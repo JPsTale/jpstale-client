@@ -79,6 +79,12 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: 'dist',
       sourcemap: false,
+      rollupOptions: {
+        input: {
+          main: resolve(__dirname, 'index.html'),
+          'char-demo': resolve(__dirname, 'char-demo.html'),
+        },
+      },
     },
   };
 });
