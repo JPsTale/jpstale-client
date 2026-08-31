@@ -17,7 +17,7 @@ const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 
-const wsUrl = `ws://${window.location.hostname || 'localhost'}:10007/ws`;
+const wsUrl = import.meta.env.VITE_GAME_WS_URL || `ws://${window.location.hostname}:10007/ws`;
 
 function hideAll() {
   loginPanel.hide();
