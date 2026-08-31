@@ -10,7 +10,7 @@ const pbjs = resolve("node_modules/protobufjs-cli/bin/pbjs");
 const pbts = resolve("node_modules/protobufjs-cli/bin/pbts");
 
 execSync(
-  `node "${pbjs}" -t static-module -w commonjs -p proto -o "${outDir}/base_message.js" proto/base/message.proto`,
+  `node "${pbjs}" -t static-module -w es6 -p proto -o "${outDir}/base_message.js" proto/base/message.proto`,
   { stdio: "inherit" }
 );
 execSync(
