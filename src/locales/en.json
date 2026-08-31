@@ -1,0 +1,11 @@
+{
+  "gui": {
+    "login": { "title": "Login", "username": "Account", "password": "Password", "submit": "Login" },
+    "server": { "title": "Select Server", "online": "{count} online" },
+    "charSel": { "title": "Character Select", "create": "Create", "enter": "Enter Game", "logout": "Switch Account", "level": "Lv.{level}" },
+    "charCreate": { "race": "Select Race", "job": "Select Job", "face": "Select Face", "name": "Enter Name", "back": "Back", "confirm": "Confirm", "create": "Create" }
+  },
+  "race": { "tempscron": "Tempscron", "moryon": "Moryon" },
+  "job": { "fighter": "Fighter", "mechanician": "Mechanician", "archer": "Archer", "pikeman": "Pikeman", "assassin": "Assassin", "knight": "Knight", "atalanta": "Atalanta", "priestess": "Priestess", "magician": "Magician", "shaman": "Shaman" },
+  "error": { "0": "Connection failed", "1": "Unknown error", "2": "Not logged in", "3": "Already logged in", "4": "Wrong password", "5": "Account banned", "6": "Character not found", "7": "Character limit reached", "8": "Invalid map", "9": "Invalid position", "10": "Speed hack", "11": "Teleport hack", "12": "Invincible hack", "13": "Invalid name", "14": "Name already exists" }
+}

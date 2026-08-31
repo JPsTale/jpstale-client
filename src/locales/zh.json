@@ -1,0 +1,21 @@
+{
+  "gui": {
+    "login": { "title": "登录", "username": "账号", "password": "密码", "submit": "登录" },
+    "server": { "title": "选择服务器", "online": "{count} 人在线" },
+    "charSel": { "title": "角色选择", "create": "创建角色", "enter": "进入游戏", "logout": "换账号", "level": "Lv.{level}" },
+    "charCreate": { "race": "选择种族", "job": "选择职业", "face": "选择脸型", "name": "输入角色名", "back": "返回", "confirm": "确认", "create": "创建" }
+  },
+  "race": { "tempscron": "坦普族", "moryon": "魔灵族" },
+  "job": {
+    "fighter": "武士", "mechanician": "机械兵", "archer": "弓箭手",
+    "pikeman": "枪兵", "assassin": "刺客",
+    "knight": "骑士", "atalanta": "魔枪兵", "priestess": "祭司",
+    "magician": "法师", "shaman": "萨满"
+  },
+  "error": {
+    "0": "连接失败", "1": "未知错误", "2": "未登录", "3": "已登录",
+    "4": "密码错误", "5": "账号封禁", "6": "角色不存在", "7": "角色数量上限",
+    "8": "无效地图", "9": "位置无效", "10": "加速作弊", "11": "传送作弊",
+    "12": "无敌作弊", "13": "无效角色名", "14": "角色名已存在"
+  }
+}
