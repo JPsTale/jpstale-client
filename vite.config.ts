@@ -83,6 +83,7 @@ export default defineConfig(({ mode }) => {
         input: {
           main: resolve(__dirname, 'index.html'),
           'char-demo': resolve(__dirname, 'char-demo.html'),
+          'map-demo': resolve(__dirname, 'map-demo.html'),
         },
       },
     },
