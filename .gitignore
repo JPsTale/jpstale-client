@@ -3,3 +3,4 @@ dist
 *.local
 .env.local
 .env.*.local
+src/net/proto/base_message.js
