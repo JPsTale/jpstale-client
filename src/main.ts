@@ -1,5 +1,5 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
-import { connect, send, onMessage, onJsonMessage, disconnect, setToken, getToken, clearToken } from './net/transport.js';
+import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken } from './net/transport.js';
 import { createCharacter, selectCharacter } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createServerSelect } from './ui/ServerSelect.js';
@@ -130,7 +130,12 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'createCharacterResult': {
       const r = msg.createCharacterResult!;
-      if (!r.success) console.warn('[app] create character failed', r.errorCode);
+      if (r.success) {
+        // server will send updated characterList automatically
+      } else {
+        console.warn('[app] create character failed', r.errorCode);
+        charSelectPanel.handleCreateResult(false, `创建失败 (${r.errorCode})`);
+      }
       break;
     }
     case 'playerState': {

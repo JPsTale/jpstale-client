@@ -16,6 +16,7 @@ export interface CharSelect {
   }): void;
   hide(): void;
   destroy(): void;
+  handleCreateResult(success: boolean, error?: string): void;
 }
 
 interface JobInfo {
@@ -329,7 +330,10 @@ export function createCharSelect(container: HTMLElement): CharSelect {
 
   // --- 3D ---
   function ensure3D() {
-    if (canvas) return;
+    if (canvas) {
+      if (!controls) controls = createCameraControls(camera!, canvas);
+      return;
+    }
     canvas = document.createElement('canvas');
     canvas.style.cssText = 'width:100%;height:100%;';
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -470,7 +474,10 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     stopBgm();
     clearPreview();
     if (sceneGroup && scene) { scene.remove(sceneGroup); sceneGroup = null; }
+    controls?.dispose();
+    controls = null;
     if (canvas) canvas.remove();
+    canvas = null;
     createEl.style.display = 'none';
     listEl.style.display = 'flex';
   }
@@ -511,6 +518,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     show(chars, o) {
       characters = chars;
       opts = o;
+      if (createEl.style.display !== 'none') exitCreateMode();
       renderList();
       root.style.display = 'flex';
     },
@@ -519,7 +527,10 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       stopRenderLoop();
       stopBgm();
       clearPreview();
+      controls?.dispose();
+      controls = null;
       if (canvas) canvas.remove();
+      canvas = null;
       if (sceneGroup && scene) { scene.remove(sceneGroup); sceneGroup = null; }
     },
     destroy() {
@@ -529,6 +540,15 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       if (canvas) canvas.remove();
       if (controls) controls.dispose();
       root.remove();
+    },
+    handleCreateResult(success: boolean, error?: string) {
+      if (success) {
+        exitCreateMode();
+      } else {
+        nameError.textContent = error || t('gui.charCreate.failed');
+        createBtn.disabled = false;
+        createBtn.textContent = t('gui.charCreate.create');
+      }
     },
   };
 }
