@@ -30,6 +30,7 @@ const ctx: import('./app/State.js').TransitionCtx = {
   showLogin() {},
   showServerSelect() {},
   showCharSelect() {},
+  showCharCreate() {},
   showWorld() {},
   hideAll,
 };
@@ -77,13 +78,20 @@ function go(to: AppScreen, ...args: unknown[]) {
   showPanelFor(to, ...args);
 }
 
+async function sha256hex(input: string): Promise<string> {
+  const data = new TextEncoder().encode(input);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+}
+
 async function onLogin(username: string, password: string) {
   if (getScreen() !== AppScreen.LOGIN) return;
   try {
-    const res = await fetch(`${apiBase}/game/login`, {
+    const passHash = await sha256hex(`${username.toUpperCase()}:${password}`);
+    const res = await fetch(`${apiBase}/api/game/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ account: username, password }),
+      body: JSON.stringify({ account: username, password: passHash }),
     });
     const data = await res.json();
     if (!data.success) {

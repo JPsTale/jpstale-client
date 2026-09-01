@@ -3,6 +3,7 @@ export enum AppScreen {
   LOGIN = 'LOGIN',
   SERVER_SELECT = 'SERVER_SELECT',
   CHAR_SELECT = 'CHAR_SELECT',
+  CHAR_CREATE = 'CHAR_CREATE',
   WORLD = 'WORLD',
 }
 
@@ -11,6 +12,7 @@ export interface TransitionCtx {
   showLogin: (error?: string) => void;
   showServerSelect: (characters: unknown[]) => void;
   showCharSelect: (characters: unknown[]) => void;
+  showCharCreate: (characters: unknown[]) => void;
   showWorld: (state: unknown) => void;
   hideAll: () => void;
 }
@@ -22,7 +24,8 @@ const VALID: Record<string, string[]> = {
   [AppScreen.BOOT]:          [AppScreen.LOGIN],
   [AppScreen.LOGIN]:         [AppScreen.SERVER_SELECT],
   [AppScreen.SERVER_SELECT]: [AppScreen.CHAR_SELECT],
-  [AppScreen.CHAR_SELECT]:   [AppScreen.WORLD, AppScreen.LOGIN],
+  [AppScreen.CHAR_SELECT]:   [AppScreen.WORLD, AppScreen.CHAR_CREATE, AppScreen.LOGIN],
+  [AppScreen.CHAR_CREATE]:   [AppScreen.CHAR_SELECT],
   [AppScreen.WORLD]:         [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
 };
 
@@ -38,6 +41,7 @@ export function transition(from: AppScreen, to: AppScreen, ctx: TransitionCtx): 
     case AppScreen.LOGIN:         ctx.showLogin(); break;
     case AppScreen.SERVER_SELECT: break;
     case AppScreen.CHAR_SELECT:   break;
+    case AppScreen.CHAR_CREATE:   break;
     case AppScreen.WORLD:         break;
   }
 }
