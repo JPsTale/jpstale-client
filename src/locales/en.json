@@ -3,7 +3,7 @@
     "login": { "title": "Login", "username": "Account", "password": "Password", "submit": "Login" },
     "server": { "title": "Select Server", "online": "● Online", "offline": "○ Offline" },
     "charSel": { "title": "Character Select", "create": "Create", "enter": "Enter Game", "logout": "Switch Account", "level": "Lv.{level}" },
-    "charCreate": { "race": "Select Race", "job": "Select Job", "face": "Select Face", "name": "Enter Name", "back": "Back", "confirm": "Confirm", "create": "Create" }
+    "charCreate": { "race": "Select Race", "job": "Select Job", "face": "Select Face", "name": "Enter Name", "back": "Back", "confirm": "Confirm", "create": "Create", "selectJob": "Select a job", "placeholder": "Name (2-12 chars)", "nameInvalid": "Only Chinese, English, and numbers, 2-12 characters", "creating": "Creating...", "failed": "Creation failed", "failedRetry": "Creation failed, please retry" }
   },
   "race": { "tempscron": "Tempscron", "moryon": "Moryon" },
   "job": { "fighter": "Fighter", "mechanician": "Mechanician", "archer": "Archer", "pikeman": "Pikeman", "assassin": "Assassin", "knight": "Knight", "atalanta": "Atalanta", "priestess": "Priestess", "magician": "Magician", "shaman": "Shaman" },

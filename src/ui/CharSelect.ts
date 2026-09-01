@@ -197,7 +197,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     nameInput = document.createElement('input');
     nameInput.type = 'text';
     nameInput.maxLength = 12;
-    nameInput.placeholder = '角色名 (2-12字)';
+    nameInput.placeholder = t('gui.charCreate.placeholder');
     nameInput.style.cssText = 'width:100%;padding:8px;background:#1a1a2e;border:1px solid #555;color:#e0d8c8;font-size:14px;box-sizing:border-box;';
     nameError = document.createElement('div');
     nameError.style.cssText = 'color:#e44;font-size:12px;margin-top:4px;min-height:16px;';
@@ -324,7 +324,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
 
   function clearJobInfo() {
     jobNameEl.textContent = '';
-    jobDescEl.textContent = t('gui.charCreate.job');
+    jobDescEl.textContent = t('gui.charCreate.selectJob');
     jobAttrEl.textContent = '';
   }
 
@@ -489,7 +489,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       nameError.textContent = '';
       createBtn.disabled = true;
     } else if (!NAME_REGEX.test(name)) {
-      nameError.textContent = '名字只能包含中英文和数字，2-12个字符';
+      nameError.textContent = t('gui.charCreate.nameInvalid');
       createBtn.disabled = true;
     } else {
       nameError.textContent = '';
@@ -501,12 +501,12 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     const name = nameInput.value.trim();
     if (!name || selectedJobId === null) return;
     createBtn.disabled = true;
-    createBtn.textContent = '创建中...';
+    createBtn.textContent = t('gui.charCreate.creating');
     try {
       opts?.onCreate(name, selectedJobId, selectedFace);
     } catch (err) {
       console.error('Create character failed:', err);
-      nameError.textContent = '创建失败，请重试';
+      nameError.textContent = t('gui.charCreate.failedRetry');
       createBtn.disabled = false;
       createBtn.textContent = t('gui.charCreate.create');
     }
