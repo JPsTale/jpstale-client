@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
-import { connect, send, onMessage, disconnect, setToken, clearToken } from './net/transport.js';
-import { loginRequest, createCharacter, selectCharacter } from './net/protocol.js';
+import { connect, send, onMessage, onJsonMessage, disconnect, setToken, getToken, clearToken } from './net/transport.js';
+import { createCharacter, selectCharacter } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createServerSelect } from './ui/ServerSelect.js';
 import type { ServerInfo } from './ui/ServerSelect.js';
@@ -11,13 +11,12 @@ import type { HudState } from './ui/Hud.js';
 import type { jpt } from './net/proto/base_message.js';
 
 const app = document.getElementById('app')!;
+const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
 
 const loginPanel = createLoginPanel(app, { onLogin });
 const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
-
-const wsUrl = import.meta.env.VITE_GAME_WS_URL || `ws://${window.location.hostname}:10007/ws`;
 
 function hideAll() {
   loginPanel.hide();
@@ -26,7 +25,6 @@ function hideAll() {
   hudPanel.hide();
 }
 
-// ponytail: show functions wired to ctx are no-ops for panels handled manually below
 const ctx: import('./app/State.js').TransitionCtx = {
   showBoot() {},
   showLogin() {},
@@ -42,9 +40,13 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       loginPanel.show(args[0] as string | undefined);
       break;
     case AppScreen.SERVER_SELECT: {
-      const servers = (args[0] as ServerInfo[]) || [{ id: 1, name: 'Server 1', online: 0 }];
+      const servers = (args[0] as ServerInfo[]) || [];
       serverSelectPanel.show(servers, (id) => {
-        console.log('[app] selected server', id);
+        const s = servers.find(s => s.id === id);
+        if (s) {
+          console.log('[app] connecting to server', s.name, s.ip + ':' + s.port);
+          connect(`ws://${s.ip}:${s.port}/ws`, true);
+        }
       });
       break;
     }
@@ -54,10 +56,10 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
         onSelect: (characterId) => send(selectCharacter(characterId)),
         onCreate: (name, classId, _head) => send(createCharacter(name, classId)),
         onLogout: () => {
-          transition(getScreen(), AppScreen.LOGIN, ctx);
-          showPanelFor(AppScreen.LOGIN);
           disconnect();
           clearToken();
+          transition(getScreen(), AppScreen.LOGIN, ctx);
+          showPanelFor(AppScreen.LOGIN);
         },
       });
       break;
@@ -75,24 +77,35 @@ function go(to: AppScreen, ...args: unknown[]) {
   showPanelFor(to, ...args);
 }
 
-function onLogin(username: string, password: string) {
+async function onLogin(username: string, password: string) {
   if (getScreen() !== AppScreen.LOGIN) return;
-  connect(wsUrl);
-  send(loginRequest(username, password));
+  try {
+    const res = await fetch(`${apiBase}/game/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ account: username, password }),
+    });
+    const data = await res.json();
+    if (!data.success) {
+      showPanelFor(AppScreen.LOGIN, data.message || '登录失败');
+      return;
+    }
+    setToken(data.token);
+    const servers: ServerInfo[] = (data.servers ?? []).map((s: any) => ({
+      id: s.id,
+      name: s.name ?? `Server ${s.id}`,
+      ip: s.ip,
+      port: s.port,
+      online: !!s.online,
+    }));
+    go(AppScreen.SERVER_SELECT, servers);
+  } catch (e) {
+    showPanelFor(AppScreen.LOGIN, '连接服务器失败');
+  }
 }
 
 onMessage((msg: jpt.base.ServerMessage) => {
   switch (msg.payload) {
-    case 'loginResponse': {
-      const lr = msg.loginResponse!;
-      if (lr.success) {
-        setToken(String(lr.accountId));
-        go(AppScreen.SERVER_SELECT);
-      } else {
-        showPanelFor(AppScreen.LOGIN, lr.errorMessage || 'unknown');
-      }
-      break;
-    }
     case 'characterList': {
       const chars = (msg.characterList!.characters || []).map((c) => ({
         characterId: Number(c.characterId),
@@ -131,6 +144,27 @@ onMessage((msg: jpt.base.ServerMessage) => {
       console.warn('[app] server error', e.errorCode, e.errorMessage);
       break;
     }
+  }
+});
+
+onJsonMessage((type, data) => {
+  switch (type) {
+    case 'auth.characterList': {
+      const chars: CharacterInfo[] = ((data as any).characters ?? []).map((c: any) => ({
+        characterId: c.characterId ?? c.id,
+        name: c.name ?? '',
+        classId: c.classId ?? c.class_id ?? 0,
+        level: c.level ?? 1,
+      }));
+      if (getScreen() === AppScreen.SERVER_SELECT) {
+        go(AppScreen.CHAR_SELECT, chars);
+      } else {
+        showPanelFor(AppScreen.CHAR_SELECT, chars);
+      }
+      break;
+    }
+    default:
+      console.log('[app] unhandled json:', type, data);
   }
 });
 

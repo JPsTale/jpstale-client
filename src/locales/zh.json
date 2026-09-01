@@ -1,7 +1,7 @@
 {
   "gui": {
     "login": { "title": "登录", "username": "账号", "password": "密码", "submit": "登录" },
-    "server": { "title": "选择服务器", "online": "{count} 人在线" },
+    "server": { "title": "选择服务器", "online": "● 在线", "offline": "○ 离线" },
     "charSel": { "title": "角色选择", "create": "创建角色", "enter": "进入游戏", "logout": "换账号", "level": "Lv.{level}" },
     "charCreate": { "race": "选择种族", "job": "选择职业", "face": "选择脸型", "name": "输入角色名", "back": "返回", "confirm": "确认", "create": "创建" }
   },

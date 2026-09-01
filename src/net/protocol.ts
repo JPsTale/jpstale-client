@@ -24,8 +24,8 @@ export function backToCharacterSelect(): jpt.base.ClientMessage.$Properties {
     });
 }
 
-export function encodeClient(msg: jpt.base.ClientMessage.$Properties): ArrayBuffer {
-    return jpt.base.ClientMessage.encode(msg).finish().buffer as ArrayBuffer;
+export function encodeClient(msg: jpt.base.ClientMessage.$Properties): Uint8Array {
+    return jpt.base.ClientMessage.encode(msg).finish();
 }
 
 export function decodeServer(data: ArrayBuffer | Uint8Array): jpt.base.ServerMessage {

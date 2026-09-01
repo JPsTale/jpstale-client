@@ -1,6 +1,6 @@
 import { t } from '../i18n/index.js';
 
-export interface ServerInfo { id: number; name: string; online: number; }
+export interface ServerInfo { id: number; name: string; ip: string; port: number; online: boolean; }
 
 export interface ServerSelect {
   show(servers: ServerInfo[], onSelect: (serverId: number) => void): void;
@@ -22,7 +22,7 @@ export function createServerSelect(container: HTMLElement): ServerSelect {
       for (const s of servers) {
         const row = document.createElement('div');
         row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:#222;border-radius:4px;cursor:pointer;min-width:300px';
-        row.innerHTML = `<span style="flex:1">${s.name}</span><span style="color:#888">${t('gui.server.online', { count: s.online })}</span>`;
+        row.innerHTML = `<span style="flex:1">${s.name}</span><span style="color:${s.online ? '#8f8' : '#f88'}">${s.online ? t('gui.server.online') : t('gui.server.offline')}</span>`;
         row.onclick = () => onSelect(s.id);
         list.appendChild(row);
       }

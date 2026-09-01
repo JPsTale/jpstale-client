@@ -1,16 +1,21 @@
 import { encodeClient, decodeServer, debugLog } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 
-type Handler = (msg: jpt.base.ServerMessage) => void;
+type ProtoHandler = (msg: jpt.base.ServerMessage) => void;
+type JsonHandler = (type: string, data: Record<string, unknown>) => void;
+
 let ws: WebSocket | null = null;
-let handlers: Handler[] = [];
+let protoHandlers: ProtoHandler[] = [];
+let jsonHandlers: JsonHandler[] = [];
 let url = '';
 let reconnectTimer = 0;
 let shouldReconnect = false;
+let sendTokenOnConnect = false;
 
-export function connect(wsUrl: string): void {
+export function connect(wsUrl: string, withToken = false): void {
   url = wsUrl;
-  shouldReconnect = true;
+  sendTokenOnConnect = withToken;
+  shouldReconnect = false;
   _connect();
 }
 
@@ -18,13 +23,26 @@ function _connect(): void {
   if (ws && (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN)) return;
   ws = new WebSocket(url);
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => { console.log('[net] connected'); };
+  ws.onopen = () => {
+    console.log('[net] connected');
+    if (sendTokenOnConnect && _token) {
+      sendJson('auth.token', { token: _token });
+    }
+  };
   ws.onmessage = (ev) => {
-    try {
-      const msg = decodeServer(ev.data as ArrayBuffer);
-      debugLog(msg);
-      for (const h of handlers) h(msg);
-    } catch { console.warn('[net] bad message', ev.data); }
+    if (typeof ev.data === 'string') {
+      try {
+        const parsed = JSON.parse(ev.data);
+        console.log('[net] json:', parsed.type);
+        for (const h of jsonHandlers) h(parsed.type, parsed.data ?? {});
+      } catch { console.warn('[net] bad json', ev.data); }
+    } else {
+      try {
+        const msg = decodeServer(ev.data as ArrayBuffer);
+        debugLog(msg);
+        for (const h of protoHandlers) h(msg);
+      } catch { console.warn('[net] bad binary', ev.data); }
+    }
   };
   ws.onclose = () => {
     console.log('[net] disconnected');
@@ -40,9 +58,19 @@ export function send(msg: jpt.base.ClientMessage.$Properties): void {
   ws.send(encodeClient(msg));
 }
 
-export function onMessage(handler: Handler): () => void {
-  handlers.push(handler);
-  return () => { handlers = handlers.filter(h => h !== handler); };
+export function sendJson(type: string, data?: Record<string, unknown>): void {
+  if (ws?.readyState !== WebSocket.OPEN) { console.warn('[net] not connected'); return; }
+  ws.send(JSON.stringify({ type, data: data ?? {} }));
+}
+
+export function onMessage(handler: ProtoHandler): () => void {
+  protoHandlers.push(handler);
+  return () => { protoHandlers = protoHandlers.filter(h => h !== handler); }
+}
+
+export function onJsonMessage(handler: JsonHandler): () => void {
+  jsonHandlers.push(handler);
+  return () => { jsonHandlers = jsonHandlers.filter(h => h !== handler); }
 }
 
 export function disconnect(): void {

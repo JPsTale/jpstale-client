@@ -1,7 +1,7 @@
 {
   "gui": {
     "login": { "title": "Login", "username": "Account", "password": "Password", "submit": "Login" },
-    "server": { "title": "Select Server", "online": "{count} online" },
+    "server": { "title": "Select Server", "online": "● Online", "offline": "○ Offline" },
     "charSel": { "title": "Character Select", "create": "Create", "enter": "Enter Game", "logout": "Switch Account", "level": "Lv.{level}" },
     "charCreate": { "race": "Select Race", "job": "Select Job", "face": "Select Face", "name": "Enter Name", "back": "Back", "confirm": "Confirm", "create": "Create" }
   },
