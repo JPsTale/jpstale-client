@@ -24,6 +24,12 @@ export function backToCharacterSelect(): jpt.base.ClientMessage.$Properties {
     });
 }
 
+export function ping(): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        ping: { timestamp: Date.now() },
+    });
+}
+
 export function encodeClient(msg: jpt.base.ClientMessage.$Properties): Uint8Array {
     return jpt.base.ClientMessage.encode(msg).finish();
 }

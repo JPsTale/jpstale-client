@@ -1,4 +1,4 @@
-import { encodeClient, decodeServer, debugLog } from './protocol.js';
+import { encodeClient, decodeServer, debugLog, ping } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 
 type ProtoHandler = (msg: jpt.base.ServerMessage) => void;
@@ -9,8 +9,11 @@ let protoHandlers: ProtoHandler[] = [];
 let jsonHandlers: JsonHandler[] = [];
 let url = '';
 let reconnectTimer = 0;
+let heartbeatTimer = 0;
 let shouldReconnect = false;
 let sendTokenOnConnect = false;
+
+const HEARTBEAT_INTERVAL = 20000; // 每 20s 发一次 ping（服务端 60s 读空闲超时）
 
 export function connect(wsUrl: string, withToken = false): void {
   url = wsUrl;
@@ -28,6 +31,7 @@ function _connect(): void {
     if (sendTokenOnConnect && _token) {
       sendJson('auth.token', { token: _token });
     }
+    startHeartbeat();
   };
   ws.onmessage = (ev) => {
     if (typeof ev.data === 'string') {
@@ -46,6 +50,7 @@ function _connect(): void {
   };
   ws.onclose = () => {
     console.log('[net] disconnected');
+    stopHeartbeat();
     if (shouldReconnect) {
       reconnectTimer = window.setTimeout(_connect, 3000);
     }
@@ -56,6 +61,22 @@ function _connect(): void {
 export function send(msg: jpt.base.ClientMessage.$Properties): void {
   if (ws?.readyState !== WebSocket.OPEN) { console.warn('[net] not connected'); return; }
   ws.send(encodeClient(msg));
+}
+
+function startHeartbeat(): void {
+  stopHeartbeat();
+  heartbeatTimer = window.setInterval(() => {
+    if (ws?.readyState === WebSocket.OPEN) {
+      ws.send(encodeClient(ping()));
+    }
+  }, HEARTBEAT_INTERVAL);
+}
+
+function stopHeartbeat(): void {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = 0;
+  }
 }
 
 export function sendJson(type: string, payload?: Record<string, unknown>): void {
@@ -76,6 +97,7 @@ export function onJsonMessage(handler: JsonHandler): () => void {
 export function disconnect(): void {
   shouldReconnect = false;
   clearTimeout(reconnectTimer);
+  stopHeartbeat();
   ws?.close();
   ws = null;
 }

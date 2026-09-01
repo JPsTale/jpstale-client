@@ -7,6 +7,8 @@
 import * as THREE from 'three';
 import { loadMap, updateFrameAnimations, getMapWorldBounds } from '../maps/fore1.js';
 import { mapSmdPath, MAP_CATALOG } from '../maps/map-catalog.js';
+import { mapDecorList } from '../maps/map-decor.js';
+import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { loadCharacterModel } from '../render/char-loader.js';
@@ -51,6 +53,7 @@ export function createWorldView(container: HTMLElement): WorldView {
   let lastMapSwitch = 0; // 上次换图时间（防抖）
   const mapHandles = new Map<number, Awaited<ReturnType<typeof loadMap>>>();
   const collisionMeshes = new Map<number, CollisionMesh>();
+  const decorGroups = new Map<number, THREE.Group[]>(); // mapId → 装饰 group 列表
   // 全部 44 图 world AABB（预取，用于 findCurrentMap 判归属，不依赖是否已加载）
   const allBounds = new Map<number, [number, number, number, number]>();
   let charGroup: THREE.Group | null = null;
@@ -70,12 +73,19 @@ export function createWorldView(container: HTMLElement): WorldView {
   // 移动状态（复刻 /pt/maps/ dummy 移动）
   let moveSpeed = 3;         // 移动速度（world 单位/帧）
   let wasMoving = false;     // 上一帧是否在移动（状态机切换防抖）
+  let falling = false;       // 是否正在下落
+  let fallHeight = 0;        // 下落高度（触发 FALLDAMAGE 判定）
+  let lastY = 0;             // 上一帧角色 y（检测下落位移）
   let mouseDown = false;
   let mouseX = 0, mouseY = 0;
 
   const keys: Record<string, boolean> = {};
   window.addEventListener('keydown', (e) => { keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  // C 键：控制台打印角色/相机调试信息
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyC') debugDump();
+  });
 
   // 相机状态（对应 /pt/maps/ debug 相机，Winmain.cpp 自由模式初始值）
   // 俯仰角 anx 初始 33.75°（引擎角度 384 → 弧度），any=0；fov=40.9, near=20, far=4000（JS 世界单位）
@@ -315,6 +325,12 @@ export function createWorldView(container: HTMLElement): WorldView {
     const cm = new CollisionMesh();
     cm.buildFromSMD(mh.data);
     collisionMeshes.set(mapId, cm);
+    // 装饰模型（纯色渲染，材质逆向为后续工作）
+    const decors = mapDecorList(mapId);
+    if (decors.length > 0) {
+      const gs = await loadMapDecor(scene, mapId, decors, 0x88aa44);
+      decorGroups.set(mapId, gs);
+    }
     console.log('[WorldView] 地图' + mapId + ' 加载: 材质=' + mh.mapRenderer.materials.length +
       ' tris=' + mh.mapRenderer.totalFaceCount + ' 碰撞面=' + cm.triangles.length);
     return true;
@@ -331,32 +347,36 @@ export function createWorldView(container: HTMLElement): WorldView {
   }
 
   // 判断角色所属地图（对齐服务端 MapRegionService.findMapPrecise）：
-  // 用全部 44 图 AABB 粗筛（不依赖是否已加载）→ 唯一命中返回；
-  // 多命中（交界重叠）用已加载图的碰撞网格高度精确判定；仍歧义保持当前图防抖。
+  // 先 AABB 粗筛；多命中或无命中（桥口在图 AABB 外）用已加载图碰撞网格高度判定
+  // （对齐原版：遍历 stage 用 GetFloorHeight，谁有地面就在哪）。
   function findCurrentMap(wx: number, wz: number): number {
+    const fx = -wz * 256, fz = -wx * 256; // world → raw（地图逆变换）
     const hits: number[] = [];
     for (const [mapId, [xMin, xMax, zMin, zMax]] of allBounds) {
       if (wx >= xMin && wx <= xMax && wz >= zMin && wz <= zMax) hits.push(mapId);
     }
-    if (hits.length === 1) return hits[0];
-    if (hits.length > 1) {
-      // 多命中：用已加载图的碰撞网格高度（raw 坐标，对齐服务端 getHeight(-z,-x)>0）
-      const fx = -wz * 256, fz = -wx * 256;
-      for (const mapId of hits) {
-        const cm = collisionMeshes.get(mapId);
-        if (!cm) continue;
-        if (cm.getPolyHeight(fx, fz).found) return mapId;
+    // 优先在已加载图里找实际落地（含桥口：图 AABB 外但网格有面）
+    let fallback: { mapId: number; y: number } | null = null;
+    for (const [mapId, cm] of collisionMeshes) {
+      const h = cm.getPolyHeight(fx, fz);
+      if (h.found) {
+        // 高度最高者（对齐原版取最高地面）
+        if (!fallback || h.height > fallback.y) fallback = { mapId, y: h.height };
       }
-      // 多命中但都无高度（交界处角色悬空或图未加载）→ 返回 AABB 中最靠近当前图的（防抖，避免抖动）
-      return hits.includes(currentMapId) ? currentMapId : hits[0];
     }
-    return currentMapId; // 无命中 → 保持当前图
+    if (fallback) {
+      return fallback.mapId;
+    }
+    if (hits.length === 1) return hits[0];
+    if (hits.length > 1) return hits.includes(currentMapId) ? currentMapId : hits[0];
+    return currentMapId; // 完全无命中 → 保持当前图
   }
 
   // 每帧移动：朝鼠标方向（屏幕投影方向）移动，跨图碰撞校验。返回是否实际移动。
   function updateMovement(): boolean {
     if (!camera || !renderer) return false;
     if (!mouseDown) return false;
+    if (falling) return false; // 掉落中禁止水平移动（对齐原版：下落时不动）
 
     const rect = renderer.domElement.getBoundingClientRect();
     // 1. 角色在屏幕上的投影坐标
@@ -409,7 +429,10 @@ export function createWorldView(container: HTMLElement): WorldView {
       if (!result.collision) {
         // raw → world
         selfPos.x = -result.z / 256;
-        selfPos.y = result.y / 256;
+        // 下坡（新地面明显低于当前 y）不贴地：保留物理 y，由 updateFalling 逐帧下落（对齐原版 PHeight）
+        if (result.y >= sy - 8 * 256) {
+          selfPos.y = result.y / 256;
+        }
         selfPos.z = -result.x / 256;
         moved = true;
         break;
@@ -439,15 +462,87 @@ export function createWorldView(container: HTMLElement): WorldView {
     return false;
   }
 
+  // C 键调试：打印角色/相机状态、脚下地面/材质
+  function debugDump(): void {
+    const rawX = -selfPos.z * 256;
+    const rawZ = -selfPos.x * 256;
+    const rawY = selfPos.y * 256;
+    console.log('========== WorldView Debug ==========');
+    console.log(`[角色] mapId=${currentMapId} pos=(${selfPos.x.toFixed(2)}, ${selfPos.y.toFixed(2)}, ${selfPos.z.toFixed(2)}) raw=(${rawX.toFixed(0)}, ${rawY.toFixed(0)}, ${rawZ.toFixed(0)}) angle(rad)=${selfAngle.toFixed(4)} falling=${falling}`);
+    // 脚下地面/材质
+    const cm = collisionMeshes.get(currentMapId);
+    if (cm) {
+      const h = cm.getFloorHeight(rawX, rawZ, rawY);
+      console.log(`[脚下] 地面高度 found=${h.found} raw=${h.found ? h.height.toFixed(0) : '-'} world=${h.found ? (h.height / 256).toFixed(2) : '-'}`);
+      // 找角色脚下（raw 投影）命中的三角形材质
+      const idxs = cm._nearbyTriangleIdx(rawX, rawZ);
+      let best: { dist: number; tri: (typeof cm.triangles)[number] } | null = null;
+      for (const i of idxs) {
+        const tri = cm.triangles[i];
+        if (rawX < tri.minX || rawX > tri.maxX || rawZ < tri.minZ || rawZ > tri.maxZ) continue;
+        const dy = rawY - tri.maxY;
+        if (dy < 0) continue; // 三角形在角色上方
+        if (!best || dy < best.dist) best = { dist: dy, tri };
+      }
+      if (best) {
+        const t = best.tri;
+        console.log(`[脚下材质] matIdx=${t.matIdx} nyNorm=${t.nyNorm.toFixed(3)} triY(raw)=(${t.y1},${t.y2},${t.y3})`);
+      } else {
+        console.log('[脚下材质] 无命中三角形（悬空？）');
+      }
+    }
+    // 相机
+    if (camera) {
+      console.log(`[相机] pos=(${camera.position.x.toFixed(2)}, ${camera.position.y.toFixed(2)}, ${camera.position.z.toFixed(2)}) rot(x)=${(camera.rotation.x * 180 / Math.PI).toFixed(2)}° rot(y)=${(camera.rotation.y * 180 / Math.PI).toFixed(2)}° fov=${cam.fov} near=${camera.near} far=${camera.far} dist=${cam.dist.toFixed(1)} anx=${cam.anx.toFixed(3)} any=${cam.any.toFixed(3)}`);
+    }
+    console.log(`[已加载地图] ${[...mapHandles.keys()].join(', ')}`);
+    console.log('=====================================');
+  }
+
+  // 掉落（对齐原版 character.cpp:1984-2009）：
+  // 地面高度差 > 8*fONE 视为下落，每帧 pY -= 8*fONE（下落速度）；
+  // 下落超 32*fONE 触发 FALLDOWN 动画；落地时 FALLDOWN → FallHeight>200 → FALLDAMAGE 否则 FALLSTAND。
+  function updateFalling(): boolean {
+    if (!animState) return false;
+    const cm = collisionMeshes.get(currentMapId);
+    if (!cm) return false;
+    const rawX = -selfPos.z * 256;
+    const rawZ = -selfPos.x * 256;
+    const pY = selfPos.y * 256;
+    const h = cm.getFloorHeight(rawX, rawZ, pY);
+    const groundY = h.found ? h.height : -80 * 256; // 悬空 → 虚空
+    const diff = pY - groundY;
+
+    // 调试：打印下落关键值（触发时）
+    if (diff > 32 * 256 && !falling) {
+      console.log(`[fall] 开始下落: selfPos.y=${selfPos.y.toFixed(1)} groundY(world)=${(groundY / 256).toFixed(1)} diff(world)=${(diff / 256).toFixed(1)}`);
+    }
+
+    if (diff > 8 * 256) {
+      // 下落中
+      selfPos.y = (pY - 8 * 256) / 256;
+      if (diff > 32 * 256 && !falling) {
+        falling = true;
+        fallHeight = diff;
+        animState.triggerFallDown();
+      }
+      return true;
+    }
+    // 落地
+    selfPos.y = groundY / 256;
+    if (falling) {
+      falling = false;
+      if (fallHeight > 200 * 256) animState.triggerFallDamage();
+      else animState.triggerFallStand();
+    }
+    return false;
+  }
+
   // 同步地图区域：加载当前图的相邻图（含 2 跳，保留回程中间图），卸载更远的图
   let regionLoading = new Set<number>();
   async function syncMapRegions(centerMapId: number): Promise<void> {
-    // wanted = 当前图 + 相邻 + 相邻的相邻（2 跳内不卸载，避免回程困在已卸载的中间图）
-    const wanted = new Set<number>([centerMapId]);
-    for (const n of neighborMaps(centerMapId)) {
-      wanted.add(n);
-      for (const n2 of neighborMaps(n)) wanted.add(n2);
-    }
+    // wanted = 当前图 + 直接相邻（1 跳）
+    const wanted = new Set<number>([centerMapId, ...neighborMaps(centerMapId)]);
     // 加载 wanted 中未加载的图
     const toLoad = [...wanted].filter(id => !mapHandles.has(id) && !regionLoading.has(id));
     if (toLoad.length) {
@@ -465,6 +560,9 @@ export function createWorldView(container: HTMLElement): WorldView {
         if (mh) mh.mapRenderer.dispose?.();
         mapHandles.delete(id);
         collisionMeshes.delete(id);
+        // 清装饰
+        const dg = decorGroups.get(id);
+        if (dg) { unloadDecor(dg, scene!); decorGroups.delete(id); }
         console.log('[WorldView] 卸载地图' + id);
       }
     }
@@ -510,15 +608,35 @@ export function createWorldView(container: HTMLElement): WorldView {
     // 移动（鼠标左键朝鼠标方向），先移动再让相机跟随
     const moved = updateMovement();
 
-    // 状态机切换：移动中 RUN，停下 Idle（只在状态变化时触发，避免每帧重置动画）
+    // 掉落（始终处理，不依赖鼠标）
+    const wasFalling = falling;
+    const fell = updateFalling();
+    if (fell && selfPos.y !== lastY) {
+      // 下落时角色/dummy/坐标轴同步 y
+      if (charGroup) charGroup.position.copy(selfPos);
+      if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
+      if (axisGroup) axisGroup.position.copy(selfPos);
+    }
+    lastY = selfPos.y;
+
+    // 状态机切换：掉落优先（FALLDOWN/FALLSTAND/FALLDAMAGE），否则移动 RUN / 停下 Idle
     if (animState) {
-      if (moved && !wasMoving) {
-        animState.triggerRun();
-      } else if (!moved && wasMoving) {
-        animState.triggerIdle();
+      if (falling) {
+        // 下落中：不触发 RUN/Idle（FALLDOWN 由 updateFalling 管理）
+        wasMoving = false;
+      } else if (wasFalling) {
+        // 刚落地：FALLSTAND/FALLDAMAGE 由 updateFalling 触发，保持 wasMoving=false 让下帧能切 RUN
+        // （不更新 wasMoving，让鼠标按住时落地后自动转 RUN）
+      } else {
+        if (moved && !wasMoving) {
+          animState.triggerRun();
+          wasMoving = true;
+        } else if (!moved && wasMoving) {
+          animState.triggerIdle();
+          wasMoving = false;
+        }
       }
     }
-    wasMoving = moved;
 
     // 相机跟随角色
     updateCamera();

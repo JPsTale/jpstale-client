@@ -272,7 +272,9 @@ export class CollisionMesh {
         const lMinY = Math.min(l.sp[1], l.ep[1]);
         const lMaxY = Math.max(l.sp[1], l.ep[1]);
         if (tri.maxY < lMinY || tri.minY > lMaxY) continue;
+        // 双面判定：单面三角形（栏杆等）从法线背面接近也应挡（对齐游戏预期）
         if (this._triangleImact(tri, l.sp, l.ep)) return true;
+        if (this._triangleImact(tri, l.ep, l.sp)) return true;
       }
     }
     return false;

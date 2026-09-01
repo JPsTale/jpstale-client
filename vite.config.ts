@@ -81,9 +81,9 @@ export default defineConfig(({ mode }) => {
       sourcemap: false,
       rollupOptions: {
         input: {
-          main: resolve(__dirname, 'index.html'),
-          'char-demo': resolve(__dirname, 'char-demo.html'),
-          'map-demo': resolve(__dirname, 'map-demo.html'),
+          main: resolve(import.meta.dirname, 'index.html'),
+          'char-demo': resolve(import.meta.dirname, 'char-demo.html'),
+          'map-demo': resolve(import.meta.dirname, 'map-demo.html'),
         },
       },
     },

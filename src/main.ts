@@ -8,6 +8,8 @@ import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
 import { preloadAllModels } from './render/model-cache.js';
 import { preloadAllMaps } from './maps/map-preload.js';
+import { MAP_CATALOG } from './maps/map-catalog.js';
+import { createLoadingScreen } from './ui/LoadingScreen.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
@@ -22,6 +24,7 @@ const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 const worldView = createWorldView(app);
+const loadingScreen = createLoadingScreen(app);
 
 function hideAll() {
   loginPanel.hide();
@@ -29,6 +32,7 @@ function hideAll() {
   charSelectPanel.hide();
   hudPanel.hide();
   worldView.hide();
+  loadingScreen.hide();
 }
 
 const ctx: import('./app/State.js').TransitionCtx = {
@@ -245,10 +249,25 @@ onJsonMessage((type, data) => {
   }
 });
 
-// 启动即后台预加载全部职业模型/骨骼/动画，用户在创建/选择角色时无需等待
-preloadAllModels((loaded, total) => console.log(`[app] preloading models: ${loaded}/${total}`));
-
-// 启动即后台预加载全部地图数据（SMD+纹理缓存，不显示），进图时无需下载等待
-preloadAllMaps((loaded, total) => console.log(`[app] preloading maps: ${loaded}/${total}`));
-
-go(AppScreen.LOGIN);
+// 启动：先显式加载（进度条），预加载完成才显示登录页，避免未加载完就进游戏
+loadingScreen.show();
+const TOTAL_MODELS = 10;
+const TOTAL_MAPS = Object.keys(MAP_CATALOG).length;
+const TOTAL = TOTAL_MODELS + TOTAL_MAPS;
+let doneModels = 0, doneMaps = 0, preloadDone = false;
+function updateLoading(): void {
+  const done = doneModels + doneMaps;
+  loadingScreen.setProgress(done, TOTAL, `加载资源 ${doneModels}/${TOTAL_MODELS} 模型 + ${doneMaps}/${TOTAL_MAPS} 地图`);
+  if (preloadDone && done >= TOTAL) {
+    loadingScreen.hide();
+    go(AppScreen.LOGIN);
+  }
+}
+(async () => {
+  await Promise.all([
+    preloadAllModels((loaded) => { doneModels = loaded; updateLoading(); }),
+    preloadAllMaps((loaded) => { doneMaps = loaded; updateLoading(); }),
+  ]);
+  preloadDone = true;
+  updateLoading();
+})();

@@ -264,8 +264,8 @@ function parseObj3D(dv: DataView, info: { nodeName: string; length: number; objF
   const tmInvert = readIntMatrix(dv, o); o += 64;
   const tmResult = readFloatMatrix(dv, o); o += 64;
   const tmRotate = readIntMatrix(dv, o); o += 64;
-  o += 64; // mWorld
-  o += 64; // mLocal
+  const mWorld = readFloatMatrix(dv, o); o += 64;   // 实测为 float 矩阵（含 1.0f 平移）
+  const mLocal = readFloatMatrix(dv, o); o += 64;
 
   o += 4; // lFrame
 
@@ -394,6 +394,8 @@ function parseObj3D(dv: DataView, info: { nodeName: string; length: number; objF
     tm: { m: tm },
     tmInvert: { m: tmInvert },
     tmRotate: { m: tmRotate },
+    mWorld: { m: mWorld },
+    mLocal: { m: mLocal },
     tmResult,
     head, posi, cameraPosi, angle,
   };

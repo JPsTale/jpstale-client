@@ -209,6 +209,8 @@ export interface Obj3D {
   tm: { m: number[] };
   tmInvert: { m: number[] };
   tmRotate: { m: number[] };
+  mWorld: { m: number[] };
+  mLocal: { m: number[] };
   tmResult: number[];
   head: number;
   posi: Vec3;

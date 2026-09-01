@@ -21,6 +21,8 @@ export const STATE: Record<string, number> = {
   RUN: 0x0060,
   SPRINT: 0x0070,
   FALLDOWN: 0x0080,
+  FALLSTAND: 0x0170,
+  FALLDAMAGE: 0x0180,
   ATTACK: 0x0100,
   DAMAGE: 0x0110,
   DEAD: 0x0120,
@@ -50,6 +52,9 @@ export interface AnimStateMachine {
   triggerWalk: () => boolean;
   triggerRun: () => boolean;
   triggerIdle: () => boolean;
+  triggerFallDown: () => boolean;
+  triggerFallStand: () => boolean;
+  triggerFallDamage: () => boolean;
   triggerTaunt: () => boolean;
   triggerYahoo: () => boolean;
   onAnimationEnd: () => MotionInfo | null;
@@ -151,6 +156,30 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
+  function triggerFallDown(): boolean {
+    const motion = findMotionForState(STATE.FALLDOWN, false);
+    if (!motion) return false;
+    currentState = STATE.FALLDOWN;
+    applyMotion(motion);
+    return true;
+  }
+
+  function triggerFallStand(): boolean {
+    const motion = findMotionForState(STATE.FALLSTAND, false);
+    if (!motion) return false;
+    currentState = STATE.FALLSTAND;
+    applyMotion(motion);
+    return true;
+  }
+
+  function triggerFallDamage(): boolean {
+    const motion = findMotionForState(STATE.FALLDAMAGE, false);
+    if (!motion) return false;
+    currentState = STATE.FALLDAMAGE;
+    applyMotion(motion);
+    return true;
+  }
+
   function triggerTaunt(): boolean {
     const motion = findMotionForState(STATE.TAUNT, false);
     if (!motion) { log2('No matching taunt animation'); return false; }
@@ -169,7 +198,8 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function onAnimationEnd(): MotionInfo | null {
     if (currentState === STATE.ATTACK || currentState === STATE.SKILL ||
-        currentState === STATE.TAUNT || currentState === STATE.YAHOO) {
+        currentState === STATE.TAUNT || currentState === STATE.YAHOO ||
+        currentState === STATE.FALLSTAND || currentState === STATE.FALLDAMAGE) {
       return triggerIdle() ? currentMotion : null;
     }
     return null;
@@ -194,6 +224,9 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     triggerWalk,
     triggerRun,
     triggerIdle,
+    triggerFallDown,
+    triggerFallStand,
+    triggerFallDamage,
     triggerTaunt,
     triggerYahoo,
     onAnimationEnd,
