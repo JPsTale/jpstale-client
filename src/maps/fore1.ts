@@ -1,14 +1,12 @@
 /**
- * fore-1 单图加载与帧动画更新。
- * 迁移自 maps/index.html loadMap 的地图渲染部分(资产 /res + getMatConfig + build + 帧动画)。
+ * 单图 SMD 加载与帧动画更新（泛化，支持任意 field smd）。
  * 资产走 vite devAssets /res → E:\JPsTale\client。
  */
 import * as THREE from 'three';
 import { parseSMD } from '../core/smd-parser';
+import { cachedFetch } from '../core/asset-cache';
 import { loadGameTexture } from '../render/texture-loader';
 import { MapRenderer, type MatConfig } from '../render/map-renderer';
-
-const SMD_PATH = '/res/field/forest/fore-1.smd';
 
 export interface Fore1Map {
   mapRenderer: MapRenderer;
@@ -22,10 +20,54 @@ function assetUrl(raw: string): string {
   return '/res/' + raw.replace(/\\/g, '/').toLowerCase();
 }
 
-export async function loadFore1(scene: THREE.Scene): Promise<Fore1Map> {
-  const r = await fetch(SMD_PATH);
-  if (!r.ok) throw new Error('HTTP ' + r.status + ' — ' + SMD_PATH);
-  const buf = await r.arrayBuffer();
+// world AABB 缓存：smdPath → [xMin, xMax, zMin, zMax]（world 坐标）
+const worldBoundsCache = new Map<string, [number, number, number, number]>();
+
+/**
+ * 获取地图 world AABB（XZ 平面矩形），用缓存 SMD 解析，不建渲染。
+ * 换算对齐 map-renderer：wx = -rawZ/256, wz = -rawX/256。
+ */
+export async function getMapWorldBounds(smdPath: string): Promise<[number, number, number, number] | null> {
+  const cached = worldBoundsCache.get(smdPath);
+  if (cached) return cached;
+  try {
+    const buf = await cachedFetch(smdPath);
+    const data = parseSMD(buf);
+    const b = data.bounds;
+    const S = 1 / 256;
+    const xMin = -b.maxZ * S, xMax = -b.minZ * S;
+    const zMin = -b.maxX * S, zMax = -b.minX * S;
+    const r: [number, number, number, number] = [xMin, xMax, zMin, zMax];
+    worldBoundsCache.set(smdPath, r);
+    return r;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * 预加载地图数据：缓存 SMD 二进制 + 预加载全部纹理（texture-loader 内部缓存）。
+ * 进图时 loadMap 命中缓存快速构建，无需等待下载。
+ */
+export async function preloadMapData(smdPath: string): Promise<void> {
+  const buf = await cachedFetch(smdPath); // 缓存 SMD
+  const data = parseSMD(buf);
+  const urls = new Set<string>();
+  for (let i = 0; i < data.materials.length; i++) {
+    const mat = data.materials[i];
+    if (mat.useState & 0x0400) continue;
+    if (mat.tex.length > 0) urls.add(assetUrl(mat.tex[0]));
+    if (mat.tex.length > 1) urls.add(assetUrl(mat.tex[1]));
+    if (mat.animTexCounter > 0 && mat.animTextures.length > 0) {
+      for (const n of mat.animTextures) urls.add(assetUrl(n));
+    }
+  }
+  await Promise.allSettled([...urls].map(async (u) => loadGameTexture(u)));
+}
+
+/** 加载任意 field SMD 地图（smdPath 如 '/res/field/ricarten/village-2.smd'） */
+export async function loadMap(scene: THREE.Scene, smdPath: string): Promise<Fore1Map> {
+  const buf = await cachedFetch(smdPath);
   const data = parseSMD(buf);
 
   // 收集纹理 URL(跳过不可见材质 useState & 0x0400)
@@ -98,6 +140,11 @@ export async function loadFore1(scene: THREE.Scene): Promise<Fore1Map> {
   }
 
   return { mapRenderer: mr, animatedMeshes, data };
+}
+
+/** 兼容旧接口：加载 fore-1 */
+export async function loadFore1(scene: THREE.Scene): Promise<Fore1Map> {
+  return loadMap(scene, '/res/field/forest/fore-1.smd');
 }
 
 /** 每帧帧动画: frameIdx = (time_ms >> Shift_FrameSpeed) & FrameMask(默认 64ms/帧) */

@@ -7,8 +7,11 @@ import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
 import { preloadAllModels } from './render/model-cache.js';
+import { preloadAllMaps } from './maps/map-preload.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
+import { createWorldView } from './ui/WorldView.js';
+import type { EnterGameInfo } from './ui/WorldView.js';
 import type { jpt } from './net/proto/base_message.js';
 
 const app = document.getElementById('app')!;
@@ -18,12 +21,14 @@ const loginPanel = createLoginPanel(app, { onLogin });
 const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
+const worldView = createWorldView(app);
 
 function hideAll() {
   loginPanel.hide();
   serverSelectPanel.hide();
   charSelectPanel.hide();
   hudPanel.hide();
+  worldView.hide();
 }
 
 const ctx: import('./app/State.js').TransitionCtx = {
@@ -69,6 +74,8 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
     case AppScreen.WORLD: {
       const state = args[0] as HudState | undefined;
       if (state) hudPanel.show(state);
+      const enterGame = args[1] as EnterGameInfo | undefined;
+      if (enterGame) worldView.show(enterGame);
       break;
     }
   }
@@ -164,6 +171,40 @@ onMessage((msg: jpt.base.ServerMessage) => {
       }
       break;
     }
+    case 'enterGame': {
+      const eg = msg.enterGame!;
+      const hudState: HudState = {
+        hp: 100, maxHp: 100, mp: 50, maxMp: 50,
+        level: eg.appearance?.classId ? 1 : 1,
+      };
+      const enterGame: EnterGameInfo = {
+        playerId: Number(eg.playerId),
+        mapId: eg.mapId || 0,
+        position: {
+          x: eg.position?.x || 0,
+          y: eg.position?.y || 0,
+          z: eg.position?.z || 0,
+        },
+        rotation: eg.rotation ? {
+          x: eg.rotation.x || 0,
+          y: eg.rotation.y || 0,
+          z: eg.rotation.z || 0,
+        } : undefined,
+        appearance: eg.appearance ? {
+          classId: eg.appearance.classId || 0,
+          head: eg.appearance.head || 0,
+          rank: eg.appearance.rank || 0,
+          bodyModel: eg.appearance.bodyModel || undefined,
+          bodyModelIdcode: eg.appearance.bodyModelIdcode || 0,
+          weaponDorp: eg.appearance.weaponDorp || undefined,
+          weaponIdcode: eg.appearance.weaponIdcode || 0,
+          weaponPos: eg.appearance.weaponPos || 0,
+          sizeLevel: eg.appearance.sizeLevel || 0,
+        } : undefined,
+      };
+      go(AppScreen.WORLD, hudState, enterGame);
+      break;
+    }
     case 'error': {
       const e = msg.error!;
       console.warn('[app] server error', e.errorCode, e.errorMessage);
@@ -206,5 +247,8 @@ onJsonMessage((type, data) => {
 
 // 启动即后台预加载全部职业模型/骨骼/动画，用户在创建/选择角色时无需等待
 preloadAllModels((loaded, total) => console.log(`[app] preloading models: ${loaded}/${total}`));
+
+// 启动即后台预加载全部地图数据（SMD+纹理缓存，不显示），进图时无需下载等待
+preloadAllMaps((loaded, total) => console.log(`[app] preloading maps: ${loaded}/${total}`));
 
 go(AppScreen.LOGIN);
