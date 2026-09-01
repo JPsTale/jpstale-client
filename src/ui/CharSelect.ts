@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { t } from '../i18n/index.js';
-import { loadCharacterModel } from '../render/char-loader.js';
+import { loadCharacterModel, CharLoadResult } from '../render/char-loader.js';
+import { createAnimStateMachine, AnimStateMachine } from '../char/anim-state-machine.js';
 import { evalSkeleton, applyToBones } from '../char/animation.js';
-import { createAnimStateMachine } from '../char/anim-state-machine.js';
-import type { MotionInfo } from '../char/char-format.js';
-import type { CharLoadResult } from '../render/char-loader.js';
+import { loadScene } from '../render/scene-loader.js';
+import { createCameraControls } from './camera-controls.js';
 
 export interface CharacterInfo { characterId: number; name: string; classId: number; level: number; }
 
@@ -18,121 +18,73 @@ export interface CharSelect {
   destroy(): void;
 }
 
-const JOBS_TEMPCRON = [1, 2, 3, 4, 5] as const;
-const JOBS_MORYON = [6, 7, 8, 9, 10] as const;
-const JOB_NAMES_TEMPCRON = ['fighter', 'mechanician', 'archer', 'pikeman', 'assassin'] as const;
-const JOB_NAMES_MORYON = ['knight', 'atalanta', 'priestess', 'magician', 'shaman'] as const;
+interface JobInfo {
+  id: number;
+  nameKey: string;
+  side: 'tempscron' | 'moryon';
+}
+
+const JOBS: JobInfo[] = [
+  { id: 1, nameKey: 'job.fighter', side: 'tempscron' },
+  { id: 2, nameKey: 'job.mechanician', side: 'tempscron' },
+  { id: 3, nameKey: 'job.archer', side: 'tempscron' },
+  { id: 4, nameKey: 'job.pikeman', side: 'tempscron' },
+  { id: 5, nameKey: 'job.assassin', side: 'tempscron' },
+  { id: 6, nameKey: 'job.knight', side: 'moryon' },
+  { id: 7, nameKey: 'job.atalanta', side: 'moryon' },
+  { id: 8, nameKey: 'job.priestess', side: 'moryon' },
+  { id: 9, nameKey: 'job.magician', side: 'moryon' },
+  { id: 10, nameKey: 'job.shaman', side: 'moryon' },
+];
+
+const NAME_REGEX = /^[\u4e00-\u9fa5a-zA-Z0-9]{2,12}$/;
 
 export function createCharSelect(container: HTMLElement): CharSelect {
-  const el = document.createElement('div');
-  el.className = 'panel char-select';
-  el.style.cssText = 'display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,0.85);color:#fff;font-size:14px;overflow-y:auto';
-  container.appendChild(el);
+  const root = document.createElement('div');
+  root.id = 'char-select-root';
+  root.style.cssText = 'display:none;position:fixed;inset:0;background:#0a0a1a;color:#e0d8c8;font-family:monospace;z-index:100;flex-direction:column;';
+  container.appendChild(root);
 
   let characters: CharacterInfo[] = [];
   let opts: { onSelect: (id: number) => void; onCreate: (name: string, classId: number, head: number) => void; onLogout: () => void } | null = null;
-  let wizardStep = 0;
-  let selectedRace: 'tempscron' | 'moryon' | null = null;
-  let selectedJobId = 0;
+
+  // creation mode state
+  let selectedJobId: number | null = null;
+  let hoveredJobId: number | null = null;
   let selectedFace = 0;
+  let currentPreviewJobId: number | null = null;
+  let currentPreviewFace = -1;
+
+  // 3D
   let canvas: HTMLCanvasElement | null = null;
   let renderer: THREE.WebGLRenderer | null = null;
   let scene: THREE.Scene | null = null;
   let camera: THREE.PerspectiveCamera | null = null;
+  let controls: ReturnType<typeof createCameraControls> | null = null;
+  let sceneGroup: THREE.Group | null = null;
+  let skeletonGroup: THREE.Group | null = null;
   let charResult: CharLoadResult | null = null;
+  let animState: AnimStateMachine | null = null;
+  let animFrameId = 0;
   let animFrame = 0;
-  let currentFrameStep = 80;
-  let animSmb: CharLoadResult['animSmb'] | null = null;
-  let skeleton: THREE.Skeleton | null = null;
-  let bones: THREE.Bone[] = [];
-  let bipInxMotions: MotionInfo[] = [];
-  let stateMachine: ReturnType<typeof createAnimStateMachine> | null = null;
-  let rafId = 0;
-  let loading = false;
-  const tmpMat4 = new THREE.Matrix4();
+  const tmp = new THREE.Matrix4();
   const posV = new THREE.Vector3();
   const quatQ = new THREE.Quaternion();
   const sclV = new THREE.Vector3();
 
-  function ensure3D() {
-    if (canvas) return;
-    canvas = document.createElement('canvas');
-    canvas.style.cssText = 'width:300px;height:400px;background:#111;border-radius:4px';
-    canvas.width = 300;
-    canvas.height = 400;
-    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(300, 400);
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x222233);
-    camera = new THREE.PerspectiveCamera(50, 300 / 400, 0.1, 10000);
-    camera.position.set(0, 150, 400);
-    const ambientLight = new THREE.AmbientLight(0x666688, 1.2);
-    scene.add(ambientLight);
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(100, 200, 100);
-    scene.add(dirLight);
-  }
+  // BGM
+  let bgm: HTMLAudioElement | null = null;
 
-  function animatePreview() {
-    rafId = requestAnimationFrame(animatePreview);
-    if (!renderer || !scene || !camera || !skeleton || bones.length === 0 || !animSmb) return;
-    animFrame += currentFrameStep;
-    const motion = stateMachine?.getCurrentMotion();
-    if (motion) {
-      if (animFrame >= motion.endFrame * 160) {
-        if (motion.repeat) {
-          const len = (motion.endFrame - motion.startFrame) * 160;
-          animFrame = motion.startFrame * 160 + ((animFrame - motion.startFrame * 160) % len);
-        } else {
-          stateMachine?.onAnimationEnd();
-          const next = stateMachine?.getCurrentMotion();
-          if (next) animFrame = next.startFrame * 160;
-        }
-      }
-    }
-    const skelFrames = evalSkeleton(animSmb, animFrame, false);
-    applyToBones(bones, skelFrames, tmpMat4, posV, quatQ, sclV);
-    skeleton.update();
-    renderer.render(scene, camera);
-  }
-
-  async function loadPreview(jobId: number, faceNum: number) {
-    if (loading) return;
-    loading = true;
-    if (scene && charResult) {
-      scene.remove(charResult.bodyGroup);
-      scene.remove(charResult.headGroup);
-    }
-    try {
-      const result = await loadCharacterModel(jobId, faceNum);
-      charResult = result;
-      scene!.add(result.bodyGroup);
-      scene!.add(result.headGroup);
-      skeleton = result.skeleton;
-      bones = result.bones;
-      animSmb = result.animSmb;
-      bipInxMotions = result.bipInxInfo.motions;
-      stateMachine = createAnimStateMachine({
-        getMotions: () => bipInxMotions,
-        getClassId: () => jobId,
-        onMotionChange: (m: MotionInfo) => { animFrame = m.startFrame * 160; },
-      });
-      stateMachine.triggerIdle();
-      animFrame = 0;
-      if (!rafId) animatePreview();
-    } catch (e) {
-      console.warn('CharSelect: loadPreview failed', e);
-    }
-    loading = false;
-  }
+  // --- list mode ---
+  const listEl = document.createElement('div');
+  listEl.style.cssText = 'display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;background:rgba(0,0,0,0.85);color:#fff;font-size:14px;';
 
   function renderList() {
-    el.innerHTML = '';
-    el.style.display = 'flex';
+    listEl.innerHTML = '';
+    listEl.style.display = 'flex';
     const title = document.createElement('h2');
     title.textContent = t('gui.charSel.title');
-    el.appendChild(title);
+    listEl.appendChild(title);
 
     const cardList = document.createElement('div');
     cardList.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px';
@@ -143,159 +95,440 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       card.onclick = () => opts?.onSelect(c.characterId);
       cardList.appendChild(card);
     }
-    el.appendChild(cardList);
+    listEl.appendChild(cardList);
 
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;gap:12px;margin-top:12px';
     const createBtn = document.createElement('button');
     createBtn.textContent = t('gui.charSel.create');
     createBtn.style.cssText = 'padding:8px 20px;font-size:14px;cursor:pointer';
-    createBtn.onclick = () => { wizardStep = 0; selectedRace = null; selectedJobId = 0; selectedFace = 0; renderWizard(); };
+    createBtn.onclick = () => enterCreateMode();
     btnRow.appendChild(createBtn);
     const logoutBtn = document.createElement('button');
     logoutBtn.textContent = t('gui.charSel.logout');
     logoutBtn.style.cssText = 'padding:8px 20px;font-size:14px;cursor:pointer';
     logoutBtn.onclick = () => opts?.onLogout();
     btnRow.appendChild(logoutBtn);
-    el.appendChild(btnRow);
-  }
-
-  function renderWizard() {
-    el.innerHTML = '';
-    el.style.display = 'flex';
-    ensure3D();
-    if (wizardStep < 3 && canvas) canvas.remove();
-
-    if (wizardStep === 0) renderStepRace();
-    else if (wizardStep === 1) renderStepJob();
-    else if (wizardStep === 2) renderStepFace();
-    else renderStepName();
-  }
-
-  function renderStepRace() {
-    const title = document.createElement('h2');
-    title.textContent = t('gui.charCreate.race');
-    el.appendChild(title);
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;gap:12px';
-    for (const race of ['tempscron', 'moryon'] as const) {
-      const btn = document.createElement('button');
-      btn.textContent = t('race.' + race);
-      btn.style.cssText = 'padding:12px 24px;font-size:16px;cursor:pointer';
-      btn.onclick = () => { selectedRace = race; wizardStep = 1; renderWizard(); };
-      btnRow.appendChild(btn);
-    }
-    el.appendChild(btnRow);
-    addBackBtn();
-  }
-
-  function renderStepJob() {
-    const title = document.createElement('h2');
-    title.textContent = t('gui.charCreate.job');
-    el.appendChild(title);
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:500px';
-    const jobIds = selectedRace === 'tempscron' ? JOBS_TEMPCRON : JOBS_MORYON;
-    const jobNames = selectedRace === 'tempscron' ? JOB_NAMES_TEMPCRON : JOB_NAMES_MORYON;
-    for (let i = 0; i < jobIds.length; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = t('job.' + jobNames[i]);
-      btn.style.cssText = 'padding:10px 20px;font-size:14px;cursor:pointer;min-width:100px';
-      btn.onclick = () => { selectedJobId = jobIds[i]; wizardStep = 2; renderWizard(); };
-      btnRow.appendChild(btn);
-    }
-    el.appendChild(btnRow);
-    addBackBtn();
-  }
-
-  function renderStepFace() {
-    const title = document.createElement('h2');
-    title.textContent = t('gui.charCreate.face');
-    el.appendChild(title);
-    const content = document.createElement('div');
-    content.style.cssText = 'display:flex;gap:12px;align-items:flex-start';
-    const faceCol = document.createElement('div');
-    faceCol.style.cssText = 'display:flex;flex-direction:column;gap:8px';
-    for (let i = 0; i < 3; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = `${t('gui.charCreate.face')} ${i + 1}`;
-      btn.style.cssText = 'padding:8px 16px;font-size:14px;cursor:pointer';
-      if (i === selectedFace) btn.style.background = '#444';
-      btn.onclick = () => { selectedFace = i; if (canvas) content.appendChild(canvas); loadPreview(selectedJobId, i); renderWizard(); };
-      faceCol.appendChild(btn);
-    }
-    content.appendChild(faceCol);
-    if (canvas) {
-      content.appendChild(canvas);
-      loadPreview(selectedJobId, selectedFace);
-    }
-    el.appendChild(content);
-    addBackBtn(() => { if (canvas) canvas.remove(); });
-  }
-
-  function renderStepName() {
-    if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
-    if (canvas) canvas.remove();
-    const title = document.createElement('h2');
-    title.textContent = t('gui.charCreate.name');
-    el.appendChild(title);
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.maxLength = 8;
-    input.placeholder = '角色名 (≤8字符)';
-    input.style.cssText = 'padding:6px 12px;width:240px;font-size:14px';
-    el.appendChild(input);
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;gap:12px;margin-top:8px';
-    const confirmBtn = document.createElement('button');
-    confirmBtn.textContent = t('gui.charCreate.create');
-    confirmBtn.style.cssText = 'padding:8px 24px;font-size:14px;cursor:pointer';
-    confirmBtn.onclick = () => {
-      const name = input.value.trim();
-      if (!name || name.length === 0) return;
-      if (!/^[a-zA-Z0-9_]+$/.test(name)) return;
-      opts?.onCreate(name, selectedJobId, selectedFace);
-    };
-    btnRow.appendChild(confirmBtn);
-    el.appendChild(btnRow);
-    addBackBtn();
-    input.focus();
-  }
-
-  function addBackBtn(onExtra?: () => void) {
-    const btn = document.createElement('button');
-    btn.textContent = t('gui.charCreate.back');
-    btn.style.cssText = 'padding:6px 16px;font-size:13px;cursor:pointer;margin-top:8px';
-    btn.onclick = () => { onExtra?.(); wizardStep--; renderWizard(); };
-    el.appendChild(btn);
+    listEl.appendChild(btnRow);
   }
 
   function jobKeyById(id: number): string {
-    const allTempscron = [...JOBS_TEMPCRON];
-    const allMoryon = [...JOBS_MORYON];
-    const idxT = allTempscron.indexOf(id as any);
-    if (idxT >= 0) return JOB_NAMES_TEMPCRON[idxT];
-    const idxM = allMoryon.indexOf(id as any);
-    if (idxM >= 0) return JOB_NAMES_MORYON[idxM];
-    return 'fighter';
+    const j = JOBS.find(j => j.id === id);
+    return j ? j.nameKey.split('.')[1] : 'fighter';
   }
+
+  // --- create mode ---
+  const createEl = document.createElement('div');
+  createEl.style.cssText = 'display:none;flex:1;flex-direction:column;overflow:hidden;';
+
+  // DOM refs
+  let jobNameEl: HTMLDivElement;
+  let jobDescEl: HTMLDivElement;
+  let jobAttrEl: HTMLDivElement;
+  let jobGrid: HTMLDivElement;
+  let faceEls: HTMLDivElement[] = [];
+  let nameInput: HTMLInputElement;
+  let nameError: HTMLDivElement;
+  let createBtn: HTMLButtonElement;
+  let centerPanel: HTMLDivElement;
+  const jobEls = new Map<number, HTMLDivElement>();
+
+  function buildCreateUI() {
+    createEl.innerHTML = '';
+
+    const layout = document.createElement('div');
+    layout.style.cssText = 'display:flex;flex:1;overflow:hidden;';
+
+    // left panel
+    const leftPanel = document.createElement('div');
+    leftPanel.style.cssText = 'width:220px;padding:20px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;';
+    jobNameEl = document.createElement('div');
+    jobNameEl.style.cssText = 'font-size:24px;margin-bottom:12px;';
+    jobDescEl = document.createElement('div');
+    jobDescEl.style.cssText = 'font-size:13px;line-height:1.6;opacity:0.8;';
+    jobAttrEl = document.createElement('div');
+    jobAttrEl.style.cssText = 'font-size:13px;margin-top:12px;opacity:0.7;';
+    leftPanel.append(jobNameEl, jobDescEl, jobAttrEl);
+    clearJobInfo();
+
+    // center panel
+    centerPanel = document.createElement('div');
+    centerPanel.style.cssText = 'flex:1;position:relative;';
+
+    // right panel
+    const rightPanel = document.createElement('div');
+    rightPanel.style.cssText = 'width:240px;padding:20px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px;overflow-y:auto;';
+
+    // job section
+    const jobSection = document.createElement('div');
+    const jobTitle = document.createElement('div');
+    jobTitle.textContent = t('gui.charCreate.job');
+    jobTitle.style.cssText = 'font-size:14px;margin-bottom:8px;opacity:0.6;';
+    jobGrid = document.createElement('div');
+    jobGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;';
+    jobSection.append(jobTitle, jobGrid);
+    buildJobGrid();
+
+    // face section
+    const faceSection = document.createElement('div');
+    const faceTitle = document.createElement('div');
+    faceTitle.textContent = t('gui.charCreate.face');
+    faceTitle.style.cssText = 'font-size:14px;margin-bottom:8px;opacity:0.6;';
+    const faceRow = document.createElement('div');
+    faceRow.style.cssText = 'display:flex;gap:8px;';
+    faceSection.append(faceTitle, faceRow);
+    faceEls = [];
+    for (let f = 0; f < 3; f++) {
+      const el = document.createElement('div');
+      el.textContent = String(f + 1);
+      el.style.cssText = `width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:2px solid #555;border-radius:4px;cursor:pointer;font-size:14px;`;
+      el.addEventListener('click', () => selectFace(f));
+      faceRow.appendChild(el);
+      faceEls.push(el);
+    }
+    updateFaceHighlight();
+
+    // name section
+    const nameSection = document.createElement('div');
+    const nameLabel = document.createElement('div');
+    nameLabel.textContent = t('gui.charCreate.name');
+    nameLabel.style.cssText = 'font-size:14px;margin-bottom:8px;opacity:0.6;';
+    nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.maxLength = 12;
+    nameInput.placeholder = '角色名 (2-12字)';
+    nameInput.style.cssText = 'width:100%;padding:8px;background:#1a1a2e;border:1px solid #555;color:#e0d8c8;font-size:14px;box-sizing:border-box;';
+    nameError = document.createElement('div');
+    nameError.style.cssText = 'color:#e44;font-size:12px;margin-top:4px;min-height:16px;';
+    nameInput.addEventListener('input', validateName);
+    nameSection.append(nameLabel, nameInput, nameError);
+
+    // buttons
+    const btnSection = document.createElement('div');
+    btnSection.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+    createBtn = document.createElement('button');
+    createBtn.textContent = t('gui.charCreate.create');
+    createBtn.disabled = true;
+    createBtn.style.cssText = 'padding:10px;background:#4a7c59;color:#e0d8c8;border:none;cursor:pointer;font-size:14px;';
+    createBtn.addEventListener('click', doCreate);
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = t('gui.charCreate.back');
+    cancelBtn.style.cssText = 'padding:10px;background:transparent;color:#e0d8c8;border:1px solid #555;cursor:pointer;font-size:14px;';
+    cancelBtn.addEventListener('click', exitCreateMode);
+    btnSection.append(createBtn, cancelBtn);
+
+    rightPanel.append(jobSection, faceSection, nameSection, btnSection);
+    layout.append(leftPanel, centerPanel, rightPanel);
+    createEl.appendChild(layout);
+  }
+
+  buildCreateUI();
+
+  function buildJobGrid() {
+    jobGrid.innerHTML = '';
+    jobEls.clear();
+    const tempscron = JOBS.filter(j => j.side === 'tempscron');
+    const moryon = JOBS.filter(j => j.side === 'moryon');
+    for (let i = 0; i < Math.max(tempscron.length, moryon.length); i++) {
+      if (tempscron[i]) {
+        const el = createJobEl(tempscron[i], 'right');
+        jobGrid.appendChild(el);
+        jobEls.set(tempscron[i].id, el);
+      } else {
+        jobGrid.appendChild(document.createElement('div'));
+      }
+      if (moryon[i]) {
+        const el = createJobEl(moryon[i], 'left');
+        jobGrid.appendChild(el);
+        jobEls.set(moryon[i].id, el);
+      } else {
+        jobGrid.appendChild(document.createElement('div'));
+      }
+    }
+  }
+
+  function createJobEl(job: JobInfo, align: 'left' | 'right'): HTMLDivElement {
+    const el = document.createElement('div');
+    el.textContent = t(job.nameKey);
+    el.style.cssText = `padding:6px 8px;cursor:pointer;font-size:14px;text-align:${align};border-radius:3px;transition:background 0.15s,color 0.15s;`;
+    el.addEventListener('mouseenter', () => {
+      hoveredJobId = job.id;
+      updateJobHighlight();
+      loadPreview(job.id, 0);
+      updateJobInfo(job);
+    });
+    el.addEventListener('mouseleave', () => {
+      hoveredJobId = null;
+      updateJobHighlight();
+      if (selectedJobId !== null) {
+        const sel = JOBS.find(j => j.id === selectedJobId);
+        if (sel) {
+          loadPreview(selectedJobId, selectedFace);
+          updateJobInfo(sel);
+        }
+      } else {
+        clearPreview();
+        clearJobInfo();
+      }
+    });
+    el.addEventListener('click', () => selectJob(job.id));
+    return el;
+  }
+
+  function selectJob(jobId: number) {
+    selectedJobId = jobId;
+    const job = JOBS.find(j => j.id === jobId);
+    if (job) {
+      loadPreview(jobId, selectedFace);
+      updateJobInfo(job);
+    }
+    updateJobHighlight();
+    validateName();
+  }
+
+  function selectFace(face: number) {
+    selectedFace = face;
+    updateFaceHighlight();
+    if (currentPreviewJobId !== null) {
+      loadPreview(currentPreviewJobId, face);
+    }
+  }
+
+  function updateFaceHighlight() {
+    faceEls.forEach((el, i) => {
+      el.style.borderColor = i === selectedFace ? '#f0c040' : '#555';
+      el.style.color = i === selectedFace ? '#f0c040' : '#e0d8c8';
+    });
+  }
+
+  function updateJobHighlight() {
+    for (const [id, el] of jobEls) {
+      const isHovered = id === hoveredJobId;
+      const isSelected = id === selectedJobId;
+      if (isSelected || isHovered) {
+        el.style.background = isSelected ? '#3a5a3a' : '#2a3a2a';
+        el.style.color = '#f0c040';
+      } else {
+        el.style.background = 'transparent';
+        el.style.color = '#e0d8c8';
+      }
+    }
+  }
+
+  function updateJobInfo(job: JobInfo) {
+    jobNameEl.textContent = t(job.nameKey);
+    jobDescEl.textContent = '';
+    jobAttrEl.textContent = '';
+  }
+
+  function clearJobInfo() {
+    jobNameEl.textContent = '';
+    jobDescEl.textContent = t('gui.charCreate.job');
+    jobAttrEl.textContent = '';
+  }
+
+  // --- 3D ---
+  function ensure3D() {
+    if (canvas) return;
+    canvas = document.createElement('canvas');
+    canvas.style.cssText = 'width:100%;height:100%;';
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setClearColor(0x1a1a2e);
+    scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x1a1a2e, 20, 60);
+    camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    controls = createCameraControls(camera, canvas);
+    skeletonGroup = new THREE.Group();
+    scene.add(skeletonGroup);
+    const amb = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(amb);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+    dir.position.set(5, 10, 5);
+    scene.add(dir);
+  }
+
+  async function loadSceneAsync() {
+    try {
+      sceneGroup = await loadScene('/res/game/maps/chrselect/select.smd', '/res/game/maps/chrselect');
+      scene!.add(sceneGroup);
+    } catch (err) {
+      console.warn('CharSelect: failed to load chrselect scene', err);
+    }
+  }
+
+  async function loadPreview(jobId: number, face: number) {
+    if (currentPreviewJobId === jobId && currentPreviewFace === face) return;
+    currentPreviewJobId = jobId;
+    currentPreviewFace = face;
+    clearCharModel();
+    try {
+      charResult = await loadCharacterModel(jobId, face);
+      skeletonGroup!.add(charResult.skeletonGroup);
+      animState = createAnimStateMachine({
+        getMotions: () => charResult!.bipInxInfo.motions,
+        getClassId: () => jobId,
+        onMotionChange: () => {},
+      });
+      animState.triggerIdle();
+      animFrame = 0;
+    } catch (err) {
+      console.warn('CharSelect: loadPreview failed', err);
+      currentPreviewJobId = null;
+      currentPreviewFace = -1;
+    }
+  }
+
+  function clearCharModel() {
+    if (charResult && skeletonGroup) {
+      skeletonGroup.remove(charResult.skeletonGroup);
+      charResult = null;
+      animState = null;
+    }
+  }
+
+  function clearPreview() {
+    clearCharModel();
+    currentPreviewJobId = null;
+    currentPreviewFace = -1;
+  }
+
+  function startRenderLoop() {
+    if (animFrameId) return;
+    function loop() {
+      animFrameId = requestAnimationFrame(loop);
+      if (!renderer || !scene || !camera || !centerPanel) return;
+
+      if (charResult && animState) {
+        const motion = animState.getCurrentMotion();
+        if (motion) {
+          animFrame += 80;
+          const endFrame = motion.endFrame * 160;
+          const startFrame = motion.startFrame * 160;
+          if (animFrame >= endFrame) {
+            if (motion.repeat) {
+              const len = endFrame - startFrame;
+              animFrame = startFrame + ((animFrame - startFrame) % len);
+            } else {
+              animState.onAnimationEnd();
+              const next = animState.getCurrentMotion();
+              if (next) animFrame = next.startFrame * 160;
+            }
+          }
+          const skelFrames = evalSkeleton(charResult.animSmb, animFrame, false);
+          applyToBones(charResult.bones, skelFrames, tmp, posV, quatQ, sclV);
+        }
+      }
+
+      const rect = centerPanel.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) {
+        camera.aspect = rect.width / rect.height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(rect.width, rect.height, false);
+      }
+      renderer.render(scene, camera);
+    }
+    loop();
+  }
+
+  function stopRenderLoop() {
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = 0;
+    }
+  }
+
+  // --- BGM ---
+  function startBgm() {
+    try {
+      bgm = new Audio('/res/game/sounds/music/characterselect.wav');
+      bgm.loop = true;
+      bgm.volume = 0.3;
+      bgm.play().catch(() => {});
+    } catch {}
+  }
+
+  function stopBgm() {
+    if (bgm) { bgm.pause(); bgm = null; }
+  }
+
+  // --- mode switching ---
+  function enterCreateMode() {
+    listEl.style.display = 'none';
+    createEl.style.display = 'flex';
+    ensure3D();
+    centerPanel.appendChild(canvas!);
+    loadSceneAsync();
+    startBgm();
+    startRenderLoop();
+    // select first job by default
+    selectJob(1);
+  }
+
+  function exitCreateMode() {
+    stopRenderLoop();
+    stopBgm();
+    clearPreview();
+    if (sceneGroup && scene) { scene.remove(sceneGroup); sceneGroup = null; }
+    if (canvas) canvas.remove();
+    createEl.style.display = 'none';
+    listEl.style.display = 'flex';
+  }
+
+  // --- name validation ---
+  function validateName() {
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameError.textContent = '';
+      createBtn.disabled = true;
+    } else if (!NAME_REGEX.test(name)) {
+      nameError.textContent = '名字只能包含中英文和数字，2-12个字符';
+      createBtn.disabled = true;
+    } else {
+      nameError.textContent = '';
+      createBtn.disabled = selectedJobId === null;
+    }
+  }
+
+  function doCreate() {
+    const name = nameInput.value.trim();
+    if (!name || selectedJobId === null) return;
+    createBtn.disabled = true;
+    createBtn.textContent = '创建中...';
+    try {
+      opts?.onCreate(name, selectedJobId, selectedFace);
+    } catch (err) {
+      console.error('Create character failed:', err);
+      nameError.textContent = '创建失败，请重试';
+      createBtn.disabled = false;
+      createBtn.textContent = t('gui.charCreate.create');
+    }
+  }
+
+  root.append(listEl, createEl);
 
   return {
     show(chars, o) {
       characters = chars;
       opts = o;
       renderList();
+      root.style.display = 'flex';
     },
     hide() {
-      el.style.display = 'none';
-      if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+      root.style.display = 'none';
+      stopRenderLoop();
+      stopBgm();
+      clearPreview();
       if (canvas) canvas.remove();
+      if (sceneGroup && scene) { scene.remove(sceneGroup); sceneGroup = null; }
     },
     destroy() {
-      if (rafId) cancelAnimationFrame(rafId);
+      stopRenderLoop();
+      stopBgm();
       if (renderer) renderer.dispose();
       if (canvas) canvas.remove();
-      el.remove();
+      if (controls) controls.dispose();
+      root.remove();
     },
   };
 }
