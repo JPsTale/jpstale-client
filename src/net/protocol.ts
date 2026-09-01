@@ -6,9 +6,9 @@ export function loginRequest(username: string, password: string): jpt.base.Clien
     });
 }
 
-export function createCharacter(name: string, classId: number): jpt.base.ClientMessage.$Properties {
+export function createCharacter(name: string, classId: number, head = 0): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        createCharacter: { name, classId },
+        createCharacter: { name, classId, head },
     });
 }
 

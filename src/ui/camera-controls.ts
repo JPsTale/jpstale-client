@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 export interface CameraControls {
   update(): void;
+  setTarget(t: THREE.Vector3): void;
   dispose(): void;
 }
 
@@ -9,22 +10,23 @@ export function createCameraControls(
   camera: THREE.PerspectiveCamera,
   domElement: HTMLElement,
 ): CameraControls {
-  let theta = 0; // 水平角度
-  let distance = 5; // 摄像机到原点距离
-  const minDist = 2;
-  const maxDist = 15;
-  const height = 4; // 固定高度（俯视）
+  let theta = 0;
+  let distance = 80;
+  const minDist = 20;
+  const maxDist = 200;
+  const minHeight = 10;
+  let height = 40;
+  let target = new THREE.Vector3(0, 0, 0);
   let isDragging = false;
   let lastX = 0;
 
-  // 俯视：摄像机在 (0, height, distance)，看向 (0, 0, 0)
   function updateCamera() {
     camera.position.set(
-      Math.sin(theta) * distance,
-      height,
-      Math.cos(theta) * distance,
+      Math.sin(theta) * distance + target.x,
+      height + target.y,
+      Math.cos(theta) * distance + target.z,
     );
-    camera.lookAt(0, 0, 0);
+    camera.lookAt(target);
   }
 
   function onPointerDown(e: PointerEvent) {
@@ -49,6 +51,7 @@ export function createCameraControls(
     e.preventDefault();
     distance += e.deltaY * 0.01;
     distance = Math.max(minDist, Math.min(maxDist, distance));
+    height = Math.max(minHeight, height + e.deltaY * 0.005);
     updateCamera();
   }
 
@@ -61,6 +64,10 @@ export function createCameraControls(
 
   return {
     update() {},
+    setTarget(t: THREE.Vector3) {
+      target.copy(t);
+      updateCamera();
+    },
     dispose() {
       domElement.removeEventListener('pointerdown', onPointerDown);
       domElement.removeEventListener('pointermove', onPointerMove);

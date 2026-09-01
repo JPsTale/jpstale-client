@@ -13,7 +13,7 @@
  */
 
 import type { MotionInfo } from './char-format.js';
-import { findMotions, pickMotion } from './anim-match.js';
+import { findMotions, findMotionsByType, pickMotion } from './anim-match.js';
 
 export const STATE: Record<string, number> = {
   STAND: 0x0040,
@@ -33,6 +33,12 @@ export const STATE: Record<string, number> = {
 export interface AnimStateMachineOpts {
   getMotions: () => MotionInfo[];
   getClassId: () => number;
+  /** 当前武器 idcode（null/0=空手） */
+  getWeaponIdCode?: () => number | null;
+  /** 当前武器类型（'AXE'|'BOW'|...），精确匹配无结果时回退类型匹配 */
+  getWeaponType?: () => string | null;
+  /** 武器姿态变化：'combat'=武器有匹配动画（手持）；'sheathed'=回退空手动画（应收起） */
+  onStanceChange?: (stance: 'combat' | 'sheathed') => void;
   onMotionChange: (motion: MotionInfo) => void;
   log?: (msg: string) => void;
 }
@@ -49,19 +55,47 @@ export interface AnimStateMachine {
   onAnimationEnd: () => MotionInfo | null;
   getCurrentState: () => number;
   getCurrentMotion: () => MotionInfo | null;
+  playMotion: (motion: MotionInfo | null) => boolean;
 }
 
 export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMachine {
-  const { getMotions, getClassId, onMotionChange, log: logFn } = opts;
-  const log2 = logFn || (() => {});
+  const { getMotions, getClassId, getWeaponIdCode, getWeaponType, onStanceChange, onMotionChange, log: logFn } = opts;
+  const log2 = logFn || ((msg: string) => console.log(msg));
 
   let currentState = STATE.STAND;
   let currentMotion: MotionInfo | null = null;
+  let currentStance: 'combat' | 'sheathed' | null = null;
+
+  function setStance(stance: 'combat' | 'sheathed') {
+    if (currentStance !== stance) {
+      currentStance = stance;
+      if (onStanceChange) onStanceChange(stance);
+    }
+  }
 
   function findMotionForState(state: number, excludeCurrent: boolean): MotionInfo | null {
     const motions = getMotions();
     const classId = getClassId();
-    let candidates = findMotions(motions, state, classId);
+    const weaponId = getWeaponIdCode ? getWeaponIdCode() : null;
+    let candidates = findMotions(motions, state, weaponId, classId);
+    let weaponMatched = candidates.length > 0;
+    // 精确匹配无结果时，回退到类型匹配（对齐 pviewer：新武器无精确索引）
+    if (!candidates.length && getWeaponType) {
+      const weaponType = getWeaponType();
+      if (weaponType) {
+        candidates = findMotionsByType(motions, state, weaponType, classId);
+        if (candidates.length > 0) weaponMatched = true;
+      }
+    }
+    // 武器类型仍无匹配（如职业拿非本职业武器）时回退空手动画，保证角色有动作
+    if (!candidates.length && weaponId != null && weaponId !== 0) {
+      candidates = findMotions(motions, state, null, classId);
+    }
+    // 有武器且未命中武器动画 → 空手姿态，武器应收起；否则战斗姿态
+    if (weaponId != null && weaponId !== 0) {
+      setStance(weaponMatched ? 'combat' : 'sheathed');
+    }
+    log2(`[anim] state=0x${state.toString(16)} weapon=${weaponId} type=${getWeaponType ? getWeaponType() : '?'} candidates=${candidates.length} motions=${motions.length} (state-match=${motions.filter(m => m.state === state).length})`);
     if (excludeCurrent && currentMotion && candidates.length > 1) {
       candidates = candidates.filter(m => m !== currentMotion);
     }
@@ -144,6 +178,15 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
   function getCurrentState(): number { return currentState; }
   function getCurrentMotion(): MotionInfo | null { return currentMotion; }
 
+  // 直接播放指定动画（调试用），不经过状态机随机选择
+  function playMotion(motion: MotionInfo | null): boolean {
+    if (!motion) return false;
+    currentMotion = motion;
+    currentState = motion.state;
+    onMotionChange(motion);
+    return true;
+  }
+
   return {
     STATE,
     triggerAttack,
@@ -156,5 +199,6 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     onAnimationEnd,
     getCurrentState,
     getCurrentMotion,
+    playMotion,
   };
 }

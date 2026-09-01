@@ -8,7 +8,7 @@ import { loadCharacterModel, JOB_DATA } from '../render/char-loader.js';
 import { evalSkeleton, applyToBones } from './animation.js';
 import { createAnimStateMachine } from './anim-state-machine.js';
 import { motionStateName } from './char-format.js';
-import { decodeTexture } from '../core/texture.js';
+import { decodeTextureAsync } from '../core/texture.js';
 import type { MotionInfo } from './char-format.js';
 
 const app = document.getElementById('app') as HTMLElement;
@@ -61,7 +61,7 @@ async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | n
     const resp = await fetch(url, { cache: 'no-store' });
     if (!resp.ok) return null;
     const buf = await resp.arrayBuffer();
-    const decoded = decodeTexture(buf);
+    const decoded = await decodeTextureAsync(buf);
     if (!decoded) return null;
     const tex = new THREE.DataTexture(new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat);
     tex.flipY = true;

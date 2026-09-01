@@ -12,10 +12,15 @@ function assetUrl(raw: string): string {
  * 加载 SMD 场景文件（如 chrselect/select.smd）为 Three.js Group。
  * 复用 smd-parser 的顶点/面/UV/材质解析，按材质分组构建网格。
  */
+export interface SceneLoadResult {
+  group: THREE.Group;
+  bounds: { center: THREE.Vector3; size: THREE.Vector3 };
+}
+
 export async function loadScene(
   scenePath: string,
-  _resPrefix: string, // ponytail: unused — texture paths come from SMD material data. Kept for interface compat with CharSelect.
-): Promise<THREE.Group> {
+  _resPrefix: string,
+): Promise<SceneLoadResult> {
   const group = new THREE.Group();
   const r = await fetch(scenePath);
   if (!r.ok) throw new Error('HTTP ' + r.status + ' — ' + scenePath);
@@ -112,5 +117,13 @@ export async function loadScene(
     group.add(mesh);
   }
 
-  return group;
+  // Compute bounds
+  const box = new THREE.Box3().setFromObject(group);
+  const center = new THREE.Vector3();
+  const size = new THREE.Vector3();
+  box.getCenter(center);
+  box.getSize(size);
+  console.log('[scene-loader] bounds:', { center: center.toArray(), size: size.toArray(), nFace: smd.nFace, nVertex: smd.nVertex });
+
+  return { group, bounds: { center, size } };
 }

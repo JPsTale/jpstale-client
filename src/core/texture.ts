@@ -21,6 +21,33 @@ export function decodeTexture(arrayBuffer: ArrayBuffer): DecodedTexture | null {
   return decodeTGA(data);
 }
 
+/** 判断是否为未加密 PNG（PNG 魔数 89 50 4E 47） */
+export function isPng(arrayBuffer: ArrayBuffer): boolean {
+  const data = new Uint8Array(arrayBuffer, 0, 4);
+  return data.length === 4 && data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4e && data[3] === 0x47;
+}
+
+/**
+ * 浏览器端纹理解码：PT 加密 TGA/BMP 走 decodeTexture；未加密 PNG 走 createImageBitmap。
+ * 有些 PT 贴图实际是未加密 PNG（如 tmhc03.bmp），直接当 BMP/TGA 解码会损坏，需原样浏览器解码。
+ */
+export async function decodeTextureAsync(arrayBuffer: ArrayBuffer): Promise<DecodedTexture | null> {
+  if (isPng(arrayBuffer)) {
+    try {
+      const bitmap = await createImageBitmap(new Blob([arrayBuffer]));
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('no 2d ctx');
+      ctx.drawImage(bitmap, 0, 0);
+      const { data } = ctx.getImageData(0, 0, bitmap.width, bitmap.height);
+      return { width: bitmap.width, height: bitmap.height, pixels: new Uint8Array(data), hasAlpha: true };
+    } catch {
+      return null;
+    }
+  }
+  return decodeTexture(arrayBuffer);
+}
+
 function decryptBMPHeader(data: Uint8Array): void {
   data[0] = 0x42;
   data[1] = 0x4d;

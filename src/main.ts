@@ -6,6 +6,7 @@ import { createServerSelect } from './ui/ServerSelect.js';
 import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
+import { preloadAllModels } from './render/model-cache.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import type { jpt } from './net/proto/base_message.js';
@@ -55,7 +56,7 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       const chars = (args[0] as CharacterInfo[]) || [];
       charSelectPanel.show(chars, {
         onSelect: (characterId) => send(selectCharacter(characterId)),
-        onCreate: (name, classId, _head) => send(createCharacter(name, classId)),
+        onCreate: (name, classId, head) => send(createCharacter(name, classId, head)),
         onLogout: () => {
           disconnect();
           clearToken();
@@ -120,6 +121,17 @@ onMessage((msg: jpt.base.ServerMessage) => {
         name: c.name || '',
         classId: c.classId || 0,
         level: c.level || 1,
+        appearance: c.appearance ? {
+          classId: c.appearance.classId || 0,
+          head: c.appearance.head || 0,
+          rank: c.appearance.rank || 0,
+          bodyModel: c.appearance.bodyModel || undefined,
+          bodyModelIdcode: c.appearance.bodyModelIdcode || 0,
+          weaponDorp: c.appearance.weaponDorp || undefined,
+          weaponIdcode: c.appearance.weaponIdcode || 0,
+          weaponPos: c.appearance.weaponPos || 0,
+          sizeLevel: c.appearance.sizeLevel || 0,
+        } : undefined,
       }));
       if (getScreen() === AppScreen.SERVER_SELECT) {
         go(AppScreen.CHAR_SELECT, chars);
@@ -168,6 +180,17 @@ onJsonMessage((type, data) => {
         name: c.name ?? '',
         classId: c.classId ?? c.class_id ?? 0,
         level: c.level ?? 1,
+        appearance: c.appearance ? {
+          classId: c.appearance.classId ?? 0,
+          head: c.appearance.head ?? 0,
+          rank: c.appearance.rank ?? 0,
+          bodyModel: c.appearance.bodyModel ?? undefined,
+          bodyModelIdcode: c.appearance.bodyModelIdcode ?? 0,
+          weaponDorp: c.appearance.weaponDorp ?? undefined,
+          weaponIdcode: c.appearance.weaponIdcode ?? 0,
+          weaponPos: c.appearance.weaponPos ?? 0,
+          sizeLevel: c.appearance.sizeLevel ?? 0,
+        } : undefined,
       }));
       if (getScreen() === AppScreen.SERVER_SELECT) {
         go(AppScreen.CHAR_SELECT, chars);
@@ -180,5 +203,8 @@ onJsonMessage((type, data) => {
       console.log('[app] unhandled json:', type, data);
   }
 });
+
+// 启动即后台预加载全部职业模型/骨骼/动画，用户在创建/选择角色时无需等待
+preloadAllModels((loaded, total) => console.log(`[app] preloading models: ${loaded}/${total}`));
 
 go(AppScreen.LOGIN);

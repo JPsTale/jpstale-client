@@ -58,9 +58,9 @@ export function send(msg: jpt.base.ClientMessage.$Properties): void {
   ws.send(encodeClient(msg));
 }
 
-export function sendJson(type: string, data?: Record<string, unknown>): void {
+export function sendJson(type: string, payload?: Record<string, unknown>): void {
   if (ws?.readyState !== WebSocket.OPEN) { console.warn('[net] not connected'); return; }
-  ws.send(JSON.stringify({ type, data: data ?? {} }));
+  ws.send(JSON.stringify({ type, ...payload }));
 }
 
 export function onMessage(handler: ProtoHandler): () => void {

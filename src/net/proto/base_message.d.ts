@@ -816,6 +816,9 @@ export namespace jpt {
             /** C2S_CreateCharacter classId. */
             classId: number;
 
+            /** C2S_CreateCharacter head. */
+            head: number;
+
             /**
              * Creates a new C2S_CreateCharacter instance using the specified properties.
              * @param [properties] Properties to set
@@ -905,6 +908,9 @@ export namespace jpt {
 
                 /** C2S_CreateCharacter classId */
                 classId?: (number|null);
+
+                /** C2S_CreateCharacter head */
+                head?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -1542,8 +1548,8 @@ export namespace jpt {
             /** CharacterInfo mapId. */
             mapId: number;
 
-            /** CharacterInfo gold. */
-            gold: (number|Long);
+            /** CharacterInfo appearance. */
+            appearance?: (jpt.base.CharacterAppearance.$Properties|null);
 
             /**
              * Creates a new CharacterInfo instance using the specified properties.
@@ -1647,8 +1653,8 @@ export namespace jpt {
                 /** CharacterInfo mapId */
                 mapId?: (number|null);
 
-                /** CharacterInfo gold */
-                gold?: (number|Long|null);
+                /** CharacterInfo appearance */
+                appearance?: (jpt.base.CharacterAppearance.$Properties|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -9208,6 +9214,465 @@ export namespace jpt {
 
             /** Shape of a BuffProto. */
             type $Shape = jpt.base.BuffProto.$Properties;
+        }
+
+        /**
+         * Properties of a Rotation.
+         * @deprecated Use jpt.base.Rotation.$Properties instead.
+         */
+        interface IRotation extends jpt.base.Rotation.$Properties {
+        }
+
+        /** Represents a Rotation. */
+        class Rotation {
+
+            /**
+             * Constructs a new Rotation.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: jpt.base.Rotation.$Properties);
+
+            /** Unknown fields preserved while decoding when enabled */
+            $unknowns?: Uint8Array[];
+
+            /** Rotation x. */
+            x: number;
+
+            /** Rotation y. */
+            y: number;
+
+            /** Rotation z. */
+            z: number;
+
+            /**
+             * Creates a new Rotation instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns Rotation instance
+             */
+            static create(properties: jpt.base.Rotation.$Shape): jpt.base.Rotation & jpt.base.Rotation.$Shape;
+            static create(properties?: jpt.base.Rotation.$Properties): jpt.base.Rotation;
+
+            /**
+             * Encodes the specified Rotation message. Does not implicitly {@link jpt.base.Rotation.verify|verify} messages.
+             * @param message Rotation message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encode(message: jpt.base.Rotation.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified Rotation message, length delimited. Does not implicitly {@link jpt.base.Rotation.verify|verify} messages.
+             * @param message Rotation message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encodeDelimited(message: jpt.base.Rotation.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a Rotation message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns {jpt.base.Rotation & jpt.base.Rotation.$Shape} Rotation
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): jpt.base.Rotation & jpt.base.Rotation.$Shape;
+
+            /**
+             * Decodes a Rotation message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns {jpt.base.Rotation & jpt.base.Rotation.$Shape} Rotation
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): jpt.base.Rotation & jpt.base.Rotation.$Shape;
+
+            /**
+             * Verifies a Rotation message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a Rotation message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns Rotation
+             */
+            static fromObject(object: { [k: string]: any }): jpt.base.Rotation;
+
+            /**
+             * Creates a plain object from a Rotation message. Also converts values to other types if specified.
+             * @param message Rotation
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            static toObject(message: jpt.base.Rotation, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this Rotation to JSON.
+             * @returns JSON object
+             */
+            toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the type url for Rotation
+             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns The type url
+             */
+            static getTypeUrl(prefix?: string): string;
+        }
+
+        namespace Rotation {
+
+            /** Properties of a Rotation. */
+            interface $Properties {
+
+                /** Rotation x */
+                x?: (number|null);
+
+                /** Rotation y */
+                y?: (number|null);
+
+                /** Rotation z */
+                z?: (number|null);
+
+                /** Unknown fields preserved while decoding when enabled */
+                $unknowns?: Uint8Array[];
+            }
+
+            /** Shape of a Rotation. */
+            type $Shape = jpt.base.Rotation.$Properties;
+        }
+
+        /**
+         * Properties of a CharacterAppearance.
+         * @deprecated Use jpt.base.CharacterAppearance.$Properties instead.
+         */
+        interface ICharacterAppearance extends jpt.base.CharacterAppearance.$Properties {
+        }
+
+        /** Represents a CharacterAppearance. */
+        class CharacterAppearance {
+
+            /**
+             * Constructs a new CharacterAppearance.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: jpt.base.CharacterAppearance.$Properties);
+
+            /** Unknown fields preserved while decoding when enabled */
+            $unknowns?: Uint8Array[];
+
+            /** CharacterAppearance classId. */
+            classId: number;
+
+            /** CharacterAppearance head. */
+            head: number;
+
+            /** CharacterAppearance rank. */
+            rank: number;
+
+            /** CharacterAppearance bodyModel. */
+            bodyModel: string;
+
+            /** CharacterAppearance bodyModelIdcode. */
+            bodyModelIdcode: number;
+
+            /** CharacterAppearance weaponDorp. */
+            weaponDorp: string;
+
+            /** CharacterAppearance weaponIdcode. */
+            weaponIdcode: number;
+
+            /** CharacterAppearance weaponPos. */
+            weaponPos: number;
+
+            /** CharacterAppearance sizeLevel. */
+            sizeLevel: number;
+
+            /**
+             * Creates a new CharacterAppearance instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns CharacterAppearance instance
+             */
+            static create(properties: jpt.base.CharacterAppearance.$Shape): jpt.base.CharacterAppearance & jpt.base.CharacterAppearance.$Shape;
+            static create(properties?: jpt.base.CharacterAppearance.$Properties): jpt.base.CharacterAppearance;
+
+            /**
+             * Encodes the specified CharacterAppearance message. Does not implicitly {@link jpt.base.CharacterAppearance.verify|verify} messages.
+             * @param message CharacterAppearance message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encode(message: jpt.base.CharacterAppearance.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified CharacterAppearance message, length delimited. Does not implicitly {@link jpt.base.CharacterAppearance.verify|verify} messages.
+             * @param message CharacterAppearance message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encodeDelimited(message: jpt.base.CharacterAppearance.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a CharacterAppearance message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns {jpt.base.CharacterAppearance & jpt.base.CharacterAppearance.$Shape} CharacterAppearance
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): jpt.base.CharacterAppearance & jpt.base.CharacterAppearance.$Shape;
+
+            /**
+             * Decodes a CharacterAppearance message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns {jpt.base.CharacterAppearance & jpt.base.CharacterAppearance.$Shape} CharacterAppearance
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): jpt.base.CharacterAppearance & jpt.base.CharacterAppearance.$Shape;
+
+            /**
+             * Verifies a CharacterAppearance message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a CharacterAppearance message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns CharacterAppearance
+             */
+            static fromObject(object: { [k: string]: any }): jpt.base.CharacterAppearance;
+
+            /**
+             * Creates a plain object from a CharacterAppearance message. Also converts values to other types if specified.
+             * @param message CharacterAppearance
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            static toObject(message: jpt.base.CharacterAppearance, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this CharacterAppearance to JSON.
+             * @returns JSON object
+             */
+            toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the type url for CharacterAppearance
+             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns The type url
+             */
+            static getTypeUrl(prefix?: string): string;
+        }
+
+        namespace CharacterAppearance {
+
+            /** Properties of a CharacterAppearance. */
+            interface $Properties {
+
+                /** CharacterAppearance classId */
+                classId?: (number|null);
+
+                /** CharacterAppearance head */
+                head?: (number|null);
+
+                /** CharacterAppearance rank */
+                rank?: (number|null);
+
+                /** CharacterAppearance bodyModel */
+                bodyModel?: (string|null);
+
+                /** CharacterAppearance bodyModelIdcode */
+                bodyModelIdcode?: (number|null);
+
+                /** CharacterAppearance weaponDorp */
+                weaponDorp?: (string|null);
+
+                /** CharacterAppearance weaponIdcode */
+                weaponIdcode?: (number|null);
+
+                /** CharacterAppearance weaponPos */
+                weaponPos?: (number|null);
+
+                /** CharacterAppearance sizeLevel */
+                sizeLevel?: (number|null);
+
+                /** Unknown fields preserved while decoding when enabled */
+                $unknowns?: Uint8Array[];
+            }
+
+            /** Shape of a CharacterAppearance. */
+            type $Shape = jpt.base.CharacterAppearance.$Properties;
+        }
+
+        /**
+         * Properties of a PlayerAppearInfo.
+         * @deprecated Use jpt.base.PlayerAppearInfo.$Properties instead.
+         */
+        interface IPlayerAppearInfo extends jpt.base.PlayerAppearInfo.$Properties {
+        }
+
+        /** Represents a PlayerAppearInfo. */
+        class PlayerAppearInfo {
+
+            /**
+             * Constructs a new PlayerAppearInfo.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: jpt.base.PlayerAppearInfo.$Properties);
+
+            /** Unknown fields preserved while decoding when enabled */
+            $unknowns?: Uint8Array[];
+
+            /** PlayerAppearInfo playerId. */
+            playerId: (number|Long);
+
+            /** PlayerAppearInfo name. */
+            name: string;
+
+            /** PlayerAppearInfo level. */
+            level: number;
+
+            /** PlayerAppearInfo appearance. */
+            appearance?: (jpt.base.CharacterAppearance.$Properties|null);
+
+            /** PlayerAppearInfo position. */
+            position?: (jpt.base.Position.$Properties|null);
+
+            /** PlayerAppearInfo rotation. */
+            rotation?: (jpt.base.Rotation.$Properties|null);
+
+            /** PlayerAppearInfo state. */
+            state: number;
+
+            /** PlayerAppearInfo hp. */
+            hp: number;
+
+            /** PlayerAppearInfo maxHp. */
+            maxHp: number;
+
+            /**
+             * Creates a new PlayerAppearInfo instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns PlayerAppearInfo instance
+             */
+            static create(properties: jpt.base.PlayerAppearInfo.$Shape): jpt.base.PlayerAppearInfo & jpt.base.PlayerAppearInfo.$Shape;
+            static create(properties?: jpt.base.PlayerAppearInfo.$Properties): jpt.base.PlayerAppearInfo;
+
+            /**
+             * Encodes the specified PlayerAppearInfo message. Does not implicitly {@link jpt.base.PlayerAppearInfo.verify|verify} messages.
+             * @param message PlayerAppearInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encode(message: jpt.base.PlayerAppearInfo.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified PlayerAppearInfo message, length delimited. Does not implicitly {@link jpt.base.PlayerAppearInfo.verify|verify} messages.
+             * @param message PlayerAppearInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encodeDelimited(message: jpt.base.PlayerAppearInfo.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a PlayerAppearInfo message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns {jpt.base.PlayerAppearInfo & jpt.base.PlayerAppearInfo.$Shape} PlayerAppearInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): jpt.base.PlayerAppearInfo & jpt.base.PlayerAppearInfo.$Shape;
+
+            /**
+             * Decodes a PlayerAppearInfo message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns {jpt.base.PlayerAppearInfo & jpt.base.PlayerAppearInfo.$Shape} PlayerAppearInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): jpt.base.PlayerAppearInfo & jpt.base.PlayerAppearInfo.$Shape;
+
+            /**
+             * Verifies a PlayerAppearInfo message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a PlayerAppearInfo message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns PlayerAppearInfo
+             */
+            static fromObject(object: { [k: string]: any }): jpt.base.PlayerAppearInfo;
+
+            /**
+             * Creates a plain object from a PlayerAppearInfo message. Also converts values to other types if specified.
+             * @param message PlayerAppearInfo
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            static toObject(message: jpt.base.PlayerAppearInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this PlayerAppearInfo to JSON.
+             * @returns JSON object
+             */
+            toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the type url for PlayerAppearInfo
+             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns The type url
+             */
+            static getTypeUrl(prefix?: string): string;
+        }
+
+        namespace PlayerAppearInfo {
+
+            /** Properties of a PlayerAppearInfo. */
+            interface $Properties {
+
+                /** PlayerAppearInfo playerId */
+                playerId?: (number|Long|null);
+
+                /** PlayerAppearInfo name */
+                name?: (string|null);
+
+                /** PlayerAppearInfo level */
+                level?: (number|null);
+
+                /** PlayerAppearInfo appearance */
+                appearance?: (jpt.base.CharacterAppearance.$Properties|null);
+
+                /** PlayerAppearInfo position */
+                position?: (jpt.base.Position.$Properties|null);
+
+                /** PlayerAppearInfo rotation */
+                rotation?: (jpt.base.Rotation.$Properties|null);
+
+                /** PlayerAppearInfo state */
+                state?: (number|null);
+
+                /** PlayerAppearInfo hp */
+                hp?: (number|null);
+
+                /** PlayerAppearInfo maxHp */
+                maxHp?: (number|null);
+
+                /** Unknown fields preserved while decoding when enabled */
+                $unknowns?: Uint8Array[];
+            }
+
+            /** Shape of a PlayerAppearInfo. */
+            type $Shape = jpt.base.PlayerAppearInfo.$Properties;
         }
     }
 }

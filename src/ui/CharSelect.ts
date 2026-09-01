@@ -3,10 +3,34 @@ import { t } from '../i18n/index.js';
 import { loadCharacterModel, CharLoadResult } from '../render/char-loader.js';
 import { createAnimStateMachine, AnimStateMachine } from '../char/anim-state-machine.js';
 import { evalSkeleton, applyToBones } from '../char/animation.js';
-import { loadScene } from '../render/scene-loader.js';
+import { decodeTextureAsync } from '../core/texture.js';
 import { createCameraControls } from './camera-controls.js';
+import { CHRMOTION_EXT } from '../char/char-format.js';
+import type { MotionInfo } from '../char/char-format.js';
+import { resolveCostumeBody } from '../render/costume-body-map.js';
+import { loadWeaponModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
+import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 
-export interface CharacterInfo { characterId: number; name: string; classId: number; level: number; }
+export interface CharacterAppearance {
+  classId: number;
+  head: number;
+  rank: number;
+  bodyModel?: string;
+  bodyModelIdcode: number;
+  weaponDorp?: string;
+  weaponIdcode: number;
+  weaponPos: number;
+  sizeLevel: number;
+}
+
+// 浠?idCode 璁＄畻閾犵敳缂栧彿锛堝榻?pviewer armorNumFromIdCode锛夛細(idcode >> 8) & 0xff, >25 鏃?-=17
+export function armorNumFromIdCode(idCode: number): number {
+  let n = (idCode >> 8) & 0xff;
+  if (n > 25) n -= 17;
+  return n;
+}
+
+export interface CharacterInfo { characterId: number; name: string; classId: number; level: number; appearance?: CharacterAppearance; }
 
 export interface CharSelect {
   show(characters: CharacterInfo[], opts: {
@@ -25,16 +49,17 @@ interface JobInfo {
   side: 'tempscron' | 'moryon';
 }
 
+// 鑱屼笟褰掑睘锛坈haracter-model-mapping.md 搂2/搂3锛夛細鍧︽櫘鏃?1,2,3,4,9锛涢瓟鐏垫棌=5,6,7,8,10
 const JOBS: JobInfo[] = [
   { id: 1, nameKey: 'job.fighter', side: 'tempscron' },
   { id: 2, nameKey: 'job.mechanician', side: 'tempscron' },
   { id: 3, nameKey: 'job.archer', side: 'tempscron' },
   { id: 4, nameKey: 'job.pikeman', side: 'tempscron' },
-  { id: 5, nameKey: 'job.assassin', side: 'tempscron' },
+  { id: 9, nameKey: 'job.assassin', side: 'tempscron' },
+  { id: 5, nameKey: 'job.atalanta', side: 'moryon' },
   { id: 6, nameKey: 'job.knight', side: 'moryon' },
-  { id: 7, nameKey: 'job.atalanta', side: 'moryon' },
+  { id: 7, nameKey: 'job.magician', side: 'moryon' },
   { id: 8, nameKey: 'job.priestess', side: 'moryon' },
-  { id: 9, nameKey: 'job.magician', side: 'moryon' },
   { id: 10, nameKey: 'job.shaman', side: 'moryon' },
 ];
 
@@ -52,9 +77,10 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   // creation mode state
   let selectedJobId: number | null = null;
   let hoveredJobId: number | null = null;
-  let selectedFace = 0;
+  let selectedHead = 0;
   let currentPreviewJobId: number | null = null;
-  let currentPreviewFace = -1;
+  let currentPreviewHead = -1;
+  let currentPreviewAppearance = '';
 
   // 3D
   let canvas: HTMLCanvasElement | null = null;
@@ -68,6 +94,8 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   let animState: AnimStateMachine | null = null;
   let animFrameId = 0;
   let animFrame = 0;
+  let loadGeneration = 0; // prevents stale async loads from adding models
+  let motionList: MotionInfo[] = []; // TmFrame 偏移后的动画列表（调试列表用）
   const tmp = new THREE.Matrix4();
   const posV = new THREE.Vector3();
   const quatQ = new THREE.Quaternion();
@@ -76,41 +104,111 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   // BGM
   let bgm: HTMLAudioElement | null = null;
 
+  // Texture loading (same as char-demo.ts)
+  async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | null> {
+    try {
+      const resp = await fetch(url, { cache: 'no-store' });
+      if (!resp.ok) return null;
+      const buf = await resp.arrayBuffer();
+      const decoded = await decodeTextureAsync(buf);
+      if (!decoded) return null;
+      const tex = new THREE.DataTexture(new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat);
+      tex.flipY = true;
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.needsUpdate = true;
+      return tex;
+    } catch { return null; }
+  }
+
+  async function loadTextures(textures: { url: string; mat: THREE.MeshPhongMaterial }[]): Promise<void> {
+    await Promise.allSettled(textures.map(async (t) => {
+      const texPath = t.url.replace(/\\/g, '/').toLowerCase();
+      const tex = await fetchAndDecodeTexture('/res/' + texPath);
+      if (tex) {
+        t.mat.map = tex;
+        t.mat.color.set(0xffffff);
+        t.mat.alphaTest = 0.5;
+        t.mat.transparent = true;
+        t.mat.needsUpdate = true;
+      }
+    }));
+  }
+
   // --- list mode ---
   const listEl = document.createElement('div');
-  listEl.style.cssText = 'display:none;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;background:rgba(0,0,0,0.85);color:#fff;font-size:14px;';
+  listEl.style.cssText = 'display:none;flex-direction:row;height:100%;background:rgba(0,0,0,0.85);color:#fff;font-size:14px;';
+  const listPreviewHost = document.createElement('div');
+  listPreviewHost.style.cssText = 'flex:1;position:relative;';
+  listEl.appendChild(listPreviewHost);
+
+  let selectedCharId: number | null = null;
 
   function renderList() {
-    listEl.innerHTML = '';
-    listEl.style.display = 'flex';
+    listEl.querySelector('.char-side')?.remove();
+    listPreviewHost.innerHTML = '';
+
+    const side = document.createElement('div');
+    side.className = 'char-side';
+    side.style.cssText = 'width:300px;padding:24px;box-sizing:border-box;border-left:1px solid #333;display:flex;flex-direction:column;gap:12px;';
+
     const title = document.createElement('h2');
     title.textContent = t('gui.charSel.title');
-    listEl.appendChild(title);
+    side.appendChild(title);
 
-    const cardList = document.createElement('div');
-    cardList.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px';
+    const charList = document.createElement('div');
+    charList.style.cssText = 'flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;';
     for (const c of characters) {
       const card = document.createElement('div');
-      card.style.cssText = 'padding:12px 16px;background:#222;border-radius:4px;cursor:pointer;min-width:160px;text-align:center';
+      card.dataset.characterId = String(c.characterId);
+      card.style.cssText = 'padding:14px 16px;background:#222;border-radius:4px;cursor:pointer;border:2px solid transparent;';
       card.innerHTML = `<div style="font-weight:bold">${c.name}</div><div style="color:#aaa">${t('job.' + jobKeyById(c.classId))} ${t('gui.charSel.level', { level: c.level })}</div>`;
-      card.onclick = () => opts?.onSelect(c.characterId);
-      cardList.appendChild(card);
+      card.onclick = () => selectCharacter(c.characterId);
+      charList.appendChild(card);
     }
-    listEl.appendChild(cardList);
+    side.appendChild(charList);
 
-    const btnRow = document.createElement('div');
-    btnRow.style.cssText = 'display:flex;gap:12px;margin-top:12px';
+    const enterBtn = document.createElement('button');
+    enterBtn.textContent = t('gui.charSel.enter');
+    enterBtn.style.cssText = 'padding:10px;background:#4a7c59;color:#fff;border:none;cursor:pointer;font-size:14px;';
+    enterBtn.onclick = () => { if (selectedCharId !== null) opts?.onSelect(selectedCharId); };
+
     const createBtn = document.createElement('button');
     createBtn.textContent = t('gui.charSel.create');
-    createBtn.style.cssText = 'padding:8px 20px;font-size:14px;cursor:pointer';
+    createBtn.style.cssText = 'padding:10px;background:transparent;color:#fff;border:1px solid #555;cursor:pointer;font-size:14px;';
     createBtn.onclick = () => enterCreateMode();
-    btnRow.appendChild(createBtn);
+
     const logoutBtn = document.createElement('button');
     logoutBtn.textContent = t('gui.charSel.logout');
-    logoutBtn.style.cssText = 'padding:8px 20px;font-size:14px;cursor:pointer';
+    logoutBtn.style.cssText = 'padding:10px;background:transparent;color:#fff;border:1px solid #555;cursor:pointer;font-size:14px;';
     logoutBtn.onclick = () => opts?.onLogout();
-    btnRow.appendChild(logoutBtn);
-    listEl.appendChild(btnRow);
+
+    const btnRow = document.createElement('div');
+    btnRow.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
+    btnRow.append(enterBtn, createBtn, logoutBtn);
+    side.appendChild(btnRow);
+
+    listEl.appendChild(side);
+    listEl.style.display = 'flex';
+
+    ensure3D();
+    if (canvas && canvas.parentElement !== listPreviewHost) listPreviewHost.appendChild(canvas);
+    loadSceneAsync();
+    startBgm();
+    startRenderLoop();
+
+    if (characters.length) selectCharacter(characters[0].characterId);
+    else clearPreview();
+  }
+
+  function selectCharacter(characterId: number) {
+    selectedCharId = characterId;
+    const c = characters.find(x => x.characterId === characterId);
+    if (c) loadPreview(c.classId, c.appearance?.head ?? 0, c.appearance);
+    listEl.querySelectorAll('[data-character-id]').forEach((el) => {
+      const active = el.getAttribute('data-character-id') === String(characterId);
+      (el as HTMLDivElement).style.borderColor = active ? '#f0c040' : 'transparent';
+      (el as HTMLDivElement).style.background = active ? '#3a5a3a' : '#222';
+    });
   }
 
   function jobKeyById(id: number): string {
@@ -127,7 +225,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   let jobDescEl: HTMLDivElement;
   let jobAttrEl: HTMLDivElement;
   let jobGrid: HTMLDivElement;
-  let faceEls: HTMLDivElement[] = [];
+  let headEls: HTMLDivElement[] = [];
   let nameInput: HTMLInputElement;
   let nameError: HTMLDivElement;
   let createBtn: HTMLButtonElement;
@@ -170,24 +268,24 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     jobSection.append(jobTitle, jobGrid);
     buildJobGrid();
 
-    // face section
-    const faceSection = document.createElement('div');
-    const faceTitle = document.createElement('div');
-    faceTitle.textContent = t('gui.charCreate.face');
-    faceTitle.style.cssText = 'font-size:14px;margin-bottom:8px;opacity:0.6;';
-    const faceRow = document.createElement('div');
-    faceRow.style.cssText = 'display:flex;gap:8px;';
-    faceSection.append(faceTitle, faceRow);
-    faceEls = [];
-    for (let f = 0; f < 3; f++) {
+    // head section
+    const headSection = document.createElement('div');
+    const headTitle = document.createElement('div');
+    headTitle.textContent = t('gui.charCreate.face');
+    headTitle.style.cssText = 'font-size:14px;margin-bottom:8px;opacity:0.6;';
+    const headRow = document.createElement('div');
+    headRow.style.cssText = 'display:flex;gap:8px;';
+    headSection.append(headTitle, headRow);
+    headEls = [];
+    for (let h = 0; h < 3; h++) {
       const el = document.createElement('div');
-      el.textContent = String(f + 1);
+      el.textContent = String(h + 1);
       el.style.cssText = `width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:2px solid #555;border-radius:4px;cursor:pointer;font-size:14px;`;
-      el.addEventListener('click', () => selectFace(f));
-      faceRow.appendChild(el);
-      faceEls.push(el);
+      el.addEventListener('click', () => selectHead(h));
+      headRow.appendChild(el);
+      headEls.push(el);
     }
-    updateFaceHighlight();
+    updateHeadHighlight();
 
     // name section
     const nameSection = document.createElement('div');
@@ -218,7 +316,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     cancelBtn.addEventListener('click', exitCreateMode);
     btnSection.append(createBtn, cancelBtn);
 
-    rightPanel.append(jobSection, faceSection, nameSection, btnSection);
+    rightPanel.append(jobSection, headSection, nameSection, btnSection);
     layout.append(leftPanel, centerPanel, rightPanel);
     createEl.appendChild(layout);
   }
@@ -255,7 +353,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     el.addEventListener('mouseenter', () => {
       hoveredJobId = job.id;
       updateJobHighlight();
-      loadPreview(job.id, 0);
+      loadPreview(job.id, selectedHead);
       updateJobInfo(job);
     });
     el.addEventListener('mouseleave', () => {
@@ -264,7 +362,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       if (selectedJobId !== null) {
         const sel = JOBS.find(j => j.id === selectedJobId);
         if (sel) {
-          loadPreview(selectedJobId, selectedFace);
+          loadPreview(selectedJobId, selectedHead);
           updateJobInfo(sel);
         }
       } else {
@@ -280,25 +378,25 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     selectedJobId = jobId;
     const job = JOBS.find(j => j.id === jobId);
     if (job) {
-      loadPreview(jobId, selectedFace);
+      loadPreview(jobId, selectedHead);
       updateJobInfo(job);
     }
     updateJobHighlight();
     validateName();
   }
 
-  function selectFace(face: number) {
-    selectedFace = face;
-    updateFaceHighlight();
+  function selectHead(head: number) {
+    selectedHead = head;
+    updateHeadHighlight();
     if (currentPreviewJobId !== null) {
-      loadPreview(currentPreviewJobId, face);
+      loadPreview(currentPreviewJobId, head);
     }
   }
 
-  function updateFaceHighlight() {
-    faceEls.forEach((el, i) => {
-      el.style.borderColor = i === selectedFace ? '#f0c040' : '#555';
-      el.style.color = i === selectedFace ? '#f0c040' : '#e0d8c8';
+  function updateHeadHighlight() {
+    headEls.forEach((el, i) => {
+      el.style.borderColor = i === selectedHead ? '#f0c040' : '#555';
+      el.style.color = i === selectedHead ? '#f0c040' : '#e0d8c8';
     });
   }
 
@@ -340,8 +438,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setClearColor(0x1a1a2e);
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0x1a1a2e, 20, 60);
-    camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
     controls = createCameraControls(camera, canvas);
     skeletonGroup = new THREE.Group();
     scene.add(skeletonGroup);
@@ -353,55 +450,187 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   }
 
   async function loadSceneAsync() {
-    try {
-      sceneGroup = await loadScene('/res/game/maps/chrselect/select.smd', '/res/game/maps/chrselect');
-      scene!.add(sceneGroup);
-    } catch (err) {
-      console.warn('CharSelect: failed to load chrselect scene', err);
-    }
+    // Ponytail: select.smd is a game map, not chrselect scene. Use solid background for now.
+    scene!.background = new THREE.Color(0x1a1a2e);
+    camera!.position.set(0, 40, 80);
+    camera!.lookAt(0, 25, 0);
+    controls!.setTarget(new THREE.Vector3(0, 25, 0));
   }
 
-  async function loadPreview(jobId: number, face: number) {
-    if (currentPreviewJobId === jobId && currentPreviewFace === face) return;
+  async function loadPreview(jobId: number, head: number, appearance?: CharacterAppearance) {
+    const appSig = appearance
+      ? `${appearance.bodyModel ?? ''}|${appearance.bodyModelIdcode}|${appearance.weaponDorp ?? ''}|${appearance.weaponIdcode}|${appearance.weaponPos}`
+      : '';
+    if (currentPreviewJobId === jobId && currentPreviewHead === head && currentPreviewAppearance === appSig) return;
     currentPreviewJobId = jobId;
-    currentPreviewFace = face;
+    currentPreviewHead = head;
+    currentPreviewAppearance = appSig;
     clearCharModel();
+    const gen = ++loadGeneration;
     try {
-      charResult = await loadCharacterModel(jobId, face);
-      skeletonGroup!.add(charResult.skeletonGroup);
+      // bodyModel=时装 dorpItem（查 COSTUME_BODY_MAP），bodyModelIdcode=普通防具 idcode（算 armorNum）
+      let armorNum = 1;
+      let bodyInxOverride: string | null = null;
+      if (appearance?.bodyModelIdcode && appearance.bodyModelIdcode > 0) {
+        armorNum = armorNumFromIdCode(appearance.bodyModelIdcode);
+      } else if (appearance?.bodyModel) {
+        bodyInxOverride = resolveCostumeBody(appearance.bodyModel, jobId);
+      }
+      const result = await loadCharacterModel(jobId, head, 0, armorNum, bodyInxOverride);
+      if (gen !== loadGeneration) return; // stale load, discard
+      charResult = result;
+      // Hide meshes until textures load (prevent grey flash)
+      result.bodyGroup.visible = false;
+      result.headGroup.visible = false;
+      skeletonGroup!.add(result.skeletonGroup);
+      skeletonGroup!.add(result.bodyGroup);
+      skeletonGroup!.add(result.headGroup);
+      // Load textures
+      await loadTextures([...result.bodyTextures, ...result.headTextures]);
+      if (gen !== loadGeneration) return;
+      result.bodyGroup.visible = true;
+      result.headGroup.visible = true; // stale after texture load
+      // 姝﹀櫒鎸傝浇锛堝鏈夛級
+      currentWeaponIdcode = appearance?.weaponIdcode && appearance.weaponIdcode > 0 ? appearance.weaponIdcode : null;
+      currentWeaponType = currentWeaponIdcode ? getWeaponTypeFromIdCode(currentWeaponIdcode) : null;
+      currentWeaponPos = appearance?.weaponPos || 4;
+      weaponStance = 'combat';
+      if (appearance?.weaponDorp) {
+        await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos);
+      }
+      if (gen !== loadGeneration) return;
       animState = createAnimStateMachine({
-        getMotions: () => charResult!.bipInxInfo.motions,
+        getMotions: () => motionList,
         getClassId: () => jobId,
-        onMotionChange: () => {},
+        getWeaponIdCode: () => currentWeaponIdcode,
+        getWeaponType: () => currentWeaponType,
+        onStanceChange: (stance) => { setWeaponStance(stance); },
+        onMotionChange: (motion: MotionInfo) => {
+          // 1 tick = 160 帧；.inx startFrame/endFrame 单位是 tick（已 TmFrame 偏移）
+          animFrame = motion.startFrame * 160;
+        },
       });
-      animState.triggerIdle();
-      animFrame = 0;
+      buildMotionList();
+      animState.triggerIdle(); // onMotionChange 已设 animFrame=startFrame*160，勿再覆盖
     } catch (err) {
       console.warn('CharSelect: loadPreview failed', err);
       currentPreviewJobId = null;
-      currentPreviewFace = -1;
+      currentPreviewHead = -1;
+      currentPreviewAppearance = '';
+    }
+  }
+
+  let weaponGroup: THREE.Group | null = null;
+  let currentWeaponIdcode: number | null = null;
+  let currentWeaponType: string | null = null;
+  let currentWeaponPos = 4;
+  let weaponStance = 'combat';
+
+  // 鏀惰捣濮挎€侀楠硷紙鏂囨。 搂8.2 / m6 瀹炴祴锛夛細鍓戞枾鍏ヨ儗 in01锛屽紦 in-bow锛屽崄瀛楀紦 in-cro锛屽寱棣?in_DaggerL/R
+  function sheatheBoneForType(weaponType: string | null, weaponPos: number): string {
+    switch (weaponType) {
+      case 'BOW': return WEAPON_BONES.SHEATHE_BOW;
+      case 'CROSSBOW': return WEAPON_BONES.SHEATHE_CROSSBOW;
+      case 'DAGGER': return weaponPos === 2 ? 'Bip in_DaggerL' : 'Bip in_DaggerR';
+      default: return WEAPON_BONES.SHEATHE_BACK; // AXE/SWORD/HAMMER/JAVELIN/SCYTHE/STAFF 鍏ヨ儗
+    }
+  }
+
+  async function setWeaponStance(stance: 'combat' | 'sheathed') {
+    if (!weaponGroup || !skeletonGroup || weaponStance === stance) return;
+    const fromBone = stance === 'combat' ? sheatheBoneForType(currentWeaponType, currentWeaponPos) : currentCombatBone;
+    const toBone = stance === 'combat' ? currentCombatBone : sheatheBoneForType(currentWeaponType, currentWeaponPos);
+    if (!fromBone || !toBone) return;
+    const from = findBone(skeletonGroup, fromBone);
+    const to = findBone(skeletonGroup, toBone);
+    if (!from || !to) return;
+    weaponGroup.parent?.remove(weaponGroup);
+    to.add(weaponGroup);
+    weaponStance = stance;
+  }
+
+  let currentCombatBone = WEAPON_BONES.RIGHT_HAND;
+
+  async function attachWeaponPreview(dorpItem: string, weaponPos: number) {
+    if (!weaponGroup) {
+      try {
+        const result = await loadWeaponModel(dorpItem);
+        weaponGroup = result.group;
+        // modelPosition: 2=LeftHand, 4=RightHand (default) 鈥斺€?瀵归綈 pviewer
+        const boneName = weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
+        currentCombatBone = boneName;
+        const bone = findBone(skeletonGroup!, boneName);
+        if (!bone) {
+          console.warn('CharSelect: 找不到武器挂载骨骼', boneName);
+          weaponGroup = null;
+          return;
+        }
+        bone.add(weaponGroup);
+        weaponStance = 'combat';
+        await loadTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
+      } catch (err) {
+        console.warn('CharSelect: 姝﹀櫒鍔犺浇澶辫触', dorpItem, err);
+        weaponGroup = null;
+      }
     }
   }
 
   function clearCharModel() {
     if (charResult && skeletonGroup) {
       skeletonGroup.remove(charResult.skeletonGroup);
-      charResult = null;
-      animState = null;
+      skeletonGroup.remove(charResult.bodyGroup);
+      skeletonGroup.remove(charResult.headGroup);
     }
+    if (weaponGroup && skeletonGroup) {
+      skeletonGroup.traverse((o) => {
+        if (o !== skeletonGroup && weaponGroup && o.children.includes(weaponGroup)) {
+          o.remove(weaponGroup);
+        }
+      });
+    }
+    weaponGroup = null;
+    currentWeaponIdcode = null;
+    currentWeaponType = null;
+    charResult = null;
+    animState = null;
+    motionList = [];
   }
 
   function clearPreview() {
     clearCharModel();
     currentPreviewJobId = null;
-    currentPreviewFace = -1;
+    currentPreviewHead = -1;
+    currentPreviewAppearance = '';
+  }
+
+  // 构建 TmFrame 偏移后的动画列表（供动画状态机使用）
+  function buildMotionList() {
+    if (!charResult) return;
+    motionList = [];
+    const smb = charResult.animSmb;
+    const tmFrame = smb.tmFrame;
+    const bip = charResult.bipInxInfo;
+    for (let i = CHRMOTION_EXT; i < bip.motionCount; i++) {
+      const mi = bip.motions[i];
+      if (!mi.state && !mi.startFrame && !mi.endFrame) continue;
+      let startFrame = mi.startFrame;
+      let endFrame = mi.endFrame;
+      if (tmFrame && mi.motionFrame > 0 && tmFrame[mi.motionFrame - 1]) {
+        const off = tmFrame[mi.motionFrame - 1].startFrame / 160;
+        startFrame += off;
+        endFrame += off;
+      }
+      motionList.push({ ...mi, startFrame, endFrame });
+    }
   }
 
   function startRenderLoop() {
     if (animFrameId) return;
     function loop() {
       animFrameId = requestAnimationFrame(loop);
-      if (!renderer || !scene || !camera || !centerPanel) return;
+      if (!renderer || !scene || !camera || !canvas) return;
+      const host = canvas.parentElement;
+      if (!host) return;
 
       if (charResult && animState) {
         const motion = animState.getCurrentMotion();
@@ -414,17 +643,19 @@ export function createCharSelect(container: HTMLElement): CharSelect {
               const len = endFrame - startFrame;
               animFrame = startFrame + ((animFrame - startFrame) % len);
             } else {
-              animState.onAnimationEnd();
-              const next = animState.getCurrentMotion();
-              if (next) animFrame = next.startFrame * 160;
+              const next = animState.onAnimationEnd();
+              if (next) {
+                animFrame = next.startFrame * 160;
+              }
             }
           }
           const skelFrames = evalSkeleton(charResult.animSmb, animFrame, false);
           applyToBones(charResult.bones, skelFrames, tmp, posV, quatQ, sclV);
+          charResult.skeleton.update();
         }
       }
 
-      const rect = centerPanel.getBoundingClientRect();
+      const rect = host.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
         camera.aspect = rect.width / rect.height;
         camera.updateProjectionMatrix();
@@ -443,14 +674,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   }
 
   // --- BGM ---
-  function startBgm() {
-    try {
-      bgm = new Audio('/res/game/sounds/music/characterselect.wav');
-      bgm.loop = true;
-      bgm.volume = 0.3;
-      bgm.play().catch(() => {});
-    } catch {}
-  }
+  function startBgm() {}
 
   function stopBgm() {
     if (bgm) { bgm.pause(); bgm = null; }
@@ -479,7 +703,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     if (canvas) canvas.remove();
     canvas = null;
     createEl.style.display = 'none';
-    listEl.style.display = 'flex';
+    renderList();
   }
 
   // --- name validation ---
@@ -503,7 +727,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     createBtn.disabled = true;
     createBtn.textContent = t('gui.charCreate.creating');
     try {
-      opts?.onCreate(name, selectedJobId, selectedFace);
+      opts?.onCreate(name, selectedJobId, selectedHead);
     } catch (err) {
       console.error('Create character failed:', err);
       nameError.textContent = t('gui.charCreate.failedRetry');
@@ -518,8 +742,11 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     show(chars, o) {
       characters = chars;
       opts = o;
-      if (createEl.style.display !== 'none') exitCreateMode();
-      renderList();
+      if (createEl.style.display !== 'none') {
+        exitCreateMode(); // 鍐呴儴宸?renderList()
+      } else {
+        renderList();
+      }
       root.style.display = 'flex';
     },
     hide() {
@@ -552,3 +779,4 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     },
   };
 }
+
