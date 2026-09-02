@@ -119,11 +119,11 @@ export function createHud(container: HTMLElement): Hud {
     if (!currentState) return;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
-    // 内容按原版 800×600 坐标绘制。1280×720 画布内把内容块(288..800 / 底600)
-    // 平移：水平居中对齐到画布中心、垂直贴画布底，避免整条 UI 飘在左上。
-    // offX: 块宽512 → (1280-512)/2-288 = 96；offY: 600 底贴 720 → 120
+    // 内容按原版 800×600 坐标绘制。1280×720 画布内平移：
+    // 视觉中心 = HP/MP 条与左右技能图标的中点 x≈400（非整条背景中心）。
+    // offX: 400 → 画布中心 640 => 240；offY: 600 底贴 720 → 120
     ctx.save();
-    ctx.translate(96, 120);
+    ctx.translate(240, 120);
 
     // 原版渲染顺序：Menu背景 → inter条 → 条 → 按钮
     // Menu背景 (原版 (288,472) 256x128 + (544,536) 256x64)
