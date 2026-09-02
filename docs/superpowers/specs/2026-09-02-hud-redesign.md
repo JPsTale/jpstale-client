@@ -190,24 +190,24 @@
 ## 5. 实现优先级
 
 ### P0 — 核心
-- [ ] 1280×720画布 + CSS缩放
-- [ ] 加载并渲染原版HUD纹理（bar_life, bar_mana, bar_stamina, bar_exp等）
-- [ ] 条的绘制（垂直填充，底部锚定）
-- [ ] 日月时钟渲染
-- [ ] 小地图渲染
-- [ ] 服务端对时协议实现
-- [ ] 客户端时间同步与本地推进
-- [ ] 昼夜状态计算（NightDayTime）
-- [ ] 天空背景切换（日/暮/夜）
-- [ ] DarkLevel 平滑插值
+- [x] 1280×720画布 + CSS缩放（实现见 §5.1：底部锚定 + 焦点居中）
+- [x] 加载并渲染原版HUD纹理（bar_life, bar_mana, bar_stamina, bar_exp等）
+- [x] 条的绘制（垂直填充，底部锚定）
+- [x] 日月时钟渲染
+- [x] 小地图渲染（实现见 §5.4：统一世界窗口多图同绘 + i18n 文本标题）
+- [x] 服务端对时协议实现（实现见 §5.2：服务器权威单调时钟）
+- [x] 客户端时间同步与本地推进
+- [x] 昼夜状态计算（NightDayTime）
+- [ ] 天空背景切换（日/暮/夜）—— **未完成，挂起**（需 sky.txt + SMD 广告牌层，独立排期）
+- [x] DarkLevel 平滑插值
 
 ### P1 — 交互
 - [ ] 按钮点击检测（hit test）
-- [ ] 键盘快捷键绑定系统
-- [ ] 键位设置面板UI
-- [ ] localStorage读写
-- [ ] Walk/相机/地图按钮渲染
-- [ ] 6功能按钮渲染
+- [x] 键盘快捷键绑定系统（KeyBinding.ts，原版默认键，见 §3）
+- [x] 键位设置面板UI（KeyBindingPanel.ts，X 系统菜单弹出）
+- [x] localStorage读写（KeyBinding.ts）
+- [x] Walk/相机/地图按钮渲染
+- [x] 6功能按钮渲染
 
 ### P2 — 完善
 - [ ] 技能槽（左右键）
@@ -221,3 +221,44 @@
 - [ ] 战斗指示器（防御/格挡/闪避）
 - [ ] 命中计数板
 - [ ] 伤害飘字
+
+## 6. P0 实现结论（2026-09-02）
+
+> 本轮实现偏离 §2.1 的"缩放至1280×720新坐标"设想，实际改为：**按原版 800×600 坐标绘制 + 图层平移定位**。以下为落地结论，与上文章节相抵触处以本节省略为准。
+
+### 6.1 HUD 画布与定位（Hud.ts）
+- 画布固定 1280×720；内容仍用原版 800×600 坐标绘制。
+- **水平**：以玩家感知焦点 = HP/MP 条与左右技能图标中点（原版 x≈400）对齐画布中心 640 ⇒ `ctx.translate(240, 120)`。
+- **垂直**：内容底（原版 y=600）贴画布底 720（底锚定）。`fitCanvas` 等比 `min(vw/1280, vh/720)`、CSS 底部锚定，小窗口时等比缩小（不做统一 letterbox；devtools 极端视口属已知可接受噪音）。
+- Menu 背景 = `menu-1.tga`/`menu-2.tga`（TGA 带 alpha）；bar_life/bar_mana/bar_stamina 是自下而上填充的**填充条**（无独立背景框，原版 Shadow* 为死代码）。
+- 技能区默认画两个拳头 `skill/skill_normal.bmp` @ (349,541)/(403,541) 49×46；药水槽底图 `inven/potionback.bmp` @(495,565)。
+- `inter_01/02/03` 本客户端为纯黑占位 → **删除绘制**（原版用途是宽屏时把底条延伸到 800px 之外，16:9 下无存在价值，spec §2.1 表已删）。
+
+### 6.2 服务端对时（权威时钟）
+- 服务端 `PingService.pong.timestamp` = **服务器单调毫秒**（`nanoTime` 模拟原版 `GetTickCount`），非回显客户端值。
+- 客户端换算 `gameMin = ms/800`（GAME_WORLDTIME_MIN=800），`hour=(gameMin/60)%24`，本地每 800ms 推进，漂移 >10 游戏分钟 snap 回（原版 `abs(dwGameWorldTime-dwTime)>10`；此前误用 600000ms 墙钟）。
+- 连接即发一次 ping 做首同步；`GameClock.isSynced()` 区分首次锚定/周期校正。
+
+### 6.3 坐标系（统一 raw→GL，权威 = pt-game-server loader/RenderMapPng）
+- smd 顶点分量0=东(A)、分量2=北(C)（`StageVertex` 读取：`(x,y,z)=(-C,B,-A)/256`）。
+- **GL 目标：东=+X、北=−Z** ⇒ `wx=+A/256, wz=−C/256`；`rawToWorld=(x,y,-z)`。
+- 服务端始终下发原始坐标（东 x、北 z），startPoint 无需改；此前客户端 `(-z,y,-x)` 消费导致 90° 错位，已全量修正（renderer 顶点/bounds/lights、fore1 bounds、移动/碰撞/掉落往返、findCurrentMap、装饰整体绕 Y+90°）。
+- 服务端 startPoint/门/center 与 smd header RECT 同一原始坐标系（+x 东/+z 北），跨图连续。
+
+### 6.4 昼夜（忠实原版）
+- 驱动 = 每帧 `dnUpdate`（移植 /pt/maps index.html）：`DarkLevel`/`BackColor` ±1 渐变趋向时段目标，环境光偏移 `(-DarkLevel+BackColor)/255` 经 shader uniform（`uEnvLight`/`uSceneLight[8]`/`uTorch`）加到预烘焙顶点色（MeshBasicMaterial+vertexColors，**不受 THREE 灯光影响**——改 Ambient/Dir 无效，这是最初"乱来"的根因）。
+- 附加：玩家火把（ap=Dark×1.25、范围 260）、玩家附近 ≤8 场景灯（NIGHT 型全亮、其余 ×DarkLevel>>8）。
+- 时段槽（户外）：白昼 dark=1 /back(0,0,-10)，傍晚(22h)=24/(28,0,-30)，夜(23-3h)=145/(-50,0,10)。
+- **按地图档案 `map-light.ts`**：地牢/室内(13-16,22-26,32,36,40-43) 恒夜固定 DarkLevel/BackColor（HoSky MainSky 表：110 纯黑 / dun-4,5=40 黑 / tcave=60 蓝 / mcave=60 冷 / dcave+endless=40 蓝）；村庄(3,21) 夜间地形色 >>1；其余按小时昼夜。
+- 时间由 GameClock 喂 `WorldView.setGameTime(hour,min)`。
+
+### 6.5 小地图（忠实原版 playsub.cpp，浮点移植）
+- 机制：以玩家为中心的**统一世界窗口**（半宽 = 地牢16/普通24 格 ×64 world 单位），遍历所有已加载图（当前+邻图）把自己落在窗口内的部分**裁剪进同一 126 盒** → 交界两图同时可见且无缝（对齐原版双 stage 语义）。
+- 北 = −Z 上、东 = +X 右；箭头恒在框中心旋转 yaw（`scale(-1,1)` 修正贴图轴向）。TAB 开关（默认开）；M/双击全屏图后续。
+- 标题**不用 `<name>t.tga` 贴图**，走 i18n `t('map.<mapId>')`（locales zh/en）。
+- 资源：`field/map/<ase>.tga`（整场俯视图）+ `Image/arrow.tga mapbox.tga`。
+
+### 6.6 调试便利
+- 左下角面板：FPS/Draw/Tris/Verts + `Pos (x,y,z) m<mapId>` + `Time HH:mm`(调试小时带*) + `Dark n`。
+- `[`/`]` 临时调游戏小时（`DN_DEBUG_KEYS` 集中标注，后期删除）。
+- 顶 P0 清单与 §2.3 布局映射按实际调整；服务端对时字段/协议不变。
