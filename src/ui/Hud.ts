@@ -22,6 +22,9 @@ const H = 720
 
 interface Tex { el: HTMLImageElement; w: number; h: number }
 
+// 需要做黑色透明化的纹理（按钮/图标类，黑色=背景）
+const TRANSPARENT_KEYS = new Set(['b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR'])
+
 const TEXTURES: Record<string, string> = {
   menu1: 'inter/menu-1.tga',
   menu2: 'inter/menu-2.tga',
@@ -29,6 +32,7 @@ const TEXTURES: Record<string, string> = {
   mana: 'inter/bar_mana.bmp',
   stm: 'inter/bar_stamina.bmp',
   exp: 'inter/sinGage/bar_exp.bmp',
+  potionBack: 'inven/potionback.bmp',
   b0: 'inter/bstatus.bmp', b1: 'inter/binventory.bmp', b2: 'inter/bskill.bmp',
   b3: 'inter/bparty.bmp', b4: 'inter/bquest.bmp', b5: 'inter/bsystem.bmp',
   walk: 'inter/Button/walk.bmp',
@@ -44,7 +48,7 @@ const TEXTURES: Record<string, string> = {
   shadowLife: 'inter/shadowlife.tga',
 };
 
-async function loadTex(rel: string): Promise<Tex | null> {
+async function loadTex(rel: string, key: string): Promise<Tex | null> {
   const url = '/res/image/sinimage/' + rel;
   try {
     const resp = await fetch(url);
@@ -52,10 +56,12 @@ async function loadTex(rel: string): Promise<Tex | null> {
     const buf = await resp.arrayBuffer();
     const decoded = await decodeTextureAsync(buf);
     if (!decoded) return null;
-    // PT黑色做透明色
-    for (let i = 0; i < decoded.pixels.length; i += 4) {
-      if (decoded.pixels[i] === 0 && decoded.pixels[i+1] === 0 && decoded.pixels[i+2] === 0) {
-        decoded.pixels[i+3] = 0;
+    // 仅对按钮/图标类纹理做黑色透明化，TGA/背景类不做
+    if (TRANSPARENT_KEYS.has(key)) {
+      for (let i = 0; i < decoded.pixels.length; i += 4) {
+        if (decoded.pixels[i] === 0 && decoded.pixels[i+1] === 0 && decoded.pixels[i+2] === 0) {
+          decoded.pixels[i+3] = 0;
+        }
       }
     }
     const c = document.createElement('canvas');
@@ -158,6 +164,9 @@ export function createHud(container: HTMLElement): Hud {
       ctx.drawImage(barTex.el, 0, 0, fill, 5, 375, 593, fill, 5);
     }
 
+    // 药水槽背景 (原版 (495,565) 77x25)
+    drawTex('potionBack', 495, 565, 77, 25);
+
     // 功能按钮
     drawTex('walk', 575, 565, 24, 25);
     drawTex('cam1', 599, 565, 24, 25);
@@ -175,7 +184,7 @@ export function createHud(container: HTMLElement): Hud {
 
   async function loadAllTextures() {
     const keys = Object.keys(TEXTURES);
-    const loaded = await Promise.all(keys.map(k => loadTex(TEXTURES[k])));
+    const loaded = await Promise.all(keys.map(k => loadTex(TEXTURES[k], k)));
     keys.forEach((k, i) => { if (loaded[i]) textures[k] = loaded[i]!; });
   }
 
