@@ -60,6 +60,9 @@ keyBinding.onKeyDown((action) => {
     case 'system':
       keyBindingPanel.show();
       break;
+    case 'minimap':
+      worldView.toggleMinimap();
+      break;
   }
 });
 

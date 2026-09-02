@@ -37,6 +37,8 @@ export interface WorldView {
   destroy(): void;
   /** 游戏时间（0-23时/0-59分）：昼夜驱动源（忠实 /pt/maps darkLevel/BackColor 渐变） */
   setGameTime(hour: number, min: number): void;
+  /** 切换场内小地图显示（原版 TAB） */
+  toggleMinimap(): void;
 }
 
 /** 服务端出生点 → 世界坐标（对齐 /pt/maps/ positionDummyAtSpawn：worldX=-z, worldZ=-x，y 是地形高度） */
@@ -137,6 +139,71 @@ export function createWorldView(container: HTMLElement): WorldView {
   const statsEl = document.createElement('div');
   statsEl.style.cssText = 'position:absolute;left:8px;bottom:8px;padding:6px 10px;background:rgba(0,0,0,0.72);color:#cfc;font:12px/1.5 monospace;border:1px solid #486;z-index:60;user-select:none;pointer-events:none;white-space:pre;';
   root.appendChild(statsEl);
+
+  // ── 场内小地图（128×128，原版右上角；玩家箭头按移动朝向旋转，TAB 开关）──
+  const MM_SIZE = 128;
+  const mmEl = document.createElement('canvas');
+  mmEl.width = MM_SIZE; mmEl.height = MM_SIZE;
+  mmEl.style.cssText = 'position:absolute;right:10px;top:10px;z-index:60;pointer-events:none;background:rgba(10,16,10,0.62);border:2px solid #b59a5a;box-sizing:border-box;';
+  root.appendChild(mmEl);
+  const mmCtx = mmEl.getContext('2d')!;
+  let mmVisible = true;
+
+  function drawMinimap(): void {
+    mmCtx.clearRect(0, 0, MM_SIZE, MM_SIZE);
+    if (!mmVisible || mapHandles.size === 0) return;
+    // 显示范围 = 所有已加载地图的 world AABB 并集（世界坐标连续，跨图/桥口可跟踪）
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const mh of mapHandles.values()) {
+      const [wx1, , wz1] = mh.mapRenderer.worldMin;
+      const [wx2, , wz2] = mh.mapRenderer.worldMax;
+      minX = Math.min(minX, wx1, wx2); maxX = Math.max(maxX, wx1, wx2);
+      minZ = Math.min(minZ, wz1, wz2); maxZ = Math.max(maxZ, wz1, wz2);
+    }
+    if (minX === Infinity) return;
+    const pad = 4;
+    const spanX = Math.max(maxX - minX, 1e-6);
+    const spanZ = Math.max(maxZ - minZ, 1e-6);
+    const scale = (MM_SIZE - pad * 2) / Math.max(spanX, spanZ);
+    const mapX = (x: number) => pad + (x - minX) * scale;
+    const mapY = (z: number) => pad + (z - minZ) * scale;
+    // 已加载地图矩形（当前图高亮，邻图淡）
+    for (const [mapId, mh] of mapHandles) {
+      const [wx1, , wz1] = mh.mapRenderer.worldMin;
+      const [wx2, , wz2] = mh.mapRenderer.worldMax;
+      const x = mapX(Math.min(wx1, wx2)), y = mapY(Math.min(wz1, wz2));
+      const w = Math.abs(wx2 - wx1) * scale, h = Math.abs(wz2 - wz1) * scale;
+      if (mapId === currentMapId) {
+        mmCtx.fillStyle = 'rgba(180,200,120,0.18)';
+        mmCtx.fillRect(x, y, w, h);
+        mmCtx.strokeStyle = '#d8c478';
+      } else {
+        mmCtx.fillStyle = 'rgba(255,255,255,0.05)';
+        mmCtx.fillRect(x, y, w, h);
+        mmCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+      }
+      mmCtx.lineWidth = 1;
+      mmCtx.strokeRect(x, y, w, h);
+    }
+    // 玩家箭头：朝向 = 移动方向 (sin, cos)，画布 +x 右 / +z 下（相机从 +z 侧俯视）
+    const px = mapX(selfPos.x), py = mapY(selfPos.z);
+    const f = (v: number) => v * 7; // 箭头长度
+    mmCtx.strokeStyle = '#ffe95a';
+    mmCtx.lineWidth = 2;
+    mmCtx.beginPath();
+    mmCtx.moveTo(px, py);
+    mmCtx.lineTo(px + Math.sin(selfAngle) * f(1), py + Math.cos(selfAngle) * f(1));
+    mmCtx.stroke();
+    mmCtx.fillStyle = '#ffe95a';
+    mmCtx.beginPath();
+    mmCtx.arc(px, py, 3, 0, Math.PI * 2);
+    mmCtx.fill();
+  }
+
+  function toggleMinimap(): void {
+    mmVisible = !mmVisible;
+    mmEl.style.display = mmVisible ? 'block' : 'none';
+  }
 
   const tmp = new THREE.Matrix4();
   const posV = new THREE.Vector3();
@@ -792,6 +859,9 @@ export function createWorldView(container: HTMLElement): WorldView {
     // 昼夜光照驱动（每帧）：darkLevel/BackColor 渐变 + 火把 + 场景灯 → 各地图 shader uniform
     dnUpdate();
 
+    // 小地图
+    drawMinimap();
+
     for (const mh of mapHandles.values()) {
       mh.mapRenderer.render(camera);
       mh.mapRenderer.updateScroll(rafMs);
@@ -884,6 +954,7 @@ export function createWorldView(container: HTMLElement): WorldView {
       renderLoop();
     },
     setGameTime,
+    toggleMinimap,
     hide() {
       root.style.display = 'none';
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
