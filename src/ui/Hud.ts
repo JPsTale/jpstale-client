@@ -49,6 +49,12 @@ async function loadTex(rel: string): Promise<Tex | null> {
     const buf = await resp.arrayBuffer();
     const decoded = await decodeTextureAsync(buf);
     if (!decoded) return null;
+    // PT黑色做透明色
+    for (let i = 0; i < decoded.pixels.length; i += 4) {
+      if (decoded.pixels[i] === 0 && decoded.pixels[i+1] === 0 && decoded.pixels[i+2] === 0) {
+        decoded.pixels[i+3] = 0;
+      }
+    }
     const c = document.createElement('canvas');
     c.width = decoded.width;
     c.height = decoded.height;
