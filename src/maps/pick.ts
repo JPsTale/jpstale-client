@@ -73,8 +73,8 @@ function matRenderFlags(fore: Fore1Map, matIdx: number): PickFace {
   };
 }
 
-/** 收集某 (rawX, rawZ) 点上所有投影包含它的面;返回按 rawY 升序 */
-function facesAtColumn(data: SMDData, rawX: number, rawZ: number, fore: Fore1Map): PickFace[] {
+/** 收集某 (rawA, rawC) 点上所有投影包含它的面;返回按 rawY 升序 */
+export function facesAtColumn(data: SMDData, rawX: number, rawZ: number, fore: Fore1Map): PickFace[] {
   const verts = data.verts, triIdx = data.triIdx, faceMat = data.faceMat;
   const out: PickFace[] = [];
   for (let fi = 0; fi < data.nFace; fi++) {
