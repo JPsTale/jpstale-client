@@ -92,7 +92,7 @@ export function createHud(container: HTMLElement): Hud {
   let rafId = 0;
 
   function fitCanvas() {
-    // 等比缩放，但锚定窗口底边：HUD 始终贴底，只允许顶部留空，
+    // 等比缩放，锚定窗口底边：HUD 始终贴底，只允许顶部留空，
     // 避免窗口变窄/变矮时画布垂直居中造成“越缩离底越远”。
     const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
     canvas.style.width = `${W * scale}px`;
