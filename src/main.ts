@@ -42,11 +42,17 @@ function hideAll() {
 }
 
 onTimeSync((serverTimeMs: number) => {
-  if (gameClock.getState().hour === 0 && gameClock.getState().min === 0) {
-    gameClock.setInitialTime(serverTimeMs)
+  // 首次收到服务器权威时钟时锚定；此后走漂移校正
+  if (gameClock.isSynced()) {
+    gameClock.correctTime(serverTimeMs);
   } else {
-    gameClock.correctTime(serverTimeMs)
+    gameClock.setInitialTime(serverTimeMs);
   }
+});
+
+// 昼夜：游戏时钟变化 → 场景光照切换
+gameClock.onTimeUpdate((state) => {
+  worldView.setNight(state.isNight);
 });
 
 keyBinding.onKeyDown((action) => {
@@ -204,7 +210,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'enterGame': {
       const eg = msg.enterGame!;
-      gameClock.setInitialTime(Date.now());
+      // 时间锚定不在此处做：连接即已发 ping，onTimeSync 首次回调已用服务器权威时钟初始化 GameClock
       const hudState: HudState = {
         hp: 100, maxHp: 100, mp: 50, maxMp: 50, stm: 0, maxStm: 0,
         level: eg.appearance?.classId ? 1 : 1,

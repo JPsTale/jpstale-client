@@ -82,10 +82,10 @@ export class MapRenderer {
       const fog = this.scene.fog as THREE.Fog;
       fog.color.setHex(night ? 0x111122 : 0xffffff);
     }
-    // 调整环境光
+    // 调整环境光（与 ensure3D 白天 0.6 一致，避免进图跳变）
     const ambientLight = this.scene.children.find(c => c instanceof THREE.AmbientLight) as THREE.AmbientLight | undefined;
     if (ambientLight) {
-      ambientLight.intensity = night ? 0.3 : 1.0;
+      ambientLight.intensity = night ? 0.22 : 0.6;
     }
   }
 

@@ -11,6 +11,7 @@ export interface GameClock {
   getMin(): number
   isNight(): boolean
   getState(): TimeState
+  isSynced(): boolean
   onTimeUpdate(callback: (state: TimeState) => void): void
   dispose(): void
   setInitialTime(serverTimeMs: number): void
@@ -20,11 +21,12 @@ export interface GameClock {
 const GAME_WORLDTIME_MIN = 800 // 800ms = 1 game minute
 const GAME_HOUR_DAY = 4
 const GAME_HOUR_DARKNESS = 23
+// 原版漂移容差：>10 游戏分钟强制 snap（=800*10=8000ms 真实时间）
+const MAX_DRIFT_GAME_MIN = 10
 
 export function createGameClock(): GameClock {
   let dwGameWorldTime = 0
-  let dwConnectedServerTime = 0
-  let dwConnectedClientTime = 0
+  let hasServerTime = false
   let lastLocalTime = Date.now()
   let callbacks: ((state: TimeState) => void)[] = []
 
@@ -55,21 +57,27 @@ export function createGameClock(): GameClock {
   }
 
   function setInitialTime(serverTimeMs: number) {
-    dwConnectedServerTime = serverTimeMs
-    dwConnectedClientTime = Date.now()
+    hasServerTime = true
     dwGameWorldTime = Math.floor(serverTimeMs / GAME_WORLDTIME_MIN)
     notify()
   }
 
+  function isSynced(): boolean {
+    return hasServerTime
+  }
+
   function correctTime(serverTimeMs: number) {
-    const calculatedServerTime = (Date.now() - dwConnectedClientTime) + dwConnectedServerTime
-    const drift = Math.abs(serverTimeMs - calculatedServerTime)
-    
-    // 漂移>10分钟（600000ms）时强制校正
-    if (drift > 600000) {
-      dwGameWorldTime = Math.floor(serverTimeMs / GAME_WORLDTIME_MIN)
-      dwConnectedServerTime = serverTimeMs
-      dwConnectedClientTime = Date.now()
+    if (!hasServerTime) {
+      setInitialTime(serverTimeMs)
+      return
+    }
+    // 服务器毫秒 → 游戏分钟（同 ConvSysTimeToGameTime）
+    const serverGameMin = Math.floor(serverTimeMs / GAME_WORLDTIME_MIN)
+    const driftMin = Math.abs(dwGameWorldTime - serverGameMin)
+
+    // 原版 netplay: abs(dwGameWorldTime - dwTime) > 10 → snap 回服务器时间
+    if (driftMin > MAX_DRIFT_GAME_MIN) {
+      dwGameWorldTime = serverGameMin
     }
     notify()
   }
@@ -90,6 +98,7 @@ export function createGameClock(): GameClock {
     getMin,
     isNight,
     getState,
+    isSynced,
     onTimeUpdate: (cb) => { callbacks.push(cb) },
     dispose: () => {
       clearInterval(intervalId)

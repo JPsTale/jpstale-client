@@ -74,6 +74,10 @@ export function send(msg: jpt.base.ClientMessage.$Properties): void {
 
 function startHeartbeat(): void {
   stopHeartbeat();
+  // 连接即发一次 ping，让时间同步立刻获得服务器权威时钟（不等首个4s周期）
+  if (ws?.readyState === WebSocket.OPEN) {
+    ws.send(encodeClient(ping()));
+  }
   heartbeatTimer = window.setInterval(() => {
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(encodeClient(ping()));

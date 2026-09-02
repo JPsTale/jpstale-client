@@ -33,6 +33,8 @@ export interface WorldView {
   show(enterGame: EnterGameInfo): void;
   hide(): void;
   destroy(): void;
+  /** 昼夜切换（true=夜晚）：驱动各已加载地图的光照/雾 + 场景背景/方向光 */
+  setNight(night: boolean): void;
 }
 
 /** 服务端出生点 → 世界坐标（对齐 /pt/maps/ positionDummyAtSpawn：worldX=-z, worldZ=-x，y 是地形高度） */
@@ -51,6 +53,8 @@ export function createWorldView(container: HTMLElement): WorldView {
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
+  let dirLight: THREE.DirectionalLight | null = null; // 平行光（昼夜亮度切换）
+  let isNightState = false; // 当前昼夜（false=白天）
   const mapHandles = new Map<number, Awaited<ReturnType<typeof loadMap>>>();
   const collisionMeshes = new Map<number, CollisionMesh>();
   const decorGroups = new Map<number, THREE.Group[]>(); // mapId → 装饰 group 列表
@@ -122,13 +126,30 @@ export function createWorldView(container: HTMLElement): WorldView {
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
     camera.position.set(0, 200, 400);
-    const amb = new THREE.AmbientLight(0xffffff, 0.5);
+    const amb = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(amb);
-    const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+    const dir = new THREE.DirectionalLight(0xffffff, 0.85);
     dir.position.set(200, 400, 200);
     scene.add(dir);
+    dirLight = dir;
     buildAxis();
     buildDummy();
+  }
+
+  // 昼夜 → 场景：已加载地图各自 setNightDay（环境光/雾），本层管背景色+方向光
+  function applyDayNight(): void {
+    for (const mh of mapHandles.values()) {
+      mh.mapRenderer.setNightDay(isNightState);
+    }
+    if (scene && scene.background instanceof THREE.Color) {
+      scene.background.setHex(isNightState ? 0x0d1326 : 0x9db4d0);
+    }
+    if (dirLight) dirLight.intensity = isNightState ? 0.12 : 0.85;
+  }
+
+  function setNight(night: boolean): void {
+    isNightState = night;
+    applyDayNight();
   }
 
   // 坐标轴参考（复刻 /pt/maps/：三色圆柱+圆锥+标签），用于判断朝向。挂到出生点。
@@ -322,6 +343,7 @@ export function createWorldView(container: HTMLElement): WorldView {
     if (!smdPath) return false;
     const mh = await loadMap(scene, smdPath);
     mapHandles.set(mapId, mh);
+    applyDayNight(); // 新地图加入后同步当前昼夜光照
     const cm = new CollisionMesh();
     cm.buildFromSMD(mh.data);
     collisionMeshes.set(mapId, cm);
@@ -734,6 +756,7 @@ export function createWorldView(container: HTMLElement): WorldView {
       clock.getDelta();
       renderLoop();
     },
+    setNight,
     hide() {
       root.style.display = 'none';
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
