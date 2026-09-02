@@ -12,6 +12,7 @@ import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
+import { t } from '../i18n/index.js';
 import { loadCharacterModel } from '../render/char-loader.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
@@ -209,10 +210,7 @@ export function createWorldView(container: HTMLElement): WorldView {
     if (mmMapFor !== currentMapId) {
       mmMapFor = currentMapId;
       const b = mmFieldBase();
-      if (b) {
-        ensureMMImg(`/res/field/map/${b}.tga`);
-        ensureMMImg(`/res/field/title/${b}t.tga`);
-      }
+      if (b) ensureMMImg(`/res/field/map/${b}.tga`);
     }
     const mh = mapHandles.get(currentMapId);
     if (!mh) return;
@@ -262,12 +260,17 @@ export function createWorldView(container: HTMLElement): WorldView {
     if (box) mmCtx.drawImage(box, 0, MM_BOX_Y, 128, 128);
 
     // 标题条（原版 psDrawTexImage_Point 于 (px,py-16)，点采样）
-    const titleUrl = mmFieldBase() ? `/res/field/title/${mmFieldBase()}t.tga` : '';
-    const title = titleUrl ? mmImg.get(titleUrl) : undefined;
-    if (title) {
-      mmCtx.imageSmoothingEnabled = false;
-      mmCtx.drawImage(title, 0, 0, 128, 16);
-      mmCtx.imageSmoothingEnabled = true;
+    // 标题（原版 psDrawTexImage_Point 于 (px,py-16)；为 i18n 改文本，不走 <name>t.tga 贴图）
+    const name = t(`map.${currentMapId}`);
+    if (!name.startsWith('map.')) {
+      mmCtx.font = 'bold 11px "Microsoft YaHei", "Segoe UI", sans-serif';
+      mmCtx.textAlign = 'center';
+      mmCtx.textBaseline = 'middle';
+      mmCtx.shadowColor = 'rgba(0,0,0,0.9)';
+      mmCtx.shadowBlur = 2;
+      mmCtx.fillStyle = '#f8f0d8';
+      mmCtx.fillText(name, MM_HALF, MM_BOX_Y / 2);
+      mmCtx.shadowBlur = 0;
     }
   }
 

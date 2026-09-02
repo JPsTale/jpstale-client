@@ -7,5 +7,18 @@
   },
   "race": { "tempscron": "Tempscron", "moryon": "Moryon" },
   "job": { "fighter": "Fighter", "mechanician": "Mechanician", "archer": "Archer", "pikeman": "Pikeman", "assassin": "Assassin", "knight": "Knight", "atalanta": "Atalanta", "priestess": "Priestess", "magician": "Magician", "shaman": "Shaman" },
+  "map": {
+    "0": "Acacia Forest", "1": "Bamboo Forest", "2": "Garden of Freedom", "3": "Ricarten Town",
+    "4": "Refuge of the Ancients", "5": "Castle of the Lost", "6": "Ruinen Village", "7": "Cursed Land",
+    "8": "Forgotten Land", "9": "Navisko Town", "10": "Oasis", "11": "Ancients' Battlefield",
+    "12": "Forbidden Land", "13": "Ancient Prison F1", "14": "Ancient Prison F2", "15": "Ancient Prison F3",
+    "16": "Chess Room", "17": "Forest of Spirits", "18": "Land of Dusk", "19": "Valley of Tranquility",
+    "20": "Road of the Wind", "21": "Pillai Town", "22": "Cursed Temple F1", "23": "Cursed Temple F2",
+    "24": "Mushroom Cave", "25": "Beehive Cave", "26": "Dark Sanctuary", "27": "Railway of Chaos",
+    "28": "Heart of Perum", "29": "Eura", "30": "Bellatra", "31": "Gallubia Valley",
+    "32": "Arena", "33": "Bless Castle", "34": "Greedy Lake", "35": "Frozen Sanctuary",
+    "36": "Kelvezu Lair", "37": "Lost Island", "38": "Lost Temple", "39": "Falling Grounds",
+    "40": "Endless Tower F1", "41": "Endless Tower F2", "42": "Cursed Temple F3", "43": "Endless Tower F3"
+  },
   "error": { "0": "Connection failed", "1": "Unknown error", "2": "Not logged in", "3": "Already logged in", "4": "Wrong password", "5": "Account banned", "6": "Character not found", "7": "Character limit reached", "8": "Invalid map", "9": "Invalid position", "10": "Speed hack", "11": "Teleport hack", "12": "Invincible hack", "13": "Invalid name", "14": "Name already exists" }
 }
