@@ -152,11 +152,9 @@ export function createWorldView(container: HTMLElement): WorldView {
   root.appendChild(mmEl);
   const mmCtx = mmEl.getContext('2d')!;
   let mmVisible = true;
-  let mmPlayerPx = MM_HALF, mmPlayerPy = MM_BOX_Y + MM_HALF; // 玩家像素（箭头位置）
   const mmImg = new Map<string, HTMLImageElement>(); // url → image
   const mmLoading = new Set<string>();
   let mmAssetsInit = false;          // arrow/mapbox 一次性
-  let mmMapFor = -1;                 // 当前场地缩略图已请求的 mapId
 
   async function ensureMMImg(url: string): Promise<void> {
     if (mmImg.has(url) || mmLoading.has(url)) return;
@@ -182,9 +180,9 @@ export function createWorldView(container: HTMLElement): WorldView {
     mmCtx.drawImage(img, fx * img.width, fy * img.height, Math.max(fw, 1e-4) * img.width, Math.max(fh, 1e-4) * img.height, dx, dy, Math.max(dw, 0), Math.max(dh, 0));
   }
 
-  // 场地缩略图与标题：<ase名>.tga / <ase名>t.tga（与 smd basename 一致，SetName 拼路径）
-  function mmFieldBase(): string | null {
-    const p = MAP_CATALOG[currentMapId];
+  // 场地缩略图与标题：<ase名>.tga（与 smd basename 一致，SetName 拼路径）
+  function mmBaseName(mapId: number): string | null {
+    const p = MAP_CATALOG[mapId];
     if (!p) return null;
     const b = p.split('/').pop() || '';
     return b.replace(/\.smd$/i, '');
@@ -208,58 +206,51 @@ export function createWorldView(container: HTMLElement): WorldView {
       ensureMMImg('/res/image/arrow.tga');
       ensureMMImg('/res/image/mapbox.tga');
     }
-    if (mmMapFor !== currentMapId) {
-      mmMapFor = currentMapId;
-      const b = mmFieldBase();
-      if (b) ensureMMImg(`/res/field/map/${b}.tga`);
-    }
-    const mh = mapHandles.get(currentMapId);
-    if (!mh) return;
-    const [mnx, , mnz] = mh.mapRenderer.worldMin;
-    const [mxx, , mxz] = mh.mapRenderer.worldMax;
+    if (mapHandles.size === 0) return;
 
     // 半透明黑底（原版 dsDrawColorBox(0,0,0,128)）
     mmCtx.fillStyle = 'rgba(0,0,0,0.5)';
     mmCtx.fillRect(0, MM_BOX_Y, 128, 128);
 
-    // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口）
-    // 世界语义：东=+X、北=−Z；图水平 v 轴 → 右，垂直 → 上
-    const spanX = Math.max(mxx - mnx, 1e-6);   // 东-西 world 跨距（水平）
-    const spanZ = Math.max(mxz - mnz, 1e-6);   // 南-北 world 跨距（垂直，北=−Z）
-    // 视口半宽 = 格数×64（world 单位）
+    // 统一世界窗口（以玩家为中心，固定比例，北=−Z 在上 / 东=+X 在右）
+    // 与单图不同：世界坐标连续，遍历所有已加载图（当前+邻图），每图把自己
+    // 落在窗口内的那部分缩略图裁剪画入同一 126 盒 → 交界处两张图同时可见且无缝
     const half = (mapLightProfile(currentMapId).mode === 'fixed' ? 16 : 24) * 64;
-    const fmx = (selfPos.x - mnx) / spanX;     // 玩家 东(+X) 位置分数
-    const fmy = (selfPos.z - mnz) / spanZ;     // 玩家 北(−Z) 位置分数（小 z 在上）
-    const fpx = half / spanX, fpy = half / spanZ;
-    const uLo = fmx - fpx, uHi = fmx + fpx;    // 视口采样窗
-    const vLo = fmy - fpy, vHi = fmy + fpy;
+    const winX0 = selfPos.x - half, winX1 = selfPos.x + half;
+    const winZ0 = selfPos.z - half, winZ1 = selfPos.z + half;
+    const pxScale = 126 / Math.max(winX1 - winX0, 1e-9);
 
-    // 精确 UV→像素：固定内容比例，窗越界一侧留空(露黑底)
-    const pxPerU = 126 / Math.max(uHi - uLo, 1e-9);
-    const pxPerV = 126 / Math.max(vHi - vLo, 1e-9);
-    // 玩家像素按其 uv 位置（钳到框内；玩家在界外时贴边）
-    mmPlayerPx = Math.max(0, Math.min(126, 1 + (fmx - uLo) * pxPerU));
-    mmPlayerPy = Math.max(MM_BOX_Y, Math.min(MM_BOX_Y + 126, MM_BOX_Y + 1 + (fmy - vLo) * pxPerV));
+    for (const [mapId, mh] of mapHandles) {
+      const base = mmBaseName(mapId);
+      if (!base) continue;
+      const url = `/res/field/map/${base}.tga`;
+      ensureMMImg(url); // 已缓存/在途则立即返回
+      const tile = mmImg.get(url);
+      if (!tile) continue;
 
-    const mapUrl = mmFieldBase() ? `/res/field/map/${mmFieldBase()}.tga` : '';
-    const terrain = mapUrl ? mmImg.get(mapUrl) : undefined;
-    if (terrain) {
-      const sU0 = Math.max(0, uLo), sU1 = Math.min(1, uHi);
-      const sV0 = Math.max(0, vLo), sV1 = Math.min(1, vHi);
-      const dx = 1 + (sU0 - uLo) * pxPerU;
-      const dw = (sU1 - sU0) * pxPerU;
-      const dy = MM_BOX_Y + 1 + (sV0 - vLo) * pxPerV;
-      const dh = (sV1 - sV0) * pxPerV;
-      if (dw > 0 && dh > 0) {
-        drawImgSub(terrain, dx, dy, dw, dh, sU0, sV0, sU1 - sU0, sV1 - sV0);
-      }
+      const [gx0, , gz0] = mh.mapRenderer.worldMin;
+      const [gx1, , gz1] = mh.mapRenderer.worldMax;
+      const xA = Math.max(gx0, winX0), xB = Math.min(gx1, winX1);
+      if (xB - xA <= 0) continue;
+      const zA = Math.max(gz0, winZ0), zB = Math.min(gz1, winZ1);
+      if (zB - zA <= 0) continue;
+      const spanX = gx1 - gx0, spanZ = gz1 - gz0;
+      if (spanX <= 0 || spanZ <= 0) continue;
+
+      const dx = 1 + (xA - winX0) * pxScale;
+      const dw = (xB - xA) * pxScale;
+      const dy = MM_BOX_Y + 1 + (zA - winZ0) * pxScale;
+      const dh = (zB - zA) * pxScale;
+      drawImgSub(tile, dx, dy, dw, dh,
+        (xA - gx0) / spanX, (zA - gz0) / spanZ,
+        (xB - xA) / spanX, (zB - zA) / spanZ);
     }
 
-    // 玩家箭头（原版 DrawMapArrow：无条件画，绕玩家像素旋转 yaw；贴图/位置在界外仍显示）
+    // 玩家箭头：窗口以玩家为中心 ⇒ 恒在框中心旋转（原版 DrawMapArrow）
     const arrow = mmImg.get('/res/image/arrow.tga');
     if (arrow) {
       mmCtx.save();
-      mmCtx.translate(mmPlayerPx, mmPlayerPy);
+      mmCtx.translate(MM_HALF, MM_BOX_Y + MM_HALF);
       mmCtx.scale(-1, 1);        // 若箭头仅 E/W 反向请保留，否则删此行
       mmCtx.rotate(selfAngle);
       mmCtx.drawImage(arrow, -8, -8, 16, 16);
