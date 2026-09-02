@@ -19,6 +19,8 @@ export interface KeyBinding {
   getAll(): Record<GameAction, string | null>
   save(): void
   load(): void
+  onKeyDown(callback: (action: GameAction) => void): () => void
+  dispose(): void
 }
 
 const STORAGE_KEY = 'pt-keybindings'
@@ -53,6 +55,25 @@ const DEFAULT_BINDINGS: Record<GameAction, string | null> = {
 
 export function createKeyBinding(): KeyBinding {
   let bindings = { ...DEFAULT_BINDINGS }
+  let actionCallbacks: ((action: GameAction) => void)[] = []
+
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+      return
+    }
+
+    for (const [action, key] of Object.entries(bindings)) {
+      if (key && e.code === key) {
+        e.preventDefault()
+        for (const cb of actionCallbacks) {
+          cb(action as GameAction)
+        }
+        break
+      }
+    }
+  }
+
+  window.addEventListener('keydown', handleKeyDown)
 
   function get(action: GameAction): string | null {
     return bindings[action]
@@ -88,5 +109,20 @@ export function createKeyBinding(): KeyBinding {
 
   load()
 
-  return { get, set, reset, getAll, save, load }
+  return {
+    get,
+    set,
+    reset,
+    getAll,
+    save,
+    load,
+    onKeyDown: (cb) => {
+      actionCallbacks.push(cb)
+      return () => { actionCallbacks = actionCallbacks.filter(h => h !== cb) }
+    },
+    dispose: () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      actionCallbacks = []
+    }
+  }
 }
