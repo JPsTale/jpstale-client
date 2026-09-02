@@ -963,6 +963,7 @@ export function createWorldView(container: HTMLElement): WorldView {
         `Draw  ${dc}\n` +
         `Tris  ${Math.round(visT).toLocaleString()} / ${totT.toLocaleString()}\n` +
         `Verts ${verts.toLocaleString()}\n` +
+        `Pos   ${selfPos.x.toFixed(1)}, ${selfPos.y.toFixed(1)}, ${selfPos.z.toFixed(1)}  m${currentMapId}\n` +
         `Time  ${String(dnDebugHour ?? dayNightHour).padStart(2, '0')}:${String(dayNightMin).padStart(2, '0')}${dnDebugHour !== null ? '*' : ''} Dark ${dayDark}`;
       frameCount = 0; fpsAcc = 0;
     }
