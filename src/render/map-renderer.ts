@@ -69,9 +69,28 @@ export class MapRenderer {
   buildTimeMs = 0;
   buildCellTimeMs = 0;
   private renderStamp = 0;
+  private isNight = false;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
+  }
+
+  setNightDay(night: boolean): void {
+    this.isNight = night;
+    // 调整场景雾气颜色
+    if (this.scene.fog) {
+      const fog = this.scene.fog as THREE.Fog;
+      fog.color.setHex(night ? 0x111122 : 0xffffff);
+    }
+    // 调整环境光
+    const ambientLight = this.scene.children.find(c => c instanceof THREE.AmbientLight) as THREE.AmbientLight | undefined;
+    if (ambientLight) {
+      ambientLight.intensity = night ? 0.3 : 1.0;
+    }
+  }
+
+  getNightDay(): boolean {
+    return this.isNight;
   }
 
   build(smdData: SMDData, texMap: Map<string, THREE.Texture>, getMatConfig: (matIdx: number, mat: import('../core/smd-parser').SMDMaterial) => MatConfig | null): void {
