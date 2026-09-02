@@ -1,27 +1,159 @@
+import { decodeTextureAsync } from '../core/texture.js';
+
 export interface HudState {
-  hp: number; maxHp: number;
-  mp: number; maxMp: number;
-  level: number;
+  hp: number; maxHp: number
+  mp: number; maxMp: number
+  stm: number; maxStm: number
+  exp: number; maxExp: number
+  level: number
+  playerName: string
 }
 
 export interface Hud {
-  show(state: HudState): void;
-  hide(): void;
-  destroy(): void;
+  show(state: HudState): void
+  hide(): void
+  dispose(): void
+}
+
+const W = 1280
+const H = 720
+
+interface Tex { el: HTMLImageElement; w: number; h: number }
+
+const TEXTURES: Record<string, string> = {
+  life: 'inter/bar_life.bmp',
+  mana: 'inter/bar_mana.bmp',
+  stm: 'inter/bar_stamina.bmp',
+  exp: 'inter/sinGage/bar_exp.bmp',
+  b0: 'inter/bstatus.bmp', b1: 'inter/binventory.bmp', b2: 'inter/bskill.bmp',
+  b3: 'inter/bparty.bmp', b4: 'inter/bquest.bmp', b5: 'inter/bsystem.bmp',
+  walk: 'inter/Button/walk.bmp',
+  cam1: 'inter/Button/autocameraimage.bmp',
+  cam2: 'inter/Button/pixcameraimage.bmp',
+  mapOn: 'inter/Button/maponimage.bmp',
+  sun: 'inter/Flash/sun.bmp',
+  moon: 'inter/Flash/moon.bmp',
+  barTime: 'inter/sinGage/bar_time.bmp',
+  gageL: 'Skill/p-skill.bmp',
+  gageR: 'Skill/p-skill2.bmp',
+  inter1: 'inter/inter_01.bmp', inter2: 'inter/inter_02.bmp', inter3: 'inter/inter_03.bmp',
+};
+
+async function loadTex(rel: string): Promise<Tex | null> {
+  const url = '/res/image/sinimage/' + rel;
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const buf = await resp.arrayBuffer();
+    const decoded = await decodeTextureAsync(buf);
+    if (!decoded) return null;
+    const c = document.createElement('canvas');
+    c.width = decoded.width;
+    c.height = decoded.height;
+    const cx = c.getContext('2d')!;
+    cx.putImageData(new ImageData(new Uint8ClampedArray(decoded.pixels), decoded.width, decoded.height), 0, 0);
+    const el = new Image();
+    el.src = c.toDataURL();
+    await new Promise<void>(r => { el.onload = () => r(); el.onerror = () => r(); });
+    return { el, w: decoded.width, h: decoded.height };
+  } catch { return null; }
 }
 
 export function createHud(container: HTMLElement): Hud {
-  const el = document.createElement('div');
-  el.className = 'hud';
-  el.style.cssText = 'display:none;position:absolute;top:8px;left:8px;color:#fff;font:12px monospace;text-shadow:1px 1px 2px #000';
-  container.appendChild(el);
+  const canvas = document.createElement('canvas');
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.position = 'fixed';
+  canvas.style.inset = '0';
+  canvas.style.pointerEvents = 'none';
+  container.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d')!;
+  let currentState: HudState | null = null;
+  const textures: Partial<Record<string, Tex>> = {};
+  let rafId = 0;
+
+  function fitCanvas() {
+    const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
+    canvas.style.width = `${W * scale}px`;
+    canvas.style.height = `${H * scale}px`;
+    canvas.style.left = `${(window.innerWidth - W * scale) / 2}px`;
+    canvas.style.top = `${(window.innerHeight - H * scale) / 2}px`;
+  }
+
+  function drawTex(name: string, x: number, y: number, w: number, h: number) {
+    const t = textures[name];
+    if (!t?.el) return;
+    ctx.drawImage(t.el, x, y, w, h);
+  }
+
+  function drawBar(name: string, x: number, y: number, w: number, h: number, value: number, max: number) {
+    const t = textures[name];
+    if (!t?.el) return;
+    const ratio = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
+    const fillH = Math.max(1, Math.round(t.h * ratio));
+    const sy = t.h - fillH;
+    const dh = h * ratio;
+    ctx.drawImage(t.el, 0, sy, t.w, fillH, x, y + h - dh, w, dh);
+  }
+
+  function draw() {
+    if (!currentState) return;
+    ctx.clearRect(0, 0, W, H);
+
+    drawTex('inter1', 800, 720 - 64, 66, 64);
+    drawTex('inter2', 866, 720 - 64, 64, 64);
+    drawTex('inter3', 930, 720 - 64, 40, 64);
+
+    drawBar('life', 319, 500, 16, 94, currentState.hp, currentState.maxHp);
+    drawBar('mana', 465, 500, 16, 94, currentState.mp, currentState.maxMp);
+    drawBar('stm', 303, 518, 8, 76, currentState.stm, currentState.maxStm);
+
+    drawTex('gageL', 338, 542, 16, 41);
+    drawTex('gageR', 446, 542, 16, 41);
+
+    drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
+
+    drawTex('moon', 426, 589, 13, 13);
+    drawTex('barTime', 375, 593, 50, 5);
+
+    drawTex('walk', 575, 565, 24, 25);
+    drawTex('cam1', 599, 565, 24, 25);
+    drawTex('mapOn', 623, 565, 24, 25);
+
+    for (let t = 0; t < 6; t++) {
+      drawTex('b' + t, 648 + t * 25, 560, 25, 27);
+    }
+  }
+
+  function loop() {
+    draw();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  async function loadAllTextures() {
+    const keys = Object.keys(TEXTURES);
+    const loaded = await Promise.all(keys.map(k => loadTex(TEXTURES[k])));
+    keys.forEach((k, i) => { if (loaded[i]) textures[k] = loaded[i]!; });
+  }
+
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+  loadAllTextures().then(loop);
 
   return {
-    show(state) {
-      el.innerHTML = `HP ${state.hp}/${state.maxHp} | MP ${state.mp}/${state.maxMp} | Lv.${state.level}`;
-      el.style.display = 'block';
+    show(state: HudState) {
+      currentState = state;
+      canvas.style.display = 'block';
     },
-    hide() { el.style.display = 'none'; },
-    destroy() { el.remove(); },
+    hide() {
+      canvas.style.display = 'none';
+      currentState = null;
+    },
+    dispose() {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', fitCanvas);
+      canvas.remove();
+    }
   };
 }

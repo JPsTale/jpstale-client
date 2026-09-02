@@ -77,6 +77,7 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
     }
     case AppScreen.WORLD: {
       const state = args[0] as HudState | undefined;
+      console.log('[app] WORLD screen, hudState=', state);
       if (state) hudPanel.show(state);
       const enterGame = args[1] as EnterGameInfo | undefined;
       if (enterGame) worldView.show(enterGame);
@@ -166,7 +167,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const hudState: HudState = {
         hp: ps.hp || 0, maxHp: ps.maxHp || 0,
         mp: ps.mp || 0, maxMp: ps.maxMp || 0,
-        level: ps.level || 1,
+        stm: 0, maxStm: 0,
+        level: Number(ps.level) || 1,
+        exp: Number(ps.exp) || 0, maxExp: 0,
+        playerName: '',
       };
       if (getScreen() !== AppScreen.WORLD) {
         go(AppScreen.WORLD, hudState);
@@ -178,8 +182,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
     case 'enterGame': {
       const eg = msg.enterGame!;
       const hudState: HudState = {
-        hp: 100, maxHp: 100, mp: 50, maxMp: 50,
+        hp: 100, maxHp: 100, mp: 50, maxMp: 50, stm: 0, maxStm: 0,
         level: eg.appearance?.classId ? 1 : 1,
+        exp: 0, maxExp: 0,
+        playerName: '',
       };
       const enterGame: EnterGameInfo = {
         playerId: Number(eg.playerId),
