@@ -152,6 +152,7 @@ export function createWorldView(container: HTMLElement): WorldView {
   root.appendChild(mmEl);
   const mmCtx = mmEl.getContext('2d')!;
   let mmVisible = true;
+  let mmPlayerPx = MM_HALF, mmPlayerPy = MM_BOX_Y + MM_HALF, mmPlayerInside = true; // 玩家像素（箭头位置）
   const mmImg = new Map<string, HTMLImageElement>(); // url → image
   const mmLoading = new Set<string>();
   let mmAssetsInit = false;          // arrow/mapbox 一次性
@@ -221,37 +222,47 @@ export function createWorldView(container: HTMLElement): WorldView {
     mmCtx.fillStyle = 'rgba(0,0,0,0.5)';
     mmCtx.fillRect(0, MM_BOX_Y, 128, 128);
 
-    // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口，插 1px）
-    // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口，插 1px）
-    // 世界语义（对齐 RenderMapPng）：东=+X、北=−Z；图水平=A(东)→右，垂直=C(北)→上
+    // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口）
+    // 世界语义：东=+X、北=−Z；图水平 v 轴 → 右，垂直 → 上
     const mapUrl = mmFieldBase() ? `/res/field/map/${mmFieldBase()}.tga` : '';
     const terrain = mapUrl ? mmImg.get(mapUrl) : undefined;
     if (terrain) {
-      const spanX = Math.max(mxx - mnx, 1e-6);      // 东-西 world 跨距（水平）
-      const spanZ = Math.max(mxz - mnz, 1e-6);      // 南-北 world 跨距（垂直，北=−Z）
-      // 视口半宽 = 格数×64（world 单位）；原版 = mode*64*fONE(raw)，÷256 抵消 → 浮点直接 mode*64
+      const spanX = Math.max(mxx - mnx, 1e-6);   // 东-西 world 跨距（水平）
+      const spanZ = Math.max(mxz - mnz, 1e-6);   // 南-北 world 跨距（垂直，北=−Z）
+      // 视口半宽 = 格数×64（world 单位）
       const half = (mapLightProfile(currentMapId).mode === 'fixed' ? 16 : 24) * 64;
-      const fmx = (selfPos.x - mnx) / spanX;        // 东 = +X，向右
-      const fmy = (selfPos.z - mnz) / spanZ;        // 北 = −Z，即 z 小在上 → 顶
-      const fpx = half / spanX;
-      const fpy = half / spanZ;
-      let fx = fmx - fpx, fw = fmx + fpx;
-      let fy = fmy - fpy, fh = fmy + fpy;
-      if (((fx < 0 && fw < 0) || (fx > 1 && fw > 1)) || ((fy < 0 && fh < 0) || (fy > 1 && fh > 1))) return;
-      let dx = 1, dy = 1 + MM_BOX_Y, dw = 126, dh = 126; // inset 1px（原版 px+1,py+1）
-      if (fx < 0) { const sc = -fx * (64 / fpx); dx += sc; dw -= sc; fx = 0; }
-      if (fw > 1) { const sc = (fw - 1) * (64 / fpx); dw -= sc; fw = 1; }
-      if (fy < 0) { const sc = -fy * (64 / fpy); dy += sc; dh -= sc; fy = 0; }
-      if (fh > 1) { const sc = (fh - 1) * (64 / fpy); dh -= sc; fh = 1; }
-      drawImgSub(terrain, dx, dy, dw, dh, fx, fy, fw, fh);
+      const fmx = (selfPos.x - mnx) / spanX;     // 玩家 东(+X) 位置分数
+      const fmy = (selfPos.z - mnz) / spanZ;     // 玩家 北(−Z) 位置分数（小 z 在上）
+      const fpx = half / spanX, fpy = half / spanZ;
+      const uLo = fmx - fpx, uHi = fmx + fpx;    // 视口采样窗
+      const vLo = fmy - fpy, vHi = fmy + fpy;
+
+      // 精确 UV→像素：固定内容比例，窗越界一侧留空(露黑底)，玩家像素始终按其 uv 位置
+      const pxPerU = 126 / Math.max(uHi - uLo, 1e-9);
+      const pxPerV = 126 / Math.max(vHi - vLo, 1e-9);
+      const sU0 = Math.max(0, uLo), sU1 = Math.min(1, uHi);
+      const sV0 = Math.max(0, vLo), sV1 = Math.min(1, vHi);
+      const dx = 1 + (sU0 - uLo) * pxPerU;
+      const dw = (sU1 - sU0) * pxPerU;
+      const dy = MM_BOX_Y + 1 + (sV0 - vLo) * pxPerV;
+      const dh = (sV1 - sV0) * pxPerV;
+      if (dw > 0 && dh > 0) {
+        drawImgSub(terrain, dx, dy, dw, dh, sU0, sV0, sU1 - sU0, sV1 - sV0);
+      }
+      mmPlayerPx = 1 + (fmx - uLo) * pxPerU;             // 玩家像素（东）
+      mmPlayerPy = MM_BOX_Y + 1 + (fmy - vLo) * pxPerV;  // 玩家像素（北）
+      mmPlayerInside = uLo >= 0 && uHi <= 1 && vLo >= 0 && vHi <= 1;
+    } else {
+      mmPlayerInside = false;
     }
 
-    // 玩家箭头（原版 DrawMapArrow：框中心，绕中心旋转 yaw）
-    // 北 = −Z 向上 ⇒ forward=(sin,cos) 在画布为 (sin,−cos)；ctx.rotate(selfAngle) 使贴图 +y 头指向前方
+    // 玩家箭头（原版 DrawMapArrow：绕玩家像素旋转 yaw）
+    // 北 = −Z 向上 ⇒ forward=(sin,cos) 在画布为 (sin,−cos)；mirror 修正贴图轴向(E/W)
     const arrow = mmImg.get('/res/image/arrow.tga');
-    if (arrow) {
+    if (arrow && mmPlayerInside) {
       mmCtx.save();
-      mmCtx.translate(MM_HALF, MM_BOX_Y + MM_HALF);
+      mmCtx.translate(mmPlayerPx, mmPlayerPy);
+      mmCtx.scale(-1, 1);        // 若箭头仅 E/W 反向请保留，否则删此行
       mmCtx.rotate(selfAngle);
       mmCtx.drawImage(arrow, -8, -8, 16, 16);
       mmCtx.restore();
