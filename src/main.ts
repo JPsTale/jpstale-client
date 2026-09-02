@@ -193,6 +193,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         level: Number(ps.level) || 1,
         exp: Number(ps.exp) || 0, maxExp: 0,
         playerName: '',
+        gameClock,
       };
       if (getScreen() !== AppScreen.WORLD) {
         go(AppScreen.WORLD, hudState);
@@ -203,11 +204,13 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'enterGame': {
       const eg = msg.enterGame!;
+      gameClock.setInitialTime(Date.now());
       const hudState: HudState = {
         hp: 100, maxHp: 100, mp: 50, maxMp: 50, stm: 0, maxStm: 0,
         level: eg.appearance?.classId ? 1 : 1,
         exp: 0, maxExp: 0,
         playerName: '',
+        gameClock,
       };
       const enterGame: EnterGameInfo = {
         playerId: Number(eg.playerId),
