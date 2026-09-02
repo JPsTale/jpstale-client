@@ -140,64 +140,135 @@ export function createWorldView(container: HTMLElement): WorldView {
   statsEl.style.cssText = 'position:absolute;left:8px;bottom:8px;padding:6px 10px;background:rgba(0,0,0,0.72);color:#cfc;font:12px/1.5 monospace;border:1px solid #486;z-index:60;user-select:none;pointer-events:none;white-space:pre;';
   root.appendChild(statsEl);
 
-  // ── 场内小地图（128×128，原版右上角；玩家箭头按移动朝向旋转，TAB 开关）──
-  const MM_SIZE = 128;
+  // ── 场内小地图（忠实原版 playsub.cpp DrawFieldMap：北向滚动视口整场缩略图 + 中心箭头 + MapBox + 标题）
+  // 全浮点移植：剥掉原版 8 位定点(fONE=256/FLOATNS=8)与 4096 角度查表，比例语义不变。
+  // 画布布局：y0..16 = 标题条；y16..144 = 128×128 地图框（原版 (px,py)，py=426+(WinSizeY-600)）。
+  const MM_BOX_Y = 16;               // 框顶部（标题条高度）
+  const MM_HALF = 64;                // 框中心 = px+64
   const mmEl = document.createElement('canvas');
-  mmEl.width = MM_SIZE; mmEl.height = MM_SIZE;
-  mmEl.style.cssText = 'position:absolute;right:10px;top:10px;z-index:60;pointer-events:none;background:rgba(10,16,10,0.62);border:2px solid #b59a5a;box-sizing:border-box;';
+  mmEl.width = 128; mmEl.height = 144;
+  mmEl.style.cssText = 'position:absolute;z-index:60;pointer-events:none;';
   root.appendChild(mmEl);
   const mmCtx = mmEl.getContext('2d')!;
   let mmVisible = true;
+  const mmImg = new Map<string, HTMLImageElement>(); // url → image
+  const mmLoading = new Set<string>();
+  let mmAssetsInit = false;          // arrow/mapbox 一次性
+  let mmMapFor = -1;                 // 当前场地缩略图已请求的 mapId
+
+  async function ensureMMImg(url: string): Promise<void> {
+    if (mmImg.has(url) || mmLoading.has(url)) return;
+    mmLoading.add(url);
+    try {
+      const resp = await fetch(url);
+      if (!resp.ok) return;
+      const dec = await decodeTextureAsync(await resp.arrayBuffer());
+      if (!dec) return;
+      const c = document.createElement('canvas');
+      c.width = dec.width; c.height = dec.height;
+      c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(dec.pixels), dec.width, dec.height), 0, 0);
+      const img = new Image();
+      img.src = c.toDataURL();
+      await new Promise<void>((r) => { img.onload = () => r(); img.onerror = () => r(); });
+      mmImg.set(url, img);
+    } catch { /* 缺资源忽略 */ } finally {
+      mmLoading.delete(url);
+    }
+  }
+
+  function drawImgSub(img: HTMLImageElement, dx: number, dy: number, dw: number, dh: number, fx: number, fy: number, fw: number, fh: number): void {
+    mmCtx.drawImage(img, fx * img.width, fy * img.height, Math.max(fw, 1e-4) * img.width, Math.max(fh, 1e-4) * img.height, dx, dy, Math.max(dw, 0), Math.max(dh, 0));
+  }
+
+  // 场地缩略图与标题：<ase名>.tga / <ase名>t.tga（与 smd basename 一致，SetName 拼路径）
+  function mmFieldBase(): string | null {
+    const p = MAP_CATALOG[currentMapId];
+    if (!p) return null;
+    const b = p.split('/').pop() || '';
+    return b.replace(/\.smd$/i, '');
+  }
+
+  // 原版不显示小地图的场（SOD/quest-arena/ACTION/boss36）
+  function mmFieldHidden(): boolean {
+    return [30, 32, 36, 39].includes(currentMapId);
+  }
 
   function drawMinimap(): void {
-    mmCtx.clearRect(0, 0, MM_SIZE, MM_SIZE);
-    if (!mmVisible || mapHandles.size === 0) return;
-    // 显示范围 = 所有已加载地图的 world AABB 并集（世界坐标连续，跨图/桥口可跟踪）
-    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-    for (const mh of mapHandles.values()) {
-      const [wx1, , wz1] = mh.mapRenderer.worldMin;
-      const [wx2, , wz2] = mh.mapRenderer.worldMax;
-      minX = Math.min(minX, wx1, wx2); maxX = Math.max(maxX, wx1, wx2);
-      minZ = Math.min(minZ, wz1, wz2); maxZ = Math.max(maxZ, wz1, wz2);
+    // 屏幕定位：px=656+(W-800)=W-144，py=426+(H-600)=H-174；标题在 py-16 之上
+    const px = window.innerWidth - 144;
+    const py = window.innerHeight - 174;
+    mmEl.style.left = `${px}px`;
+    mmEl.style.top = `${py - MM_BOX_Y}px`;
+    mmCtx.clearRect(0, 0, 128, 144);
+    if (!mmVisible || mmFieldHidden()) return;
+    if (!mmAssetsInit) {
+      mmAssetsInit = true;
+      ensureMMImg('/res/image/arrow.tga');
+      ensureMMImg('/res/image/mapbox.tga');
     }
-    if (minX === Infinity) return;
-    const pad = 4;
-    const spanX = Math.max(maxX - minX, 1e-6);
-    const spanZ = Math.max(maxZ - minZ, 1e-6);
-    const scale = (MM_SIZE - pad * 2) / Math.max(spanX, spanZ);
-    const mapX = (x: number) => pad + (x - minX) * scale;
-    const mapY = (z: number) => pad + (z - minZ) * scale;
-    // 已加载地图矩形（当前图高亮，邻图淡）
-    for (const [mapId, mh] of mapHandles) {
-      const [wx1, , wz1] = mh.mapRenderer.worldMin;
-      const [wx2, , wz2] = mh.mapRenderer.worldMax;
-      const x = mapX(Math.min(wx1, wx2)), y = mapY(Math.min(wz1, wz2));
-      const w = Math.abs(wx2 - wx1) * scale, h = Math.abs(wz2 - wz1) * scale;
-      if (mapId === currentMapId) {
-        mmCtx.fillStyle = 'rgba(180,200,120,0.18)';
-        mmCtx.fillRect(x, y, w, h);
-        mmCtx.strokeStyle = '#d8c478';
-      } else {
-        mmCtx.fillStyle = 'rgba(255,255,255,0.05)';
-        mmCtx.fillRect(x, y, w, h);
-        mmCtx.strokeStyle = 'rgba(255,255,255,0.18)';
+    if (mmMapFor !== currentMapId) {
+      mmMapFor = currentMapId;
+      const b = mmFieldBase();
+      if (b) {
+        ensureMMImg(`/res/field/map/${b}.tga`);
+        ensureMMImg(`/res/field/title/${b}t.tga`);
       }
-      mmCtx.lineWidth = 1;
-      mmCtx.strokeRect(x, y, w, h);
     }
-    // 玩家箭头：朝向 = 移动方向 (sin, cos)，画布 +x 右 / +z 下（相机从 +z 侧俯视）
-    const px = mapX(selfPos.x), py = mapY(selfPos.z);
-    const f = (v: number) => v * 7; // 箭头长度
-    mmCtx.strokeStyle = '#ffe95a';
-    mmCtx.lineWidth = 2;
-    mmCtx.beginPath();
-    mmCtx.moveTo(px, py);
-    mmCtx.lineTo(px + Math.sin(selfAngle) * f(1), py + Math.cos(selfAngle) * f(1));
-    mmCtx.stroke();
-    mmCtx.fillStyle = '#ffe95a';
-    mmCtx.beginPath();
-    mmCtx.arc(px, py, 3, 0, Math.PI * 2);
-    mmCtx.fill();
+    const mh = mapHandles.get(currentMapId);
+    if (!mh) return;
+    const [mnx, , mnz] = mh.mapRenderer.worldMin;
+    const [mxx, , mxz] = mh.mapRenderer.worldMax;
+
+    // 半透明黑底（原版 dsDrawColorBox(0,0,0,128)）
+    mmCtx.fillStyle = 'rgba(0,0,0,0.5)';
+    mmCtx.fillRect(0, MM_BOX_Y, 128, 128);
+
+    // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口，插 1px）
+    const mapUrl = mmFieldBase() ? `/res/field/map/${mmFieldBase()}.tga` : '';
+    const terrain = mapUrl ? mmImg.get(mapUrl) : undefined;
+    if (terrain) {
+      const spanWz = Math.max(mxz - mnz, 1e-6); // world z 跨距（对应 fmx 轴）
+      const spanWx = Math.max(mxx - mnx, 1e-6); // world x 跨距（对应 fmy 轴）
+      // 视口半宽 = 格数×64（world 单位）；原版 = mode*64*fONE(raw)，÷256 抵消 → 浮点直接 mode*64
+      const half = (mapLightProfile(currentMapId).mode === 'fixed' ? 16 : 24) * 64;
+      const fmx = (mxz - selfPos.z) / spanWz;      // x=(pX-L) 等价世界化
+      const fmy = (selfPos.x - mnx) / spanWx;      // z=(B-pZ) 等价世界化
+      const fpx = half / spanWz;
+      const fpy = half / spanWx;
+      let fx = fmx - fpx, fw = fmx + fpx;
+      let fy = fmy - fpy, fh = fmy + fpy;
+      if (((fx < 0 && fw < 0) || (fx > 1 && fw > 1)) || ((fy < 0 && fh < 0) || (fy > 1 && fh > 1))) return;
+      let dx = 1, dy = 1 + MM_BOX_Y, dw = 126, dh = 126; // inset 1px（原版 px+1,py+1）
+      if (fx < 0) { const sc = -fx * (64 / fpx); dx += sc; dw -= sc; fx = 0; }
+      if (fw > 1) { const sc = (fw - 1) * (64 / fpx); dw -= sc; fw = 1; }
+      if (fy < 0) { const sc = -fy * (64 / fpy); dy += sc; dh -= sc; fy = 0; }
+      if (fh > 1) { const sc = (fh - 1) * (64 / fpy); dh -= sc; fh = 1; }
+      drawImgSub(terrain, dx, dy, dw, dh, fx, fy, fw, fh);
+    }
+
+    // 玩家箭头（原版 DrawMapArrow：框中心，绕中心旋转 yaw）
+    // 北向上：屏幕 y↑ = world +z。forward=(sin,cos)→画布 (sin,-cos)；ctx.rotate(selfAngle) 使贴图 +y 头指向该方向
+    const arrow = mmImg.get('/res/image/arrow.tga');
+    if (arrow) {
+      mmCtx.save();
+      mmCtx.translate(MM_HALF, MM_BOX_Y + MM_HALF);
+      mmCtx.rotate(selfAngle);
+      mmCtx.drawImage(arrow, -8, -8, 16, 16);
+      mmCtx.restore();
+    }
+
+    // 边框（原版 MapBox 最后覆盖，中心镂空）
+    const box = mmImg.get('/res/image/mapbox.tga');
+    if (box) mmCtx.drawImage(box, 0, MM_BOX_Y, 128, 128);
+
+    // 标题条（原版 psDrawTexImage_Point 于 (px,py-16)，点采样）
+    const titleUrl = mmFieldBase() ? `/res/field/title/${mmFieldBase()}t.tga` : '';
+    const title = titleUrl ? mmImg.get(titleUrl) : undefined;
+    if (title) {
+      mmCtx.imageSmoothingEnabled = false;
+      mmCtx.drawImage(title, 0, 0, 128, 16);
+      mmCtx.imageSmoothingEnabled = true;
+    }
   }
 
   function toggleMinimap(): void {
