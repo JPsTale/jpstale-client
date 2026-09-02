@@ -25,7 +25,7 @@ const worldBoundsCache = new Map<string, [number, number, number, number]>();
 
 /**
  * 获取地图 world AABB（XZ 平面矩形），用缓存 SMD 解析，不建渲染。
- * 换算对齐 map-renderer：wx = -rawZ/256, wz = -rawX/256。
+ * 换算对齐 map-renderer：raw A(东)→+X，raw C(北)→−Z。
  */
 export async function getMapWorldBounds(smdPath: string): Promise<[number, number, number, number] | null> {
   const cached = worldBoundsCache.get(smdPath);
@@ -35,8 +35,8 @@ export async function getMapWorldBounds(smdPath: string): Promise<[number, numbe
     const data = parseSMD(buf);
     const b = data.bounds;
     const S = 1 / 256;
-    const xMin = -b.maxZ * S, xMax = -b.minZ * S;
-    const zMin = -b.maxX * S, zMax = -b.minX * S;
+    const xMin = b.minX * S, xMax = b.maxX * S;
+    const zMin = -b.maxZ * S, zMax = -b.minZ * S;
     const r: [number, number, number, number] = [xMin, xMax, zMin, zMax];
     worldBoundsCache.set(smdPath, r);
     return r;

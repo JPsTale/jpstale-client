@@ -72,8 +72,10 @@ export async function loadDecor(asePath: string, color: number): Promise<THREE.G
           y = (v.x * tm[1] + v.y * tm[5] + v.z * tm[9]) / 256;
           z = (v.x * tm[2] + v.y * tm[6] + v.z * tm[10]) / 256;
         }
-        // 角色变换 + 位置
-        positions.push(x + pos.x, z + pos.y, -y + pos.z);
+        // 角色变换 + 位置 → 旧世界系（绕 Y 镜面 old: (-Z, ·, -X)），
+        // 再统一转到新世界系：new=(+X, ·, −Z)，即 old(X,Z) 绕 Y +90° → (−Z, X)
+        const wx = x + pos.x, wy = z + pos.y, wz = -y + pos.z; // old 系
+        positions.push(-wz, wy, wx); // new 系（与 map-renderer 顶点/rawToWorld 对齐）
       }
       indices.push(triIdx * 3, triIdx * 3 + 1, triIdx * 3 + 2);
       triIdx++;

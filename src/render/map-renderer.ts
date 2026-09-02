@@ -79,9 +79,10 @@ export class MapRenderer {
     const t0 = performance.now();
 
     const b = smdData.bounds;
-    const wx1 = -b.maxZ * S, wx2 = -b.minZ * S;
+    // raw→GL：+A(东)→+X，北(+C)→−Z（对齐 pt-game-server RenderMapPng 世界语义）
+    const wx1 = b.minX * S, wx2 = b.maxX * S;
     const wy1 = b.minY * S, wy2 = b.maxY * S;
-    const wz1 = -b.maxX * S, wz2 = -b.minX * S;
+    const wz1 = -b.maxZ * S, wz2 = -b.minZ * S;
     this.worldMin = [Math.min(wx1, wx2), wy1, Math.min(wz1, wz2)];
     this.worldMax = [Math.max(wx1, wx2), wy2, Math.max(wz1, wz2)];
     this.worldWidth = this.worldMax[0] - this.worldMin[0];
@@ -94,7 +95,7 @@ export class MapRenderer {
     for (const l of smdData.lights || []) {
       this.lights.push({
         type: l.type,
-        wx: -l.z * S, wy: l.y * S, wz: -l.x * S,
+        wx: l.x * S, wy: l.y * S, wz: -l.z * S,
         range: l.range, r: l.r, g: l.g, b: l.b,
       });
     }
@@ -163,9 +164,9 @@ export class MapRenderer {
       const vids = [a, bb, c];
       for (let j = 0; j < 3; j++) {
         const vi = vids[j];
-        const wx = -smdData.verts[vi * 3 + 2] * S;
+        const wx = smdData.verts[vi * 3] * S;         // raw A(东) → +X
         const wy = smdData.verts[vi * 3 + 1] * S;
-        const wz = -smdData.verts[vi * 3] * S;
+        const wz = -smdData.verts[vi * 3 + 2] * S;    // raw C(北) → −Z
         pos2[fi * 9 + j * 3] = wx;
         pos2[fi * 9 + j * 3 + 1] = wy;
         pos2[fi * 9 + j * 3 + 2] = wz;

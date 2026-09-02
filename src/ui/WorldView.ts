@@ -42,9 +42,9 @@ export interface WorldView {
   toggleMinimap(): void;
 }
 
-/** 服务端出生点 → 世界坐标（对齐 /pt/maps/ positionDummyAtSpawn：worldX=-z, worldZ=-x，y 是地形高度） */
+/** 服务端出生点(原始坐标 x=东,y,z=北) → 世界：东→+X，北→−Z */
 export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
-  return new THREE.Vector3(-z, y, -x);
+  return new THREE.Vector3(x, y, -z);
 }
 
 export function createWorldView(container: HTMLElement): WorldView {
@@ -222,17 +222,19 @@ export function createWorldView(container: HTMLElement): WorldView {
     mmCtx.fillRect(0, MM_BOX_Y, 128, 128);
 
     // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口，插 1px）
+    // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口，插 1px）
+    // 世界语义（对齐 RenderMapPng）：东=+X、北=−Z；图水平=A(东)→右，垂直=C(北)→上
     const mapUrl = mmFieldBase() ? `/res/field/map/${mmFieldBase()}.tga` : '';
     const terrain = mapUrl ? mmImg.get(mapUrl) : undefined;
     if (terrain) {
-      const spanWz = Math.max(mxz - mnz, 1e-6); // world z 跨距（对应 fmx 轴）
-      const spanWx = Math.max(mxx - mnx, 1e-6); // world x 跨距（对应 fmy 轴）
+      const spanX = Math.max(mxx - mnx, 1e-6);      // 东-西 world 跨距（水平）
+      const spanZ = Math.max(mxz - mnz, 1e-6);      // 南-北 world 跨距（垂直，北=−Z）
       // 视口半宽 = 格数×64（world 单位）；原版 = mode*64*fONE(raw)，÷256 抵消 → 浮点直接 mode*64
       const half = (mapLightProfile(currentMapId).mode === 'fixed' ? 16 : 24) * 64;
-      const fmx = (mxz - selfPos.z) / spanWz;      // x=(pX-L) 等价世界化
-      const fmy = (selfPos.x - mnx) / spanWx;      // z=(B-pZ) 等价世界化
-      const fpx = half / spanWz;
-      const fpy = half / spanWx;
+      const fmx = (selfPos.x - mnx) / spanX;        // 东 = +X，向右
+      const fmy = (selfPos.z - mnz) / spanZ;        // 北 = −Z，即 z 小在上 → 顶
+      const fpx = half / spanX;
+      const fpy = half / spanZ;
       let fx = fmx - fpx, fw = fmx + fpx;
       let fy = fmy - fpy, fh = fmy + fpy;
       if (((fx < 0 && fw < 0) || (fx > 1 && fw > 1)) || ((fy < 0 && fh < 0) || (fy > 1 && fh > 1))) return;
@@ -245,7 +247,7 @@ export function createWorldView(container: HTMLElement): WorldView {
     }
 
     // 玩家箭头（原版 DrawMapArrow：框中心，绕中心旋转 yaw）
-    // 北向上：屏幕 y↑ = world +z。forward=(sin,cos)→画布 (sin,-cos)；ctx.rotate(selfAngle) 使贴图 +y 头指向该方向
+    // 北 = −Z 向上 ⇒ forward=(sin,cos) 在画布为 (sin,−cos)；ctx.rotate(selfAngle) 使贴图 +y 头指向前方
     const arrow = mmImg.get('/res/image/arrow.tga');
     if (arrow) {
       mmCtx.save();
@@ -259,7 +261,6 @@ export function createWorldView(container: HTMLElement): WorldView {
     const box = mmImg.get('/res/image/mapbox.tga');
     if (box) mmCtx.drawImage(box, 0, MM_BOX_Y, 128, 128);
 
-    // 标题条（原版 psDrawTexImage_Point 于 (px,py-16)，点采样）
     // 标题（原版 psDrawTexImage_Point 于 (px,py-16)；为 i18n 改文本，不走 <name>t.tga 贴图）
     const name = t(`map.${currentMapId}`);
     if (!name.startsWith('map.')) {
@@ -636,7 +637,7 @@ export function createWorldView(container: HTMLElement): WorldView {
   // 先 AABB 粗筛；多命中或无命中（桥口在图 AABB 外）用已加载图碰撞网格高度判定
   // （对齐原版：遍历 stage 用 GetFloorHeight，谁有地面就在哪）。
   function findCurrentMap(wx: number, wz: number): number {
-    const fx = -wz * 256, fz = -wx * 256; // world → raw（地图逆变换）
+    const fx = wx * 256, fz = -wz * 256; // world → raw（A=wx·256，C=−wz·256）
     const hits: number[] = [];
     for (const [mapId, [xMin, xMax, zMin, zMax]] of allBounds) {
       if (wx >= xMin && wx <= xMax && wz >= zMin && wz <= zMax) hits.push(mapId);
@@ -700,12 +701,12 @@ export function createWorldView(container: HTMLElement): WorldView {
     const dz = cosVal * step;
     const dist = Math.hypot(dx, dz);
 
-    // world → raw SMD 坐标（地图逆变换）
-    const sx = -selfPos.z * 256;
+    // world → raw SMD 坐标（A=wx·256，C=−wz·256）
+    const sx = selfPos.x * 256;
     const sy = selfPos.y * 256;
-    const sz = -selfPos.x * 256;
-    // 移动方向转 raw 角度（world 方向 (sinA, cosA) → raw 增量 (-cosA, -sinA)）
-    const rawAngle = Math.atan2(-cosVal, -sinVal);
+    const sz = -selfPos.z * 256;
+    // 移动方向转 raw 角度：raw 增量 (ΔA,ΔC)=(Δwx,−Δwz)=(sin,−cos)
+    const rawAngle = Math.atan2(sinVal, -cosVal);
 
     // 跨图碰撞：遍历所有已加载图的碰撞网格，都试 checkNextMove，取第一个能走的（对齐原版双 stage）
     // 解决桥等跨图边界：桥前半在 A 图、后半在 B 图，单图碰撞会让角色在交界处掉落。
@@ -713,13 +714,13 @@ export function createWorldView(container: HTMLElement): WorldView {
     for (const cm of collisionMeshes.values()) {
       const result = cm.checkNextMove(sx, sy, sz, rawAngle, dist * 256);
       if (!result.collision) {
-        // raw → world
-        selfPos.x = -result.z / 256;
+        // raw → world（A=result.x，C=result.z）
+        selfPos.x = result.x / 256;
         // 下坡（新地面明显低于当前 y）不贴地：保留物理 y，由 updateFalling 逐帧下落（对齐原版 PHeight）
         if (result.y >= sy - 8 * 256) {
           selfPos.y = result.y / 256;
         }
-        selfPos.z = -result.x / 256;
+        selfPos.z = -result.z / 256;
         moved = true;
         break;
       }
@@ -750,8 +751,8 @@ export function createWorldView(container: HTMLElement): WorldView {
 
   // C 键调试：打印角色/相机状态、脚下地面/材质
   function debugDump(): void {
-    const rawX = -selfPos.z * 256;
-    const rawZ = -selfPos.x * 256;
+    const rawX = selfPos.x * 256;
+    const rawZ = -selfPos.z * 256;
     const rawY = selfPos.y * 256;
     console.log('========== WorldView Debug ==========');
     console.log(`[角色] mapId=${currentMapId} pos=(${selfPos.x.toFixed(2)}, ${selfPos.y.toFixed(2)}, ${selfPos.z.toFixed(2)}) raw=(${rawX.toFixed(0)}, ${rawY.toFixed(0)}, ${rawZ.toFixed(0)}) angle(rad)=${selfAngle.toFixed(4)} falling=${falling}`);
@@ -792,8 +793,8 @@ export function createWorldView(container: HTMLElement): WorldView {
     if (!animState) return false;
     const cm = collisionMeshes.get(currentMapId);
     if (!cm) return false;
-    const rawX = -selfPos.z * 256;
-    const rawZ = -selfPos.x * 256;
+    const rawX = selfPos.x * 256;
+    const rawZ = -selfPos.z * 256;
     const pY = selfPos.y * 256;
     const h = cm.getFloorHeight(rawX, rawZ, pY);
     const groundY = h.found ? h.height : -80 * 256; // 悬空 → 虚空
