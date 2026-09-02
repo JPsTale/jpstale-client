@@ -1,5 +1,5 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
-import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken } from './net/transport.js';
+import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
 import { createCharacter, selectCharacter } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createServerSelect } from './ui/ServerSelect.js';
@@ -14,6 +14,9 @@ import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
 import type { EnterGameInfo } from './ui/WorldView.js';
+import { createGameClock } from './ui/GameClock.js';
+import { createKeyBinding } from './ui/KeyBinding.js';
+import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
 import type { jpt } from './net/proto/base_message.js';
 
 const app = document.getElementById('app')!;
@@ -25,6 +28,9 @@ const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 const worldView = createWorldView(app);
 const loadingScreen = createLoadingScreen(app);
+const gameClock = createGameClock();
+const keyBinding = createKeyBinding();
+const keyBindingPanel = createKeyBindingPanel(app, keyBinding);
 
 function hideAll() {
   loginPanel.hide();
@@ -34,6 +40,22 @@ function hideAll() {
   worldView.hide();
   loadingScreen.hide();
 }
+
+onTimeSync((serverTimeMs: number) => {
+  if (gameClock.getState().hour === 0 && gameClock.getState().min === 0) {
+    gameClock.setInitialTime(serverTimeMs)
+  } else {
+    gameClock.correctTime(serverTimeMs)
+  }
+});
+
+keyBinding.onKeyDown((action) => {
+  switch (action) {
+    case 'system':
+      keyBindingPanel.show();
+      break;
+  }
+});
 
 const ctx: import('./app/State.js').TransitionCtx = {
   showBoot() {},
