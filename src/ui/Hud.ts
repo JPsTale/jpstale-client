@@ -23,8 +23,8 @@ const H = 720
 interface Tex { el: HTMLImageElement; w: number; h: number }
 
 const TEXTURES: Record<string, string> = {
-  menu1: 'inter/menu-1.bmp',
-  menu2: 'inter/menu-2.bmp',
+  menu1: 'inter/menu-1.tga',
+  menu2: 'inter/menu-2.tga',
   life: 'inter/bar_life.bmp',
   mana: 'inter/bar_mana.bmp',
   stm: 'inter/bar_stamina.bmp',
@@ -41,9 +41,7 @@ const TEXTURES: Record<string, string> = {
   gageL: 'Skill/p-skill.bmp',
   gageR: 'Skill/p-skill2.bmp',
   inter1: 'inter/inter_01.bmp', inter2: 'inter/inter_02.bmp', inter3: 'inter/inter_03.bmp',
-  shadowLife: 'inter/shadowlife.bmp',
-  shadowMana: 'inter/shadowmana.bmp',
-  shadowStm: 'inter/shadowstamina.bmp',
+  shadowLife: 'inter/shadowlife.tga',
 };
 
 async function loadTex(rel: string): Promise<Tex | null> {
@@ -125,10 +123,8 @@ export function createHud(container: HTMLElement): Hud {
     drawTex('inter2', 866, 720 - 64, 64, 64);
     drawTex('inter3', 930, 720 - 64, 40, 64);
 
-    // 条背景阴影
+    // 条背景阴影 (只有shadowlife存在)
     drawTex('shadowLife', 319, 500, 16, 94);
-    drawTex('shadowMana', 465, 500, 16, 94);
-    drawTex('shadowStm', 303, 518, 8, 76);
 
     // 条填充 (bottom-up)
     drawBar('life', 319, 500, 16, 94, currentState.hp, currentState.maxHp);
