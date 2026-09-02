@@ -1,4 +1,5 @@
 import { decodeTextureAsync } from '../core/texture.js';
+import type { GameClock } from './GameClock.js';
 
 export interface HudState {
   hp: number; maxHp: number
@@ -7,6 +8,7 @@ export interface HudState {
   exp: number; maxExp: number
   level: number
   playerName: string
+  gameClock?: GameClock
 }
 
 export interface Hud {
@@ -114,8 +116,27 @@ export function createHud(container: HTMLElement): Hud {
 
     drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
 
-    drawTex('moon', 426, 589, 13, 13);
-    drawTex('barTime', 375, 593, 50, 5);
+    // 日月时钟
+    const clock = currentState.gameClock;
+    const hour = clock ? clock.getHour() : 12;
+    const min = clock ? clock.getMin() : 0;
+    const isDay = hour >= 4 && hour < 22;
+    
+    // 日/月图标
+    drawTex(isDay ? 'sun' : 'moon', isDay ? 363 : 426, 589, 13, 13);
+    
+    // 时条填充
+    const barTex = textures['barTime'];
+    if (barTex?.el) {
+      let fill: number;
+      if (isDay) {
+        fill = Math.floor(50 * ((hour - 4) * 60 + min) / (19 * 60));
+      } else {
+        fill = Math.floor(50 * ((hour + 1) * 60 + min) / (5 * 60));
+      }
+      fill = Math.max(0, Math.min(50, fill));
+      ctx.drawImage(barTex.el, 0, 0, fill, 5, 375, 593, fill, 5);
+    }
 
     drawTex('walk', 575, 565, 24, 25);
     drawTex('cam1', 599, 565, 24, 25);
