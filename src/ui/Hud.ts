@@ -23,6 +23,8 @@ const H = 720
 interface Tex { el: HTMLImageElement; w: number; h: number }
 
 const TEXTURES: Record<string, string> = {
+  menu1: 'inter/menu-1.bmp',
+  menu2: 'inter/menu-2.bmp',
   life: 'inter/bar_life.bmp',
   mana: 'inter/bar_mana.bmp',
   stm: 'inter/bar_stamina.bmp',
@@ -39,6 +41,9 @@ const TEXTURES: Record<string, string> = {
   gageL: 'Skill/p-skill.bmp',
   gageR: 'Skill/p-skill2.bmp',
   inter1: 'inter/inter_01.bmp', inter2: 'inter/inter_02.bmp', inter3: 'inter/inter_03.bmp',
+  shadowLife: 'inter/shadowlife.bmp',
+  shadowMana: 'inter/shadowmana.bmp',
+  shadowStm: 'inter/shadowstamina.bmp',
 };
 
 async function loadTex(rel: string): Promise<Tex | null> {
@@ -110,17 +115,31 @@ export function createHud(container: HTMLElement): Hud {
     if (!currentState) return;
     ctx.clearRect(0, 0, W, H);
 
+    // 原版渲染顺序：Menu背景 → inter条 → 条 → 按钮
+    // Menu背景 (原版 (288,472) 256x128 + (544,536) 256x64)
+    drawTex('menu1', 288, 472, 256, 128);
+    drawTex('menu2', 544, 536, 256, 64);
+
+    // 右侧inter装饰条
     drawTex('inter1', 800, 720 - 64, 66, 64);
     drawTex('inter2', 866, 720 - 64, 64, 64);
     drawTex('inter3', 930, 720 - 64, 40, 64);
 
+    // 条背景阴影
+    drawTex('shadowLife', 319, 500, 16, 94);
+    drawTex('shadowMana', 465, 500, 16, 94);
+    drawTex('shadowStm', 303, 518, 8, 76);
+
+    // 条填充 (bottom-up)
     drawBar('life', 319, 500, 16, 94, currentState.hp, currentState.maxHp);
     drawBar('mana', 465, 500, 16, 94, currentState.mp, currentState.maxMp);
     drawBar('stm', 303, 518, 8, 76, currentState.stm, currentState.maxStm);
 
+    // 技能条框架
     drawTex('gageL', 338, 542, 16, 41);
     drawTex('gageR', 446, 542, 16, 41);
 
+    // EXP条
     drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
 
     // 日月时钟
@@ -129,10 +148,8 @@ export function createHud(container: HTMLElement): Hud {
     const min = clock ? clock.getMin() : 0;
     const isDay = hour >= 4 && hour < 22;
     
-    // 日/月图标
     drawTex(isDay ? 'sun' : 'moon', isDay ? 363 : 426, 589, 13, 13);
     
-    // 时条填充
     const barTex = textures['barTime'];
     if (barTex?.el) {
       let fill: number;
@@ -145,6 +162,7 @@ export function createHud(container: HTMLElement): Hud {
       ctx.drawImage(barTex.el, 0, 0, fill, 5, 375, 593, fill, 5);
     }
 
+    // 功能按钮
     drawTex('walk', 575, 565, 24, 25);
     drawTex('cam1', 599, 565, 24, 25);
     drawTex('mapOn', 623, 565, 24, 25);
