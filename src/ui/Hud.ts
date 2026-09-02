@@ -23,7 +23,7 @@ const H = 720
 interface Tex { el: HTMLImageElement; w: number; h: number }
 
 // 需要做黑色透明化的纹理（按钮/图标类，黑色=背景）
-const TRANSPARENT_KEYS = new Set(['b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR'])
+const TRANSPARENT_KEYS = new Set(['b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR','fist'])
 
 const TEXTURES: Record<string, string> = {
   menu1: 'inter/menu-1.tga',
@@ -33,6 +33,7 @@ const TEXTURES: Record<string, string> = {
   stm: 'inter/bar_stamina.bmp',
   exp: 'inter/sinGage/bar_exp.bmp',
   potionBack: 'inven/potionback.bmp',
+  fist: 'skill/skill_normal.bmp',
   b0: 'inter/bstatus.bmp', b1: 'inter/binventory.bmp', b2: 'inter/bskill.bmp',
   b3: 'inter/bparty.bmp', b4: 'inter/bquest.bmp', b5: 'inter/bsystem.bmp',
   walk: 'inter/Button/walk.bmp',
@@ -42,10 +43,9 @@ const TEXTURES: Record<string, string> = {
   sun: 'inter/Flash/sun.bmp',
   moon: 'inter/Flash/moon.bmp',
   barTime: 'inter/sinGage/bar_time.bmp',
-  gageL: 'Skill/p-skill.bmp',
-  gageR: 'Skill/p-skill2.bmp',
+  gageL: 'skill/p-skill.bmp',
+  gageR: 'skill/p-skill2.bmp',
   inter1: 'inter/inter_01.bmp', inter2: 'inter/inter_02.bmp', inter3: 'inter/inter_03.bmp',
-  shadowLife: 'inter/shadowlife.tga',
 };
 
 async function loadTex(rel: string, key: string): Promise<Tex | null> {
@@ -129,17 +129,16 @@ export function createHud(container: HTMLElement): Hud {
     drawTex('inter2', 866, 720 - 64, 64, 64);
     drawTex('inter3', 930, 720 - 64, 40, 64);
 
-    // 条背景阴影 (只有shadowlife存在)
-    drawTex('shadowLife', 319, 500, 16, 94);
-
     // 条填充 (bottom-up)
     drawBar('life', 319, 500, 16, 94, currentState.hp, currentState.maxHp);
     drawBar('mana', 465, 500, 16, 94, currentState.mp, currentState.maxMp);
     drawBar('stm', 303, 518, 8, 76, currentState.stm, currentState.maxStm);
 
-    // 技能条框架
-    drawTex('gageL', 338, 542, 16, 41);
-    drawTex('gageR', 446, 542, 16, 41);
+    // 默认拳头图标 (技能条区域，49x46，居中于gage区域)
+    // 左拳: gage区域 x=338,w=16 → 中心346，拳头49宽 → x=346-24=322
+    // 右拳: gage区域 x=446,w=16 → 中心454，拳头49宽 → x=454-24=430
+    drawTex('fist', 322, 556, 49, 46);
+    drawTex('fist', 430, 556, 49, 46);
 
     // EXP条
     drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
