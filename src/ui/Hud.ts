@@ -117,7 +117,13 @@ export function createHud(container: HTMLElement): Hud {
 
   function draw() {
     if (!currentState) return;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    // 内容按原版 800×600 坐标绘制。1280×720 画布内把内容块(288..800 / 底600)
+    // 平移：水平居中对齐到画布中心、垂直贴画布底，避免整条 UI 飘在左上。
+    // offX: 块宽512 → (1280-512)/2-288 = 96；offY: 600 底贴 720 → 120
+    ctx.save();
+    ctx.translate(96, 120);
 
     // 原版渲染顺序：Menu背景 → inter条 → 条 → 按钮
     // Menu背景 (原版 (288,472) 256x128 + (544,536) 256x64)
@@ -170,6 +176,8 @@ export function createHud(container: HTMLElement): Hud {
     for (let t = 0; t < 6; t++) {
       drawTex('b' + t, 648 + t * 25, 560, 25, 27);
     }
+
+    ctx.restore();
   }
 
   function loop() {
