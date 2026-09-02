@@ -166,7 +166,13 @@ export function createWorldView(container: HTMLElement): WorldView {
         if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图 404: ' + url); }
         return;
       }
-      const dec = await decodeTextureAsync(await resp.arrayBuffer());
+      const buf = await resp.arrayBuffer();
+      // dev 服务器对缺失文件回退成 index.html(200)；按魔数排除
+      if (buf.byteLength === 0 || new Uint8Array(buf)[0] === 0x3c /* '<' */) {
+        if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图缺失(html回退): ' + url); }
+        return;
+      }
+      const dec = await decodeTextureAsync(buf);
       if (!dec) {
         if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图 解码失败: ' + url); }
         return;
@@ -188,7 +194,16 @@ export function createWorldView(container: HTMLElement): WorldView {
   }
 
   // 场地缩略图与标题：<ase名>.tga（与 smd basename 一致，SetName 拼路径）
+  // 个别场地的缩略图文件名 ≠ smd basename（源自 C++ field.cpp SetName 第二参数），覆盖：
+  const MM_TILE_OVERRIDE: Record<number, string> = {
+    35: 'ice2',          // ice_2.smd → ice2.tga
+    37: 'lost',          // lostisland.smd → Lost.tga
+    38: 'Losttemple',    // lost_temple.smd → Losttemple.tga
+    42: 'dun-6',         // dun-6a.smd → dun-6.tga
+  };
   function mmBaseName(mapId: number): string | null {
+    const ov = MM_TILE_OVERRIDE[mapId];
+    if (ov) return ov;
     const p = MAP_CATALOG[mapId];
     if (!p) return null;
     const b = p.split('/').pop() || '';
