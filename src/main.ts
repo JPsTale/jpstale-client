@@ -22,6 +22,19 @@ import type { jpt } from './net/proto/base_message.js';
 const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
 
+// [临时调试] 捕获最近 console.error/warn 全文，__errs() 回放（排查 shader 报错）
+{
+  const buf: string[] = [];
+  const fmt = (a: unknown) => typeof a === 'string' ? a : (a instanceof Error ? a.message : safeJson(a));
+  const orig = console.error;
+  console.error = (...args: unknown[]) => { buf.push(args.map(fmt).join(' ')); orig(...args); };
+  (window as unknown as Record<string, unknown>).__errs = () => {
+    console.log('===== err 捕获 ' + buf.length + ' 条 =====');
+    console.log(buf.slice(-40).join('\n----\n'));
+  };
+  function safeJson(v: unknown): string { try { return JSON.stringify(v) ?? String(v); } catch { return String(v); } }
+}
+
 const loginPanel = createLoginPanel(app, { onLogin });
 const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);

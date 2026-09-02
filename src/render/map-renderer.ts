@@ -496,7 +496,7 @@ export class MapRenderer {
         uvInline += '\nvMyLightMapUv = uv2;';
         if (scrollU1) uvInline += '\nvMyLightMapUv.x += uScrollU.y;';
       }
-      if (scrollU0) uvInline += '\nvMapUv.x += uScrollU.x;';
+      if (scrollU0) uvInline += '\nvUv.x += uScrollU.x;'; // three 顶点变量为 vUv（勿写成 vMapUv）
       shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', uvInline);
 
       if (windKind) {
