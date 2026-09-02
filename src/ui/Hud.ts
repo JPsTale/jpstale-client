@@ -67,6 +67,7 @@ export function createHud(container: HTMLElement): Hud {
   canvas.height = H;
   canvas.style.position = 'fixed';
   canvas.style.inset = '0';
+  canvas.style.zIndex = '55';
   canvas.style.pointerEvents = 'none';
   container.appendChild(canvas);
 
