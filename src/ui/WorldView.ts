@@ -89,7 +89,11 @@ export function createWorldView(container: HTMLElement): WorldView {
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
 
-  // 移动状态（复刻 /pt/maps/ dummy 移动）
+  // ── [临时调试] [ ] 键前后调小时，便于看各时段光照。TODO: 验证后删除本块 ──
+  const DN_DEBUG_KEYS = true; // 关闭即整体失效
+  let dnDebugHour: number | null = null; // 覆盖游戏时钟的小时（null=跟随 GameClock）
+
+  // ── 移动状态（复刻 /pt/maps/ dummy 移动）──
   let moveSpeed = 3;         // 移动速度（world 单位/帧）
   let wasMoving = false;     // 上一帧是否在移动（状态机切换防抖）
   let falling = false;       // 是否正在下落
@@ -104,6 +108,15 @@ export function createWorldView(container: HTMLElement): WorldView {
   // C 键：控制台打印角色/相机调试信息
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyC') debugDump();
+  });
+
+  // ── [临时调试] [ ] 键 ±1 小时（TODO: 验证后删除本块）──
+  window.addEventListener('keydown', (e) => {
+    if (!DN_DEBUG_KEYS) return;
+    if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+    const base = dnDebugHour ?? dayNightHour;
+    if (e.code === 'BracketLeft') { dnDebugHour = (base + 23) % 24; console.log(`[daynight] hour=${dnDebugHour}`); }
+    if (e.code === 'BracketRight') { dnDebugHour = (base + 1) % 24; console.log(`[daynight] hour=${dnDebugHour}`); }
   });
 
   // 相机状态（对应 /pt/maps/ debug 相机，Winmain.cpp 自由模式初始值）
@@ -151,9 +164,15 @@ export function createWorldView(container: HTMLElement): WorldView {
     buildDummy();
   }
 
+  // 有效小时：调试键覆盖优先，否则跟随 GameClock
+  function dnEffectiveHour(): number {
+    return dnDebugHour ?? dayNightHour;
+  }
+
   function dnCurrentSlot(): { dark: number; back: number[] } {
+    const h = dnEffectiveHour();
     for (const s of DAYNIGHT_SLOTS) {
-      if (dayNightHour >= s.hLo && dayNightHour < s.hHi) return s;
+      if (h >= s.hLo && h < s.hHi) return s;
     }
     return DAYNIGHT_SLOTS[0];
   }
@@ -163,7 +182,7 @@ export function createWorldView(container: HTMLElement): WorldView {
   // 加入玩家火把 + 附近≤8 场景灯后写入每张地图材质 shader uniform。
   function dnUpdate(): void {
     const slot = dnCurrentSlot();
-    dayNightState = (dayNightHour < 4 || dayNightHour >= 23) ? 1 : 0;
+    dayNightState = (dnEffectiveHour() < 4 || dnEffectiveHour() >= 23) ? 1 : 0;
     if (dayDark < slot.dark) dayDark = Math.min(dayDark + 1, slot.dark);
     if (dayDark > slot.dark) dayDark = Math.max(dayDark - 1, slot.dark);
     if (dayBackR < slot.back[0]) dayBackR = Math.min(dayBackR + 1, slot.back[0]);
