@@ -134,11 +134,10 @@ export function createHud(container: HTMLElement): Hud {
     drawBar('mana', 465, 500, 16, 94, currentState.mp, currentState.maxMp);
     drawBar('stm', 303, 518, 8, 76, currentState.stm, currentState.maxStm);
 
-    // 默认拳头图标 (技能条区域，49x46，居中于gage区域)
-    // 左拳: gage区域 x=338,w=16 → 中心346，拳头49宽 → x=346-24=322
-    // 右拳: gage区域 x=446,w=16 → 中心454，拳头49宽 → x=454-24=430
-    drawTex('fist', 322, 556, 49, 46);
-    drawTex('fist', 430, 556, 49, 46);
+    // 默认拳头图标 (原版 sinSkill.cpp sLeftRightSkill)
+    // 左拳 (349,541) 49x46  右拳 (403,541) 49x46
+    drawTex('fist', 349, 541, 49, 46);
+    drawTex('fist', 403, 541, 49, 46);
 
     // EXP条
     drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
