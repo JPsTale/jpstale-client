@@ -50,9 +50,9 @@ onTimeSync((serverTimeMs: number) => {
   }
 });
 
-// 昼夜：游戏时钟变化 → 场景光照切换
+// 昼夜：游戏时钟小时 → WorldView 昼夜驱动（darkLevel/BackColor 渐变 + 火把 + 场景灯）
 gameClock.onTimeUpdate((state) => {
-  worldView.setNight(state.isNight);
+  worldView.setGameTime(state.hour);
 });
 
 keyBinding.onKeyDown((action) => {

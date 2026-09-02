@@ -12,6 +12,7 @@ import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { loadCharacterModel } from '../render/char-loader.js';
+import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
@@ -33,8 +34,8 @@ export interface WorldView {
   show(enterGame: EnterGameInfo): void;
   hide(): void;
   destroy(): void;
-  /** 昼夜切换（true=夜晚）：驱动各已加载地图的光照/雾 + 场景背景/方向光 */
-  setNight(night: boolean): void;
+  /** 游戏小时（0-23）：昼夜驱动源（忠实 /pt/maps darkLevel/BackColor 渐变） */
+  setGameTime(hour: number): void;
 }
 
 /** 服务端出生点 → 世界坐标（对齐 /pt/maps/ positionDummyAtSpawn：worldX=-z, worldZ=-x，y 是地形高度） */
@@ -53,8 +54,22 @@ export function createWorldView(container: HTMLElement): WorldView {
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
-  let dirLight: THREE.DirectionalLight | null = null; // 平行光（昼夜亮度切换）
-  let isNightState = false; // 当前昼夜（false=白天）
+  let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
+
+  // ── 昼夜状态（移植 /pt/maps index.html:512-615，忠实原版 Winmain.cpp:5394 + playmain.cpp:2981）──
+  let dayNightHour = 12;          // 当前游戏小时（由 main.ts 喂入）
+  let dayNightState = 0;          // 0=白天 1=夜晚（hour<4 || hour>=23 或地牢）
+  let dayDark = 0;                // DarkLevel 0~220（每帧 ±1 趋向 slot.dark）
+  let dayBackR = 0, dayBackG = 0, dayBackB = 0; // BackColor 天空色调（每帧 ±1 趋向 slot.back）
+  let dnSceneLightWarned = false; // 无灯提示只打一次
+  // 户外时段目标（对齐 /pt/maps：Sky01 day/evening/night 的 LightColor + LightDark）
+  // 索引4 day: (0,0,-10)/1；5 evening: (28,0,-30)/24；6 night: (-50,0,10)/145
+  const DAYNIGHT_SLOTS = [
+    { hLo: 4,  hHi: 22, dark: 1,   back: [0, 0, -10] },  // 白天 4-21
+    { hLo: 22, hHi: 23, dark: 24,  back: [28, 0, -30] }, // 傍晚 22
+    { hLo: 23, hHi: 24, dark: 145, back: [-50, 0, 10] }, // 夜 23
+    { hLo: 0,  hHi: 4,  dark: 145, back: [-50, 0, 10] }, // 夜 0-3
+  ];
   const mapHandles = new Map<number, Awaited<ReturnType<typeof loadMap>>>();
   const collisionMeshes = new Map<number, CollisionMesh>();
   const decorGroups = new Map<number, THREE.Group[]>(); // mapId → 装饰 group 列表
@@ -136,20 +151,91 @@ export function createWorldView(container: HTMLElement): WorldView {
     buildDummy();
   }
 
-  // 昼夜 → 场景：已加载地图各自 setNightDay（环境光/雾），本层管背景色+方向光
-  function applyDayNight(): void {
-    for (const mh of mapHandles.values()) {
-      mh.mapRenderer.setNightDay(isNightState);
+  function dnCurrentSlot(): { dark: number; back: number[] } {
+    for (const s of DAYNIGHT_SLOTS) {
+      if (dayNightHour >= s.hLo && dayNightHour < s.hHi) return s;
     }
-    if (scene && scene.background instanceof THREE.Color) {
-      scene.background.setHex(isNightState ? 0x0d1326 : 0x9db4d0);
-    }
-    if (dirLight) dirLight.intensity = isNightState ? 0.12 : 0.85;
+    return DAYNIGHT_SLOTS[0];
   }
 
-  function setNight(night: boolean): void {
-    isNightState = night;
-    applyDayNight();
+  // 每帧昼夜驱动（移植 /pt/maps index.html dnUpdate）：
+  // DarkLevel 每帧 ±1 趋向时段目标，BackColor 每帧 ±1，环境光偏移 = (-DarkLevel+BackColor)/255，
+  // 加入玩家火把 + 附近≤8 场景灯后写入每张地图材质 shader uniform。
+  function dnUpdate(): void {
+    const slot = dnCurrentSlot();
+    dayNightState = (dayNightHour < 4 || dayNightHour >= 23) ? 1 : 0;
+    if (dayDark < slot.dark) dayDark = Math.min(dayDark + 1, slot.dark);
+    if (dayDark > slot.dark) dayDark = Math.max(dayDark - 1, slot.dark);
+    if (dayBackR < slot.back[0]) dayBackR = Math.min(dayBackR + 1, slot.back[0]);
+    if (dayBackR > slot.back[0]) dayBackR = Math.max(dayBackR - 1, slot.back[0]);
+    if (dayBackG < slot.back[1]) dayBackG = Math.min(dayBackG + 1, slot.back[1]);
+    if (dayBackG > slot.back[1]) dayBackG = Math.max(dayBackG - 1, slot.back[1]);
+    if (dayBackB < slot.back[2]) dayBackB = Math.min(dayBackB + 1, slot.back[2]);
+    if (dayBackB > slot.back[2]) dayBackB = Math.max(dayBackB - 1, slot.back[2]);
+
+    const envLight = new THREE.Vector3(
+      (-dayDark + dayBackR) / 255,
+      (-dayDark + dayBackG) / 255,
+      (-dayDark + dayBackB) / 255,
+    );
+
+    // 玩家火把（Winmain.cpp:5517-5535）：DarkLevel>0 时 ap=DarkLevel×1.25，非地牢范围 260 world
+    const torchPos = new THREE.Vector3();
+    const torchColor = new THREE.Vector3();
+    let torchRange = 0;
+    if (dayDark > 0) {
+      const ap = Math.min(Math.round(dayDark * 1.25), 255);
+      torchPos.set(selfPos.x, selfPos.y + 32, selfPos.z);
+      torchColor.set(ap / 255, ap / 255, ap / 255);
+      torchRange = 260;
+    }
+
+    // 场景灯（playmain.cpp:847-885）：夜(DarkLevel>0)启用；NIGHT型(type&1)&&夜 全亮，其余 rgb×DarkLevel>>8
+    const sceneLights: { pos: THREE.Vector3; color: THREE.Vector3; range: number }[] = [];
+    if (dayDark > 0) {
+      const cand: { d2: number; l: SceneLightWorld }[] = [];
+      for (const mh of mapHandles.values()) {
+        for (const l of mh.mapRenderer.lights) {
+          const dx = l.wx - selfPos.x, dy = l.wy - selfPos.y, dz = l.wz - selfPos.z;
+          const d2 = dx * dx + dy * dy + dz * dz;
+          if (d2 < 0x300000) cand.push({ d2, l });
+        }
+      }
+      if (cand.length === 0) {
+        if (!dnSceneLightWarned) {
+          dnSceneLightWarned = true;
+          console.warn('[daynight] 无场景灯（当前图未烘焙灯或远离光源）');
+        }
+      }
+      cand.sort((a, b) => a.d2 - b.d2);
+      const DL = dayDark;
+      const dim = (v: number) => (v * DL) >> 8;
+      for (let i = 0; i < Math.min(cand.length, 8); i++) {
+        const l = cand[i].l;
+        const nightFull = ((l.type & 0x1) !== 0) && dayNightState === 1;
+        const r = nightFull ? l.r : dim(l.r);
+        const g = nightFull ? l.g : dim(l.g);
+        const b = nightFull ? l.b : dim(l.b);
+        sceneLights.push({
+          pos: new THREE.Vector3(l.wx, l.wy, l.wz),
+          color: new THREE.Vector3(r / 255, g / 255, b / 255),
+          range: l.range / 256, // raw → world
+        });
+      }
+    }
+
+    for (const mh of mapHandles.values()) {
+      mh.mapRenderer.updateDayNight(envLight, sceneLights, torchPos, torchColor, torchRange);
+    }
+    // 角色等受光材质（Phong）同步压暗：dir/amb 强度随 DarkLevel 线性降
+    const k = 1 - dayDark / 255;
+    if (dirLight) dirLight.intensity = 0.85 * k;
+    const amb = scene?.children.find(c => c instanceof THREE.AmbientLight) as THREE.AmbientLight | undefined;
+    if (amb) amb.intensity = 0.6 * k;
+  }
+
+  function setGameTime(hour: number): void {
+    dayNightHour = hour;
   }
 
   // 坐标轴参考（复刻 /pt/maps/：三色圆柱+圆锥+标签），用于判断朝向。挂到出生点。
@@ -343,7 +429,7 @@ export function createWorldView(container: HTMLElement): WorldView {
     if (!smdPath) return false;
     const mh = await loadMap(scene, smdPath);
     mapHandles.set(mapId, mh);
-    applyDayNight(); // 新地图加入后同步当前昼夜光照
+    // 新地图的昼夜光照由 renderLoop 每帧 dnUpdate 统一写入（updateDayNight），无需在此处理
     const cm = new CollisionMesh();
     cm.buildFromSMD(mh.data);
     collisionMeshes.set(mapId, cm);
@@ -666,6 +752,9 @@ export function createWorldView(container: HTMLElement): WorldView {
     camera.updateMatrixWorld();
     camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
 
+    // 昼夜光照驱动（每帧）：darkLevel/BackColor 渐变 + 火把 + 场景灯 → 各地图 shader uniform
+    dnUpdate();
+
     for (const mh of mapHandles.values()) {
       mh.mapRenderer.render(camera);
       mh.mapRenderer.updateScroll(rafMs);
@@ -756,7 +845,7 @@ export function createWorldView(container: HTMLElement): WorldView {
       clock.getDelta();
       renderLoop();
     },
-    setNight,
+    setGameTime,
     hide() {
       root.style.display = 'none';
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }

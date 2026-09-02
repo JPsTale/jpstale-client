@@ -69,28 +69,9 @@ export class MapRenderer {
   buildTimeMs = 0;
   buildCellTimeMs = 0;
   private renderStamp = 0;
-  private isNight = false;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
-  }
-
-  setNightDay(night: boolean): void {
-    this.isNight = night;
-    // 调整场景雾气颜色
-    if (this.scene.fog) {
-      const fog = this.scene.fog as THREE.Fog;
-      fog.color.setHex(night ? 0x111122 : 0xffffff);
-    }
-    // 调整环境光（与 ensure3D 白天 0.6 一致，避免进图跳变）
-    const ambientLight = this.scene.children.find(c => c instanceof THREE.AmbientLight) as THREE.AmbientLight | undefined;
-    if (ambientLight) {
-      ambientLight.intensity = night ? 0.22 : 0.6;
-    }
-  }
-
-  getNightDay(): boolean {
-    return this.isNight;
   }
 
   build(smdData: SMDData, texMap: Map<string, THREE.Texture>, getMatConfig: (matIdx: number, mat: import('../core/smd-parser').SMDMaterial) => MatConfig | null): void {
@@ -569,7 +550,7 @@ export class MapRenderer {
           '#include <color_fragment>\n' +
           (needLM ? '  diffuseColor.rgb *= texture2D(uLightMap, vMyLightMapUv).rgb;\n' : '') +
           (need2Tex ? '  diffuseColor.rgb *= texture2D(uSecondTex, vMyLightMapUv).rgb;\n' : '') +
-          '  { float _z = vPtFogZ; if (_z > 2304.0) { float _dlev = (_z - 2304.0) * 0.5; if (_dlev > 255.0) _dlev = 255.0; diffuseColor.rgb *= 1.0 - _dlev / 256.0; } }',
+          '  { float _z = vPtFogZ; if (_z > 1152.0) { float _dlev = (_z - 1152.0) * 0.5; if (_dlev > 255.0) _dlev = 255.0; diffuseColor.rgb *= 1.0 - _dlev / 256.0; } }',
         );
         if (needLM) shader.uniforms.uLightMap = { value: config.lightmapTex };
         if (need2Tex) shader.uniforms.uSecondTex = { value: config.secondTex };
