@@ -34,8 +34,8 @@ export interface WorldView {
   show(enterGame: EnterGameInfo): void;
   hide(): void;
   destroy(): void;
-  /** 游戏小时（0-23）：昼夜驱动源（忠实 /pt/maps darkLevel/BackColor 渐变） */
-  setGameTime(hour: number): void;
+  /** 游戏时间（0-23时/0-59分）：昼夜驱动源（忠实 /pt/maps darkLevel/BackColor 渐变） */
+  setGameTime(hour: number, min: number): void;
 }
 
 /** 服务端出生点 → 世界坐标（对齐 /pt/maps/ positionDummyAtSpawn：worldX=-z, worldZ=-x，y 是地形高度） */
@@ -58,6 +58,7 @@ export function createWorldView(container: HTMLElement): WorldView {
 
   // ── 昼夜状态（移植 /pt/maps index.html:512-615，忠实原版 Winmain.cpp:5394 + playmain.cpp:2981）──
   let dayNightHour = 12;          // 当前游戏小时（由 main.ts 喂入）
+  let dayNightMin = 0;            // 当前游戏分钟
   let dayNightState = 0;          // 0=白天 1=夜晚（hour<4 || hour>=23 或地牢）
   let dayDark = 0;                // DarkLevel 0~220（每帧 ±1 趋向 slot.dark）
   let dayBackR = 0, dayBackG = 0, dayBackB = 0; // BackColor 天空色调（每帧 ±1 趋向 slot.back）
@@ -253,8 +254,9 @@ export function createWorldView(container: HTMLElement): WorldView {
     if (amb) amb.intensity = 0.6 * k;
   }
 
-  function setGameTime(hour: number): void {
+  function setGameTime(hour: number, min: number): void {
     dayNightHour = hour;
+    dayNightMin = min;
   }
 
   // 坐标轴参考（复刻 /pt/maps/：三色圆柱+圆锥+标签），用于判断朝向。挂到出生点。
@@ -799,7 +801,8 @@ export function createWorldView(container: HTMLElement): WorldView {
         `FPS   ${fps.toFixed(0)}  地图 ${mapHandles.size}\n` +
         `Draw  ${dc}\n` +
         `Tris  ${Math.round(visT).toLocaleString()} / ${totT.toLocaleString()}\n` +
-        `Verts ${verts.toLocaleString()}`;
+        `Verts ${verts.toLocaleString()}\n` +
+        `Time  ${String(dnDebugHour ?? dayNightHour).padStart(2, '0')}:${String(dayNightMin).padStart(2, '0')}${dnDebugHour !== null ? '*' : ''} Dark ${dayDark}`;
       frameCount = 0; fpsAcc = 0;
     }
   }
