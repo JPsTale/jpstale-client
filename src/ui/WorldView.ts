@@ -152,7 +152,7 @@ export function createWorldView(container: HTMLElement): WorldView {
   root.appendChild(mmEl);
   const mmCtx = mmEl.getContext('2d')!;
   let mmVisible = true;
-  let mmPlayerPx = MM_HALF, mmPlayerPy = MM_BOX_Y + MM_HALF, mmPlayerInside = true; // 玩家像素（箭头位置）
+  let mmPlayerPx = MM_HALF, mmPlayerPy = MM_BOX_Y + MM_HALF; // 玩家像素（箭头位置）
   const mmImg = new Map<string, HTMLImageElement>(); // url → image
   const mmLoading = new Set<string>();
   let mmAssetsInit = false;          // arrow/mapbox 一次性
@@ -224,22 +224,26 @@ export function createWorldView(container: HTMLElement): WorldView {
 
     // 场地缩略图（原版 DrawFieldMap：玩家居中的北向滚动视口）
     // 世界语义：东=+X、北=−Z；图水平 v 轴 → 右，垂直 → 上
+    const spanX = Math.max(mxx - mnx, 1e-6);   // 东-西 world 跨距（水平）
+    const spanZ = Math.max(mxz - mnz, 1e-6);   // 南-北 world 跨距（垂直，北=−Z）
+    // 视口半宽 = 格数×64（world 单位）
+    const half = (mapLightProfile(currentMapId).mode === 'fixed' ? 16 : 24) * 64;
+    const fmx = (selfPos.x - mnx) / spanX;     // 玩家 东(+X) 位置分数
+    const fmy = (selfPos.z - mnz) / spanZ;     // 玩家 北(−Z) 位置分数（小 z 在上）
+    const fpx = half / spanX, fpy = half / spanZ;
+    const uLo = fmx - fpx, uHi = fmx + fpx;    // 视口采样窗
+    const vLo = fmy - fpy, vHi = fmy + fpy;
+
+    // 精确 UV→像素：固定内容比例，窗越界一侧留空(露黑底)
+    const pxPerU = 126 / Math.max(uHi - uLo, 1e-9);
+    const pxPerV = 126 / Math.max(vHi - vLo, 1e-9);
+    // 玩家像素按其 uv 位置（钳到框内；玩家在界外时贴边）
+    mmPlayerPx = Math.max(0, Math.min(126, 1 + (fmx - uLo) * pxPerU));
+    mmPlayerPy = Math.max(MM_BOX_Y, Math.min(MM_BOX_Y + 126, MM_BOX_Y + 1 + (fmy - vLo) * pxPerV));
+
     const mapUrl = mmFieldBase() ? `/res/field/map/${mmFieldBase()}.tga` : '';
     const terrain = mapUrl ? mmImg.get(mapUrl) : undefined;
     if (terrain) {
-      const spanX = Math.max(mxx - mnx, 1e-6);   // 东-西 world 跨距（水平）
-      const spanZ = Math.max(mxz - mnz, 1e-6);   // 南-北 world 跨距（垂直，北=−Z）
-      // 视口半宽 = 格数×64（world 单位）
-      const half = (mapLightProfile(currentMapId).mode === 'fixed' ? 16 : 24) * 64;
-      const fmx = (selfPos.x - mnx) / spanX;     // 玩家 东(+X) 位置分数
-      const fmy = (selfPos.z - mnz) / spanZ;     // 玩家 北(−Z) 位置分数（小 z 在上）
-      const fpx = half / spanX, fpy = half / spanZ;
-      const uLo = fmx - fpx, uHi = fmx + fpx;    // 视口采样窗
-      const vLo = fmy - fpy, vHi = fmy + fpy;
-
-      // 精确 UV→像素：固定内容比例，窗越界一侧留空(露黑底)，玩家像素始终按其 uv 位置
-      const pxPerU = 126 / Math.max(uHi - uLo, 1e-9);
-      const pxPerV = 126 / Math.max(vHi - vLo, 1e-9);
       const sU0 = Math.max(0, uLo), sU1 = Math.min(1, uHi);
       const sV0 = Math.max(0, vLo), sV1 = Math.min(1, vHi);
       const dx = 1 + (sU0 - uLo) * pxPerU;
@@ -249,17 +253,11 @@ export function createWorldView(container: HTMLElement): WorldView {
       if (dw > 0 && dh > 0) {
         drawImgSub(terrain, dx, dy, dw, dh, sU0, sV0, sU1 - sU0, sV1 - sV0);
       }
-      mmPlayerPx = 1 + (fmx - uLo) * pxPerU;             // 玩家像素（东）
-      mmPlayerPy = MM_BOX_Y + 1 + (fmy - vLo) * pxPerV;  // 玩家像素（北）
-      mmPlayerInside = uLo >= 0 && uHi <= 1 && vLo >= 0 && vHi <= 1;
-    } else {
-      mmPlayerInside = false;
     }
 
-    // 玩家箭头（原版 DrawMapArrow：绕玩家像素旋转 yaw）
-    // 北 = −Z 向上 ⇒ forward=(sin,cos) 在画布为 (sin,−cos)；mirror 修正贴图轴向(E/W)
+    // 玩家箭头（原版 DrawMapArrow：无条件画，绕玩家像素旋转 yaw；贴图/位置在界外仍显示）
     const arrow = mmImg.get('/res/image/arrow.tga');
-    if (arrow && mmPlayerInside) {
+    if (arrow) {
       mmCtx.save();
       mmCtx.translate(mmPlayerPx, mmPlayerPy);
       mmCtx.scale(-1, 1);        // 若箭头仅 E/W 反向请保留，否则删此行
