@@ -11,6 +11,7 @@ import { mapDecorList } from '../maps/map-decor.js';
 import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
+import { mapLightProfile } from '../maps/map-light.js';
 import { loadCharacterModel } from '../render/char-loader.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
@@ -178,26 +179,41 @@ export function createWorldView(container: HTMLElement): WorldView {
     return DAYNIGHT_SLOTS[0];
   }
 
-  // 每帧昼夜驱动（移植 /pt/maps index.html dnUpdate）：
-  // DarkLevel 每帧 ±1 趋向时段目标，BackColor 每帧 ±1，环境光偏移 = (-DarkLevel+BackColor)/255，
+  // 每帧昼夜驱动（移植 /pt/maps index.html dnUpdate + 按地图档案）：
+  // 地牢/室内(fixed)：DarkLevel/BackColor 直接用档案固定值（恒夜）；户外/村庄：每帧 ±1 渐变趋向时段目标。
+  // 环境光偏移 = (-DarkLevel+BackColor)/255（村庄夜间地形再减半，原版 playmain Color>>=1），
   // 加入玩家火把 + 附近≤8 场景灯后写入每张地图材质 shader uniform。
   function dnUpdate(): void {
-    const slot = dnCurrentSlot();
-    dayNightState = (dnEffectiveHour() < 4 || dnEffectiveHour() >= 23) ? 1 : 0;
-    if (dayDark < slot.dark) dayDark = Math.min(dayDark + 1, slot.dark);
-    if (dayDark > slot.dark) dayDark = Math.max(dayDark - 1, slot.dark);
-    if (dayBackR < slot.back[0]) dayBackR = Math.min(dayBackR + 1, slot.back[0]);
-    if (dayBackR > slot.back[0]) dayBackR = Math.max(dayBackR - 1, slot.back[0]);
-    if (dayBackG < slot.back[1]) dayBackG = Math.min(dayBackG + 1, slot.back[1]);
-    if (dayBackG > slot.back[1]) dayBackG = Math.max(dayBackG - 1, slot.back[1]);
-    if (dayBackB < slot.back[2]) dayBackB = Math.min(dayBackB + 1, slot.back[2]);
-    if (dayBackB > slot.back[2]) dayBackB = Math.max(dayBackB - 1, slot.back[2]);
+    const prof = mapLightProfile(currentMapId);
+    const fixed = prof.mode === 'fixed';
+    if (fixed) {
+      // 恒夜：直落固定值（原版 MainSky 进图即设，非渐变）
+      dayNightState = 1;
+      dayDark = prof.dark;
+      dayBackR = prof.back[0];
+      dayBackG = prof.back[1];
+      dayBackB = prof.back[2];
+    } else {
+      const slot = dnCurrentSlot();
+      dayNightState = (dnEffectiveHour() < 4 || dnEffectiveHour() >= 23) ? 1 : 0;
+      if (dayDark < slot.dark) dayDark = Math.min(dayDark + 1, slot.dark);
+      if (dayDark > slot.dark) dayDark = Math.max(dayDark - 1, slot.dark);
+      if (dayBackR < slot.back[0]) dayBackR = Math.min(dayBackR + 1, slot.back[0]);
+      if (dayBackR > slot.back[0]) dayBackR = Math.max(dayBackR - 1, slot.back[0]);
+      if (dayBackG < slot.back[1]) dayBackG = Math.min(dayBackG + 1, slot.back[1]);
+      if (dayBackG > slot.back[1]) dayBackG = Math.max(dayBackG - 1, slot.back[1]);
+      if (dayBackB < slot.back[2]) dayBackB = Math.min(dayBackB + 1, slot.back[2]);
+      if (dayBackB > slot.back[2]) dayBackB = Math.max(dayBackB - 1, slot.back[2]);
+    }
 
-    const envLight = new THREE.Vector3(
-      (-dayDark + dayBackR) / 255,
-      (-dayDark + dayBackG) / 255,
-      (-dayDark + dayBackB) / 255,
-    );
+    // 环境光偏移 = -DarkLevel + BackColor（有符号，/255 后进 shader）；村庄夜间减半（>>1）
+    let eR = -dayDark + dayBackR;
+    let eG = -dayDark + dayBackG;
+    let eB = -dayDark + dayBackB;
+    if (prof.village && dayDark > 0) {
+      eR >>= 1; eG >>= 1; eB >>= 1;
+    }
+    const envLight = new THREE.Vector3(eR / 255, eG / 255, eB / 255);
 
     // 玩家火把（Winmain.cpp:5517-5535）：DarkLevel>0 时 ap=DarkLevel×1.25，非地牢范围 260 world
     const torchPos = new THREE.Vector3();
