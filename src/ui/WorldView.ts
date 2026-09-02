@@ -154,6 +154,7 @@ export function createWorldView(container: HTMLElement): WorldView {
   let mmVisible = true;
   const mmImg = new Map<string, HTMLImageElement>(); // url → image
   const mmLoading = new Set<string>();
+  const mmWarned = new Set<string>(); // 一次性诊断告警
   let mmAssetsInit = false;          // arrow/mapbox 一次性
 
   async function ensureMMImg(url: string): Promise<void> {
@@ -161,9 +162,15 @@ export function createWorldView(container: HTMLElement): WorldView {
     mmLoading.add(url);
     try {
       const resp = await fetch(url);
-      if (!resp.ok) return;
+      if (!resp.ok) {
+        if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图 404: ' + url); }
+        return;
+      }
       const dec = await decodeTextureAsync(await resp.arrayBuffer());
-      if (!dec) return;
+      if (!dec) {
+        if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图 解码失败: ' + url); }
+        return;
+      }
       const c = document.createElement('canvas');
       c.width = dec.width; c.height = dec.height;
       c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(dec.pixels), dec.width, dec.height), 0, 0);
@@ -220,27 +227,28 @@ export function createWorldView(container: HTMLElement): WorldView {
     const winZ0 = selfPos.z - half, winZ1 = selfPos.z + half;
     const pxScale = 126 / Math.max(winX1 - winX0, 1e-9);
 
+    const mmNote = (k: string, m: string) => { if (!mmWarned.has(k)) { mmWarned.add(k); console.warn('[mm] ' + m); } };
     for (const [mapId, mh] of mapHandles) {
       const base = mmBaseName(mapId);
       if (!base) continue;
       const url = `/res/field/map/${base}.tga`;
-      ensureMMImg(url); // 已缓存/在途则立即返回
-      const tile = mmImg.get(url);
-      if (!tile) continue;
-
       const [gx0, , gz0] = mh.mapRenderer.worldMin;
       const [gx1, , gz1] = mh.mapRenderer.worldMax;
-      const xA = Math.max(gx0, winX0), xB = Math.min(gx1, winX1);
-      if (xB - xA <= 0) continue;
-      const zA = Math.max(gz0, winZ0), zB = Math.min(gz1, winZ1);
-      if (zB - zA <= 0) continue;
       const spanX = gx1 - gx0, spanZ = gz1 - gz0;
       if (spanX <= 0 || spanZ <= 0) continue;
+      const xA = Math.max(gx0, winX0), xB = Math.min(gx1, winX1);
+      const zA = Math.max(gz0, winZ0), zB = Math.min(gz1, winZ1);
+      if (xB - xA <= 0 || zB - zA <= 0) continue; // 该图不在视窗内
+
+      ensureMMImg(url);
+      const tile = mmImg.get(url);
+      if (!tile) { mmNote('miss:' + mapId, `图${mapId} 在视窗内但缩略图未就绪 ${url}`); continue; }
 
       const dx = 1 + (xA - winX0) * pxScale;
       const dw = (xB - xA) * pxScale;
       const dy = MM_BOX_Y + 1 + (zA - winZ0) * pxScale;
       const dh = (zB - zA) * pxScale;
+      if (dw < 2 || dh < 2) mmNote('thin:' + mapId, `图${mapId} 绘制过细 ${dw.toFixed(2)}x${dh.toFixed(2)} half=${half}`);
       drawImgSub(tile, dx, dy, dw, dh,
         (xA - gx0) / spanX, (zA - gz0) / spanZ,
         (xB - xA) / spanX, (zB - zA) / spanZ);
@@ -856,6 +864,31 @@ export function createWorldView(container: HTMLElement): WorldView {
   }
 
   let frameCount = 0, fpsAcc = 0;
+
+  // [临时调试] 直接跳图到指定地图中心（开发用，之后删除）
+  async function devJump(mapId: number): Promise<void> {
+    if (!scene) { console.warn('[dev] 世界未初始化'); return; }
+    if (!mapHandles.has(mapId)) await loadMapById(mapId);
+    const mh = mapHandles.get(mapId);
+    if (!mh) { console.warn('[dev] 地图不可用 ' + mapId); return; }
+    const [gx0, gy0, gz0] = mh.mapRenderer.worldMin;
+    const [gx1, gy1, gz1] = mh.mapRenderer.worldMax;
+    const cx = (gx0 + gx1) / 2, cz = (gz0 + gz1) / 2;
+    const cm = collisionMeshes.get(mapId);
+    let cy = (gy0 + gy1) / 2;
+    if (cm) {
+      const h = cm.getFloorHeight(cx * 256, -cz * 256, 400 * 256);
+      if (h.found) cy = h.height / 256;
+    }
+    selfPos.set(cx, cy, cz);
+    currentMapId = mapId;
+    if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
+    if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
+    if (axisGroup) axisGroup.position.copy(selfPos);
+    await syncMapRegions(mapId);
+    console.log(`[dev] 已跳到地图${mapId} pos=${selfPos.x.toFixed(0)},${selfPos.y.toFixed(0)},${selfPos.z.toFixed(0)}`);
+  }
+  (window as unknown as Record<string, unknown>).__jpJump = devJump;
 
   function renderLoop(): void {
     animFrameId = requestAnimationFrame(renderLoop);
