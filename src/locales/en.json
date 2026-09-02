@@ -6,6 +6,7 @@
     "charCreate": { "race": "Select Race", "job": "Select Job", "face": "Select Face", "name": "Enter Name", "back": "Back", "confirm": "Confirm", "create": "Create", "selectJob": "Select a job", "placeholder": "Name (2-12 chars)", "nameInvalid": "Only Chinese, English, and numbers, 2-12 characters", "creating": "Creating...", "failed": "Creation failed", "failedRetry": "Creation failed, please retry" }
   },
   "race": { "tempscron": "Tempscron", "moryon": "Moryon" },
+  "hud": { "life": "HP {cur}/{max}", "mana": "MP {cur}/{max}", "stm": "SP {cur}/{max}" },
   "job": { "fighter": "Fighter", "mechanician": "Mechanician", "archer": "Archer", "pikeman": "Pikeman", "assassin": "Assassin", "knight": "Knight", "atalanta": "Atalanta", "priestess": "Priestess", "magician": "Magician", "shaman": "Shaman" },
   "map": {
     "0": "Acacia Forest", "1": "Bamboo Forest", "2": "Garden of Freedom", "3": "Ricarten Town",

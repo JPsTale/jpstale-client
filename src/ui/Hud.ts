@@ -1,5 +1,6 @@
 import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
+import { t } from '../i18n/index.js';
 
 export interface HudState {
   hp: number; maxHp: number
@@ -23,7 +24,10 @@ const H = 720
 interface Tex { el: HTMLImageElement; w: number; h: number }
 
 // 需要做黑色透明化的纹理（按钮/图标类，黑色=背景）
-const TRANSPARENT_KEYS = new Set(['b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR','fist'])
+const TRANSPARENT_KEYS = new Set([
+  'b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR','fist',
+  'i0','i1','i2','i3','i4','i5','iWalk','iRun','iCamHand','iCamFix','iCamAuto','iMapOn','iMapOff',
+])
 
 const TEXTURES: Record<string, string> = {
   menu1: 'inter/menu-1.tga',
@@ -46,6 +50,13 @@ const TEXTURES: Record<string, string> = {
   gageL: 'skill/p-skill.bmp',
   gageR: 'skill/p-skill2.bmp',
   inter1: 'inter/inter_01.bmp', inter2: 'inter/inter_02.bmp', inter3: 'inter/inter_03.bmp',
+  i0: 'inter/buttoninfo/statusinfo.bmp', i1: 'inter/buttoninfo/inveninfo.bmp',
+  i2: 'inter/buttoninfo/skillinfo.bmp', i3: 'inter/buttoninfo/partyinfo.bmp',
+  i4: 'inter/buttoninfo/questinfo.bmp', i5: 'inter/buttoninfo/systeminfo.bmp',
+  iWalk: 'inter/buttoninfo/walk.bmp', iRun: 'inter/buttoninfo/run.bmp',
+  iCamHand: 'inter/buttoninfo/camera_hand.bmp', iCamFix: 'inter/buttoninfo/camera_fix.bmp',
+  iCamAuto: 'inter/buttoninfo/camera_auto.bmp',
+  iMapOn: 'inter/buttoninfo/mapon.bmp', iMapOff: 'inter/buttoninfo/mapoff.bmp',
 };
 
 async function loadTex(rel: string, key: string): Promise<Tex | null> {
@@ -91,6 +102,14 @@ export function createHud(container: HTMLElement): Hud {
   const textures: Partial<Record<string, Tex>> = {};
   let rafId = 0;
 
+  // 指针（悬停/按下；HUD canvas 为 pointer-events:none，事件走 window 只读检测，不拦截世界点击）
+  let ptrX = -1, ptrY = -1, ptrDown = false;
+  // 功能/交互小状态（暂为 tooltip 用；后续动作接线后由行为更新）
+  const uiState = { runFlag: false, camFlag: 2, mapOnFlag: true };
+  window.addEventListener('pointermove', (e) => { ptrX = e.clientX; ptrY = e.clientY; });
+  window.addEventListener('pointerdown', (e) => { if (e.button === 0) ptrDown = true; });
+  window.addEventListener('pointerup', (e) => { if (e.button === 0) ptrDown = false; });
+
   function fitCanvas() {
     // 等比缩放，锚定窗口底边：HUD 始终贴底，只允许顶部留空，
     // 避免窗口变窄/变矮时画布垂直居中造成“越缩离底越远”。
@@ -115,6 +134,47 @@ export function createHud(container: HTMLElement): Hud {
     const sy = t.h - fillH;
     const dh = h * ratio;
     ctx.drawImage(t.el, 0, sy, t.w, fillH, x, y + h - dh, w, dh);
+  }
+
+  // 悬停反馈：把指针换算到内容(800×600)坐标后画 tooltip 泡泡/条数值（都在内容坐标）
+  function drawHoverFx() {
+    if (!currentState) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || ptrX < rect.left || ptrX > rect.right || ptrY < rect.top || ptrY > rect.bottom) return;
+    const s = rect.width / W;
+    const mx = (ptrX - rect.left) / s - 240;
+    const my = (ptrY - rect.top) / s - 120;
+    const hit = (x0: number, y0: number, x1: number, y1: number) => mx >= x0 && mx < x1 && my >= y0 && my < y1;
+
+    // 小按钮 tooltip（原版 y536；map 泡泡与状态相反）
+    if (!ptrDown) {
+      if (hit(569, 555, 595, 581)) {
+        drawTex(uiState.runFlag ? 'iRun' : 'iWalk', 575 + 12 - 38, 536, 77, 27);
+      } else if (hit(595, 555, 621, 581)) {
+        if (uiState.camFlag === 1) drawTex('iCamAuto', 575 + 26 + 13 - 38, 536, 77, 27);
+        else drawTex(uiState.camFlag === 2 ? 'iCamFix' : 'iCamHand', 575 + 24 + 12 - 38, 536, 77, 27);
+      } else if (hit(621, 555, 647, 581)) {
+        drawTex(uiState.mapOnFlag ? 'iMapOff' : 'iMapOn', 575 + 48 + 12 - 38, 536, 77, 27);
+      }
+    }
+    // 6 功能按钮 hover 泡泡（595+t*25,533）；按下时原版换 pressed sprite（缺资源）暂只隐泡泡
+    for (let bt = 0; bt < 6; bt++) {
+      if (hit(648 + bt * 25, 560, 648 + bt * 25 + 25, 587)) {
+        if (!ptrDown) drawTex('i' + bt, 595 + bt * 25, 533, 77, 27);
+        break;
+      }
+    }
+    // HP/MP/STM 悬停数值（原版 ShowParaState 条右侧白字，无贴图）
+    ctx.font = 'bold 12px "Microsoft YaHei", "Segoe UI", monospace';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0,0,0,0.8)';
+    ctx.shadowBlur = 2;
+    if (hit(315, 500, 337, 594)) ctx.fillText(t('hud.life', { cur: Math.round(currentState.hp), max: Math.round(currentState.maxHp) }), 343, 500);
+    if (hit(463, 498, 483, 595)) ctx.fillText(t('hud.mana', { cur: Math.round(currentState.mp), max: Math.round(currentState.maxMp) }), 490, 498);
+    if (hit(300, 513, 313, 595)) ctx.fillText(t('hud.stm', { cur: Math.round(currentState.stm), max: Math.round(currentState.maxStm) }), 320, 513);
+    ctx.shadowBlur = 0;
   }
 
   function draw() {
@@ -178,6 +238,8 @@ export function createHud(container: HTMLElement): Hud {
     for (let t = 0; t < 6; t++) {
       drawTex('b' + t, 648 + t * 25, 560, 25, 27);
     }
+
+    drawHoverFx();
 
     ctx.restore();
   }

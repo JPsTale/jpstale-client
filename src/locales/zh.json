@@ -6,6 +6,7 @@
     "charCreate": { "race": "选择种族", "job": "选择职业", "face": "选择脸型", "name": "输入角色名", "back": "返回", "confirm": "确认", "create": "创建", "selectJob": "请选择职业", "placeholder": "角色名 (2-12字)", "nameInvalid": "名字只能包含中英文和数字，2-12个字符", "creating": "创建中...", "failed": "创建失败", "failedRetry": "创建失败，请重试" }
   },
   "race": { "tempscron": "坦普族", "moryon": "魔灵族" },
+  "hud": { "life": "生命 {cur}/{max}", "mana": "魔力 {cur}/{max}", "stm": "体力 {cur}/{max}" },
   "job": {
     "fighter": "武士", "mechanician": "机械兵", "archer": "弓箭手",
     "pikeman": "枪兵", "assassin": "刺客",
