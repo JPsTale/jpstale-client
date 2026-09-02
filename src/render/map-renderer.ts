@@ -496,7 +496,8 @@ export class MapRenderer {
         uvInline += '\nvMyLightMapUv = uv2;';
         if (scrollU1) uvInline += '\nvMyLightMapUv.x += uScrollU.y;';
       }
-      if (scrollU0) uvInline += '\nvUv.x += uScrollU.x;'; // three 顶点变量为 vUv（勿写成 vMapUv）
+      // three 的 vUv 仅在 USE_UV 时声明（有 map/uv 的材质）；无则跳过滚动避免编译错
+      if (scrollU0) uvInline += '\n#if defined(USE_UV)\nvUv.x += uScrollU.x;\n#endif';
       shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', uvInline);
 
       if (windKind) {
