@@ -124,10 +124,7 @@ export function createHud(container: HTMLElement): Hud {
     drawTex('menu1', 288, 472, 256, 128);
     drawTex('menu2', 544, 536, 256, 64);
 
-    // 右侧inter装饰条
-    drawTex('inter1', 800, 720 - 64, 66, 64);
-    drawTex('inter2', 866, 720 - 64, 64, 64);
-    drawTex('inter3', 930, 720 - 64, 40, 64);
+    // 右侧inter延伸条：本客户端资源 inter_01/02/03.bmp 为纯黑占位，无内容可画，跳过
 
     // 条填充 (bottom-up)
     drawBar('life', 319, 500, 16, 94, currentState.hp, currentState.maxHp);
