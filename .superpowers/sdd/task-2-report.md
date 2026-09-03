@@ -35,3 +35,18 @@
 构建输出：`npm run build` — `tsc --noEmit` 无错误；vite build 成功，77 modules，built in 173ms，仅 chunk>500kB 提示性警告。
 
 提交：`fix(hud): 走跑按钮下降沿触发(按一下切一次, 按住不重复)` → `edfe13419038d7db0a9422411036b8a60f0f38c2`
+
+## Fix2: onAction 桥接
+
+改了 `src/ui/Hud.ts` 的 `createHud` 返回对象：原 `onAction: undefined, // main.ts 赋值`（独立属性，main.ts 赋值改不到闭包变量）替换为 getter/setter 桥接闭包 `let onAction`：
+
+```ts
+get onAction() { return onAction; },
+set onAction(fn) { onAction = fn; },
+```
+
+`checkButtonClick()` 仍读闭包 `onAction`。这样 `hud.onAction = fn` 赋值经 setter 写入闭包变量，按钮点击 `onAction?.('toggleRun')` 可正常触发回调。
+
+构建输出：`npm run build` — `tsc --noEmit` 无错误；vite build 成功，77 modules，built in 165ms，仅 chunk>500kB 提示性警告。
+
+提交：`fix(hud): onAction 闭包与返回属性桥接(getter/setter), 点击回调可达` → `49be634e84f399c7ff6d79dd78f95afa195aea0e`

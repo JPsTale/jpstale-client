@@ -111,7 +111,36 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // ── 移动状态（复刻 /pt/maps/ dummy 移动）──
   const WALK_STEP = 3;       // 走（world 单位/帧）
-  const RUN_STEP = 7.5;      // 跑（≈走×2.5，对齐原版 MoveAngle2 460/180）
+  let RUN_STEP = 7.5;        // 跑（≈走×2.5，对齐原版 MoveAngle2 460/180）；可被下方调试 slider 覆盖
+  // EU 档位→速度换算（复刻 PristonTale-EU CharacterGame.h:37 + character.cpp:4199）
+  //   MoveSpeed = cnt*10 + 250（cnt=欧盟档位 1~25，上限 iMaxRunSpeed=((25*10)+250)*460>>8）
+  //   跑 step(world/帧) = ((MoveSpeed*460)>>8)/256（fONE=256）；world/s@60 = step*60
+  const speedLevel = document.createElement('input');
+  const speedDisp = document.createElement('div');
+  let speedLevelVal = 82;    // 默认≈当前 RUN_STEP 7.5 world/帧
+  function speedLevelToRunStep(cnt: number): number {
+    return (((cnt * 10 + 250) * 460) >> 8) / 256;
+  }
+  function updateSpeedPanel(): void {
+    const cnt = speedLevelVal;
+    const step = speedLevelToRunStep(cnt);
+    RUN_STEP = step;
+    const perSec = step * 60;
+    speedDisp.textContent =
+      `速度档 ${cnt}  MoveSpeed=${cnt * 10 + 250}\n` +
+      `跑 ${step.toFixed(2)} 单位/帧  ${perSec.toFixed(1)} 单位/s@60`;
+  }
+  speedLevel.type = 'range';
+  speedLevel.min = '1'; speedLevel.max = '100'; speedLevel.step = '1';
+  speedLevel.value = String(speedLevelVal);
+  speedLevel.addEventListener('input', () => {
+    speedLevelVal = Number(speedLevel.value);
+    updateSpeedPanel();
+  });
+  speedDisp.style.cssText = 'position:absolute;left:8px;bottom:118px;padding:6px 10px;background:rgba(0,0,0,0.72);color:#fc8;font:12px/1.5 monospace;border:1px solid #864;z-index:60;user-select:none;white-space:pre;';
+  speedLevel.style.cssText = 'position:absolute;left:8px;bottom:96px;width:230px;z-index:60;';
+  root.appendChild(speedDisp);
+  root.appendChild(speedLevel);
   let wasMoving = false;     // 上一帧是否在移动（状态机切换防抖）
   let falling = false;       // 是否正在下落
   let fallHeight = 0;        // 下落高度（触发 FALLDAMAGE 判定）
@@ -125,6 +154,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // C 键：控制台打印角色/相机调试信息
   window.addEventListener('keydown', (e) => {
     if (e.code === 'KeyC') debugDump();
+  });
+  // U 键：[临时调试] 角色垂直上抛 40 单位（穿桥掉到桥下后脱困用；TODO: 验证后删除）
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'KeyU') {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      selfPos.y += 40;
+      console.log('[u] teleport 角色上抛 40 → y=' + selfPos.y.toFixed(1));
+    }
   });
 
   // ── [临时调试] [ ] 键 ±1 小时（TODO: 验证后删除本块）──
@@ -753,6 +790,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (!result.collision) {
         // raw → world（A=result.x，C=result.z）
         selfPos.x = result.x / 256;
+        // 诊断：单步大幅下沉（下坡/穿透放行）打印决策，定位 checkNextMove 为何未挡桥沿
+        if (result.y < sy - 8 * 256) {
+          let alts = '';
+          for (const [mid, c2] of collisionMeshes) {
+            const j = c2.getFloorHeight(result.x, -result.z, sy);
+            alts += ` m${mid}:${j.found ? (j.height / 256).toFixed(1) : '无'}`;
+          }
+          console.log(`[pen] step=${step} 前y=${(sy / 256).toFixed(1)} 新地面=${(result.y / 256).toFixed(1)} 新x=${(result.x / 256).toFixed(1)} 新z=${(-result.z / 256).toFixed(1)}${alts}`);
+        }
         // 下坡（新地面明显低于当前 y）不贴地：保留物理 y，由 updateFalling 逐帧下落（对齐原版 PHeight）
         if (result.y >= sy - 8 * 256) {
           selfPos.y = result.y / 256;
@@ -828,18 +874,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 下落超 32*fONE 触发 FALLDOWN 动画；落地时 FALLDOWN → FallHeight>200 → FALLDAMAGE 否则 FALLSTAND。
   function updateFalling(): boolean {
     if (!animState) return false;
-    const cm = collisionMeshes.get(currentMapId);
-    if (!cm) return false;
     const rawX = selfPos.x * 256;
     const rawZ = -selfPos.z * 256;
     const pY = selfPos.y * 256;
-    const h = cm.getFloorHeight(rawX, rawZ, pY);
-    const groundY = h.found ? h.height : -80 * 256; // 悬空 → 虚空
+    // 遍历所有已加载图取脚下最高有效地面（跨图桥/边界时角色可站在非 currentMapId 的图上，
+    // 沿用 findCurrentMap 取最高地面的语义，避免用错的 currentMapId 单图误判虚空导致掉桥）
+    let groundY = -80 * 256; // 悬空 → 虚空
+    for (const cm of collisionMeshes.values()) {
+      const h = cm.getFloorHeight(rawX, rawZ, pY);
+      if (h.found && h.height > groundY) groundY = h.height;
+    }
     const diff = pY - groundY;
 
     // 调试：打印下落关键值（触发时）
     if (diff > 32 * 256 && !falling) {
-      console.log(`[fall] 开始下落: selfPos.y=${selfPos.y.toFixed(1)} groundY(world)=${(groundY / 256).toFixed(1)} diff(world)=${(diff / 256).toFixed(1)}`);
+      // 诊断：打印本图与所有已加载图在该点的地面高度，区分"用错图碰撞" vs "y 未贴地"
+      let alt = '';
+      for (const [mid, cm] of collisionMeshes) {
+        const hh = cm.getFloorHeight(rawX, rawZ, pY);
+        alt += ` m${mid}:${hh.found ? (hh.height / 256).toFixed(1) : '无'}`;
+      }
+      const fm = findCurrentMap(selfPos.x, selfPos.z);
+      console.log(`[fall] 开始下落: y=${selfPos.y.toFixed(1)} ground(${currentMapId})=${(groundY / 256).toFixed(1)} diff=${(diff / 256).toFixed(1)} findMap=${fm}${alt}`);
     }
 
     if (diff > 8 * 256) {
