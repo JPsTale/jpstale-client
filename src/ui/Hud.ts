@@ -16,6 +16,10 @@ export interface Hud {
   show(state: HudState): void
   hide(): void
   dispose(): void
+  /** 同步走/跑状态到 tooltip 展示 */
+  setRunFlag(run: boolean): void
+  /** 用户动作回调（走跑按钮等） */
+  onAction?: (action: 'toggleRun') => void
 }
 
 const W = 1280
@@ -105,7 +109,7 @@ export function createHud(container: HTMLElement): Hud {
   // 指针（悬停/按下；HUD canvas 为 pointer-events:none，事件走 window 只读检测，不拦截世界点击）
   let ptrX = -1, ptrY = -1, ptrDown = false;
   // 功能/交互小状态（暂为 tooltip 用；后续动作接线后由行为更新）
-  const uiState = { runFlag: false, camFlag: 2, mapOnFlag: true };
+  const uiState = { runFlag: true, camFlag: 2, mapOnFlag: true };
   window.addEventListener('pointermove', (e) => { ptrX = e.clientX; ptrY = e.clientY; });
   window.addEventListener('pointerdown', (e) => { if (e.button === 0) ptrDown = true; });
   window.addEventListener('pointerup', (e) => { if (e.button === 0) ptrDown = false; });
@@ -177,6 +181,25 @@ export function createHud(container: HTMLElement): Hud {
     ctx.shadowBlur = 0;
   }
 
+  function setRunFlag(run: boolean): void {
+    uiState.runFlag = run;
+  }
+
+  let onAction: ((action: 'toggleRun') => void) | undefined;
+
+  // 走跑按钮点击：内容坐标 (569,555,595,581) 内左键按下 → 上报动作（复用 pointerdown 记录）
+  function checkButtonClick(): void {
+    if (!currentState || !ptrDown) return;
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || ptrX < rect.left || ptrX > rect.right || ptrY < rect.top || ptrY > rect.bottom) return;
+    const s = rect.width / W;
+    const mx = (ptrX - rect.left) / s - 240;
+    const my = (ptrY - rect.top) / s - 120;
+    if (mx >= 569 && mx < 595 && my >= 555 && my < 581) {
+      onAction?.('toggleRun');
+    }
+  }
+
   function draw() {
     if (!currentState) return;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -246,6 +269,7 @@ export function createHud(container: HTMLElement): Hud {
 
   function loop() {
     draw();
+    checkButtonClick();
     rafId = requestAnimationFrame(loop);
   }
 
@@ -272,6 +296,8 @@ export function createHud(container: HTMLElement): Hud {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', fitCanvas);
       canvas.remove();
-    }
+    },
+    setRunFlag,
+    onAction: undefined, // main.ts 赋值
   };
 }
