@@ -26,7 +26,9 @@ const loginPanel = createLoginPanel(app, { onLogin });
 const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
-const worldView = createWorldView(app);
+const worldView = createWorldView(app, {
+  onMoveModeChange: (mode) => console.log('[mmode]', mode), // P1 占位出口；未来接 C2S 时替换
+});
 const loadingScreen = createLoadingScreen(app);
 const gameClock = createGameClock();
 const keyBinding = createKeyBinding();
@@ -63,8 +65,17 @@ keyBinding.onKeyDown((action) => {
     case 'minimap':
       worldView.toggleMinimap();
       break;
+    case 'walkRun':
+      hudPanel.setRunFlag(worldView.toggleRun());
+      break;
   }
 });
+
+hudPanel.onAction = (action) => {
+  if (action === 'toggleRun') {
+    hudPanel.setRunFlag(worldView.toggleRun());
+  }
+};
 
 const ctx: import('./app/State.js').TransitionCtx = {
   showBoot() {},
