@@ -301,6 +301,7 @@ export function createHud(container: HTMLElement): Hud {
       canvas.remove();
     },
     setRunFlag,
-    onAction: undefined, // main.ts 赋值
+    get onAction() { return onAction; },
+    set onAction(fn) { onAction = fn; },
   };
 }
