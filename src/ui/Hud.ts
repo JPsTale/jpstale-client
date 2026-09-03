@@ -187,9 +187,12 @@ export function createHud(container: HTMLElement): Hud {
 
   let onAction: ((action: 'toggleRun') => void) | undefined;
 
-  // 走跑按钮点击：内容坐标 (569,555,595,581) 内左键按下 → 上报动作（复用 pointerdown 记录）
+  // 走跑按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
+  let prevPtrDown = false;
   function checkButtonClick(): void {
-    if (!currentState || !ptrDown) return;
+    const justPressed = ptrDown && !prevPtrDown;
+    prevPtrDown = ptrDown;
+    if (!currentState || !justPressed) return;
     const rect = canvas.getBoundingClientRect();
     if (rect.width <= 0 || ptrX < rect.left || ptrX > rect.right || ptrY < rect.top || ptrY > rect.bottom) return;
     const s = rect.width / W;
