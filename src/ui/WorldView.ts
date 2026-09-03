@@ -46,9 +46,12 @@ export interface WorldView {
   isRunning(): boolean;
 }
 
-/** 服务端出生点(原始坐标 x=东,y,z=北) → 世界：东→+X，北→−Z */
+/**
+ * 服务端出生点/位置坐标(北正 world：x=rawX/256, z=-rawZ/256) → 场景世界。
+ * 服务端 world 与 three 场景渲染同域北正，直接使用，无需翻转。
+ */
 export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
-  return new THREE.Vector3(x, y, -z);
+  return new THREE.Vector3(x, y, z);
 }
 
 export interface WorldViewOpts {
