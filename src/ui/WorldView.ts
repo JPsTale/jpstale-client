@@ -40,6 +40,10 @@ export interface WorldView {
   setGameTime(hour: number, min: number): void;
   /** 切换场内小地图显示（原版 TAB） */
   toggleMinimap(): void;
+  /** 走/跑模式（真源）；返回切换后的值 */
+  toggleRun(): boolean;
+  /** 当前是否跑 */
+  isRunning(): boolean;
 }
 
 /** 服务端出生点(原始坐标 x=东,y,z=北) → 世界：东→+X，北→−Z */
@@ -47,7 +51,11 @@ export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
   return new THREE.Vector3(x, y, -z);
 }
 
-export function createWorldView(container: HTMLElement): WorldView {
+export interface WorldViewOpts {
+  onMoveModeChange?: (mode: 'run' | 'walk') => void; // 可替换出口（未来 C2S）
+}
+
+export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
   const root = document.createElement('div');
   root.id = 'world-root';
   root.style.cssText = 'display:none;position:fixed;inset:0;z-index:50;background:#0d0d0d;';
@@ -58,6 +66,9 @@ export function createWorldView(container: HTMLElement): WorldView {
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
+
+  // ---- 走/跑模式（真源；切换动作经 onMoveModeChange 出口，未来可替换为 C2S）---
+  let running = true; // 默认跑
   let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
 
   // ── 昼夜状态（移植 /pt/maps index.html:512-615，忠实原版 Winmain.cpp:5394 + playmain.cpp:2981）──
@@ -99,7 +110,8 @@ export function createWorldView(container: HTMLElement): WorldView {
   let dnDebugHour: number | null = null; // 覆盖游戏时钟的小时（null=跟随 GameClock）
 
   // ── 移动状态（复刻 /pt/maps/ dummy 移动）──
-  let moveSpeed = 3;         // 移动速度（world 单位/帧）
+  const WALK_STEP = 3;       // 走（world 单位/帧）
+  const RUN_STEP = 7.5;      // 跑（≈走×2.5，对齐原版 MoveAngle2 460/180）
   let wasMoving = false;     // 上一帧是否在移动（状态机切换防抖）
   let falling = false;       // 是否正在下落
   let fallHeight = 0;        // 下落高度（触发 FALLDAMAGE 判定）
@@ -672,6 +684,18 @@ export function createWorldView(container: HTMLElement): WorldView {
     return currentMapId; // 完全无命中 → 保持当前图
   }
 
+  // 走/跑切换核心：翻转本地状态并经出口通报；移动中立即切对应动画（原版 character.cpp ChangeMoveMode）
+  function setRunMode(next: boolean): boolean {
+    if (running === next) return running;
+    running = next;
+    opts?.onMoveModeChange?.(next ? 'run' : 'walk');
+    if (wasMoving) {
+      if (running) animState?.triggerRun();
+      else animState?.triggerWalk();
+    }
+    return running;
+  }
+
   // 每帧移动：朝鼠标方向（屏幕投影方向）移动，跨图碰撞校验。返回是否实际移动。
   function updateMovement(): boolean {
     if (!camera || !renderer) return false;
@@ -706,8 +730,8 @@ export function createWorldView(container: HTMLElement): WorldView {
     //   world 方向 (wx,wz) → 引擎角度语义：sin 对 x、cos 对 z
     selfAngle = Math.atan2(wx / wlen, wz / wlen);
 
-    // 6. 移动一步（复刻 /pt/maps/ MoveAngle2）
-    const step = moveSpeed;
+    // 6. 移动一步（复刻 /pt/maps/ MoveAngle2）；速度随走/跑
+    const step = running ? RUN_STEP : WALK_STEP;
     const sinVal = Math.sin(selfAngle);
     const cosVal = Math.cos(selfAngle);
     const dx = sinVal * step;
@@ -929,7 +953,8 @@ export function createWorldView(container: HTMLElement): WorldView {
         // （不更新 wasMoving，让鼠标按住时落地后自动转 RUN）
       } else {
         if (moved && !wasMoving) {
-          animState.triggerRun();
+          if (running) animState.triggerRun();
+          else animState.triggerWalk();
           wasMoving = true;
         } else if (!moved && wasMoving) {
           animState.triggerIdle();
@@ -1044,6 +1069,8 @@ export function createWorldView(container: HTMLElement): WorldView {
     },
     setGameTime,
     toggleMinimap,
+    toggleRun: () => setRunMode(!running),
+    isRunning: () => running,
     hide() {
       root.style.display = 'none';
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
