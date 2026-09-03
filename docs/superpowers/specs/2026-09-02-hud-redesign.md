@@ -262,3 +262,9 @@
 - 左下角面板：FPS/Draw/Tris/Verts + `Pos (x,y,z) m<mapId>` + `Time HH:mm`(调试小时带*) + `Dark n`。
 - `[`/`]` 临时调游戏小时（`DN_DEBUG_KEYS` 集中标注，后期删除）。
 - 顶 P0 清单与 §2.3 布局映射按实际调整；服务端对时字段/协议不变。
+
+### 6.7 渲染 shader 编译错误（2026-09-03 修复）
+- 现象：跳地图32/含滚动纹理处 `THREE.WebGLProgram: Shader Error 0 - VALIDATE_STATUS false`，Info Log 只给 `Vertex shader is not compiled.`（真实报错靠 `__errs()` 控制台捕获拿全：`ERROR:0:414 'vMapUv' undeclared` / 后改 `vUv` 仍 undeclared）。
+- 根因：`map-renderer.ts` tex0 `TextureFormState=SCROLL` 的顶点注入。第一版误用 three 不存在的 `vMapUv`；three 顶点的 `vUv` 仅在 `USE_UV`（材质带 map/uv）时才声明，滚动材质无 uv varying → 仍 undeclared。
+- 修复：注入包 `#if defined(USE_UV)`，有 vUv 才滚动，无则跳过（不再崩）。
+- `meshState Flag0x1` 为**剔除启用**；`twoSide` 忠实原版 smd 材质标记（map5 wire=`true`/map6 wire=`false`）——map6 那段桥背面剔除同原版，不改。

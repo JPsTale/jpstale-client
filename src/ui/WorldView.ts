@@ -12,7 +12,6 @@ import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
-import { facesAtColumn } from '../maps/pick.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel } from '../render/char-loader.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
@@ -155,7 +154,6 @@ export function createWorldView(container: HTMLElement): WorldView {
   let mmVisible = true;
   const mmImg = new Map<string, HTMLImageElement>(); // url → image
   const mmLoading = new Set<string>();
-  const mmWarned = new Set<string>(); // 一次性诊断告警
   let mmAssetsInit = false;          // arrow/mapbox 一次性
 
   async function ensureMMImg(url: string): Promise<void> {
@@ -163,21 +161,12 @@ export function createWorldView(container: HTMLElement): WorldView {
     mmLoading.add(url);
     try {
       const resp = await fetch(url);
-      if (!resp.ok) {
-        if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图 404: ' + url); }
-        return;
-      }
+      if (!resp.ok) return;
       const buf = await resp.arrayBuffer();
       // dev 服务器对缺失文件回退成 index.html(200)；按魔数排除
-      if (buf.byteLength === 0 || new Uint8Array(buf)[0] === 0x3c /* '<' */) {
-        if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图缺失(html回退): ' + url); }
-        return;
-      }
+      if (buf.byteLength === 0 || new Uint8Array(buf)[0] === 0x3c /* '<' */) return;
       const dec = await decodeTextureAsync(buf);
-      if (!dec) {
-        if (!mmWarned.has(url)) { mmWarned.add(url); console.warn('[mm] 缩略图 解码失败: ' + url); }
-        return;
-      }
+      if (!dec) return;
       const c = document.createElement('canvas');
       c.width = dec.width; c.height = dec.height;
       c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(dec.pixels), dec.width, dec.height), 0, 0);
@@ -244,7 +233,6 @@ export function createWorldView(container: HTMLElement): WorldView {
     const winZ0 = selfPos.z - half, winZ1 = selfPos.z + half;
     const pxScale = 126 / Math.max(winX1 - winX0, 1e-9);
 
-    const mmNote = (k: string, m: string) => { if (!mmWarned.has(k)) { mmWarned.add(k); console.warn('[mm] ' + m); } };
     for (const [mapId, mh] of mapHandles) {
       const base = mmBaseName(mapId);
       if (!base) continue;
@@ -259,13 +247,13 @@ export function createWorldView(container: HTMLElement): WorldView {
 
       ensureMMImg(url);
       const tile = mmImg.get(url);
-      if (!tile) { mmNote('miss:' + mapId, `图${mapId} 在视窗内但缩略图未就绪 ${url}`); continue; }
+      if (!tile) continue; // 缩略图未就绪再下一帧补
 
       const dx = 1 + (xA - winX0) * pxScale;
       const dw = (xB - xA) * pxScale;
       const dy = MM_BOX_Y + 1 + (zA - winZ0) * pxScale;
       const dh = (zB - zA) * pxScale;
-      if (dw < 2 || dh < 2) mmNote('thin:' + mapId, `图${mapId} 绘制过细 ${dw.toFixed(2)}x${dh.toFixed(2)} half=${half}`);
+      if (dw < 2 || dh < 2) continue;
       drawImgSub(tile, dx, dy, dw, dh,
         (xA - gx0) / spanX, (zA - gz0) / spanZ,
         (xB - xA) / spanX, (zB - zA) / spanZ);
@@ -650,57 +638,12 @@ export function createWorldView(container: HTMLElement): WorldView {
 
   function onMouseDown(e: MouseEvent): void {
     if (e.button === 0) { mouseDown = true; mouseX = e.clientX; mouseY = e.clientY; }
-    if (e.button === 2) pickScene(e); // 右键射线拾取（临时诊断）
   }
   function onMouseUp(e: MouseEvent): void {
     if (e.button === 0) mouseDown = false;
   }
   function onMouseMove(e: MouseEvent): void {
     mouseX = e.clientX; mouseY = e.clientY;
-  }
-
-  // [临时] 射线拾取：输出点击面上的材质/面信息（供栏杆单面等诊断）
-  function pickScene(e: MouseEvent): void {
-    if (!renderer || !camera) return;
-    const rect = renderer.domElement.getBoundingClientRect();
-    const ndc = new THREE.Vector2(
-      ((e.clientX - rect.left) / rect.width) * 2 - 1,
-      -((e.clientY - rect.top) / rect.height) * 2 + 1,
-    );
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(ndc, camera);
-    const meta: { mesh: THREE.Mesh; matIdx: number; mapId: number }[] = [];
-    for (const [mapId, mh] of mapHandles) {
-      for (const mrd of mh.mapRenderer.materials) meta.push({ mesh: mrd.mesh, matIdx: mrd.matIdx, mapId });
-    }
-    const hits = raycaster.intersectObjects(meta.map((t) => t.mesh), false);
-    if (!hits.length) { console.log('[pick] 未命中'); return; }
-    hits.sort((a, b) => a.distance - b.distance);
-    const hit = hits[0];
-    const t = meta.find((x) => x.mesh === hit.object);
-    if (!t) return;
-    const mh = mapHandles.get(t.mapId)!;
-    const mat = mh.data.materials[t.matIdx];
-    const world = hit.point;
-    const rawA = Math.round(world.x * 256), rawC = Math.round(-world.z * 256);
-    console.log('[pick] ===== 右键拾取 =====');
-    console.log(`[pick] map=${t.mapId} matIdx=${t.matIdx} geoFace=${hit.faceIndex ?? -1} world=(${world.x.toFixed(1)},${world.y.toFixed(1)},${world.z.toFixed(1)}) raw=(${rawA},${rawC})`);
-    if (mat) {
-      console.log(`[pick] 材质 flags: twoSide=${mat.twoSide} blend=${mat.blendType} transparency=${mat.transparency} meshState=0x${(mat.meshState >>> 0).toString(16)} useState=0x${(mat.useState >>> 0).toString(16)} tex0="${mat.tex[0]}" tex1="${mat.tex[1] ?? ''}"`);
-    }
-    // 该 (rawA,rawC) 柱上的所有面（按 rawY 升序），含栏杆另一面等多层
-    const col = facesAtColumn(mh.data, rawA, rawC, mh);
-    if (col.length) {
-      console.log(`[pick] 同柱面 ${col.length} 个（最近在前）:`);
-      for (const f of col.slice(0, 12)) {
-        console.log(`  rawY=${Math.round(f.rawY)} worldY=${f.worldY.toFixed(1)} face=${f.faceIndex} mat=${f.matIdx} twoSide=${f.twoSide} blend=${f.blendType} tex="${f.tex}"`);
-      }
-      if (col.length > 12) console.log(`  … 共 ${col.length} 个`);
-    }
-  }
-  function onContext(e: MouseEvent): void {
-    e.preventDefault();
-    pickScene(e);
   }
 
   // 判断角色所属地图（对齐服务端 MapRegionService.findMapPrecise）：
@@ -927,31 +870,6 @@ export function createWorldView(container: HTMLElement): WorldView {
 
   let frameCount = 0, fpsAcc = 0;
 
-  // [临时调试] 直接跳图到指定地图中心（开发用，之后删除）
-  async function devJump(mapId: number): Promise<void> {
-    if (!scene) { console.warn('[dev] 世界未初始化'); return; }
-    if (!mapHandles.has(mapId)) await loadMapById(mapId);
-    const mh = mapHandles.get(mapId);
-    if (!mh) { console.warn('[dev] 地图不可用 ' + mapId); return; }
-    const [gx0, gy0, gz0] = mh.mapRenderer.worldMin;
-    const [gx1, gy1, gz1] = mh.mapRenderer.worldMax;
-    const cx = (gx0 + gx1) / 2, cz = (gz0 + gz1) / 2;
-    const cm = collisionMeshes.get(mapId);
-    let cy = (gy0 + gy1) / 2;
-    if (cm) {
-      const h = cm.getFloorHeight(cx * 256, -cz * 256, 400 * 256);
-      if (h.found) cy = h.height / 256;
-    }
-    selfPos.set(cx, cy, cz);
-    currentMapId = mapId;
-    if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
-    if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
-    if (axisGroup) axisGroup.position.copy(selfPos);
-    await syncMapRegions(mapId);
-    console.log(`[dev] 已跳到地图${mapId} pos=${selfPos.x.toFixed(0)},${selfPos.y.toFixed(0)},${selfPos.z.toFixed(0)}`);
-  }
-  (window as unknown as Record<string, unknown>).__jpJump = devJump;
-
   function renderLoop(): void {
     animFrameId = requestAnimationFrame(renderLoop);
     if (!renderer || !scene || !camera) return;
@@ -1105,7 +1023,6 @@ export function createWorldView(container: HTMLElement): WorldView {
       canvasEl.addEventListener('mousedown', onMouseDown);
       canvasEl.addEventListener('mouseup', onMouseUp);
       canvasEl.addEventListener('mousemove', onMouseMove);
-      canvasEl.addEventListener('contextmenu', onContext);
       window.addEventListener('mouseup', onMouseUp);
 
       // dummy 摆到出生点，朝向与角色一致（红线指向角色面朝方向）
@@ -1139,7 +1056,6 @@ export function createWorldView(container: HTMLElement): WorldView {
         renderer.domElement.removeEventListener('mousedown', onMouseDown);
         renderer.domElement.removeEventListener('mouseup', onMouseUp);
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
-        renderer.domElement.removeEventListener('contextmenu', onContext);
         renderer.domElement.remove();
       }
       if (renderer) renderer.dispose();
