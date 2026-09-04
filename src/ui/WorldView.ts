@@ -53,8 +53,8 @@ export interface WorldView {
 }
 
 /**
- * 服务端出生点/位置坐标(北正 world：x=rawX/256, z=-rawZ/256) → 场景世界。
- * 服务端 world 与 three 场景渲染同域北正，直接使用，无需翻转。
+ * 服务端出生点/位置坐标 → 场景世界。
+ * 服务端 world 与 three 场景渲染同域（+z = south），直接使用。
  */
 export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
   return new THREE.Vector3(x, y, z);
@@ -711,7 +711,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 先 AABB 粗筛；多命中或无命中（桥口在图 AABB 外）用已加载图碰撞网格高度判定
   // （对齐原版：遍历 stage 用 GetFloorHeight，谁有地面就在哪）。
   function findCurrentMap(wx: number, wz: number): number {
-    const fx = wx * 256, fz = -wz * 256; // world → raw（A=wx·256，C=−wz·256）
+    const fx = wx * 256, fz = wz * 256; // world → collision (z already matches world convention)
     const hits: number[] = [];
     for (const [mapId, [xMin, xMax, zMin, zMax]] of allBounds) {
       if (wx >= xMin && wx <= xMax && wz >= zMin && wz <= zMax) hits.push(mapId);
@@ -787,12 +787,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const dz = cosVal * step;
     const dist = Math.hypot(dx, dz);
 
-    // world → raw SMD 坐标（A=wx·256，C=−wz·256）
+    // world → collision coords (x/y raw, z already matches world convention)
     const sx = selfPos.x * 256;
     const sy = selfPos.y * 256;
-    const sz = -selfPos.z * 256;
-    // 移动方向转 raw 角度：raw 增量 (ΔA,ΔC)=(Δwx,−Δwz)=(sin,−cos)
-    const rawAngle = Math.atan2(sinVal, -cosVal);
+    const sz = selfPos.z * 256;
+    // angle: collision z matches world z, use directly
+    const rawAngle = selfAngle;
 
     // 跨图碰撞：遍历所有已加载图的碰撞网格，都试 checkNextMove，取第一个能走的（对齐原版双 stage）
     // 解决桥等跨图边界：桥前半在 A 图、后半在 B 图，单图碰撞会让角色在交界处掉落。
@@ -806,16 +806,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (result.y < sy - 8 * 256) {
           let alts = '';
           for (const [mid, c2] of collisionMeshes) {
-            const j = c2.getFloorHeight(result.x, -result.z, sy);
+            const j = c2.getFloorHeight(result.x, result.z, sy);
             alts += ` m${mid}:${j.found ? (j.height / 256).toFixed(1) : '无'}`;
           }
-          console.log(`[pen] step=${step} 前y=${(sy / 256).toFixed(1)} 新地面=${(result.y / 256).toFixed(1)} 新x=${(result.x / 256).toFixed(1)} 新z=${(-result.z / 256).toFixed(1)}${alts}`);
+          console.log(`[pen] step=${step} 前y=${(sy / 256).toFixed(1)} 新地面=${(result.y / 256).toFixed(1)} 新x=${(result.x / 256).toFixed(1)} 新z=${(result.z / 256).toFixed(1)}${alts}`);
         }
         // 下坡（新地面明显低于当前 y）不贴地：保留物理 y，由 updateFalling 逐帧下落（对齐原版 PHeight）
         if (result.y >= sy - 8 * 256) {
           selfPos.y = result.y / 256;
         }
-        selfPos.z = -result.z / 256;
+        selfPos.z = result.z / 256;
         moved = true;
         break;
       }
@@ -847,7 +847,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // C 键调试：打印角色/相机状态、脚下地面/材质
   function debugDump(): void {
     const rawX = selfPos.x * 256;
-    const rawZ = -selfPos.z * 256;
+    const rawZ = selfPos.z * 256;
     const rawY = selfPos.y * 256;
     console.log('========== WorldView Debug ==========');
     console.log(`[角色] mapId=${currentMapId} pos=(${selfPos.x.toFixed(2)}, ${selfPos.y.toFixed(2)}, ${selfPos.z.toFixed(2)}) raw=(${rawX.toFixed(0)}, ${rawY.toFixed(0)}, ${rawZ.toFixed(0)}) angle(rad)=${selfAngle.toFixed(4)} falling=${falling}`);
@@ -887,7 +887,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function updateFalling(): boolean {
     if (!animState) return false;
     const rawX = selfPos.x * 256;
-    const rawZ = -selfPos.z * 256;
+    const rawZ = selfPos.z * 256;
     const pY = selfPos.y * 256;
     // 遍历所有已加载图取脚下最高有效地面（跨图桥/边界时角色可站在非 currentMapId 的图上，
     // 沿用 findCurrentMap 取最高地面的语义，避免用错的 currentMapId 单图误判虚空导致掉桥）
