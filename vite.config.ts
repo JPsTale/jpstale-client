@@ -4,9 +4,8 @@ import { resolve, sep, relative } from 'node:path';
 
 const loadBackend = (mode: string) => {
   const e = loadEnv(mode, process.cwd(), '');
-  // 从 VITE_API_BASE 剥离 context-path 得 web-server origin，例如
-  // http://192.168.31.10:8080/pt -> http://192.168.31.10:8080
   const apiBase: string = e.VITE_API_BASE || 'http://192.168.31.10:8080/pt';
+  if (apiBase.startsWith('/')) return 'http://192.168.31.10:8080';
   return apiBase.replace(/\/pt\/?$/, '');
 };
 
