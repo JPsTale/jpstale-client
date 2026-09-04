@@ -32,6 +32,11 @@
       "creating": "创建中...",
       "failed": "创建失败",
       "failedRetry": "创建失败，请重试"
+    },
+    "load": {
+      "tipsTitle": "游戏提示",
+      "world": "正在进入世界",
+      "entering": "正在进入 {map}"
     }
   },
   "race": {

@@ -32,6 +32,11 @@
       "creating": "Creating...",
       "failed": "Creation failed",
       "failedRetry": "Creation failed, please retry"
+    },
+    "load": {
+      "tipsTitle": "Gameplay Tips & Tricks",
+      "world": "Entering world",
+      "entering": "Entering {map}"
     }
   },
   "race": {
