@@ -3,6 +3,7 @@ import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearTok
 import { createCharacter, selectCharacter } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
+import { sound } from './core/sound.js';
 import { createServerSelect } from './ui/ServerSelect.js';
 import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
@@ -99,6 +100,11 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
   } else {
     loginBackdrop.hide();
   }
+  // 界面 BGM/点击音效：登录+选服共用登录曲，选人独立曲目，进游戏静音
+  const sndKind = (to === AppScreen.LOGIN || to === AppScreen.SERVER_SELECT)
+    ? 'login'
+    : to === AppScreen.CHAR_SELECT ? 'charSelect' : 'none';
+  sound.setScreen(sndKind);
   switch (to) {
     case AppScreen.LOGIN:
       loginPanel.show(args[0] as string | undefined);

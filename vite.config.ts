@@ -26,6 +26,7 @@ function devAssets(mode: string): Plugin {
     '.hdr': 'application/octet-stream',
     '.jpg': 'image/jpeg',
     '.png': 'image/png',
+    '.wav': 'audio/wav',
     '.txt': 'text/plain',
     '.json': 'application/json',
   };
@@ -47,9 +48,39 @@ function devAssets(mode: string): Plugin {
         const file = resolve(assetRoot, relPath);
         if (!existsSync(file) || !statSync(file).isFile()) return next();
         const ext = file.slice(file.lastIndexOf('.')).toLowerCase();
+        const mime = MIME[ext] || 'application/octet-stream';
+        const cache = 'public, max-age=604800, immutable';
+        const size = statSync(file).size;
+        // 支持 HTTP Range（大 wav/纹理：<audio> 流式播放与拖动需要）
+        const range = req.headers.range;
+        if (range) {
+          const m = /^bytes=(\d*)-(\d*)$/.exec(String(range).trim());
+          if (m) {
+            const reqStart = m[1] === '' ? -1 : Number(m[1]);
+            const reqEnd = m[2] === '' ? -1 : Number(m[2]);
+            let start = reqStart < 0 ? Math.max(0, size - reqEnd) : reqStart;
+            let end = reqEnd < 0 ? size - 1 : reqEnd;
+            if (Number.isInteger(start) && Number.isInteger(end) && start <= end && start < size) {
+              end = Math.min(end, size - 1);
+              res.writeHead(206, {
+                'Content-Type': mime,
+                'Content-Range': `bytes ${start}-${end}/${size}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': end - start + 1,
+                'Cache-Control': cache,
+              });
+              if (req.method !== 'HEAD') createReadStream(file, { start, end }).pipe(res);
+              else res.end();
+              return;
+            }
+            res.writeHead(416, { 'Content-Range': `bytes */${size}` });
+            return res.end();
+          }
+        }
         res.writeHead(200, {
-          'Content-Type': MIME[ext] || 'application/octet-stream',
-          'Cache-Control': 'public, max-age=604800, immutable',
+          'Content-Type': mime,
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': cache,
         });
         if (req.method === 'HEAD') return res.end();
         createReadStream(file).pipe(res);
