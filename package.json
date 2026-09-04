@@ -13,6 +13,7 @@
     "proto": "npx tsx scripts/gen-proto.ts"
   },
   "dependencies": {
+    "js-sha256": "^1.0.0",
     "three": "^0.160.0"
   },
   "devDependencies": {

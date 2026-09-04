@@ -18,8 +18,7 @@ import { createGameClock } from './ui/GameClock.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
 import type { jpt } from './net/proto/base_message.js';
-
-const app = document.getElementById('app')!;
+import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
 
 const loginPanel = createLoginPanel(app, { onLogin });
@@ -133,16 +132,11 @@ function go(to: AppScreen, ...args: unknown[]) {
   showPanelFor(to, ...args);
 }
 
-async function sha256hex(input: string): Promise<string> {
-  const data = new TextEncoder().encode(input);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-}
 
 async function onLogin(username: string, password: string) {
   if (getScreen() !== AppScreen.LOGIN) return;
   try {
-    const passHash = await sha256hex(`${username.toUpperCase()}:${password}`);
+    const passHash = sha256(`${username.toUpperCase()}:${password}`).toUpperCase();
     const res = await fetch(`${apiBase}/api/game/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
