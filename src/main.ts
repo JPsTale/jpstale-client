@@ -2,6 +2,7 @@ import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
 import { createCharacter, selectCharacter } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
+import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { createServerSelect } from './ui/ServerSelect.js';
 import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
@@ -20,6 +21,7 @@ import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
 
+const loginBackdrop = createLoginBackdrop(app);
 const loginPanel = createLoginPanel(app, { onLogin });
 const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
@@ -91,6 +93,12 @@ const ctx: import('./app/State.js').TransitionCtx = {
 };
 
 function showPanelFor(to: AppScreen, ...args: unknown[]) {
+  // 登录/选服界面显示原画背景层，其余界面隐藏（世界画面、选角自带底）
+  if (to === AppScreen.LOGIN || to === AppScreen.SERVER_SELECT) {
+    loginBackdrop.show();
+  } else {
+    loginBackdrop.hide();
+  }
   switch (to) {
     case AppScreen.LOGIN:
       loginPanel.show(args[0] as string | undefined);
@@ -308,6 +316,7 @@ onJsonMessage((type, data) => {
 });
 
 // 启动：预加载角色模型（选角需要），地图按需加载（进图时）
+loginBackdrop.preload();
 loadingScreen.show();
 const TOTAL_MODELS = 10;
 preloadAllModels((loaded) => {

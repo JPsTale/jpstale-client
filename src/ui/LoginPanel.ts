@@ -11,7 +11,7 @@ export function createLoginPanel(container: HTMLElement, opts: {
 }): LoginPanel {
   const el = document.createElement('div');
   el.className = 'panel login-panel';
-  el.style.cssText = 'display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(0,0,0,0.85);color:#fff;font-size:14px';
+  el.style.cssText = 'display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:transparent;color:#fff;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,0.9);z-index:1';
   el.innerHTML = `
     <h2>${t('gui.login.title')}</h2>
     <div class="error" style="color:red;min-height:1.2em"></div>

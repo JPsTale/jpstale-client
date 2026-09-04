@@ -11,7 +11,7 @@ export interface ServerSelect {
 export function createServerSelect(container: HTMLElement): ServerSelect {
   const el = document.createElement('div');
   el.className = 'panel server-select';
-  el.style.cssText = 'display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:rgba(0,0,0,0.85);color:#fff;font-size:14px';
+  el.style.cssText = 'display:none;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:transparent;color:#fff;font-size:14px;text-shadow:0 1px 3px rgba(0,0,0,0.9);z-index:1';
   container.appendChild(el);
 
   return {
@@ -21,7 +21,7 @@ export function createServerSelect(container: HTMLElement): ServerSelect {
       list.style.cssText = 'display:flex;flex-direction:column;gap:8px';
       for (const s of servers) {
         const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:#222;border-radius:4px;cursor:pointer;min-width:300px';
+        row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(15,15,24,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:4px;cursor:pointer;min-width:300px;backdrop-filter:blur(2px)';
         row.innerHTML = `<span style="flex:1">${s.name}</span><span style="color:${s.online ? '#8f8' : '#f88'}">${s.online ? t('gui.server.online') : t('gui.server.offline')}</span>`;
         row.onclick = () => onSelect(s.id);
         list.appendChild(row);
