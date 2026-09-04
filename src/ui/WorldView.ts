@@ -7,6 +7,7 @@
 import * as THREE from 'three';
 import { loadMap, updateFrameAnimations, getMapWorldBounds } from '../maps/fore1.js';
 import { mapSmdPath, MAP_CATALOG } from '../maps/map-catalog.js';
+import { minimapBase } from '../maps/map-data.js';
 import { mapDecorList } from '../maps/map-decor.js';
 import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
@@ -235,22 +236,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     mmCtx.drawImage(img, fx * img.width, fy * img.height, Math.max(fw, 1e-4) * img.width, Math.max(fh, 1e-4) * img.height, dx, dy, Math.max(dw, 0), Math.max(dh, 0));
   }
 
-  // 场地缩略图名（显式，源 = C++ field.cpp SetName(ase, 名字) 第二参数，44 图逐条）
-  // 名字与 smd basename 无规律（如 lostisland→lost、dun-6a→dun-6、quest_iv→quest_IV…），故不推断。
-  const MM_TILE_BASE: Record<number, string> = {
-    0: 'fore-3', 1: 'fore-2', 2: 'fore-1', 3: 'village-2',
-    4: 'ruin-4', 5: 'ruin-3', 6: 'ruin-2', 7: 'ruin-1',
-    8: 'De-1', 9: 'village-1', 10: 'De-2', 11: 'De-3', 12: 'De-4',
-    13: 'dun-1', 14: 'dun-2', 15: 'dun-3', 16: 'office',
-    17: 'forever-fall-04', 18: 'forever-fall-03', 19: 'forever-fall-02', 20: 'forever-fall-01', 21: 'pilai',
-    22: 'dun-4', 23: 'dun-5', 24: 'Tcave', 25: 'Mcave', 26: 'Dcave',
-    27: 'iron-1', 28: 'iron-2', 29: 'ice_ura', 30: 'sod-1', 31: 'ice1',
-    32: 'quest_IV', 33: 'castle', 34: 'Greedy', 35: 'ice2',
-    36: 'Boss', 37: 'lost', 38: 'Losttemple', 39: 'fall_game',
-    40: 'dun-7', 41: 'dun-8', 42: 'dun-6', 43: 'dun-9',
-  };
+  // 场地缩略图名：唯一数据源 fields.json 的 minimap 字段（= EU SetFileName(ase, 名) 第二参）。
+  // 名字与 smd basename 无规律（如 lostisland→lost、dun-6a→dun-6），故由数据文件决定、不做推断。
   function mmBaseName(mapId: number): string | null {
-    return MM_TILE_BASE[mapId] ?? null;
+    return minimapBase(mapId);
   }
 
   // 原版不显示小地图的场（SOD/quest-arena/ACTION/boss36）
