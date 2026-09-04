@@ -49,7 +49,7 @@ function devAssets(mode: string): Plugin {
         const ext = file.slice(file.lastIndexOf('.')).toLowerCase();
         res.writeHead(200, {
           'Content-Type': MIME[ext] || 'application/octet-stream',
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'public, max-age=604800, immutable',
         });
         if (req.method === 'HEAD') return res.end();
         createReadStream(file).pipe(res);

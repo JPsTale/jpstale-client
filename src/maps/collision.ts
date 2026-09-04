@@ -1,8 +1,9 @@
 ﻿/**
  * Collision detection — 移植自 /pt/maps/ js/collision.js（复刻 smStage3d.cpp CheckNextMove / GetPolyHeight / smMakeTLine）
  *
- * All coordinates in raw SMD integers (fONE = 256 per game unit).
- * Caller must convert world ↔ SMD coords.
+ * Coordinates: x/y in raw SMD integers, z negated to match THREE.js world convention (+z = south).
+ * Callers pass world z directly (no manual negation needed).
+ * Distance/height still in raw SMD units (fONE = 256 per game unit).
  *
  * Original C++ flow (smStage3d.cpp:569):
  *   CheckNextMove(x,y,z,angle,dist)
@@ -39,7 +40,7 @@ export class CollisionMesh {
   maxY = 0;
 
   /**
-   * Build collision mesh from SMD data in RAW SMD coordinates.
+   * Build collision mesh from SMD data. z is negated to match THREE.js world convention.
    * Only faces where (meshState & 1) != 0 are solid.
    */
   buildFromSMD(smdData: SMDData): void {
@@ -61,10 +62,10 @@ export class CollisionMesh {
       const i1 = triIdx[fi * 3 + 1];
       const i2 = triIdx[fi * 3 + 2];
 
-      // Raw SMD coordinates (no scaling)
-      const x1 = pos[i0 * 3], y1 = pos[i0 * 3 + 1], z1 = pos[i0 * 3 + 2];
-      const x2 = pos[i1 * 3], y2 = pos[i1 * 3 + 1], z2 = pos[i1 * 3 + 2];
-      const x3 = pos[i2 * 3], y3 = pos[i2 * 3 + 1], z3 = pos[i2 * 3 + 2];
+      // x/y: raw SMD; z: negated to match THREE.js world (+z = south)
+      const x1 = pos[i0 * 3], y1 = pos[i0 * 3 + 1], z1 = -pos[i0 * 3 + 2];
+      const x2 = pos[i1 * 3], y2 = pos[i1 * 3 + 1], z2 = -pos[i1 * 3 + 2];
+      const x3 = pos[i2 * 3], y3 = pos[i2 * 3 + 1], z3 = -pos[i2 * 3 + 2];
 
       if (y1 < minY) minY = y1; if (y1 > maxY) maxY = y1;
 
@@ -282,8 +283,8 @@ export class CollisionMesh {
 
   /**
    * CheckNextMove — replicates smSTAGE3D::CheckNextMove (smStage3d.cpp:569)
-   * Input: raw SMD coords (x,y,z), angle in radians, distance in fONE units.
-   * Returns { x, y, z, collision } in raw SMD coords.
+   * Input: x/y in raw SMD units, z in world convention (+z = south), angle in radians, distance in fONE units.
+   * Returns { x, y, z, collision } in same coordinate space.
    */
   checkNextMove(x: number, y: number, z: number, angle: number, dist: number, bodyWidth = 11): { x: number; y: number; z: number; collision: boolean } {
     const prevX = x, prevY = y, prevZ = z;

@@ -7,8 +7,6 @@ import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
 import { preloadAllModels } from './render/model-cache.js';
-import { preloadAllMaps } from './maps/map-preload.js';
-import { MAP_CATALOG } from './maps/map-catalog.js';
 import { createLoadingScreen } from './ui/LoadingScreen.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
@@ -294,25 +292,13 @@ onJsonMessage((type, data) => {
   }
 });
 
-// 启动：先显式加载（进度条），预加载完成才显示登录页，避免未加载完就进游戏
+// 启动：预加载角色模型（选角需要），地图按需加载（进图时）
 loadingScreen.show();
 const TOTAL_MODELS = 10;
-const TOTAL_MAPS = Object.keys(MAP_CATALOG).length;
-const TOTAL = TOTAL_MODELS + TOTAL_MAPS;
-let doneModels = 0, doneMaps = 0, preloadDone = false;
-function updateLoading(): void {
-  const done = doneModels + doneMaps;
-  loadingScreen.setProgress(done, TOTAL, `加载资源 ${doneModels}/${TOTAL_MODELS} 模型 + ${doneMaps}/${TOTAL_MAPS} 地图`);
-  if (preloadDone && done >= TOTAL) {
+preloadAllModels((loaded) => {
+  loadingScreen.setProgress(loaded, TOTAL_MODELS, `加载模型 ${loaded}/${TOTAL_MODELS}`);
+  if (loaded >= TOTAL_MODELS) {
     loadingScreen.hide();
     go(AppScreen.LOGIN);
   }
-}
-(async () => {
-  await Promise.all([
-    preloadAllModels((loaded) => { doneModels = loaded; updateLoading(); }),
-    preloadAllMaps((loaded) => { doneMaps = loaded; updateLoading(); }),
-  ]);
-  preloadDone = true;
-  updateLoading();
-})();
+});

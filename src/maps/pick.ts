@@ -121,7 +121,7 @@ export function attachPick(
     hits.sort((a, b) => a.distance - b.distance);
     const wp = hits[0].point;
 
-    const rawX = -wp.z * 256, rawY = wp.y * 256, rawZ = -wp.x * 256;
+    const rawX = wp.x * 256, rawY = wp.y * 256, rawZ = -wp.z * 256;
     const faces = facesAtColumn(fore.data, rawX, rawZ, fore);
     const nearest = faces.reduce<PickFace | null>((best, f) =>
       (best === null || Math.abs(f.rawY - rawY) < Math.abs(best.rawY - rawY)) ? f : best, null);
