@@ -13,7 +13,8 @@ import { createLoadingScreen } from './ui/LoadingScreen.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
-import type { EnterGameInfo } from './ui/WorldView.js';
+import type { EnterGameInfo, WorldLoadHooks } from './ui/WorldView.js';
+import { t } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
@@ -29,6 +30,11 @@ const worldView = createWorldView(app, {
   onMoveModeChange: (mode) => console.log('[mmode]', mode), // P1 占位出口；未来接 C2S 时替换
 });
 const loadingScreen = createLoadingScreen(app);
+// 进图加载出口（showPanelFor WORLD 处传给 worldView.show）
+const worldLoadHooks: WorldLoadHooks = {
+  onProgress: (current, max) => loadingScreen.setProgress(current, max),
+  onReady: () => loadingScreen.hide(),
+};
 const gameClock = createGameClock();
 const keyBinding = createKeyBinding();
 const keyBindingPanel = createKeyBindingPanel(app, keyBinding);
@@ -121,7 +127,16 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       console.log('[app] WORLD screen, hudState=', state);
       if (state) hudPanel.show(state);
       const enterGame = args[1] as EnterGameInfo | undefined;
-      if (enterGame) worldView.show(enterGame);
+      if (enterGame) {
+        // 进图加载页：go() 的 hideAll 已收起 loadingScreen，这里同 tick 重新显示盖住世界画面，
+        // WorldView 阶段进度喂进度条，首帧渲染完成（onReady）后收起
+        const mapName = t(`map.${enterGame.mapId}`);
+        const title = mapName.startsWith('map.')
+          ? t('gui.load.world')
+          : t('gui.load.entering', { map: mapName });
+        loadingScreen.show(title);
+        worldView.show(enterGame, worldLoadHooks);
+      }
       break;
     }
   }

@@ -3,7 +3,8 @@
     "login": { "title": "登录", "username": "账号", "password": "密码", "submit": "登录" },
     "server": { "title": "选择服务器", "online": "● 在线", "offline": "○ 离线" },
     "charSel": { "title": "角色选择", "create": "创建角色", "enter": "进入游戏", "logout": "换账号", "level": "Lv.{level}" },
-    "charCreate": { "race": "选择种族", "job": "选择职业", "face": "选择脸型", "name": "输入角色名", "back": "返回", "confirm": "确认", "create": "创建", "selectJob": "请选择职业", "placeholder": "角色名 (2-12字)", "nameInvalid": "名字只能包含中英文和数字，2-12个字符", "creating": "创建中...", "failed": "创建失败", "failedRetry": "创建失败，请重试" }
+    "charCreate": { "race": "选择种族", "job": "选择职业", "face": "选择脸型", "name": "输入角色名", "back": "返回", "confirm": "确认", "create": "创建", "selectJob": "请选择职业", "placeholder": "角色名 (2-12字)", "nameInvalid": "名字只能包含中英文和数字，2-12个字符", "creating": "创建中...", "failed": "创建失败", "failedRetry": "创建失败，请重试" },
+    "load": { "tipsTitle": "游戏提示", "world": "正在进入世界", "entering": "正在进入 {map}" }
   },
   "race": { "tempscron": "坦普族", "moryon": "魔灵族" },
   "hud": { "life": "生命 {cur}/{max}", "mana": "魔力 {cur}/{max}", "stm": "体力 {cur}/{max}" },

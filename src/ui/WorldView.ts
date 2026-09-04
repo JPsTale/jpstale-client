@@ -32,8 +32,14 @@ export interface EnterGameInfo {
   appearance?: CharacterAppearance;
 }
 
+/** 进图加载出口：main.ts 喂给 LoadingScreen（阶段进度 + 首帧渲染完成） */
+export interface WorldLoadHooks {
+  onProgress?: (current: number, max: number) => void;
+  onReady?: () => void;
+}
+
 export interface WorldView {
-  show(enterGame: EnterGameInfo): void;
+  show(enterGame: EnterGameInfo, hooks?: WorldLoadHooks): void;
   hide(): void;
   destroy(): void;
   /** 游戏时间（0-23时/0-59分）：昼夜驱动源（忠实 /pt/maps darkLevel/BackColor 渐变） */
@@ -107,6 +113,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let animFrame = 0;
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
+  // 进图加载 hooks（show() 每次重置；首帧渲染后触发 onReady，供 main.ts 收起加载页）
+  let loadHooks: WorldLoadHooks | null = null;
+  let firstFramePending = false;
 
   // ── [临时调试] [ ] 键前后调小时，便于看各时段光照。TODO: 验证后删除本块 ──
   const DN_DEBUG_KEYS = true; // 关闭即整体失效
@@ -1043,6 +1052,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     renderer.render(scene, camera);
 
+    // 首帧渲染完成 → 通知 main.ts 收起加载页
+    if (firstFramePending) {
+      firstFramePending = false;
+      loadHooks?.onProgress?.(4, 4);
+      loadHooks?.onReady?.();
+    }
+
     // 统计面板（map-demo 同款）
     fpsAcc += dt;
     frameCount++;
@@ -1074,56 +1090,75 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   return {
-    async show(enterGame) {
+    async show(enterGame, hooks) {
+      loadHooks = hooks ?? null;
+      firstFramePending = false;
       root.style.display = 'block';
       ensure3D();
-      if (!scene || !camera) return;
-
-      // 预取全部 44 图 world AABB（缓存 SMD 命中，用于 findCurrentMap 判归属）
-      if (allBounds.size === 0) {
-        await Promise.all(Object.keys(MAP_CATALOG).map(async (k) => {
-          const id = Number(k);
-          const b = await getMapWorldBounds('/res/field/' + MAP_CATALOG[id]);
-          if (b) allBounds.set(id, b);
-        }));
-      }
-
-      const smdPath = mapSmdPath(enterGame.mapId);
-      if (!smdPath) {
-        console.warn('WorldView: 未知地图 mapId=' + enterGame.mapId);
+      if (!scene || !camera) {
+        loadHooks?.onReady?.();
         return;
       }
-      selfPos = rawToWorld(enterGame.position.x, enterGame.position.y, enterGame.position.z);
-      selfAngle = enterGame.rotation?.y || 0;
-      currentMapId = enterGame.mapId;
-      console.log('[WorldView] mapId=' + enterGame.mapId + ' 自机 world=(' +
-        selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ') angle=' + selfAngle);
-      await loadMapById(enterGame.mapId);
-      // 加载相邻图 + 卸载非相邻图
-      await syncMapRegions(enterGame.mapId);
 
-      // 鼠标移动监听（对齐 /pt/maps/：左键按住朝鼠标方向移动）
-      const canvasEl = renderer!.domElement;
-      canvasEl.addEventListener('mousedown', onMouseDown);
-      canvasEl.addEventListener('mouseup', onMouseUp);
-      canvasEl.addEventListener('mousemove', onMouseMove);
-      window.addEventListener('mouseup', onMouseUp);
+      try {
+        // 预取全部 44 图 world AABB（缓存 SMD 命中，用于 findCurrentMap 判归属）
+        if (allBounds.size === 0) {
+          await Promise.all(Object.keys(MAP_CATALOG).map(async (k) => {
+            const id = Number(k);
+            const b = await getMapWorldBounds('/res/field/' + MAP_CATALOG[id]);
+            if (b) allBounds.set(id, b);
+          }));
+        }
 
-      // dummy 摆到出生点，朝向与角色一致（红线指向角色面朝方向）
-      if (dummyGroup) {
-        dummyGroup.position.copy(selfPos);
-        dummyGroup.rotation.y = selfAngle;
+        const smdPath = mapSmdPath(enterGame.mapId);
+        if (!smdPath) {
+          console.warn('WorldView: 未知地图 mapId=' + enterGame.mapId);
+          loadHooks?.onReady?.();
+          return;
+        }
+        selfPos = rawToWorld(enterGame.position.x, enterGame.position.y, enterGame.position.z);
+        selfAngle = enterGame.rotation?.y || 0;
+        currentMapId = enterGame.mapId;
+        console.log('[WorldView] mapId=' + enterGame.mapId + ' 自机 world=(' +
+          selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ') angle=' + selfAngle);
+
+        // 阶段进度：1=本图 2=相邻图 3=角色 4=首帧（renderLoop 里触发）
+        await loadMapById(enterGame.mapId);
+        loadHooks?.onProgress?.(1, 4);
+        // 加载相邻图 + 卸载非相邻图
+        await syncMapRegions(enterGame.mapId);
+        loadHooks?.onProgress?.(2, 4);
+
+        // 鼠标移动监听（对齐 /pt/maps/：左键按住朝鼠标方向移动）
+        const canvasEl = renderer!.domElement;
+        canvasEl.addEventListener('mousedown', onMouseDown);
+        canvasEl.addEventListener('mouseup', onMouseUp);
+        canvasEl.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+
+        // dummy 摆到出生点，朝向与角色一致（红线指向角色面朝方向）
+        if (dummyGroup) {
+          dummyGroup.position.copy(selfPos);
+          dummyGroup.rotation.y = selfAngle;
+        }
+        // 坐标轴挂到出生点（参考坐标系，判断朝向用）
+        if (axisGroup) axisGroup.position.copy(selfPos);
+
+        // 自机外观：职业 → 渲染
+        const jobId = enterGame.appearance?.classId || 1;
+        await loadPlayer(enterGame.appearance, jobId);
+        loadHooks?.onProgress?.(3, 4);
+      } catch (e) {
+        // 加载失败也要收起加载页：黑屏世界好过错死的加载图
+        console.error('[WorldView] 进图加载失败', e);
+        loadHooks?.onReady?.();
+        return;
       }
-      // 坐标轴挂到出生点（参考坐标系，判断朝向用）
-      if (axisGroup) axisGroup.position.copy(selfPos);
-
-      // 自机外观：职业 → 渲染
-      const jobId = enterGame.appearance?.classId || 1;
-      await loadPlayer(enterGame.appearance, jobId);
 
       window.addEventListener('resize', resize);
       requestAnimationFrame(() => requestAnimationFrame(resize));
       clock.getDelta();
+      firstFramePending = true;
       renderLoop();
     },
     setGameTime,
