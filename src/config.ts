@@ -6,8 +6,6 @@
  */
 
 export interface Env {
-  /** 游戏 WebSocket 端点（pt-game-server，JSON over WS:10008，路径 /ws） */
-  gameWsUrl: string;
   /** HTTP API base（pt-web-server，含 context-path /pt，不含 /api） */
   apiBase: string;
   /** 资产 URL base（dev 由 vite 中间件映射 /res，生产指向部署位置） */
@@ -20,7 +18,6 @@ export function api(path: string): string {
 }
 
 export const env: Env = {
-  gameWsUrl: import.meta.env.VITE_GAME_WS_URL as string,
   apiBase: import.meta.env.VITE_API_BASE as string,
   assetBase: import.meta.env.VITE_ASSET_BASE as string,
 };

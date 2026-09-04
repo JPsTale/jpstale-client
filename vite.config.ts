@@ -12,9 +12,10 @@ const loadBackend = (mode: string) => {
 
 // /res/** 资产服务：dev 阶段把本地游戏资产根映射为 URL 路径，按需流式读取。
 // 不做公共目录拷贝，故 dev 不扫描、build 不跟进（build 后 /res 由部署服务器提供）。
-// 资产根用环境变量 PT_ASSET_ROOT 配置（默认 E:\JPsTale\client）。
-function devAssets(): Plugin {
-  const assetRoot = resolve(process.env.PT_ASSET_ROOT || 'E:\\JPsTale\\client');
+// 资产根从 .env 的 VITE_ASSET_ROOT 读取。
+function devAssets(mode: string): Plugin {
+  const env = loadEnv(mode, process.cwd(), '');
+  const assetRoot = resolve(env.VITE_ASSET_ROOT);
   const MIME: Record<string, string> = {
     '.smd': 'application/octet-stream',
     '.smb': 'application/octet-stream',
@@ -33,7 +34,7 @@ function devAssets(): Plugin {
     name: 'jpstale-dev-assets',
     configureServer(server) {
       if (!existsSync(assetRoot)) {
-        server.config.logger.warn(`[devAssets] PT_ASSET_ROOT not found: ${assetRoot}`);
+        server.config.logger.warn(`[devAssets] VITE_ASSET_ROOT not found: ${assetRoot}`);
         return;
       }
       server.middlewares.use((req, res, next) => {
@@ -63,13 +64,12 @@ export default defineConfig(({ mode }) => {
   const origin = loadBackend(mode);
   return {
     base: '/',
-    plugins: [devAssets()],
+    plugins: [devAssets(mode)],
     server: {
       host: true,
       port: 5173,
       proxy: {
-        // dev 期相对 /pt/* 请求转发到远端 pt-web-server（context-path /pt）
-        // 直连用法见 src/config.ts：VITE_API_BASE / VITE_GAME_WS_URL 直接指 remote
+        // dev 期相对 /pt/* 请求转发到 pt-web-server（context-path /pt）
         '/pt': {
           target: origin,
           changeOrigin: true,
