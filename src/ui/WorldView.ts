@@ -74,9 +74,9 @@ export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
 }
 
 export interface WorldViewOpts {
-  /** 移动意图上报（P1 C2S）：angle=弧度（0=+Z 北），mode=0 IDLE / 1 WALK / 2 RUN。
-   *  仅在模式变化、移动中朝向变化或停止时回调（main.ts 再做节流防抖）。 */
-  onMoveInt?: (angle: number, mode: 0 | 1 | 2) => void;
+  /** 移动上报（客户端位置上权威，方向二）：angle=弧度(0=+Z北)、mode=0 IDLE/1 WALK/2 RUN、
+   *  x/y/z=当前世界位置。WorldView 控制上报节奏（移动中 ~25Hz + 启动/停止/转向即时）。 */
+  onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number) => void;
 }
 
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
@@ -140,21 +140,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 服务端 MovementService 固定 EU cnt=25：跑系数 460 / 走系数 180（EU_COEFF_RUN/WALK 同款公式）。
   //   客户端 60fps 帧步长 step_f = ((cnt*10+250)*coeff>>8)/256 world
   //   服务端 20fps tick 步长 step = step_f×3（world/s 一致 ⇒ 预测≈权威，免频繁纠偏）
-  // ── 自机（Option A）：位置/朝向/动画完全由服务端权威快照插值驱动，本地不预测位置 ──
-  // 输入只负责"面向 + 意图上报"，服务端跑哪/停哪就渲染哪 → 无超前回拉、无滑冰、无 tap 多跑。
+  // ── 自机（方向二：客户端位置上权威）：本地即时移动（即时跟手）+ 按节奏上报位置 ──
+  // 无对账/回拉：上报的就是本地正在渲染的位置，服务端限速校验后转发，远端看到即此处。
   let selfPlayerId = -1;
-  const SELF_INTERP_DELAY = 80;   // 渲染滞后：须 ≥ 服务端广播周期(50ms) + 抖动余量
-  // 权威快照缓冲（本地到达时刻为 t），与远端插值同一套语义
-  const selfSnaps: { t: number; x: number; y: number; z: number; angle: number; anim: number }[] = [];
-  let lastSelfAnim = -1;          // 最近一次应用的权威动画值
-  const CONVERGE_SNAP = 300;      // 单帧权威位移超此视为传送（重生/换图），直接吸附
   let mouseDown = false;
   let mouseX = 0, mouseY = 0;
 
-  // ── 移动意图上报（P1 C2S）去重：模式/朝向变化或停止才回调 ──
-  let lastIntentMode: 0 | 1 | 2 = 0;
-  let lastIntentAngle = 0;
-  const MIN_REPORT_ANGLE = 0.02;  // 朝向变化最小上报弧度（≈1.1°）；越小服务端路径越贴鼠标曲线
+  // 本地移动步速 world/s（与服务端限速同源：EU 最高档 run=×460 / walk=×180 @cnt25）
+  const RUN_WPS = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
+  const WALK_WPS = (((25 * 10 + 250) * 180) >> 8) / 256 * 60;  // ≈82.3
+  // 上报状态机
+  let wasMoving = false;        // 上一帧是否在移动（本地动画/停止上报去重）
+  let lastMoveReportAt = 0;
+  const MOVE_REPORT_MS = 40;    // 移动中上报节奏 ≈25Hz（服务端 20Hz tick 消费）
 
   function wrapAngle(a: number): number {
     const tau = Math.PI * 2;
@@ -698,8 +696,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function onMouseUp(e: MouseEvent): void {
     if (e.button === 0) {
       mouseDown = false;
-      // 松开立即上报停止（IDLE），不等下一帧；位置由服务端停止快照决定，本地不预测
-      opts?.onMoveInt?.(selfAngle, 0);
+      // 停止上报由 renderLoop 检测 wasMoving→false 时带当前位置发送，保证位置是真正停点
     }
   }
   function onMouseMove(e: MouseEvent): void {
@@ -737,13 +734,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setRunMode(next: boolean): boolean {
     if (running === next) return running;
     running = next;
-    // 移动中切换走/跑：立即通报新档位（动画/位置由服务端快照驱动，这里只发意图）
-    if (mouseDown) opts?.onMoveInt?.(selfAngle, running ? 2 : 1);
+    // 移动中切换走/跑：立即带当前位置通报新档位（服务端据此广播新动画）
+    if (mouseDown) opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z);
     return running;
   }
 
-  // 鼠标指向（屏幕投影 → 世界方向角）：Option A 下它只用于"意图朝向上报"，
-  // 不再驱动本地位置。
+  // 鼠标指向（屏幕投影 → 世界方向角）：用于本地移动朝向
   function mouseFacing(): number | null {
     if (!camera || !renderer) return null;
     if (!mouseDown) return null;
@@ -1003,27 +999,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  /** 自机收到权威移动：入快照缓冲（Option A），由 updateSelfFromSnaps 插值渲染。 */
-  function pushSelfSnap(x: number, y: number, z: number, angle: number, anim: number): void {
-    const last = selfSnaps[selfSnaps.length - 1];
-    if (last) {
-      const dx = x - last.x, dz = z - last.z;
-      // 传送（重生/换图）级位移：清缓冲直接吸附，避免跨超大间距滑过去
-      if (dx * dx + dz * dz > CONVERGE_SNAP * CONVERGE_SNAP) {
-        selfSnaps.length = 0;
-      }
-    }
-    selfSnaps.push({ t: performance.now(), x, y, z, angle, anim });
-    if (selfSnaps.length > 64) selfSnaps.shift();
-  }
-
   // C 键调试：打印角色/相机状态、脚下地面/材质
   function debugDump(): void {
     const rawX = selfPos.x * 256;
     const rawZ = selfPos.z * 256;
     const rawY = selfPos.y * 256;
     console.log('========== WorldView Debug ==========');
-    console.log(`[角色] mapId=${currentMapId} pos=(${selfPos.x.toFixed(2)}, ${selfPos.y.toFixed(2)}, ${selfPos.z.toFixed(2)}) raw=(${rawX.toFixed(0)}, ${rawY.toFixed(0)}, ${rawZ.toFixed(0)}) angle(rad)=${selfAngle.toFixed(4)} snaps=${selfSnaps.length}`);
+    console.log(`[角色] mapId=${currentMapId} pos=(${selfPos.x.toFixed(2)}, ${selfPos.y.toFixed(2)}, ${selfPos.z.toFixed(2)}) raw=(${rawX.toFixed(0)}, ${rawY.toFixed(0)}, ${rawZ.toFixed(0)}) angle(rad)=${selfAngle.toFixed(4)}`);
     // 脚下地面/材质
     const cm = collisionMeshes.get(currentMapId);
     if (cm) {
@@ -1089,66 +1071,60 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   let frameCount = 0, fpsAcc = 0;
 
-  // Option A：自机渲染位置/朝向/动画完全由权威快照插值决定（与远端同一套语义）
-  function updateSelfFromSnaps(): void {
-    if (selfSnaps.length === 0) {
-      return; // 尚未收到任何权威快照（进图加载中），保持 show() 播种位置
-    }
-    const now = performance.now();
-    const renderT = now - SELF_INTERP_DELAY;
-    let i = selfSnaps.length - 1;
-    while (i > 0 && selfSnaps[i].t > renderT) i--;
-    const s0 = selfSnaps[i];
-    let px = s0.x, py = s0.y, pz = s0.z, pAng = s0.angle;
-    if (i + 1 < selfSnaps.length) {
-      const s1 = selfSnaps[i + 1];
-      const span = s1.t - s0.t;
-      const f = span > 0 ? Math.max(0, Math.min(1, (renderT - s0.t) / span)) : 1;
-      px = s0.x + (s1.x - s0.x) * f;
-      py = s0.y + (s1.y - s0.y) * f;
-      pz = s0.z + (s1.z - s0.z) * f;
-      pAng = s0.angle + wrapAngle(s1.angle - s0.angle) * f;
-    }
-    const keepAfter = now - (SELF_INTERP_DELAY + 250);
-    while (selfSnaps.length > 1 && selfSnaps[1].t < keepAfter) selfSnaps.shift();
+  // ===== 自机（方向二：客户端位置上权威）=====
+  // 本地即时移动（鼠标驱动 + 本地碰撞，dt 等速 → 手感跟手）；位置按节奏上报服务端做限速校验。
+  function updateMovement(dt: number): boolean {
+    if (!camera || !renderer) return false;
+    const face = mouseFacing();
+    if (face === null) return false;
+    selfAngle = face;
 
-    selfPos.set(px, py, pz);
-    if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = pAng; }
-    if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = pAng; }
-    if (axisGroup) axisGroup.position.copy(selfPos);
+    const mdt = Math.min(dt, 0.1); // 掉帧/切页兜底
+    const step = (running ? RUN_WPS : WALK_WPS) * mdt; // world 步长
 
-    // 动画随权威快照：服务端跑了才 RUN、停了才 STAND → 杜绝"本地多跑一截 / 提前 stand 滑冰"
-    if (s0.anim !== lastSelfAnim && animState) {
-      lastSelfAnim = s0.anim;
-      if (s0.anim === 0x0060) animState.triggerRun();
-      else if (s0.anim === 0x0050) animState.triggerWalk();
-      else animState.triggerIdle();
+    const sx = selfPos.x * 256;
+    const sy = selfPos.y * 256;
+    const sz = selfPos.z * 256;
+    let moved = false;
+    // 跨图碰撞：遍历已加载图网格，取第一个能走的位置（与服务器同款 SMD 网格）
+    for (const cm of collisionMeshes.values()) {
+      const res = cm.checkNextMove(sx, sy, sz, selfAngle, step * 256);
+      if (!res.collision) {
+        selfPos.x = res.x / 256;
+        selfPos.z = res.z / 256;
+        // 保守贴地：非"大幅下坠"才采纳结果 y（>8 world/步 视为下落，暂无掉落模拟，保持旧 y）
+        if (res.y >= sy - 8 * 256) selfPos.y = res.y / 256;
+        moved = true;
+        break;
+      }
     }
-
-    // 跨图跟随：插值位置换图后按需加载/卸载相邻图区域（防抖）
-    const foundMap = findCurrentMap(px, pz);
-    if (foundMap !== currentMapId && rafMs - lastMapSwitch > 200) {
-      currentMapId = foundMap;
-      lastMapSwitch = rafMs;
-      mapAudio.enterMap(currentMapId);
-      void syncMapRegions(currentMapId);
+    if (moved) {
+      // 跨图：换图后加载/卸载相邻图区域（防抖）
+      const foundMap = findCurrentMap(selfPos.x, selfPos.z);
+      if (foundMap !== currentMapId && rafMs - lastMapSwitch > 200) {
+        currentMapId = foundMap;
+        lastMapSwitch = rafMs;
+        mapAudio.enterMap(currentMapId);
+        void syncMapRegions(currentMapId);
+      }
+      if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
+      if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
+      if (axisGroup) axisGroup.position.copy(selfPos);
     }
+    return moved;
   }
 
-  // Option A：移动意图上报 —— 只发"想朝哪跑 / 跑还是走"，位置由服务端决定
-  function reportIntent(): void {
-    let movingIntent = false;
-    if (mouseDown) {
-      const face = mouseFacing();
-      if (face !== null) { selfAngle = face; movingIntent = true; }
+  /** 上报客户端权威移动。mode=0（停止）立即发；移动中按 MOVE_REPORT_MS 节流。 */
+  function reportMove(mode: 0 | 1 | 2): void {
+    const now = performance.now();
+    if (mode === 0) {
+      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z);
+      lastMoveReportAt = now;
+      return;
     }
-    const intentMode: 0 | 1 | 2 = movingIntent ? (running ? 2 : 1) : 0;
-    const dAngle = Math.abs(wrapAngle(selfAngle - lastIntentAngle));
-    if (intentMode !== lastIntentMode || (intentMode !== 0 && dAngle >= MIN_REPORT_ANGLE)) {
-      lastIntentMode = intentMode;
-      lastIntentAngle = selfAngle;
-      opts?.onMoveInt?.(selfAngle, intentMode);
-    }
+    if (now - lastMoveReportAt < MOVE_REPORT_MS) return;
+    lastMoveReportAt = now;
+    opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z);
   }
 
   function renderLoop(): void {
@@ -1186,9 +1162,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
 
-    // ===== 自机 Option A：位置/朝向/动画由服务端权威快照插值驱动，输入只上报意图 =====
-    updateSelfFromSnaps();
-    reportIntent();
+    // ===== 自机（方向二）：本地即时移动 + 上报位置（无对账/回拉）=====
+    const moved = updateMovement(dt);
+    if (moved) {
+      if (!wasMoving) {
+        wasMoving = true;
+        if (running) animState?.triggerRun();
+        else animState?.triggerWalk();
+      }
+      reportMove(running ? 2 : 1);
+    } else if (wasMoving) {
+      // 本地已停：立即上报停止（mode 0 + 当前位置），随后切 IDLE
+      wasMoving = false;
+      reportMove(0);
+      if (animState) animState.triggerIdle();
+      if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
+      if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
+    } else if (mouseDown) {
+      // 静止但按着鼠标（光标贴角色，方向无效）：保持朝向即时
+      const f = mouseFacing();
+      if (f !== null && charGroup) charGroup.rotation.y = f;
+    }
 
     // 远端玩家（Phase 2/3）
     updateRemotes(dt);
@@ -1290,10 +1284,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         selfPos = rawToWorld(enterGame.position.x, enterGame.position.y, enterGame.position.z);
         selfAngle = enterGame.rotation?.y || 0;
         currentMapId = enterGame.mapId;
-        // Option A：播种初始权威快照（进图位置），服务端首个 S2C_PlayerMove 前渲染不漂
-        selfSnaps.length = 0;
-        selfSnaps.push({ t: performance.now(), x: selfPos.x, y: selfPos.y, z: selfPos.z, angle: selfAngle, anim: 0x0040 });
-        lastSelfAnim = 0x0040;
         mapAudio.enterMap(currentMapId);
         mapAudio.resume();
         console.log('[WorldView] mapId=' + enterGame.mapId + ' 自机 world=(' +
@@ -1347,8 +1337,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyPlayerMove: (playerId, x, y, z, angle, animState) => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {
-        // Option A：自机位置/动画全由权威快照插值驱动，无本地预测
-        pushSelfSnap(x, y, z, angle, animState);
+        // 方向二：自机位置自己权威，忽略回推（服务端不修正正常移动；换图/重生等由 enterGame 处理）
+        return;
       } else {
         const actor = remotes.get(pid);
         if (actor) {

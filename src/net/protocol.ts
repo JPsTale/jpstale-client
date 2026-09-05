@@ -24,10 +24,10 @@ export function backToCharacterSelect(): jpt.base.ClientMessage.$Properties {
     });
 }
 
-/** 移动意图上报：angle=弧度（0=+Z 北），mode=0 IDLE / 1 WALK / 2 RUN */
-export function playerMove(angle: number, mode: number): jpt.base.ClientMessage.$Properties {
+/** 移动上报（客户端位置上权威）：angle=弧度(0=+Z北)，mode=0 IDLE/1 WALK/2 RUN，x/y/z=世界位置 */
+export function playerMove(angle: number, mode: number, x: number, y: number, z: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        playerMove: { angle, mode, timestamp: Date.now() },
+        playerMove: { position: { x, y, z }, angle, mode, timestamp: Date.now() },
     });
 }
 

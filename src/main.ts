@@ -29,18 +29,13 @@ const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 const worldView = createWorldView(app, {
-  // 移动意图上报（P1 C2S）：WorldView 已在模式/角度变化时去重回调，这里按 50ms 节流防高频
-  onMoveInt: (angle, mode) => sendMoveIntent(angle, mode),
+  // 移动上报（客户端位置上权威）：WorldView 已按节奏/模式/停止去重，这里直接转发
+  onMoveInt: (angle, mode, x, y, z) => sendMoveIntent(angle, mode, x, y, z),
 });
 
-// 最近一次上报的移动意图（去重）；模式/停止变化即时发送
-let lastSentAngle = NaN;
-let lastSentMode = -1;
-function sendMoveIntent(angle: number, mode: 0 | 1 | 2): void {
-  if (mode === lastSentMode && angle === lastSentAngle) return;
-  lastSentAngle = angle;
-  lastSentMode = mode;
-  send(playerMove(angle, mode));
+// 转发客户端权威移动（含位置）
+function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number): void {
+  send(playerMove(angle, mode, x, y, z));
 }
 const loadingScreen = createLoadingScreen(app);
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）

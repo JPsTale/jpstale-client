@@ -1819,6 +1819,9 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
+            /** C2S_PlayerMove position. */
+            position?: (jpt.base.Position.$Properties|null);
+
             /** C2S_PlayerMove angle. */
             angle: number;
 
@@ -1911,6 +1914,9 @@ export namespace jpt {
 
             /** Properties of a C2S_PlayerMove. */
             interface $Properties {
+
+                /** C2S_PlayerMove position */
+                position?: (jpt.base.Position.$Properties|null);
 
                 /** C2S_PlayerMove angle */
                 angle?: (number|null);
