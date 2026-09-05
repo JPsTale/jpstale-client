@@ -911,6 +911,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // ===== 远端玩家（Phase 2/3：S2C_PlayerAppear/Move/Disappear → 独立克隆演员）=====
   // char-loader 的 body/head/skeleton 是共享单例（同 job 同一组对象），不可加入第二个父节点，
   // 故每个远端角色克隆一套骨骼（保持原 bones 数组顺序，skinIndex 依赖索引）+ 克隆蒙皮网格再新 bind。
+  // 远端渲染用"时间戳快照缓冲插值"（Gambetta Part III）：渲染滞后 REMOTE_INTERP_DELAY ms，
+  // 在相邻权威快照间线性插值 → 速度恒定、无 chase 橡皮筋、停止即精确停在权威位。
+  const REMOTE_INTERP_DELAY = 100;
+  interface RemoteSnap {
+    t: number;        // 本地到达时刻(ms,单调)
+    x: number; y: number; z: number;
+    angle: number;
+    anim: number;
+  }
   interface RemoteActor {
     playerId: number;
     name: string;
@@ -923,8 +932,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState: ReturnType<typeof createAnimStateMachine>;
     motionList: MotionInfo[];
     animFrame: number;
-    target: THREE.Vector3;
-    angle: number;
+    snaps: RemoteSnap[];
     lastAnimState: number;
   }
   const remotes = new Map<number, RemoteActor>();
@@ -1039,8 +1047,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState: animState2,
           motionList: motionList2,
           animFrame: 0,
-          target: pos,
-          angle: 0,
+          snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
         };
         remotes.set(pid, actorObj);
@@ -1076,12 +1083,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     remoteSpawning.delete(playerId);
   }
 
-  // 每帧：远端演员位置插值（帧率无关指数平滑，时间常数 ~120ms）+ 动画推进
-  function updateRemotes(dt: number): void {
+  // 每帧：远端演员按"时间戳快照插值"渲染（滞后 REMOTE_INTERP_DELAY ms）+ 动画推进
+  function updateRemotes(_dt: number): void {
+    const now = performance.now();
+    const renderT = now - REMOTE_INTERP_DELAY;
     for (const actor of remotes.values()) {
-      const k = 1 - Math.exp(-dt / 0.12);
-      actor.root.position.lerp(actor.target, k);
-      actor.root.rotation.y = actor.angle;
+      const snaps = actor.snaps;
+      if (snaps.length === 0) continue;
+
+      // 选中最新满足 t<=renderT 的快照 s0；若有后继 s1 则线性插值
+      let i = snaps.length - 1;
+      while (i > 0 && snaps[i].t > renderT) i--;
+      const s0 = snaps[i];
+      let px = s0.x, py = s0.y, pz = s0.z, pAng = s0.angle;
+      if (i + 1 < snaps.length) {
+        const s1 = snaps[i + 1];
+        const span = s1.t - s0.t;
+        const f = span > 0 ? Math.max(0, Math.min(1, (renderT - s0.t) / span)) : 1;
+        px = s0.x + (s1.x - s0.x) * f;
+        py = s0.y + (s1.y - s0.y) * f;
+        pz = s0.z + (s1.z - s0.z) * f;
+        pAng = s0.angle + wrapAngle(s1.angle - s0.angle) * f;
+      }
+      // 过旧快照清理（保留至少 1 条，覆盖 100ms 延迟 + 抖动余量）
+      const keepAfter = now - (REMOTE_INTERP_DELAY + 250);
+      while (snaps.length > 1 && snaps[1].t < keepAfter) snaps.shift();
+
+      actor.root.position.set(px, py, pz);
+      actor.root.rotation.y = pAng;
+      setRemoteAnim(actor, s0.anim);
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
@@ -1536,9 +1566,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       } else {
         const actor = remotes.get(pid);
         if (actor) {
-          actor.target.set(x, y, z);
-          actor.angle = angle;
-          setRemoteAnim(actor, animState);
+          // 存入权威快照缓冲（本地到达时刻作为时间戳），由 updateRemotes 按延迟插值渲染
+          actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState });
+          if (actor.snaps.length > 32) actor.snaps.shift();
         }
       }
     },
