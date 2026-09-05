@@ -1073,33 +1073,54 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // ===== 自机（方向二：客户端位置上权威）=====
   // 本地即时移动（鼠标驱动 + 本地碰撞，dt 等速 → 手感跟手）；位置按节奏上报服务端做限速校验。
+  // 本地即时移动（客户端位置上权威）：完整还原方案 A 之前的跨图碰撞/贴地逻辑。
   function updateMovement(dt: number): boolean {
     if (!camera || !renderer) return false;
     const face = mouseFacing();
     if (face === null) return false;
     selfAngle = face;
 
-    const mdt = Math.min(dt, 0.1); // 掉帧/切页兜底
-    const step = (running ? RUN_WPS : WALK_WPS) * mdt; // world 步长
+    const mdt = Math.min(dt, 0.1); // 掉帧/切页兜底，避免单帧超大位移
+    const step = (running ? RUN_WPS : WALK_WPS) * mdt; // world 步长（与服务端限速同源）
+    const sinVal = Math.sin(selfAngle);
+    const cosVal = Math.cos(selfAngle);
+    const dx = sinVal * step;
+    const dz = cosVal * step;
+    const dist = Math.hypot(dx, dz);
 
+    // world → collision coords（raw = world×256；z 与 world 同域）
     const sx = selfPos.x * 256;
     const sy = selfPos.y * 256;
     const sz = selfPos.z * 256;
+    const rawAngle = selfAngle;
+
+    // 跨图碰撞：遍历所有已加载图的碰撞网格，取第一个能走的（对齐原版双 stage）；
+    // 解决桥等跨图边界：桥前半在 A 图、后半在 B 图，单图碰撞会让角色在交界处掉落。
     let moved = false;
-    // 跨图碰撞：遍历已加载图网格，取第一个能走的位置（与服务器同款 SMD 网格）
     for (const cm of collisionMeshes.values()) {
-      const res = cm.checkNextMove(sx, sy, sz, selfAngle, step * 256);
-      if (!res.collision) {
-        selfPos.x = res.x / 256;
-        selfPos.z = res.z / 256;
-        // 保守贴地：非"大幅下坠"才采纳结果 y（>8 world/步 视为下落，暂无掉落模拟，保持旧 y）
-        if (res.y >= sy - 8 * 256) selfPos.y = res.y / 256;
+      const result = cm.checkNextMove(sx, sy, sz, rawAngle, dist * 256);
+      if (!result.collision) {
+        selfPos.x = result.x / 256;
+        // 诊断：单步大幅下沉（下坡/穿透放行）打印决策
+        if (result.y < sy - 8 * 256) {
+          let alts = '';
+          for (const [mid, c2] of collisionMeshes) {
+            const j = c2.getFloorHeight(result.x, result.z, sy);
+            alts += ` m${mid}:${j.found ? (j.height / 256).toFixed(1) : '无'}`;
+          }
+          console.log(`[pen] step=${step} 前y=${(sy / 256).toFixed(1)} 新地面=${(result.y / 256).toFixed(1)} 新x=${(result.x / 256).toFixed(1)} 新z=${(result.z / 256).toFixed(1)}${alts}`);
+        }
+        // 下坡/贴地：非大幅下坠才采纳结果 y（大幅下坠交给 followGround 逐帧下落）
+        if (result.y >= sy - 8 * 256) {
+          selfPos.y = result.y / 256;
+        }
+        selfPos.z = result.z / 256;
         moved = true;
         break;
       }
     }
     if (moved) {
-      // 跨图：换图后加载/卸载相邻图区域（防抖）
+      // 换图：移动后用 AABB+高度精确判定所属地图，跨图时同步地图区域（2 跳内保留）
       const foundMap = findCurrentMap(selfPos.x, selfPos.z);
       if (foundMap !== currentMapId && rafMs - lastMapSwitch > 200) {
         currentMapId = foundMap;
@@ -1107,11 +1128,39 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         mapAudio.enterMap(currentMapId);
         void syncMapRegions(currentMapId);
       }
+      // 更新角色 / dummy / 坐标轴位置
       if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
       if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
       if (axisGroup) axisGroup.position.copy(selfPos);
+      return true;
     }
-    return moved;
+    return false;
+  }
+
+  // 地面跟随/逐帧下落（还原方案 A 之前的 updateFalling 位置部分，不做掉落动画）：
+  // 每帧把 y 贴到脚下地面；高于地面 >8 world 则逐帧下落，避免在坡/边缘悬空或穿地。
+  function followGround(): boolean {
+    if (!scene) return false;
+    const rawX = selfPos.x * 256;
+    const rawZ = selfPos.z * 256;
+    const pY = selfPos.y * 256;
+    let groundY = -80 * 256; // 悬空 → 虚空
+    for (const cm of collisionMeshes.values()) {
+      const h = cm.getFloorHeight(rawX, rawZ, pY);
+      if (h.found && h.height > groundY) groundY = h.height;
+    }
+    const diff = pY - groundY;
+    if (diff > 8 * 256) {
+      // 悬空：逐帧下落（每帧最多 8 world），落地前一帧贴近但不穿地
+      selfPos.y = Math.max(groundY / 256, (pY - 8 * 256) / 256);
+      return true;
+    }
+    if (Math.abs(diff) > 1) {
+      // 轻微悬空/陷入：直接贴地（与 groundY 差 ≤1 raw 忽略，避免抖动）
+      selfPos.y = groundY / 256;
+      return true;
+    }
+    return false;
   }
 
   /** 上报客户端权威移动。mode=0（停止）立即发；移动中按 MOVE_REPORT_MS 节流。 */
@@ -1182,6 +1231,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 静止但按着鼠标（光标贴角色，方向无效）：保持朝向即时
       const f = mouseFacing();
       if (f !== null && charGroup) charGroup.rotation.y = f;
+    }
+
+    // 地面跟随（坡/边缘贴地，悬空逐帧下落），y 变化时同步角色/dummy/坐标轴
+    if (followGround()) {
+      if (charGroup) charGroup.position.y = selfPos.y;
+      if (dummyGroup) dummyGroup.position.y = selfPos.y;
+      if (axisGroup) axisGroup.position.y = selfPos.y;
     }
 
     // 远端玩家（Phase 2/3）
