@@ -322,6 +322,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
       if (worldView.isSelf(Number(a.playerId))) {
         break;
       }
+      const pa = a.appearance;
       worldView.playerAppear(
         Number(a.playerId),
         a.name || '',
@@ -330,6 +331,17 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.position?.x || 0,
         a.position?.y || 0,
         a.position?.z || 0,
+        pa ? {
+          classId: pa.classId || 0,
+          head: pa.head || 0,
+          rank: pa.rank || 0,
+          bodyModel: pa.bodyModel || undefined,
+          bodyModelIdcode: pa.bodyModelIdcode || 0,
+          weaponDorp: pa.weaponDorp || undefined,
+          weaponIdcode: pa.weaponIdcode || 0,
+          weaponPos: pa.weaponPos || 0,
+          sizeLevel: pa.sizeLevel || 0,
+        } : undefined,
       );
       break;
     }

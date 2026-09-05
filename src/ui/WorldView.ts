@@ -25,6 +25,7 @@ import { decodeTextureAsync } from '../core/texture.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
+import { loadWeaponModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
 
 export interface EnterGameInfo {
   playerId: number;
@@ -59,7 +60,7 @@ export interface WorldView {
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员 */
-  playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number): void;
+  playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
 }
@@ -955,7 +956,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     else actor.animState.triggerIdle();
   }
 
-  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number }): void {
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; appearance?: CharacterAppearance }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
@@ -966,8 +967,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     remoteSpawning.add(pid);
     void (async () => {
       try {
-        const jobId = actorInfo.classId || 1;
-        const result = await loadCharacterModel(jobId, 0, 0, 1, null);
+        // 外观：头/防具（idcode→armorNum，时装 dorp→costume body）与自机同源，武器单独挂载
+        const app = actorInfo.appearance;
+        const jobId = actorInfo.classId || app?.classId || 1;
+        let armorNum = 1;
+        let bodyInxOverride: string | null = null;
+        if (app?.bodyModelIdcode && app.bodyModelIdcode > 0) {
+          armorNum = armorNumFromIdCode(app.bodyModelIdcode);
+        } else if (app?.bodyModel) {
+          bodyInxOverride = resolveCostumeBody(app.bodyModel, jobId);
+        }
+        const head = app?.head || 0;
+        const result = await loadCharacterModel(jobId, head, 0, armorNum, bodyInxOverride);
         // 远端可能先于自机出现，需单独加载其纹理（共享材质幂等，重复 map 无害）
         await loadTextures([...result.bodyTextures, ...result.headTextures]);
         if (remotes.has(pid)) return;
@@ -1011,6 +1022,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         remotes.set(pid, actorObj);
         animState2.triggerIdle();
         console.log('[WorldView] 远端玩家出现: id=' + pid + ' job=' + jobId + ' name=' + actorInfo.name);
+        // 武器：挂到克隆骨架的手部骨骼（WEAPON_BONES），随动画姿态移动
+        if (app?.weaponDorp) {
+          try {
+            const wres = await loadWeaponModel(app.weaponDorp);
+            await loadTextures(wres.texturesToLoad);
+            const boneName = app.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
+            const bone = findBone(root, boneName);
+            if (bone) bone.add(wres.group);
+            else console.warn('[WorldView] 远端武器挂点缺失: id=' + pid + ' bone=' + boneName);
+          } catch (e) {
+            console.warn('[WorldView] 远端武器加载失败: id=' + pid + ' dorp=' + app.weaponDorp, e);
+          }
+        }
       } catch (e) {
         console.warn('[WorldView] 远端玩家加载失败 id=' + pid, e);
       } finally {
@@ -1461,8 +1485,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     },
-    playerAppear: (playerId, name, classId, level, x, y, z) => {
-      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z });
+    playerAppear: (playerId, name, classId, level, x, y, z, appearance) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z, appearance });
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     hide() {
