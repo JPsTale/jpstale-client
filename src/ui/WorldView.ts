@@ -190,7 +190,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let convergeTarget: THREE.Vector3 | null = null;
   const convergeFrom = new THREE.Vector3();
   let convergeT0 = 0;             // 收敛开始 rafMs
-  const CONVERGE_MS = 250;        // 插值时长（200-300ms 目标）
+  const CONVERGE_MS = 160;        // 插值时长（收敛不重置起点后须够短，尽快交还输入控制）
   const CONVERGE_SNAP = 300;      // 距离超过则直接瞬移（换图/重生路径落差）
 
   // ── 移动意图上报（P1 C2S）去重：模式/朝向变化或停止才回调 ──
@@ -788,10 +788,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // 每帧移动：朝鼠标方向（屏幕投影方向）移动，跨图碰撞校验。返回是否实际移动。
-  function updateMovement(): boolean {
-    if (!camera || !renderer) return false;
-    if (!mouseDown) return false;
-    if (falling) return false; // 掉落中禁止水平移动（对齐原版：下落时不动）
+  // 方向计算单独抽出 mouseFacing()：收敛期间位置由服务端权威插值驱动，但朝向仍须跟随鼠标，
+  // 否则收敛窗口内转向被忽略 → "改了鼠标 114 却坚定朝一个方向跑"。
+  function mouseFacing(): number | null {
+    if (!camera || !renderer) return null;
+    if (!mouseDown) return null;
+    if (falling) return null; // 掉落中禁止水平移动（对齐原版：下落时不动）
 
     const rect = renderer.domElement.getBoundingClientRect();
     // 1. 角色在屏幕上的投影坐标
@@ -802,7 +804,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const sdx = mouseX - projX;
     const sdy = -(mouseY - projY);
     const slen = Math.hypot(sdx, sdy);
-    if (slen < 1) return false;
+    if (slen < 1) return null;
     const ux = sdx / slen, uy = sdy / slen;
     // 3. 相机 right/forward 向量（XZ 平面）映射到世界
     const camRight = new THREE.Vector3();
@@ -816,10 +818,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const wx = ux * camRight.x + uy * camFwd.x;
     const wz = ux * camRight.z + uy * camFwd.z;
     const wlen = Math.hypot(wx, wz);
-    if (wlen < 1e-6) return false;
+    if (wlen < 1e-6) return null;
     // 5. 朝向 = atan2(正弦, 余弦)（/pt/maps/：angle = atan2(sin, cos)，对应 world 方向）
     //   world 方向 (wx,wz) → 引擎角度语义：sin 对 x、cos 对 z
-    selfAngle = Math.atan2(wx / wlen, wz / wlen);
+    return Math.atan2(wx / wlen, wz / wlen);
+  }
+
+  function updateMovement(): boolean {
+    if (!camera || !renderer) return false;
+    const face = mouseFacing();
+    if (face === null) return false;
+    selfAngle = face;
 
     // 6. 移动一步（复刻 /pt/maps/ MoveAngle2）；速度随走/跑
     const step = running ? RUN_STEP : WALK_STEP;
@@ -1085,11 +1094,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 自机权威收敛：偏差 ≥ 阈值开始 250ms 插值（大位移直接瞬移）；偏移小的仅校准朝向 */
   function applyAuthorityToSelf(x: number, y: number, z: number, angle: number): void {
-    selfAngle = angle;
-    if (charGroup) charGroup.rotation.y = selfAngle;
-    if (dummyGroup) dummyGroup.rotation.y = selfAngle;
+    // 无主动转向输入时才采纳权威角度（移动者自己就是朝向真源；收敛中每帧会用鼠标重算朝向）
+    if (!mouseDown) {
+      selfAngle = angle;
+      if (charGroup) charGroup.rotation.y = selfAngle;
+      if (dummyGroup) dummyGroup.rotation.y = selfAngle;
+    }
     const target = new THREE.Vector3(x, y, z);
     const dist = selfPos.distanceTo(target);
+    if (convergeTarget) {
+      // 收敛进行中：不重置插值起点/计时。服务端每 ~50ms 一条 S2C_PlayerMove，若每次都
+      // 重开收敛，250ms 插值永远到不了终点 → 收敛期间输入被永久抑制（鼠标转向被忽略）。
+      if (dist >= CONVERGE_SNAP) {
+        selfPos.copy(target);
+        convergeTarget = null;
+      } else {
+        convergeTarget.copy(target); // 仅顺延终点，让当前插值平滑到达最新权威位
+      }
+      return;
+    }
     if (dist >= CONVERGE_THRESHOLD) {
       if (dist >= CONVERGE_SNAP || dist < 1e-6) {
         selfPos.copy(target);
@@ -1099,9 +1122,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         convergeTarget = target;
         convergeT0 = rafMs;
       }
-    } else if (convergeTarget) {
-      // 权威位已接近本地预测：提前结束收敛（避免抖动）
-      convergeTarget = null;
     }
   }
 
@@ -1262,6 +1282,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const converging = convergeTarget !== null;
     let moved: boolean;
     if (converging) {
+      // 收敛中位置由权威插值驱动，但朝向仍每帧跟随鼠标（若按住）：避免收敛窗口内转向无响应
+      if (mouseDown) {
+        const face = mouseFacing();
+        if (face !== null) selfAngle = face;
+      }
       const ctarget = convergeTarget as THREE.Vector3;
       const t = (rafMs - convergeT0) / CONVERGE_MS;
       if (t >= 1) {
