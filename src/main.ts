@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
-import { createCharacter, selectCharacter } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -29,8 +29,23 @@ const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 const worldView = createWorldView(app, {
-  onMoveModeChange: (mode) => console.log('[mmode]', mode), // P1 占位出口；未来接 C2S 时替换
+  // 移动意图上报（P1 C2S）：WorldView 已在模式/角度变化时去重回调，这里按 50ms 节流防高频
+  onMoveInt: (angle, mode) => sendMoveIntent(angle, mode),
 });
+
+// 最近一次上报的移动意图（去重/节流）；模式变化即时发送
+let lastSentAngle = NaN;
+let lastSentMode = -1;
+let lastMoveSendAt = 0;
+function sendMoveIntent(angle: number, mode: 0 | 1 | 2): void {
+  const now = Date.now();
+  if (mode === lastSentMode && angle === lastSentAngle) return;
+  if (mode === lastSentMode && now - lastMoveSendAt < 50) return; // 仅角度变化：50ms 节流
+  lastSentAngle = angle;
+  lastSentMode = mode;
+  lastMoveSendAt = now;
+  send(playerMove(angle, mode));
+}
 const loadingScreen = createLoadingScreen(app);
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）
 const worldLoadHooks: WorldLoadHooks = {
@@ -287,6 +302,36 @@ onMessage((msg: jpt.base.ServerMessage) => {
         } : undefined,
       };
       go(AppScreen.WORLD, hudState, enterGame);
+      worldView.setSelfId(enterGame.playerId);
+      break;
+    }
+    case 'playerMove': {
+      const m = msg.playerMove!;
+      worldView.applyPlayerMove(
+        Number(m.playerId),
+        m.position?.x || 0,
+        m.position?.y || 0,
+        m.position?.z || 0,
+        m.angle || 0,
+        m.animState || 0,
+      );
+      break;
+    }
+    case 'playerAppear': {
+      const a = msg.playerAppear!;
+      worldView.playerAppear(
+        Number(a.playerId),
+        a.name || '',
+        a.classId || 0,
+        Number(a.level) || 1,
+        a.position?.x || 0,
+        a.position?.y || 0,
+        a.position?.z || 0,
+      );
+      break;
+    }
+    case 'playerDisappear': {
+      worldView.playerDisappear(Number(msg.playerDisappear!.playerId));
       break;
     }
     case 'error': {

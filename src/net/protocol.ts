@@ -24,6 +24,13 @@ export function backToCharacterSelect(): jpt.base.ClientMessage.$Properties {
     });
 }
 
+/** 移动意图上报：angle=弧度（0=+Z 北），mode=0 IDLE / 1 WALK / 2 RUN */
+export function playerMove(angle: number, mode: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        playerMove: { angle, mode, timestamp: Date.now() },
+    });
+}
+
 export function ping(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
         ping: { timestamp: Date.now() },

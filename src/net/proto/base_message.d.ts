@@ -1819,14 +1819,14 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** C2S_PlayerMove newPosition. */
-            newPosition?: (jpt.base.Position.$Properties|null);
+            /** C2S_PlayerMove angle. */
+            angle: number;
+
+            /** C2S_PlayerMove mode. */
+            mode: number;
 
             /** C2S_PlayerMove timestamp. */
             timestamp: (number|Long);
-
-            /** C2S_PlayerMove speed. */
-            speed: number;
 
             /**
              * Creates a new C2S_PlayerMove instance using the specified properties.
@@ -1912,14 +1912,14 @@ export namespace jpt {
             /** Properties of a C2S_PlayerMove. */
             interface $Properties {
 
-                /** C2S_PlayerMove newPosition */
-                newPosition?: (jpt.base.Position.$Properties|null);
+                /** C2S_PlayerMove angle */
+                angle?: (number|null);
+
+                /** C2S_PlayerMove mode */
+                mode?: (number|null);
 
                 /** C2S_PlayerMove timestamp */
                 timestamp?: (number|Long|null);
-
-                /** C2S_PlayerMove speed */
-                speed?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -2710,6 +2710,12 @@ export namespace jpt {
             /** S2C_PlayerMove position. */
             position?: (jpt.base.Position.$Properties|null);
 
+            /** S2C_PlayerMove angle. */
+            angle: number;
+
+            /** S2C_PlayerMove animState. */
+            animState: number;
+
             /** S2C_PlayerMove timestamp. */
             timestamp: (number|Long);
 
@@ -2802,6 +2808,12 @@ export namespace jpt {
 
                 /** S2C_PlayerMove position */
                 position?: (jpt.base.Position.$Properties|null);
+
+                /** S2C_PlayerMove angle */
+                angle?: (number|null);
+
+                /** S2C_PlayerMove animState */
+                animState?: (number|null);
 
                 /** S2C_PlayerMove timestamp */
                 timestamp?: (number|Long|null);

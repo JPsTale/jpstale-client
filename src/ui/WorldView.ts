@@ -52,6 +52,14 @@ export interface WorldView {
   toggleRun(): boolean;
   /** 当前是否跑 */
   isRunning(): boolean;
+  /** 记录自机 playerId（enterGame.playerId），供 S2C_PlayerMove 路由收敛 */
+  setSelfId(playerId: number): void;
+  /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
+  applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
+  /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员 */
+  playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number): void;
+  /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
+  playerDisappear(playerId: number): void;
 }
 
 /**
@@ -63,7 +71,9 @@ export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
 }
 
 export interface WorldViewOpts {
-  onMoveModeChange?: (mode: 'run' | 'walk') => void; // 可替换出口（未来 C2S）
+  /** 移动意图上报（P1 C2S）：angle=弧度（0=+Z 北），mode=0 IDLE / 1 WALK / 2 RUN。
+   *  仅在模式变化、移动中朝向变化或停止时回调（main.ts 再做节流防抖）。 */
+  onMoveInt?: (angle: number, mode: 0 | 1 | 2) => void;
 }
 
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
@@ -78,7 +88,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
 
-  // ---- 走/跑模式（真源；切换动作经 onMoveModeChange 出口，未来可替换为 C2S）---
+  // ---- 走/跑模式（真源；移动中切换经 onMoveInt 出口上报 C2S）---
   let running = true; // 默认跑
   let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
 
@@ -123,18 +133,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const DN_DEBUG_KEYS = true; // 关闭即整体失效
   let dnDebugHour: number | null = null; // 覆盖游戏时钟的小时（null=跟随 GameClock）
 
-  // ── 移动状态（复刻 /pt/maps/ dummy 移动）──
-  const WALK_STEP = 3;       // 走（world 单位/帧）
-  let RUN_STEP = 7.5;        // 跑（≈走×2.5，对齐原版 MoveAngle2 460/180）；可被下方调试 slider 覆盖
-  // EU 档位→速度换算（复刻 PristonTale-EU CharacterGame.h:37 + character.cpp:4199）
-  //   MoveSpeed = cnt*10 + 250（cnt=欧盟档位 1~25，上限 iMaxRunSpeed=((25*10)+250)*460>>8）
-  //   跑 step(world/帧) = ((MoveSpeed*460)>>8)/256（fONE=256）；world/s@60 = step*60
-  const speedLevel = document.createElement('input');
-  const speedDisp = document.createElement('div');
-  let speedLevelVal = 82;    // 默认≈当前 RUN_STEP 7.5 world/帧
+  // ── 移动状态（复刻 /pt/maps/ dummy 移动；速度对齐服务端 EU 权威档位）──
+  // 服务端 MovementService 固定 EU cnt=25：跑系数 460 / 走系数 180（EU_COEFF_RUN/WALK 同款公式）。
+  //   客户端 60fps 帧步长 step_f = ((cnt*10+250)*coeff>>8)/256 world
+  //   服务端 20fps tick 步长 step = step_f×3（world/s 一致 ⇒ 预测≈权威，免频繁纠偏）
+  const EU_CNT = 25;             // 服务端权威档位（固定最高档 25）
   function speedLevelToRunStep(cnt: number): number {
     return (((cnt * 10 + 250) * 460) >> 8) / 256;
   }
+  function speedLevelToWalkStep(cnt: number): number {
+    return (((cnt * 10 + 250) * 180) >> 8) / 256;
+  }
+  const WALK_STEP = speedLevelToWalkStep(EU_CNT);   // ≈1.37 world/帧@60fps
+  const RUN_STEP_DEFAULT = speedLevelToRunStep(EU_CNT); // ≈3.51 world/帧@60fps
+  let RUN_STEP = RUN_STEP_DEFAULT;   // 跑；可被下方调试 slider 覆盖
+  // 自机收敛阈值：服务端跑步长（20fps tick）×... 直接取 max(step_f×3, 8)（对齐服务端）≈10.52
+  const CONVERGE_THRESHOLD = Math.max(speedLevelToRunStep(EU_CNT) * 3, 8.0);
+  const speedLevel = document.createElement('input');
+  const speedDisp = document.createElement('div');
+  let speedLevelVal = EU_CNT;  // 默认对齐服务端权威档位（此前 82≈7.5 world/帧 远超 EU 上限，会造成常驻纠偏）
   function updateSpeedPanel(): void {
     const cnt = speedLevelVal;
     const step = speedLevelToRunStep(cnt);
@@ -161,6 +178,24 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let lastY = 0;             // 上一帧角色 y（检测下落位移）
   let mouseDown = false;
   let mouseX = 0, mouseY = 0;
+
+  // ── 服务端权威收敛（自机）：S2C_PlayerMove 偏差 ≥ CONVERGE_THRESHOLD → 短时插值到权威位（期间抑制本地移动）──
+  let selfPlayerId = -1;
+  let convergeTarget: THREE.Vector3 | null = null;
+  const convergeFrom = new THREE.Vector3();
+  let convergeT0 = 0;             // 收敛开始 rafMs
+  const CONVERGE_MS = 250;        // 插值时长（200-300ms 目标）
+  const CONVERGE_SNAP = 300;      // 距离超过则直接瞬移（换图/重生路径落差）
+
+  // ── 移动意图上报（P1 C2S）去重：模式/朝向变化或停止才回调 ──
+  let lastIntentMode: 0 | 1 | 2 = 0;
+  let lastIntentAngle = 0;
+  const MIN_REPORT_ANGLE = 0.05;  // 朝向变化最小上报弧度（≈2.9°）
+
+  function wrapAngle(a: number): number {
+    const tau = Math.PI * 2;
+    return ((a + Math.PI) % tau + tau) % tau - Math.PI;
+  }
 
   const keys: Record<string, boolean> = {};
   window.addEventListener('keydown', (e) => { keys[e.code] = true; });
@@ -612,14 +647,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState.triggerIdle();
   }
 
-  function buildMotionList(): void {
-    if (!animSmb || !bipInxInfo) return;
-    motionList = [];
-    const smb = animSmb;
-    const tmFrame = smb.tmFrame;
-    const bip = bipInxInfo;
-    for (let i = CHRMOTION_EXT; i < bip.motionCount; i++) {
-      const mi = bip.motions[i];
+  function buildMotionListFor(
+    animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'],
+    bipInxInfo: Awaited<ReturnType<typeof loadCharacterModel>>['bipInxInfo'],
+  ): MotionInfo[] {
+    const list: MotionInfo[] = [];
+    const tmFrame = animSmb.tmFrame;
+    for (let i = CHRMOTION_EXT; i < bipInxInfo.motionCount; i++) {
+      const mi = bipInxInfo.motions[i];
       if (!mi.state && !mi.startFrame && !mi.endFrame) continue;
       let startFrame = mi.startFrame;
       let endFrame = mi.endFrame;
@@ -628,8 +663,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         startFrame += off;
         endFrame += off;
       }
-      motionList.push({ ...mi, startFrame, endFrame });
+      list.push({ ...mi, startFrame, endFrame });
     }
+    return list;
+  }
+
+  function buildMotionList(): void {
+    if (animSmb && bipInxInfo) motionList = buildMotionListFor(animSmb, bipInxInfo);
   }
 
   // 相机跟随角色（/pt/maps/ updateDummy 同款，Winmain.cpp 卫星相机）
@@ -692,7 +732,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (e.button === 0) { mouseDown = true; mouseX = e.clientX; mouseY = e.clientY; }
   }
   function onMouseUp(e: MouseEvent): void {
-    if (e.button === 0) mouseDown = false;
+    if (e.button === 0) {
+      mouseDown = false;
+      // 松开立即上报停止（IDLE），不等下一帧
+      opts?.onMoveInt?.(selfAngle, 0);
+    }
   }
   function onMouseMove(e: MouseEvent): void {
     mouseX = e.clientX; mouseY = e.clientY;
@@ -724,14 +768,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return currentMapId; // 完全无命中 → 保持当前图
   }
 
-  // 走/跑切换核心：翻转本地状态并经出口通报；移动中立即切对应动画（原版 character.cpp ChangeMoveMode）
+  // 走/跑切换核心：翻转本地状态并经 onMoveInt 出口通报（mode 1/2）；移动中立即切对应动画
+  // （原版 character.cpp ChangeMoveMode）
   function setRunMode(next: boolean): boolean {
     if (running === next) return running;
     running = next;
-    opts?.onMoveModeChange?.(next ? 'run' : 'walk');
-    if (wasMoving) {
+    if (wasMoving && !convergeTarget) {
       if (running) animState?.triggerRun();
       else animState?.triggerWalk();
+      opts?.onMoveInt?.(selfAngle, running ? 2 : 1);
     }
     return running;
   }
@@ -834,6 +879,185 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return true;
     }
     return false;
+  }
+
+  // ===== 远端玩家（Phase 2/3：S2C_PlayerAppear/Move/Disappear → 独立克隆演员）=====
+  // char-loader 的 body/head/skeleton 是共享单例（同 job 同一组对象），不可加入第二个父节点，
+  // 故每个远端角色克隆一套骨骼（保持原 bones 数组顺序，skinIndex 依赖索引）+ 克隆蒙皮网格再新 bind。
+  interface RemoteActor {
+    playerId: number;
+    name: string;
+    root: THREE.Group;
+    bodyGroup: THREE.Group;
+    headGroup: THREE.Group;
+    bones: THREE.Bone[];
+    skeleton: THREE.Skeleton;
+    animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'];
+    animState: ReturnType<typeof createAnimStateMachine>;
+    motionList: MotionInfo[];
+    animFrame: number;
+    target: THREE.Vector3;
+    angle: number;
+    lastAnimState: number;
+  }
+  const remotes = new Map<number, RemoteActor>();
+  const remoteSpawning = new Set<number>();
+
+  // 克隆骨骼树：按原 bones 数组顺序生成克隆并重建父/子关系（顺序即 skinIndex 语义）
+  function cloneBoneHierarchy(srcBones: THREE.Bone[]): { bones: THREE.Bone[]; skeleton: THREE.Skeleton } {
+    const map = new Map<THREE.Bone, THREE.Bone>();
+    const clones: THREE.Bone[] = srcBones.map((b) => {
+      const nb = new THREE.Bone();
+      nb.name = b.name;
+      nb.position.copy(b.position);
+      nb.quaternion.copy(b.quaternion);
+      nb.scale.copy(b.scale);
+      nb.userData.nodeName = b.userData.nodeName;
+      map.set(b, nb);
+      return nb;
+    });
+    for (const b of srcBones) {
+      const nb = map.get(b)!;
+      for (const child of b.children) {
+        const nchild = map.get(child as THREE.Bone);
+        if (nchild && nchild.parent !== nb) nb.add(nchild);
+      }
+    }
+    return { bones: clones, skeleton: new THREE.Skeleton(clones) };
+  }
+
+  function cloneSkinnedMesh(src: THREE.SkinnedMesh, skel: THREE.Skeleton): THREE.SkinnedMesh {
+    const m = src.clone() as THREE.SkinnedMesh;
+    m.bind(skel);
+    return m;
+  }
+
+  /** 权威动画值 → actor 状态机（0x0050 WALK / 0x0060 RUN / 其余 STAND） */
+  function setRemoteAnim(actor: RemoteActor, animState: number): void {
+    if (animState === actor.lastAnimState) return;
+    actor.lastAnimState = animState;
+    if (animState === 0x0060) actor.animState.triggerRun();
+    else if (animState === 0x0050) actor.animState.triggerWalk();
+    else actor.animState.triggerIdle();
+  }
+
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number }): void {
+    if (!scene) return;
+    const pid = actorInfo.playerId;
+    if (remotes.has(pid) || remoteSpawning.has(pid)) return;
+    remoteSpawning.add(pid);
+    void (async () => {
+      try {
+        const jobId = actorInfo.classId || 1;
+        const result = await loadCharacterModel(jobId, 0, 0, 1, null);
+        // 远端可能先于自机出现，需单独加载其纹理（共享材质幂等，重复 map 无害）
+        await loadTextures([...result.bodyTextures, ...result.headTextures]);
+        if (remotes.has(pid)) return;
+
+        const { bones, skeleton } = cloneBoneHierarchy(result.bones);
+        const bodyGroup = new THREE.Group();
+        for (const m of result.bodyMeshes) bodyGroup.add(cloneSkinnedMesh(m, skeleton));
+        const headGroup = new THREE.Group();
+        for (const m of result.headMeshes) headGroup.add(cloneSkinnedMesh(m, skeleton));
+        const root = new THREE.Group();
+        const boneRoot = new THREE.Group();
+        boneRoot.add(bones[0]);
+        root.add(boneRoot);
+        root.add(bodyGroup);
+        root.add(headGroup);
+        const pos = new THREE.Vector3(actorInfo.x, actorInfo.y, actorInfo.z);
+        root.position.copy(pos);
+        root.rotation.y = 0;
+        scene.add(root);
+
+        const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
+        let actorObj!: RemoteActor;
+        const animState2 = createAnimStateMachine({
+          getMotions: () => actorObj.motionList,
+          getClassId: () => jobId,
+          onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
+        });
+        actorObj = {
+          playerId: pid,
+          name: actorInfo.name,
+          root, bodyGroup, headGroup,
+          bones, skeleton,
+          animSmb: result.animSmb,
+          animState: animState2,
+          motionList: motionList2,
+          animFrame: 0,
+          target: pos,
+          angle: 0,
+          lastAnimState: 0x0040,
+        };
+        remotes.set(pid, actorObj);
+        animState2.triggerIdle();
+        console.log('[WorldView] 远端玩家出现: id=' + pid + ' job=' + jobId + ' name=' + actorInfo.name);
+      } catch (e) {
+        console.warn('[WorldView] 远端玩家加载失败 id=' + pid, e);
+      } finally {
+        remoteSpawning.delete(pid);
+      }
+    })();
+  }
+
+  function despawnRemote(playerId: number): void {
+    const actor = remotes.get(playerId);
+    if (actor) {
+      scene?.remove(actor.root);
+      remotes.delete(playerId);
+    }
+    remoteSpawning.delete(playerId);
+  }
+
+  // 每帧：远端演员位置插值（帧率无关指数平滑，时间常数 ~120ms）+ 动画推进
+  function updateRemotes(dt: number): void {
+    for (const actor of remotes.values()) {
+      const k = 1 - Math.exp(-dt / 0.12);
+      actor.root.position.lerp(actor.target, k);
+      actor.root.rotation.y = actor.angle;
+
+      const motion = actor.animState.getCurrentMotion();
+      if (motion) {
+        actor.animFrame += 80;
+        const endFrame = motion.endFrame * 160;
+        const startFrame = motion.startFrame * 160;
+        if (actor.animFrame >= endFrame) {
+          if (motion.repeat) {
+            const len = endFrame - startFrame;
+            actor.animFrame = startFrame + ((actor.animFrame - startFrame) % len);
+          } else {
+            const next = actor.animState.onAnimationEnd();
+            if (next) actor.animFrame = next.startFrame * 160;
+          }
+        }
+        const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
+        applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
+        actor.skeleton.update();
+      }
+    }
+  }
+
+  /** 自机权威收敛：偏差 ≥ 阈值开始 250ms 插值（大位移直接瞬移）；偏移小的仅校准朝向 */
+  function applyAuthorityToSelf(x: number, y: number, z: number, angle: number): void {
+    selfAngle = angle;
+    if (charGroup) charGroup.rotation.y = selfAngle;
+    if (dummyGroup) dummyGroup.rotation.y = selfAngle;
+    const target = new THREE.Vector3(x, y, z);
+    const dist = selfPos.distanceTo(target);
+    if (dist >= CONVERGE_THRESHOLD) {
+      if (dist >= CONVERGE_SNAP || dist < 1e-6) {
+        selfPos.copy(target);
+        convergeTarget = null;
+      } else {
+        convergeFrom.copy(selfPos);
+        convergeTarget = target;
+        convergeT0 = rafMs;
+      }
+    } else if (convergeTarget) {
+      // 权威位已接近本地预测：提前结束收敛（避免抖动）
+      convergeTarget = null;
+    }
   }
 
   // C 键调试：打印角色/相机状态、脚下地面/材质
@@ -989,12 +1213,32 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
 
-    // 移动（鼠标左键朝鼠标方向），先移动再让相机跟随
-    const moved = updateMovement();
+    // 服务端权威收敛（自机）：收敛期间抑制本地移动/掉落/本地动画驱动
+    const converging = convergeTarget !== null;
+    let moved: boolean;
+    if (converging) {
+      const ctarget = convergeTarget as THREE.Vector3;
+      const t = (rafMs - convergeT0) / CONVERGE_MS;
+      if (t >= 1) {
+        selfPos.copy(ctarget);
+        convergeTarget = null;
+      } else {
+        // easeOutCubic：起步快、落点缓，视觉上"拉回"平滑
+        const e = 1 - Math.pow(1 - t, 3);
+        selfPos.lerpVectors(convergeFrom, ctarget, e);
+      }
+      if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
+      if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
+      if (axisGroup) axisGroup.position.copy(selfPos);
+      moved = false;
+    } else {
+      // 移动（鼠标左键朝鼠标方向），先移动再让相机跟随
+      moved = updateMovement();
+    }
 
-    // 掉落（始终处理，不依赖鼠标）
+    // 掉落（始终处理，不依赖鼠标；收敛期间跳过）
     const wasFalling = falling;
-    const fell = updateFalling();
+    const fell = converging ? false : updateFalling();
     if (fell && selfPos.y !== lastY) {
       // 下落时角色/dummy/坐标轴同步 y
       if (charGroup) charGroup.position.copy(selfPos);
@@ -1004,7 +1248,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     lastY = selfPos.y;
 
     // 状态机切换：掉落优先（FALLDOWN/FALLSTAND/FALLDAMAGE），否则移动 RUN / 停下 Idle
-    if (animState) {
+    // （收敛期间交给权威动画驱动，本地不切换）
+    if (animState && !converging) {
       if (falling) {
         // 下落中：不触发 RUN/Idle（FALLDOWN 由 updateFalling 管理）
         wasMoving = false;
@@ -1022,6 +1267,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     }
+
+    // 移动意图上报（P1 C2S）：模式变化 / 移动中朝向变化 >= MIN_REPORT_ANGLE 才回调（main.ts 再做节流）
+    if (!converging) {
+      const intentMoving = moved && !falling;
+      const intentMode: 0 | 1 | 2 = intentMoving ? (running ? 2 : 1) : 0;
+      const dAngle = Math.abs(wrapAngle(selfAngle - lastIntentAngle));
+      if (intentMode !== lastIntentMode || (intentMode !== 0 && dAngle >= MIN_REPORT_ANGLE)) {
+        lastIntentMode = intentMode;
+        lastIntentAngle = selfAngle;
+        opts?.onMoveInt?.(selfAngle, intentMode);
+      }
+    }
+
+    // 远端玩家（Phase 2/3）
+    updateRemotes(dt);
 
     // 相机跟随角色
     updateCamera();
@@ -1162,6 +1422,24 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     toggleMinimap,
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
+    setSelfId: (id: number) => { selfPlayerId = id; },
+    applyPlayerMove: (playerId, x, y, z, angle, animState) => {
+      const pid = Number(playerId);
+      if (pid === selfPlayerId) {
+        applyAuthorityToSelf(x, y, z, angle);
+      } else {
+        const actor = remotes.get(pid);
+        if (actor) {
+          actor.target.set(x, y, z);
+          actor.angle = angle;
+          setRemoteAnim(actor, animState);
+        }
+      }
+    },
+    playerAppear: (playerId, name, classId, level, x, y, z) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z });
+    },
+    playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     hide() {
       root.style.display = 'none';
       mapAudio.suspend();
@@ -1169,6 +1447,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     destroy() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
+      for (const actor of remotes.values()) {
+        scene?.remove(actor.root);
+        actor.bodyGroup.children.forEach((c) => (c as THREE.SkinnedMesh).geometry?.dispose?.());
+      }
+      remotes.clear();
+      remoteSpawning.clear();
       mapAudio.dispose();
       window.removeEventListener('resize', resize);
       window.removeEventListener('mouseup', onMouseUp);
