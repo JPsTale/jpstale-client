@@ -183,7 +183,7 @@ function setAmbient(kind: AmbientKind | null, hour: number): void {
 
 /* ─────────── 每帧：按距离更新对象声源音量（原版 GetDistVolume2；坐标均为世界域）─────────── */
 function updateStations(playerWorld: Vector3): void {
-  if (!active || !unlocked) return;
+  if (!active || !unlocked || hidden) return;
   const px = playerWorld.x;
   const py = playerWorld.y;
   const pz = playerWorld.z;
@@ -238,11 +238,30 @@ function setupMap(mapId: number): void {
 /* ─────────── 解锁 & 恢复/挂起 ─────────── */
 function onUnlock(): void {
   unlocked = true;
-  if (!active) return;
+  if (!active || hidden) return;
   if (bgmEl && bgmKind >= 0 && BGM_FILE[bgmKind] && bgmEl.src) bgmEl.play().catch(() => { });
   if (ambEl && ambEl.src) ambEl.play().catch(() => { });
   // 对象声源继续 play 由 updateStations 驱动（距 >0 自动恢复）
 }
+
+function pauseAll(): void {
+  if (bgm) for (const m of bgm) m.pause();
+  if (amb) for (const m of amb) m.pause();
+  for (const s of stations) s.el.pause();
+}
+
+function onVisibilityChange(): void {
+  hidden = document.visibilityState === 'hidden';
+  if (hidden) {
+    pauseAll();
+  } else {
+    // 回前台：若世界屏可见且已解锁则恢复
+    if (active && unlocked) onUnlock();
+  }
+}
+
+// 页面最小化/切后台（visibilitychange）静音，回前台恢复
+document.addEventListener('visibilitychange', onVisibilityChange);
 
 export const mapAudio = {
   /** 当前声源列表（调试可视化用；坐标 world 域，z 已为 GL 约定） */
@@ -340,6 +359,7 @@ export const mapAudio = {
     ambNight = false;
     currentMapId = -1;
     active = false;
+    hidden = false;
   },
 };
 
