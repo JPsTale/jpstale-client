@@ -954,7 +954,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // 每帧：远端演员按"时间戳快照插值"渲染（滞后 REMOTE_INTERP_DELAY ms）+ 动画推进
-  function updateRemotes(_dt: number): void {
+  function updateRemotes(dt: number): void {
     const now = performance.now();
     const renderT = now - REMOTE_INTERP_DELAY;
     for (const actor of remotes.values()) {
@@ -974,6 +974,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         py = s0.y + (s1.y - s0.y) * f;
         pz = s0.z + (s1.z - s0.z) * f;
         pAng = s0.angle + wrapAngle(s1.angle - s0.angle) * f;
+      } else {
+        // 无后继（移动刚停/短暂微移/上报稀疏）：向最新点指数缓动而非原地冻结 →
+        // 避免"停在原地 → 新点一到直接硬跳"的小位移瞬移；连续移动不受影响（恒有后继）。
+        const k = 1 - Math.exp(-dt / 0.06);
+        const cp = actor.root.position;
+        px = cp.x + (s0.x - cp.x) * k;
+        py = cp.y + (s0.y - cp.y) * k;
+        pz = cp.z + (s0.z - cp.z) * k;
+        pAng = s0.angle;
       }
       // 过旧快照清理（保留至少 1 条，覆盖 100ms 延迟 + 抖动余量）
       const keepAfter = now - (REMOTE_INTERP_DELAY + 250);
@@ -1241,6 +1250,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (wasMoving) {
         wasMoving = false;
         reportMove(0);
+      }
+      // 同步下落 y：按 MOVE_REPORT_MS 节奏上报 mode0+当前位置（服务端限速只看 x/z，
+      // 接受后广播 → 其他玩家能看到角色下降；FALL 动画同步需协议扩展，暂用 STAND 落体）
+      const fnow = performance.now();
+      if (fnow - lastMoveReportAt >= MOVE_REPORT_MS) {
+        lastMoveReportAt = fnow;
+        opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z);
       }
     } else if (moved) {
       if (!wasMoving) {
