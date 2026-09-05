@@ -18,6 +18,7 @@ import { t } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
+import { createSystemSettingsPanel } from './ui/SystemSettingsPanel.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -39,12 +40,17 @@ const worldLoadHooks: WorldLoadHooks = {
 const gameClock = createGameClock();
 const keyBinding = createKeyBinding();
 const keyBindingPanel = createKeyBindingPanel(app, keyBinding);
+const systemSettingsPanel = createSystemSettingsPanel(app, {
+  onOpenKeyBindings: () => { systemSettingsPanel.hide(); keyBindingPanel.show(); },
+});
 
 function hideAll() {
   loginPanel.hide();
   serverSelectPanel.hide();
   charSelectPanel.hide();
   hudPanel.hide();
+  systemSettingsPanel.hide();
+  keyBindingPanel.hide();
   worldView.hide();
   loadingScreen.hide();
 }
@@ -66,7 +72,7 @@ gameClock.onTimeUpdate((state) => {
 keyBinding.onKeyDown((action) => {
   switch (action) {
     case 'system':
-      keyBindingPanel.show();
+      systemSettingsPanel.show();
       break;
     case 'minimap':
       worldView.toggleMinimap();
@@ -80,6 +86,8 @@ keyBinding.onKeyDown((action) => {
 hudPanel.onAction = (action) => {
   if (action === 'toggleRun') {
     hudPanel.setRunFlag(worldView.toggleRun());
+  } else if (action === 'system') {
+    systemSettingsPanel.show();
   }
 };
 

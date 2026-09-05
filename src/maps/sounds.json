@@ -1,0 +1,1044 @@
+{
+  "bgm": {
+    "0": "desert.wav",
+    "1": "navisko.wav",
+    "2": "ricarten.wav",
+    "3": null,
+    "4": "forest.wav",
+    "5": "dungeon.wav",
+    "6": "phillai.wav",
+    "7": "bellatra_123.wav",
+    "8": "bellatra_456.wav",
+    "9": "bellatra_78.wav",
+    "10": "desert.wav",
+    "11": "ice.wav",
+    "12": "atlantis.wav",
+    "13": "login_aor_old.wav",
+    "14": "characterselect.wav",
+    "15": "eura.wav",
+    "16": "mysteryforest.wav",
+    "17": "mysterydesert.wav",
+    "18": "battle.wav",
+    "19": "christmas.wav",
+    "20": "questarena.wav",
+    "21": "blesscastle.wav",
+    "22": "furyarena.wav",
+    "23": "secretlab.wav",
+    "24": "heartoffire.wav"
+  },
+  "ambients": {
+    "town": {
+      "file": "tempskron-town.wav",
+      "night": null
+    },
+    "forest": {
+      "file": "forest-day.wav",
+      "night": "forest-night.wav"
+    },
+    "ruin": {
+      "file": "ruin wind.wav",
+      "night": null
+    },
+    "desert": {
+      "file": "desert wind.wav",
+      "night": null
+    },
+    "dungeon": {
+      "file": "dungeon.wav",
+      "night": null
+    },
+    "temple": {
+      "file": "temple_amb.wav",
+      "night": null
+    },
+    "cave": {
+      "file": "cave_amb.wav",
+      "night": null
+    },
+    "darksanc": {
+      "file": "darksanc_amb.wav",
+      "night": null
+    },
+    "iron": {
+      "file": "iron_amb.wav",
+      "night": null
+    },
+    "ice": {
+      "file": "icewind.wav",
+      "night": null
+    }
+  },
+  "objectSounds": {
+    "0": "ship_swaing_l.wav",
+    "1": "dungeon_pumping_b.wav",
+    "2": "dungeon_pumping_l.wav",
+    "3": "dungeon_spin_b.wav",
+    "4": "lake 1.wav",
+    "5": "mystic 1.wav",
+    "6": "mystic 2.wav",
+    "7": "ship_swaing_l.wav",
+    "8": "stream.wav",
+    "9": "town_bell 1.wav",
+    "10": "town_bell 2.wav",
+    "11": "town_spin_b.wav",
+    "12": "town_spin_l.wav",
+    "13": "waterfall.wav",
+    "14": "stone-mill2.wav",
+    "15": "watermill 1.wav",
+    "16": "windmill 1.wav",
+    "17": "windmill 2.wav",
+    "18": "windmill 3.wav",
+    "19": "windmill 4.wav",
+    "20": "owl 1.wav",
+    "21": "dungeon_big-bolt 1.wav",
+    "22": "dungeon_stonepole.wav",
+    "23": "zombiemill 1.wav",
+    "24": "dungeon_weight.wav",
+    "25": "dungeon_device_side.wav",
+    "26": "dungeon_device_axe.wav",
+    "27": "dungeon_cage 1.wav"
+  },
+  "maps": [
+    {
+      "id": 0,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": [
+        [
+          -13819,
+          226,
+          8950,
+          100,
+          15
+        ],
+        [
+          -13457,
+          409,
+          10276,
+          150,
+          0
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": [
+        [
+          -3775,
+          171,
+          14447,
+          160,
+          14
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": []
+    },
+    {
+      "id": 3,
+      "bgm": 2,
+      "ambient": "town",
+      "sounds": [
+        [
+          -1006,
+          170,
+          17835,
+          80,
+          27
+        ],
+        [
+          2632,
+          321,
+          17285,
+          80,
+          27
+        ]
+      ]
+    },
+    {
+      "id": 4,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 5,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 6,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 7,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": [
+        [
+          16503,
+          1117,
+          13707,
+          150,
+          0
+        ]
+      ]
+    },
+    {
+      "id": 8,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 9,
+      "bgm": 1,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 10,
+      "bgm": 10,
+      "ambient": "desert",
+      "sounds": []
+    },
+    {
+      "id": 11,
+      "bgm": 10,
+      "ambient": "desert",
+      "sounds": []
+    },
+    {
+      "id": 12,
+      "bgm": 10,
+      "ambient": "desert",
+      "sounds": []
+    },
+    {
+      "id": 13,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": [
+        [
+          -15385,
+          100,
+          24949,
+          128,
+          0
+        ]
+      ]
+    },
+    {
+      "id": 14,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 15,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 16,
+      "bgm": 4,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 17,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": [
+        [
+          -1448,
+          827,
+          -34188,
+          160,
+          7
+        ],
+        [
+          618,
+          531,
+          -35981,
+          160,
+          7
+        ],
+        [
+          2282,
+          537,
+          -32355,
+          160,
+          20
+        ],
+        [
+          2597,
+          793,
+          -30745,
+          0,
+          20
+        ],
+        [
+          2562,
+          641,
+          -32726,
+          0,
+          20
+        ],
+        [
+          3789,
+          770,
+          -30062,
+          0,
+          20
+        ],
+        [
+          3698,
+          909,
+          -34179,
+          60,
+          14
+        ]
+      ]
+    },
+    {
+      "id": 18,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": [
+        [
+          -3573,
+          861,
+          -42603,
+          0,
+          15
+        ]
+      ]
+    },
+    {
+      "id": 19,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": [
+        [
+          -266,
+          862,
+          -57971,
+          100,
+          13
+        ],
+        [
+          -5014,
+          629,
+          -56702,
+          100,
+          13
+        ],
+        [
+          2153,
+          772,
+          -53576,
+          80,
+          13
+        ],
+        [
+          -395,
+          542,
+          -56521,
+          80,
+          13
+        ],
+        [
+          -3329,
+          522,
+          -56469,
+          20,
+          15
+        ],
+        [
+          -39,
+          604,
+          -54080,
+          10,
+          6
+        ]
+      ]
+    },
+    {
+      "id": 20,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": [
+        [
+          2849,
+          577,
+          -67330,
+          30,
+          18
+        ],
+        [
+          317,
+          653,
+          -64957,
+          10,
+          19
+        ],
+        [
+          -1166,
+          779,
+          -63268,
+          40,
+          18
+        ],
+        [
+          -181,
+          864,
+          -62576,
+          10,
+          18
+        ],
+        [
+          190,
+          686,
+          -61850,
+          10,
+          18
+        ],
+        [
+          -1070,
+          671,
+          -61561,
+          10,
+          18
+        ],
+        [
+          1815,
+          562,
+          -65414,
+          100,
+          8
+        ],
+        [
+          1800,
+          603,
+          -61149,
+          100,
+          8
+        ]
+      ]
+    },
+    {
+      "id": 21,
+      "bgm": 6,
+      "ambient": "town",
+      "sounds": [
+        [
+          3557,
+          613,
+          -75558,
+          20,
+          9
+        ],
+        [
+          2256,
+          745,
+          -78247,
+          50,
+          6
+        ],
+        [
+          2066,
+          463,
+          -73782,
+          0,
+          5
+        ],
+        [
+          3032,
+          554,
+          -73674,
+          10,
+          4
+        ],
+        [
+          2246,
+          554,
+          -76792,
+          0,
+          14
+        ],
+        [
+          2531,
+          544,
+          -74955,
+          30,
+          12
+        ],
+        [
+          2034,
+          544,
+          -74921,
+          30,
+          12
+        ],
+        [
+          934,
+          542,
+          -73886,
+          0,
+          17
+        ],
+        [
+          3851,
+          492,
+          -74639,
+          0,
+          17
+        ],
+        [
+          3326,
+          666,
+          -76387,
+          0,
+          17
+        ],
+        [
+          2227,
+          543,
+          -74647,
+          120,
+          0
+        ]
+      ]
+    },
+    {
+      "id": 22,
+      "bgm": 5,
+      "ambient": "temple",
+      "sounds": [
+        [
+          -10857,
+          343,
+          42634,
+          10,
+          24
+        ],
+        [
+          -11299,
+          689,
+          44077,
+          10,
+          24
+        ],
+        [
+          -12995,
+          689,
+          44112,
+          10,
+          24
+        ],
+        [
+          -11698,
+          343,
+          43240,
+          10,
+          24
+        ],
+        [
+          -13472,
+          343,
+          42494,
+          10,
+          24
+        ],
+        [
+          -13447,
+          343,
+          40892,
+          10,
+          24
+        ],
+        [
+          -9956,
+          343,
+          40637,
+          10,
+          24
+        ],
+        [
+          -9957,
+          443,
+          43232,
+          10,
+          24
+        ],
+        [
+          -14113,
+          443,
+          42715,
+          10,
+          24
+        ],
+        [
+          -14245,
+          343,
+          40555,
+          10,
+          24
+        ],
+        [
+          -12071,
+          339,
+          39504,
+          10,
+          24
+        ],
+        [
+          -10236,
+          443,
+          44024,
+          0,
+          23
+        ],
+        [
+          -12637,
+          339,
+          38716,
+          0,
+          23
+        ],
+        [
+          -12231,
+          94,
+          41732,
+          10,
+          27
+        ]
+      ]
+    },
+    {
+      "id": 23,
+      "bgm": 5,
+      "ambient": "temple",
+      "sounds": [
+        [
+          -3660,
+          730,
+          36915,
+          40,
+          23
+        ],
+        [
+          -2166,
+          732,
+          36125,
+          0,
+          24
+        ],
+        [
+          -5150,
+          732,
+          36123,
+          0,
+          24
+        ],
+        [
+          -6175,
+          762,
+          41850,
+          0,
+          24
+        ],
+        [
+          -1239,
+          762,
+          41850,
+          0,
+          24
+        ],
+        [
+          -1251,
+          794,
+          38207,
+          0,
+          24
+        ],
+        [
+          -2424,
+          732,
+          38229,
+          0,
+          7
+        ],
+        [
+          -3611,
+          885,
+          39760,
+          0,
+          7
+        ],
+        [
+          -4798,
+          732,
+          38212,
+          0,
+          7
+        ]
+      ]
+    },
+    {
+      "id": 24,
+      "bgm": 5,
+      "ambient": "cave",
+      "sounds": []
+    },
+    {
+      "id": 25,
+      "bgm": 5,
+      "ambient": "cave",
+      "sounds": []
+    },
+    {
+      "id": 26,
+      "bgm": 5,
+      "ambient": "darksanc",
+      "sounds": []
+    },
+    {
+      "id": 27,
+      "bgm": -1,
+      "ambient": "iron",
+      "sounds": []
+    },
+    {
+      "id": 28,
+      "bgm": -1,
+      "ambient": "iron",
+      "sounds": []
+    },
+    {
+      "id": 29,
+      "bgm": 11,
+      "ambient": "ice",
+      "sounds": []
+    },
+    {
+      "id": 30,
+      "bgm": -1,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 31,
+      "bgm": 11,
+      "ambient": "ice",
+      "sounds": []
+    },
+    {
+      "id": 32,
+      "bgm": 20,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 33,
+      "bgm": 21,
+      "ambient": "temple",
+      "sounds": []
+    },
+    {
+      "id": 34,
+      "bgm": 11,
+      "ambient": "ice",
+      "sounds": []
+    },
+    {
+      "id": 35,
+      "bgm": 11,
+      "ambient": "ice",
+      "sounds": [
+        [
+          -38893,
+          830,
+          45337,
+          120,
+          0
+        ]
+      ]
+    },
+    {
+      "id": 36,
+      "bgm": 5,
+      "ambient": "cave",
+      "sounds": []
+    },
+    {
+      "id": 37,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 38,
+      "bgm": 10,
+      "ambient": "ruin",
+      "sounds": []
+    },
+    {
+      "id": 39,
+      "bgm": 4,
+      "ambient": "forest",
+      "sounds": []
+    },
+    {
+      "id": 40,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 41,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 42,
+      "bgm": 5,
+      "ambient": "temple",
+      "sounds": [
+        [
+          -3648,
+          3,
+          50013,
+          0,
+          7
+        ],
+        [
+          -4349,
+          454,
+          47777,
+          0,
+          7
+        ],
+        [
+          -5130,
+          454,
+          47587,
+          0,
+          7
+        ],
+        [
+          -2183,
+          172,
+          47864,
+          0,
+          7
+        ],
+        [
+          -1785,
+          167,
+          48077,
+          0,
+          7
+        ],
+        [
+          -3725,
+          116,
+          46758,
+          0,
+          7
+        ],
+        [
+          -3632,
+          3,
+          47999,
+          0,
+          7
+        ],
+        [
+          -627,
+          229,
+          45987,
+          0,
+          7
+        ],
+        [
+          -1896,
+          116,
+          45010,
+          0,
+          7
+        ],
+        [
+          -5077,
+          116,
+          45555,
+          0,
+          7
+        ],
+        [
+          -5289,
+          116,
+          46422,
+          0,
+          7
+        ]
+      ]
+    },
+    {
+      "id": 43,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 44,
+      "bgm": 5,
+      "ambient": "ice",
+      "sounds": []
+    },
+    {
+      "id": 45,
+      "bgm": 12,
+      "ambient": "town",
+      "sounds": []
+    },
+    {
+      "id": 46,
+      "bgm": 16,
+      "ambient": "forest",
+      "sounds": []
+    },
+    {
+      "id": 47,
+      "bgm": 16,
+      "ambient": "forest",
+      "sounds": []
+    },
+    {
+      "id": 48,
+      "bgm": 16,
+      "ambient": "forest",
+      "sounds": []
+    },
+    {
+      "id": 49,
+      "bgm": 18,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 50,
+      "bgm": 17,
+      "ambient": "desert",
+      "sounds": []
+    },
+    {
+      "id": 51,
+      "bgm": 17,
+      "ambient": "desert",
+      "sounds": []
+    },
+    {
+      "id": 52,
+      "bgm": 17,
+      "ambient": "desert",
+      "sounds": []
+    },
+    {
+      "id": 53,
+      "bgm": 5,
+      "ambient": "temple",
+      "sounds": []
+    },
+    {
+      "id": 54,
+      "bgm": 5,
+      "ambient": "temple",
+      "sounds": []
+    },
+    {
+      "id": 55,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 56,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 57,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 58,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 59,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 60,
+      "bgm": 22,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 61,
+      "bgm": 23,
+      "ambient": "darksanc",
+      "sounds": []
+    },
+    {
+      "id": 62,
+      "bgm": 5,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 63,
+      "bgm": 24,
+      "ambient": "dungeon",
+      "sounds": []
+    },
+    {
+      "id": 64,
+      "bgm": 2,
+      "ambient": "town",
+      "sounds": []
+    },
+    {
+      "id": 65,
+      "bgm": 2,
+      "ambient": "town",
+      "sounds": []
+    },
+    {
+      "id": 66,
+      "bgm": 2,
+      "ambient": "dungeon",
+      "sounds": []
+    }
+  ]
+}

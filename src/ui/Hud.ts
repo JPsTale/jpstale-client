@@ -18,8 +18,8 @@ export interface Hud {
   dispose(): void
   /** 同步走/跑状态到 tooltip 展示 */
   setRunFlag(run: boolean): void
-  /** 用户动作回调（走跑按钮等） */
-  onAction?: (action: 'toggleRun') => void
+  /** 用户动作回调（走跑按钮 / 系统按钮等） */
+  onAction?: (action: 'toggleRun' | 'system') => void
 }
 
 const W = 1280
@@ -185,7 +185,7 @@ export function createHud(container: HTMLElement): Hud {
     uiState.runFlag = run;
   }
 
-  let onAction: ((action: 'toggleRun') => void) | undefined;
+  let onAction: ((action: 'toggleRun' | 'system') => void) | undefined;
 
   // 走跑按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
   let prevPtrDown = false;
@@ -200,6 +200,13 @@ export function createHud(container: HTMLElement): Hud {
     const my = (ptrY - rect.top) / s - 120;
     if (mx >= 569 && mx < 595 && my >= 555 && my < 581) {
       onAction?.('toggleRun');
+    }
+    // 6 功能按钮（b0..b5）：现只接 b5=系统；b0..b4 面板未实现
+    for (let bt = 0; bt < 6; bt++) {
+      if (mx >= 648 + bt * 25 && mx < 648 + bt * 25 + 25 && my >= 560 && my < 587) {
+        if (bt === 5) onAction?.('system');
+        break;
+      }
     }
   }
 
