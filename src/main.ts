@@ -30,12 +30,12 @@ const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 const worldView = createWorldView(app, {
   // 移动上报（客户端位置上权威）：WorldView 已按节奏/模式/停止去重，这里直接转发
-  onMoveInt: (angle, mode, x, y, z) => sendMoveIntent(angle, mode, x, y, z),
+  onMoveInt: (angle, mode, x, y, z, anim) => sendMoveIntent(angle, mode, x, y, z, anim),
 });
 
-// 转发客户端权威移动（含位置）
-function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number): void {
-  send(playerMove(angle, mode, x, y, z));
+// 转发客户端权威移动（含位置 + 可选动画覆盖）
+function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim = 0): void {
+  send(playerMove(angle, mode, x, y, z, anim));
 }
 const loadingScreen = createLoadingScreen(app);
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）

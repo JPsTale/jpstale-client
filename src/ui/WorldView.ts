@@ -75,9 +75,17 @@ export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
 
 export interface WorldViewOpts {
   /** 移动上报（客户端位置上权威，方向二）：angle=弧度(0=+Z北)、mode=0 IDLE/1 WALK/2 RUN、
-   *  x/y/z=当前世界位置。WorldView 控制上报节奏（移动中 ~25Hz + 启动/停止/转向即时）。 */
-  onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number) => void;
+   *  x/y/z=当前世界位置。WorldView 控制上报节奏（移动中 ~25Hz + 启动/停止/转向即时）。
+   *  anim=动画覆盖：0=按 mode 推导；下落 FALLDOWN=0x70、落地 FALLSTAND=0x71/FALLDAMAGE=0x72。 */
+  onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim?: number) => void;
 }
+
+// 动画状态 wire token（与 S2C_PlayerMove.anim_state / C2S anim_state 同义）
+const ANIM_WALK = 0x0050;
+const ANIM_RUN = 0x0060;
+const ANIM_FALLDOWN = 0x0070;
+const ANIM_FALLSTAND = 0x0071;
+const ANIM_FALLDAMAGE = 0x0072;
 
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
   const root = document.createElement('div');
@@ -739,7 +747,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (running === next) return running;
     running = next;
     // 移动中切换走/跑：立即带当前位置通报新档位（服务端据此广播新动画）
-    if (mouseDown) opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z);
+    if (mouseDown) opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z, 0);
     return running;
   }
 
@@ -852,12 +860,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return m;
   }
 
-  /** 权威动画值 → actor 状态机（0x0050 WALK / 0x0060 RUN / 其余 STAND） */
+  /** 权威动画值 → actor 状态机（0x0050 WALK / 0x0060 RUN / 0x70~0x72 掉落 / 其余 STAND） */
   function setRemoteAnim(actor: RemoteActor, animState: number): void {
     if (animState === actor.lastAnimState) return;
     actor.lastAnimState = animState;
-    if (animState === 0x0060) actor.animState.triggerRun();
-    else if (animState === 0x0050) actor.animState.triggerWalk();
+    if (animState === ANIM_RUN) actor.animState.triggerRun();
+    else if (animState === ANIM_WALK) actor.animState.triggerWalk();
+    else if (animState === ANIM_FALLDOWN) actor.animState.triggerFallDown();
+    else if (animState === ANIM_FALLSTAND) actor.animState.triggerFallStand();
+    else if (animState === ANIM_FALLDAMAGE) actor.animState.triggerFallDamage();
     else actor.animState.triggerIdle();
   }
 
@@ -1189,17 +1200,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return false;
   }
 
-  /** 上报客户端权威移动。mode=0（停止）立即发；移动中按 MOVE_REPORT_MS 节流。 */
-  function reportMove(mode: 0 | 1 | 2): void {
+  /** 上报客户端权威移动。mode=0（停止）立即发；移动中按 MOVE_REPORT_MS 节流。
+   *  anim=动画覆盖（0=按 mode 推导；下落/落地传 FALL* token 让远端播放）。 */
+  function reportMove(mode: 0 | 1 | 2, anim = 0): void {
     const now = performance.now();
     if (mode === 0) {
-      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z);
+      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, anim);
       lastMoveReportAt = now;
       return;
     }
     if (now - lastMoveReportAt < MOVE_REPORT_MS) return;
     lastMoveReportAt = now;
-    opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z);
+    opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z, anim);
   }
 
   function renderLoop(): void {
@@ -1238,6 +1250,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
 
     // ===== 自机（方向二）：本地即时移动 + 上报位置（无对账/回拉）=====
+    const wasFallingNow = falling;
     const moved = updateMovement(dt); // falling 中 mouseFacing=null → 不移动
     const fell = updateFalling();
     if (fell && selfPos.y !== lastY) {
@@ -1254,13 +1267,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         wasMoving = false;
         reportMove(0);
       }
-      // 同步下落 y：按 MOVE_REPORT_MS 节奏上报 mode0+当前位置（服务端限速只看 x/z，
-      // 接受后广播 → 其他玩家能看到角色下降；FALL 动画同步需协议扩展，暂用 STAND 落体）
+      // 同步下落 y + FALLDOWN：按 MOVE_REPORT_MS 节奏上报，服务端原样广播 → 别人能看到下降+掉落动画
       const fnow = performance.now();
       if (fnow - lastMoveReportAt >= MOVE_REPORT_MS) {
         lastMoveReportAt = fnow;
-        opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z);
+        opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, ANIM_FALLDOWN);
       }
+    } else if (wasFallingNow && !wasMoving) {
+      // 刚落地：上报一次落地动画（FALLSTAND / 高差大 FALLDAMAGE），随后归 IDLE
+      const landAnim = fallHeight > 200 * 256 ? ANIM_FALLDAMAGE : ANIM_FALLSTAND;
+      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, landAnim);
+      if (animState) animState.triggerIdle();
     } else if (moved) {
       if (!wasMoving) {
         wasMoving = true;

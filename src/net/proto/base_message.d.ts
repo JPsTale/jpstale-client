@@ -1831,6 +1831,9 @@ export namespace jpt {
             /** C2S_PlayerMove timestamp. */
             timestamp: (number|Long);
 
+            /** C2S_PlayerMove animState. */
+            animState: number;
+
             /**
              * Creates a new C2S_PlayerMove instance using the specified properties.
              * @param [properties] Properties to set
@@ -1926,6 +1929,9 @@ export namespace jpt {
 
                 /** C2S_PlayerMove timestamp */
                 timestamp?: (number|Long|null);
+
+                /** C2S_PlayerMove animState */
+                animState?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
