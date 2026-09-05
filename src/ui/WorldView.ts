@@ -905,8 +905,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const remotes = new Map<number, RemoteActor>();
   const remoteSpawning = new Set<number>();
 
+  // 进场竞态缓存：服务端 onPlayerEnter 广播的 Appear 早于本机 enterGame 到达
+  // （此刻 scene 未建、show() 未调用）→ 暂存，show() 建好 scene 后重放，避免被吞。
+  const pendingAppears: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number }[] = [];
+
   // 克隆骨骼树：按原 bones 数组顺序生成克隆并重建父/子关系（顺序即 skinIndex 语义）
-  function cloneBoneHierarchy(srcBones: THREE.Bone[]): { bones: THREE.Bone[]; skeleton: THREE.Skeleton } {
+  // 克隆层级/局部变换与源完全一致 ⇒ boneInverses 必须沿用源（bind() 用当前恒等世界矩阵
+  // 重算会得到错误逆矩阵 → 蒙皮二次变换 → 模型扭曲）。
+  function cloneBoneHierarchy(srcBones: THREE.Bone[], srcSkeleton: THREE.Skeleton): { bones: THREE.Bone[]; skeleton: THREE.Skeleton } {
     const map = new Map<THREE.Bone, THREE.Bone>();
     const clones: THREE.Bone[] = srcBones.map((b) => {
       const nb = new THREE.Bone();
@@ -925,12 +931,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (nchild && nchild.parent !== nb) nb.add(nchild);
       }
     }
-    return { bones: clones, skeleton: new THREE.Skeleton(clones) };
+    const skeleton = new THREE.Skeleton(clones);
+    skeleton.boneInverses = srcSkeleton.boneInverses.map((m) => m.clone());
+    return { bones: clones, skeleton };
   }
 
   function cloneSkinnedMesh(src: THREE.SkinnedMesh, skel: THREE.Skeleton): THREE.SkinnedMesh {
     const m = src.clone() as THREE.SkinnedMesh;
-    m.bind(skel);
+    // 顶点已烘焙进 bind pose（buildSkinnedMesh 预乘了骨骼 bind 世界矩阵），
+    // 故必须复用源 bindMatrix/bindMatrixInverse，仅换新骨架；bind() 会重算成恒等 → 扭曲。
+    m.skeleton = skel;
+    m.bindMatrix.copy(src.bindMatrix);
+    m.bindMatrixInverse.copy(src.bindMatrixInverse);
     return m;
   }
 
@@ -944,7 +956,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number }): void {
-    if (!scene) return;
+    if (!scene) {
+      // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
+      pendingAppears.push(actorInfo);
+      return;
+    }
     const pid = actorInfo.playerId;
     if (remotes.has(pid) || remoteSpawning.has(pid)) return;
     remoteSpawning.add(pid);
@@ -956,7 +972,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         await loadTextures([...result.bodyTextures, ...result.headTextures]);
         if (remotes.has(pid)) return;
 
-        const { bones, skeleton } = cloneBoneHierarchy(result.bones);
+        const { bones, skeleton } = cloneBoneHierarchy(result.bones, result.skeleton);
         const bodyGroup = new THREE.Group();
         for (const m of result.bodyMeshes) bodyGroup.add(cloneSkinnedMesh(m, skeleton));
         const headGroup = new THREE.Group();
@@ -1357,6 +1373,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         return;
       }
 
+      // 重放进场竞态期间缓存的远端 Appear（此刻 scene 已就绪）
+      if (pendingAppears.length > 0) {
+        const batch = pendingAppears.splice(0);
+        for (const a of batch) spawnRemote(a);
+      }
+
       try {
         // 预取全部 44 图 world AABB（缓存 SMD 命中，用于 findCurrentMap 判归属）
         if (allBounds.size === 0) {
@@ -1456,6 +1478,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       remotes.clear();
       remoteSpawning.clear();
+      pendingAppears.length = 0;
       mapAudio.dispose();
       window.removeEventListener('resize', resize);
       window.removeEventListener('mouseup', onMouseUp);
