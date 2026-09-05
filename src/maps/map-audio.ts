@@ -86,6 +86,7 @@ function effTarget(): number { return effOn ? EFFECT_VOLUME * effLevel : 0; }
 /* ─────────── 运行时状态 ─────────── */
 let unlocked = false;      // 首次用户手势后放行
 let active = false;        // 世界屏显示中
+let hidden = false;        // 页面不可见（最小化/切后台）时静音
 let currentMapId = -1;
 let gameHour = 12;         // 0-23（game time，昼夜选曲/环境音用）
 
