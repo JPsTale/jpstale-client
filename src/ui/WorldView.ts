@@ -15,6 +15,7 @@ import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel } from '../render/char-loader.js';
+import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
 import type { MotionInfo } from '../char/char-format.js';
@@ -478,6 +479,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setGameTime(hour: number, min: number): void {
     dayNightHour = hour;
     dayNightMin = min;
+    mapAudio.setGameTime(hour);
   }
 
   // 坐标轴参考（复刻 /pt/maps/：三色圆柱+圆锥+标签），用于判断朝向。挂到出生点。
@@ -816,6 +818,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (foundMap !== currentMapId && rafMs - lastMapSwitch > 200) {
         currentMapId = foundMap;
         lastMapSwitch = rafMs;
+        mapAudio.enterMap(currentMapId);
         syncMapRegions(currentMapId);
       }
       // 更新角色/ dummy /坐标轴位置
@@ -1029,6 +1032,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 昼夜光照驱动（每帧）：darkLevel/BackColor 渐变 + 火把 + 场景灯 → 各地图 shader uniform
     dnUpdate();
 
+    // 地图音效：3D 声源按角色距离更新音量（BGM/环境音已在进入/换图时设置）
+    mapAudio.updateAt(selfPos);
+
     // 小地图
     drawMinimap();
 
@@ -1108,6 +1114,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         selfPos = rawToWorld(enterGame.position.x, enterGame.position.y, enterGame.position.z);
         selfAngle = enterGame.rotation?.y || 0;
         currentMapId = enterGame.mapId;
+        mapAudio.enterMap(currentMapId);
+        mapAudio.resume();
         console.log('[WorldView] mapId=' + enterGame.mapId + ' 自机 world=(' +
           selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ') angle=' + selfAngle);
 
@@ -1156,10 +1164,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     isRunning: () => running,
     hide() {
       root.style.display = 'none';
+      mapAudio.suspend();
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
     },
     destroy() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
+      mapAudio.dispose();
       window.removeEventListener('resize', resize);
       window.removeEventListener('mouseup', onMouseUp);
       if (renderer && renderer.domElement) {
