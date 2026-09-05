@@ -784,6 +784,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 远端渲染用"时间戳快照缓冲插值"（Gambetta Part III）：渲染滞后 REMOTE_INTERP_DELAY ms，
   // 在相邻权威快照间线性插值 → 速度恒定、无 chase 橡皮筋、停止即精确停在权威位。
   const REMOTE_INTERP_DELAY = 100;
+  // 相邻权威快照间隔超过此值视为"长静默/重新起步"：不跨空闲间隙插值（否则起步那帧
+  // 从很久以前的 STAND 锚点 f≈1 直接弹跳到新位 → 瞬移 + 旧动画残留）。
+  const REMOTE_RESYNC_MS = 150;
   interface RemoteSnap {
     t: number;        // 本地到达时刻(ms,单调)
     x: number; y: number; z: number;
@@ -1436,7 +1439,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       } else {
         const actor = remotes.get(pid);
         if (actor) {
-          // 存入权威快照缓冲（本地到达时刻作为时间戳），由 updateRemotes 按延迟插值渲染
+          // 存入权威快照缓冲（本地到达时刻作为时间戳），由 updateRemotes 按延迟插值渲染。
+          // 跨长静默（空闲期无广播）到达的新快照 → 重锚：清空旧缓冲，避免跨空闲间隙插值造成起步瞬移。
+          const lastSnap = actor.snaps[actor.snaps.length - 1];
+          if (lastSnap && performance.now() - lastSnap.t > REMOTE_RESYNC_MS) {
+            actor.snaps.length = 0;
+          }
           actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState });
           if (actor.snaps.length > 32) actor.snaps.shift();
         }
