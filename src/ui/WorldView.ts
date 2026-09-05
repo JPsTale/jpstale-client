@@ -150,8 +150,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const WALK_STEP = speedLevelToWalkStep(EU_CNT);   // ≈1.37 world/帧@60fps
   const RUN_STEP_DEFAULT = speedLevelToRunStep(EU_CNT); // ≈3.51 world/帧@60fps
   let RUN_STEP = RUN_STEP_DEFAULT;   // 跑；可被下方调试 slider 覆盖
-  // 自机收敛阈值：服务端跑步长（20fps tick）×... 直接取 max(step_f×3, 8)（对齐服务端）≈10.52
-  const CONVERGE_THRESHOLD = Math.max(speedLevelToRunStep(EU_CNT) * 3, 8.0);
+  // 自机收敛阈值：服务端权威位是其他玩家看到的"真位置"，本地预测须紧贴它。
+  // 原先取 ~10.5（一个服务端 tick 步长），绕圈/转向时偏差常压在阈值以下永不收敛，
+  // 稳态偏移 ~10 world 在远端视角非常明显。降到 ~3.0：低于此不理会（免逐帧抖动），
+  // 超过则 250ms 插值收敛，远端看到的位置与本地基本一致。
+  const CONVERGE_THRESHOLD = 3.0;
   const speedLevel = document.createElement('input');
   const speedDisp = document.createElement('div');
   let speedLevelVal = EU_CNT;  // 默认对齐服务端权威档位（此前 82≈7.5 world/帧 远超 EU 上限，会造成常驻纠偏）
