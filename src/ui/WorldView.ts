@@ -179,6 +179,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   root.appendChild(speedDisp);
   root.appendChild(speedLevel);
   let wasMoving = false;     // 上一帧是否在移动（状态机切换防抖）
+  // 停止宽限期：松手后位置可能被服务端权威回拉归位，此刻若已切 STAND 会呈"滑冰"。
+  // 保留 RUN 动画直到收到服务端 STAND 广播或超时（约 200ms），归位更自然。
+  let releasePending = false;
+  let releasePendingSince = 0;
   let falling = false;       // 是否正在下落
   let fallHeight = 0;        // 下落高度（触发 FALLDAMAGE 判定）
   let lastY = 0;             // 上一帧角色 y（检测下落位移）
@@ -740,6 +744,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function onMouseUp(e: MouseEvent): void {
     if (e.button === 0) {
       mouseDown = false;
+      if (wasMoving) {
+        releasePending = true;
+        releasePendingSince = performance.now();
+      }
       // 松开立即上报停止（IDLE），不等下一帧
       opts?.onMoveInt?.(selfAngle, 0);
     }
@@ -824,14 +832,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return Math.atan2(wx / wlen, wz / wlen);
   }
 
-  function updateMovement(): boolean {
+  function updateMovement(dt: number): boolean {
     if (!camera || !renderer) return false;
     const face = mouseFacing();
     if (face === null) return false;
     selfAngle = face;
 
-    // 6. 移动一步（复刻 /pt/maps/ MoveAngle2）；速度随走/跑
-    const step = running ? RUN_STEP : WALK_STEP;
+    // 6. 移动一步（复刻 /pt/maps/ MoveAngle2）；速度随走/跑。
+    // RUN_STEP/WALK_STEP 是 60fps 语义(每帧步长) → 折成每秒步长再 ×dt，保证任意刷新率下
+    // 客户端每秒位移都与服务端(20fps × step_f×3)一致；否则高刷屏跑得比服务端快，
+    // 越跑越超前，停顿时被拖回（打滑/滑冰）。
+    const mdt = Math.min(dt, 0.1); // 掉帧/切页兜底，避免单帧超大位移
+    const step = (running ? RUN_STEP : WALK_STEP) * 60 * mdt;
     const sinVal = Math.sin(selfAngle);
     const cosVal = Math.cos(selfAngle);
     const dx = sinVal * step;
@@ -1310,7 +1322,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 用户按住鼠标接管：取消任何残留收敛，交给本地预测
       if (convergeTarget) convergeTarget = null;
       // 移动（鼠标左键朝鼠标方向），先移动再让相机跟随
-      moved = updateMovement();
+      moved = updateMovement(dt);
     }
 
     // 掉落（始终处理，不依赖鼠标；收敛期间跳过）
@@ -1338,9 +1350,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (running) animState.triggerRun();
           else animState.triggerWalk();
           wasMoving = true;
+          releasePending = false; // 已重新移动，取消停止宽限
         } else if (!moved && wasMoving) {
-          animState.triggerIdle();
-          wasMoving = false;
+          // 停止宽限：等权威归位/STAND 广播后再切 IDLE，避免"提前 stand + 滑行"
+          const graceOver = !releasePending || performance.now() - releasePendingSince > 200;
+          if (graceOver) {
+            animState.triggerIdle();
+            wasMoving = false;
+            releasePending = false;
+          }
         }
       }
     }
@@ -1511,6 +1529,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const pid = Number(playerId);
       if (pid === selfPlayerId) {
         applyAuthorityToSelf(x, y, z, angle);
+        // 服务端已广播本机 STAND（停止落定）→ 停止宽限结束，可切 IDLE
+        if (animState === 0x0040 && !mouseDown) {
+          releasePending = false;
+        }
       } else {
         const actor = remotes.get(pid);
         if (actor) {
