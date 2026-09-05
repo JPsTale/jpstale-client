@@ -54,6 +54,8 @@ export interface WorldView {
   isRunning(): boolean;
   /** 记录自机 playerId（enterGame.playerId），供 S2C_PlayerMove 路由收敛 */
   setSelfId(playerId: number): void;
+  /** playerId 是否为自机（供 S2C_PlayerAppear 丢弃自己的外观快照） */
+  isSelf(playerId: number): boolean;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员 */
@@ -1423,6 +1425,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
     setSelfId: (id: number) => { selfPlayerId = id; },
+    isSelf: (id: number) => id === selfPlayerId,
     applyPlayerMove: (playerId, x, y, z, angle, animState) => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {

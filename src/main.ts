@@ -319,6 +319,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'playerAppear': {
       const a = msg.playerAppear!;
+      if (worldView.isSelf(Number(a.playerId))) {
+        break;
+      }
       worldView.playerAppear(
         Number(a.playerId),
         a.name || '',
