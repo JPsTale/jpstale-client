@@ -153,6 +153,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let wasMoving = false;        // 上一帧是否在移动（本地动画/停止上报去重）
   let lastMoveReportAt = 0;
   const MOVE_REPORT_MS = 40;    // 移动中上报节奏 ≈25Hz（服务端 20Hz tick 消费）
+  // 掉落状态（对齐原版：下落有 FALLDOWN 动画，下落中不能水平移动/转向）
+  let falling = false;          // 是否正在下落
+  let fallHeight = 0;           // 下落起始高度差（触发 FALLDAMAGE 判定）
+  let lastY = 0;                // 上一帧自机 y（检测下落位移，同步角色高度）
 
   function wrapAngle(a: number): number {
     const tau = Math.PI * 2;
@@ -743,6 +747,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function mouseFacing(): number | null {
     if (!camera || !renderer) return null;
     if (!mouseDown) return null;
+    if (falling) return null; // 掉落中禁止水平移动/转向（对齐原版：下落时不动）
 
     const rect = renderer.domElement.getBoundingClientRect();
     // 1. 角色在屏幕上的投影坐标
@@ -1110,7 +1115,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
           console.log(`[pen] step=${step} 前y=${(sy / 256).toFixed(1)} 新地面=${(result.y / 256).toFixed(1)} 新x=${(result.x / 256).toFixed(1)} 新z=${(result.z / 256).toFixed(1)}${alts}`);
         }
-        // 下坡/贴地：非大幅下坠才采纳结果 y（大幅下坠交给 followGround 逐帧下落）
+        // 下坡/贴地：非大幅下坠才采纳结果 y（大幅下坠交给 updateFalling 逐帧下落）
         if (result.y >= sy - 8 * 256) {
           selfPos.y = result.y / 256;
         }
@@ -1137,10 +1142,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return false;
   }
 
-  // 地面跟随/逐帧下落（还原方案 A 之前的 updateFalling 位置部分，不做掉落动画）：
-  // 每帧把 y 贴到脚下地面；高于地面 >8 world 则逐帧下落，避免在坡/边缘悬空或穿地。
-  function followGround(): boolean {
-    if (!scene) return false;
+  // 地面跟随 + 掉落（还原方案 A 之前的 updateFalling）：每帧把 y 贴到脚下最高地面；
+  // 高于地面 >8 world 逐帧下落并进入 falling（FALLDOWN 动画），落地触发 FALLSTAND/FALLDAMAGE。
+  // 下落中 mouseFacing 返回 null → 不能水平移动/转向。
+  function updateFalling(): boolean {
+    if (!animState) return false;
     const rawX = selfPos.x * 256;
     const rawZ = selfPos.z * 256;
     const pY = selfPos.y * 256;
@@ -1150,15 +1156,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (h.found && h.height > groundY) groundY = h.height;
     }
     const diff = pY - groundY;
+
     if (diff > 8 * 256) {
-      // 悬空：逐帧下落（每帧最多 8 world），落地前一帧贴近但不穿地
-      selfPos.y = Math.max(groundY / 256, (pY - 8 * 256) / 256);
+      // 下落中：逐帧下落（对齐原版 PHeight 8/帧），首帧触发 FALLDOWN
+      selfPos.y = (pY - 8 * 256) / 256;
+      if (diff > 32 * 256 && !falling) {
+        falling = true;
+        fallHeight = diff;
+        animState.triggerFallDown();
+      }
       return true;
     }
-    if (Math.abs(diff) > 1) {
-      // 轻微悬空/陷入：直接贴地（与 groundY 差 ≤1 raw 忽略，避免抖动）
-      selfPos.y = groundY / 256;
-      return true;
+    // 落地
+    selfPos.y = groundY / 256;
+    if (falling) {
+      falling = false;
+      if (fallHeight > 200 * 256) animState.triggerFallDamage();
+      else animState.triggerFallStand();
     }
     return false;
   }
@@ -1212,8 +1226,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
 
     // ===== 自机（方向二）：本地即时移动 + 上报位置（无对账/回拉）=====
-    const moved = updateMovement(dt);
-    if (moved) {
+    const moved = updateMovement(dt); // falling 中 mouseFacing=null → 不移动
+    const fell = updateFalling();
+    if (fell && selfPos.y !== lastY) {
+      // 下落/落地时角色/dummy/坐标轴同步 y（x/z 未变）
+      if (charGroup) charGroup.position.y = selfPos.y;
+      if (dummyGroup) dummyGroup.position.y = selfPos.y;
+      if (axisGroup) axisGroup.position.y = selfPos.y;
+    }
+    lastY = selfPos.y;
+
+    if (falling) {
+      // 下落中：不切换 RUN/IDLE（FALLDOWN 由 updateFalling 管理）；已上报的运行状态置为停
+      if (wasMoving) {
+        wasMoving = false;
+        reportMove(0);
+      }
+    } else if (moved) {
       if (!wasMoving) {
         wasMoving = true;
         if (running) animState?.triggerRun();
@@ -1231,13 +1260,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 静止但按着鼠标（光标贴角色，方向无效）：保持朝向即时
       const f = mouseFacing();
       if (f !== null && charGroup) charGroup.rotation.y = f;
-    }
-
-    // 地面跟随（坡/边缘贴地，悬空逐帧下落），y 变化时同步角色/dummy/坐标轴
-    if (followGround()) {
-      if (charGroup) charGroup.position.y = selfPos.y;
-      if (dummyGroup) dummyGroup.position.y = selfPos.y;
-      if (axisGroup) axisGroup.position.y = selfPos.y;
     }
 
     // 远端玩家（Phase 2/3）
