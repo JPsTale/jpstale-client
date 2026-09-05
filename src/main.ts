@@ -33,17 +33,13 @@ const worldView = createWorldView(app, {
   onMoveInt: (angle, mode) => sendMoveIntent(angle, mode),
 });
 
-// 最近一次上报的移动意图（去重/节流）；模式变化即时发送
+// 最近一次上报的移动意图（去重）；模式/停止变化即时发送
 let lastSentAngle = NaN;
 let lastSentMode = -1;
-let lastMoveSendAt = 0;
 function sendMoveIntent(angle: number, mode: 0 | 1 | 2): void {
-  const now = Date.now();
   if (mode === lastSentMode && angle === lastSentAngle) return;
-  if (mode === lastSentMode && now - lastMoveSendAt < 50) return; // 仅角度变化：50ms 节流
   lastSentAngle = angle;
   lastSentMode = mode;
-  lastMoveSendAt = now;
   send(playerMove(angle, mode));
 }
 const loadingScreen = createLoadingScreen(app);

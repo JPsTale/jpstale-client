@@ -196,7 +196,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // ── 移动意图上报（P1 C2S）去重：模式/朝向变化或停止才回调 ──
   let lastIntentMode: 0 | 1 | 2 = 0;
   let lastIntentAngle = 0;
-  const MIN_REPORT_ANGLE = 0.05;  // 朝向变化最小上报弧度（≈2.9°）
+  const MIN_REPORT_ANGLE = 0.02;  // 朝向变化最小上报弧度（≈1.1°）；越小服务端路径越贴鼠标曲线
 
   function wrapAngle(a: number): number {
     const tau = Math.PI * 2;
@@ -1094,22 +1094,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 自机权威收敛：偏差 ≥ 阈值开始 250ms 插值（大位移直接瞬移）；偏移小的仅校准朝向 */
   function applyAuthorityToSelf(x: number, y: number, z: number, angle: number): void {
-    // 无主动转向输入时才采纳权威角度（移动者自己就是朝向真源；收敛中每帧会用鼠标重算朝向）
-    if (!mouseDown) {
-      selfAngle = angle;
-      if (charGroup) charGroup.rotation.y = selfAngle;
-      if (dummyGroup) dummyGroup.rotation.y = selfAngle;
-    }
     const target = new THREE.Vector3(x, y, z);
     const dist = selfPos.distanceTo(target);
+    if (mouseDown) {
+      // 主动操控中：本地预测即手感（即时跟手），绝不向服务端 20Hz 折线路径回拽——
+      // 那正是打滑/拖尾/卡顿的来源。服务端位置只给他人视角用，这里仅处理换图/传送大位移。
+      if (dist >= CONVERGE_SNAP) {
+        selfPos.copy(target);
+      }
+      return;
+    }
+    // 松手静止：朝向、位置都采纳权威（停止时刻服务端可能还领先 ≤1 tick，平滑归位）
+    selfAngle = angle;
+    if (charGroup) charGroup.rotation.y = selfAngle;
+    if (dummyGroup) dummyGroup.rotation.y = selfAngle;
     if (convergeTarget) {
-      // 收敛进行中：不重置插值起点/计时。服务端每 ~50ms 一条 S2C_PlayerMove，若每次都
-      // 重开收敛，250ms 插值永远到不了终点 → 收敛期间输入被永久抑制（鼠标转向被忽略）。
+      // 收敛进行中：只顺延终点，不重置插值起点/计时（避免 50ms 一条 S2C 无限续期锁输入）
       if (dist >= CONVERGE_SNAP) {
         selfPos.copy(target);
         convergeTarget = null;
       } else {
-        convergeTarget.copy(target); // 仅顺延终点，让当前插值平滑到达最新权威位
+        convergeTarget.copy(target);
       }
       return;
     }
@@ -1278,8 +1283,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
 
-    // 服务端权威收敛（自机）：收敛期间抑制本地移动/掉落/本地动画驱动
-    const converging = convergeTarget !== null;
+    // 服务端权威收敛（自机）：仅松手静止时收敛；按住鼠标即交还本地控制，避免收敛拽位造成卡顿/打滑
+    const converging = convergeTarget !== null && !mouseDown;
     let moved: boolean;
     if (converging) {
       // 收敛中位置由权威插值驱动，但朝向仍每帧跟随鼠标（若按住）：避免收敛窗口内转向无响应
@@ -1302,6 +1307,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (axisGroup) axisGroup.position.copy(selfPos);
       moved = false;
     } else {
+      // 用户按住鼠标接管：取消任何残留收敛，交给本地预测
+      if (convergeTarget) convergeTarget = null;
       // 移动（鼠标左键朝鼠标方向），先移动再让相机跟随
       moved = updateMovement();
     }
