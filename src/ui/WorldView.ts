@@ -866,9 +866,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     actor.lastAnimState = animState;
     if (animState === ANIM_RUN) actor.animState.triggerRun();
     else if (animState === ANIM_WALK) actor.animState.triggerWalk();
-    else if (animState === ANIM_FALLDOWN) actor.animState.triggerFallDown();
-    else if (animState === ANIM_FALLSTAND) actor.animState.triggerFallStand();
-    else if (animState === ANIM_FALLDAMAGE) actor.animState.triggerFallDamage();
+    else if (animState === ANIM_FALLDOWN) { if (!actor.animState.triggerFallDown()) actor.animState.triggerIdle(); }
+    else if (animState === ANIM_FALLSTAND) { if (!actor.animState.triggerFallStand()) actor.animState.triggerIdle(); }
+    else if (animState === ANIM_FALLDAMAGE) { if (!actor.animState.triggerFallDamage()) actor.animState.triggerIdle(); }
     else actor.animState.triggerIdle();
   }
 
