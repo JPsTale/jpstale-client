@@ -59,8 +59,8 @@ export interface WorldView {
   isSelf(playerId: number): boolean;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
-  /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员 */
-  playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number, appearance?: CharacterAppearance): void;
+  /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
+  playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
 }
@@ -821,7 +821,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // 进场竞态缓存：服务端 onPlayerEnter 广播的 Appear 早于本机 enterGame 到达
   // （此刻 scene 未建、show() 未调用）→ 暂存，show() 建好 scene 后重放，避免被吞。
-  const pendingAppears: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number }[] = [];
+  const pendingAppears: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; angle?: number }[] = [];
 
   // 克隆骨骼树：按原 bones 数组顺序生成克隆并重建父/子关系（顺序即 skinIndex 语义）
   // 克隆层级/局部变换与源完全一致 ⇒ boneInverses 必须沿用源（bind() 用当前恒等世界矩阵
@@ -872,7 +872,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     else actor.animState.triggerIdle();
   }
 
-  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; appearance?: CharacterAppearance }): void {
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
@@ -912,7 +912,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.add(headGroup);
         const pos = new THREE.Vector3(actorInfo.x, actorInfo.y, actorInfo.z);
         root.position.copy(pos);
-        root.rotation.y = 0;
+        root.rotation.y = actorInfo.angle ?? 0;
         scene.add(root);
 
         const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
@@ -931,7 +931,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState: animState2,
           motionList: motionList2,
           animFrame: 0,
-          snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: 0, anim: 0x0040 }],
+          snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
         };
         remotes.set(pid, actorObj);
@@ -1467,8 +1467,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     },
-    playerAppear: (playerId, name, classId, level, x, y, z, appearance) => {
-      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z, appearance });
+    playerAppear: (playerId, name, classId, level, x, y, z, angle, appearance) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z, angle, appearance });
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     hide() {

@@ -128,7 +128,7 @@ export async function loadMonsterModel(inxPath: string): Promise<MonsterModelRes
   const meshNames = high.length > 0 ? high : def.length > 0 ? def : low.length > 0 ? low : null;
 
   // 网格 .smd：优先 modelFile 推断，回退 inx 同名 / inx 目录+model 名
-  const mesh = await loadFirst([modelBase, inxBase, inxDir + modelName]);
+  const mesh = await loadMesh([modelBase, inxBase, inxDir + modelName]);
   if (!mesh) throw new Error('monster .smd 加载失败: ' + inxPath);
 
   // 动画源：motionFile → linkFile(共享模板) → 同名 .smb
@@ -149,16 +149,8 @@ export async function loadMonsterModel(inxPath: string): Promise<MonsterModelRes
   }
   if (!animBase) animBase = modelBase;
 
-  let animSmb: SmbData | null = null;
   const animCandidates = [animBase, animBase !== modelBase ? modelBase : ''].filter(Boolean) as string[];
-  for (const base of animCandidates) {
-    try {
-      animSmb = parseSmb(await fetchAB('/res/' + base + '.smb'));
-      if (animSmb) { animBase = base; break; }
-    } catch {
-      // next
-    }
-  }
+  let animSmb: SmbData | null = await loadAnim(animCandidates);
   if (!animSmb) throw new Error('monster .smb 加载失败: ' + inxPath + ' base=' + animBase);
 
   const skel = buildSkeleton(animSmb, false);

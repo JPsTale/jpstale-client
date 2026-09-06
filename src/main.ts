@@ -322,6 +322,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.position?.x || 0,
         a.position?.y || 0,
         a.position?.z || 0,
+        a.angle || 0,
         pa ? {
           classId: pa.classId || 0,
           head: pa.head || 0,

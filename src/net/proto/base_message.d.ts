@@ -2470,6 +2470,9 @@ export namespace jpt {
             /** S2C_PlayerAppear appearance. */
             appearance?: (jpt.base.CharacterAppearance.$Properties|null);
 
+            /** S2C_PlayerAppear angle. */
+            angle: number;
+
             /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -2577,6 +2580,9 @@ export namespace jpt {
 
                 /** S2C_PlayerAppear appearance */
                 appearance?: (jpt.base.CharacterAppearance.$Properties|null);
+
+                /** S2C_PlayerAppear angle */
+                angle?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
