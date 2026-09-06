@@ -341,6 +341,41 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.playerDisappear(Number(msg.playerDisappear!.playerId));
       break;
     }
+    case 'monsterAppear': {
+      const a = msg.monsterAppear!;
+      worldView.monsterAppear(
+        Number(a.monsterId),
+        a.templateId || 0,
+        a.name || '',
+        a.modelFile || '',
+        Number(a.level) || 1,
+        a.position?.x || 0,
+        a.position?.y || 0,
+        a.position?.z || 0,
+        a.angle || 0,
+      );
+      break;
+    }
+    case 'monsterMove': {
+      const m = msg.monsterMove!;
+      worldView.monsterMove(
+        Number(m.monsterId),
+        m.position?.x || 0,
+        m.position?.y || 0,
+        m.position?.z || 0,
+        m.angle || 0,
+        m.animState || 0,
+      );
+      break;
+    }
+    case 'monsterDisappear': {
+      worldView.monsterDisappear(Number(msg.monsterDisappear!.monsterId));
+      break;
+    }
+    case 'monsterDeath': {
+      worldView.monsterDeath(Number(msg.monsterDeath!.monsterId));
+      break;
+    }
     case 'error': {
       const e = msg.error!;
       console.warn('[app] server error', e.errorCode, e.errorMessage);

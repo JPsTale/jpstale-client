@@ -3460,6 +3460,12 @@ export namespace jpt {
             /** S2C_MonsterAppear maxHp. */
             maxHp: number;
 
+            /** S2C_MonsterAppear modelFile. */
+            modelFile: string;
+
+            /** S2C_MonsterAppear angle. */
+            angle: number;
+
             /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -3564,6 +3570,12 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear maxHp */
                 maxHp?: (number|null);
+
+                /** S2C_MonsterAppear modelFile */
+                modelFile?: (string|null);
+
+                /** S2C_MonsterAppear angle */
+                angle?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -3715,6 +3727,12 @@ export namespace jpt {
             /** S2C_MonsterMove position. */
             position?: (jpt.base.Position.$Properties|null);
 
+            /** S2C_MonsterMove angle. */
+            angle: number;
+
+            /** S2C_MonsterMove animState. */
+            animState: number;
+
             /**
              * Creates a new S2C_MonsterMove instance using the specified properties.
              * @param [properties] Properties to set
@@ -3804,6 +3822,12 @@ export namespace jpt {
 
                 /** S2C_MonsterMove position */
                 position?: (jpt.base.Position.$Properties|null);
+
+                /** S2C_MonsterMove angle */
+                angle?: (number|null);
+
+                /** S2C_MonsterMove animState */
+                animState?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

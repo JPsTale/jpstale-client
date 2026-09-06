@@ -15,6 +15,8 @@ import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel } from '../render/char-loader.js';
+import { loadMonsterModel } from '../render/monster-loader.js';
+import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
@@ -63,6 +65,14 @@ export interface WorldView {
   playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
+  /** 怪物出现（S2C_MonsterAppear）：modelFile 资产路径 + 位置/朝向 → 渲染怪物演员 */
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, x: number, y: number, z: number, angle: number): void;
+  /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
+  monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void;
+  /** 怪物消失（S2C_MonsterDisappear）→ 移除 */
+  monsterDisappear(monsterId: number): void;
+  /** 怪物死亡（S2C_MonsterDeath）→ 移除(尸体由服务端后续以 Disappear 兜底) */
+  monsterDeath(monsterId: number): void;
 }
 
 /**
@@ -872,6 +882,165 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     else actor.animState.triggerIdle();
   }
 
+  // ==================== 怪物渲染（服务端权威 S2C_Monster*） ====================
+  const ANIM_ATTACK = 0x0100;
+
+  interface MonsterActor {
+    monsterId: number;
+    name: string;
+    root: THREE.Group;
+    bones: THREE.Bone[];
+    skeleton: THREE.Skeleton;
+    animSmb: MonsterModelResult['animSmb'];
+    animState: ReturnType<typeof createAnimStateMachine>;
+    motionList: MotionInfo[];
+    animFrame: number;
+    snaps: RemoteSnap[];
+    lastAnimState: number;
+  }
+  const monsters = new Map<number, MonsterActor>();
+  const monsterSpawning = new Set<number>();
+  // 进场竞态：与玩家 pendingAppears 同理（世界未建好时暂存，show() 后重放）
+  const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
+
+  function setRemoteMonsterAnim(actor: MonsterActor, animState: number): void {
+    if (animState === actor.lastAnimState) return;
+    actor.lastAnimState = animState;
+    if (animState === ANIM_RUN) actor.animState.triggerRun();
+    else if (animState === ANIM_WALK) actor.animState.triggerWalk();
+    else if (animState === ANIM_ATTACK) { if (!actor.animState.triggerAttack()) actor.animState.triggerIdle(); }
+    else actor.animState.triggerIdle();
+  }
+
+  function spawnMonster(actorInfo: {
+    monsterId: number; name: string; modelFile: string; x: number; y: number; z: number; angle: number;
+  }): void {
+    if (!scene) {
+      pendingMonsterAppears.push(actorInfo);
+      return;
+    }
+    const mid = actorInfo.monsterId;
+    if (monsters.has(mid) || monsterSpawning.has(mid)) return;
+    monsterSpawning.add(mid);
+    void (async () => {
+      try {
+        const result = await loadMonsterModel(actorInfo.modelFile);
+        await loadTextures(result.texturesToLoad);
+        if (monsters.has(mid)) return;
+
+        const root = new THREE.Group();
+        root.add(result.skeletonGroup);
+        root.add(result.group);
+        root.position.set(actorInfo.x, actorInfo.y, actorInfo.z);
+        root.rotation.y = actorInfo.angle || 0;
+        scene!.add(root);
+
+        let actorObj!: MonsterActor;
+        const animState = createAnimStateMachine({
+          getMotions: () => actorObj.motionList,
+          getClassId: () => 0,
+          onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
+        });
+        actorObj = {
+          monsterId: mid,
+          name: actorInfo.name,
+          root,
+          bones: result.bones,
+          skeleton: result.skeleton,
+          animSmb: result.animSmb,
+          animState,
+          motionList: result.motionList,
+          animFrame: 0,
+          snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: 0x0040 }],
+          lastAnimState: 0x0040,
+        };
+        monsters.set(mid, actorObj);
+        animState.triggerIdle();
+        console.log('[WorldView] 怪物出现: id=' + mid + ' model=' + actorInfo.modelFile + ' name=' + actorInfo.name);
+      } catch (e) {
+        console.warn('[WorldView] 怪物加载失败 id=' + mid + ' model=' + actorInfo.modelFile, e);
+      } finally {
+        monsterSpawning.delete(mid);
+      }
+    })();
+  }
+
+  function despawnMonster(monsterId: number): void {
+    const actor = monsters.get(monsterId);
+    if (actor) {
+      scene?.remove(actor.root);
+      monsters.delete(monsterId);
+    }
+    monsterSpawning.delete(monsterId);
+  }
+
+  function applyMonsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void {
+    const actor = monsters.get(monsterId);
+    if (!actor) return;
+    const lastSnap = actor.snaps[actor.snaps.length - 1];
+    if (lastSnap && performance.now() - lastSnap.t > REMOTE_RESYNC_MS) {
+      actor.snaps.length = 0;
+    }
+    actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState });
+    if (actor.snaps.length > 32) actor.snaps.shift();
+  }
+
+  /** 每帧：怪物演员按快照插值渲染 + 动画推进（同远端玩家管线） */
+  function updateMonsters(dt: number): void {
+    const now = performance.now();
+    const renderT = now - REMOTE_INTERP_DELAY;
+    for (const actor of monsters.values()) {
+      const snaps = actor.snaps;
+      if (snaps.length === 0) continue;
+
+      let i = snaps.length - 1;
+      while (i > 0 && snaps[i].t > renderT) i--;
+      const s0 = snaps[i];
+      let px = s0.x, py = s0.y, pz = s0.z, pAng = s0.angle;
+      if (i + 1 < snaps.length) {
+        const s1 = snaps[i + 1];
+        const span = s1.t - s0.t;
+        const f = span > 0 ? Math.max(0, Math.min(1, (renderT - s0.t) / span)) : 1;
+        px = s0.x + (s1.x - s0.x) * f;
+        py = s0.y + (s1.y - s0.y) * f;
+        pz = s0.z + (s1.z - s0.z) * f;
+        pAng = s0.angle + wrapAngle(s1.angle - s0.angle) * f;
+      } else {
+        const k = 1 - Math.exp(-dt / 0.06);
+        const cp = actor.root.position;
+        px = cp.x + (s0.x - cp.x) * k;
+        py = cp.y + (s0.y - cp.y) * k;
+        pz = cp.z + (s0.z - cp.z) * k;
+        pAng = s0.angle;
+      }
+      const keepAfter = now - (REMOTE_INTERP_DELAY + 250);
+      while (snaps.length > 1 && snaps[1].t < keepAfter) snaps.shift();
+
+      actor.root.position.set(px, py, pz);
+      actor.root.rotation.y = pAng;
+      setRemoteMonsterAnim(actor, s0.anim);
+
+      const motion = actor.animState.getCurrentMotion();
+      if (motion) {
+        actor.animFrame += 80;
+        const endFrame = motion.endFrame * 160;
+        const startFrame = motion.startFrame * 160;
+        if (actor.animFrame >= endFrame) {
+          if (motion.repeat) {
+            const len = endFrame - startFrame;
+            actor.animFrame = startFrame + ((actor.animFrame - startFrame) % len);
+          } else {
+            const next = actor.animState.onAnimationEnd();
+            if (next) actor.animFrame = next.startFrame * 160;
+          }
+        }
+        const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
+        applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
+        actor.skeleton.update();
+      }
+    }
+  }
+
   function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
@@ -1300,6 +1469,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // 远端玩家（Phase 2/3）
     updateRemotes(dt);
+    // 怪物（服务端权威, S2C_MonsterMove）
+    updateMonsters(dt);
 
     // 相机跟随角色
     updateCamera();
@@ -1377,6 +1548,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (pendingAppears.length > 0) {
         const batch = pendingAppears.splice(0);
         for (const a of batch) spawnRemote(a);
+      }
+      // 怪物同理（可能早于本机 enterGame 到达）
+      if (pendingMonsterAppears.length > 0) {
+        const batch = pendingMonsterAppears.splice(0);
+        for (const a of batch) spawnMonster(a);
       }
 
       try {
@@ -1471,6 +1647,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z, angle, appearance });
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, x, y, z, angle) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, x, y, z, angle: angle || 0 });
+    },
+    monsterMove: (monsterId, x, y, z, angle, animState) => {
+      applyMonsterMove(Number(monsterId), x, y, z, angle, animState);
+    },
+    monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
+    monsterDeath: (monsterId) => despawnMonster(Number(monsterId)),
     hide() {
       root.style.display = 'none';
       mapAudio.suspend();
@@ -1485,6 +1669,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       remotes.clear();
       remoteSpawning.clear();
       pendingAppears.length = 0;
+      for (const actor of monsters.values()) {
+        scene?.remove(actor.root);
+        actor.skeleton.dispose?.();
+      }
+      monsters.clear();
+      monsterSpawning.clear();
+      pendingMonsterAppears.length = 0;
       mapAudio.dispose();
       window.removeEventListener('resize', resize);
       window.removeEventListener('mouseup', onMouseUp);
