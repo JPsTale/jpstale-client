@@ -113,11 +113,13 @@ export interface MonsterModelResult {
  * @param inxPath 资产相对路径（如 char/monster/monimp/monimp-a.inx）
  */
 export async function loadMonsterModel(inxPath: string): Promise<MonsterModelResult> {
-  const inxInfo = await parseInx(await fetchAB('/res/' + inxPath.replace(/\\/g, '/').toLowerCase()));
-  if (!inxInfo.modelFile) throw new Error('monster .inx modelFile 为空: ' + inxPath);
+  // 兜底归一化:小写 + 反斜杠→斜杠 + .ini→.inx(服务端已规范,双保险)
+  const path = inxPath.replace(/\\/g, '/').toLowerCase().replace(/\.ini$/, '.inx');
+  const inxInfo = await parseInx(await fetchAB('/res/' + path));
+  if (!inxInfo.modelFile) throw new Error('monster .inx modelFile 为空: ' + path);
 
   const modelBase = lowerBase(inxInfo.modelFile);
-  const inxBase = inxPath.replace(/\.inx$/i, '').replace(/\\/g, '/').toLowerCase();
+  const inxBase = path.replace(/\.inx$/i, '');
   const inxDir = inxBase.substring(0, inxBase.lastIndexOf('/') + 1);
   const modelName = modelBase.substring(modelBase.lastIndexOf('/') + 1);
 
