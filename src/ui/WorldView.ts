@@ -906,8 +906,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number): void {
     if (animState === actor.lastAnimState) return;
     actor.lastAnimState = animState;
-    if (animState === ANIM_RUN) actor.animState.triggerRun();
-    else if (animState === ANIM_WALK) actor.animState.triggerWalk();
+    if (animState === ANIM_RUN) { if (!actor.animState.triggerRun()) actor.animState.triggerWalk(); }
+    else if (animState === ANIM_WALK) { if (!actor.animState.triggerWalk()) actor.animState.triggerIdle(); }
     else if (animState === ANIM_ATTACK) { if (!actor.animState.triggerAttack()) actor.animState.triggerIdle(); }
     else actor.animState.triggerIdle();
   }
