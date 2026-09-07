@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame } from '../../app/gameStore.js';
 import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, weaponIconUrl, type SkillDef } from '../../game/skillData.js';
+import { transparentBmp } from '../../game/transparentBmp.js';
 import { t } from '../../i18n/index.js';
 
 // 学习等级 / 熟练度：服务端原版技能表同步前，用角色等级推断占位。
@@ -49,10 +50,25 @@ const WEAPON_NAMES: Record<number, string> = {
   6: 'Sword', 7: 'Claw', 8: 'Shooter', 9: 'Throwing', 10: 'Dagger', 11: 'Twin Blade',
 };
 
+// 技能图标：黑色背景透明化后本身即六边形，无需外部遮罩。
+function useSkillIconSrc(classDir: string, iconFile: string): string {
+  const url = skillIconUrl(classDir, iconFile);
+  const [src, setSrc] = useState(url);
+  useEffect(() => {
+    let alive = true;
+    transparentBmp(url).then((processed) => {
+      if (alive) setSrc(processed ?? url);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [url]);
+  return src;
+}
+
 // 技能面板（原版布局，仅客户端）：
-// 单列 5 排（T1-T5），每排「职业名 + 4 个技能」横排；技能格只显示图标。
-// 悬停信息框用 portal 挂到 document.body，position:fixed 跟随鼠标，
-// 完全脱离面板容器，不会被面板宽度/高度/overflow 裁剪。
+// 单列 5 排（T1-T5），每排上方为职业名分栏标题（.jp-sec 式），下方 4 个技能横排。
+// 技能格：六边形图标（黑色背景已透明化）+ 底部水平熟练度条 + 悬停信息框（portal 跟随鼠标，脱离面板）。
 export default function SkillPanel() {
   const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
   const [tip, setTip] = useState<{ skill: SkillDef; x: number; y: number } | null>(null);
@@ -76,7 +92,14 @@ export default function SkillPanel() {
   return (
     <div className="jp-skillpanel">
       {rows.map((row) => (
-        <SkillRow key={row.tierName} tierName={row.tierName} skills={row.skills} base={row.base} classDir={classDir} charLevel={c.level} onTip={setTip} />
+        <div key={row.tierName} className="jp-skill-group">
+          <div className="jp-sec jp-skill-tier">{row.tierName}</div>
+          <div className="jp-skill-row-skills">
+            {row.skills.map((s, i) => (
+              <SkillCell key={row.base + i} skill={s} classDir={classDir} charLevel={c.level} onTip={setTip} />
+            ))}
+          </div>
+        </div>
       ))}
       <div className="jp-skill-pts">
         <div className="jp-skill-pt">
@@ -93,26 +116,6 @@ export default function SkillPanel() {
   );
 }
 
-function SkillRow(props: {
-  tierName: string;
-  skills: SkillDef[];
-  base: number;
-  classDir: string;
-  charLevel: number;
-  onTip: (tip: { skill: SkillDef; x: number; y: number } | null) => void;
-}) {
-  return (
-    <div className="jp-skill-row">
-      <div className="jp-tier-name">{props.tierName}</div>
-      <div className="jp-skill-row-skills">
-        {props.skills.map((s, i) => (
-          <SkillCell key={props.base + i} skill={s} classDir={props.classDir} charLevel={props.charLevel} onTip={props.onTip} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function SkillCell(props: {
   skill: SkillDef;
   classDir: string;
@@ -123,6 +126,7 @@ function SkillCell(props: {
   const lv = learnedLevel(charLevel, skill.reqLv);
   const learned = lv > 0;
   const masteryPct = 0; // 熟练度占位：服务端推送后替换
+  const iconSrc = useSkillIconSrc(classDir, skill.iconFile);
   return (
     <div
       className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}
@@ -131,13 +135,11 @@ function SkillCell(props: {
       onMouseLeave={() => onTip(null)}
     >
       <div className="jp-skill-iconbox">
-        <div className={learned ? 'jp-hex jp-hex--learned' : 'jp-hex'}>
-          <img className="jp-hex-img" src={skillIconUrl(classDir, skill.iconFile)} alt={skill.name} />
-        </div>
-        <div className="jp-skill-fill">
-          <div className="jp-skill-fill-bar" style={{ height: `${masteryPct}%` }} />
-        </div>
+        <img className={learned ? 'jp-skill-icon' : 'jp-skill-icon jp-skill-icon--locked'} src={iconSrc} alt={skill.name} />
         <span className="jp-skill-lv">{learned ? `Lv.${lv}` : '—'}</span>
+      </div>
+      <div className="jp-skill-mastery">
+        <div className="jp-skill-mastery-bar" style={{ width: `${masteryPct}%` }} />
       </div>
     </div>
   );
