@@ -101,14 +101,30 @@ export function createHud(container: HTMLElement): Hud {
   canvas.style.pointerEvents = 'none';
   container.appendChild(canvas);
 
-  // 点击拦截层：覆盖 HUD 底带（内容 y460~600），pointer-events:auto 吞掉点击，
-  // 防止穿透到下方 World 画布导致“点 HUD 角色跟着移动”。按钮判定仍走 window 指针检测。
-  const barrier = document.createElement('div');
-  barrier.style.position = 'fixed';
-  barrier.style.zIndex = '56';
-  barrier.style.display = 'none';
-  barrier.style.pointerEvents = 'auto';
-  container.appendChild(barrier);
+  // 点击拦截：不对 HUD 底部整带设一个 pointer-events:auto 大坝（会吞掉玩家在空白
+  // 区的移动点击），而是仅在真正的交互控件矩形上覆盖小的 pointer-events:auto 层。
+  // 因此点 HUD 时世界画布收不到事件（不误触移动），点按钮旁的底带空白处则正常穿透移动。
+  // 各矩形为内容坐标（800×600），fitCanvas 换算为物理坐标。坐标与 draw() 中按钮一致。
+  const INTERACT_RECTS = [
+    { x: 569, y: 555, w: 26, h: 26 }, // 走跑
+    { x: 599, y: 565, w: 24, h: 25 }, // cam
+    { x: 623, y: 565, w: 24, h: 25 }, // map
+    { x: 648, y: 560, w: 25, h: 27 }, // b0
+    { x: 673, y: 560, w: 25, h: 27 }, // b1
+    { x: 698, y: 560, w: 25, h: 27 }, // b2
+    { x: 723, y: 560, w: 25, h: 27 }, // b3
+    { x: 748, y: 560, w: 25, h: 27 }, // b4
+    { x: 773, y: 560, w: 25, h: 27 }, // b5
+  ];
+  const barriers = INTERACT_RECTS.map(() => {
+    const el = document.createElement('div');
+    el.style.position = 'fixed';
+    el.style.zIndex = '56';
+    el.style.display = 'none';
+    el.style.pointerEvents = 'auto';
+    container.appendChild(el);
+    return el;
+  });
 
   const ctx = canvas.getContext('2d')!;
   let currentState: HudState | null = null;
@@ -133,11 +149,14 @@ export function createHud(container: HTMLElement): Hud {
     canvas.style.height = `${hpx}px`;
     canvas.style.left = `${(window.innerWidth - wpx) / 2}px`;
     canvas.style.top = `${window.innerHeight - hpx}px`;
-    // 拦截层对齐 HUD 底带：画布逻辑 y 580~720（= 内容 460~600）
-    barrier.style.left = `${(window.innerWidth - wpx) / 2}px`;
-    barrier.style.width = `${wpx}px`;
-    barrier.style.top = `${window.innerHeight - hpx + (580 / H) * hpx}px`;
-    barrier.style.height = `${(140 / H) * hpx}px`;
+    // 拦截小层对齐各交互控件矩形（内容坐标 → 画布坐标：+240,+120，再按 scale）
+    barriers.forEach((barrier, i) => {
+      const r = INTERACT_RECTS[i];
+      barrier.style.left = `${(window.innerWidth - wpx) / 2 + (r.x + 240) * scale}px`;
+      barrier.style.top = `${window.innerHeight - hpx + (r.y + 120) * scale}px`;
+      barrier.style.width = `${r.w * scale}px`;
+      barrier.style.height = `${r.h * scale}px`;
+    });
   }
 
   function drawTex(name: string, x: number, y: number, w: number, h: number) {
@@ -314,18 +333,18 @@ export function createHud(container: HTMLElement): Hud {
     show(state: HudState) {
       currentState = state;
       canvas.style.display = 'block';
-      barrier.style.display = 'block';
+      barriers.forEach((b) => { b.style.display = 'block'; });
     },
     hide() {
       canvas.style.display = 'none';
-      barrier.style.display = 'none';
+      barriers.forEach((b) => { b.style.display = 'none'; });
       currentState = null;
     },
     dispose() {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', fitCanvas);
       canvas.remove();
-      barrier.remove();
+      barriers.forEach((b) => b.remove());
     },
     setRunFlag,
     get onAction() { return onAction; },
