@@ -45,8 +45,13 @@ let levels: LevelMap = SKILL_DEBUG ? load<LevelMap>(LS_LEVELS, {}) : {};
 let weaponIndex = SKILL_DEBUG ? load<number>(LS_WEAPON, 0) : 0;
 const listeners = new Set<() => void>();
 
+// 快照对象：useSyncExternalStore 要求 getSnapshot 返回稳定缓存引用，
+// 每次变更时替换整对象（与 gameStore 同款模式），否则无限重渲染。
+let snapshot = { levels, weaponIndex };
+
 function emit(): void {
   if (!SKILL_DEBUG) return;
+  snapshot = { levels, weaponIndex };
   try {
     localStorage.setItem(LS_LEVELS, JSON.stringify(levels));
     localStorage.setItem(LS_WEAPON, JSON.stringify(weaponIndex));
@@ -60,7 +65,7 @@ export function subscribeSkillDbg(fn: () => void): () => void {
 }
 
 export function getSkillDbgSnapshot(): { levels: LevelMap; weaponIndex: number } {
-  return { levels, weaponIndex };
+  return snapshot;
 }
 
 /** 技能调试等级（iconFile 含 .bmp）；未手动设置返回 null */
