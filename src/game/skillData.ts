@@ -263,6 +263,13 @@ export const CLASS_TIERS: Record<string, string[]> = {
   shaman: ['Shaman', 'Clairvoyant', 'Conjurer', 'Necromancer', 'Oracle'],
 };
 
+/** 普攻图标 URL（/res 资产：image/sinimage/skill/skill_normal.bmp，非职业目录） */
+export const NORMAL_ATTACK_ICON = 'skill_normal';
+
+export function normalAttackIconUrl(): string {
+  return `/res/image/sinimage/skill/${NORMAL_ATTACK_ICON}.bmp`;
+}
+
 /** 技能图标 URL（/res 资产：image/sinimage/skill/{职业}/button/{文件}.bmp） */
 export function skillIconUrl(classDir: string, iconFile: string): string {
   const seg = iconFile.split(' ').map(encodeURIComponent).join('%20');

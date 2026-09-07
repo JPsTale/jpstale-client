@@ -195,6 +195,18 @@
     "curEffect": "Current Effect",
     "nextEffect": "Next Level",
     "mastery": "Mastery",
-    "demo": "DEMO DATA (skill table not wired yet)"
+    "demo": "DEMO DATA (skill table not wired yet)",
+    "equipHint": "Left-click → left fist · Right-click → right fist · Hold mouse + F1~F8 → hotkey",
+    "normalAttack": "Normal Attack",
+    "normalAttackTip": "Normal attack: left-click binds left fist / right-click binds right fist",
+    "equipLeft": "Equipped: Left Fist",
+    "equipRight": "Equipped: Right Fist",
+    "quickKey": "Hotkey",
+    "lvUp": "Skill level +1",
+    "lvDown": "Skill level -1",
+    "lvAuto": "Level auto-inferred (click center number to set 0~10 manually)",
+    "lvReset": "Clear manual level, back to auto-inferred",
+    "dbgWeapon": "Debug weapon:",
+    "dbgReset": "Reset skill levels"
   }
 }

@@ -195,6 +195,18 @@
     "curEffect": "当前效果",
     "nextEffect": "下一级效果",
     "mastery": "熟练度",
-    "demo": "演示数据（待接入服务端技能表）"
+    "demo": "演示数据（待接入服务端技能表）",
+    "equipHint": "左键绑定左拳 · 右键绑定右拳 · 按住鼠标时按 F1~F8 绑定快捷键",
+    "normalAttack": "普通攻击",
+    "normalAttackTip": "普通攻击：左键绑左拳 / 右键绑右拳（点击恢复普攻）",
+    "equipLeft": "已装备左拳",
+    "equipRight": "已装备右拳",
+    "quickKey": "快捷键",
+    "lvUp": "技能等级 +1",
+    "lvDown": "技能等级 -1",
+    "lvAuto": "自动推断等级（点中间数字手动设 0~10）",
+    "lvReset": "清除手动等级，恢复自动推断",
+    "dbgWeapon": "调试武器:",
+    "dbgReset": "重置技能等级"
   }
 }

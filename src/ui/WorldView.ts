@@ -28,6 +28,10 @@ import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadWeaponModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
+import { SKILL_DEBUG, dbgWeapon, subscribeSkillDbg } from '../game/skillDbg.js';
+import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
+import { CLASS_DIR } from '../game/skillData.js';
+import { getGameSnapshot } from '../app/gameStore.js';
 
 export interface EnterGameInfo {
   playerId: number;
@@ -75,6 +79,10 @@ export interface WorldView {
   monsterDisappear(monsterId: number): void;
   /** 怪物死亡（S2C_MonsterDeath）→ 移除(尸体由服务端后续以 Disappear 兜底) */
   monsterDeath(monsterId: number): void;
+  /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
+  playSkillByIcon(iconFile: string): boolean;
+  /** [调试/装备] 播放当前装备在指定拳的技能动画 */
+  playEquippedSkill(slot: 'left' | 'right'): boolean;
 }
 
 /**
@@ -137,6 +145,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const allBounds = new Map<number, [number, number, number, number]>();
   let charGroup: THREE.Group | null = null;
   let selfAngle = 0; // 角色朝向（弧度）
+  let selfJobId = 1;
+  let selfWeaponGroup: THREE.Group | null = null; // 调试武器（self 挂载）
+  let skillDbgUnsub: (() => void) | null = null;
   let animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'] | null = null;
   let bipInxInfo: Awaited<ReturnType<typeof loadCharacterModel>>['bipInxInfo'] | null = null;
   let bones: THREE.Bone[] = [];
@@ -533,6 +544,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   async function loadPlayer(appearance: CharacterAppearance | undefined, jobId: number): Promise<void> {
     if (!scene) return;
+    selfJobId = jobId;
     let armorNum = 1;
     let bodyInxOverride: string | null = null;
     if (appearance?.bodyModelIdcode && appearance.bodyModelIdcode > 0) {
@@ -566,11 +578,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState = createAnimStateMachine({
       getMotions: () => motionList,
       getClassId: () => jobId,
+      getWeaponIdCode: () => {
+        const w = dbgWeapon();
+        return w && w.idcode ? w.idcode : null;
+      },
+      getWeaponType: () => {
+        const w = dbgWeapon();
+        return w && w.weaponType ? w.weaponType : null;
+      },
       onMotionChange: (motion: MotionInfo) => {
         animFrame = motion.startFrame * 160;
       },
     });
     animState.triggerIdle();
+    // 调试武器挂载：随 skillDbg 切换（SKILL_DEBUG=false 时 dbgWeapon 恒为空手）
+    await applyDbgWeapon();
   }
 
   function buildMotionListFor(
@@ -596,6 +618,71 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function buildMotionList(): void {
     if (animSmb && bipInxInfo) motionList = buildMotionListFor(animSmb, bipInxInfo);
+  }
+
+  // ===== [调试] 技能动画播放（SKILL_DEBUG=false 时：武器恒空手 + playSkillByIcon 仅按 skillIndex 匹配）=====
+  // 挂载当前调试武器（skillDbg.dbgWeapon()）到自机手部骨骼；旧武器先移除。
+  async function applyDbgWeapon(): Promise<void> {
+    if (!scene || !charGroup) return;
+    if (selfWeaponGroup) {
+      charGroup.remove(selfWeaponGroup);
+      selfWeaponGroup = null;
+    }
+    const w = dbgWeapon();
+    if (!w.dorp) return;
+    try {
+      const wres = await loadWeaponModel(w.dorp);
+      await loadTextures(wres.texturesToLoad);
+      const boneName = WEAPON_BONES.RIGHT_HAND;
+      const bone = findBone(charGroup, boneName) || findBone(charGroup, WEAPON_BONES.LEFT_HAND);
+      if (bone) {
+        selfWeaponGroup = wres.group;
+        bone.add(wres.group);
+      }
+    } catch (e) {
+      console.warn('[WorldView][dbg] 武器挂载失败 dorp=' + w.dorp, e);
+    }
+  }
+
+  /**
+   * 播放技能动画（调试/装备触发）。
+   * @param iconFile skillData iconFile（含 .bmp）；'skill_normal'=普攻动画
+   * @returns 是否找到并播放
+   */
+  function playSkillByIcon(iconFile: string): boolean {
+    if (!animState) return false;
+    const norm = iconFile.replace(/\.bmp$/i, '');
+    if (norm === 'skill_normal') {
+      const ok = animState.triggerAttack(true);
+      console.log('[WorldView][dbg] 普攻动画 → ' + (ok ? 'OK' : '无匹配'));
+      return ok;
+    }
+    const idx = skillIndexByIcon(norm + '.bmp');
+    if (idx != null) {
+      // 指定技能：有专属 SKILL 动画则播专属；无则回退普攻（多数技能动作即普攻）
+      const ok = animState.triggerSkill(idx);
+      if (ok) { console.log('[WorldView][dbg] 技能动画 #' + idx + ' ' + iconFile); return true; }
+      const fallback = animState.triggerAttack(true);
+      console.log('[WorldView][dbg] 技能无专属动画→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
+      return fallback;
+    }
+    // 无 saSkillData 条目（T5 等）：直接任意 SKILL 或普攻
+    const ok = animState.triggerSkill(null);
+    if (ok) { console.log('[WorldView][dbg] 任意SKILL动画 ' + iconFile); return true; }
+    const fallback = animState.triggerAttack(true);
+    console.log('[WorldView][dbg] 技能任意SKILL→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
+    return fallback;
+  }
+
+  /** 播放当前装备在指定拳的技能动画（左/右拳）。未装备/普通攻击 → 播普攻。 */
+  function playEquippedSkill(slot: 'left' | 'right'): boolean {
+    const snap = getGameSnapshot();
+    const bind = snap.fistBindings[slot];
+    const selfClass = CLASS_DIR[selfJobId] ?? 'fighter';
+    if (!bind || bind.classDir !== selfClass) {
+      return playSkillByIcon('skill_normal');
+    }
+    return playSkillByIcon(bind.iconFile + '.bmp');
   }
 
   // 相机跟随角色（/pt/maps/ updateDummy 同款，Winmain.cpp 卫星相机）
@@ -655,6 +742,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function onMouseDown(e: MouseEvent): void {
+    // [调试] Alt/Shift+点击 → 原地播放左/右拳装备的技能动画（不移动、不选目标）
+    if (SKILL_DEBUG && (e.altKey || e.shiftKey) && e.button === 0) {
+      const slot = e.altKey ? 'left' : 'right';
+      e.preventDefault();
+      playEquippedSkill(slot);
+      return;
+    }
     if (e.button === 0) { mouseDown = true; mouseX = e.clientX; mouseY = e.clientY; }
   }
   function onMouseUp(e: MouseEvent): void {
@@ -1491,6 +1585,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         return;
       }
 
+      // [调试] 订阅技能调试面板的武器切换 → 重挂自机武器（进图/切武器都触发）
+      skillDbgUnsub?.();
+      skillDbgUnsub = subscribeSkillDbg(() => {
+        if (charGroup) void applyDbgWeapon();
+      });
+
       // 重放进场竞态期间缓存的远端 Appear（此刻 scene 已就绪）
       if (pendingAppears.length > 0) {
         const batch = pendingAppears.splice(0);
@@ -1599,13 +1699,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
     monsterDeath: (monsterId) => despawnMonster(Number(monsterId)),
+    playSkillByIcon: (iconFile) => playSkillByIcon(iconFile),
+    playEquippedSkill: (slot) => playEquippedSkill(slot),
     hide() {
       root.style.display = 'none';
       mapAudio.suspend();
+      skillDbgUnsub?.();
+      skillDbgUnsub = null;
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
     },
     destroy() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
+      skillDbgUnsub?.();
+      skillDbgUnsub = null;
       for (const actor of remotes.values()) {
         scene?.remove(actor.root);
         actor.bodyGroup.children.forEach((c) => (c as THREE.SkinnedMesh).geometry?.dispose?.());

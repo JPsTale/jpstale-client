@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { getGameSnapshot, subscribeGame } from '../../app/gameStore.js';
-import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, weaponIconUrl, type SkillDef } from '../../game/skillData.js';
+import { getGameSnapshot, subscribeGame, equipFist, setQuickBinding, type FistBinding } from '../../app/gameStore.js';
+import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, weaponIconUrl, normalAttackIconUrl, type SkillDef } from '../../game/skillData.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
+import { SKILL_DEBUG, subscribeSkillDbg, getSkillDbgSnapshot, dbgLevel, setDbgLevel, dbgWeaponIndex, setDbgWeapon, resetDbgLevels, DBG_WEAPONS } from '../../game/skillDbg.js';
 import { t } from '../../i18n/index.js';
 
 // 学习等级 / 熟练度：服务端原版技能表同步前，用角色等级推断占位。
@@ -11,6 +12,13 @@ import { t } from '../../i18n/index.js';
 function learnedLevel(charLevel: number, reqLv: number): number {
   if (charLevel < reqLv) return 0;
   return Math.min(20, Math.floor((charLevel - reqLv) / 10) + 1);
+}
+
+/** 技能当前等级：调试模式下手动等级(0~10)优先，否则按角色等级自动推断。 */
+function effectiveLevel(charLevel: number, reqLv: number, iconFile: string): number {
+  const dbg = dbgLevel(iconFile);
+  if (SKILL_DEBUG && dbg != null) return dbg;
+  return learnedLevel(charLevel, reqLv);
 }
 
 // —— 假数据（DEMO）：服务端技能表接入前，按技能分类规则生成 MP/SP/效果/下一级效果 ——
@@ -55,27 +63,40 @@ const WEAPON_NAMES: Record<number, string> = {
 };
 
 // 技能图标：黑色背景透明化后本身即六边形，无需外部遮罩。
-function useSkillIconSrc(classDir: string, iconFile: string): string {
-  const url = skillIconUrl(classDir, iconFile);
+function useSkillIconSrc(url: string): string {
   const [src, setSrc] = useState(url);
   useEffect(() => {
     let alive = true;
     transparentBmp(url).then((processed) => {
       if (alive) setSrc(processed ?? url);
     });
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [url]);
   return src;
 }
 
-// 技能面板（原版布局，仅客户端）：
-// 单列 5 排（T1-T5），每排上方为职业名分栏标题（.jp-sec 式），下方 4 个技能横排。
-// 技能格：六边形图标（黑色背景已透明化）+ 底部水平熟练度条 + 悬停信息框（portal 跟随鼠标，脱离面板）。
+interface TipData { skill: SkillDef; lv: number; x: number; y: number }
+
+// 可绑拳规则（useCode）：左键绑左拳需 LEFT/ALL；右键绑右拳需 RIGHT/ALL。
+function canBindLeft(useCode: SkillDef['useCode']): boolean {
+  return useCode === 'LEFT' || useCode === 'ALL';
+}
+function canBindRight(useCode: SkillDef['useCode']): boolean {
+  return useCode === 'RIGHT' || useCode === 'ALL';
+}
+
+// 技能面板：
+// - 顶部普攻格（拳头）：左键绑左拳 / 右键绑右拳 → 恢复普通攻击
+// - 技能格：左键绑左拳、右键绑右拳（仅已学 + useCode 允许）；被动不可绑
+// - 按住鼠标（左/右）在技能格上按 F1~F8 → 记录快捷绑定到对应拳；同 F 键覆盖旧绑定
+// - 已绑定状态角标：L=左拳、R=右拳、F1~F8 小标
 export default function SkillPanel() {
-  const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
-  const [tip, setTip] = useState<{ skill: SkillDef; lv: number; x: number; y: number } | null>(null);
+  const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
+  const dbgSnap = useSyncExternalStore(subscribeSkillDbg, getSkillDbgSnapshot);
+  const { character, fistBindings, quickBindings } = snap;
+  const [tip, setTip] = useState<TipData | null>(null);
+  // 当前按住的鼠标键（用于 F1-F8 录制判定目标拳）
+  const pressedBtn = useRef<'left' | 'right' | null>(null);
 
   const classDir = character ? CLASS_DIR[character.job] ?? 'fighter' : 'fighter';
   const skills = character ? SKILLS[classDir] ?? [] : [];
@@ -92,15 +113,96 @@ export default function SkillPanel() {
 
   const c = character;
   if (!c) return <div className="jp-nodata">{t('panel.noData')}</div>;
+  void dbgSnap; // skillDbg 订阅：调试等级/武器变化触发本面板重渲染
+
+  // 绑定技能到拳；bind=null 表示普通攻击
+  function bind(target: 'left' | 'right', bind: FistBinding | null): void {
+    equipFist(target, bind);
+  }
+
+  // 某技能当前是否绑在某拳
+  function fistOf(classDir: string, iconFile: string): 'left' | 'right' | null {
+    const norm = iconFile.replace(/\.bmp$/i, '');
+    if (fistBindings.left && fistBindings.left.classDir === classDir && fistBindings.left.iconFile === norm) return 'left';
+    if (fistBindings.right && fistBindings.right.classDir === classDir && fistBindings.right.iconFile === norm) return 'right';
+    return null;
+  }
+
+  // 某技能绑定的 F 键（返回 1-8）
+  function quickKeyOf(classDir: string, iconFile: string): number | null {
+    const norm = iconFile.replace(/\.bmp$/i, '');
+    for (let i = 0; i < 8; i++) {
+      const q = quickBindings[i];
+      if (q && q.classDir === classDir && q.iconFile === norm) return i + 1;
+    }
+    return null;
+  }
 
   return (
-    <div className="jp-skillpanel">
+    <div
+      className="jp-skillpanel"
+      onPointerDown={(e) => { pressedBtn.current = e.button === 2 ? 'right' : e.button === 0 ? 'left' : null; }}
+      onPointerUp={() => { pressedBtn.current = null; }}
+      onPointerLeave={() => { pressedBtn.current = null; }}
+    >
+      {/* 顶部提示行：操作说明 */}
+      <div className="jp-skill-hint">{t('skills.equipHint')}</div>
+
+      {/* 调试工具条：武器切换 + 重置等级（SKILL_DEBUG 关闭即整体移除） */}
+      {SKILL_DEBUG && (
+        <div className="jp-skill-dbgbar">
+          <label className="jp-skill-dbgbar-label">
+            {t('skills.dbgWeapon')}
+            <select
+              className="jp-skill-dbgbar-select"
+              value={dbgWeaponIndex()}
+              onChange={(e) => setDbgWeapon(Number(e.target.value))}
+            >
+              {DBG_WEAPONS.map((w, i) => (
+                <option key={w.dorp || 'none'} value={i}>{w.label}</option>
+              ))}
+            </select>
+          </label>
+          <button type="button" className="jp-skill-dbgbar-btn" onClick={() => resetDbgLevels()}>
+            {t('skills.dbgReset')}
+          </button>
+        </div>
+      )}
+
+      {/* 普攻格行：恢复普通攻击 */}
+      <div className="jp-skill-group">
+        <div className="jp-sec jp-skill-tier">{t('skills.normalAttack')}</div>
+        <div className="jp-skill-row-skills">
+          <NormalAttackCell
+            classDir={classDir}
+            fistBindings={fistBindings}
+            onEquip={(target) => bind(target, null)}
+            onRecord={(target, key) => setQuickBinding(key - 1, { classDir, iconFile: 'skill_normal', target })}
+            bindState={pressedBtn}
+            quickKeyOf={(iconFile) => quickKeyOf(classDir, iconFile)}
+          />
+        </div>
+      </div>
+
       {rows.map((row) => (
         <div key={row.tierName} className="jp-skill-group">
           <div className="jp-sec jp-skill-tier">{row.tierName}</div>
           <div className="jp-skill-row-skills">
             {row.skills.map((s, i) => (
-              <SkillCell key={row.base + i} skill={s} classDir={classDir} charLevel={c.level} onTip={setTip} />
+              <SkillCell
+                key={row.base + i}
+                skill={s}
+                classDir={classDir}
+                lv={effectiveLevel(c.level, s.reqLv, s.iconFile)}
+                dbgLv={dbgLevel(s.iconFile)}
+                fistOf={() => fistOf(classDir, s.iconFile)}
+                quickKey={() => quickKeyOf(classDir, s.iconFile)}
+                onEquip={(target) => bind(target, { classDir, iconFile: s.iconFile.replace(/\.bmp$/i, '') })}
+                onRecord={(target, key) => setQuickBinding(key - 1, { classDir, iconFile: s.iconFile.replace(/\.bmp$/i, ''), target })}
+                onChangeLevel={(v) => setDbgLevel(s.iconFile, v)}
+                bindState={pressedBtn}
+                onTip={setTip}
+              />
             ))}
           </div>
         </div>
@@ -120,31 +222,171 @@ export default function SkillPanel() {
   );
 }
 
+// —— 通用格子交互（普攻格/技能格共用）：左/右键绑定 + F1-F8 录制 ——
+interface CellBinding {
+  onEquip(target: 'left' | 'right'): void;
+  /** 录制 F 键快捷绑定（按下鼠标左/右键时同时按 F1~F8） */
+  onRecord(target: 'left' | 'right', key: number): void;
+  /** 当前按住的鼠标键 */
+  bindState: React.MutableRefObject<'left' | 'right' | null>;
+  /** 该技能绑定的 F 键号（1-8），无则 null */
+  quickKey?: number | null;
+  /** 绑定的拳（角标显示），无则 null */
+  fist?: 'left' | 'right' | null;
+}
+
+/** 是否允许点击绑定（技能格 override：learned + useCode；普攻恒可） */
+function useEquipAction(cb: CellBinding, allowed: boolean, useCode?: SkillDef['useCode']): {
+  onPointerDown?: (e: React.PointerEvent) => void;
+  onContextMenu: (e: React.MouseEvent) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+} {
+  if (!allowed) {
+    return { onContextMenu: (e) => e.preventDefault() };
+  }
+  const bindLeft = useCode ? canBindLeft(useCode) : true;
+  const bindRight = useCode ? canBindRight(useCode) : true;
+
+  return {
+    onPointerDown: (e: React.PointerEvent) => {
+      if (e.button !== 0 && e.button !== 2) return;
+      const target = e.button === 0 ? 'left' : 'right';
+      if (e.button === 0 && !bindLeft) return;
+      if (e.button === 2 && !bindRight) return;
+      cb.onEquip(target);
+    },
+    onContextMenu: (e) => e.preventDefault(),
+    onKeyDown: (e: React.KeyboardEvent) => {
+      // F1-F8 录制：需正按住某鼠标键（记录 target 拳）
+      const m = /^F([1-8])$/.exec(e.key);
+      if (!m) return;
+      const target = cb.bindState.current;
+      if (!target) return;
+      e.preventDefault();
+      e.stopPropagation();
+      cb.onRecord(target, Number(m[1]));
+    },
+  };
+}
+
+function NormalAttackCell(props: {
+  classDir: string;
+  fistBindings: { left: FistBinding | null; right: FistBinding | null };
+  onEquip(target: 'left' | 'right'): void;
+  onRecord(target: 'left' | 'right', key: number): void;
+  bindState: React.MutableRefObject<'left' | 'right' | null>;
+  quickKeyOf(iconFile: string): number | null;
+}) {
+  const { classDir, fistBindings, onEquip, onRecord, bindState, quickKeyOf } = props;
+  const iconFile = 'skill_normal';
+  const url = normalAttackIconUrl();
+  const iconSrc = useSkillIconSrc(url);
+  const fist = fistOfBinding(fistBindings, classDir, iconFile);
+  const quickKey = quickKeyOf(iconFile);
+  const actions = useEquipAction({ onEquip, onRecord, bindState }, true);
+
+  return (
+    <div
+      className="jp-skill-cell"
+      title={t('skills.normalAttackTip')}
+      {...actions}
+    >
+      <div className="jp-skill-iconbox">
+        <img className="jp-skill-icon" src={iconSrc} alt={t('skills.normalAttack')} />
+        {fist && <span className={`jp-skill-fistbadge jp-skill-fistbadge--${fist}`}>{fist === 'left' ? 'L' : 'R'}</span>}
+        {quickKey && <span className="jp-skill-keybadge">F{quickKey}</span>}
+      </div>
+      <div className="jp-skill-mastery"><div className="jp-skill-mastery-bar" style={{ width: '0%' }} /></div>
+    </div>
+  );
+}
+
+function fistOfBinding(fb: { left: FistBinding | null; right: FistBinding | null }, classDir: string, iconFile: string): 'left' | 'right' | null {
+  const norm = iconFile.replace(/\.bmp$/i, '');
+  if (fb.left && fb.left.classDir === classDir && fb.left.iconFile === norm) return 'left';
+  if (fb.right && fb.right.classDir === classDir && fb.right.iconFile === norm) return 'right';
+  return null;
+}
+
 function SkillCell(props: {
   skill: SkillDef;
   classDir: string;
-  charLevel: number;
-  onTip: (tip: { skill: SkillDef; lv: number; x: number; y: number } | null) => void;
+  lv: number;               // 有效技能等级（0=未学习；调试可手动覆盖）
+  dbgLv: number | null;     // 调试手动等级（null=未手动设置）
+  fistOf(): 'left' | 'right' | null;
+  quickKey(): number | null;
+  onEquip(target: 'left' | 'right'): void;
+  onRecord(target: 'left' | 'right', key: number): void;
+  onChangeLevel(lv: number | null): void;
+  bindState: React.MutableRefObject<'left' | 'right' | null>;
+  onTip: (tip: TipData | null) => void;
 }) {
-  const { skill, classDir, charLevel, onTip } = props;
-  const lv = learnedLevel(charLevel, skill.reqLv);
+  const { skill, classDir, lv, dbgLv, fistOf, quickKey, onEquip, onRecord, onChangeLevel, bindState, onTip } = props;
   const learned = lv > 0;
   const masteryPct = 0; // 熟练度占位：服务端推送后替换
-  const iconSrc = useSkillIconSrc(classDir, skill.iconFile);
+  const iconSrc = useSkillIconSrc(skillIconUrl(classDir, skill.iconFile));
+  const useCode = skill.useCode;
+  const canBind = learned && useCode !== 'NOT';
+  const canL = canBindLeft(useCode);
+  const canR = canBindRight(useCode);
+  const fist = learned ? fistOf() : null;
+  const qkey = learned ? quickKey() : null;
+  const actions = useEquipAction({ onEquip, onRecord, bindState }, canBind, useCode);
+
+  // 说明标题
+  let title = skill.name;
+  if (learned) {
+    if (fist === 'left') title += `\n[${t('skills.equipLeft')}]`;
+    else if (fist === 'right') title += `\n[${t('skills.equipRight')}]`;
+    if (qkey) title += `\n[${t('skills.quickKey')} F${qkey}]`;
+    title += `\n${t('skills.equipHint')}`;
+  }
+
   return (
     <div
       className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}
-      onMouseEnter={(e) => onTip({ skill, lv, x: e.clientX, y: e.clientY })}
-      onMouseMove={(e) => onTip({ skill, lv, x: e.clientX, y: e.clientY })}
+      title={title}
+      {...actions}
+      onMouseEnter={(e) => learned && onTip({ skill, lv, x: e.clientX, y: e.clientY })}
+      onMouseMove={(e) => learned && onTip({ skill, lv, x: e.clientX, y: e.clientY })}
       onMouseLeave={() => onTip(null)}
     >
       <div className="jp-skill-iconbox">
         <img className={learned ? 'jp-skill-icon' : 'jp-skill-icon jp-skill-icon--locked'} src={iconSrc} alt={skill.name} />
         <span className="jp-skill-lv">{learned ? `Lv.${lv}` : '—'}</span>
+        {learned && canL && fist === null && !canR && (
+          <span className="jp-skill-fistonly">L</span>
+        )}
+        {fist && <span className={`jp-skill-fistbadge jp-skill-fistbadge--${fist}`}>{fist === 'left' ? 'L' : 'R'}</span>}
+        {qkey && <span className="jp-skill-keybadge">F{qkey}</span>}
       </div>
       <div className="jp-skill-mastery">
         <div className="jp-skill-mastery-bar" style={{ width: `${masteryPct}%` }} />
       </div>
+      {/* 调试：技能等级微调（0=未学，1~10 级）。▲▼ 停更于图标下沿。 */}
+      {SKILL_DEBUG && (
+        <div className="jp-skill-lvdbg">
+          <button
+            type="button"
+            className="jp-skill-lvdbg-btn"
+            onClick={(e) => { e.stopPropagation(); const base = dbgLv ?? 0; onChangeLevel(base <= 0 ? 0 : base - 1); }}
+            title={t('skills.lvDown')}
+          >−</button>
+          <span
+            className={`jp-skill-lvdbg-val${dbgLv != null ? ' jp-skill-lvdbg-val--set' : ''}`}
+            onClick={(e) => { e.stopPropagation(); onChangeLevel(null); }}
+            title={dbgLv != null ? t('skills.lvReset') : t('skills.lvAuto')}
+          >
+            {dbgLv != null ? String(dbgLv) : '·'}
+          </span>
+          <button
+            type="button"
+            className="jp-skill-lvdbg-btn"
+            onClick={(e) => { e.stopPropagation(); const base = dbgLv ?? 0; onChangeLevel(base >= 10 ? 10 : base + 1); }}
+            title={t('skills.lvUp')}
+          >+</button>
+        </div>
+      )}
     </div>
   );
 }

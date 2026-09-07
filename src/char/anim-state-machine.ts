@@ -48,7 +48,7 @@ export interface AnimStateMachineOpts {
 export interface AnimStateMachine {
   STATE: typeof STATE;
   triggerAttack: (retry?: boolean) => boolean;
-  triggerSkill: () => boolean;
+  triggerSkill: (skillIndex?: number | null) => boolean;
   triggerWalk: () => boolean;
   triggerRun: () => boolean;
   triggerIdle: () => boolean;
@@ -125,13 +125,53 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
-  function triggerSkill(): boolean {
-    const motion = findMotionForState(STATE.SKILL, true);
-    if (!motion) { log2('No matching skill animation'); return false; }
+  /**
+   * 触发技能动画。
+   * @param skillIndex saSkillData 索引（0 起）；匹配 .inx SKILL 条目 skillCodeList。
+   *   null/undefined：退化为任意 SKILL 动画（历史行为）。
+   *   指定但无专属动画：返回 false，调用方（WorldView）回退普攻动画。
+   */
+  function triggerSkill(skillIndex?: number | null): boolean {
+    let candidates: MotionInfo[] = [];
+    if (skillIndex != null) {
+      candidates = motionsForSkill(skillIndex);
+    }
+    if (!candidates.length) {
+      const m = findMotionForState(STATE.SKILL, true);
+      if (!m) { log2('No matching skill animation'); return false; }
+      currentState = STATE.SKILL;
+      applyMotion(m);
+      log2('Skill(any): 0x' + m.state.toString(16) + ' [' + m.startFrame + ',' + m.endFrame + ']');
+      return true;
+    }
+    const m = pickMotion(candidates);
+    if (!m) return false;
     currentState = STATE.SKILL;
-    applyMotion(motion);
-    log2('Skill: 0x' + motion.state.toString(16) + ' [' + motion.startFrame + ',' + motion.endFrame + ']');
+    applyMotion(m);
+    log2('Skill #' + skillIndex + ': 0x' + m.state.toString(16) + ' [' + m.startFrame + ',' + m.endFrame + ']' + ' items=' + m.itemCodeCount);
     return true;
+  }
+
+  /** 收集能播放指定 saSkillData 索引的 SKILL 动画（按 状态+职业+武器+skillCodeList 过滤） */
+  function motionsForSkill(skillIndex: number): MotionInfo[] {
+    const motions = getMotions();
+    const classId = getClassId();
+    const weaponId = getWeaponIdCode ? getWeaponIdCode() : null;
+    let candidates = findMotions(motions, STATE.SKILL, weaponId, classId)
+      .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
+    if (!candidates.length && getWeaponType) {
+      const weaponType = getWeaponType();
+      if (weaponType) {
+        candidates = findMotionsByType(motions, STATE.SKILL, weaponType, classId)
+          .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
+      }
+    }
+    // 武器仍无匹配 → 空手候选
+    if (!candidates.length && weaponId != null && weaponId !== 0) {
+      candidates = findMotions(motions, STATE.SKILL, null, classId)
+        .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
+    }
+    return candidates;
   }
 
   function triggerWalk(): boolean {

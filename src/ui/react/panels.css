@@ -433,6 +433,82 @@
   border-radius: 2px;
 }
 
+/* 调试：技能等级微调（0=未学，1~10）。▲▼ 一行叠在格子底部。 */
+.jp-skill-lvdbg {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 1px;
+  flex: 0 0 auto;
+}
+.jp-skill-lvdbg-btn {
+  width: 16px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid #3a3f46;
+  border-radius: 2px;
+  background: #0d1117;
+  color: #8b949e;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+.jp-skill-lvdbg-btn:hover {
+  background: #2d333b;
+  color: #e6edf3;
+}
+.jp-skill-lvdbg-val {
+  min-width: 14px;
+  text-align: center;
+  font-size: 10px;
+  color: #6e7681;
+  cursor: pointer;
+  line-height: 1;
+}
+.jp-skill-lvdbg-val--set {
+  color: #ffa657;
+  font-weight: 700;
+}
+
+/* 调试工具条：武器切换 + 重置（SKILL_DEBUG=false 时整块随组件消失） */
+.jp-skill-dbgbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  background: #101318;
+  border: 1px solid #2a2f36;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #9aa0a6;
+}
+.jp-skill-dbgbar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.jp-skill-dbgbar-select {
+  background: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #3a3f46;
+  border-radius: 3px;
+  font-size: 12px;
+  padding: 1px 4px;
+}
+.jp-skill-dbgbar-btn {
+  background: #1f2329;
+  color: #9aa0a6;
+  border: 1px solid #3a3f46;
+  border-radius: 3px;
+  font-size: 11px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+.jp-skill-dbgbar-btn:hover {
+  background: #2d333b;
+  color: #e6edf3;
+}
+
 /* —— 技能悬停信息框（portal 到 body，fixed 跟随鼠标，脱离面板裁剪）—— */
 .jp-skill-tip {
   position: fixed;
