@@ -192,6 +192,7 @@
     "skillType": "类型",
     "consume": "消耗",
     "weapon": "需求武器",
+    "curEffect": "当前效果",
     "nextEffect": "下一级效果",
     "mastery": "熟练度",
     "demo": "演示数据（待接入服务端技能表）"

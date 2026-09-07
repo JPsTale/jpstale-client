@@ -192,6 +192,7 @@
     "skillType": "Type",
     "consume": "Cost",
     "weapon": "Weapon",
+    "curEffect": "Current Effect",
     "nextEffect": "Next Level",
     "mastery": "Mastery",
     "demo": "DEMO DATA (skill table not wired yet)"

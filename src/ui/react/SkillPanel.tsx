@@ -24,24 +24,28 @@ function skillReqWeight(skill: SkillDef): number {
   // 每超 reqLv 基准等级，粗略算技能档位
   return Math.max(0, Math.floor((skill.reqLv - 10) / 10));
 }
-function demoNextEffect(skill: SkillDef, tierWeight: number): string {
+/** 假数据效果值：lv=0 表示未学习（显示基础值），lv≥1 按等级缩放 */
+function demoEffect(skill: SkillDef, tierWeight: number, lv: number): string {
   const base = 40 + skill.reqLv * 3 + tierWeight * 15;
-  const nxt = Math.round(base * (skill.reqLv > 40 ? 1.25 : 1.35));
+  const mult = lv > 0 ? 1 + (lv - 1) * 0.08 : 1;
   switch (skill.type) {
     case 'Passive':
-      return `Increases the stat by ${Math.round(base / 4) + 1}% at next level`;
+      return `Permanently increases the stat by ${Math.round(base * mult / 4)}%`;
     case 'Buff':
-      return `Duration +1s · effect +${Math.round(base / 3) + 3}% at next level`;
+      return `Duration ${Math.round((15 + skill.reqLv * 0.2) * (lv > 0 ? 1 + (lv-1)*0.03 : 1))}s · effect +${Math.round(base * mult / 3)}%`;
     case 'Summon':
-      return `Companion ${Math.round(base * 2) + 40} HP · attack ${nxt} at next level`;
+      return `Companion ${Math.round(base * mult * 2)} HP · attack ${Math.round(base * mult)}`;
     case 'Single Target':
     case 'Target Area':
     case 'Area Attack':
     case 'Active':
-      return `Deals ${nxt}~${Math.round(nxt * 1.4)} damage at next level`;
+      return `Deals ${Math.round(base * mult)}~${Math.round(base * mult * 1.4)} damage`;
     default:
-      return `Effect ${nxt} at next level`;
+      return `Effect ${Math.round(base * mult)}`;
   }
+}
+function demoNextEffect(skill: SkillDef, tierWeight: number, curLv: number): string {
+  return demoEffect(skill, tierWeight, curLv + 1);
 }
 
 // 武器图标说明（DB skillinfo.itemallowedtype 对齐原版 UseSkillItemInfo）
@@ -71,7 +75,7 @@ function useSkillIconSrc(classDir: string, iconFile: string): string {
 // 技能格：六边形图标（黑色背景已透明化）+ 底部水平熟练度条 + 悬停信息框（portal 跟随鼠标，脱离面板）。
 export default function SkillPanel() {
   const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
-  const [tip, setTip] = useState<{ skill: SkillDef; x: number; y: number } | null>(null);
+  const [tip, setTip] = useState<{ skill: SkillDef; lv: number; x: number; y: number } | null>(null);
 
   const classDir = character ? CLASS_DIR[character.job] ?? 'fighter' : 'fighter';
   const skills = character ? SKILLS[classDir] ?? [] : [];
@@ -111,7 +115,7 @@ export default function SkillPanel() {
           <b>{c.specialSkillPoint}</b>
         </div>
       </div>
-      {tip && createPortal(<SkillTip skill={tip.skill} x={tip.x} y={tip.y} />, document.body)}
+      {tip && createPortal(<SkillTip skill={tip.skill} lv={tip.lv} x={tip.x} y={tip.y} />, document.body)}
     </div>
   );
 }
@@ -120,7 +124,7 @@ function SkillCell(props: {
   skill: SkillDef;
   classDir: string;
   charLevel: number;
-  onTip: (tip: { skill: SkillDef; x: number; y: number } | null) => void;
+  onTip: (tip: { skill: SkillDef; lv: number; x: number; y: number } | null) => void;
 }) {
   const { skill, classDir, charLevel, onTip } = props;
   const lv = learnedLevel(charLevel, skill.reqLv);
@@ -130,8 +134,8 @@ function SkillCell(props: {
   return (
     <div
       className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}
-      onMouseEnter={(e) => onTip({ skill, x: e.clientX, y: e.clientY })}
-      onMouseMove={(e) => onTip({ skill, x: e.clientX, y: e.clientY })}
+      onMouseEnter={(e) => onTip({ skill, lv, x: e.clientX, y: e.clientY })}
+      onMouseMove={(e) => onTip({ skill, lv, x: e.clientX, y: e.clientY })}
       onMouseLeave={() => onTip(null)}
     >
       <div className="jp-skill-iconbox">
@@ -145,13 +149,15 @@ function SkillCell(props: {
   );
 }
 
-function SkillTip(props: { skill: SkillDef; x: number; y: number }) {
-  const { skill, x, y } = props;
+function SkillTip(props: { skill: SkillDef; lv: number; x: number; y: number }) {
+  const { skill, lv, x, y } = props;
   const masteryPct = 0;
   const tw = skillReqWeight(skill);
   const mp = demoMp(skill);
   const sp = demoSp(skill);
   const weapons = skill.weapon ?? [];
+  const curEffect = demoEffect(skill, tw, lv);
+  const nextEffect = demoNextEffect(skill, tw, lv);
   const style = {
     left: x + 18,
     top: y + 14,
@@ -175,7 +181,8 @@ function SkillTip(props: { skill: SkillDef; x: number; y: number }) {
         </div>
       )}
       <div className="jp-skill-tip-desc">{skill.desc}</div>
-      <div className="jp-skill-tip-row jp-skill-tip-next">{t('skills.nextEffect')}: {demoNextEffect(skill, tw)}</div>
+      {lv > 0 && <div className="jp-skill-tip-row jp-skill-tip-cur">Lv {lv}: {curEffect}</div>}
+      <div className="jp-skill-tip-row jp-skill-tip-next">Lv {Math.max(1, lv + 1)}: {nextEffect}</div>
       <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
       <div className="jp-skill-tip-demo">{t('skills.demo')}</div>
     </div>

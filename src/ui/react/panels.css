@@ -501,9 +501,15 @@
   padding-top: 5px;
 }
 
+/* 当前等级效果：白色强显 */
+.jp-skill-tip-cur {
+  margin-top: 4px;
+  color: #ffffff;
+}
+
 /* 下一级效果：金色（原版 NextSkillLevelLine=金） */
 .jp-skill-tip-next {
-  margin-top: 4px;
+  margin-top: 2px;
   color: #ffdc00;
 }
 
