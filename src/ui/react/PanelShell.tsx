@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { t } from '../../i18n/index.js';
-import { setOpenPanel, type OpenPanel } from '../../app/gameStore.js';
+import { closePanel, type OpenPanel } from '../../app/gameStore.js';
 
 interface Props {
   title: string;
@@ -70,7 +70,7 @@ export default function PanelShell({ title, children, panel, align = 'center', w
           <button
             type="button"
             className="jp-panel-close"
-            onClick={() => setOpenPanel(null)}
+            onClick={() => closePanel(panel)}
             aria-label={t('panel.close')}
           >
             ×

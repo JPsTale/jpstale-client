@@ -3,7 +3,7 @@
 // 用 useSyncExternalStore 桥接（见 ui/react/*）：getGameSnapshot 返回稳定引用，
 // 只有 commit 时才替换快照对象，避免无谓重渲染。
 
-export type OpenPanel = 'charStatus' | 'skills' | null;
+export type OpenPanel = 'charStatus' | 'skills';
 
 export interface GameCharacter {
   playerId: number;
@@ -69,10 +69,10 @@ export interface GamePlayer {
 export interface GameSnapshot {
   character: GameCharacter | null;
   player: GamePlayer | null;
-  openPanel: OpenPanel;
+  openPanels: readonly OpenPanel[];
 }
 
-let snapshot: GameSnapshot = { character: null, player: null, openPanel: null };
+let snapshot: GameSnapshot = { character: null, player: null, openPanels: [] };
 const listeners = new Set<() => void>();
 
 export function getGameSnapshot(): GameSnapshot {
@@ -97,6 +97,27 @@ export function setGamePlayer(p: GamePlayer): void {
   commit({ player: p });
 }
 
-export function setOpenPanel(p: OpenPanel): void {
-  commit({ openPanel: p });
+// 面板不再互斥：原版共用窗口底部区域才需互斥，本客户端面板可自由拖动，
+// 因此改为"打开中面板的集合"，各面板独立开关、互不影响。
+export function openPanel(p: OpenPanel): void {
+  if (snapshot.openPanels.includes(p)) return;
+  commit({ openPanels: [...snapshot.openPanels, p] });
+}
+
+export function closePanel(p: OpenPanel): void {
+  if (!snapshot.openPanels.includes(p)) return;
+  commit({ openPanels: snapshot.openPanels.filter((x) => x !== p) });
+}
+
+export function togglePanel(p: OpenPanel): void {
+  if (snapshot.openPanels.includes(p)) {
+    closePanel(p);
+  } else {
+    openPanel(p);
+  }
+}
+
+export function closeAllPanels(): void {
+  if (snapshot.openPanels.length === 0) return;
+  commit({ openPanels: [] });
 }
