@@ -124,6 +124,8 @@ hudPanel.onAction = (action) => {
     systemSettingsPanel.show();
   } else if (action === 'status') {
     reactPanels.toggle('charStatus');
+  } else if (action === 'skills') {
+    reactPanels.toggle('skills');
   }
 };
 
