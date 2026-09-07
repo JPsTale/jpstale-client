@@ -60,7 +60,7 @@
 }
 
 .jp-panel-body {
-  padding: 12px 14px;
+  padding: 10px 12px;
 }
 
 .jp-nodata {
@@ -81,7 +81,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 13px;
-  padding: 3px 6px;
+  padding: 2px 6px;
   background: #14161a;
   border-radius: 4px;
 }
@@ -152,7 +152,7 @@
 .jp-charpanel {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .jp-char-head {
@@ -186,12 +186,12 @@
 }
 
 .jp-sec {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 12px;
   letter-spacing: 2px;
   color: #9aa4b0;
   border-bottom: 1px solid #33373d;
-  padding-bottom: 3px;
+  padding-bottom: 2px;
 }
 
 .jp-alloc-row {
@@ -229,19 +229,43 @@
   cursor: not-allowed;
 }
 
+/* 剩余点数 + 撤销卡（属性区最后一格） */
 .jp-alloc-rem {
-  align-items: center;
+  justify-content: center;
   color: #ffd98a;
   font-weight: 600;
   background: #1e2017;
+}
+
+.jp-undo-btn {
+  height: 20px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 3px;
+  border: 1px solid #8a6d2a;
+  background: #262008;
+  color: #ffd98a;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.jp-undo-btn:hover {
+  border-color: #c9a23e;
+  background: #33290a;
+}
+
+.jp-undo-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* 属性分配卡片（grid2 内）：每格 label+值 上排，±1/±10/±100 按钮下排 */
 .jp-alloc-card {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 4px 6px;
+  gap: 3px;
+  padding: 3px 6px;
   background: #14161a;
   border-radius: 4px;
   min-width: 0;
@@ -269,7 +293,7 @@
 .jp-alloc-btn {
   flex: 1;
   min-width: 0;
-  height: 20px;
+  height: 18px;
   padding: 0;
   font-size: 11px;
   line-height: 1;
@@ -297,5 +321,5 @@
 .jp-grid2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 6px 12px;
+  gap: 4px 10px;
 }

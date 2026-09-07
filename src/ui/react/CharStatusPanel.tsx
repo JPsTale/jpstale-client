@@ -108,9 +108,14 @@ export default function CharStatusPanel() {
             </div>
           </div>
         ))}
-        <div className="jp-field jp-alloc-rem">
-          <span>{t('stats.statePoint')}</span>
-          <b>{c.statePoint}</b>
+        <div className="jp-alloc-card jp-alloc-rem">
+          <div className="jp-alloc-head">
+            <span>{t('stats.statePoint')}</span>
+            <b>{c.statePoint}</b>
+          </div>
+          <button type="button" className="jp-undo-btn" onClick={() => sendAllocateStat('undo')}>
+            ↺ {t('stats.undo')}
+          </button>
         </div>
       </div>
 

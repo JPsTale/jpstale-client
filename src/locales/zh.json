@@ -71,6 +71,7 @@
     "attackSpeed": "攻速",
     "range": "射程",
     "statePoint": "剩余点数",
+    "undo": "撤销上次分配",
     "exp": "经验值",
     "regen": "恢复",
     "bio": "生物",

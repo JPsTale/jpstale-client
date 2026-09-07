@@ -71,6 +71,7 @@
     "attackSpeed": "Atk Spd",
     "range": "Range",
     "statePoint": "Spare Points",
+    "undo": "Undo Last Point",
     "exp": "EXP",
     "regen": "Regen",
     "bio": "Bio",
