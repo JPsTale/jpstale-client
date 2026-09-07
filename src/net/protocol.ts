@@ -32,6 +32,13 @@ export function playerMove(angle: number, mode: number, x: number, y: number, z:
     });
 }
 
+/** 属性分配（服务端权威）：stat 为 strength/spirit/talent/agility/health/undo */
+export function allocateStat(stat: string, points = 1): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        allocateStat: { stat, points },
+    });
+}
+
 export function ping(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
         ping: { timestamp: Date.now() },

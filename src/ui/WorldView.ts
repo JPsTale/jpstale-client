@@ -184,9 +184,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const keys: Record<string, boolean> = {};
   window.addEventListener('keydown', (e) => { keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
-  // C 键：控制台打印角色/相机调试信息
+  // C 键已由全局 KeyBinding 接管（角色状态面板），这里不再注册 debugDump。
+  // 调试输出改为挂到 KeyJ（不会与游戏键位冲突）。
   window.addEventListener('keydown', (e) => {
-    if (e.code === 'KeyC') debugDump();
+    if (e.code === 'KeyJ') debugDump();
   });
   // U 键：[临时调试] 角色垂直上抛 40 单位（穿桥掉到桥下后脱困用；TODO: 验证后删除）
   window.addEventListener('keydown', (e) => {
