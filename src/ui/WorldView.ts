@@ -905,11 +905,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
 
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number): void {
-    if (animState === actor.lastAnimState) return;
+    const isAttack = animState === ANIM_ATTACK;
+    if (isAttack) {
+      // 服务端每刀重发 ANIM_ATTACK（lastBroadcastAnim 强制 -1）。若上一刀攻击动画
+      // 仍未播完（状态机还在 ATTACK）则忽略重复包；播完回 STAND 后允许再次重播。
+      if (actor.lastAnimState === ANIM_ATTACK &&
+          actor.animState.getCurrentState() !== actor.animState.STATE.STAND) {
+        return;
+      }
+    } else if (animState === actor.lastAnimState) {
+      return;
+    }
     actor.lastAnimState = animState;
     if (animState === ANIM_RUN) { if (!actor.animState.triggerRun()) actor.animState.triggerWalk(); }
     else if (animState === ANIM_WALK) { if (!actor.animState.triggerWalk()) actor.animState.triggerIdle(); }
-    else if (animState === ANIM_ATTACK) { if (!actor.animState.triggerAttack()) actor.animState.triggerIdle(); }
+    else if (animState === ANIM_ATTACK) { if (!actor.animState.triggerAttack(true)) actor.animState.triggerIdle(); }
     else actor.animState.triggerIdle();
   }
 

@@ -47,7 +47,7 @@ export interface AnimStateMachineOpts {
 
 export interface AnimStateMachine {
   STATE: typeof STATE;
-  triggerAttack: () => boolean;
+  triggerAttack: (retry?: boolean) => boolean;
   triggerSkill: () => boolean;
   triggerWalk: () => boolean;
   triggerRun: () => boolean;
@@ -114,8 +114,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
-  function triggerAttack(): boolean {
-    const motion = findMotionForState(STATE.ATTACK, true);
+  function triggerAttack(retry: boolean = false): boolean {
+    // retry=true：允许选中与当前相同的攻击动画（怪物每刀重发 ANIM_ATTACK 时从头重播），
+    // 不排除 currentMotion，保证周期攻击每刀都有挥击动作。
+    const motion = findMotionForState(STATE.ATTACK, !retry);
     if (!motion) { log2('No matching attack animation'); return false; }
     currentState = STATE.ATTACK;
     applyMotion(motion);

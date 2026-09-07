@@ -148,16 +148,17 @@ export function createCharacterPanel(container: HTMLElement): CharacterPanel {
   canvas.height = H
   canvas.style.position = 'fixed'
   canvas.style.inset = '0'
-  canvas.style.zIndex = '60'
+  canvas.style.zIndex = '54'
   canvas.style.pointerEvents = 'none'
   canvas.style.display = 'none'
   container.appendChild(canvas)
 
   // 命中层：仅覆盖面板带（画布逻辑 y 520~720 = 原版 400~600），
   // 避免全屏 canvas 挡住世界点击。跟随 fitCanvas 布局。
+  // z-index 57 高于 HUD 拦截层(56)：面板打开时面板交互优先，且吞掉该区域点击防世界移动。
   const hitZone = document.createElement('div')
   hitZone.style.position = 'fixed'
-  hitZone.style.zIndex = '61'
+  hitZone.style.zIndex = '57'
   hitZone.style.display = 'none'
   hitZone.style.cursor = 'pointer'
   hitZone.style.pointerEvents = 'auto'
@@ -328,6 +329,14 @@ export function createCharacterPanel(container: HTMLElement): CharacterPanel {
       const buf = await resp.arrayBuffer()
       const decoded = await decodeTextureAsync(buf)
       if (!decoded) return null
+      // 原版 Status/箭头等为带 alpha 的 DDS，本资产为 24-bit BMP 无 alpha：
+      // 黑色（ColorKey 0,0,0，原版 CreateColorKeySurface 语义）置透明，恢复透明边缘。
+      const px = decoded.pixels
+      for (let i = 0; i < px.length; i += 4) {
+        if (px[i] === 0 && px[i + 1] === 0 && px[i + 2] === 0) {
+          px[i + 3] = 0
+        }
+      }
       const c = document.createElement('canvas')
       c.width = decoded.width
       c.height = decoded.height

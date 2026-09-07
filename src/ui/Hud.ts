@@ -101,6 +101,15 @@ export function createHud(container: HTMLElement): Hud {
   canvas.style.pointerEvents = 'none';
   container.appendChild(canvas);
 
+  // 点击拦截层：覆盖 HUD 底带（内容 y460~600），pointer-events:auto 吞掉点击，
+  // 防止穿透到下方 World 画布导致“点 HUD 角色跟着移动”。按钮判定仍走 window 指针检测。
+  const barrier = document.createElement('div');
+  barrier.style.position = 'fixed';
+  barrier.style.zIndex = '56';
+  barrier.style.display = 'none';
+  barrier.style.pointerEvents = 'auto';
+  container.appendChild(barrier);
+
   const ctx = canvas.getContext('2d')!;
   let currentState: HudState | null = null;
   const textures: Partial<Record<string, Tex>> = {};
@@ -118,10 +127,17 @@ export function createHud(container: HTMLElement): Hud {
     // 等比缩放，锚定窗口底边：HUD 始终贴底，只允许顶部留空，
     // 避免窗口变窄/变矮时画布垂直居中造成“越缩离底越远”。
     const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
-    canvas.style.width = `${W * scale}px`;
-    canvas.style.height = `${H * scale}px`;
-    canvas.style.left = `${(window.innerWidth - W * scale) / 2}px`;
-    canvas.style.top = `${window.innerHeight - H * scale}px`;
+    const wpx = W * scale;
+    const hpx = H * scale;
+    canvas.style.width = `${wpx}px`;
+    canvas.style.height = `${hpx}px`;
+    canvas.style.left = `${(window.innerWidth - wpx) / 2}px`;
+    canvas.style.top = `${window.innerHeight - hpx}px`;
+    // 拦截层对齐 HUD 底带：画布逻辑 y 580~720（= 内容 460~600）
+    barrier.style.left = `${(window.innerWidth - wpx) / 2}px`;
+    barrier.style.width = `${wpx}px`;
+    barrier.style.top = `${window.innerHeight - hpx + (580 / H) * hpx}px`;
+    barrier.style.height = `${(140 / H) * hpx}px`;
   }
 
   function drawTex(name: string, x: number, y: number, w: number, h: number) {
@@ -298,15 +314,18 @@ export function createHud(container: HTMLElement): Hud {
     show(state: HudState) {
       currentState = state;
       canvas.style.display = 'block';
+      barrier.style.display = 'block';
     },
     hide() {
       canvas.style.display = 'none';
+      barrier.style.display = 'none';
       currentState = null;
     },
     dispose() {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', fitCanvas);
       canvas.remove();
+      barrier.remove();
     },
     setRunFlag,
     get onAction() { return onAction; },
