@@ -58,7 +58,28 @@
     "crit": "必杀",
     "block": "格挡",
     "avoid": "回避",
-    "move": "移速(走/跑)"
+    "move": "移速(走/跑)",
+    "group": {
+      "base": "基础属性",
+      "combat": "战斗属性",
+      "resist": "抗性",
+      "move": "移动速度"
+    }
+  },
+  "stats": {
+    "hit": "命中",
+    "attackSpeed": "攻速",
+    "range": "射程",
+    "weight": "负重",
+    "statePoint": "剩余点数",
+    "bio": "生物",
+    "poison": "剧毒",
+    "fire": "火焰",
+    "lightning": "闪电",
+    "ice": "冰霜",
+    "gear": "档位",
+    "walk": "步行",
+    "run": "奔跑"
   },
   "race": {
     "tempscron": "坦普族",

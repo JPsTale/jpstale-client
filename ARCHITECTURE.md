@@ -50,14 +50,13 @@ src/
   ui/
     WorldView.ts     #   three 场景：自机预测 + 远端插值 + 小地图/昼夜
     Hud.ts           #   HUD canvas（1280×720 缩放、位图、pointer-events:none）
-    CharacterPanel.ts#   canvas 角色面板（Phase 2 由 React 版替代后退役）
     CharSelect.ts / LoginPanel.ts / ServerSelect.ts / LoadingScreen.ts
     KeyBinding.ts / KeyBindingPanel.ts / SystemSettingsPanel.ts
     react/           # React 面板层（低频文本面板）
-      mount.tsx      #   createReactPanels()：挂载根，show/hide（store.openPanel）
+      mount.tsx      #   createReactPanels()：挂载根，show/hide/toggle（store.openPanel）
       PanelsRoot.tsx #   按 openPanel 渲染唯一面板（互斥单值）
-      PanelShell.tsx #   通用外壳：遮罩/滑入/Esc/关闭
-      CharStatusDemo.tsx # Phase 1 验收页（读 store 渲染角色信息）
+      PanelShell.tsx #   通用外壳：遮罩/align(left|center)/关闭
+      CharStatusPanel.tsx # 角色信息面板（左侧详情栏，C 键进入），替代原 canvas 版
       panels.css
   i18n/              # t()/setLocale + locales/{zh,en}.json
 ```
@@ -84,4 +83,5 @@ src/
   - main.ts（OrbitControls + 每帧 updateScroll/Wind/Water + 帧动画 + render 剔除）
   - 资产经 vite devAssets `/res` → `E:\JPsTale\client`；fore-1 静态+风/水/滚动已在浏览器渲染通过
 - [ ] 碰撞网格（render/collision，maps collision.js TS 化）
-- [x] Phase 1（feat/ui）：React 面板层基建（gameStore + bridge + PanelsRoot/PanelShell/CharStatusDemo），构建验证通过；HUD 与 canvas 面板不受影响
+- [x] Phase 1（feat/ui）：React 面板层基建（gameStore + bridge + PanelsRoot/PanelShell），构建验证通过；HUD 与 canvas 面板不受影响
+- [x] Phase 2：CharStatusPanel 替换 canvas CharacterPanel（C 键进入，加点闭环走 bridge），canvas 版已移除

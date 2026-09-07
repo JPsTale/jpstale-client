@@ -145,3 +145,101 @@
   color: #8a8f96;
   font-size: 12px;
 }
+
+/* 左侧详情栏（CharStatusPanel 等） */
+.jp-panel--left {
+  left: 24px;
+  width: min(360px, 90vw);
+  transform: translateY(-50%);
+  top: 50%;
+  bottom: auto;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.jp-panel--left .jp-panel-body {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.jp-charpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.jp-char-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.jp-job {
+  font-size: 13px;
+  color: #7fb3ff;
+}
+
+.jp-char-sub {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #c8ccd2;
+}
+
+.jp-pt {
+  color: #ffd98a;
+  font-weight: 600;
+}
+
+.jp-sec {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #9aa4b0;
+  border-bottom: 1px solid #33373d;
+  padding-bottom: 3px;
+}
+
+.jp-alloc-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 0;
+}
+
+.jp-alloc-label {
+  flex: 1;
+  font-size: 13px;
+}
+
+.jp-alloc-value {
+  min-width: 28px;
+  text-align: right;
+  font-size: 14px;
+}
+
+.jp-plus {
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid #3a3f46;
+  background: #262a31;
+  color: #ffd98a;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.jp-plus:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.jp-grid2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 12px;
+}

@@ -58,7 +58,28 @@
     "crit": "Crit",
     "block": "Block",
     "avoid": "Avoid",
-    "move": "Move(walk/run)"
+    "move": "Move(walk/run)",
+    "group": {
+      "base": "Base Stats",
+      "combat": "Combat",
+      "resist": "Resistance",
+      "move": "Movement"
+    }
+  },
+  "stats": {
+    "hit": "Hit",
+    "attackSpeed": "Atk Spd",
+    "range": "Range",
+    "weight": "Weight",
+    "statePoint": "Spare Points",
+    "bio": "Bio",
+    "poison": "Poison",
+    "fire": "Fire",
+    "lightning": "Lightning",
+    "ice": "Ice",
+    "gear": "Gear",
+    "walk": "Walk",
+    "run": "Run"
   },
   "race": {
     "tempscron": "Tempscron",

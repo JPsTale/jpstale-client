@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
-import { createCharacter, selectCharacter, playerMove, allocateStat } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -8,8 +8,6 @@ import { createServerSelect } from './ui/ServerSelect.js';
 import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
-import { createCharacterPanel } from './ui/CharacterPanel.js';
-import type { CharacterStatus } from './ui/CharacterPanel.js';
 import { preloadAllModels } from './render/model-cache.js';
 import { createLoadingScreen } from './ui/LoadingScreen.js';
 import { createHud } from './ui/Hud.js';
@@ -32,11 +30,6 @@ const loginPanel = createLoginPanel(app, { onLogin });
 const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
-const characterPanel = createCharacterPanel(app);
-// 属性分配（服务端权威）：点击箭头发送，等待服务端回推 CharacterStatus 刷新
-characterPanel.onAllocate = (stat) => {
-  send(allocateStat(stat, 1));
-};
 const worldView = createWorldView(app, {
   // 移动上报（客户端位置上权威）：WorldView 已按节奏/模式/停止去重，这里直接转发
   onMoveInt: (angle, mode, x, y, z, anim) => sendMoveIntent(angle, mode, x, y, z, anim),
@@ -47,60 +40,6 @@ function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z:
   send(playerMove(angle, mode, x, y, z, anim));
 }
 
-// 最近一次角色信息面板数据（无则面板只显示占位）
-let lastCharacterStatus: CharacterStatus | null = null;
-
-function toggleStatusPanel() {
-  if (characterPanel.visible()) {
-    characterPanel.hide();
-  } else if (lastCharacterStatus) {
-    characterPanel.show(lastCharacterStatus);
-  }
-}
-
-function toCharacterStatus(e: jpt.base.S2C_CharacterStatus.$Properties): CharacterStatus {
-  return {
-    playerId: Number(e.playerId),
-    name: e.name || '',
-    job: e.job || 0,
-    level: e.level || 1,
-    exp: Number(e.exp) || 0,
-    nextExp: Number(e.nextExp) || 0,
-    gold: Number(e.gold) || 0,
-    strength: e.strength || 0,
-    spirit: e.spirit || 0,
-    talent: e.talent || 0,
-    agility: e.agility || 0,
-    health: e.health || 0,
-    statePoint: e.statePoint || 0,
-    totalStatPoints: e.totalStatPoints || 0,
-    hp: e.hp || 0,
-    maxHp: e.maxHp || 0,
-    mp: e.mp || 0,
-    maxMp: e.maxMp || 0,
-    sp: e.sp || 0,
-    maxSp: e.maxSp || 0,
-    attackMin: e.attackMin || 0,
-    attackMax: e.attackMax || 0,
-    attackRating: e.attackRating || 0,
-    defense: e.defense || 0,
-    absorption: e.absorption || 0,
-    moveSpeed: e.moveSpeed || 0,
-    walkSpeed: e.walkSpeed || 0,
-    runSpeed: e.runSpeed || 0,
-    attackSpeed: e.attackSpeed || 0,
-    critical: e.critical || 0,
-    block: e.block || 0,
-    avoid: e.avoid || 0,
-    shootingRange: e.shootingRange || 0,
-    maxWeight: e.maxWeight || 0,
-    resBionic: e.resBionic || 0,
-    resPoison: e.resPoison || 0,
-    resFire: e.resFire || 0,
-    resLightning: e.resLightning || 0,
-    resIce: e.resIce || 0,
-  };
-}
 const loadingScreen = createLoadingScreen(app);
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）
 const worldLoadHooks: WorldLoadHooks = {
@@ -119,18 +58,19 @@ const reactPanels = createReactPanels(app);
 installBridge();
 console.info('[ui] react panels layer ready — dev: window.__pt.ui.show/hide');
 
-// Phase 1 验证入口：进图后在控制台 window.__pt.ui.show('charStatus') 打开演示面板
+// 开发入口：进图后 window.__pt.ui.toggle('charStatus') 打开角色信息面板
 declare global {
-  interface Window { __pt: { ui: { show: typeof reactPanels.show; hide: typeof reactPanels.hide } }; }
+  interface Window {
+    __pt: { ui: { show: typeof reactPanels.show; hide: typeof reactPanels.hide; toggle: typeof reactPanels.toggle } };
+  }
 }
-window.__pt = { ui: { show: reactPanels.show, hide: reactPanels.hide } };
+window.__pt = { ui: { show: reactPanels.show, hide: reactPanels.hide, toggle: reactPanels.toggle } };
 
 function hideAll() {
   loginPanel.hide();
   serverSelectPanel.hide();
   charSelectPanel.hide();
   hudPanel.hide();
-  characterPanel.hide();
   systemSettingsPanel.hide();
   keyBindingPanel.hide();
   worldView.hide();
@@ -158,7 +98,7 @@ keyBinding.onKeyDown((action) => {
       systemSettingsPanel.show();
       break;
     case 'status':
-      toggleStatusPanel();
+      reactPanels.toggle('charStatus');
       break;
     case 'minimap':
       worldView.toggleMinimap();
@@ -169,7 +109,6 @@ keyBinding.onKeyDown((action) => {
     case 'closePanel':
       systemSettingsPanel.hide();
       keyBindingPanel.hide();
-      characterPanel.hide();
       reactPanels.hide();
       break;
   }
@@ -181,7 +120,7 @@ hudPanel.onAction = (action) => {
   } else if (action === 'system') {
     systemSettingsPanel.show();
   } else if (action === 'status') {
-    toggleStatusPanel();
+    reactPanels.toggle('charStatus');
   }
 };
 
@@ -346,27 +285,6 @@ onMessage((msg: jpt.base.ServerMessage) => {
         go(AppScreen.WORLD, hudState);
       } else {
         hudPanel.show(hudState);
-      }
-      // HUD 收到新状态时，若角色面板已打开，也同步刷新其 HP/MP/SP/等级/经验
-      if (lastCharacterStatus && characterPanel.visible()) {
-        lastCharacterStatus.hp = hudState.hp;
-        lastCharacterStatus.maxHp = hudState.maxHp;
-        lastCharacterStatus.mp = hudState.mp;
-        lastCharacterStatus.maxMp = hudState.maxMp;
-        lastCharacterStatus.sp = hudState.stm;
-        lastCharacterStatus.maxSp = hudState.maxStm;
-        lastCharacterStatus.level = hudState.level;
-        lastCharacterStatus.exp = hudState.exp;
-        lastCharacterStatus.nextExp = hudState.maxExp;
-        characterPanel.show(lastCharacterStatus);
-      }
-      break;
-    }
-    case 'characterStatus': {
-      const cs = msg.characterStatus!;
-      lastCharacterStatus = toCharacterStatus(cs);
-      if (characterPanel.visible()) {
-        characterPanel.show(lastCharacterStatus);
       }
       break;
     }
