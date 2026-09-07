@@ -8,8 +8,10 @@ interface Props {
   children: ReactNode;
   /** 位置变体：'center'（底部居中，默认）| 'left'（左侧详情栏） */
   align?: 'center' | 'left';
-  /** 左侧栏宽版（技能面板等需要更宽内容时用） */
+  /** 左侧栏宽版（角色状态等需要更宽内容时用） */
   wide?: boolean;
+  /** 宽度模式：'auto'（贴合内容，技能面板等窄面板用）| 默认走 .jp-panel--left 固定宽 */
+  width?: 'auto';
 }
 
 // 位置记忆：每个面板类型独立存储拖动偏移（关闭再打开恢复，不同面板不串台）。
@@ -19,7 +21,7 @@ const posMemory = new Map<Exclude<OpenPanel, null>, { x: number; y: number }>();
 // - 透明层 pointer-events:none：面板打开不影响游戏操作（键盘走 window、鼠标点击走 three canvas）
 // - left 变体可按住标题栏拖动（双击标题栏复位，位置跨开关持久化）
 // 关闭：右上角 × 或 Esc（closePanel 动作）。
-export default function PanelShell({ title, children, panel, align = 'center', wide = false }: Props) {
+export default function PanelShell({ title, children, panel, align = 'center', wide = false, width }: Props) {
   const [pos, setPos] = useState(() => posMemory.get(panel) ?? { x: 0, y: 0 });
   const draggable = align === 'left';
 
@@ -46,6 +48,7 @@ export default function PanelShell({ title, children, panel, align = 'center', w
         left: 24 + pos.x,
         top: `calc(50% + ${pos.y}px)`,
         transform: 'translateY(-50%)',
+        width: width === 'auto' ? 'fit-content' : undefined,
       }
     : undefined;
 

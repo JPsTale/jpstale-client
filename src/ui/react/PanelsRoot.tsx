@@ -18,7 +18,7 @@ export default function PanelsRoot() {
   }
   if (openPanel === 'skills') {
     return (
-      <PanelShell key="skills" panel="skills" title={t('panel.skills')} align="left">
+      <PanelShell key="skills" panel="skills" title={t('panel.skills')} align="left" width="auto">
         <SkillPanel />
       </PanelShell>
     );

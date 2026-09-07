@@ -334,13 +334,17 @@
 
 /* 技能面板（SkillPanel，原版布局）：
    单列 T1-T5 共 5 排；每排一组：上方职业名分栏标题 + 下方 4 个技能横排。 */
+/* 技能图标源 BMP 49px 宽，透明化后可见六边形约 40px。
+   因此图标框 44px、整格 46px（+1px 边框）即完全容纳，无多余死区。 */
+/* 技能图标源 BMP 49px 宽，透明化后可见六边形约 40px。
+   因此图标框 44px、整格 46px（+1px 边框）即完全容纳，无多余死区。
+   面板宽度 = 内容宽（fit-content）：一行 = 4×46 + 3×4 = 196px。 */
 .jp-skillpanel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  min-width: 236px;
-  width: max-content;
-  max-width: 100%;
+  gap: 8px;
+  width: fit-content;
+  min-width: 196px;
   font-size: 13px;
 }
 
@@ -354,27 +358,27 @@
 .jp-skill-tier {
   margin-top: 0;
   padding-bottom: 3px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #c8d3e0;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
 }
 
-/* 一组内的 4 个技能：横向一排，每格固定 52px */
+/* 一组内的 4 个技能：横向一排，每格固定 46px（图标 44 + 边框） */
 .jp-skill-row-skills {
   display: flex;
-  gap: 6px;
+  gap: 4px;
 }
 
 .jp-skill-cell {
   position: relative;
-  width: 52px;
-  height: 58px;
+  width: 46px;
+  height: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   background: #14161a;
   border: 1px solid #2c3138;
   border-radius: 4px;
