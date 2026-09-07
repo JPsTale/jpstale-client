@@ -341,6 +341,7 @@
   min-width: 236px;
   width: max-content;
   max-width: 100%;
+  font-size: 13px;
 }
 
 .jp-skill-group {
@@ -352,7 +353,11 @@
 /* 职业名：角色面板 .jp-sec 同款分栏标题（浅灰、letter-spacing、底分隔线），靠左 */
 .jp-skill-tier {
   margin-top: 0;
-  padding-bottom: 2px;
+  padding-bottom: 3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #c8d3e0;
+  letter-spacing: 2px;
 }
 
 /* 一组内的 4 个技能：横向一排，每格固定 52px */
@@ -416,7 +421,7 @@
   position: absolute;
   top: 0;
   left: 0;
-  font-size: 8px;
+  font-size: 10px;
   line-height: 1;
   color: #9aa0a6;
   background: rgba(20, 22, 26, 0.75);
@@ -428,12 +433,13 @@
 .jp-skill-tip {
   position: fixed;
   z-index: 10000;
-  width: 300px;
+  width: 320px;
   background: rgba(8, 9, 11, 0.94);
   border: 1px solid #4a3f2a;
   border-radius: 5px;
-  padding: 8px 10px;
-  font-size: 11px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
   color: #d0d4da;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
   pointer-events: none;
@@ -442,12 +448,12 @@
 /* 贴近视口右/下边缘时收窄 + 自动换边（由 inline left/top 顶起，这里防溢出） */
 @media (max-width: 1280px) {
   .jp-skill-tip {
-    width: 260px;
+    width: 280px;
   }
 }
 
 .jp-skill-tip-name {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: #dee7ff; /* 原版技能名 = 淡蓝白粗体 */
   margin-bottom: 5px;
@@ -456,7 +462,7 @@
 }
 
 .jp-skill-tip-row {
-  line-height: 1.55;
+  line-height: 1.6;
   color: #9aa0a6;
 }
 
@@ -485,8 +491,8 @@
 }
 
 .jp-skill-tip-wicon {
-  width: 18px;
-  height: 24px;
+  width: 21px;
+  height: 28px;
   object-fit: contain;
   image-rendering: pixelated;
   background: rgba(0, 0, 0, 0.3);
@@ -496,7 +502,7 @@
 .jp-skill-tip-desc {
   margin-top: 6px;
   color: #cfd3da;
-  line-height: 1.5;
+  line-height: 1.55;
   border-top: 1px solid rgba(74, 63, 42, 0.5);
   padding-top: 5px;
 }
@@ -515,7 +521,7 @@
 
 .jp-skill-tip-demo {
   margin-top: 5px;
-  font-size: 9px;
+  font-size: 11px;
   color: #5a6068;
   font-style: italic;
 }
@@ -532,16 +538,16 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 11px;
+  font-size: 13px;
   color: #c8ccd2;
   background: #14161a;
   border: 1px solid #3a3f46;
   border-radius: 4px;
-  padding: 2px 8px;
+  padding: 3px 9px;
 }
 
 .jp-skill-pt b {
-  font-size: 13px;
+  font-size: 15px;
   color: #ffd98a;
   font-variant-numeric: tabular-nums;
 }

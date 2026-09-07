@@ -11,14 +11,14 @@ export default function PanelsRoot() {
   if (openPanel === null) return null;
   if (openPanel === 'charStatus') {
     return (
-      <PanelShell panel="charStatus" title={t('panel.title')} align="left">
+      <PanelShell key="charStatus" panel="charStatus" title={t('panel.title')} align="left">
         <CharStatusPanel />
       </PanelShell>
     );
   }
   if (openPanel === 'skills') {
     return (
-      <PanelShell panel="skills" title={t('panel.skills')} align="left">
+      <PanelShell key="skills" panel="skills" title={t('panel.skills')} align="left">
         <SkillPanel />
       </PanelShell>
     );

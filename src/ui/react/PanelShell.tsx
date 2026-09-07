@@ -1,4 +1,4 @@
-import { useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { t } from '../../i18n/index.js';
 import { setOpenPanel, type OpenPanel } from '../../app/gameStore.js';
 
@@ -12,13 +12,21 @@ interface Props {
   wide?: boolean;
 }
 
+// 位置记忆：每个面板类型独立存储拖动偏移（关闭再打开恢复，不同面板不串台）。
+const posMemory = new Map<Exclude<OpenPanel, null>, { x: number; y: number }>();
+
 // 通用面板外壳。
 // - 透明层 pointer-events:none：面板打开不影响游戏操作（键盘走 window、鼠标点击走 three canvas）
-// - left 变体可按住标题栏拖动（双击标题栏复位）
+// - left 变体可按住标题栏拖动（双击标题栏复位，位置跨开关持久化）
 // 关闭：右上角 × 或 Esc（closePanel 动作）。
-export default function PanelShell({ title, children, align = 'center', wide = false }: Props) {
-  const [pos, setPos] = useState({ x: 0, y: 0 });
+export default function PanelShell({ title, children, panel, align = 'center', wide = false }: Props) {
+  const [pos, setPos] = useState(() => posMemory.get(panel) ?? { x: 0, y: 0 });
   const draggable = align === 'left';
+
+  // 拖动/复位后写入位置记忆
+  useEffect(() => {
+    posMemory.set(panel, pos);
+  }, [pos, panel]);
 
   function onHeadPointerDown(e: ReactPointerEvent<HTMLElement>) {
     if (!draggable) return;
