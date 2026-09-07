@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { allocateStat } from './protocol.js';
+import { allocateStat, useSkill } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
   setGameCharacter,
@@ -83,4 +83,9 @@ export function installBridge(): void {
 /** 角色属性分配（服务端权威）：stat ∈ strength/spirit/talent/agility/health/undo */
 export function sendAllocateStat(stat: string, points = 1): void {
   send(allocateStat(stat, points));
+}
+
+/** 释放技能（服务端权威）：skillId 见 protocol.useSkill 注释（当前为技能列表下标）；targetId 默认 0 */
+export function sendUseSkill(skillId: number, targetId = 0): void {
+  send(useSkill(skillId, targetId));
 }

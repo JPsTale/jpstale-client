@@ -64,7 +64,8 @@
       "base": "Base Stats",
       "combat": "Combat",
       "resist": "Resistance"
-    }
+    },
+    "skills": "Skills"
   },
   "stats": {
     "hit": "Hit",
@@ -183,5 +184,8 @@
     "12": "Invincible hack",
     "13": "Invalid name",
     "14": "Name already exists"
+  },
+  "skills": {
+    "barHint": "Drag skill icons into the bar (F1-F12); click a slot to cast, right-click to clear"
   }
 }

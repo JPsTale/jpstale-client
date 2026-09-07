@@ -3,7 +3,11 @@
 // 用 useSyncExternalStore 桥接（见 ui/react/*）：getGameSnapshot 返回稳定引用，
 // 只有 commit 时才替换快照对象，避免无谓重渲染。
 
-export type OpenPanel = 'charStatus' | null;
+export type OpenPanel = 'charStatus' | 'skills' | null;
+
+/** 技能快捷栏：12 格（F1-F12），值 = SKILLS[职业] 列表下标（0-19），null = 空。
+ *  暂存内存（单角色、职业固定）；接入存档/多角色时再持久化。 */
+export type SkillBar = Array<number | null>;
 
 export interface GameCharacter {
   playerId: number;
@@ -68,9 +72,10 @@ export interface GameSnapshot {
   character: GameCharacter | null;
   player: GamePlayer | null;
   openPanel: OpenPanel;
+  skillBar: SkillBar;
 }
 
-let snapshot: GameSnapshot = { character: null, player: null, openPanel: null };
+let snapshot: GameSnapshot = { character: null, player: null, openPanel: null, skillBar: Array(12).fill(null) };
 const listeners = new Set<() => void>();
 
 export function getGameSnapshot(): GameSnapshot {
@@ -97,4 +102,12 @@ export function setGamePlayer(p: GamePlayer): void {
 
 export function setOpenPanel(p: OpenPanel): void {
   commit({ openPanel: p });
+}
+
+/** 绑定/清空快捷栏某格：slot 0-11，idx = SKILLS[职业] 下标 0-19 或 null */
+export function setSkillBarSlot(slot: number, idx: number | null): void {
+  if (slot < 0 || slot >= 12) return;
+  const next = [...snapshot.skillBar];
+  next[slot] = idx;
+  commit({ skillBar: next });
 }

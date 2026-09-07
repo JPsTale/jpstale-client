@@ -1,6 +1,7 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
 import { createCharacter, selectCharacter, playerMove } from './net/protocol.js';
+import { sendUseSkill } from './net/bridge.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -21,6 +22,7 @@ import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
 import { createSystemSettingsPanel } from './ui/SystemSettingsPanel.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installBridge } from './net/bridge.js';
+import { getGameSnapshot } from './app/gameStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -38,6 +40,12 @@ const worldView = createWorldView(app, {
 // 转发客户端权威移动（含位置 + 可选动画覆盖）
 function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim = 0): void {
   send(playerMove(angle, mode, x, y, z, anim));
+}
+
+// 快捷栏释放技能：F1-F12 按下 → 读 store.skillBar 对应格，绑定则发 C2S_UseSkill
+function releaseBarSkill(slot: number): void {
+  const idx = getGameSnapshot().skillBar[slot];
+  if (idx !== null && idx !== undefined) sendUseSkill(idx);
 }
 
 const loadingScreen = createLoadingScreen(app);
@@ -100,6 +108,21 @@ keyBinding.onKeyDown((action) => {
     case 'status':
       reactPanels.toggle('charStatus');
       break;
+    case 'skillPanel':
+      reactPanels.toggle('skills');
+      break;
+    case 'skill1': releaseBarSkill(0); break;
+    case 'skill2': releaseBarSkill(1); break;
+    case 'skill3': releaseBarSkill(2); break;
+    case 'skill4': releaseBarSkill(3); break;
+    case 'skill5': releaseBarSkill(4); break;
+    case 'skill6': releaseBarSkill(5); break;
+    case 'skill7': releaseBarSkill(6); break;
+    case 'skill8': releaseBarSkill(7); break;
+    case 'skill9': releaseBarSkill(8); break;
+    case 'skill10': releaseBarSkill(9); break;
+    case 'skill11': releaseBarSkill(10); break;
+    case 'skill12': releaseBarSkill(11); break;
     case 'minimap':
       worldView.toggleMinimap();
       break;

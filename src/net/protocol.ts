@@ -39,6 +39,16 @@ export function allocateStat(stat: string, points = 1): jpt.base.ClientMessage.$
     });
 }
 
+/** 技能释放（服务端权威）。
+ *  skillId 占位：当前传 SKILLS[职业] 列表下标（0-19），由服务端当普攻处理；
+ *  接入真实技能时改为服务端技能表（skilldata.skillid）的技能 id。
+ *  targetId=0 表示无显式目标（buff/自施法）；targetPosition 供地面技能后续使用。 */
+export function useSkill(skillId: number, targetId = 0, targetPosition?: jpt.base.Position.$Properties): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        useSkill: { skillId, targetId, ...(targetPosition ? { targetPosition } : {}) },
+    });
+}
+
 export function ping(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
         ping: { timestamp: Date.now() },

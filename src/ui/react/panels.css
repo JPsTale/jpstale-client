@@ -326,3 +326,140 @@
   grid-template-columns: repeat(2, 1fr);
   gap: 4px 10px;
 }
+
+/* 技能面板（SkillPanel）：5 页签 × 4 技能 + 12 格快捷栏（F1-F12） */
+.jp-skillpanel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.jp-skill-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.jp-skill-tab {
+  flex: 1;
+  height: 26px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.1;
+  border-radius: 3px;
+  border: 1px solid #3a3f46;
+  background: #262a31;
+  color: #c8ccd2;
+  cursor: pointer;
+}
+
+.jp-skill-tab--on {
+  border-color: #c9a23e;
+  background: #262008;
+  color: #ffd98a;
+  font-weight: 600;
+}
+
+.jp-skill-tab-lv {
+  display: block;
+  font-size: 9px;
+  color: #8a8f96;
+  font-weight: 400;
+}
+
+.jp-skill-tab--on .jp-skill-tab-lv {
+  color: #c9a23e;
+}
+
+.jp-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.jp-skill-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  background: #14161a;
+  border: 1px solid #2c3138;
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.jp-skill-cell:hover {
+  border-color: #4a515a;
+}
+
+.jp-skill-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.jp-skill-name {
+  font-size: 10px;
+  text-align: center;
+  color: #d8dce2;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jp-skill-lv {
+  font-size: 9px;
+  color: #7fb3ff;
+}
+
+.jp-skill-hint {
+  font-size: 11px;
+  color: #8a8f96;
+  text-align: center;
+}
+
+.jp-skillbar {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+}
+
+.jp-skillbar-slot {
+  position: relative;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #14161a;
+  border: 1px dashed #3a3f46;
+  border-radius: 4px;
+  cursor: pointer;
+  min-height: 34px;
+}
+
+.jp-skillbar-slot--filled {
+  border-style: solid;
+  border-color: #464c55;
+}
+
+.jp-skillbar-slot:hover {
+  border-color: #8f6b1f;
+}
+
+.jp-skillbar-icon {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.jp-skillbar-key {
+  position: absolute;
+  top: 1px;
+  left: 3px;
+  font-size: 8px;
+  line-height: 1;
+  color: #8a8f96;
+}
