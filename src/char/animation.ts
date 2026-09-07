@@ -62,11 +62,19 @@ function getRotMatrix(obj: Obj3D, frame: number): number[] {
   }
 
   let num = getTmFrameRot(obj, frame);
-  if (num < 0) num = 0;
+  // C++ TmAnimation: NumTmRot = GetTmFrameRot(frame)；若 <0（当前帧不在任何有效旋转段内，
+  // 例如某骨骼在部分动作段无独立旋转数据）则走 else 分支 smFMatrixFromMatrix(qmat, TmRotate)，
+  // 即回退到绑定姿态矩阵，而不是从全局 tmRot[0] 插值（后者对新 smb 多段数据会取错段 → 横躺）。
+  if (num < 0) {
+    const m = obj.tmRotate.m;
+    return [m[0] / 256, m[1] / 256, m[2] / 256, 0, m[4] / 256, m[5] / 256, m[6] / 256, 0, m[8] / 256, m[9] / 256, m[10] / 256, 0, 0, 0, 0, 1];
+  }
 
   let cnt = num;
   if (tmRot[cnt].frame > frame) {
-    return tmPrevRot[0].slice();
+    // 帧早于该段首关键帧：C++ GetRotFrame 对 tmRot[cnt].frame>frame 直接 return frame
+    // （不写 gmat），上层调用后 qmat 保持单位阵，等价于 PrevRot 首帧（段起点）。
+    return tmPrevRot[cnt].slice();
   }
   let s: number, e: number;
   while (true) {
