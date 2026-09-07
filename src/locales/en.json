@@ -187,6 +187,13 @@
   },
   "skills": {
     "pt": "Skill Pts",
-    "ptSpecial": "Special Pts"
+    "ptSpecial": "Special Pts",
+    "reqLevel": "Required Level",
+    "skillType": "Type",
+    "consume": "Cost",
+    "weapon": "Weapon",
+    "nextEffect": "Next Level",
+    "mastery": "Mastery",
+    "demo": "DEMO DATA (skill table not wired yet)"
   }
 }

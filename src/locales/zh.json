@@ -187,6 +187,13 @@
   },
   "skills": {
     "pt": "技能点",
-    "ptSpecial": "特殊技能点"
+    "ptSpecial": "特殊技能点",
+    "reqLevel": "需求等级",
+    "skillType": "类型",
+    "consume": "消耗",
+    "weapon": "需求武器",
+    "nextEffect": "下一级效果",
+    "mastery": "熟练度",
+    "demo": "演示数据（待接入服务端技能表）"
   }
 }
