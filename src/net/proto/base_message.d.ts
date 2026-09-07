@@ -3189,6 +3189,15 @@ export namespace jpt {
             /** S2C_PlayerState nextExp. */
             nextExp: (number|Long);
 
+            /** S2C_PlayerState moveSpeed. */
+            moveSpeed: number;
+
+            /** S2C_PlayerState walkSpeed. */
+            walkSpeed: number;
+
+            /** S2C_PlayerState runSpeed. */
+            runSpeed: number;
+
             /**
              * Creates a new S2C_PlayerState instance using the specified properties.
              * @param [properties] Properties to set
@@ -3314,6 +3323,15 @@ export namespace jpt {
 
                 /** S2C_PlayerState nextExp */
                 nextExp?: (number|Long|null);
+
+                /** S2C_PlayerState moveSpeed */
+                moveSpeed?: (number|null);
+
+                /** S2C_PlayerState walkSpeed */
+                walkSpeed?: (number|null);
+
+                /** S2C_PlayerState runSpeed */
+                runSpeed?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -3714,6 +3732,9 @@ export namespace jpt {
             /** S2C_CharacterStatus resIce. */
             resIce: number;
 
+            /** S2C_CharacterStatus avoid. */
+            avoid: number;
+
             /**
              * Creates a new S2C_CharacterStatus instance using the specified properties.
              * @param [properties] Properties to set
@@ -3911,6 +3932,9 @@ export namespace jpt {
 
                 /** S2C_CharacterStatus resIce */
                 resIce?: (number|null);
+
+                /** S2C_CharacterStatus avoid */
+                avoid?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

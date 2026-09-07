@@ -89,6 +89,7 @@ function toCharacterStatus(e: jpt.base.S2C_CharacterStatus.$Properties): Charact
     attackSpeed: e.attackSpeed || 0,
     critical: e.critical || 0,
     block: e.block || 0,
+    avoid: e.avoid || 0,
     shootingRange: e.shootingRange || 0,
     maxWeight: e.maxWeight || 0,
     resBionic: e.resBionic || 0,
@@ -313,6 +314,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'playerState': {
       const ps = msg.playerState!;
+      // 自机移动速度接入服务端权威属性（walk/run speed 世界/秒；playerState 到 any 帧都设置）
+      if (typeof ps.walkSpeed === 'number' && typeof ps.runSpeed === 'number') {
+        worldView.setSpeed(ps.walkSpeed, ps.runSpeed);
+      }
       const hudState: HudState = {
         hp: ps.hp || 0, maxHp: ps.maxHp || 0,
         mp: ps.mp || 0, maxMp: ps.maxMp || 0,

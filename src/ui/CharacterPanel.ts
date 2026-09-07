@@ -45,6 +45,7 @@ export interface CharacterStatus {
   attackSpeed: number
   critical: number
   block: number
+  avoid: number
   shootingRange: number
   maxWeight: number
   resBionic: number
@@ -109,6 +110,10 @@ const T = {
   def: [710, 494] as const,
   spd: [710, 514] as const,
   abs: [710, 533] as const,
+  // 必杀/格挡/回避（原版这些率在 OtherStateShow 展示，服务端按原版公式计算，此处补到面板右下方）
+  cri: [708, 545] as const,
+  blk: [708, 562] as const,
+  avd: [708, 579] as const,
   resB: [219, 457] as const,
   resP: [289, 456] as const,
   resF: [219, 494] as const,
@@ -244,6 +249,9 @@ export function createCharacterPanel(container: HTMLElement): CharacterPanel {
     text(T.def[0], T.def[1], String(s.defense))
     text(T.spd[0], T.spd[1], String(s.moveSpeed))
     text(T.abs[0], T.abs[1], String(s.absorption))
+    if (s.critical > 0) text(T.cri[0], T.cri[1], `必杀 ${s.critical}%`)
+    if (s.block > 0) text(T.blk[0], T.blk[1], `格挡 ${s.block}%`)
+    if (s.avoid > 0) text(T.avd[0], T.avd[1], `回避 ${s.avoid}%`)
     text(T.resB[0], T.resB[1], String(s.resBionic))
     text(T.resP[0], T.resP[1], String(s.resPoison))
     text(T.resF[0], T.resF[1], String(s.resFire))

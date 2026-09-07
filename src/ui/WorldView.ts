@@ -57,6 +57,8 @@ export interface WorldView {
   isRunning(): boolean;
   /** 记录自机 playerId（enterGame.playerId），供 S2C_PlayerMove 路由收敛 */
   setSelfId(playerId: number): void;
+  /** 自机移动速度（世界单位/秒，服务端权威属性）；默认 EU 最高档，S2C_PlayerState 到达后覆盖 */
+  setSpeed(walkWps: number, runWps: number): void;
   /** playerId 是否为自机（供 S2C_PlayerAppear 丢弃自己的外观快照） */
   isSelf(playerId: number): boolean;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
@@ -164,9 +166,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let mouseDown = false;
   let mouseX = 0, mouseY = 0;
 
-  // 本地移动步速 world/s（与服务端限速同源：EU 最高档 run=×460 / walk=×180 @cnt25）
-  const RUN_WPS = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
-  const WALK_WPS = (((25 * 10 + 250) * 180) >> 8) / 256 * 60;  // ≈82.3
+  // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
+  let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
+  let selfWalkWps = (((25 * 10 + 250) * 180) >> 8) / 256 * 60;  // ≈82.3
   // 上报状态机
   let wasMoving = false;        // 上一帧是否在移动（本地动画/停止上报去重）
   let lastMoveReportAt = 0;
@@ -1289,7 +1291,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfAngle = face;
 
     const mdt = Math.min(dt, 0.1); // 掉帧/切页兜底，避免单帧超大位移
-    const step = (running ? RUN_WPS : WALK_WPS) * mdt; // world 步长（与服务端限速同源）
+    const step = (running ? selfRunWps : selfWalkWps) * mdt; // world 步长（与服务端限速同源）
     const sinVal = Math.sin(selfAngle);
     const cosVal = Math.cos(selfAngle);
     const dx = sinVal * step;
@@ -1656,6 +1658,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     playerAppear: (playerId, name, classId, level, x, y, z, angle, appearance) => {
       spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z, angle, appearance });
+    },
+    setSpeed: (walkWps, runWps) => {
+      // 服务端权威属性速度（世界/秒）；非法值忽略，保留当前值
+      if (Number.isFinite(walkWps) && walkWps > 0) selfWalkWps = walkWps;
+      if (Number.isFinite(runWps) && runWps > 0) selfRunWps = runWps;
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     monsterAppear: (monsterId, _templateId, name, modelFile, _level, x, y, z, angle) => {
