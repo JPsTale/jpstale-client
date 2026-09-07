@@ -1,3 +1,5 @@
+import { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame } from '../../app/gameStore.js';
 import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, weaponIconUrl, type SkillDef } from '../../game/skillData.js';
@@ -48,76 +50,86 @@ const WEAPON_NAMES: Record<number, string> = {
 };
 
 // 技能面板（原版布局，仅客户端）：
-// 左列 T1-T4 四行，每行「职业名 + 4 技能」；右侧 T5 一行（未来 T6 接其下），右下角技能点。
-// 技能格只显示图标；悬停显示半透明信息框（技能名/需求等级/类型/MP·SP/武器/效果/下一级效果/熟练度）。
+// 单列 5 排（T1-T5），每排「职业名 + 4 个技能」横排；技能格只显示图标。
+// 悬停信息框用 portal 挂到 document.body，position:fixed 跟随鼠标，
+// 完全脱离面板容器，不会被面板宽度/高度/overflow 裁剪。
 export default function SkillPanel() {
   const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
+  const [tip, setTip] = useState<{ skill: SkillDef; x: number; y: number } | null>(null);
 
-  if (!character) return <div className="jp-nodata">{t('panel.noData')}</div>;
+  const classDir = character ? CLASS_DIR[character.job] ?? 'fighter' : 'fighter';
+  const skills = character ? SKILLS[classDir] ?? [] : [];
+  const tiers = character ? CLASS_TIERS[classDir] ?? [] : [];
+
+  const rows = useMemo(
+    () => Array.from({ length: 5 }, (_, i) => ({
+      tierName: tiers[i] ?? `T${i + 1}`,
+      base: i * SKILLS_PER_PAGE,
+      skills: skills.slice(i * SKILLS_PER_PAGE, (i + 1) * SKILLS_PER_PAGE),
+    })),
+    [tiers, skills],
+  );
+
   const c = character;
-  const classDir = CLASS_DIR[c.job] ?? 'fighter';
-  const skills = SKILLS[classDir] ?? [];
-  const tiers = CLASS_TIERS[classDir] ?? [];
-
-  const leftRows = [0, 1, 2, 3].map((t) => ({
-    tierName: tiers[t] ?? `T${t + 1}`,
-    base: t * SKILLS_PER_PAGE,
-    skills: skills.slice(t * SKILLS_PER_PAGE, (t + 1) * SKILLS_PER_PAGE),
-  }));
-  const t5 = {
-    tierName: tiers[4] ?? 'T5',
-    base: 4 * SKILLS_PER_PAGE,
-    skills: skills.slice(4 * SKILLS_PER_PAGE, 5 * SKILLS_PER_PAGE),
-  };
+  if (!c) return <div className="jp-nodata">{t('panel.noData')}</div>;
 
   return (
     <div className="jp-skillpanel">
-      <div className="jp-skill-col">
-        {leftRows.map((row) => (
-          <SkillRow key={row.tierName} tierName={row.tierName} skills={row.skills} base={row.base} classDir={classDir} charLevel={c.level} />
-        ))}
-      </div>
-      <div className="jp-skill-side">
-        <SkillRow tierName={t5.tierName} skills={t5.skills} base={t5.base} classDir={classDir} charLevel={c.level} />
-        <div className="jp-skill-pts">
-          <div className="jp-skill-pt">
-            <span>{t('skills.pt')}</span>
-            <b>{c.skillPoint}</b>
-          </div>
-          <div className="jp-skill-pt">
-            <span>{t('skills.ptSpecial')}</span>
-            <b>{c.specialSkillPoint}</b>
-          </div>
+      {rows.map((row) => (
+        <SkillRow key={row.tierName} tierName={row.tierName} skills={row.skills} base={row.base} classDir={classDir} charLevel={c.level} onTip={setTip} />
+      ))}
+      <div className="jp-skill-pts">
+        <div className="jp-skill-pt">
+          <span>{t('skills.pt')}</span>
+          <b>{c.skillPoint}</b>
+        </div>
+        <div className="jp-skill-pt">
+          <span>{t('skills.ptSpecial')}</span>
+          <b>{c.specialSkillPoint}</b>
         </div>
       </div>
+      {tip && createPortal(<SkillTip skill={tip.skill} x={tip.x} y={tip.y} />, document.body)}
     </div>
   );
 }
 
-function SkillRow(props: { tierName: string; skills: SkillDef[]; base: number; classDir: string; charLevel: number }) {
+function SkillRow(props: {
+  tierName: string;
+  skills: SkillDef[];
+  base: number;
+  classDir: string;
+  charLevel: number;
+  onTip: (tip: { skill: SkillDef; x: number; y: number } | null) => void;
+}) {
   return (
     <div className="jp-skill-row">
       <div className="jp-tier-name">{props.tierName}</div>
       <div className="jp-skill-row-skills">
         {props.skills.map((s, i) => (
-          <SkillCell key={props.base + i} skill={s} classDir={props.classDir} charLevel={props.charLevel} />
+          <SkillCell key={props.base + i} skill={s} classDir={props.classDir} charLevel={props.charLevel} onTip={props.onTip} />
         ))}
       </div>
     </div>
   );
 }
 
-function SkillCell(props: { skill: SkillDef; classDir: string; charLevel: number }) {
-  const { skill, classDir, charLevel } = props;
+function SkillCell(props: {
+  skill: SkillDef;
+  classDir: string;
+  charLevel: number;
+  onTip: (tip: { skill: SkillDef; x: number; y: number } | null) => void;
+}) {
+  const { skill, classDir, charLevel, onTip } = props;
   const lv = learnedLevel(charLevel, skill.reqLv);
   const learned = lv > 0;
   const masteryPct = 0; // 熟练度占位：服务端推送后替换
-  const tw = skillReqWeight(skill);
-  const mp = demoMp(skill);
-  const sp = demoSp(skill);
-  const weapons = skill.weapon ?? [];
   return (
-    <div className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}>
+    <div
+      className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}
+      onMouseEnter={(e) => onTip({ skill, x: e.clientX, y: e.clientY })}
+      onMouseMove={(e) => onTip({ skill, x: e.clientX, y: e.clientY })}
+      onMouseLeave={() => onTip(null)}
+    >
       <div className="jp-skill-iconbox">
         <div className={learned ? 'jp-hex jp-hex--learned' : 'jp-hex'}>
           <img className="jp-hex-img" src={skillIconUrl(classDir, skill.iconFile)} alt={skill.name} />
@@ -127,28 +139,43 @@ function SkillCell(props: { skill: SkillDef; classDir: string; charLevel: number
         </div>
         <span className="jp-skill-lv">{learned ? `Lv.${lv}` : '—'}</span>
       </div>
+    </div>
+  );
+}
 
-      <div className="jp-skill-tip">
-        <div className="jp-skill-tip-name">{skill.name}</div>
-        <div className="jp-skill-tip-row">{t('skills.reqLevel')}: <b>{skill.reqLv}</b></div>
-        <div className="jp-skill-tip-row">{t('skills.skillType')}: {skill.type}</div>
-        {skill.alt && <div className="jp-skill-tip-row jp-skill-tip-alt">({skill.alt})</div>}
-        <div className="jp-skill-tip-row">{t('skills.consume')}: MP {mp} / SP {sp}</div>
-        {weapons.length > 0 && (
-          <div className="jp-skill-tip-row jp-skill-tip-weapon">
-            {t('skills.weapon')}:
-            <span className="jp-skill-tip-wicons">
-              {weapons.map((w) => (
-                <img key={w} className="jp-skill-tip-wicon" src={weaponIconUrl(w)} alt={WEAPON_NAMES[w] ?? String(w)} title={WEAPON_NAMES[w] ?? String(w)} />
-              ))}
-            </span>
-          </div>
-        )}
-        <div className="jp-skill-tip-desc">{skill.desc}</div>
-        <div className="jp-skill-tip-row jp-skill-tip-next">{t('skills.nextEffect')}: {demoNextEffect(skill, tw)}</div>
-        <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
-        <div className="jp-skill-tip-demo">{t('skills.demo')}</div>
-      </div>
+function SkillTip(props: { skill: SkillDef; x: number; y: number }) {
+  const { skill, x, y } = props;
+  const masteryPct = 0;
+  const tw = skillReqWeight(skill);
+  const mp = demoMp(skill);
+  const sp = demoSp(skill);
+  const weapons = skill.weapon ?? [];
+  const style = {
+    left: x + 18,
+    top: y + 14,
+    maxWidth: 'min(340px, calc(100vw - 40px))',
+  };
+  return (
+    <div className="jp-skill-tip" style={style}>
+      <div className="jp-skill-tip-name">{skill.name}</div>
+      <div className="jp-skill-tip-row">{t('skills.reqLevel')}: <b>{skill.reqLv}</b></div>
+      <div className="jp-skill-tip-row">{t('skills.skillType')}: {skill.type}</div>
+      {skill.alt && <div className="jp-skill-tip-row jp-skill-tip-alt">({skill.alt})</div>}
+      <div className="jp-skill-tip-row">{t('skills.consume')}: MP {mp} / SP {sp}</div>
+      {weapons.length > 0 && (
+        <div className="jp-skill-tip-row jp-skill-tip-weapon">
+          {t('skills.weapon')}:
+          <span className="jp-skill-tip-wicons">
+            {weapons.map((w) => (
+              <img key={w} className="jp-skill-tip-wicon" src={weaponIconUrl(w)} alt={WEAPON_NAMES[w] ?? String(w)} title={WEAPON_NAMES[w] ?? String(w)} />
+            ))}
+          </span>
+        </div>
+      )}
+      <div className="jp-skill-tip-desc">{skill.desc}</div>
+      <div className="jp-skill-tip-row jp-skill-tip-next">{t('skills.nextEffect')}: {demoNextEffect(skill, tw)}</div>
+      <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
+      <div className="jp-skill-tip-demo">{t('skills.demo')}</div>
     </div>
   );
 }

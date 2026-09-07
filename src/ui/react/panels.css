@@ -335,23 +335,12 @@
 /* 技能面板（SkillPanel，原版布局）：
    左列 T1-T4 四行（职业名 + 4 技能），右侧 T5 一行（未来 T6 接其下），右下角技能点 */
 .jp-skillpanel {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  align-items: start;
-}
-
-.jp-skill-col {
   display: flex;
   flex-direction: column;
   gap: 8px;
-}
-
-.jp-skill-side {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  align-items: stretch;
+  min-width: 360px;
+  width: max-content;
+  max-width: 100%;
 }
 
 .jp-skill-row {
@@ -375,24 +364,22 @@
   min-width: 108px;
 }
 
-/* 一行内的 4 个技能：横向一排 */
+/* 一行内的 4 个技能：横向一排，不做 flex:1（防挤压），每格固定 52px */
 .jp-skill-row-skills {
   display: flex;
   gap: 6px;
-  flex: 1;
 }
 
 .jp-skill-cell {
   position: relative;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
   background: #14161a;
   border: 1px solid #2c3138;
   border-radius: 4px;
-  flex: 1;
-  min-width: 0;
   cursor: default;
 }
 
@@ -463,33 +450,26 @@
   border-radius: 2px;
 }
 
-/* —— 技能悬停信息框（原版半透明框风格）—— */
+/* —— 技能悬停信息框（portal 到 body，fixed 跟随鼠标，脱离面板裁剪）—— */
 .jp-skill-tip {
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 60;
-  width: 248px;
-  background: rgba(8, 9, 11, 0.92);
+  position: fixed;
+  z-index: 10000;
+  width: 300px;
+  background: rgba(8, 9, 11, 0.94);
   border: 1px solid #4a3f2a;
   border-radius: 5px;
   padding: 8px 10px;
   font-size: 11px;
   color: #d0d4da;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65);
-  display: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
 
-.jp-skill-cell:hover .jp-skill-tip {
-  display: block;
-}
-
-/* 右侧 T5 列的提示框向左弹 */
-.jp-skill-side .jp-skill-tip {
-  left: auto;
-  right: calc(100% + 8px);
+/* 贴近视口右/下边缘时收窄 + 自动换边（由 inline left/top 顶起，这里防溢出） */
+@media (max-width: 1280px) {
+  .jp-skill-tip {
+    width: 260px;
+  }
 }
 
 .jp-skill-tip-name {
@@ -560,13 +540,12 @@
   font-style: italic;
 }
 
-/* 右下角技能点 */
+/* 面板底部技能点 */
 .jp-skill-pts {
   display: flex;
   gap: 6px;
   justify-content: flex-end;
-  margin-top: auto;
-  padding-top: 6px;
+  padding-top: 4px;
 }
 
 .jp-skill-pt {
