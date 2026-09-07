@@ -1,5 +1,5 @@
 /**
- * WORLD 屏：复刻 /pt/maps/ 的地图渲染 + dummy 角色 + debug 相机跟随。
+ * WORLD 屏：复刻 /pt/maps/ 的地图渲染 + 真实角色模型 + 卫星相机跟随。
  * 唯一差异：地图从服务端 enterGame 的 mapId/出生点读取，而非下拉选择。
  * 权威依据：pt-web-server/static/maps/index.html + docs/fields/pt-map-renderer-design.md §3.10.2。
  * 坐标：出生点 world = (-z, y, -x)；地图顶点 world = raw/256 + 轴交换（map-renderer 内部处理）。
@@ -136,7 +136,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 全部 44 图 world AABB（预取，用于 findCurrentMap 判归属，不依赖是否已加载）
   const allBounds = new Map<number, [number, number, number, number]>();
   let charGroup: THREE.Group | null = null;
-  let dummyGroup: THREE.Group | null = null;
   let selfAngle = 0; // 角色朝向（弧度）
   let animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'] | null = null;
   let bipInxInfo: Awaited<ReturnType<typeof loadCharacterModel>>['bipInxInfo'] | null = null;
@@ -390,8 +389,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     dir.position.set(200, 400, 200);
     scene.add(dir);
     dirLight = dir;
-    buildAxis();
-    buildDummy();
   }
 
   // 有效小时：调试键覆盖优先，否则跟随 GameClock
@@ -502,64 +499,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     dayNightHour = hour;
     dayNightMin = min;
     mapAudio.setGameTime(hour);
-  }
-
-  // 坐标轴参考（复刻 /pt/maps/：三色圆柱+圆锥+标签），用于判断朝向。挂到出生点。
-  let axisGroup: THREE.Group | null = null;
-  function buildAxis(): void {
-    if (!scene) return;
-    const g = new THREE.Group();
-    const axisLen = 50;
-    const axisColors = [0xff3333, 0x33ff33, 0x3333ff];
-    const axisDirs = [new THREE.Vector3(1,0,0), new THREE.Vector3(0,1,0), new THREE.Vector3(0,0,1)];
-    const axisLabels = ['X', 'Y', 'Z'];
-    axisDirs.forEach((d, i) => {
-      const cyl = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, axisLen, 8), new THREE.MeshBasicMaterial({ color: axisColors[i] }));
-      cyl.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
-      cyl.position.copy(d.clone().multiplyScalar(axisLen/2));
-      g.add(cyl);
-      const cone = new THREE.Mesh(new THREE.ConeGeometry(1.4, 5, 10), new THREE.MeshBasicMaterial({ color: axisColors[i] }));
-      cone.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), d.clone().normalize());
-      cone.position.copy(d.clone().multiplyScalar(axisLen));
-      g.add(cone);
-      const canvas = document.createElement('canvas');
-      canvas.width = 64; canvas.height = 64;
-      const ctx = canvas.getContext('2d')!;
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 40px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(axisLabels[i], 32, 32);
-      const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(canvas), depthTest: false }));
-      sprite.position.copy(d).multiplyScalar(axisLen + 3);
-      sprite.scale.set(6, 6, 1);
-      g.add(sprite);
-    });
-    scene.add(g);
-    axisGroup = g;
-  }
-
-  // 复刻 /pt/maps/ dummy 角色：蓝线框盒（碰撞体）+ 红前向线 + 绿 beacon
-  function buildDummy(): void {
-    if (!scene) return;
-    const PAT_HEIGHT = 44, PAT_WIDTH = 44;
-    const BODY_HEIGHT = 0.75 * PAT_HEIGHT - 12;
-    const BODY_WIDTH = 0.25 * PAT_WIDTH;
-    const g = new THREE.Group();
-    const box = new THREE.Mesh(
-      new THREE.BoxGeometry(BODY_WIDTH * 2, BODY_HEIGHT, BODY_WIDTH * 2),
-      new THREE.MeshBasicMaterial({ color: 0x4488ff, wireframe: true }),
-    );
-    box.position.y = 12 + BODY_HEIGHT / 2;
-    g.add(box);
-    const fwdGeo = new THREE.BufferGeometry();
-    fwdGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 16, 0, 0, 16, 20]), 3));
-    g.add(new THREE.Line(fwdGeo, new THREE.LineBasicMaterial({ color: 0xff4444 })));
-    const beacon = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.5, 0.5, 80, 6),
-      new THREE.MeshBasicMaterial({ color: 0x00ff00, wireframe: true }),
-    );
-    beacon.position.y = 40 + 80 / 2;
-    g.add(beacon);
-    scene.add(g);
-    dummyGroup = g;
   }
 
   // 角色纹理加载（复刻 CharSelect：隐藏→加载纹理→显示）
@@ -1338,10 +1277,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         mapAudio.enterMap(currentMapId);
         void syncMapRegions(currentMapId);
       }
-      // 更新角色 / dummy / 坐标轴位置
+      // 更新角色位置
       if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
-      if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
-      if (axisGroup) axisGroup.position.copy(selfPos);
       return true;
     }
     return false;
@@ -1436,10 +1373,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const moved = updateMovement(dt); // falling 中 mouseFacing=null → 不移动
     const fell = updateFalling();
     if (fell && selfPos.y !== lastY) {
-      // 下落/落地时角色/dummy/坐标轴同步 y（x/z 未变）
+      // 下落/落地时角色同步 y（x/z 未变）
       if (charGroup) charGroup.position.y = selfPos.y;
-      if (dummyGroup) dummyGroup.position.y = selfPos.y;
-      if (axisGroup) axisGroup.position.y = selfPos.y;
     }
     lastY = selfPos.y;
 
@@ -1473,7 +1408,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       reportMove(0);
       if (animState) animState.triggerIdle();
       if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
-      if (dummyGroup) { dummyGroup.position.copy(selfPos); dummyGroup.rotation.y = selfAngle; }
     } else if (mouseDown) {
       // 静止但按着鼠标（光标贴角色，方向无效）：保持朝向即时
       const f = mouseFacing();
@@ -1606,14 +1540,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         canvasEl.addEventListener('mousemove', onMouseMove);
         window.addEventListener('mouseup', onMouseUp);
 
-        // dummy 摆到出生点，朝向与角色一致（红线指向角色面朝方向）
-        if (dummyGroup) {
-          dummyGroup.position.copy(selfPos);
-          dummyGroup.rotation.y = selfAngle;
-        }
-        // 坐标轴挂到出生点（参考坐标系，判断朝向用）
-        if (axisGroup) axisGroup.position.copy(selfPos);
-
         // 自机外观：职业 → 渲染
         const jobId = enterGame.appearance?.classId || 1;
         await loadPlayer(enterGame.appearance, jobId);
@@ -1710,8 +1636,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       mapHandles.clear();
       collisionMeshes.clear();
       charGroup = null;
-      dummyGroup = null;
-      axisGroup = null;
       statsEl.remove();
       root.remove();
     },
