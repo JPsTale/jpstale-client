@@ -25,6 +25,8 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     agility: e.agility || 0,
     health: e.health || 0,
     statePoint: e.statePoint || 0,
+    skillPoint: (e as unknown as { skillPoint?: number }).skillPoint ?? 0,
+    specialSkillPoint: (e as unknown as { specialSkillPoint?: number }).specialSkillPoint ?? 0,
     hp: e.hp || 0,
     maxHp: e.maxHp || 0,
     mp: e.mp || 0,

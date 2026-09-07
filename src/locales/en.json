@@ -186,6 +186,7 @@
     "14": "Name already exists"
   },
   "skills": {
-    "barHint": "Drag skill icons into the bar (F1-F12); click a slot to cast, right-click to clear"
+    "pt": "Skill Pts",
+    "ptSpecial": "Special Pts"
   }
 }

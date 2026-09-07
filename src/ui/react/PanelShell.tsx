@@ -8,13 +8,15 @@ interface Props {
   children: ReactNode;
   /** 位置变体：'center'（底部居中，默认）| 'left'（左侧详情栏） */
   align?: 'center' | 'left';
+  /** 左侧栏宽版（技能面板等需要更宽内容时用） */
+  wide?: boolean;
 }
 
 // 通用面板外壳。
 // - 透明层 pointer-events:none：面板打开不影响游戏操作（键盘走 window、鼠标点击走 three canvas）
 // - left 变体可按住标题栏拖动（双击标题栏复位）
 // 关闭：右上角 × 或 Esc（closePanel 动作）。
-export default function PanelShell({ title, children, align = 'center' }: Props) {
+export default function PanelShell({ title, children, align = 'center', wide = false }: Props) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const draggable = align === 'left';
 
@@ -42,7 +44,7 @@ export default function PanelShell({ title, children, align = 'center' }: Props)
   return (
     <div className="jp-overlay">
       <div
-        className={`jp-panel${align === 'left' ? ' jp-panel--left' : ''}`}
+        className={`jp-panel${align === 'left' ? ' jp-panel--left' : ''}${wide ? ' jp-panel--wide' : ''}`}
         style={style}
         role="dialog"
         aria-modal="false"

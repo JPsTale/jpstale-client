@@ -246,6 +246,21 @@ export const SKILLS: Record<string, SkillDef[]> = {
 export const SKILLS_PER_PAGE = 4;
 export const SKILL_PAGES = 5;
 
+// 各职业技能树 5 阶（T1-T5）进阶职业名（wartale 页序，原版转职体系）。
+// T5 为最终职业；未来新增 T6 时在数组末尾追加。
+export const CLASS_TIERS: Record<string, string[]> = {
+  fighter: ['Fighter', 'Warrior', 'Champion', 'Immortal Warrior', 'Warlord'],
+  mecha: ['Mechanician', 'Mechanic Master', 'Metal Leader', 'Heavy Metal', 'Titanium Chief'],
+  archer: ['Archer', 'Huntress Master', "Dion's Disciple", 'Sagittarius', 'Phoenix Master'],
+  pikeman: ['Pikeman', 'Combatant', 'Lancer', 'Lancelot', 'Phalanx'],
+  atalanta: ['Atalanta', 'Valkyrie', 'Brynhild', 'Valhalla', 'Sentinel'],
+  knight: ['Knight', 'Paladin', 'Holy Knight', 'Saint Knight', 'Crusader'],
+  magician: ['Magician', 'Wizard', 'Royal Wizard', 'Arch Mage', 'Elemental Master'],
+  priestess: ['Priestess', 'Saintess', 'Bishop', 'Celestial', 'Prophetess'],
+  assassin: ['Assassin', 'Rogue', 'Hermit', 'Shadower', 'Nightwalker'],
+  shaman: ['Shaman', 'Clairvoyant', 'Conjurer', 'Necromancer', 'Oracle'],
+};
+
 /** 技能图标 URL（/res 资产：image/sinimage/skill/{职业}/button/{文件}.bmp） */
 export function skillIconUrl(classDir: string, iconFile: string): string {
   const seg = iconFile.split(' ').map(encodeURIComponent).join('%20');

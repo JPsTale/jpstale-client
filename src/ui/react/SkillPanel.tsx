@@ -1,106 +1,90 @@
-import { useRef, useState, useSyncExternalStore, type DragEvent } from 'react';
-import { getGameSnapshot, setSkillBarSlot, subscribeGame } from '../../app/gameStore.js';
-import { CLASS_DIR, SKILLS, SKILLS_PER_PAGE, SKILL_PAGES, skillIconUrl } from '../../game/skillData.js';
-import { sendUseSkill } from '../../net/bridge.js';
+import { useSyncExternalStore } from 'react';
+import { getGameSnapshot, subscribeGame } from '../../app/gameStore.js';
+import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, type SkillDef } from '../../game/skillData.js';
 import { t } from '../../i18n/index.js';
 
-const BAR_SLOTS = 12;
+// 学习等级 / 熟练度：服务端原版技能表同步前，用角色等级推断占位。
+// PT 掌握规则 ≈ 每超 reqLv 10 级可练高 1 级；熟练度（mastery）暂为 0，待服务端推送。
+function learnedLevel(charLevel: number, reqLv: number): number {
+  if (charLevel < reqLv) return 0;
+  return Math.min(20, Math.floor((charLevel - reqLv) / 10) + 1);
+}
 
-// 技能面板（仅客户端）：5 页（T1-T5）×4 技能，图标可拖入下方 F1-F12 快捷栏。
-// 释放走 sendUseSkill → C2S_UseSkill（服务端当前占位普攻）；拖入格会话内留存。
+// 技能面板（原版布局，仅客户端）：
+// 左列 T1-T4 四行，每行「职业名 + 4 技能」；右侧 T5 一行（未来 T6 接其下），右下角技能点。
+// 已学=彩色、未学=灰色；图标六边形遮罩；每格右侧竖条为熟练度进度。
 export default function SkillPanel() {
-  const { character, skillBar } = useSyncExternalStore(subscribeGame, getGameSnapshot);
-  const [page, setPage] = useState(0);
-  // HTML5 drop 后会紧跟触发 click；300ms 内吞掉，避免「拖完顺手放技能」
-  const lastDropAt = useRef(0);
+  const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
 
   if (!character) return <div className="jp-nodata">{t('panel.noData')}</div>;
-  const classDir = CLASS_DIR[character.job] ?? 'fighter';
+  const c = character;
+  const classDir = CLASS_DIR[c.job] ?? 'fighter';
   const skills = SKILLS[classDir] ?? [];
+  const tiers = CLASS_TIERS[classDir] ?? [];
 
-  const pageSkills = skills.slice(page * SKILLS_PER_PAGE, (page + 1) * SKILLS_PER_PAGE);
-
-  function handleDrop(e: DragEvent<HTMLElement>, slot: number) {
-    e.preventDefault();
-    const idx = e.dataTransfer.getData('text/skill-index');
-    if (idx === '') return;
-    const n = Number(idx);
-    if (Number.isNaN(n) || n < 0 || n >= skills.length) return;
-    setSkillBarSlot(slot, n);
-    lastDropAt.current = Date.now();
-  }
-
-  function handleSlotClick(slot: number) {
-    if (Date.now() - lastDropAt.current < 300) return;
-    const idx = skillBar[slot];
-    if (idx !== null && idx !== undefined) sendUseSkill(idx);
-  }
+  const leftRows = [0, 1, 2, 3].map((t) => ({
+    tierName: tiers[t] ?? `T${t + 1}`,
+    base: t * SKILLS_PER_PAGE,
+    skills: skills.slice(t * SKILLS_PER_PAGE, (t + 1) * SKILLS_PER_PAGE),
+  }));
+  const t5 = {
+    tierName: tiers[4] ?? 'T5',
+    base: 4 * SKILLS_PER_PAGE,
+    skills: skills.slice(4 * SKILLS_PER_PAGE, 5 * SKILLS_PER_PAGE),
+  };
 
   return (
     <div className="jp-skillpanel">
-      <div className="jp-skill-tabs">
-        {Array.from({ length: SKILL_PAGES }, (_, i) => {
-          const first = skills[i * SKILLS_PER_PAGE];
-          return (
-            <button
-              key={i}
-              type="button"
-              className={i === page ? 'jp-skill-tab jp-skill-tab--on' : 'jp-skill-tab'}
-              onClick={() => setPage(i)}
-            >
-              T{i + 1}
-              {first ? <span className="jp-skill-tab-lv">Lv.{first.reqLv}</span> : null}
-            </button>
-          );
-        })}
+      <div className="jp-skill-col">
+        {leftRows.map((row) => (
+          <SkillRow key={row.tierName} tierName={row.tierName} skills={row.skills} base={row.base} classDir={classDir} charLevel={c.level} />
+        ))}
       </div>
-
-      <div className="jp-skill-grid">
-        {pageSkills.map((s, pi) => {
-          const index = page * SKILLS_PER_PAGE + pi;
-          return (
-            <div
-              key={index}
-              className="jp-skill-cell"
-              draggable
-              onDragStart={(e) => e.dataTransfer.setData('text/skill-index', String(index))}
-              title={s.name}
-            >
-              <img className="jp-skill-icon" src={skillIconUrl(classDir, s.iconFile)} alt={s.name} draggable={false} />
-              <div className="jp-skill-name">{s.name}</div>
-              <div className="jp-skill-lv">Lv.{s.reqLv}</div>
-            </div>
-          );
-        })}
+      <div className="jp-skill-side">
+        <SkillRow tierName={t5.tierName} skills={t5.skills} base={t5.base} classDir={classDir} charLevel={c.level} />
+        <div className="jp-skill-pts">
+          <div className="jp-skill-pt">
+            <span>{t('skills.pt')}</span>
+            <b>{c.skillPoint}</b>
+          </div>
+          <div className="jp-skill-pt">
+            <span>{t('skills.ptSpecial')}</span>
+            <b>{c.specialSkillPoint}</b>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
 
-      <div className="jp-skill-hint">{t('skills.barHint')}</div>
+function SkillRow(props: { tierName: string; skills: SkillDef[]; base: number; classDir: string; charLevel: number }) {
+  return (
+    <div className="jp-skill-row">
+      <div className="jp-tier-name">{props.tierName}</div>
+      {props.skills.map((s, i) => (
+        <SkillCell key={props.base + i} skill={s} classDir={props.classDir} charLevel={props.charLevel} />
+      ))}
+    </div>
+  );
+}
 
-      <div className="jp-skillbar">
-        {Array.from({ length: BAR_SLOTS }, (_, slot) => {
-          const idx = skillBar[slot];
-          const skill = idx !== null && idx !== undefined ? skills[idx] : null;
-          return (
-            <div
-              key={slot}
-              className={skill ? 'jp-skillbar-slot jp-skillbar-slot--filled' : 'jp-skillbar-slot'}
-              onClick={() => handleSlotClick(slot)}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                setSkillBarSlot(slot, null);
-              }}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => handleDrop(e, slot)}
-              title={skill ? `${skill.name} (F${slot + 1})` : `F${slot + 1}`}
-            >
-              <span className="jp-skillbar-key">F{slot + 1}</span>
-              {skill ? (
-                <img className="jp-skillbar-icon" src={skillIconUrl(classDir, skill.iconFile)} alt={skill.name} />
-              ) : null}
-            </div>
-          );
-        })}
+function SkillCell(props: { skill: SkillDef; classDir: string; charLevel: number }) {
+  const { skill, classDir, charLevel } = props;
+  const lv = learnedLevel(charLevel, skill.reqLv);
+  const learned = lv > 0;
+  const masteryPct = 0; // 熟练度占位：服务端推送后替换
+  return (
+    <div className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'} title={`${skill.name} · 熟练度 ${masteryPct}%`}>
+      <div className="jp-skill-iconbox">
+        <div className={learned ? 'jp-hex jp-hex--learned' : 'jp-hex'}>
+          <img className="jp-hex-img" src={skillIconUrl(classDir, skill.iconFile)} alt={skill.name} />
+        </div>
+        <div className="jp-skill-fill">
+          <div className="jp-skill-fill-bar" style={{ height: `${masteryPct}%` }} />
+        </div>
+        <span className="jp-skill-lv">{learned ? `Lv.${lv}` : '—'}</span>
       </div>
+      <div className="jp-skill-name">{skill.name}</div>
     </div>
   );
 }
