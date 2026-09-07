@@ -194,52 +194,86 @@
   padding-bottom: 2px;
 }
 
-.jp-alloc-row {
+/* 属性区（原版风格）：属性行左侧顺序排，每行右侧上下双钮（+ 上 / − 下）；底部步长档位 ×1/×10/×100 */
+.jp-allocs {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.jp-stat-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 2px 0;
+  gap: 6px;
+  padding: 2px 4px;
+  background: #14161a;
+  border-radius: 3px;
 }
 
-.jp-alloc-label {
+.jp-stat-label {
   flex: 1;
   font-size: 13px;
+  color: #c8ccd2;
 }
 
-.jp-alloc-value {
-  min-width: 28px;
+.jp-stat-value {
+  width: 34px;
   text-align: right;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffd98a;
+  font-variant-numeric: tabular-nums;
 }
 
-.jp-plus {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+/* 上下双钮：18px 宽竖排，上绿 + 下红 − */
+.jp-spin {
+  display: flex;
+  flex-direction: column;
+  width: 18px;
+}
+
+.jp-spin button {
+  width: 18px;
+  height: 11px;
+  padding: 0;
   border: 1px solid #3a3f46;
   background: #262a31;
-  color: #ffd98a;
-  font-size: 14px;
+  font-size: 10px;
   line-height: 1;
   cursor: pointer;
+  font-variant-numeric: tabular-nums;
 }
 
-.jp-plus:disabled {
+.jp-spin button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* 剩余点数 + 撤销卡（属性区最后一格） */
-.jp-alloc-rem {
-  justify-content: center;
-  color: #ffd98a;
+.jp-spin-up {
+  border-radius: 3px 3px 0 0;
+  border-bottom: none;
+  color: #9fe8a8;
+}
+
+.jp-spin-down {
+  border-radius: 0 0 3px 3px;
+  color: #ff8a7a;
+}
+
+/* 剩余点数行：金色值 + 右侧撤销按钮 */
+.jp-rem-label {
   font-weight: 600;
-  background: #1e2017;
+}
+
+.jp-rem-value {
+  color: #ffd98a;
+  font-weight: 700;
 }
 
 .jp-undo-btn {
-  height: 20px;
-  padding: 0 8px;
+  width: 26px;
+  height: 18px;
+  padding: 0;
   font-size: 12px;
   line-height: 1;
   border-radius: 3px;
@@ -247,7 +281,6 @@
   background: #262008;
   color: #ffd98a;
   cursor: pointer;
-  font-variant-numeric: tabular-nums;
 }
 
 .jp-undo-btn:hover {
@@ -260,42 +293,18 @@
   cursor: not-allowed;
 }
 
-/* 属性分配卡片（grid2 内）：每格 label+值 上排，±1/±10/±100 按钮下排 */
-.jp-alloc-card {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 3px 6px;
-  background: #14161a;
-  border-radius: 4px;
-  min-width: 0;
-}
-
-.jp-alloc-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 13px;
-}
-
-.jp-alloc-head b {
-  font-weight: 600;
-  color: #ffd98a;
-  font-variant-numeric: tabular-nums;
-}
-
-.jp-alloc-btns {
+/* 步长档位：底部一行三档 */
+.jp-step-row {
   display: flex;
   gap: 3px;
+  padding-top: 2px;
 }
 
-.jp-alloc-btn {
+.jp-step-btn {
   flex: 1;
-  min-width: 0;
-  height: 18px;
+  height: 16px;
   padding: 0;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1;
   border-radius: 3px;
   border: 1px solid #3a3f46;
@@ -305,17 +314,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-.jp-alloc-btn:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.jp-alloc-btn--plus {
-  color: #9fe8a8;
-}
-
-.jp-alloc-btn--minus {
-  color: #ff8a7a;
+.jp-step-btn--on {
+  border-color: #c9a23e;
+  background: #262008;
+  color: #ffd98a;
+  font-weight: 600;
 }
 
 .jp-grid2 {
