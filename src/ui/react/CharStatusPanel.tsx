@@ -27,10 +27,10 @@ export default function CharStatusPanel() {
     { stat: 'health', label: t('panel.health'), value: c.health },
   ];
 
-  const bars = [
-    { key: 'hp' as const, cur: c.hp, max: c.maxHp, cls: 'jp-bar-hp' },
-    { key: 'mp' as const, cur: c.mp, max: c.maxMp, cls: 'jp-bar-mp' },
-    { key: 'sp' as const, cur: c.sp, max: c.maxSp, cls: 'jp-bar-sp' },
+  const vitals: Array<{ key: 'hp' | 'mp' | 'sp'; cur: number; max: number }> = [
+    { key: 'hp', cur: c.hp, max: c.maxHp },
+    { key: 'mp', cur: c.mp, max: c.maxMp },
+    { key: 'sp', cur: c.sp, max: c.maxSp },
   ];
 
   const combat: Array<[string, string | number]> = [
@@ -71,15 +71,14 @@ export default function CharStatusPanel() {
         <span className="jp-pt">{t('stats.statePoint')}: {c.statePoint}</span>
       </div>
 
-      {bars.map((b) => (
-        <div key={b.key} className="jp-hud-row">
-          <span className="jp-hud-label">{t(`panel.${b.key}`)}</span>
-          <div className="jp-bar">
-            <i className={b.cls} style={{ width: `${b.max ? Math.min(100, (b.cur / b.max) * 100) : 0}%` }} />
+      <div className="jp-vitals">
+        {vitals.map((v) => (
+          <div key={v.key} className="jp-vital">
+            <span>{t(`panel.${v.key}`)}</span>
+            <b>{v.cur}/{v.max}</b>
           </div>
-          <span className="jp-lv">{b.cur}/{b.max}</span>
-        </div>
-      ))}
+        ))}
+      </div>
 
       <div className="jp-sec">{t('panel.group.base')}</div>
       <div className="jp-alloc">
