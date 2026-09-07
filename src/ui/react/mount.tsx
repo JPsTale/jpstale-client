@@ -1,4 +1,5 @@
 import { createRoot } from 'react-dom/client';
+import { AppScreen, getScreen } from '../../app/State.js';
 import { getGameSnapshot, setOpenPanel, type OpenPanel } from '../../app/gameStore.js';
 import PanelsRoot from './PanelsRoot.js';
 import './panels.css';
@@ -21,7 +22,11 @@ export function createReactPanels(container: HTMLElement): ReactPanels {
   return {
     show: (panel) => setOpenPanel(panel),
     hide: () => setOpenPanel(null),
-    toggle: (panel) => setOpenPanel(getGameSnapshot().openPanel === panel ? null : panel),
+    // 游戏内专用：登录/选角等界面不响应面板切换
+    toggle: (panel) => {
+      if (getScreen() !== AppScreen.WORLD) return;
+      setOpenPanel(getGameSnapshot().openPanel === panel ? null : panel);
+    },
     dispose: () => {
       root.unmount();
       host.remove();

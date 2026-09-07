@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { t } from '../../i18n/index.js';
 import { setOpenPanel, type OpenPanel } from '../../app/gameStore.js';
 
@@ -10,19 +10,49 @@ interface Props {
   align?: 'center' | 'left';
 }
 
-// 通用面板外壳：全屏透明层 + 滑入窗口 + 点击遮罩/Esc 关闭。
-// 透明层 stopPropagation，避免点击面板时穿透到 three 世界的输入。
+// 通用面板外壳。
+// - 透明层 pointer-events:none：面板打开不影响游戏操作（键盘走 window、鼠标点击走 three canvas）
+// - left 变体可按住标题栏拖动（双击标题栏复位）
+// 关闭：右上角 × 或 Esc（closePanel 动作）。
 export default function PanelShell({ title, children, align = 'center' }: Props) {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const draggable = align === 'left';
+
+  function onHeadPointerDown(e: ReactPointerEvent<HTMLElement>) {
+    if (!draggable) return;
+    const start = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y };
+    const move = (ev: PointerEvent) =>
+      setPos({ x: start.px + ev.clientX - start.x, y: start.py + ev.clientY - start.y });
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  }
+
+  const style = draggable
+    ? {
+        left: 24 + pos.x,
+        top: `calc(50% + ${pos.y}px)`,
+        transform: 'translateY(-50%)',
+      }
+    : undefined;
+
   return (
-    <div className="jp-overlay" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="jp-dim" onPointerDown={() => setOpenPanel(null)} />
+    <div className="jp-overlay">
       <div
         className={`jp-panel${align === 'left' ? ' jp-panel--left' : ''}`}
+        style={style}
         role="dialog"
-        aria-modal="true"
+        aria-modal="false"
         aria-label={title}
       >
-        <header className="jp-panel-head">
+        <header
+          className="jp-panel-head"
+          onPointerDown={onHeadPointerDown}
+          onDoubleClick={() => setPos({ x: 0, y: 0 })}
+        >
           <span className="jp-panel-title">{title}</span>
           <button
             type="button"

@@ -12,13 +12,7 @@
 .jp-overlay {
   position: absolute;
   inset: 0;
-  pointer-events: all;
-}
-
-.jp-dim {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
 }
 
 .jp-panel {
@@ -145,6 +139,16 @@
   scrollbar-width: thin;
 }
 
+.jp-panel--left .jp-panel-head {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.jp-panel--left .jp-panel-head:active {
+  cursor: grabbing;
+}
+
 .jp-charpanel {
   display: flex;
   flex-direction: column;
@@ -161,6 +165,11 @@
 .jp-job {
   font-size: 13px;
   color: #7fb3ff;
+}
+
+.jp-clan {
+  font-size: 12px;
+  color: #8a8f96;
 }
 
 .jp-char-sub {
@@ -218,6 +227,18 @@
 .jp-plus:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+.jp-alloc-rem {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed #33373d;
+  font-size: 13px;
+  color: #ffd98a;
+  font-weight: 600;
 }
 
 .jp-grid2 {

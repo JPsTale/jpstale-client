@@ -10,7 +10,7 @@ const JOB_KEYS: Record<number, string> = {
   9: 'job.assassin', 10: 'job.shaman',
 };
 
-// 正式角色面板（Phase 2）：现代左侧详情栏。
+// 正式角色面板（Phase 2）：现代左侧详情栏（可拖动）。
 // 数据只来自 gameStore（S2C_CharacterStatus 经 bridge 写入）；加点走 bridge 发 C2S，
 // 服务端回推完整状态后本面板自动刷新 —— 与 canvas 版同样的权威闭环。
 export default function CharStatusPanel() {
@@ -43,7 +43,7 @@ export default function CharStatusPanel() {
     [t('panel.avoid'), c.avoid],
     [t('stats.attackSpeed'), c.attackSpeed],
     [t('stats.range'), c.shootingRange],
-    [t('stats.weight'), c.maxWeight],
+    [t('panel.move'), c.moveSpeed],
   ];
 
   const resist: Array<[string, number]> = [
@@ -54,21 +54,16 @@ export default function CharStatusPanel() {
     [t('stats.ice'), c.resIce],
   ];
 
-  const movement: Array<[string, string | number]> = [
-    [t('stats.gear'), c.moveSpeed],
-    [t('stats.walk'), c.walkSpeed],
-    [t('stats.run'), c.runSpeed],
-  ];
-
   return (
     <div className="jp-charpanel">
       <div className="jp-char-head">
-        <span className="jp-name">{c.name}</span>
         <span className="jp-job">{t(JOB_KEYS[c.job] ?? 'job.fighter')}</span>
+        <span className="jp-name">{c.name}</span>
+        <span className="jp-clan">{t('panel.noClan')}</span>
       </div>
       <div className="jp-char-sub">
         <span>{t('panel.lv', { level: c.level })}</span>
-        <span className="jp-pt">{t('stats.statePoint')}: {c.statePoint}</span>
+        <span>{t('stats.exp')} {c.exp}/{c.nextExp}</span>
       </div>
 
       <div className="jp-vitals">
@@ -97,6 +92,10 @@ export default function CharStatusPanel() {
             </button>
           </div>
         ))}
+        <div className="jp-alloc-rem">
+          <span>{t('stats.statePoint')}</span>
+          <b>{c.statePoint}</b>
+        </div>
       </div>
 
       <div className="jp-sec">{t('panel.group.combat')}</div>
@@ -110,19 +109,9 @@ export default function CharStatusPanel() {
       </div>
 
       <div className="jp-sec">{t('panel.group.resist')}</div>
-      <div className="jp-grid2">
+      <div className="jp-vitals">
         {resist.map(([label, value]) => (
-          <div key={label} className="jp-field">
-            <span>{label}</span>
-            <b>{value}</b>
-          </div>
-        ))}
-      </div>
-
-      <div className="jp-sec">{t('panel.group.move')}</div>
-      <div className="jp-grid2">
-        {movement.map(([label, value]) => (
-          <div key={label} className="jp-field">
+          <div key={label} className="jp-vital">
             <span>{label}</span>
             <b>{value}</b>
           </div>

@@ -43,6 +43,7 @@
     "title": "Character Info",
     "close": "Close",
     "noData": "No character data yet (auto-syncs after entering game)",
+    "noClan": "No Clan",
     "hp": "HP",
     "mp": "MP",
     "sp": "SP",
@@ -58,28 +59,24 @@
     "crit": "Crit",
     "block": "Block",
     "avoid": "Avoid",
-    "move": "Move(walk/run)",
+    "move": "Move",
     "group": {
       "base": "Base Stats",
       "combat": "Combat",
-      "resist": "Resistance",
-      "move": "Movement"
+      "resist": "Resistance"
     }
   },
   "stats": {
     "hit": "Hit",
     "attackSpeed": "Atk Spd",
     "range": "Range",
-    "weight": "Weight",
     "statePoint": "Spare Points",
+    "exp": "EXP",
     "bio": "Bio",
     "poison": "Poison",
     "fire": "Fire",
     "lightning": "Lightning",
-    "ice": "Ice",
-    "gear": "Gear",
-    "walk": "Walk",
-    "run": "Run"
+    "ice": "Ice"
   },
   "race": {
     "tempscron": "Tempscron",

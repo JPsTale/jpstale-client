@@ -43,6 +43,7 @@
     "title": "角色信息",
     "close": "关闭",
     "noData": "暂无角色数据（进入游戏后自动同步）",
+    "noClan": "无公会",
     "hp": "生命",
     "mp": "魔力",
     "sp": "体力",
@@ -58,28 +59,24 @@
     "crit": "必杀",
     "block": "格挡",
     "avoid": "回避",
-    "move": "移速(走/跑)",
+    "move": "移速",
     "group": {
       "base": "基础属性",
       "combat": "战斗属性",
-      "resist": "抗性",
-      "move": "移动速度"
+      "resist": "抗性"
     }
   },
   "stats": {
     "hit": "命中",
     "attackSpeed": "攻速",
     "range": "射程",
-    "weight": "负重",
     "statePoint": "剩余点数",
+    "exp": "经验值",
     "bio": "生物",
     "poison": "剧毒",
     "fire": "火焰",
     "lightning": "闪电",
-    "ice": "冰霜",
-    "gear": "档位",
-    "walk": "步行",
-    "run": "奔跑"
+    "ice": "冰霜"
   },
   "race": {
     "tempscron": "坦普族",
