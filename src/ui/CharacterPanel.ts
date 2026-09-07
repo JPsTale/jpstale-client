@@ -108,8 +108,8 @@ const T = {
   ar: [710, 454] as const,
   ad: [710, 473] as const,
   def: [710, 494] as const,
-  spd: [710, 514] as const,
-  abs: [710, 533] as const,
+  spd: [710, 533] as const,
+  abs: [710, 514] as const,
   // 必杀/格挡/回避（原版这些率在 OtherStateShow 展示，服务端按原版公式计算，此处补到面板右下方）
   cri: [708, 545] as const,
   blk: [708, 562] as const,
