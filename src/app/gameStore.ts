@@ -44,6 +44,9 @@ export interface GameCharacter {
   resFire: number;
   resLightning: number;
   resIce: number;
+  regenHp: number;
+  regenMp: number;
+  regenStm: number;
 }
 
 export interface GamePlayer {

@@ -3735,6 +3735,15 @@ export namespace jpt {
             /** S2C_CharacterStatus avoid. */
             avoid: number;
 
+            /** S2C_CharacterStatus hpRegen. */
+            hpRegen: number;
+
+            /** S2C_CharacterStatus mpRegen. */
+            mpRegen: number;
+
+            /** S2C_CharacterStatus stmRegen. */
+            stmRegen: number;
+
             /**
              * Creates a new S2C_CharacterStatus instance using the specified properties.
              * @param [properties] Properties to set
@@ -3935,6 +3944,15 @@ export namespace jpt {
 
                 /** S2C_CharacterStatus avoid */
                 avoid?: (number|null);
+
+                /** S2C_CharacterStatus hpRegen */
+                hpRegen?: (number|null);
+
+                /** S2C_CharacterStatus mpRegen */
+                mpRegen?: (number|null);
+
+                /** S2C_CharacterStatus stmRegen */
+                stmRegen?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

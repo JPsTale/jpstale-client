@@ -10,9 +10,12 @@ const JOB_KEYS: Record<number, string> = {
   9: 'job.assassin', 10: 'job.shaman',
 };
 
+// 快速分配档位：−100 −10 −1 +1 +10 +100
+const ALLOC_STEPS = [-100, -10, -1, 1, 10, 100];
+
 // 正式角色面板（Phase 2）：现代左侧详情栏（可拖动）。
-// 数据只来自 gameStore（S2C_CharacterStatus 经 bridge 写入）；加点走 bridge 发 C2S，
-// 服务端回推完整状态后本面板自动刷新 —— 与 canvas 版同样的权威闭环。
+// 数据只来自 gameStore（S2C_CharacterStatus 经 bridge 写入）；加点/撤回走 bridge 发 C2S，
+// 服务端回推完整状态后本面板自动刷新 —— 权威闭环。
 export default function CharStatusPanel() {
   const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
 
@@ -27,11 +30,17 @@ export default function CharStatusPanel() {
     { stat: 'health', label: t('panel.health'), value: c.health },
   ];
 
-  const vitals: Array<{ key: 'hp' | 'mp' | 'sp'; cur: number; max: number }> = [
-    { key: 'hp', cur: c.hp, max: c.maxHp },
-    { key: 'mp', cur: c.mp, max: c.maxMp },
-    { key: 'sp', cur: c.sp, max: c.maxSp },
+  const vitals: Array<{ key: 'hp' | 'mp' | 'sp'; cur: number; max: number; regen: number }> = [
+    { key: 'hp', cur: c.hp, max: c.maxHp, regen: c.regenHp },
+    { key: 'mp', cur: c.mp, max: c.maxMp, regen: c.regenMp },
+    { key: 'sp', cur: c.sp, max: c.maxSp, regen: c.regenStm },
   ];
+
+  // 生命/魔法/耐力：像战斗属性一样两列卡片，右侧显示每秒恢复值（1 位小数）
+  const vitalCells: Array<{ key: string; label: string; value: string }> = vitals.flatMap((v) => [
+    { key: `${v.key}-v`, label: t(`panel.${v.key}`), value: `${v.cur}/${v.max}` },
+    { key: `${v.key}-r`, label: t('stats.regen'), value: `+${v.regen.toFixed(1)}/s` },
+  ]);
 
   const combat: Array<[string, string | number]> = [
     [t('panel.attack'), `${c.attackMin}~${c.attackMax}`],
@@ -66,33 +75,40 @@ export default function CharStatusPanel() {
         <span>{t('stats.exp')} {c.exp}/{c.nextExp}</span>
       </div>
 
-      <div className="jp-vitals">
-        {vitals.map((v) => (
-          <div key={v.key} className="jp-vital">
-            <span>{t(`panel.${v.key}`)}</span>
-            <b>{v.cur}/{v.max}</b>
+      <div className="jp-grid2">
+        {vitalCells.map((v) => (
+          <div key={v.key} className="jp-field">
+            <span>{v.label}</span>
+            <b>{v.value}</b>
           </div>
         ))}
       </div>
 
       <div className="jp-sec">{t('panel.group.base')}</div>
-      <div className="jp-alloc">
+      <div className="jp-grid2">
         {statRows.map((s) => (
-          <div key={s.stat} className="jp-alloc-row">
-            <span className="jp-alloc-label">{s.label}</span>
-            <b className="jp-alloc-value">{s.value}</b>
-            <button
-              type="button"
-              className="jp-plus"
-              disabled={c.statePoint <= 0}
-              onClick={() => sendAllocateStat(s.stat)}
-              aria-label={`${s.label} +1`}
-            >
-              +
-            </button>
+          <div key={s.stat} className="jp-alloc-card">
+            <div className="jp-alloc-head">
+              <span>{s.label}</span>
+              <b>{s.value}</b>
+            </div>
+            <div className="jp-alloc-btns">
+              {ALLOC_STEPS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={n > 0 ? 'jp-alloc-btn jp-alloc-btn--plus' : 'jp-alloc-btn jp-alloc-btn--minus'}
+                  disabled={n > 0 ? c.statePoint < n : s.value <= 1}
+                  onClick={() => sendAllocateStat(s.stat, n)}
+                  aria-label={`${s.label} ${n > 0 ? '+' : ''}${n}`}
+                >
+                  {n > 0 ? '+' : '−'}{Math.abs(n)}
+                </button>
+              ))}
+            </div>
           </div>
         ))}
-        <div className="jp-alloc-rem">
+        <div className="jp-field jp-alloc-rem">
           <span>{t('stats.statePoint')}</span>
           <b>{c.statePoint}</b>
         </div>
@@ -109,9 +125,9 @@ export default function CharStatusPanel() {
       </div>
 
       <div className="jp-sec">{t('panel.group.resist')}</div>
-      <div className="jp-vitals">
+      <div className="jp-grid2">
         {resist.map(([label, value]) => (
-          <div key={label} className="jp-vital">
+          <div key={label} className="jp-field">
             <span>{label}</span>
             <b>{value}</b>
           </div>

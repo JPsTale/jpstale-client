@@ -230,15 +230,68 @@
 }
 
 .jp-alloc-rem {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 5px;
-  padding-top: 5px;
-  border-top: 1px dashed #33373d;
-  font-size: 13px;
+  align-items: center;
   color: #ffd98a;
   font-weight: 600;
+  background: #1e2017;
+}
+
+/* 属性分配卡片（grid2 内）：每格 label+值 上排，±1/±10/±100 按钮下排 */
+.jp-alloc-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 6px;
+  background: #14161a;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.jp-alloc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.jp-alloc-head b {
+  font-weight: 600;
+  color: #ffd98a;
+  font-variant-numeric: tabular-nums;
+}
+
+.jp-alloc-btns {
+  display: flex;
+  gap: 3px;
+}
+
+.jp-alloc-btn {
+  flex: 1;
+  min-width: 0;
+  height: 20px;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1;
+  border-radius: 3px;
+  border: 1px solid #3a3f46;
+  background: #262a31;
+  color: #c8ccd2;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.jp-alloc-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.jp-alloc-btn--plus {
+  color: #9fe8a8;
+}
+
+.jp-alloc-btn--minus {
+  color: #ff8a7a;
 }
 
 .jp-grid2 {

@@ -50,6 +50,9 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     resFire: e.resFire || 0,
     resLightning: e.resLightning || 0,
     resIce: e.resIce || 0,
+    regenHp: typeof e.hpRegen === 'number' ? e.hpRegen : 0,
+    regenMp: typeof e.mpRegen === 'number' ? e.mpRegen : 0,
+    regenStm: typeof e.stmRegen === 'number' ? e.stmRegen : 0,
   };
 }
 
