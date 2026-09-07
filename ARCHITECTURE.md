@@ -8,10 +8,10 @@
 |----|------|------|
 | **引擎** | three.js（保持 0.160.0，npm 安装） | 调研代码（maps/pviewer）已用 0.160 验证跑通，绑定层可直接迁移。无致命 bug 不升级。 |
 | **语言/构建** | TypeScript + Vite | 已建成骨架（js package.json / vite.config.ts / tsconfig.json / index.html） |
-| **UI/状态** | 原生 DOM overlay + 模块化 TS，不引 UI 框架 | MMO 客户端主循环驱动，非数据驱动；界面仅登录/选角/HUD 几屏 |
-| **仓库边界** | 客户端独立仓库（`jpstale-web`），不进 pt-web-server | 已调研原型（maps/pviewer/spawn-debug/simulator）是过渡产物，最终迁出；客户端自包含 |
-| **资产路径** | `/res/*`（废弃 `/pt/exm-run/`）| 做成 `ASSET_BASE` 可配置常量；**前端自持**：dev 用 vite 插件/静态中间件把 `E:\JPsTale\client` 映射到 `/res`（不拷贝版权资产、不污染构建产物）；生产指向部署位置 |
-| **网络传输** | JSON over WS `:10008`（/pt/ws），proto 为语义基准 | net/ 做 transport 抽象，将来可切二进制 proto（需服务端新增 WS 通道） |
+| **UI/状态（面板层）** | 高频 HUD/小地图 = canvas；低频文本面板（角色/装备/技能/聊天/设置）= React + 外部 gameStore | 主循环驱动部分保持 canvas（位图原生，canvas 内不写整句动态文字）；React 只挂低频面板层（`src/ui/react/`，打开才渲染，不参与每帧）。状态单向流动：`net/bridge → app/gameStore → ui/react`（React 只读渲染，写动作走 bridge 发消息） |
+| **仓库边界** | 客户端独立仓库（`jpstale-client`），不进 pt-web-server | 资产 `/res`（废弃 `/pt/exm-run/`）| 做成 `ASSET_BASE` 可配置常量；dev 用 vite 插件把本地游戏资产根映射到 `/res`（不拷贝版权资产、不污染构建产物）| 
+| **网络传输** | 二进制 proto over WS `:10008`（浏览器主通道）；TCP:10007 供原生客户端 | client `net/transport` 走 protobuf（encodeClient/decodeServer）；服务端 `JsonToProtoHandler` 保留旧 JSON 信封回退。网络消息语义唯一真源是 proto |
+| **面板层框架** | React（`react` + `react-dom`，TSX），volatile 用 `useSyncExternalStore` 接 gameStore | 不引状态库/ui 组件库；dev 无 fast-refresh（可验证性优先，改面板整页刷新；需要时再评估 `@vitejs/plugin-react` 与 Vite 的兼容） |
 | **动画管线** | RemotePlayer/Monster/NPC/角色统一一套 | 共享 inx/smb 解析 → 骨骼 → 动画状态机 |
 | **渲染策略** | 用 TS 重写渲染核心（不直接引用调研 JS） | 调研代码是 JS，重写为 TS 正式模块 |
 | **协议真源** | `pt-common/src/main/proto/base/message.proto` + `common.proto` | 网络消息语义的唯一依据 |
@@ -19,68 +19,56 @@
 ## 2. 服务器真实形态（已确认，供 net/ 与 render/ 参照）
 
 - **二进制 proto over TCP:10007**（NettyServer）：`LengthFieldBasedFrameDecoder(16MB, 0, 4, 0, 4)` = 4 字节长度前缀 + protobuf。纯 TCP，浏览器原生无法直连。
-- **JSON over WebSocket:10008**（WebSocketServer + JsonToProtoHandler）：浏览器直连通道。`{type, data}` 信封，服务端 JSON→proto 进业务（toClientMessage / serverMessageToJson 一一映射）。
-- 登录流程（spawn-debug 已验证）：`auth.login` → `auth.serverList` → `auth.selectServer` → `auth.characterList` → `auth.selectCharacter` → `auth.enterGame`（S2C_PlayerState → `auth.enterGame`）→ `game.enterMap` → `game.mapEntered` → `map.aabbs` → 快照 `game.snapshot`（≈150ms 全量覆盖）。
-- 移动：客户端 `game.moveInput {angle, running}` 意图上行，服务端权威推位置；客户端预测 `speed*0.05`/tick，快照漂移>20 时 20% 拉回（静止硬同步）。
+- **浏览器主通道：二进制 proto over WebSocket:10008**（/pt/ws）：client `transport.send(encodeClient(msg))`，服务端 `WebSocketServer + JsonToProtoHandler`（对旧 JSON 信封兜底映射）。proto 消息语义见 `pt-common/src/main/proto/base/message.proto`。
+- 移动（movement-sync 已迭代）：客户端 `playerMove {angle, running, x, y, z}` 上行，服务端权威校验后回推 `PlayerState`；客户端预测距离 = 档位走/跑世界速度 × dt，快照漂移超阈值收敛。**速度档位 1~51**（服务端 `GameConstants`：档速 = 250 + 10×档位，帧步长 `((speed×coeff)>>8)/256` @60fps，coeff 走 180/跑 460）。
 - 攻击：`game.attack {targetId}`，距离 ≤150 每 1s 一发。
 
 ## 3. 工程目录与依赖方向（单向，绝不逆向）
 
 ```
 src/
-  main.ts             # 启动：createApp → 挂载场景 → 状态机
-  app/                # 应用外壳 + 主循环
-    App.ts            #   渲染器 + 相机 + 渲染循环（three）
-    Game.ts           #   主循环（RAF）：输入→状态同步→动画→render
-    State.ts          #   全局客户端状态
-  core/               # 纯逻辑层，零 three/DOM 依赖，可单测
+  main.ts             # 启动：创建各层 → 状态机（登录/选角/WORLD 切换）
+  app/                # 应用外壳 + 全局状态
+    State.ts          #   屏幕状态机（AppScreen/transition/getScreen）
+    gameStore.ts      #   框架无关状态 store（character/player/openPanel 快照；React 层只读）
+  core/               # 纯逻辑层，零 three/DOM 依赖
     binary.ts        #   readCString（统一，去重复）
-    sm-sin.ts        #   正弦/余弦查找表（wind/water）
-    smb-parser.ts    #   网格+骨骼二进制解析（角色/武器/动画 .smb/.smd）
-    smd-parser.ts    #   地图 .smd 解析（几何/材质/UV/光照）
-    inx-parser.ts    #   .inx 模型信息+加密动画条目
-    texture.ts       #   BMP/TGA 加密解码（地图 vs 角色 colorkey 差异做成配置项）
-    animation.ts     #   骨骼求值：quat/matMul/toYup/evalSkeleton
-    collision.ts     #   地图碰撞网格（纯数据）
-    anim-match.ts    #   动画条目匹配（精确/类型/职业）
-    anim-state-machine.ts # 动画状态机（STAND/RUN/ATTACK…）
-    weapon-type.ts   #   idCode→武器类型
-    job-data.ts      #   10 职业身体/头/骨骼资源路径
-    costume-body-map.ts # 时装→职业身体映射
-    sitem-weapon-index.ts # sItem↔idCode 数据表
+    smb-parser.ts    #   角色骨骼/动画 .smb/.smd
+    smd-parser.ts    #   地图 .smd 解析
+    texture.ts       #   BMP/TGA 加密解码
+    sm-sin.ts        #   正弦/余弦查找表
   render/            # three.js 绑定层，无业务逻辑
-    map-renderer.ts  #   地图网格+材质+每帧剔除/shader（wind/water/fog/lightmap）
-    skinned-builder.ts # 骨骼→THREE.Bone + SkinnedMesh
-    texture-loader.ts  # 解码数据→THREE.Texture（flipY/colorspace 按场景配置）
-    builders.ts      #   辅助几何（bone lines 调试）
-  world/             # 游戏实体（调研代码没有，新增 MMO 核心）
-    MapInstance.ts   #   一张图：地图渲染+碰撞+camera
-    Player.ts        #   本地控制玩家：输入→移动→动画状态机→渲染
-    RemotePlayer.ts  #   远端玩家：服务器状态驱动（无本地输入）
-    Monster.ts / NPC.ts # 服务器驱动实体（复用 RemotePlayer 动画管线）
-    SpawnManager.ts  #   实体生命周期
-    Lighting.ts      #   昼夜/场景光/火把
-  net/               # 网络（transport 抽象）
-    transport.ts     #   接口：connect/send/onMessage
-    json-transport.ts #   实现1：JSON over WS:10008（现在用）
-    protobuf-transport.ts # 实现2：二进制 proto over WS（将来，需服务端）
-    protocol.ts      #   消息类型定义（TS 类型对齐 proto）
-    ws.ts            #   浏览器 WS 封装（重连/心跳）
-  ui/                # 界面（原生 DOM overlay）
-    LoginPanel.ts    #   登录
-    CharSelect.ts    #   选角
-    Hud.ts           #   血条/技能栏/小地图/聊天
-  data/              # 静态索引数据（职业/武器/怪物表，源自 pviewer js+json）
+    map-renderer.ts  #   地图渲染（wind/water/fog/lightmap）
+    skinned-builder.ts # 骨骼 → SkinnedMesh
+    texture-loader.ts  # 解码 → THREE.Texture
+    model-cache.ts     # 模型预加载缓存
+  net/               # 网络（浏览器直连 10008，二进制 proto）
+    transport.ts     #   ws 封装（重连/心跳/ping 时间同步）+ onMessage/onJsonMessage
+    protocol.ts      #   ClientMessage 构造（encodeClient/decodeServer）
+    proto/base_message.d.ts # protobufjs 解析类型
+    bridge.ts        #   proto 消息 → app/gameStore（订阅 onMessage）
+  ui/
+    WorldView.ts     #   three 场景：自机预测 + 远端插值 + 小地图/昼夜
+    Hud.ts           #   HUD canvas（1280×720 缩放、位图、pointer-events:none）
+    CharacterPanel.ts#   canvas 角色面板（Phase 2 由 React 版替代后退役）
+    CharSelect.ts / LoginPanel.ts / ServerSelect.ts / LoadingScreen.ts
+    KeyBinding.ts / KeyBindingPanel.ts / SystemSettingsPanel.ts
+    react/           # React 面板层（低频文本面板）
+      mount.tsx      #   createReactPanels()：挂载根，show/hide（store.openPanel）
+      PanelsRoot.tsx #   按 openPanel 渲染唯一面板（互斥单值）
+      PanelShell.tsx #   通用外壳：遮罩/滑入/Esc/关闭
+      CharStatusDemo.tsx # Phase 1 验收页（读 store 渲染角色信息）
+      panels.css
+  i18n/              # t()/setLocale + locales/{zh,en}.json
 ```
-
-**依赖方向**：`ui`/`world`/`render` → `core` + `net`；`core` 不依赖任何东西；`net` 不依赖 three。
 
 ## 4. 各层要点
 
 - **core/**：从调研代码原样翻译，统一清理重复（readCString、matMulRow、两套 texture 解码器）。忠实还原二进制格式，不做算法"优化"（逆向代码，改算法会破坏兼容）。
 - **render/**：map-renderer 去掉 `window.__pt*` 全局钩子；updateDayNight/updateScroll/updateWater/updateWind 直接复用（逐帧时间参数 t*1000）。
 - **world/**：快照驱动实体；补插值/朝向（spawn-debug 是 teleport 式）；Monster state 直接映射动画状态机（CHASE→RUN/ATTACK→ATTACK/IDLE→STAND）。
-- **net/**：transport 抽象，现在 JSON 实现；`/pt/ws` 端点（连 10008 时注意 vite proxy 与 nginx 路由）。
+- **net/**：`transport` 发送二进制 proto（encodeClient）；`bridge` 订阅消息把 S2C 状态写进 gameStore。写动作（allocStat/playerMove）由调用方经 `protocol.ts` 构造后 `send()`。
+- **ui/react/**：只渲染 `openPanel` 对应的唯一面板（互斥天然）；面板数据只从 `useSyncExternalStore(subscribeGame, getGameSnapshot)` 读，写发动作走 bridge，禁止直接改 store 外状态。
 
 ## 5. 当前进度
 
@@ -96,4 +84,4 @@ src/
   - main.ts（OrbitControls + 每帧 updateScroll/Wind/Water + 帧动画 + render 剔除）
   - 资产经 vite devAssets `/res` → `E:\JPsTale\client`；fore-1 静态+风/水/滚动已在浏览器渲染通过
 - [ ] 碰撞网格（render/collision，maps collision.js TS 化）
-- [ ] 登录→选角→进图联网链路（net/ + ui/）
+- [x] Phase 1（feat/ui）：React 面板层基建（gameStore + bridge + PanelsRoot/PanelShell/CharStatusDemo），构建验证通过；HUD 与 canvas 面板不受影响

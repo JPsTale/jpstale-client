@@ -39,6 +39,27 @@
       "entering": "正在进入 {map}"
     }
   },
+  "panel": {
+    "title": "角色信息",
+    "close": "关闭",
+    "noData": "暂无角色数据（进入游戏后自动同步）",
+    "hp": "生命",
+    "mp": "魔力",
+    "sp": "体力",
+    "lv": "Lv.{level}",
+    "strength": "力量",
+    "spirit": "精神",
+    "talent": "才艺",
+    "agility": "敏捷",
+    "health": "体质",
+    "attack": "攻击",
+    "defense": "防御",
+    "absorption": "吸收",
+    "crit": "必杀",
+    "block": "格挡",
+    "avoid": "回避",
+    "move": "移速(走/跑)"
+  },
   "race": {
     "tempscron": "坦普族",
     "moryon": "魔灵族"

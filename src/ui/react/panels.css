@@ -1,0 +1,147 @@
+/* React 面板层样式：低频文本面板（角色/装备/技能/聊天等）。
+   与 HUD（canvas 位图层）共存：本层挂在独立 DOM 容器，仅面板打开时可见。
+   透明层不拦截世界输入；面板本体 pointer-events:auto。 */
+#jp-react-panels {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+  font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
+}
+
+.jp-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: all;
+}
+
+.jp-dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.jp-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  width: min(560px, 92vw);
+  background: #181a1f;
+  color: #e8e6e1;
+  border: 1px solid #3a3f46;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  pointer-events: auto;
+  overflow: hidden;
+}
+
+.jp-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: linear-gradient(#262a31, #1d2025);
+  border-bottom: 1px solid #3a3f46;
+}
+
+.jp-panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.jp-panel-close {
+  background: none;
+  border: none;
+  color: #9aa0a6;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.jp-panel-close:hover {
+  color: #fff;
+}
+
+.jp-panel-body {
+  padding: 12px 14px;
+}
+
+.jp-nodata {
+  color: #8a8f96;
+  text-align: center;
+  padding: 24px 0;
+  font-size: 13px;
+}
+
+.jp-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px 12px;
+}
+
+.jp-field {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  padding: 3px 6px;
+  background: #14161a;
+  border-radius: 4px;
+}
+
+.jp-field b {
+  font-weight: 600;
+}
+
+.jp-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: #2a2d33;
+  overflow: hidden;
+  margin: 2px 0 8px;
+  flex: 1;
+}
+
+.jp-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.jp-bar-hp i {
+  background: linear-gradient(#e0554f, #b3342f);
+}
+
+.jp-bar-mp i {
+  background: linear-gradient(#4f8fd0, #2f63b3);
+}
+
+.jp-bar-sp i {
+  background: linear-gradient(#59b35e, #3a8e3f);
+}
+
+.jp-hud-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.jp-hud-label {
+  font-size: 12px;
+  color: #c8ccd2;
+  min-width: 2em;
+}
+
+.jp-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffd98a;
+}
+
+.jp-lv {
+  color: #8a8f96;
+  font-size: 12px;
+}

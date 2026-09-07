@@ -39,6 +39,27 @@
       "entering": "Entering {map}"
     }
   },
+  "panel": {
+    "title": "Character Info",
+    "close": "Close",
+    "noData": "No character data yet (auto-syncs after entering game)",
+    "hp": "HP",
+    "mp": "MP",
+    "sp": "SP",
+    "lv": "Lv.{level}",
+    "strength": "Str",
+    "spirit": "Spir",
+    "talent": "Tal",
+    "agility": "Agi",
+    "health": "Hea",
+    "attack": "Atk",
+    "defense": "Def",
+    "absorption": "Absorb",
+    "crit": "Crit",
+    "block": "Block",
+    "avoid": "Avoid",
+    "move": "Move(walk/run)"
+  },
   "race": {
     "tempscron": "Tempscron",
     "moryon": "Moryon"

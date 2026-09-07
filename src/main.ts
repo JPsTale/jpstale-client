@@ -21,6 +21,8 @@ import { createGameClock } from './ui/GameClock.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
 import { createSystemSettingsPanel } from './ui/SystemSettingsPanel.js';
+import { createReactPanels } from './ui/react/index.js';
+import { installBridge } from './net/bridge.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -112,6 +114,17 @@ const systemSettingsPanel = createSystemSettingsPanel(app, {
   onOpenKeyBindings: () => { systemSettingsPanel.hide(); keyBindingPanel.show(); },
 });
 
+// React 面板层（Phase 1 基建）：只渲染 store.openPanel；桥接把 proto 消息写进 store。
+const reactPanels = createReactPanels(app);
+installBridge();
+console.info('[ui] react panels layer ready — dev: window.__pt.ui.show/hide');
+
+// Phase 1 验证入口：进图后在控制台 window.__pt.ui.show('charStatus') 打开演示面板
+declare global {
+  interface Window { __pt: { ui: { show: typeof reactPanels.show; hide: typeof reactPanels.hide } }; }
+}
+window.__pt = { ui: { show: reactPanels.show, hide: reactPanels.hide } };
+
 function hideAll() {
   loginPanel.hide();
   serverSelectPanel.hide();
@@ -122,6 +135,7 @@ function hideAll() {
   keyBindingPanel.hide();
   worldView.hide();
   loadingScreen.hide();
+  reactPanels.hide();
 }
 
 onTimeSync((serverTimeMs: number) => {
@@ -156,6 +170,7 @@ keyBinding.onKeyDown((action) => {
       systemSettingsPanel.hide();
       keyBindingPanel.hide();
       characterPanel.hide();
+      reactPanels.hide();
       break;
   }
 });
