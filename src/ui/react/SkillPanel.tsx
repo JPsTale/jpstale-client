@@ -97,6 +97,25 @@ export default function SkillPanel() {
   const [tip, setTip] = useState<TipData | null>(null);
   // 当前按住的鼠标键（用于 F1-F8 录制判定目标拳）
   const pressedBtn = useRef<'left' | 'right' | null>(null);
+  // 当前鼠标悬停的技能格 → 其 onRecord 回调（原版 SkillButtonIndex 语义：悬停格上按 F 录制）
+  const hoverRecord = useRef<((target: 'left' | 'right', key: number) => void) | null>(null);
+
+  // F1-F8 录制：键盘事件需在 window 层捕获（技能格非焦点元素，onKeyDown 收不到）。
+  // 语义 = 原版 cSKILL::KeyDown：鼠标悬停技能格 + 正按住鼠标键 → 记 ShortKey + MousePosi。
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      const m = /^F([1-8])$/.exec(e.key);
+      if (!m) return;
+      const target = pressedBtn.current;
+      const rec = hoverRecord.current;
+      if (!target || !rec) return;
+      e.preventDefault();
+      rec(target, Number(m[1]));
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
 
   const classDir = character ? CLASS_DIR[character.job] ?? 'fighter' : 'fighter';
   const skills = character ? SKILLS[classDir] ?? [] : [];
@@ -180,6 +199,8 @@ export default function SkillPanel() {
             onRecord={(target, key) => setQuickBinding(key - 1, { classDir, iconFile: 'skill_normal', target })}
             bindState={pressedBtn}
             quickKeyOf={(iconFile) => quickKeyOf(classDir, iconFile)}
+            onHover={() => { hoverRecord.current = (target, key) => setQuickBinding(key - 1, { classDir, iconFile: 'skill_normal', target }); }}
+            onHoverLeave={() => { hoverRecord.current = null; }}
           />
         </div>
       </div>
@@ -202,6 +223,8 @@ export default function SkillPanel() {
                 onChangeLevel={(v) => setDbgLevel(s.iconFile, v)}
                 bindState={pressedBtn}
                 onTip={setTip}
+                onHover={() => { hoverRecord.current = (target, key) => setQuickBinding(key - 1, { classDir, iconFile: s.iconFile.replace(/\.bmp$/i, ''), target }); }}
+                onHoverLeave={() => { hoverRecord.current = null; }}
               />
             ))}
           </div>
@@ -276,8 +299,10 @@ function NormalAttackCell(props: {
   onRecord(target: 'left' | 'right', key: number): void;
   bindState: React.MutableRefObject<'left' | 'right' | null>;
   quickKeyOf(iconFile: string): number | null;
+  onHover(): void;
+  onHoverLeave(): void;
 }) {
-  const { classDir, fistBindings, onEquip, onRecord, bindState, quickKeyOf } = props;
+  const { classDir, fistBindings, onEquip, onRecord, bindState, quickKeyOf, onHover, onHoverLeave } = props;
   const iconFile = 'skill_normal';
   const url = normalAttackIconUrl();
   const iconSrc = useSkillIconSrc(url);
@@ -290,6 +315,8 @@ function NormalAttackCell(props: {
       className="jp-skill-cell"
       title={t('skills.normalAttackTip')}
       {...actions}
+      onMouseEnter={onHover}
+      onMouseLeave={onHoverLeave}
     >
       <div className="jp-skill-iconbox">
         <img className="jp-skill-icon" src={iconSrc} alt={t('skills.normalAttack')} />
@@ -320,8 +347,10 @@ function SkillCell(props: {
   onChangeLevel(lv: number | null): void;
   bindState: React.MutableRefObject<'left' | 'right' | null>;
   onTip: (tip: TipData | null) => void;
+  onHover(): void;
+  onHoverLeave(): void;
 }) {
-  const { skill, classDir, lv, dbgLv, fistOf, quickKey, onEquip, onRecord, onChangeLevel, bindState, onTip } = props;
+  const { skill, classDir, lv, dbgLv, fistOf, quickKey, onEquip, onRecord, onChangeLevel, bindState, onTip, onHover, onHoverLeave } = props;
   const learned = lv > 0;
   const masteryPct = 0; // 熟练度占位：服务端推送后替换
   const iconSrc = useSkillIconSrc(skillIconUrl(classDir, skill.iconFile));
@@ -347,9 +376,12 @@ function SkillCell(props: {
       className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}
       title={title}
       {...actions}
-      onMouseEnter={(e) => learned && onTip({ skill, lv, x: e.clientX, y: e.clientY })}
+      onMouseEnter={(e) => {
+        onHover();
+        learned && onTip({ skill, lv, x: e.clientX, y: e.clientY });
+      }}
       onMouseMove={(e) => learned && onTip({ skill, lv, x: e.clientX, y: e.clientY })}
-      onMouseLeave={() => onTip(null)}
+      onMouseLeave={() => { onHoverLeave(); onTip(null); }}
     >
       <div className="jp-skill-iconbox">
         <img className={learned ? 'jp-skill-icon' : 'jp-skill-icon jp-skill-icon--locked'} src={iconSrc} alt={skill.name} />
