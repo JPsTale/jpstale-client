@@ -20,7 +20,7 @@ export interface Hud {
   /** 同步走/跑状态到 tooltip 展示 */
   setRunFlag(run: boolean): void
   /** 用户动作回调（走跑按钮 / 系统按钮 / 角色状态按钮 / 技能面板按钮等） */
-  onAction?: (action: 'toggleRun' | 'system' | 'status' | 'skills') => void
+  onAction?: (action: 'toggleRun' | 'system' | 'status' | 'skills' | 'inventory') => void
 }
 
 const W = 1280
@@ -256,7 +256,7 @@ export function createHud(container: HTMLElement): Hud {
     uiState.runFlag = run;
   }
 
-  let onAction: ((action: 'toggleRun' | 'system' | 'status' | 'skills') => void) | undefined;
+  let onAction: ((action: 'toggleRun' | 'system' | 'status' | 'skills' | 'inventory') => void) | undefined;
 
   // 走跑按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
   let prevPtrDown = false;
@@ -272,10 +272,11 @@ export function createHud(container: HTMLElement): Hud {
     if (mx >= 569 && mx < 595 && my >= 555 && my < 581) {
       onAction?.('toggleRun');
     }
-    // 6 功能按钮（b0..b5）：b0=角色状态、b2=技能面板、b5=系统；其余面板未实现
+    // 6 功能按钮（b0..b5）：b0=角色状态、b1=背包、b2=技能面板、b5=系统
     for (let bt = 0; bt < 6; bt++) {
       if (mx >= 648 + bt * 25 && mx < 648 + bt * 25 + 25 && my >= 560 && my < 587) {
         if (bt === 0) onAction?.('status');
+        if (bt === 1) onAction?.('inventory');
         if (bt === 2) onAction?.('skills');
         if (bt === 5) onAction?.('system');
         break;

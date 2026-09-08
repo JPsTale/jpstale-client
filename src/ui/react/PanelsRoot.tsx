@@ -4,6 +4,7 @@ import { t } from '../../i18n/index.js';
 import PanelShell from './PanelShell.js';
 import CharStatusPanel from './CharStatusPanel.js';
 import SkillPanel from './SkillPanel.js';
+import ItemPanel from './ItemPanel.js';
 
 function renderPanel(panel: OpenPanel) {
   if (panel === 'charStatus') {
@@ -17,6 +18,13 @@ function renderPanel(panel: OpenPanel) {
     return (
       <PanelShell key="skills" panel="skills" title={t('panel.skills')} align="left" width="auto">
         <SkillPanel />
+      </PanelShell>
+    );
+  }
+  if (panel === 'inventory') {
+    return (
+      <PanelShell key="inventory" panel="inventory" title={t('panel.inventory')} align="left" width="auto">
+        <ItemPanel />
       </PanelShell>
     );
   }

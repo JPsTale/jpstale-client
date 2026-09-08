@@ -71,6 +71,9 @@ export interface WorldView {
   playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
+  /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型 */
+  updateSelfAppearance(appearance?: CharacterAppearance): void;
+  updateRemoteAppearance(playerId: number, appearance?: CharacterAppearance): void;
   /** 怪物出现（S2C_MonsterAppear）：modelFile 资产路径 + 位置/朝向 → 渲染怪物演员 */
   monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, x: number, y: number, z: number, angle: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
@@ -850,6 +853,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface RemoteActor {
     playerId: number;
     name: string;
+    jobId: number;
+    level: number;
     root: THREE.Group;
     bodyGroup: THREE.Group;
     headGroup: THREE.Group;
@@ -1140,6 +1145,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         actorObj = {
           playerId: pid,
           name: actorInfo.name,
+          jobId,
+          level: actorInfo.level,
           root, bodyGroup, headGroup,
           bones, skeleton,
           animSmb: result.animSmb,
@@ -1574,6 +1581,60 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     renderer.setSize(root.clientWidth, root.clientHeight, false);
   }
 
+  // —— 外观更新（穿脱装备/武器切换 S2C_AppearanceUpdate 驱动）——
+  // 自机：重建角色模型（移除旧 charGroup → 重新 loadPlayer），位置/朝向保留（selfPos/selfAngle 权威）
+  async function reloadSelfModel(appearance: CharacterAppearance | undefined): Promise<void> {
+    if (!scene) return;
+    if (charGroup) {
+      scene.remove(charGroup);
+      charGroup = null;
+    }
+    const jobId = appearance?.classId || selfJobId || 1;
+    await loadPlayer(appearance, jobId);
+    // 真实装备武器挂载（skillDbg 调试为空手时按外观挂）；旧武器先清
+    await mountAppearanceWeapon(appearance);
+  }
+
+  // 按外观 dorpItem 挂真实武器到手部骨骼（selfWeaponGroup 已由 applyDbgWeapon 管理时先清）
+  async function mountAppearanceWeapon(appearance: CharacterAppearance | undefined): Promise<void> {
+    if (!scene || !charGroup) return;
+    const dorp = appearance?.weaponDorp;
+    if (!dorp) return; // 空手（外观无武器）
+    try {
+      const wres = await loadWeaponModel(dorp);
+      await loadTextures(wres.texturesToLoad);
+      const boneName = appearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
+      const bone = findBone(charGroup, boneName);
+      if (bone) {
+        // 移除旧自机武器（无论来自外观还是 dbg）
+        if (selfWeaponGroup) {
+          bone.remove(selfWeaponGroup);
+        }
+        selfWeaponGroup = wres.group;
+        bone.add(wres.group);
+      }
+    } catch (e) {
+      console.warn('[WorldView] 外观武器挂载失败 dorp=' + dorp, e);
+    }
+  }
+
+  // 远端：移除旧演员 → 用其当前位置重建（新外观）
+  async function reloadRemoteModel(playerId: number, appearance: CharacterAppearance | undefined): Promise<void> {
+    const old = remotes.get(playerId);
+    if (!old) return;
+    const p = old.root.position;
+    const name = old.name || '';
+    const jobId = appearance?.classId || old.jobId || 1;
+    const level = old.level ?? 1;
+    const angle = old.root.rotation.y;
+    despawnRemote(playerId);
+    spawnRemote({
+      playerId, name, classId: jobId, level,
+      x: p.x, y: p.y, z: p.z, angle,
+      appearance,
+    });
+  }
+
   return {
     async show(enterGame, hooks) {
       loadHooks = hooks ?? null;
@@ -1691,6 +1752,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (Number.isFinite(runWps) && runWps > 0) selfRunWps = runWps;
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
+    updateSelfAppearance: (appearance) => { void reloadSelfModel(appearance); },
+    updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     monsterAppear: (monsterId, _templateId, name, modelFile, _level, x, y, z, angle) => {
       spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, x, y, z, angle: angle || 0 });
     },

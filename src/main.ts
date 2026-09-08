@@ -104,6 +104,9 @@ keyBinding.onKeyDown((action) => {
     case 'skillPanel':
       reactPanels.toggle('skills');
       break;
+    case 'inventory':
+      reactPanels.toggle('inventory');
+      break;
     case 'minimap':
       worldView.toggleMinimap();
       break;
@@ -134,6 +137,8 @@ hudPanel.onAction = (action) => {
     reactPanels.toggle('charStatus');
   } else if (action === 'skills') {
     reactPanels.toggle('skills');
+  } else if (action === 'inventory') {
+    reactPanels.toggle('inventory');
   }
 };
 
@@ -383,6 +388,28 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'playerDisappear': {
       worldView.playerDisappear(Number(msg.playerDisappear!.playerId));
+      break;
+    }
+    case 'appearanceUpdate': {
+      const a = msg.appearanceUpdate!;
+      const pa = a.appearance;
+      const app = pa ? {
+        classId: pa.classId || 0,
+        head: pa.head || 0,
+        rank: pa.rank || 0,
+        bodyModel: pa.bodyModel || undefined,
+        bodyModelIdcode: pa.bodyModelIdcode || 0,
+        weaponDorp: pa.weaponDorp || undefined,
+        weaponIdcode: pa.weaponIdcode || 0,
+        weaponPos: pa.weaponPos || 0,
+        sizeLevel: pa.sizeLevel || 0,
+      } : undefined;
+      const pid = Number(a.playerId);
+      if (worldView.isSelf(pid)) {
+        worldView.updateSelfAppearance(app);
+      } else {
+        worldView.updateRemoteAppearance(pid, app);
+      }
       break;
     }
     case 'monsterAppear': {

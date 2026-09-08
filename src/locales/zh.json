@@ -65,7 +65,8 @@
       "combat": "战斗属性",
       "resist": "抗性"
     },
-    "skills": "技能"
+    "skills": "技能",
+    "inventory": "背包"
   },
   "stats": {
     "hit": "命中",
@@ -270,5 +271,18 @@
         "name": "超级直击"
       }
     }
+  },
+  "item": {
+    "bag": "背包",
+    "gold": "金币",
+    "equip": "装备",
+    "unequip": "卸下",
+    "drop": "丢弃",
+    "noData": "背包为空",
+    "reqLevel": "需要等级",
+    "durability": "耐久",
+    "damage": "攻击",
+    "defence": "防御",
+    "count": "数量"
   }
 }

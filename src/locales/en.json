@@ -65,7 +65,8 @@
       "combat": "Combat",
       "resist": "Resistance"
     },
-    "skills": "Skills"
+    "skills": "Skills",
+    "inventory": "Inventory"
   },
   "stats": {
     "hit": "Hit",
@@ -270,5 +271,18 @@
         "name": "Double Blow"
       }
     }
+  },
+  "item": {
+    "bag": "Bag",
+    "gold": "Gold",
+    "equip": "Equip",
+    "unequip": "Unequip",
+    "drop": "Drop",
+    "noData": "Empty",
+    "reqLevel": "Req. Level",
+    "durability": "Durability",
+    "damage": "Damage",
+    "defence": "Defence",
+    "count": "Count"
   }
 }
