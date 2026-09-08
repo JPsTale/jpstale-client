@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, equipFist, setQuickBinding, type FistBinding } from '../../app/gameStore.js';
-import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, weaponIconUrl, normalAttackIconUrl, type SkillDef } from '../../game/skillData.js';
+import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, skillNameKey, weaponIconUrl, normalAttackIconUrl, type SkillDef } from '../../game/skillData.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { SKILL_DEBUG, subscribeSkillDbg, getSkillDbgSnapshot, dbgLevel, setDbgLevel, resetDbgLevels } from '../../game/skillDbg.js';
 import { t } from '../../i18n/index.js';
@@ -75,7 +75,7 @@ function useSkillIconSrc(url: string): string {
   return src;
 }
 
-interface TipData { skill: SkillDef; lv: number; x: number; y: number }
+interface TipData { skill: SkillDef; lv: number; x: number; y: number; displayName: string }
 
 // 可绑拳规则（useCode）：左键绑左拳需 LEFT/ALL；右键绑右拳需 RIGHT/ALL。
 function canBindLeft(useCode: SkillDef['useCode']): boolean {
@@ -231,7 +231,7 @@ export default function SkillPanel() {
           <b>{c.specialSkillPoint}</b>
         </div>
       </div>
-      {tip && createPortal(<SkillTip skill={tip.skill} lv={tip.lv} x={tip.x} y={tip.y} />, document.body)}
+      {tip && createPortal(<SkillTip skill={tip.skill} lv={tip.lv} x={tip.x} y={tip.y} displayName={tip.displayName} />, document.body)}
     </div>
   );
 }
@@ -354,7 +354,8 @@ function SkillCell(props: {
   const actions = useEquipAction({ onEquip, onRecord, bindState }, canBind, useCode);
 
   // 说明标题
-  let title = skill.name;
+  const displayName = t(skillNameKey(classDir, skill.iconFile)) || skill.name;
+  let title = displayName;
   if (learned) {
     if (fist === 'left') title += `\n[${t('skills.equipLeft')}]`;
     else if (fist === 'right') title += `\n[${t('skills.equipRight')}]`;
@@ -369,13 +370,13 @@ function SkillCell(props: {
       {...actions}
       onMouseEnter={(e) => {
         onHover();
-        learned && onTip({ skill, lv, x: e.clientX, y: e.clientY });
+        learned && onTip({ skill, lv, x: e.clientX, y: e.clientY, displayName });
       }}
-      onMouseMove={(e) => learned && onTip({ skill, lv, x: e.clientX, y: e.clientY })}
+      onMouseMove={(e) => learned && onTip({ skill, lv, x: e.clientX, y: e.clientY, displayName })}
       onMouseLeave={() => { onHoverLeave(); onTip(null); }}
     >
       <div className="jp-skill-iconbox">
-        <img className={learned ? 'jp-skill-icon' : 'jp-skill-icon jp-skill-icon--locked'} src={iconSrc} alt={skill.name} />
+        <img className={learned ? 'jp-skill-icon' : 'jp-skill-icon jp-skill-icon--locked'} src={iconSrc} alt={displayName} />
         <span className="jp-skill-lv">{learned ? `Lv.${lv}` : '—'}</span>
         {learned && canL && fist === null && !canR && (
           <span className="jp-skill-fistonly">L</span>
@@ -414,8 +415,8 @@ function SkillCell(props: {
   );
 }
 
-function SkillTip(props: { skill: SkillDef; lv: number; x: number; y: number }) {
-  const { skill, lv, x, y } = props;
+function SkillTip(props: { skill: SkillDef; lv: number; x: number; y: number; displayName: string }) {
+  const { skill, lv, x, y, displayName } = props;
   const masteryPct = 0;
   const tw = skillReqWeight(skill);
   const mp = demoMp(skill);
@@ -430,7 +431,7 @@ function SkillTip(props: { skill: SkillDef; lv: number; x: number; y: number }) 
   };
   return (
     <div className="jp-skill-tip" style={style}>
-      <div className="jp-skill-tip-name">{skill.name}</div>
+      <div className="jp-skill-tip-name">{displayName}</div>
       <div className="jp-skill-tip-row">{t('skills.reqLevel')}: <b>{skill.reqLv}</b></div>
       <div className="jp-skill-tip-row">{t('skills.skillType')}: {skill.type}</div>
       {skill.alt && <div className="jp-skill-tip-row jp-skill-tip-alt">({skill.alt})</div>}

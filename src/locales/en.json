@@ -207,6 +207,68 @@
     "lvAuto": "Level auto-inferred (click center number to set 0~10 manually)",
     "lvReset": "Clear manual level, back to auto-inferred",
     "dbgWeapon": "Debug weapon:",
-    "dbgReset": "Reset skill levels"
+    "dbgReset": "Reset skill levels",
+    "martial": {
+      "tma10_lowkick": {
+        "name": "Lowkick"
+      },
+      "tma12_s_mastery": {
+        "name": "Spirit Mastery"
+      },
+      "tma17_h_straight": {
+        "name": "Half Straight"
+      },
+      "tma20_rage_up": {
+        "name": "Rage Up"
+      },
+      "tma23_patriot": {
+        "name": "Patriot"
+      },
+      "tma26_r_elbow": {
+        "name": "Rolling Elbow"
+      },
+      "tma30_s_mastery": {
+        "name": "Speed Mastery"
+      },
+      "tma40_i_bulkup": {
+        "name": "Iron Bulkup"
+      },
+      "tma43_t_cannon": {
+        "name": "Tiger Cannon"
+      },
+      "tma46_war_cry": {
+        "name": "War Cry"
+      },
+      "tma50_j_heelkick": {
+        "name": "Jump Heelkick"
+      },
+      "tma60_combination": {
+        "name": "Combination"
+      },
+      "tma63_steelers": {
+        "name": "Steelers"
+      },
+      "tma66_b_check": {
+        "name": "Body Check"
+      },
+      "tma70_typhoon": {
+        "name": "Typhoon"
+      },
+      "tma80_d_mastery": {
+        "name": "Defence Mastery"
+      },
+      "tma83_h_hawk": {
+        "name": "Hunting Hawk"
+      },
+      "tma86_l_breaking": {
+        "name": "Leg Breaking"
+      },
+      "tma90_h_training": {
+        "name": "Hawk Training"
+      },
+      "tma14_dbblow": {
+        "name": "Double Blow"
+      }
+    }
   }
 }

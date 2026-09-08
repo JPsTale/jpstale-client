@@ -207,6 +207,68 @@
     "lvAuto": "自动推断等级（点中间数字手动设 0~10）",
     "lvReset": "清除手动等级，恢复自动推断",
     "dbgWeapon": "调试武器:",
-    "dbgReset": "重置技能等级"
+    "dbgReset": "重置技能等级",
+    "martial": {
+      "tma10_lowkick": {
+        "name": "力量控制"
+      },
+      "tma12_s_mastery": {
+        "name": "双回旋踢"
+      },
+      "tma17_h_straight": {
+        "name": "怒不可遏"
+      },
+      "tma20_rage_up": {
+        "name": "爱国者"
+      },
+      "tma23_patriot": {
+        "name": "肘部冲级"
+      },
+      "tma26_r_elbow": {
+        "name": "耐力掌控"
+      },
+      "tma30_s_mastery": {
+        "name": "即时飘散"
+      },
+      "tma40_i_bulkup": {
+        "name": "老虎加浓"
+      },
+      "tma43_t_cannon": {
+        "name": "战争呐喊"
+      },
+      "tma46_war_cry": {
+        "name": "跳跃蹬踏"
+      },
+      "tma50_j_heelkick": {
+        "name": "组合进攻"
+      },
+      "tma60_combination": {
+        "name": "钢铁侠"
+      },
+      "tma63_steelers": {
+        "name": "身体阻截"
+      },
+      "tma66_b_check": {
+        "name": "台风"
+      },
+      "tma70_typhoon": {
+        "name": "防御大师"
+      },
+      "tma80_d_mastery": {
+        "name": "狩猎之鹰"
+      },
+      "tma83_h_hawk": {
+        "name": "断行"
+      },
+      "tma86_l_breaking": {
+        "name": "强化训练"
+      },
+      "tma90_h_training": {
+        "name": "剑风"
+      },
+      "tma14_dbblow": {
+        "name": "超级直击"
+      }
+    }
   }
 }

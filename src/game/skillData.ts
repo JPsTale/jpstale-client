@@ -20,7 +20,7 @@ export interface SkillDef {
 // 职业 id（服务端 job）→ 资源目录名
 export const CLASS_DIR: Record<number, string> = {
   1: 'fighter', 2: 'mecha', 3: 'archer', 4: 'pikeman', 5: 'atalanta',
-  6: 'knight', 7: 'magician', 8: 'priestess', 9: 'assassin', 10: 'shaman',
+  6: 'knight', 7: 'magician', 8: 'priestess', 9: 'assassin', 10: 'shaman', 11: 'martial',
 };
 
 export const SKILLS: Record<string, SkillDef[]> = {
@@ -244,6 +244,30 @@ export const SKILLS: Record<string, SkillDef[]> = {
     { iconFile: 'ms86 g_nail.bmp', name: 'Phantom Nail', reqLv: 86, type: 'Target Area', useCode: 'RIGHT', alt: 'Ghosty Nail', weapon: [2], desc: 'Calls upon the spirit of the earth to attack nearby enemies' },
     { iconFile: 'ms90 h_regene.bmp', name: 'Occult Life', reqLv: 90, type: 'Passive', useCode: 'RIGHT', alt: 'High Regeneration', weapon: [2], desc: 'Permanently increases your maximum health with the power of sorcery' },
   ],
+  martial: [
+    // 拳师（私服 Martial/Button，20 技能；名称中文来自 Game.exe cls=32，英文名沿用 Button 文件名）
+    // useCode = Game.exe 提取：ALL NOT RIGHT ALL RIGHT RIGHT ALL NOT RIGHT ALL RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT NOT RIGHT RIGHT RIGHT
+    { iconFile: 'tma10 lowkick.bmp', name: 'Lowkick', reqLv: 10, type: 'Single Target', useCode: 'ALL' },
+    { iconFile: 'tma12 s_mastery.bmp', name: 'Spirit Mastery', reqLv: 12, type: 'Passive', useCode: 'NOT' },
+    { iconFile: 'tma14 dbblow.bmp', name: 'Double Blow', reqLv: 14, type: 'Single Target', useCode: 'RIGHT' },
+    { iconFile: 'tma17 h_straight.bmp', name: 'Half Straight', reqLv: 17, type: 'Single Target', useCode: 'ALL' },
+    { iconFile: 'tma20 rage up.bmp', name: 'Rage Up', reqLv: 20, type: 'Buff', useCode: 'RIGHT' },
+    { iconFile: 'tma23 patriot.bmp', name: 'Patriot', reqLv: 23, type: 'Buff', useCode: 'RIGHT' },
+    { iconFile: 'tma26 r_elbow.bmp', name: 'Rolling Elbow', reqLv: 26, type: 'Single Target', useCode: 'ALL' },
+    { iconFile: 'tma30 s_mastery.bmp', name: 'Speed Mastery', reqLv: 30, type: 'Passive', useCode: 'NOT' },
+    { iconFile: 'tma40 i_bulkup.bmp', name: 'Iron Bulkup', reqLv: 40, type: 'Buff', useCode: 'RIGHT' },
+    { iconFile: 'tma43 t_cannon.bmp', name: 'Tiger Cannon', reqLv: 43, type: 'Single Target', useCode: 'ALL' },
+    { iconFile: 'tma46 war cry.bmp', name: 'War Cry', reqLv: 46, type: 'Buff', useCode: 'RIGHT' },
+    { iconFile: 'tma50 j_heelkick.bmp', name: 'Jump Heelkick', reqLv: 50, type: 'Single Target', useCode: 'RIGHT' },
+    { iconFile: 'tma60 combination.bmp', name: 'Combination', reqLv: 60, type: 'Single Target', useCode: 'RIGHT' },
+    { iconFile: 'tma63 steelers.bmp', name: 'Steelers', reqLv: 63, type: 'Buff', useCode: 'RIGHT' },
+    { iconFile: 'tma66 b_check.bmp', name: 'Body Check', reqLv: 66, type: 'Single Target', useCode: 'RIGHT' },
+    { iconFile: 'tma70 typhoon.bmp', name: 'Typhoon', reqLv: 70, type: 'Area Attack', useCode: 'RIGHT' },
+    { iconFile: 'tma80 d_mastery.bmp', name: 'Defence Mastery', reqLv: 80, type: 'Passive', useCode: 'NOT' },
+    { iconFile: 'tma83 h_hawk.bmp', name: 'Hunting Hawk', reqLv: 83, type: 'Summon', useCode: 'RIGHT' },
+    { iconFile: 'tma86 l_breaking.bmp', name: 'Leg Breaking', reqLv: 86, type: 'Single Target', useCode: 'RIGHT' },
+    { iconFile: 'tma90 h_training.bmp', name: 'Hawk Training', reqLv: 90, type: 'Passive', useCode: 'RIGHT' },
+  ],
 };
 export const SKILLS_PER_PAGE = 4;
 export const SKILL_PAGES = 5;
@@ -261,6 +285,7 @@ export const CLASS_TIERS: Record<string, string[]> = {
   priestess: ['Priestess', 'Saintess', 'Bishop', 'Celestial', 'Prophetess'],
   assassin: ['Assassin', 'Rogue', 'Hermit', 'Shadower', 'Nightwalker'],
   shaman: ['Shaman', 'Clairvoyant', 'Conjurer', 'Necromancer', 'Oracle'],
+  martial: ['Martial Artist', 'Boxer', 'Kung Fu Master', 'Iron Body', 'Supreme Master'],
 };
 
 /** 普攻图标 URL（/res 资产：image/sinimage/skill/skill_normal.bmp，非职业目录） */
@@ -279,4 +304,28 @@ export function skillIconUrl(classDir: string, iconFile: string): string {
 /** 需求武器图标 URL（/res 资产：image/sinimage/skill/WeaponIcon/{1..13}.bmp） */
 export function weaponIconUrl(idx: number): string {
   return `/res/image/sinimage/skill/WeaponIcon/${idx}.bmp`;
+}
+
+/** 技能 i18n key（规范见 docs/skill-i18n-naming.md）：
+ *  `skills.{job}.{skill_id}.{field}`，其中 skill_id = Button 文件名去 .bmp 小写转下划线。
+ *  field: 'name' | 'desc' 等。locales 无词条时渲染层回退 SkillDef 默认英文。 */
+export function skillIconKey(iconFile: string): string {
+  return iconFile.replace(/\.bmp$/i, '').trim().toLowerCase().replace(/\s+/g, '_');
+}
+
+function skillKey(jobKey: string, iconFile: string, field: string): string {
+  return `skills.${jobKey}.${skillIconKey(iconFile)}.${field}`;
+}
+
+export function skillNameKey(jobKey: string, iconFile: string): string {
+  return skillKey(jobKey, iconFile, 'name');
+}
+
+export function skillDescKey(jobKey: string, iconFile: string): string {
+  return skillKey(jobKey, iconFile, 'desc');
+}
+
+/** 职业显示名（locales 词条可覆盖；缺则英文） */
+export function jobNameKey(jobKey: string): string {
+  return `job.name.${jobKey}`;
 }
