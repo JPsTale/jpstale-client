@@ -293,7 +293,14 @@ export function createHud(container: HTMLElement): Hud {
     ctx.save();
     ctx.translate(240, 120);
 
-    // 原版渲染顺序：Menu背景 → inter条 → 条 → 按钮
+    // 原版渲染顺序（sinMain sinDraw）：技能面板/拳位图标(cSkill.Draw)先画，
+    // 主 HUD 菜单背景(cInterFace.Draw 的 MatMenu=menu1/menu2)后画。
+    // menu-1/menu-2 的拳位是"圆形镂空"(圆内 alpha=0)，后画的主 HUD 会把拳位图标的
+    // 方形黑底圆外部分盖住 → 呈现"圆形槽内技能图标"，而非方形黑底。
+    // 故拳头/拳位技能图标必须先于 menu 背景绘制。
+    drawTex(textures['fistL'] ? 'fistL' : 'fist', 349, 541, 49, 46);
+    drawTex(textures['fistR'] ? 'fistR' : 'fist', 403, 541, 49, 46);
+
     // Menu背景 (原版 (288,472) 256x128 + (544,536) 256x64)
     drawTex('menu1', 288, 472, 256, 128);
     drawTex('menu2', 544, 536, 256, 64);
@@ -304,11 +311,6 @@ export function createHud(container: HTMLElement): Hud {
     drawBar('life', 319, 500, 16, 94, currentState.hp, currentState.maxHp);
     drawBar('mana', 465, 500, 16, 94, currentState.mp, currentState.maxMp);
     drawBar('stm', 303, 518, 8, 76, currentState.stm, currentState.maxStm);
-
-    // 默认拳头图标 (原版 sinSkill.cpp sLeftRightSkill)；装备技能后显示技能图标
-    // 左拳 (349,541) 49x46  右拳 (403,541) 49x46
-    drawTex(textures['fistL'] ? 'fistL' : 'fist', 349, 541, 49, 46);
-    drawTex(textures['fistR'] ? 'fistR' : 'fist', 403, 541, 49, 46);
 
     // EXP条
     drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
