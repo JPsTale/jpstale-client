@@ -3,7 +3,7 @@
 // 用 useSyncExternalStore 桥接（见 ui/react/*）：getGameSnapshot 返回稳定引用，
 // 只有 commit 时才替换快照对象，避免无谓重渲染。
 
-export type OpenPanel = 'charStatus' | 'skills';
+export type OpenPanel = 'charStatus' | 'skills' | 'inventory';
 
 // 拳位装备：标识一个技能（用职业目录+图标文件，跨职业唯一稳定）。
 // iconFile === 'skill_normal'（无 .bmp）表示普通攻击。
@@ -80,9 +80,56 @@ export interface GamePlayer {
   runSpeed: number;
 }
 
+/**
+ * 物品实例（对齐服务端 S2C ItemProto 动态字段）。
+ * 静态定义（图标/占格/名）查 itemDefs.ts（itemlistId/itemCode），此处只存实例动态值。
+ * location: 0=背包画布(12×12, slot=y*12+x) 1=仓库(9×9) 2=装备槽(1~13) 6=备用武器槽
+ */
+export interface GameItem {
+  uid: number;
+  itemlistId: number;
+  itemCode: number;
+  location: number;
+  slot: number;
+  count: number;
+  durability: number;
+  durabilityMax: number;
+  damageMin: number;
+  damageMax: number;
+  attackRating: number;
+  defence: number;
+  blockRating: number;   // 0.1 精度
+  absorb: number;        // 0.1 精度
+  speed: number;         // 0.1 精度
+  resBionic: number;
+  resFire: number;
+  resIce: number;
+  resLightning: number;
+  resPoison: number;
+  increaseLife: number;
+  increaseMana: number;
+  increaseStamina: number;
+  reqLevel: number;
+  reqStrength: number;
+  reqSpirit: number;
+  reqTalent: number;
+  reqAgility: number;
+  reqHealth: number;
+  price: number;
+  jobCodeMask: number;
+  agingLevel: number;
+}
+
+/** 物品容器快照（uid → 实例 索引，渲染时按 location/slot 排布）。 */
+export interface GameInventory {
+  items: GameItem[];      // 全部活物品（背包+仓库+装备+备用武器）
+  gold: number;
+}
+
 export interface GameSnapshot {
   character: GameCharacter | null;
   player: GamePlayer | null;
+  inventory: GameInventory | null;
   openPanels: readonly OpenPanel[];
   /** 当前装备到左右拳的技能（null=普通攻击；拳位默认普通攻击） */
   fistBindings: { left: FistBinding | null; right: FistBinding | null };
@@ -106,6 +153,7 @@ function loadInitial(): GameSnapshot {
   return {
     character: null,
     player: null,
+    inventory: null,
     openPanels: [],
     fistBindings: {
       left: fb?.left ?? null,
@@ -146,6 +194,41 @@ export function setGameCharacter(c: GameCharacter): void {
 
 export function setGamePlayer(p: GamePlayer): void {
   commit({ player: p });
+}
+
+// —— 物品容器 ——
+
+export function setInventory(inv: GameInventory): void {
+  commit({ inventory: inv });
+}
+
+/** 单件 upsert：uid 相同则替换（位置/属性可能变），否则新增。 */
+export function upsertInventoryItem(it: GameItem): void {
+  const cur = snapshot.inventory;
+  if (!cur) {
+    commit({ inventory: { items: [it], gold: 0 } });
+    return;
+  }
+  const idx = cur.items.findIndex((x) => x.uid === it.uid);
+  const items = idx >= 0 ? cur.items.map((x, i) => (i === idx ? it : x)) : [...cur.items, it];
+  commit({ inventory: { ...cur, items } });
+}
+
+/** 移除单件（丢弃/软删）。 */
+export function removeInventoryItem(uid: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) return;
+  commit({ inventory: { ...cur, items: cur.items.filter((x) => x.uid !== uid) } });
+}
+
+/** 金币变更。 */
+export function setInventoryGold(gold: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) {
+    commit({ inventory: { items: [], gold } });
+    return;
+  }
+  commit({ inventory: { ...cur, gold } });
 }
 
 // 面板不再互斥：原版共用窗口底部区域才需互斥，本客户端面板可自由拖动，

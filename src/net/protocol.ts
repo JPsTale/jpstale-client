@@ -39,6 +39,39 @@ export function allocateStat(stat: string, points = 1): jpt.base.ClientMessage.$
     });
 }
 
+/** 背包移动/换格（含背包↔仓库）：toLocation+toSlot 为画布目标 */
+export function inventoryMove(uid: number, toLocation: number, toSlot: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        inventoryMove: { uid, toLocation, toSlot },
+    });
+}
+
+/** 穿装备：背包物品 uid → 装备槽(1~13) */
+export function equipItem(uid: number, equipSlot: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        equipItem: { uid, equipSlot },
+    });
+}
+
+/** 脱装备：装备槽(1~13) → 背包 */
+export function unequipItem(equipSlot: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        unequipItem: { equipSlot },
+    });
+}
+
+/** 丢弃（软删） */
+export function dropItem(uid: number, count = 1): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        dropItem: { uid, count },
+    });
+}
+
+/** W 键武器切换（主装备 slot1/2 ↔ 备用武器槽） */
+export function switchWeapon(): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ switchWeapon: {} });
+}
+
 /** 技能释放（服务端权威）。
  *  skillId 占位：当前传 SKILLS[职业] 列表下标（0-19），由服务端当普攻处理；
  *  接入真实技能时改为服务端技能表（skilldata.skillid）的技能 id。
