@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JPsTale - Skill Icon Compare</title>
+    <style>
+      body { margin: 0; background: #1b1f27; color: #c8d3e0; font: 13px/1.6 system-ui, sans-serif; padding: 12px 16px; }
+      h1 { font-size: 16px; color: #9fe8a8; margin: 4px 0 2px; }
+      .sub { color: #8aa; font-size: 12px; margin-bottom: 14px; }
+      h2 { font-size: 13px; color: #dee7ff; margin: 18px 0 6px; border-bottom: 1px solid #2c3138; padding-bottom: 4px; }
+      table { border-collapse: collapse; }
+      td, th { border: 1px solid #2c3138; padding: 3px 8px; text-align: center; vertical-align: middle; }
+      th { font-size: 11px; color: #7c8899; font-weight: 400; }
+      td.name { text-align: left; font-size: 11px; color: #aab8c8; }
+      .cell { position: relative; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+      canvas { image-rendering: pixelated; background: #0d1117; }
+      .tag { font-size: 10px; color: #6a7; }
+      #log { position: fixed; bottom: 6px; left: 8px; right: 8px; max-height: 90px; overflow: auto; color: #8af; font: 11px monospace; opacity: .85; pointer-events: none; white-space: pre; }
+    </style>
+  </head>
+  <body>
+    <h1>技能图标对比：apps(exm) ↔ 私服(CN)</h1>
+    <div class="sub">同排：apps 原样 / apps 黑底透明 / 私服原样 / 私服黑底透明（资源：/res 与 /res/cnskill）</div>
+    <div id="content"></div>
+    <div id="log"></div>
+    <script type="module" src="/src/char/skill-icon-demo.ts"></script>
+  </body>
+</html>

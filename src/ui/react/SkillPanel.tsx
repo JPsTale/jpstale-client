@@ -102,6 +102,8 @@ export default function SkillPanel() {
 
   // F1-F8 录制：键盘事件需在 window 层捕获（技能格非焦点元素，onKeyDown 收不到）。
   // 语义 = 原版 cSKILL::KeyDown：鼠标悬停技能格 + 正按住鼠标键 → 记 ShortKey + MousePosi。
+  // 用捕获阶段注册：录制命中时 stopImmediatePropagation，阻止 main 的 keyBinding(bubble)
+  // 把同一 F 键当作"游戏内快捷切拳"处理；未命中录制则放行给 keyBinding 切拳。
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -111,10 +113,11 @@ export default function SkillPanel() {
       const rec = hoverRecord.current;
       if (!target || !rec) return;
       e.preventDefault();
+      e.stopImmediatePropagation();
       rec(target, Number(m[1]));
     }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
   }, []);
 
   const classDir = character ? CLASS_DIR[character.job] ?? 'fighter' : 'fighter';

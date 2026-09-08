@@ -21,6 +21,7 @@ import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
 import { createSystemSettingsPanel } from './ui/SystemSettingsPanel.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installBridge } from './net/bridge.js';
+import { pressQuickBinding } from './app/gameStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -114,6 +115,13 @@ keyBinding.onKeyDown((action) => {
       keyBindingPanel.hide();
       reactPanels.hide();
       break;
+    // F1~F8 快捷技能：把绑定在该键的技能自动切到对应拳（skill1=F1→index0）
+    case 'skill1': case 'skill2': case 'skill3': case 'skill4':
+    case 'skill5': case 'skill6': case 'skill7': case 'skill8': {
+      const idx = Number(action.slice(5)) - 1;
+      pressQuickBinding(idx);
+      break;
+    }
   }
 });
 
