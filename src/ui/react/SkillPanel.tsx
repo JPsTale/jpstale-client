@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, equipFist, setQuickBinding, type FistBinding } from '../../app/gameStore.js';
 import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, weaponIconUrl, normalAttackIconUrl, type SkillDef } from '../../game/skillData.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
-import { SKILL_DEBUG, subscribeSkillDbg, getSkillDbgSnapshot, dbgLevel, setDbgLevel, dbgWeaponIndex, setDbgWeapon, resetDbgLevels, DBG_WEAPONS } from '../../game/skillDbg.js';
+import { SKILL_DEBUG, subscribeSkillDbg, getSkillDbgSnapshot, dbgLevel, setDbgLevel, resetDbgLevels } from '../../game/skillDbg.js';
 import { t } from '../../i18n/index.js';
 
 // 学习等级 / 熟练度：服务端原版技能表同步前，用角色等级推断占位。
@@ -170,21 +170,9 @@ export default function SkillPanel() {
       {/* 顶部提示行：操作说明 */}
       <div className="jp-skill-hint">{t('skills.equipHint')}</div>
 
-      {/* 调试工具条：武器切换 + 重置等级（SKILL_DEBUG 关闭即整体移除） */}
+      {/* 调试工具条：技能等级（SKILL_DEBUG 关闭即整体移除） */}
       {SKILL_DEBUG && (
         <div className="jp-skill-dbgbar">
-          <label className="jp-skill-dbgbar-label">
-            {t('skills.dbgWeapon')}
-            <select
-              className="jp-skill-dbgbar-select"
-              value={dbgWeaponIndex()}
-              onChange={(e) => setDbgWeapon(Number(e.target.value))}
-            >
-              {DBG_WEAPONS.map((w, i) => (
-                <option key={w.dorp || 'none'} value={i}>{w.label}</option>
-              ))}
-            </select>
-          </label>
           <button type="button" className="jp-skill-dbgbar-btn" onClick={() => resetDbgLevels()}>
             {t('skills.dbgReset')}
           </button>
