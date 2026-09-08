@@ -1,6 +1,7 @@
 import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
+import { getGameSnapshot, subscribeGame, type FistBinding } from '../app/gameStore.js';
 
 export interface HudState {
   hp: number; maxHp: number
@@ -31,6 +32,7 @@ interface Tex { el: HTMLImageElement; w: number; h: number }
 const TRANSPARENT_KEYS = new Set([
   'b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR','fist',
   'i0','i1','i2','i3','i4','i5','iWalk','iRun','iCamHand','iCamFix','iCamAuto','iMapOn','iMapOff',
+  'fistL','fistR',
 ])
 
 const TEXTURES: Record<string, string> = {
@@ -130,6 +132,40 @@ export function createHud(container: HTMLElement): Hud {
   let currentState: HudState | null = null;
   const textures: Partial<Record<string, Tex>> = {};
   let rafId = 0;
+
+  // 左/右拳当前装备的技能（HUD 拳位图标显示；null=普攻拳）
+  const fistSlots: { left: FistBinding | null; right: FistBinding | null } = { left: null, right: null };
+
+  // 把某拳位绑定异步加载成纹理（key fistL/fistR），成功后重绘。
+  // binding=null（普攻）→ 用默认 fist 纹理（skill_normal），加载失败也回退默认。
+  async function loadFistIcon(slot: 'left' | 'right', binding: FistBinding | null): Promise<void> {
+    const key = slot === 'left' ? 'fistL' : 'fistR';
+    if (!binding || !binding.iconFile || binding.iconFile === 'skill_normal') {
+      delete textures[key];
+      return;
+    }
+    const file = binding.iconFile.replace(/\.bmp$/i, '').split(' ').map(encodeURIComponent).join('%20');
+    const rel = `skill/${binding.classDir}/button/${file}.bmp`;
+    const tex = await loadTex(rel, key);
+    if (tex) textures[key] = tex;
+    else delete textures[key];
+  }
+
+  // 同步拳位绑定（equipFist/快捷键变化时刷新图标）；重载时回调触发重绘
+  function syncFists(): void {
+    const snap = getGameSnapshot();
+    const needL = snap.fistBindings.left;
+    const needR = snap.fistBindings.right;
+    const lChanged = (fistSlots.left?.classDir !== needL?.classDir) || (fistSlots.left?.iconFile !== needL?.iconFile);
+    const rChanged = (fistSlots.right?.classDir !== needR?.classDir) || (fistSlots.right?.iconFile !== needR?.iconFile);
+    if (!lChanged && !rChanged) return;
+    fistSlots.left = needL;
+    fistSlots.right = needR;
+    if (lChanged) void loadFistIcon('left', needL);
+    if (rChanged) void loadFistIcon('right', needR);
+  }
+  // 订阅：装备/快捷键切换拳位 → 同步图标（世界内才重绘，无世界时也加载缓存无妨）
+  const unsubFist = subscribeGame(syncFists);
 
   // 指针（悬停/按下；HUD canvas 为 pointer-events:none，事件走 window 只读检测，不拦截世界点击）
   let ptrX = -1, ptrY = -1, ptrDown = false;
@@ -269,10 +305,10 @@ export function createHud(container: HTMLElement): Hud {
     drawBar('mana', 465, 500, 16, 94, currentState.mp, currentState.maxMp);
     drawBar('stm', 303, 518, 8, 76, currentState.stm, currentState.maxStm);
 
-    // 默认拳头图标 (原版 sinSkill.cpp sLeftRightSkill)
+    // 默认拳头图标 (原版 sinSkill.cpp sLeftRightSkill)；装备技能后显示技能图标
     // 左拳 (349,541) 49x46  右拳 (403,541) 49x46
-    drawTex('fist', 349, 541, 49, 46);
-    drawTex('fist', 403, 541, 49, 46);
+    drawTex(textures['fistL'] ? 'fistL' : 'fist', 349, 541, 49, 46);
+    drawTex(textures['fistR'] ? 'fistR' : 'fist', 403, 541, 49, 46);
 
     // EXP条
     drawBar('exp', 485, 508, 6, 86, currentState.exp, currentState.maxExp);
@@ -344,6 +380,7 @@ export function createHud(container: HTMLElement): Hud {
     dispose() {
       cancelAnimationFrame(rafId);
       window.removeEventListener('resize', fitCanvas);
+      unsubFist();
       canvas.remove();
       barriers.forEach((b) => b.remove());
     },
