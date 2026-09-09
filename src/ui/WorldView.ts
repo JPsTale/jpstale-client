@@ -323,6 +323,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   /** 点击掉落物即时拾取半径（世界单位）：更近直接发 C2S，更远则走过去由服务端触达拾取 */
   const PICK_ACT_RANGE = 3.0;
+  /** 近身点击兜底拾取半径（世界单位，对齐 agFindItem）：不必点中低矮命中面 */
+  const CLICK_NEAR_PICK = 2.0;
 
   // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
@@ -1131,6 +1133,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
       return;
+    }
+    // 1b) 近身兜底（对齐原版 agFindItem）：贴近掉落物时点它不必精确打中低矮命中面，
+    //     拾取范围内的最近物品即视为点击意图（点一下才触发，非路过自动）。
+    if (groundItems.size > 0) {
+      let nearId: number | undefined;
+      let nearD = CLICK_NEAR_PICK;
+      for (const g of groundItems.values()) {
+        const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
+        if (d <= nearD) { nearD = d; nearId = g.groundItemId; }
+      }
+      if (nearId !== undefined) {
+        console.log('[WorldView] 近身拾取(兜底) gid=' + nearId + ' dist=' + nearD.toFixed(2) + 'm');
+        opts?.onPickupGroundItem?.(nearId);
+        return;
+      }
     }
     // 2) 怪物
     const mobId = pickMonsterIdByRay(cx, cy);
