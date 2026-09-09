@@ -26,6 +26,7 @@ import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import { evalSkeleton, applyToBones } from '../char/animation.js';
 import { decodeTextureAsync } from '../core/texture.js';
+import { cachedFetch } from '../core/asset-cache.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
@@ -200,6 +201,94 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let tapDownX = 0, tapDownY = 0, tapDownT = 0;
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
+
+  // ---- 原版鼠标光标 overlay：指向可拾取→GetItem(手)、怪物→Attack(红)、NPC→Talk、默认箭头 ----
+  // 图标资产：image/sinimage/cursor/*.tga（PT 加密 TGA → 现有 decodeTextureAsync 解码为 PNG dataURL，
+  // 以 CSS cursor url() 应用在渲染画布上）。
+  const CURSOR_ROOT = '/res/image/sinimage/cursor/';
+  const cursorUrlCache = new Map<string, string>();
+  let lastCursorUrl: string | null = null;
+  let cursorProbeAt = 0;
+  let cursorModeNow: 'default' | 'pickup' | 'attack' | 'talk' = 'default';
+  let mouseSeen = false;
+
+  async function cursorDataUrl(file: string): Promise<string | null> {
+    try {
+      const buf = await cachedFetch(CURSOR_ROOT + file);
+      const dec = await decodeTextureAsync(buf);
+      if (!dec) return null;
+      const c = document.createElement('canvas');
+      c.width = dec.width;
+      c.height = dec.height;
+      const ctx = c.getContext('2d')!;
+      const img = ctx.createImageData(dec.width, dec.height);
+      img.data.set(dec.pixels);
+      ctx.putImageData(img, 0, 0);
+      return c.toDataURL('image/png');
+    } catch (e) {
+      console.warn('[cursor] 加载失败 ' + file, e);
+      return null;
+    }
+  }
+
+  function cursorFileOf(mode: string): string {
+    switch (mode) {
+      case 'pickup': return mouseDown ? 'getitem_cursor2.tga' : 'getitem_cursor1.tga';
+      case 'attack': return 'attack_cursor.tga';
+      case 'talk': return 'talk_cursor.tga';
+      default: return 'defaultcursor.tga';
+    }
+  }
+
+  function applyCursorStyle(mode: 'default' | 'pickup' | 'attack' | 'talk'): void {
+    cursorModeNow = mode;
+    const file = cursorFileOf(mode);
+    const cached = cursorUrlCache.get(file);
+    if (cached !== undefined) {
+      if (cached && cached !== lastCursorUrl) {
+        lastCursorUrl = cached;
+        if (renderer) renderer.domElement.style.cursor = `url("${cached}") 3 3, auto`;
+      }
+      return;
+    }
+    cursorUrlCache.set(file, ''); // 占位防并发重复请求
+    void cursorDataUrl(file).then(u => {
+      const url = u || '';
+      cursorUrlCache.set(file, url);
+      if (url && url !== lastCursorUrl && cursorModeNow === mode) {
+        lastCursorUrl = url;
+        if (renderer) renderer.domElement.style.cursor = `url("${url}") 3 3, auto`;
+      }
+    });
+  }
+
+  /** 按屏幕坐标探测指向目标 → 光标模式（节流） */
+  function probeCursorAt(cx: number, cy: number): void {
+    const now = performance.now();
+    if (now - cursorProbeAt < 66) return; // ~15Hz 足够（配合世界滚动静态光标）
+    cursorProbeAt = now;
+    if (!renderer || !camera || !scene) return;
+    const rect = renderer.domElement.getBoundingClientRect();
+    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
+    ray.setFromCamera(ndc, camera);
+    ray.far = 1300;
+
+    const itemTargets: THREE.Object3D[] = [];
+    for (const g of groundItems.values()) itemTargets.push(g.root);
+    if (ray.intersectObjects(itemTargets, true).length > 0) {
+      applyCursorStyle('pickup');
+      return;
+    }
+    const mobTargets: THREE.Object3D[] = [];
+    for (const m of monsters.values()) mobTargets.push(m.root);
+    if (ray.intersectObjects(mobTargets, true).length > 0) {
+      applyCursorStyle('attack');
+      return;
+    }
+    applyCursorStyle('default');
+  }
+
   // 点击寻路目标（对齐原版：点地面移动 / 点掉落物自动走过去由服务端拾取）
   let moveTarget: { x: number; z: number; itemId?: number } | null = null;
   let moveStuckStart = 0;
@@ -946,6 +1035,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 玩家按下鼠标（手动转向/走动）→ 取消进行中的自动寻路目标
       moveTarget = null;
       moveStuckStart = 0;
+      // 拾取光标按下态（GetItem2）即时刷新
+      if (cursorModeNow === 'pickup') applyCursorStyle('pickup');
     }
   }
   function onMouseUp(e: MouseEvent): void {
@@ -957,6 +1048,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (dt < 400 && moved < 12) {
         onGroundTap(e.clientX, e.clientY);
       }
+      // 拾取光标抬起态刷新（GetItem2 → GetItem1）
+      if (cursorModeNow === 'pickup') applyCursorStyle('pickup');
       // 停止上报由 renderLoop 检测 wasMoving→false 时带当前位置发送，保证位置是真正停点
     }
   }
@@ -1019,6 +1112,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   function onMouseMove(e: MouseEvent): void {
     mouseX = e.clientX; mouseY = e.clientY;
+    mouseSeen = true;
+    probeCursorAt(e.clientX, e.clientY);
+  }
+
+  function onMouseLeave(): void {
+    mouseSeen = false;
+    lastCursorUrl = null;
+    if (renderer) renderer.domElement.style.cursor = 'auto';
   }
 
   // 判断角色所属地图（对齐服务端 MapRegionService.findMapPrecise）：
@@ -2003,6 +2104,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateMonsters(dt);
     // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
     updateGroundItems(rafMs);
+    // 光标 overlay：世界滚动/物品增减时静态光标下的指向也会变 → 逐帧(节流)重探测
+    if (mouseSeen) probeCursorAt(mouseX, mouseY);
 
     // 相机跟随角色
     updateCamera();
@@ -2164,6 +2267,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         canvasEl.addEventListener('mousedown', onMouseDown);
         canvasEl.addEventListener('mouseup', onMouseUp);
         canvasEl.addEventListener('mousemove', onMouseMove);
+        canvasEl.addEventListener('mouseleave', onMouseLeave);
         window.addEventListener('mouseup', onMouseUp);
 
         // 自机外观：职业 → 渲染
