@@ -61,6 +61,8 @@ export interface AnimStateMachine {
   getCurrentState: () => number;
   getCurrentMotion: () => MotionInfo | null;
   playMotion: (motion: MotionInfo | null) => boolean;
+  /** 武器更换后按当前状态重选动画实例（STAND/WALK/RUN 立即生效；攻击/技能等一次性状态不打断） */
+  reselectForCurrentState: () => void;
 }
 
 export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMachine {
@@ -259,6 +261,20 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
+  /**
+   * 武器更换后调用：按当前状态重新选择匹配当前武器的动画实例。
+   * STAND/WALK/RUN 是持续姿势，武器不同姿势不同（持剑站姿 vs 持弓站姿）→ 立即重选；
+   * ATTACK/SKILL/掉落等一次性动画不打断（播完 onAnimationEnd 回 STAND 时已用新武器重选）。
+   */
+  function reselectForCurrentState(): void {
+    switch (currentState) {
+      case STATE.STAND: triggerIdle(); break;
+      case STATE.WALK: triggerWalk(); break;
+      case STATE.RUN: triggerRun(); break;
+      default: break; // 攻击/技能等一次性状态：不打断
+    }
+  }
+
   return {
     STATE,
     triggerAttack,
@@ -275,5 +291,6 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     getCurrentState,
     getCurrentMotion,
     playMotion,
+    reselectForCurrentState,
   };
 }

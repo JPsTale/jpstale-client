@@ -721,20 +721,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       console.log('[WorldView] 自机武器摘除');
     }
     const dorp = selfAppearance?.weaponDorp;
-    if (!dorp) return; // 空手（无装备武器）
-    try {
-      const wres = await loadWeaponModel(dorp);
-      await loadTextures(wres.texturesToLoad);
-      const boneName = selfAppearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
-      const bone = findBone(charGroup, boneName) || findBone(charGroup, WEAPON_BONES.RIGHT_HAND) || findBone(charGroup, WEAPON_BONES.LEFT_HAND);
-      if (bone) {
-        selfWeaponGroup = wres.group;
-        bone.add(wres.group);
-        console.log('[WorldView] 自机武器挂载: dorp=' + dorp + ' bone=' + boneName);
+    if (dorp) {
+      try {
+        const wres = await loadWeaponModel(dorp);
+        await loadTextures(wres.texturesToLoad);
+        const boneName = selfAppearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
+        const bone = findBone(charGroup, boneName) || findBone(charGroup, WEAPON_BONES.RIGHT_HAND) || findBone(charGroup, WEAPON_BONES.LEFT_HAND);
+        if (bone) {
+          selfWeaponGroup = wres.group;
+          bone.add(wres.group);
+          console.log('[WorldView] 自机武器挂载: dorp=' + dorp + ' bone=' + boneName);
+        }
+      } catch (e) {
+        console.warn('[WorldView] 武器挂载失败 dorp=' + dorp, e);
       }
-    } catch (e) {
-      console.warn('[WorldView] 武器挂载失败 dorp=' + dorp, e);
     }
+    // 武器已变：按当前状态重选动画实例（持剑/持弓站姿等随武器切换），一次性状态不打断
+    animState?.reselectForCurrentState();
   }
 
   /** 从 root 整棵树里把 target 从其父摘除（target 可能挂任一骨骼下）。 */
