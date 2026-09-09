@@ -351,5 +351,45 @@
     },
     "back": "Back",
     "comingSoon": "Coming soon"
+  },
+  "chat": {
+    "empty": "No chat messages yet",
+    "normal": "Normal",
+    "party": "Party",
+    "guild": "Guild",
+    "trade": "Trade",
+    "system": "System",
+    "fold": "Collapse chat window",
+    "readonly": "View only. Use /player: message to whisper.",
+    "hint": "Press Enter to chat",
+    "placeholder": "Enter message…",
+    "guildNotOpen": "Guild channel is not available yet",
+    "cmd": {
+      "partyUsage": "Usage: //party <player>",
+      "unknownGm": "Unknown GM command: /{name} (GM system in development)",
+      "unknown": "Unknown command: /{name}",
+      "invalidNumber": "Invalid number in command: {cmd}"
+    },
+    "private": {
+      "offline": "Player {name} is not online"
+    },
+    "party": {
+      "noParty": "You are not in a party",
+      "targetOffline": "Player {name} is not online",
+      "cannotInviteSelf": "You cannot invite yourself",
+      "full": "The party is full",
+      "alreadyInParty": "You are already in a party",
+      "notFound": "Party not found"
+    },
+    "log": {
+      "monsterKilled": "You defeated {monster}! Gained {exp} EXP and {gold} gold.",
+      "playerHurt": "{monster} hit you for {damage} damage!",
+      "levelUp": "Congratulations! You reached level {level} (+{points} stat points)."
+    }
+  },
+  "game": {
+    "attrAssignFailed": "Attribute assignment failed: not enough stat points or no undo history",
+    "eventStarted": "Event {name} has started!",
+    "eventEnded": "Event {name} has ended!"
   }
 }

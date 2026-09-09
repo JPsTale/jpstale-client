@@ -6,6 +6,7 @@ import CharStatusPanel from './CharStatusPanel.js';
 import SkillPanel from './SkillPanel.js';
 import ItemPanel from './ItemPanel.js';
 import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
+import ChatWindow from './ChatWindow.js';
 
 function renderPanel(panel: OpenPanel) {
   if (panel === 'charStatus') {
@@ -37,6 +38,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
   const { openPanels, systemMenuOpen } = useSyncExternalStore(subscribeGame, getGameSnapshot);
   return (
     <>
+      {/* 游戏内聊天窗（常驻 World，折叠态缺省展开由 store 控制） */}
+      <ChatWindow />
       {openPanels.map(renderPanel)}
       {systemMenuOpen && props.systemMenuSettings && (
         <SystemMenu settings={props.systemMenuSettings} />

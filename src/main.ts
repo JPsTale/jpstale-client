@@ -21,6 +21,7 @@ import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installBridge } from './net/bridge.js';
 import { pressQuickBinding, openSystemMenu, closeSystemMenu } from './app/gameStore.js';
+import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -70,6 +71,7 @@ function hideAll() {
   worldView.hide();
   loadingScreen.hide();
   reactPanels.hide();
+  setChatVisible(false);
 }
 
 onTimeSync((serverTimeMs: number) => {
@@ -107,8 +109,13 @@ keyBinding.onKeyDown((action) => {
       hudPanel.setRunFlag(worldView.toggleRun());
       break;
     case 'closePanel':
+      // 输入框打开时 Esc 优先收输入，再收起面板/菜单
+      setChatInputOpen(false);
       closeSystemMenu();
       reactPanels.hide();
+      break;
+    case 'chat':
+      setChatInputOpen(true);
       break;
     // F1~F8 快捷技能：把绑定在该键的技能自动切到对应拳（skill1=F1→index0）
     case 'skill1': case 'skill2': case 'skill3': case 'skill4':
@@ -187,6 +194,7 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       const state = args[0] as HudState | undefined;
       console.log('[app] WORLD screen, hudState=', state);
       if (state) hudPanel.show(state);
+      setChatVisible(true);
       const enterGame = args[1] as EnterGameInfo | undefined;
       if (enterGame) {
         // 进图加载页：go() 的 hideAll 已收起 loadingScreen，这里同 tick 重新显示盖住世界画面，
@@ -467,7 +475,28 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'error': {
       const e = msg.error!;
-      console.warn('[app] server error', e.errorCode, e.errorMessage);
+      // minecraft 式翻译：key 优先，否则纯文本
+      const text = e.key ? t(e.key, e.params || {}) : (e.errorMessage || String(e.errorCode || ''));
+      console.warn('[app] server error', e.errorCode, text);
+      appendSystemMessage(text, Date.now());
+      break;
+    }
+    case 'chat': {
+      const c = msg.chat!;
+      appendChatMessage({
+        channel: c.channel || 0,
+        senderId: Number(c.senderId) || 0,
+        senderName: c.senderName || '',
+        message: c.message || '',
+        timestamp: Number(c.timestamp) || Date.now(),
+      });
+      break;
+    }
+    case 'systemMessage': {
+      const sm = msg.systemMessage!;
+      // minecraft 式翻译：有 key 用 i18n 渲染（缺失 fallback 到 key），否则用纯文本
+      const text = sm.key ? t(sm.key, sm.params || {}) : (sm.message || '');
+      appendSystemMessage(text, Number(sm.timestamp) || Date.now());
       break;
     }
   }

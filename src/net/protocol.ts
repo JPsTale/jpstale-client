@@ -95,6 +95,62 @@ export function ping(): jpt.base.ClientMessage.$Properties {
     });
 }
 
+/** 聊天发送。channel 传入解析后的频道；message 为文本内容（不含前缀）。 */
+export function chat(channel: jpt.base.ChatChannel, message: string, targetName = ""): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        chat: { channel, message, ...(targetName ? { targetName } : {}) },
+    });
+}
+
+export type ParsedChat =
+    | { type: "chat"; channel: jpt.base.ChatChannel; message: string }
+    | { type: "private"; targetName: string; message: string }
+    | { type: "command"; message: string };
+
+/**
+ * 聊天输入解析（对齐原版肉节记忆）：
+ * - `/名字: 消息` 或 `/名字; 消息` → 私聊（CHAT_PRIVATE + targetName）
+ * - `/TRADE> 消息` → 交易频道（CHAT_TRADE）
+ * - `@消息` → 组队聊天（CHAT_PARTY）
+ * - 其余 `/` 开头 → 命令，原样上送服务端权威解析（含 /@、//party 等）
+ * - 其他文本 → 按传入的默认频道发送
+ */
+export function parseChatInput(input: string, defaultChannel: jpt.base.ChatChannel): ParsedChat {
+    const trimmed = input.trim();
+    if (trimmed.length === 0) {
+        return { type: "chat", channel: defaultChannel, message: "" };
+    }
+
+    // 私聊：/名字: 消息 或 /名字; 消息
+    if (trimmed.startsWith("/") && (trimmed[1] === ":" || trimmed[1] === ";")) {
+        const rest = trimmed.substring(2);
+        const sep = rest.indexOf(" ");
+        const targetName = sep >= 0 ? rest.substring(0, sep) : rest;
+        const msg = sep >= 0 ? rest.substring(sep + 1).trim() : "";
+        return { type: "private", targetName, message: msg };
+    }
+
+    // 全服交易：/TRADE> 消息
+    if (trimmed.startsWith("/TRADE>")) {
+        return { type: "chat", channel: jpt.base.ChatChannel.CHAT_TRADE, message: trimmed.substring(7).trim() };
+    }
+    if (trimmed.startsWith("/trade>")) {
+        return { type: "chat", channel: jpt.base.ChatChannel.CHAT_TRADE, message: trimmed.substring(7).trim() };
+    }
+
+    // 组队聊天：@消息
+    if (trimmed.startsWith("@")) {
+        return { type: "chat", channel: jpt.base.ChatChannel.CHAT_PARTY, message: trimmed.substring(1).trim() };
+    }
+
+    // 命令：/ 开头原样上送
+    if (trimmed.startsWith("/")) {
+        return { type: "command", message: trimmed };
+    }
+
+    return { type: "chat", channel: defaultChannel, message: trimmed };
+}
+
 export function encodeClient(msg: jpt.base.ClientMessage.$Properties): Uint8Array {
     return jpt.base.ClientMessage.encode(msg).finish();
 }

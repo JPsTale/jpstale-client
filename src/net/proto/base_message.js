@@ -4992,6 +4992,14 @@ export const jpt = $root.jpt = (() => {
                     case 14:
                         message.errorCode = 14;
                         break;
+                    case "PARTY_ERROR":
+                    case 15:
+                        message.errorCode = 15;
+                        break;
+                    case "ATTR_ERROR":
+                    case 16:
+                        message.errorCode = 16;
+                        break;
                     default:
                         if (typeof object.errorCode === "number" && (object.errorCode | 0) === object.errorCode)
                             message.errorCode = object.errorCode;
@@ -6475,6 +6483,14 @@ export const jpt = $root.jpt = (() => {
                     case "NAME_EXISTS":
                     case 14:
                         message.errorCode = 14;
+                        break;
+                    case "PARTY_ERROR":
+                    case 15:
+                        message.errorCode = 15;
+                        break;
+                    case "ATTR_ERROR":
+                    case 16:
+                        message.errorCode = 16;
                         break;
                     default:
                         if (typeof object.errorCode === "number" && (object.errorCode | 0) === object.errorCode)
@@ -22495,6 +22511,10 @@ export const jpt = $root.jpt = (() => {
                     case 5:
                         message.channel = 5;
                         break;
+                    case "CHAT_TRADE":
+                    case 6:
+                        message.channel = 6;
+                        break;
                     default:
                         if (typeof object.channel === "number" && (object.channel | 0) === object.channel)
                             message.channel = object.channel;
@@ -24908,6 +24928,10 @@ export const jpt = $root.jpt = (() => {
                     case "CHAT_SYSTEM":
                     case 5:
                         message.channel = 5;
+                        break;
+                    case "CHAT_TRADE":
+                    case 6:
+                        message.channel = 6;
                         break;
                     default:
                         if (typeof object.channel === "number" && (object.channel | 0) === object.channel)
@@ -27629,6 +27653,8 @@ export const jpt = $root.jpt = (() => {
              * @typedef {Object} jpt.base.S2C_Error.$Properties
              * @property {jpt.base.ErrorCode|null} [errorCode] S2C_Error errorCode
              * @property {string|null} [errorMessage] S2C_Error errorMessage
+             * @property {string|null} [key] S2C_Error key
+             * @property {Object.<string,string>|null} [params] S2C_Error params
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -27654,6 +27680,7 @@ export const jpt = $root.jpt = (() => {
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
             const S2C_Error = function (properties) {
+                this.params = {};
                 if (properties)
                     for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null && keys[i] !== "__proto__")
@@ -27675,6 +27702,22 @@ export const jpt = $root.jpt = (() => {
              * @instance
              */
             S2C_Error.prototype.errorMessage = "";
+
+            /**
+             * S2C_Error key.
+             * @member {string} key
+             * @memberof jpt.base.S2C_Error
+             * @instance
+             */
+            S2C_Error.prototype.key = "";
+
+            /**
+             * S2C_Error params.
+             * @member {Object.<string,string>} params
+             * @memberof jpt.base.S2C_Error
+             * @instance
+             */
+            S2C_Error.prototype.params = $util.emptyObject;
 
             /**
              * Creates a new S2C_Error instance using the specified properties.
@@ -27712,6 +27755,11 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 1, wireType 0 =*/8).int32(message.errorCode);
                 if (message.errorMessage != null && $Object.hasOwnProperty.call(message, "errorMessage") && message.errorMessage !== "")
                     writer.uint32(/* id 2, wireType 2 =*/18).string(message.errorMessage);
+                if (message.key != null && $Object.hasOwnProperty.call(message, "key") && message.key !== "")
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.key);
+                if (message.params != null && $Object.hasOwnProperty.call(message, "params"))
+                    for (let keys = $Object.keys(message.params), i = 0; i < keys.length; ++i)
+                        writer.uint32(/* id 4, wireType 2 =*/34).fork().uint32(/* id 1, wireType 2 =*/10).string(keys[i]).uint32(/* id 2, wireType 2 =*/18).string(message.params[keys[i]]).ldelim();
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -27749,7 +27797,7 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $Reader.recursionLimit)
                     throw $Error("max depth exceeded");
-                let end, message, value;
+                let end, message, key, value;
                 if (length === $undefined)
                     end = reader.len;
                 else {
@@ -27785,6 +27833,51 @@ export const jpt = $root.jpt = (() => {
                                 message.errorMessage = value;
                             else
                                 delete message.errorMessage;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.key = value;
+                            else
+                                delete message.key;
+                            continue;
+                        }
+                    case 4: {
+                            if (wireType !== 2)
+                                break;
+                            if (message.params === $util.emptyObject)
+                                message.params = {};
+                            let end2 = reader.uint32() + reader.pos;
+                            if (end2 > reader.len)
+                                throw $RangeError("index out of range");
+                            reader.len = end2;
+                            key = "";
+                            value = "";
+                            while (reader.pos < end2) {
+                                let tag2 = reader.tag();
+                                wireType = tag2 & 7;
+                                switch (tag2 >>>= 3) {
+                                case 1:
+                                    if (wireType !== 2)
+                                        break;
+                                    key = reader.stringVerify();
+                                    continue;
+                                case 2:
+                                    if (wireType !== 2)
+                                        break;
+                                    value = reader.stringVerify();
+                                    continue;
+                                }
+                                reader.skipType(wireType, _depth, tag2);
+                            }
+                            if (reader.pos !== end2)
+                                throw $RangeError("index out of range");
+                            reader.len = end;
+                            if (key === "__proto__")
+                                $util.makeProp(message.params, key);
+                            message.params[key] = value;
                             continue;
                         }
                     }
@@ -27841,6 +27934,17 @@ export const jpt = $root.jpt = (() => {
                 if (message.errorMessage != null && $Object.hasOwnProperty.call(message, "errorMessage"))
                     if (!$util.isString(message.errorMessage))
                         return "errorMessage: string expected";
+                if (message.key != null && $Object.hasOwnProperty.call(message, "key"))
+                    if (!$util.isString(message.key))
+                        return "key: string expected";
+                if (message.params != null && $Object.hasOwnProperty.call(message, "params")) {
+                    if (!$util.isObject(message.params))
+                        return "params: object expected";
+                    let key = $Object.keys(message.params);
+                    for (let i = 0; i < key.length; ++i)
+                        if (!$util.isString(message.params[key[i]]))
+                            return "params: string{k:string} expected";
+                }
                 return null;
             };
 
@@ -27924,6 +28028,14 @@ export const jpt = $root.jpt = (() => {
                     case 14:
                         message.errorCode = 14;
                         break;
+                    case "PARTY_ERROR":
+                    case 15:
+                        message.errorCode = 15;
+                        break;
+                    case "ATTR_ERROR":
+                    case 16:
+                        message.errorCode = 16;
+                        break;
                     default:
                         if (typeof object.errorCode === "number" && (object.errorCode | 0) === object.errorCode)
                             message.errorCode = object.errorCode;
@@ -27931,6 +28043,19 @@ export const jpt = $root.jpt = (() => {
                 if (object.errorMessage != null)
                     if (typeof object.errorMessage !== "string" || object.errorMessage.length)
                         message.errorMessage = $String(object.errorMessage);
+                if (object.key != null)
+                    if (typeof object.key !== "string" || object.key.length)
+                        message.key = $String(object.key);
+                if (object.params) {
+                    if (!$util.isObject(object.params))
+                        throw $TypeError(".jpt.base.S2C_Error.params: object expected");
+                    message.params = {};
+                    for (let keys = $Object.keys(object.params), i = 0; i < keys.length; ++i) {
+                        if (keys[i] === "__proto__")
+                            $util.makeProp(message.params, keys[i]);
+                        message.params[keys[i]] = $String(object.params[keys[i]]);
+                    }
+                }
                 return message;
             };
 
@@ -27951,14 +28076,28 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let object = {};
+                if (options.objects || options.defaults)
+                    object.params = {};
                 if (options.defaults) {
                     object.errorCode = options.enums === $String ? "SUCCESS" : 0;
                     object.errorMessage = "";
+                    object.key = "";
                 }
                 if (message.errorCode != null && $Object.hasOwnProperty.call(message, "errorCode"))
                     object.errorCode = options.enums === $String ? $root.jpt.base.ErrorCode[message.errorCode] === $undefined ? message.errorCode : $root.jpt.base.ErrorCode[message.errorCode] : message.errorCode;
                 if (message.errorMessage != null && $Object.hasOwnProperty.call(message, "errorMessage"))
                     object.errorMessage = message.errorMessage;
+                if (message.key != null && $Object.hasOwnProperty.call(message, "key"))
+                    object.key = message.key;
+                let keys2;
+                if (message.params && (keys2 = $Object.keys(message.params)).length) {
+                    object.params = {};
+                    for (let j = 0; j < keys2.length; ++j) {
+                        if (keys2[j] === "__proto__")
+                            $util.makeProp(object.params, keys2[j]);
+                        object.params[keys2[j]] = message.params[keys2[j]];
+                    }
+                }
                 return object;
             };
 
@@ -27997,6 +28136,8 @@ export const jpt = $root.jpt = (() => {
              * @typedef {Object} jpt.base.S2C_SystemMessage.$Properties
              * @property {string|null} [message] S2C_SystemMessage message
              * @property {number|Long|null} [timestamp] S2C_SystemMessage timestamp
+             * @property {string|null} [key] S2C_SystemMessage key
+             * @property {Object.<string,string>|null} [params] S2C_SystemMessage params
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -28022,6 +28163,7 @@ export const jpt = $root.jpt = (() => {
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
             const S2C_SystemMessage = function (properties) {
+                this.params = {};
                 if (properties)
                     for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null && keys[i] !== "__proto__")
@@ -28043,6 +28185,22 @@ export const jpt = $root.jpt = (() => {
              * @instance
              */
             S2C_SystemMessage.prototype.timestamp = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * S2C_SystemMessage key.
+             * @member {string} key
+             * @memberof jpt.base.S2C_SystemMessage
+             * @instance
+             */
+            S2C_SystemMessage.prototype.key = "";
+
+            /**
+             * S2C_SystemMessage params.
+             * @member {Object.<string,string>} params
+             * @memberof jpt.base.S2C_SystemMessage
+             * @instance
+             */
+            S2C_SystemMessage.prototype.params = $util.emptyObject;
 
             /**
              * Creates a new S2C_SystemMessage instance using the specified properties.
@@ -28080,6 +28238,11 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 1, wireType 2 =*/10).string(message.message);
                 if (message.timestamp != null && $Object.hasOwnProperty.call(message, "timestamp") && (typeof message.timestamp === "object" ? message.timestamp.low || message.timestamp.high : message.timestamp !== 0))
                     writer.uint32(/* id 2, wireType 0 =*/16).int64(message.timestamp);
+                if (message.key != null && $Object.hasOwnProperty.call(message, "key") && message.key !== "")
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.key);
+                if (message.params != null && $Object.hasOwnProperty.call(message, "params"))
+                    for (let keys = $Object.keys(message.params), i = 0; i < keys.length; ++i)
+                        writer.uint32(/* id 4, wireType 2 =*/34).fork().uint32(/* id 1, wireType 2 =*/10).string(keys[i]).uint32(/* id 2, wireType 2 =*/18).string(message.params[keys[i]]).ldelim();
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -28117,7 +28280,7 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $Reader.recursionLimit)
                     throw $Error("max depth exceeded");
-                let end, message, value;
+                let end, message, key, value;
                 if (length === $undefined)
                     end = reader.len;
                 else {
@@ -28153,6 +28316,51 @@ export const jpt = $root.jpt = (() => {
                                 message.timestamp = value;
                             else
                                 delete message.timestamp;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.key = value;
+                            else
+                                delete message.key;
+                            continue;
+                        }
+                    case 4: {
+                            if (wireType !== 2)
+                                break;
+                            if (message.params === $util.emptyObject)
+                                message.params = {};
+                            let end2 = reader.uint32() + reader.pos;
+                            if (end2 > reader.len)
+                                throw $RangeError("index out of range");
+                            reader.len = end2;
+                            key = "";
+                            value = "";
+                            while (reader.pos < end2) {
+                                let tag2 = reader.tag();
+                                wireType = tag2 & 7;
+                                switch (tag2 >>>= 3) {
+                                case 1:
+                                    if (wireType !== 2)
+                                        break;
+                                    key = reader.stringVerify();
+                                    continue;
+                                case 2:
+                                    if (wireType !== 2)
+                                        break;
+                                    value = reader.stringVerify();
+                                    continue;
+                                }
+                                reader.skipType(wireType, _depth, tag2);
+                            }
+                            if (reader.pos !== end2)
+                                throw $RangeError("index out of range");
+                            reader.len = end;
+                            if (key === "__proto__")
+                                $util.makeProp(message.params, key);
+                            message.params[key] = value;
                             continue;
                         }
                     }
@@ -28209,6 +28417,17 @@ export const jpt = $root.jpt = (() => {
                 if (message.timestamp != null && $Object.hasOwnProperty.call(message, "timestamp"))
                     if (!$util.isInteger(message.timestamp) && !(message.timestamp && $util.isInteger(message.timestamp.low) && $util.isInteger(message.timestamp.high)))
                         return "timestamp: integer|Long expected";
+                if (message.key != null && $Object.hasOwnProperty.call(message, "key"))
+                    if (!$util.isString(message.key))
+                        return "key: string expected";
+                if (message.params != null && $Object.hasOwnProperty.call(message, "params")) {
+                    if (!$util.isObject(message.params))
+                        return "params: object expected";
+                    let key = $Object.keys(message.params);
+                    for (let i = 0; i < key.length; ++i)
+                        if (!$util.isString(message.params[key[i]]))
+                            return "params: string{k:string} expected";
+                }
                 return null;
             };
 
@@ -28243,6 +28462,19 @@ export const jpt = $root.jpt = (() => {
                             message.timestamp = object.timestamp;
                         else if (typeof object.timestamp === "object")
                             message.timestamp = new $util.LongBits(object.timestamp.low >>> 0, object.timestamp.high >>> 0).toNumber();
+                if (object.key != null)
+                    if (typeof object.key !== "string" || object.key.length)
+                        message.key = $String(object.key);
+                if (object.params) {
+                    if (!$util.isObject(object.params))
+                        throw $TypeError(".jpt.base.S2C_SystemMessage.params: object expected");
+                    message.params = {};
+                    for (let keys = $Object.keys(object.params), i = 0; i < keys.length; ++i) {
+                        if (keys[i] === "__proto__")
+                            $util.makeProp(message.params, keys[i]);
+                        message.params[keys[i]] = $String(object.params[keys[i]]);
+                    }
+                }
                 return message;
             };
 
@@ -28263,6 +28495,8 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let object = {};
+                if (options.objects || options.defaults)
+                    object.params = {};
                 if (options.defaults) {
                     object.message = "";
                     if ($util.Long) {
@@ -28270,6 +28504,7 @@ export const jpt = $root.jpt = (() => {
                         object.timestamp = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
                         object.timestamp = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.key = "";
                 }
                 if (message.message != null && $Object.hasOwnProperty.call(message, "message"))
                     object.message = message.message;
@@ -28280,6 +28515,17 @@ export const jpt = $root.jpt = (() => {
                         object.timestamp = options.longs === $String ? $String(message.timestamp) : message.timestamp;
                     else
                         object.timestamp = options.longs === $String ? $util.Long.prototype.toString.call(message.timestamp) : options.longs === $Number ? new $util.LongBits(message.timestamp.low >>> 0, message.timestamp.high >>> 0).toNumber() : message.timestamp;
+                if (message.key != null && $Object.hasOwnProperty.call(message, "key"))
+                    object.key = message.key;
+                let keys2;
+                if (message.params && (keys2 = $Object.keys(message.params)).length) {
+                    object.params = {};
+                    for (let j = 0; j < keys2.length; ++j) {
+                        if (keys2[j] === "__proto__")
+                            $util.makeProp(object.params, keys2[j]);
+                        object.params[keys2[j]] = message.params[keys2[j]];
+                    }
+                }
                 return object;
             };
 
@@ -29273,6 +29519,8 @@ export const jpt = $root.jpt = (() => {
          * @property {number} INVINCIBLE_HACK=12 INVINCIBLE_HACK value
          * @property {number} INVALID_NAME=13 INVALID_NAME value
          * @property {number} NAME_EXISTS=14 NAME_EXISTS value
+         * @property {number} PARTY_ERROR=15 PARTY_ERROR value
+         * @property {number} ATTR_ERROR=16 ATTR_ERROR value
          */
         base.ErrorCode = (function() {
             const valuesById = $Object.create(null), values = $Object.create(valuesById);
@@ -29291,6 +29539,8 @@ export const jpt = $root.jpt = (() => {
             values[valuesById[12] = "INVINCIBLE_HACK"] = 12;
             values[valuesById[13] = "INVALID_NAME"] = 13;
             values[valuesById[14] = "NAME_EXISTS"] = 14;
+            values[valuesById[15] = "PARTY_ERROR"] = 15;
+            values[valuesById[16] = "ATTR_ERROR"] = 16;
             return values;
         })();
 
@@ -29364,6 +29614,7 @@ export const jpt = $root.jpt = (() => {
          * @property {number} CHAT_GUILD=3 CHAT_GUILD value
          * @property {number} CHAT_PRIVATE=4 CHAT_PRIVATE value
          * @property {number} CHAT_SYSTEM=5 CHAT_SYSTEM value
+         * @property {number} CHAT_TRADE=6 CHAT_TRADE value
          */
         base.ChatChannel = (function() {
             const valuesById = $Object.create(null), values = $Object.create(valuesById);
@@ -29373,6 +29624,7 @@ export const jpt = $root.jpt = (() => {
             values[valuesById[3] = "CHAT_GUILD"] = 3;
             values[valuesById[4] = "CHAT_PRIVATE"] = 4;
             values[valuesById[5] = "CHAT_SYSTEM"] = 5;
+            values[valuesById[6] = "CHAT_TRADE"] = 6;
             return values;
         })();
 

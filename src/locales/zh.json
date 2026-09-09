@@ -351,5 +351,45 @@
     },
     "back": "返回",
     "comingSoon": "功能开发中，敬请期待"
+  },
+  "chat": {
+    "empty": "还没有聊天消息",
+    "normal": "普通",
+    "party": "组队",
+    "guild": "公会",
+    "trade": "交易",
+    "system": "系统",
+    "fold": "折叠聊天窗",
+    "readonly": "该频道仅查看，请输入 /玩家名: 消息 私聊",
+    "hint": "按 Enter 发言",
+    "placeholder": "输入消息…",
+    "guildNotOpen": "公会频道暂未开放",
+    "cmd": {
+      "partyUsage": "用法: //party 玩家名",
+      "unknownGm": "未知GM命令: /{name}（GM 系统开发中）",
+      "unknown": "未知命令: /{name}",
+      "invalidNumber": "命令参数格式错误: {cmd}"
+    },
+    "private": {
+      "offline": "玩家 {name} 不在线"
+    },
+    "party": {
+      "noParty": "你还没有组队",
+      "targetOffline": "目标玩家 {name} 不在线",
+      "cannotInviteSelf": "不能邀请自己",
+      "full": "队伍已满",
+      "alreadyInParty": "你已在队伍中",
+      "notFound": "队伍不存在"
+    },
+    "log": {
+      "monsterKilled": "你击败了 {monster}！获得经验 {exp} 点、金币 {gold} 枚。",
+      "playerHurt": "{monster} 对你造成 {damage} 点伤害！",
+      "levelUp": "恭喜你升到了 {level} 级！获得 {points} 点自由属性点。"
+    }
+  },
+  "game": {
+    "attrAssignFailed": "属性分配失败：属性点不足或可撤销历史为空",
+    "eventStarted": "活动 {name} 已开始！",
+    "eventEnded": "活动 {name} 已结束！"
   }
 }

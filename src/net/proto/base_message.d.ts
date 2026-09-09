@@ -9531,6 +9531,12 @@ export namespace jpt {
             /** S2C_Error errorMessage. */
             errorMessage: string;
 
+            /** S2C_Error key. */
+            key: string;
+
+            /** S2C_Error params. */
+            params: { [k: string]: string };
+
             /**
              * Creates a new S2C_Error instance using the specified properties.
              * @param [properties] Properties to set
@@ -9621,6 +9627,12 @@ export namespace jpt {
                 /** S2C_Error errorMessage */
                 errorMessage?: (string|null);
 
+                /** S2C_Error key */
+                key?: (string|null);
+
+                /** S2C_Error params */
+                params?: ({ [k: string]: string }|null);
+
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
             }
@@ -9653,6 +9665,12 @@ export namespace jpt {
 
             /** S2C_SystemMessage timestamp. */
             timestamp: (number|Long);
+
+            /** S2C_SystemMessage key. */
+            key: string;
+
+            /** S2C_SystemMessage params. */
+            params: { [k: string]: string };
 
             /**
              * Creates a new S2C_SystemMessage instance using the specified properties.
@@ -9743,6 +9761,12 @@ export namespace jpt {
 
                 /** S2C_SystemMessage timestamp */
                 timestamp?: (number|Long|null);
+
+                /** S2C_SystemMessage key */
+                key?: (string|null);
+
+                /** S2C_SystemMessage params */
+                params?: ({ [k: string]: string }|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -10173,7 +10197,13 @@ export namespace jpt {
             INVALID_NAME = 13,
 
             /** NAME_EXISTS value */
-            NAME_EXISTS = 14
+            NAME_EXISTS = 14,
+
+            /** PARTY_ERROR value */
+            PARTY_ERROR = 15,
+
+            /** ATTR_ERROR value */
+            ATTR_ERROR = 16
         }
 
         /** ItemType enum. */
@@ -10252,7 +10282,10 @@ export namespace jpt {
             CHAT_PRIVATE = 4,
 
             /** CHAT_SYSTEM value */
-            CHAT_SYSTEM = 5
+            CHAT_SYSTEM = 5,
+
+            /** CHAT_TRADE value */
+            CHAT_TRADE = 6
         }
 
         /** SkillType enum. */
