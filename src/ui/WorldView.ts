@@ -14,7 +14,7 @@ import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { t } from '../i18n/index.js';
-import { loadCharacterModel } from '../render/char-loader.js';
+import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
@@ -75,6 +75,8 @@ export interface WorldView {
   /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型 */
   updateSelfAppearance(appearance?: CharacterAppearance): void;
   updateRemoteAppearance(playerId: number, appearance?: CharacterAppearance): void;
+  /** 换头（转职换头饰/道具换发型）：只替换头部网格，骨架/身体/动画不动 */
+  changeSelfHead(jobId: number, faceNum: number, tier: number): void;
   /** 怪物出现（S2C_MonsterAppear）：modelFile 资产路径 + 位置/朝向 → 渲染怪物演员 */
   monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, x: number, y: number, z: number, angle: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
@@ -546,8 +548,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }));
   }
 
-  let selfBodyGroup: THREE.Group | null = null;   // 自机身体（换装只替换此组内 mesh）
-  let selfHeadGroup: THREE.Group | null = null;   // 自机头部（常驻，不随换装动）
+  let selfBodyGroup: THREE.Group | null = null;   // 自机身体（可替换：换甲/换衣）
+  let selfHeadGroup: THREE.Group | null = null;   // 自机头部（可替换：转职换头饰/道具换发型）
+  let selfBodyArmor: string | null = null;        // 当前身体 key（job:armor:override）
+  let selfHead = 0;                               // 头型 faceNum
+  let selfHeadTier = 0;                           // 转职阶级 tier（rank，0~3，决定头模后缀 a/b/c）
 
   // 自机初始化：建私有骨架壳 + 头 + 初始身体，动画由全局 bones/skeleton 驱动（帧循环复用）。
   // 与远端同构（cloneBoneHierarchy + cloneSkinnedMesh），规避 char-loader 共享 group 导致的
@@ -563,7 +568,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       bodyInxOverride = resolveCostumeBody(appearance.bodyModel, jobId);
     }
     const head = appearance?.head || 0;
-    const result = await loadCharacterModel(jobId, head, 0, armorNum, bodyInxOverride);
+    const tier = appearance?.rank || 0;
+    const result = await loadCharacterModel(jobId, head, tier, armorNum, bodyInxOverride);
     console.log('[WorldView] 自机建模: job=' + jobId + ' bodyMesh=' + result.bodyMeshes.length + ' headMesh=' + result.headMeshes.length + ' armor=' + armorNum);
 
     // 私有骨架克隆（避免共享 skeletonGroup 被跨 reload 复用）
@@ -598,6 +604,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     charGroup.add(selfHeadGroup);
     selfHead = head;
+    selfHeadTier = tier;
 
     scene.add(charGroup);
     charGroup.position.copy(selfPos);
@@ -667,8 +674,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     console.log('[WorldView] 换装完成: armor=' + armorNum + ' bodyMesh=' + result.bodyMeshes.length);
   }
 
-  let selfBodyArmor: string | null = null;   // 当前身体 key（job:armor:override）
-  let selfHead = 0;                          // 头型（换装时保持）
+  /**
+   * 换头（增量）：仅替换头部网格（转职换头饰 / 道具换发型 / 创建时改脸型）。
+   * 骨架/身体/动画不动；新头就绪后同帧 swap，无透明穿帮。
+   * @param jobId 职业
+   * @param faceNum 头型（0-2）
+   * @param tier 转职阶级（0-3，决定头模后缀）
+   */
+  async function swapSelfHead(jobId: number, faceNum: number, tier: number): Promise<void> {
+    if (!scene || !charGroup || !selfHeadGroup || !skeleton) return;
+    if (faceNum === selfHead && tier === selfHeadTier) return; // 头没变
+    const headPart = await getHead(jobId, faceNum, tier);
+    await loadTextures(headPart.result.texturesToLoad);
+    const nextHead = new THREE.Group();
+    nextHead.name = 'selfHead';
+    for (const m of headPart.result.meshes) {
+      const cm = cloneSkinnedMesh(m, skeleton);
+      cm.visible = true;
+      nextHead.add(cm);
+    }
+    if (selfHeadGroup && selfHeadGroup.parent) {
+      const parent = selfHeadGroup.parent;
+      parent.add(nextHead);
+      parent.remove(selfHeadGroup);
+    }
+    selfHeadGroup = nextHead;
+    selfHead = faceNum;
+    selfHeadTier = tier;
+    console.log('[WorldView] 换头完成: face=' + faceNum + ' tier=' + tier + ' headMesh=' + headPart.result.meshes.length);
+  }
 
   /** 当前自机武器语义类型（AXE/SWORD/BOW...，动画白名单匹配用）；无武器/徒手返回 null */
   function selfWeaponType(): string | null {
@@ -1671,15 +1705,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     renderer.setSize(root.clientWidth, root.clientHeight, false);
   }
 
-  // —— 外观更新（穿脱装备/武器切换 S2C_AppearanceUpdate 驱动）——
-  // 自机：更新外观状态 → 增量替换身体网格（swapSelfBody），骨架/头/动画常驻；就绪前旧模型保持显示
+  // —— 外观更新（穿脱装备/武器切换/转职换头 S2C_AppearanceUpdate 驱动）——
+  // 自机：增量替换（身体网格 swapSelfBody / 头部 swapSelfHead），骨架/动画常驻；就绪前旧模型保持显示
   async function reloadSelfModel(appearance: CharacterAppearance | undefined): Promise<void> {
     if (appearance) selfAppearance = appearance;
     if (!scene) return;
-    if (charGroup && selfBodyGroup && skeleton) {
-      await swapSelfBody(appearance ?? selfAppearance);
+    if (!charGroup || !selfBodyGroup || !skeleton) return; // 未进图/无模型：外观已记录，下次 show() 用
+    const jobId = appearance?.classId || selfJobId || 1;
+    // 头/转职阶级变了 → 先换头（不改身体）
+    if (appearance && (((appearance.head ?? 0) !== selfHead) || ((appearance.rank ?? 0) !== selfHeadTier))) {
+      await swapSelfHead(jobId, appearance.head ?? selfHead, appearance.rank ?? selfHeadTier);
     }
-    // 未进图/无模型：外观已记录，下次 show() 用
+    await swapSelfBody(appearance);
   }
 
   // 远端：移除旧演员 → 用其当前位置重建（新外观）
@@ -1815,6 +1852,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     updateSelfAppearance: (appearance) => { void reloadSelfModel(appearance); },
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
+    changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
     monsterAppear: (monsterId, _templateId, name, modelFile, _level, x, y, z, angle) => {
       spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, x, y, z, angle: angle || 0 });
     },
