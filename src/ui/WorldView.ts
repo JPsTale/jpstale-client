@@ -546,6 +546,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }));
   }
 
+  let selfBodyGroup: THREE.Group | null = null;   // 自机身体（换装只替换此组内 mesh）
+  let selfHeadGroup: THREE.Group | null = null;   // 自机头部（常驻，不随换装动）
+
+  // 自机初始化：建私有骨架壳 + 头 + 初始身体，动画由全局 bones/skeleton 驱动（帧循环复用）。
+  // 与远端同构（cloneBoneHierarchy + cloneSkinnedMesh），规避 char-loader 共享 group 导致的
+  // "多次 add/remove 同一 group → 透明/串扰"问题。之后换装只调 swapSelfBody，不重建模型。
   async function loadPlayer(appearance: CharacterAppearance | undefined, jobId: number): Promise<void> {
     if (!scene) return;
     selfJobId = jobId;
@@ -558,27 +564,46 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     const head = appearance?.head || 0;
     const result = await loadCharacterModel(jobId, head, 0, armorNum, bodyInxOverride);
-    console.log('[WorldView] 自机加载: job=' + jobId + ' bodyMesh=' + result.bodyMeshes.length + ' headMesh=' + result.headMeshes.length);
-    charGroup = new THREE.Group();
-    result.bodyGroup.visible = false;
-    result.headGroup.visible = false;
-    // 角色整体（骨骼+身体+头）挂到 charGroup，整体摆位到出生点（对齐 CharSelect 的 skeletonGroup 用法）
-    if (result.skeletonGroup) charGroup.add(result.skeletonGroup);
-    charGroup.add(result.bodyGroup);
-    charGroup.add(result.headGroup);
-    scene.add(charGroup);
-    charGroup.position.copy(selfPos);
-    // 角色朝向：模型默认朝 +Z（引擎 angle 0 基准），按引擎角度绕 Y 旋转
-    charGroup.rotation.y = selfAngle;
+    console.log('[WorldView] 自机建模: job=' + jobId + ' bodyMesh=' + result.bodyMeshes.length + ' headMesh=' + result.headMeshes.length + ' armor=' + armorNum);
+
+    // 私有骨架克隆（避免共享 skeletonGroup 被跨 reload 复用）
+    const priv = cloneBoneHierarchy(result.bones, result.skeleton);
+    bones = priv.bones;
+    skeleton = priv.skeleton;
     animSmb = result.animSmb;
     bipInxInfo = result.bipInxInfo;
-    bones = result.bones;
-    skeleton = result.skeleton;
+
+    // charGroup 装配：骨架根 + 身体组 + 头组（身体组可整体换内容，头/骨架不动）
+    charGroup = new THREE.Group();
+    const boneRoot = new THREE.Group();
+    if (priv.bones[0]) boneRoot.add(priv.bones[0]);
+    charGroup.add(boneRoot);
+
+    selfBodyGroup = new THREE.Group();
+    selfBodyGroup.name = 'selfBody';
+    for (const m of result.bodyMeshes) {
+      const cm = cloneSkinnedMesh(m, skeleton);
+      cm.visible = true;
+      selfBodyGroup.add(cm);
+    }
+    selfBodyGroup.visible = false; // 纹理加载完再显示，避免透明/灰闪
+    charGroup.add(selfBodyGroup);
+
+    selfHeadGroup = new THREE.Group();
+    selfHeadGroup.name = 'selfHead';
+    for (const m of result.headMeshes) {
+      const cm = cloneSkinnedMesh(m, skeleton);
+      cm.visible = true;
+      selfHeadGroup.add(cm);
+    }
+    charGroup.add(selfHeadGroup);
+    selfHead = head;
+
+    scene.add(charGroup);
+    charGroup.position.copy(selfPos);
+    charGroup.rotation.y = selfAngle;
+
     buildMotionList();
-    // 加载纹理后显示（复刻 CharSelect：防止灰色闪屏）
-    await loadTextures([...result.bodyTextures, ...result.headTextures]);
-    result.bodyGroup.visible = true;
-    result.headGroup.visible = true;
     animState = createAnimStateMachine({
       getMotions: () => motionList,
       getClassId: () => jobId,
@@ -589,9 +614,61 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       },
     });
     animState.triggerIdle();
+    // 身体纹理就绪后统一显隐（先加载纹理避免灰/透明闪帧）
+    await loadTextures([...result.bodyTextures, ...result.headTextures]);
+    selfBodyGroup.visible = true;
+    selfHeadGroup.visible = true;
+    selfBodyArmor = `${jobId}:${armorNum}:${bodyInxOverride ?? ''}`;
     // 真实装备武器挂载（外观决定）；随外观更新重挂
     await mountSelfWeapon();
   }
+
+  /**
+   * 换装（增量）：仅替换身体网格，骨架/头部/动画常驻。
+   * 新 body 就绪前旧模型保持显示；就绪后同帧 swap，无透明穿帮。
+   */
+  async function swapSelfBody(appearance: CharacterAppearance | undefined): Promise<void> {
+    if (!scene || !charGroup || !selfBodyGroup || !skeleton) return; // 未建模型：忽略（进图用当前外观建）
+    selfAppearance = appearance;
+    const jobId = appearance?.classId || selfJobId || 1;
+    let armorNum = 1;
+    let bodyInxOverride: string | null = null;
+    if (appearance?.bodyModelIdcode && appearance.bodyModelIdcode > 0) {
+      armorNum = armorNumFromIdCode(appearance.bodyModelIdcode);
+    } else if (appearance?.bodyModel) {
+      bodyInxOverride = resolveCostumeBody(appearance.bodyModel, jobId);
+    }
+    // 若外观未变（仅武器换）跳过身体重建
+    const lastArmor = selfBodyArmor;
+    if (lastArmor === `${jobId}:${armorNum}:${bodyInxOverride ?? ''}`) {
+      await mountSelfWeapon();
+      return;
+    }
+    selfBodyArmor = `${jobId}:${armorNum}:${bodyInxOverride ?? ''}`;
+
+    // 异步加载新 body（不碰场景），就绪后一次性换掉 bodyGroup 内 mesh
+    const result = await loadCharacterModel(jobId, appearance?.head ?? selfHead, 0, armorNum, bodyInxOverride);
+    await loadTextures([...result.bodyTextures]);
+    // 新 mesh 预置同 visible；构建好后同帧替换（旧 mesh 此刻仍显示）
+    const nextBody = new THREE.Group();
+    for (const m of result.bodyMeshes) {
+      const cm = cloneSkinnedMesh(m, skeleton);
+      cm.visible = true;
+      nextBody.add(cm);
+    }
+    // swap：从 charGroup 换掉旧身体组（先加新的再移除旧的，无空白帧）
+    if (selfBodyGroup && selfBodyGroup.parent) {
+      const parent = selfBodyGroup.parent;
+      parent.add(nextBody);
+      parent.remove(selfBodyGroup);
+    }
+    selfBodyGroup = nextBody;
+    await mountSelfWeapon();
+    console.log('[WorldView] 换装完成: armor=' + armorNum + ' bodyMesh=' + result.bodyMeshes.length);
+  }
+
+  let selfBodyArmor: string | null = null;   // 当前身体 key（job:armor:override）
+  let selfHead = 0;                          // 头型（换装时保持）
 
   /** 当前自机武器语义类型（AXE/SWORD/BOW...，动画白名单匹配用）；无武器/徒手返回 null */
   function selfWeaponType(): string | null {
@@ -603,10 +680,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 挂载当前自机武器（读 selfAppearance.weaponDorp）到手部骨骼；旧武器先清。
   async function mountSelfWeapon(): Promise<void> {
     if (!scene || !charGroup) return;
+    // 摘除旧武器：它挂在手部骨骼（charGroup 深层），需沿骨架找
     if (selfWeaponGroup) {
-      // 从可能挂载的骨骼上摘除（applyDbgWeapon 曾挂到 RIGHT/LEFT 手）
-      charGroup.remove(selfWeaponGroup);
+      removeFromAnywhere(charGroup, selfWeaponGroup);
       selfWeaponGroup = null;
+      console.log('[WorldView] 自机武器摘除');
     }
     const dorp = selfAppearance?.weaponDorp;
     if (!dorp) return; // 空手（无装备武器）
@@ -618,10 +696,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (bone) {
         selfWeaponGroup = wres.group;
         bone.add(wres.group);
+        console.log('[WorldView] 自机武器挂载: dorp=' + dorp + ' bone=' + boneName);
       }
     } catch (e) {
       console.warn('[WorldView] 武器挂载失败 dorp=' + dorp, e);
     }
+  }
+
+  /** 从 root 整棵树里把 target 从其父摘除（target 可能挂任一骨骼下）。 */
+  function removeFromAnywhere(root: THREE.Object3D, target: THREE.Object3D): void {
+    if (root.children.includes(target)) {
+      root.remove(target);
+      return;
+    }
+    for (const c of root.children) removeFromAnywhere(c, target);
   }
 
   function buildMotionListFor(
@@ -1584,16 +1672,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // —— 外观更新（穿脱装备/武器切换 S2C_AppearanceUpdate 驱动）——
-  // 自机：更新外观状态 → 重建角色模型（移除旧 charGroup → 重新 loadPlayer），位置/朝向保留
+  // 自机：更新外观状态 → 增量替换身体网格（swapSelfBody），骨架/头/动画常驻；就绪前旧模型保持显示
   async function reloadSelfModel(appearance: CharacterAppearance | undefined): Promise<void> {
-    selfAppearance = appearance;
-    if (!scene || !charGroup) return; // 未进图/无模型：外观已记录，下次 show() 用
-    if (charGroup) {
-      scene.remove(charGroup);
-      charGroup = null;
+    if (appearance) selfAppearance = appearance;
+    if (!scene) return;
+    if (charGroup && selfBodyGroup && skeleton) {
+      await swapSelfBody(appearance ?? selfAppearance);
     }
-    const jobId = appearance?.classId || selfJobId || 1;
-    await loadPlayer(appearance, jobId);
+    // 未进图/无模型：外观已记录，下次 show() 用
   }
 
   // 远端：移除旧演员 → 用其当前位置重建（新外观）
