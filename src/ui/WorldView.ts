@@ -1259,11 +1259,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     root: THREE.Group;
     label: THREE.Sprite;
     model: THREE.Group;
+    /** 闪烁相位（对齐 scITEM::Draw：周期提亮 vs 正常，交替渲染） */
+    blinkOn: boolean;
+    mats: { mat: THREE.MeshPhongMaterial; base: THREE.Color }[];
   }
   const groundItems = new Map<number, GroundItemActor>();
   const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string }[] = [];
   /** 掉落物离地高度（模型躺在 XZ 地面上、略浮起避免嵌地，≈scITEM 的 pY+6 微升） */
   const GROUND_LIFT = 0.35;
+  /** 掉落物高亮闪烁周期（ms 半个周期）：对齐原版 Color+100 周期脉冲 */
+  const GROUND_BLINK_MS = 650;
 
   /** 简易名字牌（canvas → Sprite，THREE.Sprite 自动朝相机） */
   function makeItemLabel(text: string): THREE.Sprite {
@@ -1353,7 +1358,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.add(pad);
 
         scene!.add(root);
-        groundItems.set(groundItemId, { groundItemId, name, root, label, model });
+
+        // 收集可提亮材质（对齐 scITEM::Draw 的 Color+=100 白闪：周期整体提亮）
+        const mats: { mat: THREE.MeshPhongMaterial; base: THREE.Color }[] = [];
+        res.group.traverse(o => {
+          const mesh = o as THREE.Mesh;
+          const mat = mesh.material as THREE.MeshPhongMaterial | undefined;
+          if (mesh.isMesh && mat && mat.color) {
+            mats.push({ mat, base: mat.color.clone() });
+          }
+        });
+
+        groundItems.set(groundItemId, { groundItemId, name, root, label, model, blinkOn: false, mats });
         console.log('[WorldView] 地面物品出现: id=' + groundItemId + ' name=' + name
           + ' dorp=' + (dorpItem || '(flag)')
           + ' @(' + x.toFixed(2) + ',' + y.toFixed(2) + ',' + z.toFixed(2) + ')');
@@ -1369,6 +1385,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       scene?.remove(g.root);
       groundItems.delete(groundItemId);
       console.log('[WorldView] 地面物品消失: id=' + groundItemId);
+    }
+  }
+
+  /** 每帧：掉落物高亮闪烁（scITEM::Draw 的周期提亮，非旋转动画） */
+  function updateGroundItems(nowMs: number): void {
+    const on = Math.floor(nowMs / GROUND_BLINK_MS) % 2 === 0;
+    for (const g of groundItems.values()) {
+      if (g.blinkOn === on || g.mats.length === 0) continue;
+      g.blinkOn = on;
+      const k = on ? 1.8 : 1;
+      for (const { mat, base } of g.mats) mat.color.copy(base).multiplyScalar(k);
     }
   }
 
@@ -1900,6 +1927,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateRemotes(dt);
     // 怪物（服务端权威, S2C_MonsterMove）
     updateMonsters(dt);
+    // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
+    updateGroundItems(rafMs);
 
     // 相机跟随角色
     updateCamera();
