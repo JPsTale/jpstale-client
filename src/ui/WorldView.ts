@@ -289,9 +289,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyCursorStyle('default');
   }
 
-  // 点击 Chase 目标（对齐原版：选中道具/怪物后自动朝目标跑；无"点地板行走"）
-  let moveTarget: { x: number; z: number; kind: 'item' | 'monster'; itemId?: number; monsterId?: number } | null = null;
+  // 点击 Chase：目标一律存"引用"（对齐 C++ lpCharMsTrace/lpMsTraceItem），每帧用其当前坐标
+  // 重算追踪朝向（GetMouseSelAngle），目标移动时实时跟——不是点选瞬间的坐标快照。
+  let moveTarget: { kind: 'item' | 'monster' | 'player'; id: number } | null = null;
   let moveStuckStart = 0;
+
+  /** Chase 目标实时位置：找不到（消失/离视野）返回 null → 取消追踪 */
+  function chaseTargetPos(): { x: number; z: number } | null {
+    if (!moveTarget) return null;
+    if (moveTarget.kind === 'item') {
+      const g = groundItems.get(moveTarget.id);
+      return g ? { x: g.root.position.x, z: g.root.position.z } : null;
+    }
+    if (moveTarget.kind === 'monster') {
+      const m = monsters.get(moveTarget.id);
+      return m ? { x: m.root.position.x, z: m.root.position.z } : null;
+    }
+    const p = remotes.get(moveTarget.id);
+    return p ? { x: p.root.position.x, z: p.root.position.z } : null;
+  }
   /** 点击掉落物即时拾取半径（世界单位）：更近直接发 C2S，更远则走过去由服务端触达拾取 */
   const PICK_ACT_RANGE = 3.0;
 
@@ -1055,12 +1071,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 点击交互（对齐原版目标式操作，无"点地板行走"）：
-   *  点中掉落物 → 已够近则即时拾取，否则 Chase 追过去（到位自动拾取该目标）；
-   *  点中怪物 → Chase 追到近战距离停下（攻击接入后触发）；
+   *  点掉落物 → 够近即时拾取，否则 Chase(引用) 追过去到位自动拾取该目标；
+   *  点怪物 / 点玩家 → Chase(引用) 实时跟随目标当前位置（目标跑我也实时转向）；
    *  点空地 → 取消当前 Chase 目标（不移动）。 */
   function onGroundTap(cx: number, cy: number): void {
     if (!renderer || !camera || !scene) return;
-    // 1) 点中掉落物 → 近处即时拾取 / 远处 Chase
+    // 1) 掉落物
     const itemId = pickGroundItemIdByRay(cx, cy);
     if (itemId !== undefined) {
       const g = groundItems.get(itemId);
@@ -1070,28 +1086,53 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           console.log('[WorldView] 点击拾取 gid=' + itemId + ' dist=' + d.toFixed(2) + 'm');
           opts?.onPickupGroundItem?.(itemId);
         } else {
-          moveTarget = { x: g.root.position.x, z: g.root.position.z, kind: 'item', itemId };
+          moveTarget = { kind: 'item', id: itemId };
           console.log('[WorldView] 选中掉落物 gid=' + itemId + ' dist=' + d.toFixed(1) + 'm → Chase');
         }
       }
       return;
     }
-    // 2) 点中怪物 → Chase（到近战距离停下，攻击待接入）
+    // 2) 怪物
     const mobId = pickMonsterIdByRay(cx, cy);
     if (mobId !== undefined) {
-      const m = monsters.get(mobId);
-      if (m) {
-        moveTarget = { x: m.root.position.x, z: m.root.position.z, kind: 'monster', monsterId: mobId };
-        console.log('[WorldView] 选中怪物 mid=' + mobId + ' → Chase');
-      }
+      moveTarget = { kind: 'monster', id: mobId };
+      console.log('[WorldView] 选中怪物 mid=' + mobId + ' → Chase(实时跟随)');
       return;
     }
-    // 3) 空地 → 取消目标（不移动）
+    // 3) 其他玩家（跟随目标，实时取位）
+    const pid2 = pickPlayerIdByRay(cx, cy);
+    if (pid2 !== undefined) {
+      moveTarget = { kind: 'player', id: pid2 };
+      console.log('[WorldView] 选中玩家 playerId=' + pid2 + ' → Chase(实时跟随)');
+      return;
+    }
+    // 4) 空地 → 取消目标（不移动）
     if (moveTarget) {
       console.log('[WorldView] 取消 Chase 目标');
       moveTarget = null;
       moveStuckStart = 0;
     }
+  }
+
+  /** 鼠标射线命中的玩家（远端演员，非自机）id */
+  function pickPlayerIdByRay(cx: number, cy: number): number | undefined {
+    if (!renderer || !camera || !scene || remotes.size === 0) return undefined;
+    const rect = renderer.domElement.getBoundingClientRect();
+    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
+    ray.setFromCamera(ndc, camera);
+    ray.far = 1300;
+    const targets: THREE.Object3D[] = [];
+    for (const r of remotes.values()) targets.push(r.root);
+    for (const hit of ray.intersectObjects(targets, true)) {
+      let o: THREE.Object3D | null = hit.object;
+      while (o) {
+        const v = o.userData.playerId as number | undefined;
+        if (v !== undefined) return v;
+        o = o.parent;
+      }
+    }
+    return undefined;
   }
 
   /** 鼠标射线命中的掉落物 id（近优先） */
@@ -1548,8 +1589,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       groundItems.delete(groundItemId);
       console.log('[WorldView] 地面物品消失: id=' + groundItemId);
     }
-    // 正在走过去的物品已被拾取/消失 → 取消寻路（物品已入包，人停在原地）
-    if (moveTarget?.itemId === groundItemId) {
+    // 正在追的物品已被拾取/消失 → 取消目标（物品已入包，人停在原地）
+    if (moveTarget?.kind === 'item' && moveTarget.id === groundItemId) {
       moveTarget = null;
       moveStuckStart = 0;
     }
@@ -1674,6 +1715,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const pos = new THREE.Vector3(actorInfo.x, actorInfo.y, actorInfo.z);
         root.position.copy(pos);
         root.rotation.y = actorInfo.angle ?? 0;
+        root.userData.playerId = pid; // 点选/追踪（Chase）命中用
         scene.add(root);
 
         const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
@@ -1728,6 +1770,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       remotes.delete(playerId);
     }
     remoteSpawning.delete(playerId);
+    // 正在追的目标玩家离视野/登出 → 取消 Chase
+    if (moveTarget?.kind === 'player' && moveTarget.id === playerId) {
+      moveTarget = null;
+      moveStuckStart = 0;
+    }
   }
 
   // 进图重进（show 再次调用）前清场：移除上一段游戏生涯的远端演员/怪物/自机模型。
@@ -2047,37 +2094,41 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // ===== 自机（方向二）：本地即时移动 + 上报位置（无对账/回拉）=====
     const wasFallingNow = falling;
-    // Chase：无鼠标按下且有目标 → 每帧朝目标走；到位触发（道具=单次拾取请求 / 怪物=到近战距离开攻击前停下）
+    // Chase：无鼠标按下且有目标 → 每帧读目标实时坐标算朝向(GetMouseSelAngle 语义)；
+    // 目标移动实时跟随；到位(道具=拾取 / 怪物/玩家=贴身) 触发。
     let targetFace: number | undefined;
     let targetReached = false;
+    let targetLost = false;
     if (!mouseDown && moveTarget && !falling) {
-      // 怪物是移动目标 → 每帧读其最新位置
-      let tx = moveTarget.x;
-      let tz = moveTarget.z;
-      if (moveTarget.kind === 'monster' && moveTarget.monsterId !== undefined) {
-        const mm = monsters.get(moveTarget.monsterId);
-        if (mm) { tx = mm.root.position.x; tz = mm.root.position.z; }
-      }
-      const dx = tx - selfPos.x;
-      const dz = tz - selfPos.z;
-      const d = Math.hypot(dx, dz);
-      const arrive = moveTarget.kind === 'item' ? 1.0 : 2.0;
-      if (d <= arrive) {
-        targetReached = true;
+      const tp = chaseTargetPos();
+      if (tp === null) {
+        targetLost = true; // 目标已消失/离视野 → 取消
       } else {
-        targetFace = Math.atan2(dx, dz);
+        const dx = tp.x - selfPos.x;
+        const dz = tp.z - selfPos.z;
+        const d = Math.hypot(dx, dz);
+        const arrive = moveTarget.kind === 'item' ? 1.0 : 2.0;
+        if (d <= arrive) {
+          targetReached = true;
+        } else {
+          targetFace = Math.atan2(dx, dz);
+        }
       }
     }
-    if (targetReached) {
+    if (targetReached || targetLost) {
       const hit = moveTarget;
       moveTarget = null;
       moveStuckStart = 0;
-      if (hit && hit.kind === 'item' && hit.itemId !== undefined) {
+      if (hit && targetReached && hit.kind === 'item') {
         // 到位 → 对"选中的这一件"发拾取请求（服务端裁决并入包推送）
-        console.log('[WorldView] Chase 到位拾取 gid=' + hit.itemId);
-        opts?.onPickupGroundItem?.(hit.itemId);
-      } else if (hit && hit.kind === 'monster') {
-        console.log('[WorldView] Chase 到位(近战距离) mid=' + hit.monsterId + '（攻击动作待接入）');
+        console.log('[WorldView] Chase 到位拾取 gid=' + hit.id);
+        opts?.onPickupGroundItem?.(hit.id);
+      } else if (hit && targetReached && hit.kind === 'monster') {
+        console.log('[WorldView] Chase 到位(近战距离) mid=' + hit.id + '（攻击动作待接入）');
+      } else if (hit && targetReached && hit.kind === 'player') {
+        console.log('[WorldView] Chase 到位(贴身) player=' + hit.id + '（交互动作待接入）');
+      } else if (targetLost) {
+        console.log('[WorldView] Chase 目标消失，取消');
       }
     }
     const moved = updateMovement(dt, targetFace); // falling 中 mouseFacing=null → 不移动
@@ -2088,8 +2139,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       } else {
         if (moveStuckStart === 0) moveStuckStart = rafMs;
         else if (rafMs - moveStuckStart > 900) {
-          console.warn('[WorldView] 寻路受阻，放弃目标 (' +
-            moveTarget.x.toFixed(1) + ',' + moveTarget.z.toFixed(1) + ')');
+          const tp = chaseTargetPos();
+          console.warn('[WorldView] 寻路受阻，放弃目标 kind=' + moveTarget.kind
+            + ' id=' + moveTarget.id
+            + (tp ? ' (' + tp.x.toFixed(1) + ',' + tp.z.toFixed(1) + ')' : ''));
           moveTarget = null;
           moveStuckStart = 0;
         }
