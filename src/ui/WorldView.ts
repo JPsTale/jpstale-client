@@ -20,6 +20,7 @@ import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
+import { isSafeMap } from '../game/safeZones.js';
 import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
@@ -124,6 +125,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
+
+  // 动画区域位（对齐原版 StageVillage）：1=村庄 2=野外；查服务端 enterGame 下发的安全区表，未知图按野外
+  function currentFieldState(): number {
+    return isSafeMap(currentMapId) ? 1 : 2;
+  }
 
   // ---- 走/跑模式（真源；移动中切换经 onMoveInt 出口上报 C2S）---
   let running = true; // 默认跑
@@ -616,6 +622,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       getClassId: () => jobId,
       getWeaponIdCode: () => selfAppearance?.weaponIdcode || 0,
       getWeaponType: () => selfWeaponType(),
+      getFieldState: () => currentFieldState(),
       onMotionChange: (motion: MotionInfo) => {
         animFrame = motion.startFrame * 160;
       },
@@ -1504,6 +1511,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         lastMapSwitch = rafMs;
         mapAudio.enterMap(currentMapId);
         void syncMapRegions(currentMapId);
+        // 村庄↔野外姿态：跨图后重选待机/走/跑动画（安全区查服务端下发表）
+        animState?.reselectForCurrentState();
       }
       // 更新角色位置
       if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }

@@ -39,6 +39,9 @@ export interface AnimStateMachineOpts {
   getWeaponIdCode?: () => number | null;
   /** 当前武器类型（'AXE'|'BOW'|...），精确匹配无结果时回退类型匹配 */
   getWeaponType?: () => string | null;
+  /** 动画区域位（对齐原版 StageVillage）：1=村庄 2=野外 3=任意（默认3，全部放行）。
+   *  村庄态禁止战斗姿态：武器代码一律清零 → 只匹配空手动画；type 回退屏蔽；姿态强制 sheathed。 */
+  getFieldState?: () => number;
   /** 武器姿态变化：'combat'=武器有匹配动画（手持）；'sheathed'=回退空手动画（应收起） */
   onStanceChange?: (stance: 'combat' | 'sheathed') => void;
   onMotionChange: (motion: MotionInfo) => void;
@@ -66,12 +69,16 @@ export interface AnimStateMachine {
 }
 
 export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMachine {
-  const { getMotions, getClassId, getWeaponIdCode, getWeaponType, onStanceChange, onMotionChange, log: logFn } = opts;
+  const { getMotions, getClassId, getWeaponIdCode, getWeaponType, getFieldState, onStanceChange, onMotionChange, log: logFn } = opts;
   const log2 = logFn || ((msg: string) => console.log(msg));
 
   let currentState = STATE.STAND;
   let currentMotion: MotionInfo | null = null;
   let currentStance: 'combat' | 'sheathed' | null = null;
+
+  function fieldState(): number {
+    return getFieldState ? getFieldState() : 3;
+  }
 
   function setStance(stance: 'combat' | 'sheathed') {
     if (currentStance !== stance) {
@@ -83,26 +90,30 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
   function findMotionForState(state: number, excludeCurrent: boolean): MotionInfo | null {
     const motions = getMotions();
     const classId = getClassId();
-    const weaponId = getWeaponIdCode ? getWeaponIdCode() : null;
-    let candidates = findMotions(motions, state, weaponId, classId);
+    const fs = fieldState();
+    const village = fs === 1;
+    const weaponId = village ? null : (getWeaponIdCode ? getWeaponIdCode() : null);
+    let candidates = findMotions(motions, state, weaponId, classId, fs);
     let weaponMatched = candidates.length > 0;
-    // 精确匹配无结果时，回退到类型匹配（对齐 pviewer：新武器无精确索引）
-    if (!candidates.length && getWeaponType) {
+    // 精确匹配无结果时，回退到类型匹配（对齐 pviewer：新武器无精确索引）。村庄态屏蔽类型回退（禁战斗）。
+    if (!candidates.length && !village && getWeaponType) {
       const weaponType = getWeaponType();
       if (weaponType) {
-        candidates = findMotionsByType(motions, state, weaponType, classId);
+        candidates = findMotionsByType(motions, state, weaponType, classId, fs);
         if (candidates.length > 0) weaponMatched = true;
       }
     }
     // 武器类型仍无匹配（如职业拿非本职业武器）时回退空手动画，保证角色有动作
     if (!candidates.length && weaponId != null && weaponId !== 0) {
-      candidates = findMotions(motions, state, null, classId);
+      candidates = findMotions(motions, state, null, classId, fs);
     }
-    // 有武器且未命中武器动画 → 空手姿态，武器应收起；否则战斗姿态
-    if (weaponId != null && weaponId !== 0) {
+    // 有武器且未命中武器动画 → 空手姿态，武器应收起；否则战斗姿态。村庄态一律收武器姿态。
+    if (village) {
+      setStance('sheathed');
+    } else if (weaponId != null && weaponId !== 0) {
       setStance(weaponMatched ? 'combat' : 'sheathed');
     }
-    log2(`[anim] state=0x${state.toString(16)} weapon=${weaponId} type=${getWeaponType ? getWeaponType() : '?'} candidates=${candidates.length} motions=${motions.length} (state-match=${motions.filter(m => m.state === state).length})`);
+    log2(`[anim] state=0x${state.toString(16)} field=${fs} weapon=${weaponId} type=${village ? 'null' : (getWeaponType ? getWeaponType() : '?')} candidates=${candidates.length} motions=${motions.length} (state-match=${motions.filter(m => m.state === state).length})`);
     if (excludeCurrent && currentMotion && candidates.length > 1) {
       candidates = candidates.filter(m => m !== currentMotion);
     }
@@ -154,23 +165,26 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
-  /** 收集能播放指定 saSkillData 索引的 SKILL 动画（按 状态+职业+武器+skillCodeList 过滤） */
+  /** 收集能播放指定 saSkillData 索引的 SKILL 动画（按 状态+职业+武器+skillCodeList 过滤）。
+ *  村庄态武器清零；SKILL 动画多为 mp=2/3，村庄下选区自然为空 → 无技能动画。 */
   function motionsForSkill(skillIndex: number): MotionInfo[] {
     const motions = getMotions();
     const classId = getClassId();
-    const weaponId = getWeaponIdCode ? getWeaponIdCode() : null;
-    let candidates = findMotions(motions, STATE.SKILL, weaponId, classId)
+    const fs = fieldState();
+    const village = fs === 1;
+    const weaponId = village ? null : (getWeaponIdCode ? getWeaponIdCode() : null);
+    let candidates = findMotions(motions, STATE.SKILL, weaponId, classId, fs)
       .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
-    if (!candidates.length && getWeaponType) {
+    if (!candidates.length && !village && getWeaponType) {
       const weaponType = getWeaponType();
       if (weaponType) {
-        candidates = findMotionsByType(motions, STATE.SKILL, weaponType, classId)
+        candidates = findMotionsByType(motions, STATE.SKILL, weaponType, classId, fs)
           .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
       }
     }
     // 武器仍无匹配 → 空手候选
     if (!candidates.length && weaponId != null && weaponId !== 0) {
-      candidates = findMotions(motions, STATE.SKILL, null, classId)
+      candidates = findMotions(motions, STATE.SKILL, null, classId, fs)
         .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
     }
     return candidates;

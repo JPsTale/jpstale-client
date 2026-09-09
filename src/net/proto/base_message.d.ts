@@ -1458,6 +1458,129 @@ export namespace jpt {
         }
 
         /**
+         * Properties of a MapInfo.
+         * @deprecated Use jpt.base.MapInfo.$Properties instead.
+         */
+        interface IMapInfo extends jpt.base.MapInfo.$Properties {
+        }
+
+        /** Represents a MapInfo. */
+        class MapInfo {
+
+            /**
+             * Constructs a new MapInfo.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: jpt.base.MapInfo.$Properties);
+
+            /** Unknown fields preserved while decoding when enabled */
+            $unknowns?: Uint8Array[];
+
+            /** MapInfo mapId. */
+            mapId: number;
+
+            /** MapInfo isSafe. */
+            isSafe: boolean;
+
+            /**
+             * Creates a new MapInfo instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns MapInfo instance
+             */
+            static create(properties: jpt.base.MapInfo.$Shape): jpt.base.MapInfo & jpt.base.MapInfo.$Shape;
+            static create(properties?: jpt.base.MapInfo.$Properties): jpt.base.MapInfo;
+
+            /**
+             * Encodes the specified MapInfo message. Does not implicitly {@link jpt.base.MapInfo.verify|verify} messages.
+             * @param message MapInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encode(message: jpt.base.MapInfo.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified MapInfo message, length delimited. Does not implicitly {@link jpt.base.MapInfo.verify|verify} messages.
+             * @param message MapInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encodeDelimited(message: jpt.base.MapInfo.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a MapInfo message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns {jpt.base.MapInfo & jpt.base.MapInfo.$Shape} MapInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): jpt.base.MapInfo & jpt.base.MapInfo.$Shape;
+
+            /**
+             * Decodes a MapInfo message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns {jpt.base.MapInfo & jpt.base.MapInfo.$Shape} MapInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): jpt.base.MapInfo & jpt.base.MapInfo.$Shape;
+
+            /**
+             * Verifies a MapInfo message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a MapInfo message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns MapInfo
+             */
+            static fromObject(object: { [k: string]: any }): jpt.base.MapInfo;
+
+            /**
+             * Creates a plain object from a MapInfo message. Also converts values to other types if specified.
+             * @param message MapInfo
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            static toObject(message: jpt.base.MapInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this MapInfo to JSON.
+             * @returns JSON object
+             */
+            toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the type url for MapInfo
+             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns The type url
+             */
+            static getTypeUrl(prefix?: string): string;
+        }
+
+        namespace MapInfo {
+
+            /** Properties of a MapInfo. */
+            interface $Properties {
+
+                /** MapInfo mapId */
+                mapId?: (number|null);
+
+                /** MapInfo isSafe */
+                isSafe?: (boolean|null);
+
+                /** Unknown fields preserved while decoding when enabled */
+                $unknowns?: Uint8Array[];
+            }
+
+            /** Shape of a MapInfo. */
+            type $Shape = jpt.base.MapInfo.$Properties;
+        }
+
+        /**
          * Properties of a S2C_CharacterList.
          * @deprecated Use jpt.base.S2C_CharacterList.$Properties instead.
          */
@@ -3543,6 +3666,9 @@ export namespace jpt {
             /** S2C_EnterGame rotation. */
             rotation?: (jpt.base.Rotation.$Properties|null);
 
+            /** S2C_EnterGame maps. */
+            maps: jpt.base.MapInfo.$Properties[];
+
             /**
              * Creates a new S2C_EnterGame instance using the specified properties.
              * @param [properties] Properties to set
@@ -3641,6 +3767,9 @@ export namespace jpt {
 
                 /** S2C_EnterGame rotation */
                 rotation?: (jpt.base.Rotation.$Properties|null);
+
+                /** S2C_EnterGame maps */
+                maps?: (jpt.base.MapInfo.$Properties[]|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

@@ -66,13 +66,26 @@ function matchWeaponByType(motion: MotionInfo, weaponType: string | null): boole
   return false;
 }
 
+/**
+ * 区域位匹配（对齐 exm SetMotionFromCode：`(!MapPosition || (MapPosition & StageVillage))`）。
+ * @param fieldState 区域编码：1=村庄(VILLAGE) 2=野外 3=任意（默认，等价无场景）
+ *   动画条目 mapPosition：0=通用；位0(1)=仅村庄；位1(2)=仅野外。
+ */
+function matchMapPosition(motion: MotionInfo, fieldState: number): boolean {
+  if (!motion.mapPosition) return true;
+  return (motion.mapPosition & fieldState) !== 0;
+}
+
 export function findMotions(
   motions: MotionInfo[],
   state: number,
   weaponIdCode: number | null,
   classId: number,
+  fieldState: number = 3,
 ): MotionInfo[] {
-  return motions.filter(m => m.state === state && matchClass(m, classId) && matchWeapon(m, weaponIdCode));
+  return motions.filter(m =>
+    m.state === state && matchClass(m, classId) && matchWeapon(m, weaponIdCode) && matchMapPosition(m, fieldState),
+  );
 }
 
 /**
@@ -84,8 +97,11 @@ export function findMotionsByType(
   state: number,
   weaponType: string | null,
   classId: number,
+  fieldState: number = 3,
 ): MotionInfo[] {
-  return motions.filter(m => m.state === state && matchClass(m, classId) && matchWeaponByType(m, weaponType));
+  return motions.filter(m =>
+    m.state === state && matchClass(m, classId) && matchWeaponByType(m, weaponType) && matchMapPosition(m, fieldState),
+  );
 }
 
 export function pickMotion(candidates: MotionInfo[]): MotionInfo | null {

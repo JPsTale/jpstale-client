@@ -16,6 +16,7 @@ import { createWorldView } from './ui/WorldView.js';
 import type { EnterGameInfo, WorldLoadHooks } from './ui/WorldView.js';
 import { t } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
+import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
 import { createSystemSettingsPanel } from './ui/SystemSettingsPanel.js';
@@ -308,6 +309,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'enterGame': {
       const eg = msg.enterGame!;
+      setSafeMaps(eg.maps?.map(m => ({ mapId: m.mapId ?? undefined, isSafe: m.isSafe ?? false })));
       // 时间锚定不在此处做：连接即已发 ping，onTimeSync 首次回调已用服务器权威时钟初始化 GameClock
       const hudState: HudState = {
         hp: 100, maxHp: 100, mp: 50, maxMp: 50, stm: 0, maxStm: 0,
