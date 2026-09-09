@@ -499,11 +499,12 @@ export function createCharSelect(container: HTMLElement): CharSelect {
         await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos);
       }
       if (gen !== loadGeneration) return;
-      animState = createAnimStateMachine({
+animState = createAnimStateMachine({
         getMotions: () => motionList,
         getClassId: () => jobId,
         getWeaponIdCode: () => currentWeaponIdcode,
         getWeaponType: () => currentWeaponType,
+        getFieldState: () => 1, // 角色选择界面等同安全区：空手 idle + 武器收鞘姿态
         onStanceChange: (stance) => { setWeaponStance(stance); },
         onMotionChange: (motion: MotionInfo) => {
           // 1 tick = 160 帧；.inx startFrame/endFrame 单位是 tick（已 TmFrame 偏移）

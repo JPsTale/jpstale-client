@@ -143,6 +143,8 @@ export const WEAPON_BONES = {
   SHEATHE_BACK: 'Bip in01',       // 剑/斧/锤/标枪/镰/杖入背
   SHEATHE_BOW: 'Bip in-bow',      // 弓入背
   SHEATHE_CROSSBOW: 'Bip in-cro', // 十字弓入背
+  SHEATHE_DAGGER_L: 'Bip in_DaggerL', // 匕首入左侧腰
+  SHEATHE_DAGGER_R: 'Bip in_DaggerR', // 匕首入右侧腰
 };
 
 /**
