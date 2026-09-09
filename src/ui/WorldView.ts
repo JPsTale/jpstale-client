@@ -1361,6 +1361,32 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     remoteSpawning.delete(playerId);
   }
 
+  // 进图重进（show 再次调用）前清场：移除上一段游戏生涯的远端演员/怪物/自机模型。
+  // 小退→重进同/换号时，旧 charGroup 若不移除会残留场景（出生点出现"自己的另一个号"）。
+  function clearWorldActors(): void {
+    for (const actor of remotes.values()) {
+      scene?.remove(actor.root);
+    }
+    remotes.clear();
+    remoteSpawning.clear();
+    pendingAppears.length = 0;
+
+    for (const actor of monsters.values()) {
+      scene?.remove(actor.root);
+    }
+    monsters.clear();
+    monsterSpawning.clear();
+    pendingMonsterAppears.length = 0;
+
+    if (charGroup) {
+      scene?.remove(charGroup);
+      charGroup = null;
+      selfBodyGroup = null;
+      selfHeadGroup = null;
+      selfBodyArmor = null;
+    }
+  }
+
   // 每帧：远端演员按"时间戳快照插值"渲染（滞后 REMOTE_INTERP_DELAY ms）+ 动画推进
   function updateRemotes(dt: number): void {
     const now = performance.now();
@@ -1796,6 +1822,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         loadHooks?.onReady?.();
         return;
       }
+      // 重进清场：移除上次进图残留的自机/远端/怪物（小退→重进/换号必须，否则旧模型残留场景）
+      clearWorldActors();
       if (enterGame.appearance) {
         selfAppearance = enterGame.appearance;
       }
