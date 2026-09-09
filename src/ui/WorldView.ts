@@ -200,8 +200,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let tapDownX = 0, tapDownY = 0, tapDownT = 0;
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  /** 拾取生效半径（世界单位）：点击时 raycast 命中地面物品且距自机在该范围内才上报（服务端再按 1.1m 裁决） */
+  /** 射线命中拾取半径（世界单位）：鼠标正对命中该范围内才优先拾 */
   const PICK_CLICK_RANGE = 3.5;
+  /** 就近兜底拾取半径（世界单位，对齐 agFindItem 近身拾取）：点击命中该范围内最近物品 */
+  const PICK_NEAR_RANGE = 3.0;
 
   // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
@@ -957,31 +959,43 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function tryPickupAt(cx: number, cy: number): void {
     if (!renderer || !camera || !scene || groundItems.size === 0) return;
+    // 1) 优先：鼠标射线命中某个地面物品（正对点击，PICK_CLICK_RANGE 内）
     const rect = renderer.domElement.getBoundingClientRect();
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
+    ray.far = PICK_CLICK_RANGE * 3; // 只关心近处命中
     const targets: THREE.Object3D[] = [];
     for (const g of groundItems.values()) targets.push(g.root);
     const hits = ray.intersectObjects(targets, true);
-    if (hits.length === 0) return;
-    const hit = hits[0];
-    // 命中模型/名字牌子 mesh → 向上找携带 pickupItemId 的 root
-    let o: THREE.Object3D | null = hit.object;
-    let id: number | undefined;
-    while (o) {
-      const v = o.userData.pickupItemId as number | undefined;
-      if (v !== undefined) { id = v; break; }
-      o = o.parent;
+    for (const hit of hits) {
+      let o: THREE.Object3D | null = hit.object;
+      while (o) {
+        const v = o.userData.pickupItemId as number | undefined;
+        if (v !== undefined) {
+          const d = Math.hypot(hit.point.x - selfPos.x, hit.point.z - selfPos.z);
+          if (d <= PICK_CLICK_RANGE) {
+            console.log('[WorldView] 点击拾取(命中) groundItem=' + v + ' dist=' + d.toFixed(2) + 'm');
+            opts?.onPickupGroundItem?.(v);
+            return;
+          }
+          break;
+        }
+        o = o.parent;
+      }
     }
-    if (id === undefined) return;
-    const dist = Math.hypot(hit.point.x - selfPos.x, hit.point.z - selfPos.z);
-    if (dist > PICK_CLICK_RANGE) {
-      console.log('[WorldView] 拾取过远: groundItem=' + id + ' dist=' + dist.toFixed(2) + 'm（走近一点）');
-      return; // 过远不拾（服务端也会裁决）
+    // 2) 兜底（对齐原版 agFindItem 就近拾取）：点击空地/附近时，
+    //    拾取自机最近、且在拾取距离内的地面物品（不必精确点中模型）
+    let bestId: number | undefined;
+    let bestD = PICK_NEAR_RANGE;
+    for (const g of groundItems.values()) {
+      const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
+      if (d <= bestD) { bestD = d; bestId = g.groundItemId; }
     }
-    console.log('[WorldView] 点击拾取 groundItem=' + id + ' dist=' + dist.toFixed(2) + 'm');
-    opts?.onPickupGroundItem?.(id);
+    if (bestId !== undefined) {
+      console.log('[WorldView] 点击拾取(就近) groundItem=' + bestId + ' dist=' + bestD.toFixed(2) + 'm');
+      opts?.onPickupGroundItem?.(bestId);
+    }
   }
   function onMouseMove(e: MouseEvent): void {
     mouseX = e.clientX; mouseY = e.clientY;
