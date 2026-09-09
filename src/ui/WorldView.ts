@@ -200,8 +200,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let tapDownX = 0, tapDownY = 0, tapDownT = 0;
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  /** 拾取生效半径（世界单位）：点击时 raycast 命中地面物品且距自机在该范围内才上报 */
-  const PICK_CLICK_RANGE = 2.2;
+  /** 拾取生效半径（世界单位）：点击时 raycast 命中地面物品且距自机在该范围内才上报（服务端再按 1.1m 裁决） */
+  const PICK_CLICK_RANGE = 3.5;
 
   // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
@@ -945,10 +945,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function onMouseUp(e: MouseEvent): void {
     if (e.button === 0) {
       mouseDown = false;
-      // 轻点（短按、小位移）→ 射线拾取地面物品（供 C2S_PickupItem，服务端权威裁决）
+      // 轻点（短按，允许轻微移动）→ 射线拾取地面物品（供 C2S_PickupItem，服务端权威裁决）
       const dt = performance.now() - tapDownT;
       const moved = Math.hypot(e.clientX - tapDownX, e.clientY - tapDownY);
-      if (dt < 260 && moved < 8) {
+      if (dt < 400 && moved < 12) {
         tryPickupAt(e.clientX, e.clientY);
       }
       // 停止上报由 renderLoop 检测 wasMoving→false 时带当前位置发送，保证位置是真正停点
@@ -976,8 +976,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (id === undefined) return;
     const dist = Math.hypot(hit.point.x - selfPos.x, hit.point.z - selfPos.z);
-    if (dist > PICK_CLICK_RANGE) return; // 过远不拾（服务端也会裁决）
-    console.log('[WorldView] 点击拾取 groundItem=' + id);
+    if (dist > PICK_CLICK_RANGE) {
+      console.log('[WorldView] 拾取过远: groundItem=' + id + ' dist=' + dist.toFixed(2) + 'm（走近一点）');
+      return; // 过远不拾（服务端也会裁决）
+    }
+    console.log('[WorldView] 点击拾取 groundItem=' + id + ' dist=' + dist.toFixed(2) + 'm');
     opts?.onPickupGroundItem?.(id);
   }
   function onMouseMove(e: MouseEvent): void {
@@ -1323,16 +1326,31 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.set(x, y, z);
         root.userData.pickupItemId = groundItemId;
 
+        // 原版 scITEM::Draw：物品模型默认长度轴朝上，须绕 X 转 90°「躺平」贴地
+        // （武器类 angle.x = ANGLE_90）。pivot 负责由位置决定的水平朝向（绕世界 Y）。
+        const pivot = new THREE.Group();
+        pivot.rotation.y = (Math.floor(x * 256) + Math.floor(z * 256)) >> 2 & 0xFFF;
+        pivot.rotation.y = pivot.rotation.y / 0xFFF * Math.PI * 2;
+
         const model = res.group;
+        model.rotation.x = Math.PI / 2; // 立轴 → 平躺地面
         model.position.y = GROUND_LIFT; // 贴地微浮
-        // 朝向由位置决定（原版 ((rawX+rawZ)>>2) & 0xFFF → 2π），无动画
-        const raw = Math.floor(x * 256) + Math.floor(z * 256);
-        model.rotation.y = ((raw >> 2) & 0xFFF) / 0xFFF * Math.PI * 2;
-        root.add(model);
+        pivot.add(model);
+        root.add(pivot);
 
         const label = makeItemLabel(name);
         label.position.y = GROUND_LIFT + modelTopY(model) + 0.55;
         root.add(label);
+
+        // 躺平模型低矮，加一块隐形拾取垫（贴近地面、透明）扩大点击目标
+        const pad = new THREE.Mesh(
+          new THREE.CircleGeometry(1.3, 24),
+          new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }),
+        );
+        pad.rotation.x = -Math.PI / 2; // XY → 平贴地面
+        pad.position.y = GROUND_LIFT + 0.02;
+        pad.renderOrder = -1;
+        root.add(pad);
 
         scene!.add(root);
         groundItems.set(groundItemId, { groundItemId, name, root, label, model });
