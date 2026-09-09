@@ -30,7 +30,14 @@ export function armorNumFromIdCode(idCode: number): number {
   return n;
 }
 
-export interface CharacterInfo { characterId: number; name: string; classId: number; level: number; appearance?: CharacterAppearance; }
+// 地图 id → i18n 名称；无翻译时回退英文 "Map {id}"
+export function mapNameById(mapId: number): string {
+  const key = `map.${mapId}`;
+  const name = t(key);
+  return name === key ? `Map ${mapId}` : name;
+}
+
+export interface CharacterInfo { characterId: number; name: string; classId: number; level: number; mapId?: number; appearance?: CharacterAppearance; }
 
 export interface CharSelect {
   show(characters: CharacterInfo[], opts: {
@@ -161,7 +168,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       const card = document.createElement('div');
       card.dataset.characterId = String(c.characterId);
       card.style.cssText = 'padding:14px 16px;background:#222;border-radius:4px;cursor:pointer;border:2px solid transparent;';
-      card.innerHTML = `<div style="font-weight:bold">${c.name}</div><div style="color:#aaa">${t('job.' + jobKeyById(c.classId))} ${t('gui.charSel.level', { level: c.level })}</div>`;
+      card.innerHTML = `<div style="font-weight:bold">${c.name}</div><div style="color:#aaa">${t('job.' + jobKeyById(c.classId))} ${t('gui.charSel.level', { level: c.level })}</div>${c.mapId != null ? `<div style="color:#7a9ec4">${t('gui.charSel.location', { map: mapNameById(c.mapId) })}</div>` : ''}`;
       card.onclick = () => selectCharacter(c.characterId);
       charList.appendChild(card);
     }

@@ -256,6 +256,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         name: c.name || '',
         classId: c.classId || 0,
         level: c.level || 1,
+        mapId: Number(c.mapId) || 0,
         appearance: c.appearance ? {
           classId: c.appearance.classId || 0,
           head: c.appearance.head || 0,
@@ -465,6 +466,7 @@ onJsonMessage((type, data) => {
         name: c.name ?? '',
         classId: c.classId ?? c.class_id ?? 0,
         level: c.level ?? 1,
+        mapId: c.mapId ?? c.lastStage ?? 0,
         appearance: c.appearance ? {
           classId: c.appearance.classId ?? 0,
           head: c.appearance.head ?? 0,

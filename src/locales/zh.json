@@ -16,7 +16,8 @@
       "create": "创建角色",
       "enter": "进入游戏",
       "logout": "换账号",
-      "level": "Lv.{level}"
+      "level": "Lv.{level}",
+      "location": "{map}"
     },
     "charCreate": {
       "race": "选择种族",

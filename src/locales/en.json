@@ -16,7 +16,8 @@
       "create": "Create",
       "enter": "Enter Game",
       "logout": "Switch Account",
-      "level": "Lv.{level}"
+      "level": "Lv.{level}",
+      "location": "{map}"
     },
     "charCreate": {
       "race": "Select Race",
