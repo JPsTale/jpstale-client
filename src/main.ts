@@ -177,10 +177,8 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
         onSelect: (characterId) => send(selectCharacter(characterId)),
         onCreate: (name, classId, head) => send(createCharacter(name, classId, head)),
         onLogout: () => {
-          disconnect();
-          clearToken();
-          transition(getScreen(), AppScreen.LOGIN, ctx);
-          showPanelFor(AppScreen.LOGIN);
+          // 服务端权威：只发退出意图；auth.logout 到达后客户端才清 token/断开回登录
+          send(logout());
         },
       });
       break;
@@ -514,12 +512,16 @@ onJsonMessage((type, data) => {
     }
     case 'auth.logout': {
       const ok = (data as any)?.success;
-      console.log('[app] logout ack:', ok);
-      if (ok) {
-        // 大退：服务端已存档并失效 token；断开、清 token 回登录
-        disconnect();
-        clearToken();
+      const reason = (data as any)?.reason;
+      console.log('[app] logout ack:', ok, reason || '');
+      // 服务端权威登出（主动大退 ack / token 失效 / 被顶号）：一律清 token、断开、回登录
+      disconnect();
+      clearToken();
+      if (getScreen() !== AppScreen.LOGIN) {
         go(AppScreen.LOGIN);
+      }
+      if (reason) {
+        loginPanel.show(reason);
       }
       break;
     }
