@@ -10681,6 +10681,9 @@ export namespace jpt {
             /** GroundItemProto name. */
             name: string;
 
+            /** GroundItemProto dorpItem. */
+            dorpItem: string;
+
             /**
              * Creates a new GroundItemProto instance using the specified properties.
              * @param [properties] Properties to set
@@ -10785,6 +10788,9 @@ export namespace jpt {
 
                 /** GroundItemProto name */
                 name?: (string|null);
+
+                /** GroundItemProto dorpItem */
+                dorpItem?: (string|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

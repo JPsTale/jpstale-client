@@ -484,6 +484,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         it?.position?.x || 0,
         it?.position?.y || 0,
         it?.position?.z || 0,
+        it?.dorpItem || '',
       );
       break;
     }

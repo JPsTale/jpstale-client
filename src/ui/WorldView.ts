@@ -29,7 +29,7 @@ import { decodeTextureAsync } from '../core/texture.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
+import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
@@ -86,8 +86,8 @@ export interface WorldView {
   monsterDisappear(monsterId: number): void;
   /** 怪物死亡（S2C_MonsterDeath）→ 移除(尸体由服务端后续以 Disappear 兜底) */
   monsterDeath(monsterId: number): void;
-  /** 地面物品出现（S2C_GroundItemAppear）：x/y/z 世界坐标 → 地面模型+名字牌 */
-  groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number): void;
+  /** 地面物品出现（S2C_GroundItemAppear）：加载 DropItem 模型渲染（dorpItem 可空→旗帜兜底） */
+  groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void;
   /** 地面物品消失（S2C_GroundItemDisappear，拾取/过期/被清） → 移除 */
   groundItemDisappear(groundItemId: number): void;
   /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
@@ -962,15 +962,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
     const targets: THREE.Object3D[] = [];
-    for (const g of groundItems.values()) {
-      g.marker.updateWorldMatrix(true, false);
-      g.marker.parent?.updateWorldMatrix(true, false);
-      targets.push(g.marker);
-    }
-    const hits = ray.intersectObjects(targets, false);
+    for (const g of groundItems.values()) targets.push(g.root);
+    const hits = ray.intersectObjects(targets, true);
     if (hits.length === 0) return;
     const hit = hits[0];
-    const id = hit.object.userData.pickupItemId as number | undefined;
+    // 命中模型/名字牌子 mesh → 向上找携带 pickupItemId 的 root
+    let o: THREE.Object3D | null = hit.object;
+    let id: number | undefined;
+    while (o) {
+      const v = o.userData.pickupItemId as number | undefined;
+      if (v !== undefined) { id = v; break; }
+      o = o.parent;
+    }
     if (id === undefined) return;
     const dist = Math.hypot(hit.point.x - selfPos.x, hit.point.z - selfPos.z);
     if (dist > PICK_CLICK_RANGE) return; // 过远不拾（服务端也会裁决）
@@ -1243,15 +1246,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // ==================== 地面物品（S2C_GroundItem* / C2S_PickupItem） ====================
+  // 渲染对齐 C++ 客户端 scITEM::Draw（character.cpp）：
+  //  - 加载 DropItem\it{DorpItem}.smd 物品模型；无模型 → 旗帜兜底（char\flag\wow）
+  //  - 贴地微浮（服务端下发 y ≈ 地形高），模型本身平躺于地
+  //  - 固定朝向由位置决定（Angle.y = ((pX+pZ)>>2) & ANGCLIP），不做旋转动画
   interface GroundItemActor {
     groundItemId: number;
     name: string;
     root: THREE.Group;
-    marker: THREE.Mesh;
-    bobPhase: number;
+    label: THREE.Sprite;
+    model: THREE.Group;
   }
   const groundItems = new Map<number, GroundItemActor>();
-  const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number }[] = [];
+  const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string }[] = [];
+  /** 掉落物离地高度（模型躺在 XZ 地面上、略浮起避免嵌地，≈scITEM 的 pY+6 微升） */
+  const GROUND_LIFT = 0.35;
 
   /** 简易名字牌（canvas → Sprite，THREE.Sprite 自动朝相机） */
   function makeItemLabel(text: string): THREE.Sprite {
@@ -1276,27 +1285,64 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return sprite;
   }
 
-  function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number): void {
+  /** 模型组在自身空间里的最高点（用于把名字牌抬到模型顶上） */
+  function modelTopY(model: THREE.Object3D): number {
+    let top = 0;
+    model.updateMatrixWorld(true);
+    const v = new THREE.Vector3();
+    model.traverse(o => {
+      const mesh = o as THREE.Mesh;
+      if (!mesh.isMesh) return;
+      const g = mesh.geometry as THREE.BufferGeometry | undefined;
+      if (!g) return;
+      if (!g.boundingBox) g.computeBoundingBox();
+      const bb = g.boundingBox!;
+      // 把局部 bbox 顶点变换到 group 空间取最大 y（模型躺在 XZ，顶部为 +Y）
+      for (const [x, y, z] of [[bb.min.x, bb.min.y, bb.min.z], [bb.max.x, bb.max.y, bb.max.z]] as const) {
+        v.set(x, y, z);
+        mesh.localToWorld(v);
+        top = Math.max(top, v.y);
+      }
+    });
+    return top;
+  }
+
+  function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void {
     if (!scene) {
-      pendingGroundItems.push({ groundItemId, name, x, y, z });
+      pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem });
       return;
     }
     if (groundItems.has(groundItemId)) return;
-    const root = new THREE.Group();
-    const marker = new THREE.Mesh(
-      new THREE.OctahedronGeometry(0.22, 0),
-      new THREE.MeshBasicMaterial({ color: 0xffd24d }),
-    );
-    marker.position.y = 0.55; // 悬浮于地（拾取模型后续可换道具图标）
-    marker.userData.pickupItemId = groundItemId;
-    const label = makeItemLabel(name);
-    label.position.y = 1.35;
-    label.userData.pickupItemId = groundItemId;
-    root.add(marker, label);
-    root.position.set(x, y, z);
-    scene.add(root);
-    groundItems.set(groundItemId, { groundItemId, name, root, marker, bobPhase: Math.random() * Math.PI * 2 });
-    console.log('[WorldView] 地面物品出现: id=' + groundItemId + ' name=' + name + ' @(' + x.toFixed(2) + ',' + y.toFixed(2) + ',' + z.toFixed(2) + ')');
+    void (async () => {
+      try {
+        const res = await loadDropItemModel(dorpItem || null);
+        await loadTextures(res.texturesToLoad);
+        if (groundItems.has(groundItemId)) return; // 加载期间已被 despawn
+
+        const root = new THREE.Group();
+        root.position.set(x, y, z);
+        root.userData.pickupItemId = groundItemId;
+
+        const model = res.group;
+        model.position.y = GROUND_LIFT; // 贴地微浮
+        // 朝向由位置决定（原版 ((rawX+rawZ)>>2) & 0xFFF → 2π），无动画
+        const raw = Math.floor(x * 256) + Math.floor(z * 256);
+        model.rotation.y = ((raw >> 2) & 0xFFF) / 0xFFF * Math.PI * 2;
+        root.add(model);
+
+        const label = makeItemLabel(name);
+        label.position.y = GROUND_LIFT + modelTopY(model) + 0.55;
+        root.add(label);
+
+        scene!.add(root);
+        groundItems.set(groundItemId, { groundItemId, name, root, label, model });
+        console.log('[WorldView] 地面物品出现: id=' + groundItemId + ' name=' + name
+          + ' dorp=' + (dorpItem || '(flag)')
+          + ' @(' + x.toFixed(2) + ',' + y.toFixed(2) + ',' + z.toFixed(2) + ')');
+      } catch (e) {
+        console.warn('[WorldView] 地面物品加载失败 id=' + groundItemId + ' name=' + name, e);
+      }
+    })();
   }
 
   function despawnGroundItem(groundItemId: number): void {
@@ -1305,15 +1351,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       scene?.remove(g.root);
       groundItems.delete(groundItemId);
       console.log('[WorldView] 地面物品消失: id=' + groundItemId);
-    }
-  }
-
-  /** 每帧：地面物品轻微旋转 + 浮动（视觉提示可拾取） */
-  function updateGroundItems(nowMs: number): void {
-    for (const g of groundItems.values()) {
-      const phase = nowMs * 0.001 + g.bobPhase;
-      g.marker.rotation.y += 0.02;
-      g.marker.position.y = 0.55 + Math.sin(phase) * 0.08;
     }
   }
 
@@ -1845,8 +1882,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateRemotes(dt);
     // 怪物（服务端权威, S2C_MonsterMove）
     updateMonsters(dt);
-    // 地面物品（S2C_GroundItem*）：旋转 + 浮动
-    updateGroundItems(rafMs);
 
     // 相机跟随角色
     updateCamera();
@@ -1969,7 +2004,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 地面物品同理（可能早于本机进场到达）
       if (pendingGroundItems.length > 0) {
         const batch = pendingGroundItems.splice(0);
-        for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z);
+        for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z, g.dorpItem);
       }
 
       try {
@@ -2072,8 +2107,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
     monsterDeath: (monsterId) => despawnMonster(Number(monsterId)),
-    groundItemAppear: (groundItemId, name, x, y, z) => {
-      spawnGroundItem(Number(groundItemId), name || '', Number(x), Number(y), Number(z));
+    groundItemAppear: (groundItemId, name, x, y, z, dorpItem) => {
+      spawnGroundItem(Number(groundItemId), name || '', Number(x), Number(y), Number(z), dorpItem || '');
     },
     groundItemDisappear: (groundItemId) => despawnGroundItem(Number(groundItemId)),
     playSkillByIcon: (iconFile) => playSkillByIcon(iconFile),

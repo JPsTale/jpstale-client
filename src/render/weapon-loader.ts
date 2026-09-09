@@ -25,18 +25,40 @@ const DROPITEM_DIR = 'image/sinimage/items/dropitem/';
  */
 export async function loadWeaponModel(dorpItem: string): Promise<{ group: THREE.Group; texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] }> {
   const smdName = 'it' + dorpItem.toLowerCase();
-  const url = '/res/' + DROPITEM_DIR + smdName + '.smd';
+  return loadSmdFromUrl('/res/' + DROPITEM_DIR + smdName + '.smd', 'weapon_' + dorpItem);
+}
 
+/**
+ * 地面掉落物品模型（忠于 C++ 客户端 scITEM）：
+ * 优先加载该物品的 DropItem 模型（it{DorpItem}.smd）；
+ * 无模型码或加载失败 → 回退到原版兜底 "char\flag\wow.smd"（旗帜标记），
+ * 而不是自造占位几何体。
+ */
+export async function loadDropItemModel(dorpItem: string | null): Promise<{ group: THREE.Group; texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] }> {
+  if (dorpItem) {
+    try {
+      return await loadWeaponModel(dorpItem);
+    } catch (e) {
+      console.warn('[DropItem] 无模型 it' + dorpItem.toLowerCase() + '.smd，回退旗帜', e);
+    }
+  }
+  return loadSmdFromUrl('/res/char/flag/wow.smd', 'dropflag');
+}
+
+/**
+ * 从任意 .smd 构建静态 Group（角色/武器/物品同构），Y-up 顶点转换在此统一。
+ */
+export async function loadSmdFromUrl(url: string, label: string): Promise<{ group: THREE.Group; texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] }> {
   const buf = await cachedFetch(url);
   const smd = parseSmb(buf);
 
   const group = new THREE.Group();
-  group.name = 'weapon_' + dorpItem;
+  group.name = label;
   const texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] = [];
 
   const meshObjs = smd.objects.filter(o => o.nVertex > 0);
   if (meshObjs.length === 0) {
-    throw new Error('武器模型无顶点: ' + dorpItem);
+    throw new Error('模型无顶点: ' + label);
   }
 
   const objMats = smd.materials || [];
