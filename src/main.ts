@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
-import { createCharacter, selectCharacter, playerMove } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -18,11 +18,9 @@ import { t } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
 import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
-import { createKeyBindingPanel } from './ui/KeyBindingPanel.js';
-import { createSystemSettingsPanel } from './ui/SystemSettingsPanel.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installBridge } from './net/bridge.js';
-import { pressQuickBinding } from './app/gameStore.js';
+import { pressQuickBinding, openSystemMenu, closeSystemMenu } from './app/gameStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -50,10 +48,6 @@ const worldLoadHooks: WorldLoadHooks = {
 };
 const gameClock = createGameClock();
 const keyBinding = createKeyBinding();
-const keyBindingPanel = createKeyBindingPanel(app, keyBinding);
-const systemSettingsPanel = createSystemSettingsPanel(app, {
-  onOpenKeyBindings: () => { systemSettingsPanel.hide(); keyBindingPanel.show(); },
-});
 
 // React 面板层（Phase 1 基建）：只渲染 store.openPanel；桥接把 proto 消息写进 store。
 const reactPanels = createReactPanels(app);
@@ -73,8 +67,6 @@ function hideAll() {
   serverSelectPanel.hide();
   charSelectPanel.hide();
   hudPanel.hide();
-  systemSettingsPanel.hide();
-  keyBindingPanel.hide();
   worldView.hide();
   loadingScreen.hide();
   reactPanels.hide();
@@ -97,7 +89,7 @@ gameClock.onTimeUpdate((state) => {
 keyBinding.onKeyDown((action) => {
   switch (action) {
     case 'system':
-      systemSettingsPanel.show();
+      openSystemMenu();
       break;
     case 'status':
       reactPanels.toggle('charStatus');
@@ -115,8 +107,7 @@ keyBinding.onKeyDown((action) => {
       hudPanel.setRunFlag(worldView.toggleRun());
       break;
     case 'closePanel':
-      systemSettingsPanel.hide();
-      keyBindingPanel.hide();
+      closeSystemMenu();
       reactPanels.hide();
       break;
     // F1~F8 快捷技能：把绑定在该键的技能自动切到对应拳（skill1=F1→index0）
@@ -133,7 +124,7 @@ hudPanel.onAction = (action) => {
   if (action === 'toggleRun') {
     hudPanel.setRunFlag(worldView.toggleRun());
   } else if (action === 'system') {
-    systemSettingsPanel.show();
+    openSystemMenu();
   } else if (action === 'status') {
     reactPanels.toggle('charStatus');
   } else if (action === 'skills') {
@@ -218,6 +209,32 @@ function go(to: AppScreen, ...args: unknown[]) {
   transition(getScreen(), to, ctx);
   showPanelFor(to, ...args);
 }
+
+// ============ 系统菜单：大退 / 小退（退出前必须先发报文等服务端存档） ============
+// 小退：回到角色选择。只发 backToCharacterSelect，服务端存档并回 auth.backToCharacterSelectResult，
+// 连接与 token 都保留（token 不失效，同连接继续选角重进）。
+// 大退：退出登录。发 logout，服务端存档并让 token 失效，回 auth.logout 后再断开清 token 回登录。
+function performBackToCharSelect() {
+  if (getScreen() !== AppScreen.WORLD) return;
+  closeSystemMenu();
+  hideAll();
+  send(backToCharacterSelect());
+  // 连接保持；等待 auth.backToCharacterSelectResult → 服务端补发 characterList → 切 CHAR_SELECT
+}
+
+function performSystemLogout() {
+  if (getScreen() !== AppScreen.WORLD) return;
+  closeSystemMenu();
+  hideAll();
+  send(logout());
+  // 等待 auth.logout → clearToken + disconnect → LOGIN
+}
+
+reactPanels.setSystemMenuSettings({
+  keyBinding,
+  onBackToCharSelect: performBackToCharSelect,
+  onLogout: performSystemLogout,
+});
 
 
 async function onLogin(username: string, password: string) {
@@ -479,10 +496,30 @@ onJsonMessage((type, data) => {
           sizeLevel: c.appearance.sizeLevel ?? 0,
         } : undefined,
       }));
-      if (getScreen() === AppScreen.SERVER_SELECT) {
+      if (getScreen() === AppScreen.SERVER_SELECT || getScreen() === AppScreen.WORLD) {
         go(AppScreen.CHAR_SELECT, chars);
       } else {
         showPanelFor(AppScreen.CHAR_SELECT, chars);
+      }
+      break;
+    }
+    case 'auth.backToCharacterSelectResult': {
+      // 小退存档确认：状态切回选角（连接/token 保留），选角列表随后由 characterList 填充
+      const ok = (data as any)?.success;
+      console.log('[app] backToCharacterSelect ack:', ok);
+      if (ok && getScreen() !== AppScreen.CHAR_SELECT) {
+        transition(getScreen(), AppScreen.CHAR_SELECT, ctx);
+      }
+      break;
+    }
+    case 'auth.logout': {
+      const ok = (data as any)?.success;
+      console.log('[app] logout ack:', ok);
+      if (ok) {
+        // 大退：服务端已存档并失效 token；断开、清 token 回登录
+        disconnect();
+        clearToken();
+        go(AppScreen.LOGIN);
       }
       break;
     }

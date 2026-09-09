@@ -2,12 +2,15 @@ import { createRoot } from 'react-dom/client';
 import { AppScreen, getScreen } from '../../app/State.js';
 import { openPanel, togglePanel, closeAllPanels, type OpenPanel } from '../../app/gameStore.js';
 import PanelsRoot from './PanelsRoot.js';
+import type { SystemMenuSettings } from './SystemMenu.js';
 import './panels.css';
 
 export interface ReactPanels {
   show(panel: OpenPanel): void;
   hide(): void;
   toggle(panel: OpenPanel): void;
+  /** 系统菜单设置（键位对象 + 画质 setter + 大退/小退回调；由 main.ts 注入） */
+  setSystemMenuSettings(settings: SystemMenuSettings): void;
   dispose(): void;
 }
 
@@ -17,8 +20,10 @@ export function createReactPanels(container: HTMLElement): ReactPanels {
   const host = document.createElement('div');
   host.id = 'jp-react-panels';
   container.appendChild(host);
+  let systemMenuSettings: SystemMenuSettings | undefined;
   const root = createRoot(host);
-  root.render(<PanelsRoot />);
+  const rerender = () => root.render(<PanelsRoot systemMenuSettings={systemMenuSettings} />);
+  rerender();
   return {
     show: (panel) => openPanel(panel),
     hide: () => closeAllPanels(),
@@ -26,6 +31,10 @@ export function createReactPanels(container: HTMLElement): ReactPanels {
     toggle: (panel) => {
       if (getScreen() !== AppScreen.WORLD) return;
       togglePanel(panel);
+    },
+    setSystemMenuSettings: (settings) => {
+      systemMenuSettings = settings;
+      rerender();
     },
     dispose: () => {
       root.unmount();

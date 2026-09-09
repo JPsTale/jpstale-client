@@ -5,6 +5,7 @@ import PanelShell from './PanelShell.js';
 import CharStatusPanel from './CharStatusPanel.js';
 import SkillPanel from './SkillPanel.js';
 import ItemPanel from './ItemPanel.js';
+import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
 
 function renderPanel(panel: OpenPanel) {
   if (panel === 'charStatus') {
@@ -31,8 +32,15 @@ function renderPanel(panel: OpenPanel) {
   return null;
 }
 
-// 面板根：渲染所有打开中的面板（多面板并存；互斥不再需要——面板可自由拖动）。
-export default function PanelsRoot() {
-  const { openPanels } = useSyncExternalStore(subscribeGame, getGameSnapshot);
-  return <>{openPanels.map(renderPanel)}</>;
+// 面板根：渲染所有打开中的面板 + 系统菜单（模态，独占打开）。
+export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSettings }) {
+  const { openPanels, systemMenuOpen } = useSyncExternalStore(subscribeGame, getGameSnapshot);
+  return (
+    <>
+      {openPanels.map(renderPanel)}
+      {systemMenuOpen && props.systemMenuSettings && (
+        <SystemMenu settings={props.systemMenuSettings} />
+      )}
+    </>
+  );
 }

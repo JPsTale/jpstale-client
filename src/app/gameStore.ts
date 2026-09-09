@@ -131,6 +131,7 @@ export interface GameSnapshot {
   player: GamePlayer | null;
   inventory: GameInventory | null;
   openPanels: readonly OpenPanel[];
+  systemMenuOpen: boolean;
   /** 当前装备到左右拳的技能（null=普通攻击；拳位默认普通攻击） */
   fistBindings: { left: FistBinding | null; right: FistBinding | null };
   /** F1~F8 快捷绑定（length 8，index 0=F1）；按下 F 键自动把技能切到 target 拳 */
@@ -155,6 +156,7 @@ function loadInitial(): GameSnapshot {
     player: null,
     inventory: null,
     openPanels: [],
+    systemMenuOpen: false,
     fistBindings: {
       left: fb?.left ?? null,
       right: fb?.right ?? null,
@@ -254,6 +256,26 @@ export function togglePanel(p: OpenPanel): void {
 export function closeAllPanels(): void {
   if (snapshot.openPanels.length === 0) return;
   commit({ openPanels: [] });
+}
+
+// —— 系统菜单（X 键）：模态，独占（打开时收起所有面板）——
+export function openSystemMenu(): void {
+  if (snapshot.systemMenuOpen) return;
+  if (snapshot.openPanels.length > 0) commit({ openPanels: [], systemMenuOpen: true });
+  else commit({ systemMenuOpen: true });
+}
+
+export function closeSystemMenu(): void {
+  if (!snapshot.systemMenuOpen) return;
+  commit({ systemMenuOpen: false });
+}
+
+export function toggleSystemMenu(): void {
+  if (snapshot.systemMenuOpen) {
+    closeSystemMenu();
+  } else {
+    openSystemMenu();
+  }
 }
 
 // —— 拳位装备 / F1~F8 快捷绑定（持久化到 localStorage） ——
