@@ -321,8 +321,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // NPC：服务端 NPC 层接入后提供 npcs(id).root 实时坐标；当前无 NPC actor → 视为目标缺失
     return null;
   }
-  /** 点击掉落物即时拾取半径（世界单位）：更近直接发 C2S，更远则走过去由服务端触达拾取 */
-  const PICK_ACT_RANGE = 3.0;
+  /** 点击掉落物即时拾取半径（世界单位，对齐原版 ≈32）：该范围内点击即发 C2S；更远走 Chase */
+  const PICK_ACT_RANGE = 32;
   /** 近身点击兜底拾取半径（世界单位，对齐 agFindItem）：不必点中低矮命中面 */
   const CLICK_NEAR_PICK = 2.0;
 
