@@ -45,34 +45,41 @@ function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z:
 
 const loadingScreen = createLoadingScreen(app);
 
-// ── 连接断开遮罩：意外断线（服务器重启/网络抖动）必须让玩家看到，而非静默冻结 ──
+// ── 连接状态遮罩（i18n）：断开重连 / 退出等待，统一走这里提示 ──
 const connOverlayEl = document.createElement('div');
 connOverlayEl.style.cssText = 'display:none;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,0,0.8);color:#eee;font:15px/1.6 system-ui,sans-serif;';
 const connTitle = document.createElement('div');
 connTitle.style.cssText = 'font-size:22px;font-weight:700;color:#ffb0a0;';
-connTitle.textContent = '连接已断开';
 const connSub = document.createElement('div');
 connSub.style.cssText = 'color:#bbb;font-size:13px;';
-connSub.textContent = '正在重新连接服务器...';
 const connBtn = document.createElement('button');
 connBtn.style.cssText = 'padding:10px 26px;font-size:15px;cursor:pointer;border:1px solid #b0624f;background:#3a2320;color:#ffc9b8;border-radius:4px;';
-connBtn.textContent = '返回登录';
 connOverlayEl.append(connTitle, connSub, connBtn);
 document.body.appendChild(connOverlayEl);
 const RECONNECT_TOTAL = 10;
 function connOverlayShow(): void { connOverlayEl.style.display = 'flex'; }
 function connOverlayHide(): void { connOverlayEl.style.display = 'none'; }
-function connSetTitle(text: string): void { connTitle.textContent = text; }
-function connSetSub(text: string): void { connSub.textContent = text; }
-function forceBackToLogin(reason?: string): void {
+function connSetTitle(key: string, params?: Record<string, string | number>): void { connTitle.textContent = t(`net.${key}`, params || {}); }
+function connSetSub(key: string, params?: Record<string, string | number>): void { connSub.textContent = t(`net.${key}`, params || {}); }
+function forceBackToLogin(reasonKey: string): void {
   stopAutoReconnect();
   connOverlayHide();
   disconnect();
   clearToken();
   if (getScreen() !== AppScreen.LOGIN) go(AppScreen.LOGIN);
-  if (reason) loginPanel.show(reason);
+  loginPanel.show(t(`net.${reasonKey}`));
 }
-connBtn.onclick = () => forceBackToLogin('连接已断开，请重新登录');
+connBtn.onclick = () => forceBackToLogin('logoutReason');
+
+// 退出/等待遮罩：登录中显示"正在断开连接..."，阻断操作直到服务端 ACK（auth.logout 等）
+const busyEl = document.createElement('div');
+busyEl.style.cssText = 'display:none;position:fixed;inset:0;z-index:901;align-items:center;justify-content:center;flex-direction:column;gap:16px;background:rgba(0,0,0,0.85);color:#eee;font:15px/1.6 system-ui,sans-serif;';
+const busyTitle = document.createElement('div');
+busyTitle.style.cssText = 'font-size:20px;font-weight:700;color:#ffd9a0;';
+busyEl.append(busyTitle);
+document.body.appendChild(busyEl);
+function busyShow(key: string): void { busyTitle.textContent = t(`net.${key}`); busyEl.style.display = 'flex'; }
+function busyHide(): void { busyEl.style.display = 'none'; }
 
 // 断线自动重连：意外断开 → 立即停止世界渲染，弹窗并尝试重连（有界 RECONNECT_TOTAL 次）；
 // 任何一次连接成功：若已不在登录页则直接回登录重进（会话已失效），由 AOI 重新推场景。
@@ -80,28 +87,29 @@ onConnState((state, ev) => {
   if (state === 'connected') { connOverlayHide(); return; }
   if (ev.intentional) return;                       // 主动登出/切页，走正常流程
   if (getScreen() === AppScreen.LOGIN) return;      // 还在登录页：登录按钮会重试，不必打扰
+  busyHide();                                       // 若正等待退出 ACK 时断了，改走重连提示
   // 离场即停：隐藏世界（怪物/NPC/掉落物等网络实体不再渲染；地图/自机一并暂停）
   worldView.hide();
-  connSetTitle('连接已断开');
-  connSetSub('正在重新连接服务器... 0/' + RECONNECT_TOTAL);
+  connSetTitle('connLost');
+  connSetSub('reconnectProgress', { attempt: 0, total: RECONNECT_TOTAL });
   connOverlayShow();
   startAutoReconnect(RECONNECT_TOTAL, 2000);
 });
 
 onReconnect((ev) => {
   if (ev.phase === 'connecting') {
-    connSetTitle('正在重新连接服务器');
-    connSetSub(`正在重新连接服务器... ${ev.attempt}/${ev.total}`);
+    connSetTitle('reconnecting');
+    connSetSub('reconnectProgress', { attempt: ev.attempt, total: ev.total });
   } else if (ev.phase === 'success') {
-    connSetTitle('服务器已重新连接');
-    connSetSub('会话已失效，返回登录页重新进入...');
+    connSetTitle('reconnectedTitle');
+    connSetSub('reconnectedSub');
     // 会话已随断线失效：回登录重进（重进后服务端 AOI 按视野重新 appear 场景）
-    forceBackToLogin('服务器已重新连接，请重新登录');
+    forceBackToLogin('reconnectedReason');
   } else {
-    // failed：10 次都没连上
-    connSetTitle('无法连接服务器');
-    connSetSub('多次尝试失败，请返回登录稍后再试。');
-    forceBackToLogin('无法连接服务器，请重新登录');
+    // failed：全部尝试都没连上
+    connSetTitle('connFailedTitle');
+    connSetSub('connFailedSub');
+    forceBackToLogin('connFailedReason');
   }
 });
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）
@@ -294,6 +302,8 @@ function performSystemLogout() {
   if (getScreen() !== AppScreen.WORLD) return;
   closeSystemMenu();
   hideAll();
+  // 弹"正在断开连接..."阻断操作；服务端权威登出，等 auth.logout ACK 才真正断开回登录
+  busyShow('disconnecting');
   send(logout());
   // 等待 auth.logout → clearToken + disconnect → LOGIN
 }
@@ -624,7 +634,10 @@ onJsonMessage((type, data) => {
       const ok = (data as any)?.success;
       const reason = (data as any)?.reason;
       console.log('[app] logout ack:', ok, reason || '');
-      // 服务端权威登出（主动大退 ack / token 失效 / 被顶号）：一律清 token、断开、回登录
+      // 服务端权威登出（主动大退 ack / token 失效 / 被顶号）：收尾“正在断开连接”等待弹窗
+      busyHide();
+      connOverlayHide();
+      // 一律清 token、断开、回登录
       disconnect();
       clearToken();
       if (getScreen() !== AppScreen.LOGIN) {

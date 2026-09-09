@@ -396,5 +396,20 @@
     "attrAssignFailed": "Attribute assignment failed: not enough stat points or no undo history",
     "eventStarted": "Event {name} has started!",
     "eventEnded": "Event {name} has ended!"
+  },
+  "net": {
+    "connLost": "Connection lost",
+    "connLostSub": "Connection to the server was interrupted (server restart or network issue)",
+    "reconnecting": "Reconnecting to server",
+    "reconnectProgress": "Reconnecting to server... {attempt}/{total}",
+    "reconnectedTitle": "Server reconnected",
+    "reconnectedSub": "Session expired, returning to login to re-enter...",
+    "reconnectedReason": "Server reconnected, please log in again",
+    "connFailedTitle": "Cannot reach server",
+    "connFailedSub": "Multiple attempts failed, please return to login and try again later.",
+    "connFailedReason": "Cannot reach server, please log in again",
+    "backToLogin": "Back to Login",
+    "disconnecting": "Disconnecting...",
+    "logoutReason": "Connection lost, please log in again"
   }
 }

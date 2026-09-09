@@ -396,5 +396,20 @@
     "attrAssignFailed": "属性分配失败：属性点不足或可撤销历史为空",
     "eventStarted": "活动 {name} 已开始！",
     "eventEnded": "活动 {name} 已结束！"
+  },
+  "net": {
+    "connLost": "连接已断开",
+    "connLostSub": "与服务器的连接中断（服务器重启或网络异常）",
+    "reconnecting": "正在重新连接服务器",
+    "reconnectProgress": "正在重新连接服务器... {attempt}/{total}",
+    "reconnectedTitle": "服务器已重新连接",
+    "reconnectedSub": "会话已失效，返回登录页重新进入...",
+    "reconnectedReason": "服务器已重新连接，请重新登录",
+    "connFailedTitle": "无法连接服务器",
+    "connFailedSub": "多次尝试失败，请返回登录稍后再试。",
+    "connFailedReason": "无法连接服务器，请重新登录",
+    "backToLogin": "返回登录",
+    "disconnecting": "正在断开连接...",
+    "logoutReason": "连接已断开，请重新登录"
   }
 }
