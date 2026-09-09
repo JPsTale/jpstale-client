@@ -33,6 +33,75 @@ function emitConn(state: ConnState, ev: ConnEvent): void {
   for (const h of connListeners) h(state, ev);
 }
 
+// ---- 断线自动重连（有界尝试） ----
+export interface ReconnectEvent {
+  phase: 'connecting' | 'success' | 'failed';
+  attempt: number;   // 当前尝试序号（connecting）；成功后为成功的那一次
+  total: number;
+}
+type ReconnectListener = (ev: ReconnectEvent) => void;
+let rcListeners: ReconnectListener[] = [];
+let rcAttempt = 0;
+let rcTotal = 0;
+let rcActive = false;
+let rcTimer = 0;
+let rcSuccessOpen = false;
+
+export function onReconnect(listener: ReconnectListener): () => void {
+  rcListeners.push(listener);
+  return () => { rcListeners = rcListeners.filter(h => h !== listener); }
+}
+
+function emitReconnect(ev: ReconnectEvent): void {
+  for (const h of rcListeners) h(ev);
+}
+
+/** 有界自动重连：最多 total 次，间隔 delayMs。断线后由调用方触发。 */
+export function startAutoReconnect(total = 10, delayMs = 2000): void {
+  if (rcActive) return;
+  if (!url) return;
+  rcActive = true;
+  rcAttempt = 0;
+  rcTotal = total;
+  rcSuccessOpen = false;
+  scheduleReconnectAttempt(delayMs);
+}
+
+function scheduleReconnectAttempt(delayMs: number): void {
+  clearTimeout(rcTimer);
+  rcTimer = window.setTimeout(() => {
+    rcAttempt++;
+    emitReconnect({ phase: 'connecting', attempt: rcAttempt, total: rcTotal });
+    rcSuccessOpen = false;
+    _connect(); // ws.onopen/onclose 里会走重连状态机
+  }, delayMs);
+}
+
+function onReconnectOpen(): void {
+  if (!rcActive) return;
+  rcSuccessOpen = true;
+  rcActive = false;
+  clearTimeout(rcTimer);
+  emitReconnect({ phase: 'success', attempt: rcAttempt, total: rcTotal });
+}
+
+function onReconnectClosed(): void {
+  if (!rcActive) return;
+  if (rcSuccessOpen) return; // 已成功过（onopen 关闭了状态机）
+  if (rcAttempt >= rcTotal) {
+    rcActive = false;
+    clearTimeout(rcTimer);
+    emitReconnect({ phase: 'failed', attempt: rcAttempt, total: rcTotal });
+  } else {
+    scheduleReconnectAttempt(2000);
+  }
+}
+
+export function stopAutoReconnect(): void {
+  rcActive = false;
+  clearTimeout(rcTimer);
+}
+
 const HEARTBEAT_INTERVAL = 20000; // 每 20s 发一次 ping（服务端 60s 读空闲超时）
 const TIME_SYNC_INTERVAL = 4000;  // 每 4s 发一次时间校正
 
@@ -51,6 +120,7 @@ function _connect(): void {
   ws.onopen = () => {
     console.log('[net] connected');
     emitConn('connected', { intentional: false });
+    onReconnectOpen();
     if (sendTokenOnConnect && _token) {
       sendJson('auth.token', { token: _token });
     }
@@ -80,6 +150,10 @@ function _connect(): void {
     console.log('[net] disconnected', intentionalClose ? '(主动)' : '(意外)');
     stopHeartbeat();
     emitConn('closed', { intentional: intentionalClose });
+    if (!intentionalClose && rcActive) {
+      onReconnectClosed(); // 有界重连状态机接管（onclose 即一次失败尝试结束）
+      return;
+    }
     if (shouldReconnect && !intentionalClose) {
       reconnectTimer = window.setTimeout(_connect, 3000);
     }

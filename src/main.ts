@@ -1,5 +1,5 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
-import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState } from './net/transport.js';
+import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
 import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
@@ -47,41 +47,62 @@ const loadingScreen = createLoadingScreen(app);
 
 // ── 连接断开遮罩：意外断线（服务器重启/网络抖动）必须让玩家看到，而非静默冻结 ──
 const connOverlayEl = document.createElement('div');
-connOverlayEl.style.cssText = 'display:none;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,0,0.75);color:#eee;font:15px/1.6 system-ui,sans-serif;';
+connOverlayEl.style.cssText = 'display:none;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,0,0.8);color:#eee;font:15px/1.6 system-ui,sans-serif;';
 const connTitle = document.createElement('div');
 connTitle.style.cssText = 'font-size:22px;font-weight:700;color:#ffb0a0;';
 connTitle.textContent = '连接已断开';
 const connSub = document.createElement('div');
 connSub.style.cssText = 'color:#bbb;font-size:13px;';
-connSub.textContent = '与服务器的连接中断（服务器重启或网络异常），世界已暂停。';
+connSub.textContent = '正在重新连接服务器...';
 const connBtn = document.createElement('button');
 connBtn.style.cssText = 'padding:10px 26px;font-size:15px;cursor:pointer;border:1px solid #b0624f;background:#3a2320;color:#ffc9b8;border-radius:4px;';
-connBtn.textContent = '重新登录';
+connBtn.textContent = '返回登录';
 connOverlayEl.append(connTitle, connSub, connBtn);
 document.body.appendChild(connOverlayEl);
-let connAutoLoginT = 0;
+const RECONNECT_TOTAL = 10;
 function connOverlayShow(): void { connOverlayEl.style.display = 'flex'; }
 function connOverlayHide(): void { connOverlayEl.style.display = 'none'; }
+function connSetTitle(text: string): void { connTitle.textContent = text; }
+function connSetSub(text: string): void { connSub.textContent = text; }
 function forceBackToLogin(reason?: string): void {
+  stopAutoReconnect();
   connOverlayHide();
   disconnect();
   clearToken();
   if (getScreen() !== AppScreen.LOGIN) go(AppScreen.LOGIN);
   if (reason) loginPanel.show(reason);
 }
-connBtn.onclick = () => { window.clearTimeout(connAutoLoginT); forceBackToLogin('连接已断开，请重新登录'); };
+connBtn.onclick = () => forceBackToLogin('连接已断开，请重新登录');
 
-// 断线监听：登录页的主动关闭忽略；游戏/选人期间意外断开 → 立即停止世界渲染并弹遮罩，
-// 8s 后自动回登录。重连/重进后由服务端 AOI（player/monster/groundItem appear）重新推场景。
+// 断线自动重连：意外断开 → 立即停止世界渲染，弹窗并尝试重连（有界 RECONNECT_TOTAL 次）；
+// 任何一次连接成功：若已不在登录页则直接回登录重进（会话已失效），由 AOI 重新推场景。
 onConnState((state, ev) => {
   if (state === 'connected') { connOverlayHide(); return; }
   if (ev.intentional) return;                       // 主动登出/切页，走正常流程
   if (getScreen() === AppScreen.LOGIN) return;      // 还在登录页：登录按钮会重试，不必打扰
-  window.clearTimeout(connAutoLoginT);
   // 离场即停：隐藏世界（怪物/NPC/掉落物等网络实体不再渲染；地图/自机一并暂停）
   worldView.hide();
+  connSetTitle('连接已断开');
+  connSetSub('正在重新连接服务器... 0/' + RECONNECT_TOTAL);
   connOverlayShow();
-  connAutoLoginT = window.setTimeout(() => forceBackToLogin('连接已断开，请重新登录'), 8000);
+  startAutoReconnect(RECONNECT_TOTAL, 2000);
+});
+
+onReconnect((ev) => {
+  if (ev.phase === 'connecting') {
+    connSetTitle('正在重新连接服务器');
+    connSetSub(`正在重新连接服务器... ${ev.attempt}/${ev.total}`);
+  } else if (ev.phase === 'success') {
+    connSetTitle('服务器已重新连接');
+    connSetSub('会话已失效，返回登录页重新进入...');
+    // 会话已随断线失效：回登录重进（重进后服务端 AOI 按视野重新 appear 场景）
+    forceBackToLogin('服务器已重新连接，请重新登录');
+  } else {
+    // failed：10 次都没连上
+    connSetTitle('无法连接服务器');
+    connSetSub('多次尝试失败，请返回登录稍后再试。');
+    forceBackToLogin('无法连接服务器，请重新登录');
+  }
 });
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）
 const worldLoadHooks: WorldLoadHooks = {
