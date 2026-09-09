@@ -15,6 +15,23 @@ let heartbeatTimer = 0;
 let timeSyncTimer = 0;
 let shouldReconnect = false;
 let sendTokenOnConnect = false;
+/** 本次关闭是否为客户端主动发起（登出/切登录页）；false = 意外断开 */
+let intentionalClose = false;
+
+export type ConnState = 'connected' | 'closed';
+export interface ConnEvent { intentional: boolean; }
+type ConnListener = (state: ConnState, ev: ConnEvent) => void;
+let connListeners: ConnListener[] = [];
+
+/** 监听连接生命周期（UI 断线提示用）。返回取消订阅函数。 */
+export function onConnState(listener: ConnListener): () => void {
+  connListeners.push(listener);
+  return () => { connListeners = connListeners.filter(h => h !== listener); }
+}
+
+function emitConn(state: ConnState, ev: ConnEvent): void {
+  for (const h of connListeners) h(state, ev);
+}
 
 const HEARTBEAT_INTERVAL = 20000; // 每 20s 发一次 ping（服务端 60s 读空闲超时）
 const TIME_SYNC_INTERVAL = 4000;  // 每 4s 发一次时间校正
@@ -23,6 +40,7 @@ export function connect(wsUrl: string, withToken = false): void {
   url = wsUrl;
   sendTokenOnConnect = withToken;
   shouldReconnect = false;
+  intentionalClose = false;
   _connect();
 }
 
@@ -32,6 +50,7 @@ function _connect(): void {
   ws.binaryType = 'arraybuffer';
   ws.onopen = () => {
     console.log('[net] connected');
+    emitConn('connected', { intentional: false });
     if (sendTokenOnConnect && _token) {
       sendJson('auth.token', { token: _token });
     }
@@ -58,9 +77,10 @@ function _connect(): void {
     }
   };
   ws.onclose = () => {
-    console.log('[net] disconnected');
+    console.log('[net] disconnected', intentionalClose ? '(主动)' : '(意外)');
     stopHeartbeat();
-    if (shouldReconnect) {
+    emitConn('closed', { intentional: intentionalClose });
+    if (shouldReconnect && !intentionalClose) {
       reconnectTimer = window.setTimeout(_connect, 3000);
     }
   };
@@ -125,6 +145,7 @@ export function onTimeSync(handler: TimeSyncHandler): () => void {
 
 export function disconnect(): void {
   shouldReconnect = false;
+  intentionalClose = true;
   clearTimeout(reconnectTimer);
   stopHeartbeat();
   ws?.close();

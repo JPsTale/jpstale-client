@@ -1,5 +1,5 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
-import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync } from './net/transport.js';
+import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState } from './net/transport.js';
 import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
@@ -44,6 +44,42 @@ function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z:
 }
 
 const loadingScreen = createLoadingScreen(app);
+
+// ── 连接断开遮罩：意外断线（服务器重启/网络抖动）必须让玩家看到，而非静默冻结 ──
+const connOverlayEl = document.createElement('div');
+connOverlayEl.style.cssText = 'display:none;position:fixed;inset:0;z-index:900;align-items:center;justify-content:center;flex-direction:column;gap:14px;background:rgba(0,0,0,0.75);color:#eee;font:15px/1.6 system-ui,sans-serif;';
+const connTitle = document.createElement('div');
+connTitle.style.cssText = 'font-size:22px;font-weight:700;color:#ffb0a0;';
+connTitle.textContent = '连接已断开';
+const connSub = document.createElement('div');
+connSub.style.cssText = 'color:#bbb;font-size:13px;';
+connSub.textContent = '与服务器的连接中断（服务器重启或网络异常），世界已暂停。';
+const connBtn = document.createElement('button');
+connBtn.style.cssText = 'padding:10px 26px;font-size:15px;cursor:pointer;border:1px solid #b0624f;background:#3a2320;color:#ffc9b8;border-radius:4px;';
+connBtn.textContent = '重新登录';
+connOverlayEl.append(connTitle, connSub, connBtn);
+document.body.appendChild(connOverlayEl);
+let connAutoLoginT = 0;
+function connOverlayShow(): void { connOverlayEl.style.display = 'flex'; }
+function connOverlayHide(): void { connOverlayEl.style.display = 'none'; }
+function forceBackToLogin(reason?: string): void {
+  connOverlayHide();
+  disconnect();
+  clearToken();
+  if (getScreen() !== AppScreen.LOGIN) go(AppScreen.LOGIN);
+  if (reason) loginPanel.show(reason);
+}
+connBtn.onclick = () => { window.clearTimeout(connAutoLoginT); forceBackToLogin('连接已断开，请重新登录'); };
+
+// 断线监听：登录页的主动关闭忽略；游戏/选人期间意外断开 → 弹遮罩并 8s 后自动回登录
+onConnState((state, ev) => {
+  if (state === 'connected') { connOverlayHide(); return; }
+  if (ev.intentional) return;                       // 主动登出/切页，走正常流程
+  if (getScreen() === AppScreen.LOGIN) return;      // 还在登录页：登录按钮会重试，不必打扰
+  window.clearTimeout(connAutoLoginT);
+  connOverlayShow();
+  connAutoLoginT = window.setTimeout(() => forceBackToLogin('连接已断开，请重新登录'), 8000);
+});
 // 进图加载出口（showPanelFor WORLD 处传给 worldView.show）
 const worldLoadHooks: WorldLoadHooks = {
   onProgress: (current, max) => loadingScreen.setProgress(current, max),
