@@ -119,6 +119,7 @@ export default function ChatWindow() {
     histList.current = dedup.length > CHAT_HISTORY_MAX ? dedup.slice(dedup.length - CHAT_HISTORY_MAX) : dedup;
     saveChatHistory(histList.current);
     histPos.current = histList.current.length;
+    draftBackup.current = ''; // 已发送：清掉旧草稿备份，避免下次 ↑↓ 回显残留
   }
 
   // ↑/↓ 在历史中回溯/前进（IME 组合态交给输入法，不介入）
