@@ -389,6 +389,12 @@ async function onLogin(username: string, password: string) {
 onMessage((msg: jpt.base.ServerMessage) => {
   switch (msg.payload) {
     case 'characterList': {
+      // 世界内忽略：角色列表只在 SERVER_SELECT/CHAR_SELECT/登录阶段有效；
+      // 已进入世界后收到（如旧连接残余/双开顶号竞态）不可再叠选角页盖住世界。
+      if (getScreen() === AppScreen.WORLD) {
+        console.warn('[app] 世界内收到 characterList，忽略（避免选角页叠在世界上层）');
+        return;
+      }
       const chars = (msg.characterList!.characters || []).map((c) => ({
         characterId: Number(c.characterId),
         name: c.name || '',
