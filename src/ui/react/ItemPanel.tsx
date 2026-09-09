@@ -75,11 +75,12 @@ function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: Ba
 // ==================== 背包画布（原版拖放视觉） ====================
 // 拿起后物品不在原格绘制（光标持物）；拖动中落点按模式给 footprint 高亮：
 // free 可放(蓝绿) / merge 合并(亮) / swap 换手(黄?) / bad 红（≥2 件冲突/越界）。
-function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
+function BagCanvas({ items, held, onPick, onPutSlot, onZone, onHover, onHoverEnd }: {
   items: GameItem[];
   held: GameItem | null;
   onPick: (it: GameItem) => void;
   onPutSlot: (slot: number) => void;
+  onZone: (overBag: boolean) => void;
   onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
   onHoverEnd: () => void;
 }) {
@@ -95,7 +96,7 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
       return { it, x, y, w: def?.w ?? 1, h: def?.h ?? 1 };
     });
 
-  /** 以鼠标为"物品中心"求足迹左上锚格（与持物图标中心对齐，避免错位） */
+  /** 落点锚 = 指针所在格左上（对齐原版 SetInvenItemAreaCheck：ColorRect 取指针格起点，足迹=物品 w×h） */
   function anchoredTopLeft(cx: number, cy: number, gw: number, gh: number): { x: number; y: number } | null {
     const el = bagRef.current;
     if (!el) return null;
@@ -103,9 +104,8 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
     const cellX = Math.floor((cx - rect.left - el.clientLeft) / CELL);
     const cellY = Math.floor((cy - rect.top - el.clientTop) / CELL);
     if (cellX < 0 || cellX >= BAG_W || cellY < 0 || cellY >= BAG_H) return null;
-    const ax = Math.min(Math.max(cellX - Math.floor((gw - 1) / 2), 0), BAG_W - gw);
-    const ay = Math.min(Math.max(cellY - Math.floor((gh - 1) / 2), 0), BAG_H - gh);
-    return { x: ax, y: ay };
+    if (cellX + gw > BAG_W || cellY + gh > BAG_H) return null;
+    return { x: cellX, y: cellY };
   }
 
   function updatePreview(cx: number, cy: number) {
@@ -154,9 +154,9 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
       className="jp-items-bag"
       ref={bagRef}
       style={{ width: BAG_W * CELL, height: BAG_H * CELL }}
-      onPointerMove={(e) => updatePreview(e.clientX, e.clientY)}
+      onPointerMove={(e) => { onZone(true); updatePreview(e.clientX, e.clientY); }}
       onPointerDown={onBagPointerDown}
-      onPointerLeave={() => { setAnchor(null); setMode(null); }}
+      onPointerLeave={() => { onZone(false); setAnchor(null); setMode(null); }}
     >
       {/* 物品图标（拿起中的物品不绘制 → 原格空出）；按下事件交给容器统一分发 */}
       {placed.map((p) => (
@@ -172,7 +172,7 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
           {p.it.count > 1 ? <span className="jp-bag-count">{p.it.count}</span> : null}
         </button>
       ))}
-      {/* 落点 footprint 预览（不拦截事件） */}
+      {/* 落点 footprint 预览：色框 + 幽灵物品（所见=所落） */}
       {held && anchor && mode ? (
         <div
           className={`jp-bag-preview jp-bag-preview--${mode}`}
@@ -182,7 +182,10 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
             width: (defOf(held)?.w ?? 1) * CELL,
             height: (defOf(held)?.h ?? 1) * CELL,
           }}
-        />
+        >
+          <ItemImg it={held} w={(defOf(held)?.w ?? 1) * CELL} h={(defOf(held)?.h ?? 1) * CELL} />
+          {held.count > 1 ? <span className="jp-bag-count">{held.count}</span> : null}
+        </div>
       ) : null}
     </div>
   );
@@ -327,9 +330,17 @@ export default function ItemPanel() {
   const [heldUid, setHeldUid] = useState<number | null>(null);
   const { hover, show: hoverShow, hide: hoverHide } = useItemHover();
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
+  const [overBag, setOverBag] = useState(false);
   // 拿起/放下时信息框消失（原版：拖起时不再显示 hover 信息）
   useEffect(() => {
     if (heldUid != null) hoverHide();
+  }, [heldUid]);
+  // 持有期间全窗口跟踪鼠标（拿起瞬间即用指针位置，无残留/无需先滑动）
+  useEffect(() => {
+    if (heldUid == null) { setCursorPos(null); return; }
+    const mv = (e: PointerEvent) => setCursorPos({ x: e.clientX, y: e.clientY });
+    window.addEventListener('pointermove', mv);
+    return () => window.removeEventListener('pointermove', mv);
   }, [heldUid]);
 
   if (!inventory) return <div className="jp-nodata">{t('item.noData')}</div>;
@@ -418,17 +429,15 @@ export default function ItemPanel() {
 
   return (
     <>
-      <div
-        className="jp-items"
-        onPointerMove={(e) => { if (heldUid != null) setCursorPos({ x: e.clientX, y: e.clientY }); }}
-        onPointerLeave={() => setCursorPos(null)}
-      >
+      <div className="jp-items">
+
         <div className="jp-items-left">
           <BagCanvas
             items={items}
             held={held}
             onPick={onPickBag}
             onPutSlot={onPutToBagSlot}
+            onZone={setOverBag}
             onHover={hoverShow}
             onHoverEnd={hoverHide}
           />
@@ -456,7 +465,7 @@ export default function ItemPanel() {
         />
       </div>
       <ItemInfo hover={hover} />
-      {held ? <HeldIcon held={held} pos={cursorPos} /> : null}
+      {held && !overBag ? <HeldIcon held={held} pos={cursorPos} /> : null}
     </>
   );
 }

@@ -1163,33 +1163,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       console.log('[WorldView] 选中玩家 playerId=' + pid2 + ' → Chase(实时跟随)');
       return;
     }
-    // 4) 空地 → 新的"点地移动"意图（打断当前 Chase，走到该点；原版点击地面即移动）
-    const pt = groundPointFromScreen(cx, cy);
-    if (pt) {
-      moveTarget = { kind: 'ground', x: pt.x, z: pt.z };
-      console.log('[WorldView] 点地移动 → (' + pt.x.toFixed(1) + ',' + pt.z.toFixed(1) + ')');
-      return;
-    }
-    // 兜底：点不到任何地面（如天空）→ 仅取消目标
+    // 4) 空地 → 仅取消当前 Chase 目标（原版点地不产生走点移动，只有按住跑）
     if (moveTarget) {
       console.log('[WorldView] 取消 Chase 目标');
       moveTarget = null;
       moveStuckStart = 0;
     }
-  }
-
-  /** 屏幕射线与 y=selfPos.y 水平面的交点（点地移动目标） */
-  function groundPointFromScreen(cx: number, cy: number): { x: number; z: number } | null {
-    if (!renderer || !camera) return null;
-    const rect = renderer.domElement.getBoundingClientRect();
-    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
-    ray.setFromCamera(ndc, camera);
-    const r = ray.ray;
-    if (Math.abs(r.direction.y) < 1e-4) return null;
-    const t = (selfPos.y - r.origin.y) / r.direction.y;
-    if (t <= 0) return null;
-    return { x: r.origin.x + r.direction.x * t, z: r.origin.z + r.direction.z * t };
   }
 
   /** 鼠标射线命中的玩家（远端演员，非自机）id */
