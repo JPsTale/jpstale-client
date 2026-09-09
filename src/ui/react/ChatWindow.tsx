@@ -67,11 +67,27 @@ function defaultGeometry() {
   return { x: 12, y: Math.max(8, window.innerHeight - h - 12), w, h };
 }
 
+const CHAT_HISTORY_KEY = 'jpstale.chatHistory';
+const CHAT_HISTORY_MAX = 100;
+function loadChatHistory(): string[] {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CHAT_HISTORY_KEY) || '[]');
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === 'string').slice(-CHAT_HISTORY_MAX) : [];
+  } catch { return []; }
+}
+function saveChatHistory(list: string[]): void {
+  try { localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(list)); } catch { /* ignore */ }
+}
+
 export default function ChatWindow() {
   const snap = useSyncExternalStore(subscribeChat, getChatSnapshot);
   const { messages, activeChannel, collapsed, inputOpen, visible } = snap;
   const [draft, setDraft] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  // 发送历史（本地持久化，最多 CHAT_HISTORY_MAX 条）：输入框内 ↑/↓ 切换历史
+  const histList = useRef<string[]>(loadChatHistory());
+  const histPos = useRef(histList.current.length); // == length 表示"新输入草稿行"
+  const draftBackup = useRef('');
   const listRef = useRef<HTMLDivElement>(null);
   const [geo, setGeo] = useState(defaultGeometry);
   const drag = useRef<null | { mode: 'move' | 'resize'; startX: number; startY: number; baseX: number; baseY: number; baseW: number; baseH: number }>(null);
@@ -95,6 +111,33 @@ export default function ChatWindow() {
     ? [...messages].reverse().find((m) => !m.system) ?? null
     : null;
 
+  // 记录一条已发送消息（去重、上限 100、持久化）；光标回到"新输入草稿行"
+  function pushHistory(text: string) {
+    if (!text.trim()) return;
+    const list = histList.current;
+    const dedup = [...list.filter((x) => x !== text), text];
+    histList.current = dedup.length > CHAT_HISTORY_MAX ? dedup.slice(dedup.length - CHAT_HISTORY_MAX) : dedup;
+    saveChatHistory(histList.current);
+    histPos.current = histList.current.length;
+  }
+
+  // ↑/↓ 在历史中回溯/前进（IME 组合态交给输入法，不介入）
+  function recallHistory(dir: 'up' | 'down') {
+    const list = histList.current;
+    if (list.length === 0) return;
+    if (histPos.current >= list.length) draftBackup.current = draft; // 离开草稿行前暂存未发送内容
+    let next = histPos.current;
+    if (dir === 'up') { if (next > 0) next--; else return; }
+    else if (next < list.length) next++;
+    else return;
+    histPos.current = next;
+    setDraft(next >= list.length ? draftBackup.current : list[next]);
+    requestAnimationFrame(() => {
+      const el = inputRef.current;
+      if (el) el.setSelectionRange(el.value.length, el.value.length);
+    });
+  }
+
   function submit() {
     const text = draft;
     setDraft('');
@@ -104,17 +147,20 @@ export default function ChatWindow() {
       if (parsed.message) {
         send(chat(parsed.channel, parsed.message));
         noteSentOn(parsed.channel);
+        pushHistory(text);
       }
     } else if (parsed.type === 'private') {
       if (parsed.targetName && parsed.message) {
         send(chat(Ch.PRIVATE, parsed.message, parsed.targetName));
         noteSentOn(Ch.PRIVATE);
+        pushHistory(text);
       }
     } else {
       // 命令：原样上送（如 /@gm、//party、/giveitem 等），服务端 treatCommand 权威解析
       const ch = activeChannel === Ch.SYSTEM ? Ch.MAP : activeChannel;
       send(chat(ch, parsed.message));
       noteSentOn(ch);
+      pushHistory(text);
     }
     inputRef.current?.focus();
   }
@@ -206,8 +252,16 @@ export default function ChatWindow() {
             maxLength={80}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') submit();
-              else if (e.key === 'Escape') { setChatInputOpen(false); setDraft(''); }
+              const kb = e.nativeEvent as KeyboardEvent;
+              if (e.key === 'ArrowUp' && !kb.isComposing) { e.preventDefault(); recallHistory('up'); }
+              else if (e.key === 'ArrowDown' && !kb.isComposing) { e.preventDefault(); recallHistory('down'); }
+              else if (e.key === 'Enter') submit();
+              else if (e.key === 'Escape') {
+                histPos.current = histList.current.length;
+                draftBackup.current = '';
+                setChatInputOpen(false);
+                setDraft('');
+              }
             }}
             onBlur={() => setChatInputOpen(false)}
           />

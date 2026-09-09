@@ -342,11 +342,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   const keys: Record<string, boolean> = {};
-  window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+  /** 是否正在文本输入（聊天/改名等输入框聚焦）→ 游戏按键必须让路 */
+  function typingActive(): boolean {
+    const a = document.activeElement;
+    return a instanceof HTMLInputElement
+      || a instanceof HTMLTextAreaElement
+      || (a instanceof HTMLElement && a.isContentEditable === true);
+  }
+  window.addEventListener('keydown', (e) => { if (!typingActive()) keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
   // C 键已由全局 KeyBinding 接管（角色状态面板），这里不再注册 debugDump。
   // 调试输出改为挂到 KeyJ（不会与游戏键位冲突）。
   window.addEventListener('keydown', (e) => {
+    if (typingActive()) return;
     if (e.code === 'KeyJ') debugDump();
   });
   // U 键：[临时调试] 角色垂直上抛 40 单位（穿桥掉到桥下后脱困用；TODO: 验证后删除）
