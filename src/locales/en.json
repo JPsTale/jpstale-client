@@ -409,6 +409,7 @@
     "connFailedSub": "Multiple attempts failed, please return to login and try again later.",
     "connFailedReason": "Cannot reach server, please log in again",
     "backToLogin": "Back to Login",
+    "autoLogin": "Auto signing in...",
     "disconnecting": "Disconnecting...",
     "logoutReason": "Connection lost, please log in again"
   }

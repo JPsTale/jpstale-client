@@ -66,6 +66,8 @@ function forceBackToLogin(reasonKey: string): void {
   connOverlayHide();
   disconnect();
   clearToken();
+  resumeAuto = null;
+  clearResume(); // 会话终结：续传引用一并清除（登录后重新建立）
   if (getScreen() !== AppScreen.LOGIN) go(AppScreen.LOGIN);
   loginPanel.show(t(`net.${reasonKey}`));
 }
@@ -80,6 +82,39 @@ busyEl.append(busyTitle);
 document.body.appendChild(busyEl);
 function busyShow(key: string): void { busyTitle.textContent = t(`net.${key}`); busyEl.style.display = 'flex'; }
 function busyHide(): void { busyEl.style.display = 'none'; }
+
+// ── 会话续传：记住登录状态/所在界面，F5 或重开浏览器时若 token 仍有效自动回到对应界面 ──
+// token 由登录 REST 颁发（Redis 侧 Sa-Token）；本地只保存引用，服务器重启不影响 token 有效性。
+interface ResumeState {
+  token?: string;
+  server?: { id: number; name: string; ip: string; port: number };
+  screen?: 'SERVER_SELECT' | 'CHAR_SELECT' | 'WORLD';
+  charId?: number;
+}
+const RESUME_KEY = 'jpstale.resume';
+function loadResume(): ResumeState {
+  try { return JSON.parse(localStorage.getItem(RESUME_KEY) || '{}') as ResumeState; } catch { return {}; }
+}
+function saveResume(patch: Partial<ResumeState>): void {
+  const next = { ...loadResume(), ...patch };
+  localStorage.setItem(RESUME_KEY, JSON.stringify(next));
+}
+function clearResume(): void { localStorage.removeItem(RESUME_KEY); }
+// 启动自动续传进行中（连接成功后的 onReconnect 分支据此不要强退回登录，等 characterList 续传）
+let resumeAuto: { screen?: ResumeState['screen']; charId?: number } | null = null;
+
+/** 启动自动续传：localStorage 有 token+服务器 → 直接连游戏服，让服务器 push characterList 续屏 */
+function attemptAutoResume(): boolean {
+  const r = loadResume();
+  if (!r.token || !r.server || !r.server.ip) return false;
+  resumeAuto = { screen: r.screen, charId: r.charId };
+  setToken(r.token);
+  loadingScreen.show(t('net.autoLogin'));
+  go(AppScreen.SERVER_SELECT, [{ ...r.server, online: true }]);
+  console.log('[app] 自动续传 →', r.server.name, r.server.ip + ':' + r.server.port, 'target=', r.screen || 'CHAR_SELECT');
+  connect(`ws://${r.server.ip}:${r.server.port}/ws`, true);
+  return true;
+}
 
 // 断线自动重连：意外断开 → 立即停止世界渲染，弹窗并尝试重连（有界 RECONNECT_TOTAL 次）；
 // 任何一次连接成功：若已不在登录页则直接回登录重进（会话已失效），由 AOI 重新推场景。
@@ -103,7 +138,9 @@ onReconnect((ev) => {
   } else if (ev.phase === 'success') {
     connSetTitle('reconnectedTitle');
     connSetSub('reconnectedSub');
-    // 会话已随断线失效：回登录重进（重进后服务端 AOI 按视野重新 appear 场景）
+    // 正在"启动自动续传/断线自动重连"期间：服务器回来了会再 push characterList 续传，
+    // 不要强退回登录；否则会话已失效才回登录重进
+    if (resumeAuto) { connOverlayHide(); return; }
     forceBackToLogin('reconnectedReason');
   } else {
     // failed：全部尝试都没连上
@@ -243,6 +280,7 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
         const s = servers.find(s => s.id === id);
         if (s) {
           console.log('[app] connecting to server', s.name, s.ip + ':' + s.port);
+          saveResume({ server: { id: s.id, name: s.name, ip: s.ip, port: s.port }, screen: 'SERVER_SELECT' });
           connect(`ws://${s.ip}:${s.port}/ws`, true);
         }
       });
@@ -251,7 +289,10 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
     case AppScreen.CHAR_SELECT: {
       const chars = (args[0] as CharacterInfo[]) || [];
       charSelectPanel.show(chars, {
-        onSelect: (characterId) => send(selectCharacter(characterId)),
+        onSelect: (characterId) => {
+          saveResume({ charId: characterId, screen: 'WORLD' }); // 目标界面；enterGame 到达后确认
+          send(selectCharacter(characterId));
+        },
         onCreate: (name, classId, head) => send(createCharacter(name, classId, head)),
         onLogout: () => {
           // 服务端权威：只发退出意图；auth.logout 到达后客户端才清 token/断开回登录
@@ -317,6 +358,7 @@ reactPanels.setSystemMenuSettings({
 
 async function onLogin(username: string, password: string) {
   if (getScreen() !== AppScreen.LOGIN) return;
+  clearResume(); // 新一次手动登录：丢弃上次会话续传状态
   try {
     const passHash = sha256(`${username.toUpperCase()}:${password}`).toUpperCase();
     const res = await fetch(`${apiBase}/api/game/login`, {
@@ -330,6 +372,7 @@ async function onLogin(username: string, password: string) {
       return;
     }
     setToken(data.token);
+    saveResume({ token: data.token });
     const servers: ServerInfo[] = (data.servers ?? []).map((s: any) => ({
       id: s.id,
       name: s.name ?? `Server ${s.id}`,
@@ -368,6 +411,19 @@ onMessage((msg: jpt.base.ServerMessage) => {
         go(AppScreen.CHAR_SELECT, chars);
       } else {
         showPanelFor(AppScreen.CHAR_SELECT, chars);
+      }
+      saveResume({ screen: 'CHAR_SELECT' });
+      // 会话续传：上次在游戏中 → characterList 就绪后自动选同一角色直接回世界
+      if (resumeAuto?.screen === 'WORLD' && resumeAuto.charId) {
+        const target = chars.find(c => c.characterId === resumeAuto!.charId);
+        resumeAuto = null;
+        if (target) {
+          console.log('[app] 续传：自动选角进入世界', target.name);
+          saveResume({ screen: 'WORLD', charId: target.characterId });
+          send(selectCharacter(target.characterId));
+        }
+      } else {
+        resumeAuto = null;
       }
       break;
     }
@@ -441,6 +497,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
       };
       go(AppScreen.WORLD, hudState, enterGame);
       worldView.setSelfId(enterGame.playerId);
+      saveResume({ screen: 'WORLD' }); // 确认已进入世界
       break;
     }
     case 'playerMove': {
@@ -628,6 +685,7 @@ onJsonMessage((type, data) => {
       if (ok && getScreen() !== AppScreen.CHAR_SELECT) {
         transition(getScreen(), AppScreen.CHAR_SELECT, ctx);
       }
+      saveResume({ screen: 'CHAR_SELECT' });
       break;
     }
     case 'auth.logout': {
@@ -637,6 +695,8 @@ onJsonMessage((type, data) => {
       // 服务端权威登出（主动大退 ack / token 失效 / 被顶号）：收尾“正在断开连接”等待弹窗
       busyHide();
       connOverlayHide();
+      resumeAuto = null;
+      clearResume();
       // 一律清 token、断开、回登录
       disconnect();
       clearToken();
@@ -661,6 +721,9 @@ preloadAllModels((loaded) => {
   loadingScreen.setProgress(loaded, TOTAL_MODELS, `加载模型 ${loaded}/${TOTAL_MODELS}`);
   if (loaded >= TOTAL_MODELS) {
     loadingScreen.hide();
-    go(AppScreen.LOGIN);
+    // 尝试会话续传（F5/重开浏览器自动回到上次界面）；失败才落到登录页
+    if (!attemptAutoResume()) {
+      go(AppScreen.LOGIN);
+    }
   }
 });
