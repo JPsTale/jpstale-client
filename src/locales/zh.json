@@ -355,7 +355,14 @@
   "chat": {
     "empty": "还没有聊天消息",
     "normal": "普通",
-    "party": "组队",
+    "party": {
+      "noParty": "你还没有组队",
+      "targetOffline": "目标玩家 {name} 不在线",
+      "cannotInviteSelf": "不能邀请自己",
+      "full": "队伍已满",
+      "alreadyInParty": "你已在队伍中",
+      "notFound": "队伍不存在"
+    },
     "guild": "公会",
     "trade": "交易",
     "system": "系统",
@@ -377,14 +384,6 @@
     },
     "private": {
       "offline": "玩家 {name} 不在线"
-    },
-    "party": {
-      "noParty": "你还没有组队",
-      "targetOffline": "目标玩家 {name} 不在线",
-      "cannotInviteSelf": "不能邀请自己",
-      "full": "队伍已满",
-      "alreadyInParty": "你已在队伍中",
-      "notFound": "队伍不存在"
     },
     "log": {
       "monsterKilled": "你击败了 {monster}！获得经验 {exp} 点、金币 {gold} 枚。",
@@ -412,5 +411,42 @@
     "autoLogin": "自动登录中...",
     "disconnecting": "正在断开连接...",
     "logoutReason": "连接已断开，请重新登录"
+  },
+  "itemtip": {
+    "atk": "攻击",
+    "hit": "命中",
+    "def": "防御",
+    "absorb": "吸收",
+    "block": "格挡",
+    "speed": "移动速度",
+    "resBionic": "生物抗性",
+    "resPoison": "毒性抗性",
+    "resFire": "火属性抗性",
+    "resLightning": "雷电抗性",
+    "resIce": "冰属性抗性",
+    "incLife": "生命增加",
+    "incMana": "魔力增加",
+    "incStm": "体力增加",
+    "reqLv": "需求等级",
+    "reqStr": "需求力量",
+    "reqSpirit": "需求精神",
+    "reqTalent": "需求才能",
+    "reqAgility": "需求敏捷",
+    "reqHealth": "需求体质",
+    "require": "需求",
+    "durability": "耐久",
+    "price": "价格",
+    "wtype": {
+      "SWORD": "单手剑",
+      "AXE": "斧",
+      "HAMMER": "锤",
+      "SPEAR": "枪",
+      "STAFF": "杖",
+      "BOW": "弓",
+      "CROSSBOW": "弩",
+      "DAGGER": "匕首",
+      "SHIELD": "盾",
+      "MACE": "锤"
+    }
   }
 }

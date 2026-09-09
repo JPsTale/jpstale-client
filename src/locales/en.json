@@ -355,7 +355,14 @@
   "chat": {
     "empty": "No chat messages yet",
     "normal": "Normal",
-    "party": "Party",
+    "party": {
+      "noParty": "You are not in a party",
+      "targetOffline": "Player {name} is not online",
+      "cannotInviteSelf": "You cannot invite yourself",
+      "full": "The party is full",
+      "alreadyInParty": "You are already in a party",
+      "notFound": "Party not found"
+    },
     "guild": "Guild",
     "trade": "Trade",
     "system": "System",
@@ -377,14 +384,6 @@
     },
     "private": {
       "offline": "Player {name} is not online"
-    },
-    "party": {
-      "noParty": "You are not in a party",
-      "targetOffline": "Player {name} is not online",
-      "cannotInviteSelf": "You cannot invite yourself",
-      "full": "The party is full",
-      "alreadyInParty": "You are already in a party",
-      "notFound": "Party not found"
     },
     "log": {
       "monsterKilled": "You defeated {monster}! Gained {exp} EXP and {gold} gold.",
@@ -412,5 +411,42 @@
     "autoLogin": "Auto signing in...",
     "disconnecting": "Disconnecting...",
     "logoutReason": "Connection lost, please log in again"
+  },
+  "itemtip": {
+    "atk": "Attack",
+    "hit": "Hit",
+    "def": "Defense",
+    "absorb": "Absorb",
+    "block": "Block",
+    "speed": "Move Speed",
+    "resBionic": "Bionic Res.",
+    "resPoison": "Poison Res.",
+    "resFire": "Fire Res.",
+    "resLightning": "Lightning Res.",
+    "resIce": "Ice Res.",
+    "incLife": "Life +",
+    "incMana": "Mana +",
+    "incStm": "Stamina +",
+    "reqLv": "Req. Level",
+    "reqStr": "Req. Str",
+    "reqSpirit": "Req. Spirit",
+    "reqTalent": "Req. Talent",
+    "reqAgility": "Req. Agility",
+    "reqHealth": "Req. Health",
+    "require": "Requirements",
+    "durability": "Durability",
+    "price": "Price",
+    "wtype": {
+      "SWORD": "Sword",
+      "AXE": "Axe",
+      "HAMMER": "Hammer",
+      "SPEAR": "Spear",
+      "STAFF": "Staff",
+      "BOW": "Bow",
+      "CROSSBOW": "Crossbow",
+      "DAGGER": "Dagger",
+      "SHIELD": "Shield",
+      "MACE": "Mace"
+    }
   }
 }

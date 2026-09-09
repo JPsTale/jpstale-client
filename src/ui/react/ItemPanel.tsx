@@ -8,6 +8,7 @@ import {
 } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { sendInventoryMove, sendEquipItem, sendUnequipItem, sendDropItem, sendSwitchWeapon } from '../../net/bridge.js';
+import { useItemHover, ItemInfo } from './ItemInfo.js';
 
 // 画布常量（对齐服务端 ItemLocations）
 const BAG_W = 12;
@@ -42,13 +43,15 @@ function defOf(it: GameItem): Def | undefined {
 // ==================== 背包画布 ====================
 // 图标直接相对画布定位（左上角=slot 的 x/y），占多格 w×h；格线仅用 CSS 背景画布线，不遮挡图标。
 
-function BagCanvas({ items, heldUid, canDropAt, onPick, onPut, onDrop }: {
+function BagCanvas({ items, heldUid, canDropAt, onPick, onPut, onDrop, onHover, onHoverEnd }: {
   items: GameItem[];
   heldUid: number | null;
   canDropAt: (slot: number) => boolean;
   onPick: (it: GameItem) => void;
   onPut: (slot: number) => void;
   onDrop: (slot: number) => void;
+  onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
+  onHoverEnd: () => void;
 }) {
   const placed = items
     .filter((x) => x.location === 0)
@@ -68,7 +71,8 @@ function BagCanvas({ items, heldUid, canDropAt, onPick, onPut, onDrop }: {
           className={`jp-bag-item${isHeld(p.it.uid) ? ' jp-bag-item--held' : ''}`}
           style={{ left: p.x * CELL, top: p.y * CELL, width: p.w * CELL, height: p.h * CELL }}
           onPointerDown={(e) => { e.stopPropagation(); onPick(p.it); }}
-          title={defOf(p.it)?.name ?? `#${p.it.itemlistId}`}
+          onPointerEnter={(e) => { e.stopPropagation(); onHover(p.it, e); }}
+          onPointerLeave={onHoverEnd}
         >
           <ItemImg it={p.it} w={p.w * CELL} h={p.h * CELL} />
           {p.it.count > 1 ? <span className="jp-bag-count">{p.it.count}</span> : null}
@@ -149,11 +153,13 @@ function itemViewSize(it: GameItem, slotKind: SlotDef['kind']): { w: number; h: 
   return { w, h };
 }
 
-function EquipColumn({ items, heldUid, onPickEquip, onPutEquip }: {
+function EquipColumn({ items, heldUid, onPickEquip, onPutEquip, onHover, onHoverEnd }: {
   items: GameItem[];
   heldUid: number | null;
   onPickEquip: (slot: number) => void;
   onPutEquip: (slot: number) => void;
+  onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
+  onHoverEnd: () => void;
 }) {
   const eq = (slot: number) => items.find((x) => x.location === 2 && x.slot === slot);
 
@@ -173,7 +179,9 @@ function EquipColumn({ items, heldUid, onPickEquip, onPutEquip }: {
               if (it) onPickEquip(s.slot);
               else if (heldUid != null) onPutEquip(s.slot);
             }}
-            title={s.label}
+            title={it ? undefined : s.label}
+            onPointerEnter={(e) => { if (it) { e.stopPropagation(); onHover(it, e); } }}
+            onPointerLeave={onHoverEnd}
           >
             {it ? (
               <ItemImg it={it} {...itemViewSize(it, s.kind)} />
@@ -201,6 +209,7 @@ export default function ItemPanel() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
   const { inventory } = snap;
   const [heldUid, setHeldUid] = useState<number | null>(null);
+  const { hover, show: hoverShow, hide: hoverHide } = useItemHover();
 
   if (!inventory) return <div className="jp-nodata">{t('item.noData')}</div>;
 
@@ -284,35 +293,42 @@ export default function ItemPanel() {
   }
 
   return (
-    <div className="jp-items">
-      <div className="jp-items-left">
-        <BagCanvas
+    <>
+      <div className="jp-items">
+        <div className="jp-items-left">
+          <BagCanvas
+            items={items}
+            heldUid={heldUid}
+            canDropAt={canDropAt}
+            onPick={onPickBag}
+            onPut={onPutToBagSlot}
+            onDrop={onDropToBag}
+            onHover={hoverShow}
+            onHoverEnd={hoverHide}
+          />
+          {/* 底部功能区 */}
+          <div className="jp-items-foot">
+            <span className="jp-items-gold">{t('item.gold')}: {inventory.gold}</span>
+            {held ? (
+              <span className="jp-items-heldinfo">
+                <b>{heldDef?.name ?? `#${held.itemlistId}`}</b>
+                <button type="button" className="jp-items-act" onClick={dropHeld}>{t('item.drop')}</button>
+                <button type="button" className="jp-items-act" onClick={returnHeld}>{t('panel.close')}</button>
+              </span>
+            ) : null}
+            <button type="button" className="jp-items-switch" onClick={() => sendSwitchWeapon()} title="W">⇄</button>
+          </div>
+        </div>
+        <EquipColumn
           items={items}
           heldUid={heldUid}
-          canDropAt={canDropAt}
-          onPick={onPickBag}
-          onPut={onPutToBagSlot}
-          onDrop={onDropToBag}
+          onPickEquip={onPickEquip}
+          onPutEquip={onPutEquip}
+          onHover={hoverShow}
+          onHoverEnd={hoverHide}
         />
-        {/* 底部功能区 */}
-        <div className="jp-items-foot">
-          <span className="jp-items-gold">{t('item.gold')}: {inventory.gold}</span>
-          {held ? (
-            <span className="jp-items-heldinfo">
-              <b>{heldDef?.name ?? `#${held.itemlistId}`}</b>
-              <button type="button" className="jp-items-act" onClick={dropHeld}>{t('item.drop')}</button>
-              <button type="button" className="jp-items-act" onClick={returnHeld}>{t('panel.close')}</button>
-            </span>
-          ) : null}
-          <button type="button" className="jp-items-switch" onClick={() => sendSwitchWeapon()} title="W">⇄</button>
-        </div>
       </div>
-      <EquipColumn
-        items={items}
-        heldUid={heldUid}
-        onPickEquip={onPickEquip}
-        onPutEquip={onPutEquip}
-      />
-    </div>
+      <ItemInfo hover={hover} />
+    </>
   );
 }

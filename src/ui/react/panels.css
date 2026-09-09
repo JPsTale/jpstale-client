@@ -1176,3 +1176,64 @@
   background: linear-gradient(135deg, transparent 50%, rgba(160, 180, 215, 0.55) 50%);
   border-radius: 0 0 6px 0;
 }
+
+/* 原版风格物品信息框（深色半透明底；名字居中加粗；右上武器类型徽标；需求不足行红字） */
+.jp-item-info {
+  position: fixed;
+  z-index: 1200;
+  width: 236px;
+  background: rgba(10, 12, 18, 0.92);
+  border: 1px solid rgba(140, 140, 160, 0.4);
+  color: #e9e7da;
+  font: 12px/1.6 'Microsoft YaHei', system-ui, sans-serif;
+  padding: 6px 10px 8px;
+  pointer-events: none;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
+  text-align: left;
+}
+.jp-item-info-name {
+  position: relative;
+  text-align: center;
+  font-weight: 700;
+  color: #ffe9a8;
+  margin: 2px 0 3px;
+  padding-right: 4px;
+}
+.jp-item-info-wtype {
+  position: absolute;
+  right: 0;
+  top: 0;
+  font-weight: 400;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #cfe0ee;
+  border: 1px solid rgba(170, 190, 210, 0.4);
+  padding: 0 4px;
+  border-radius: 2px;
+  background: rgba(30, 40, 55, 0.55);
+}
+.jp-item-info-line {
+  display: flex;
+  gap: 6px;
+}
+.jp-item-info-l {
+  flex: 0 0 auto;
+  color: #cfc6ae;
+}
+.jp-item-info-v {
+  color: #ffffff;
+}
+.jp-item-info-red .jp-item-info-l,
+.jp-item-info-red .jp-item-info-v {
+  color: #ff5c5c;
+}
+.jp-item-info-sec {
+  justify-content: center;
+  color: #aab3c2;
+  border-top: 1px dashed rgba(150, 155, 170, 0.35);
+  margin-top: 3px;
+  padding-top: 3px;
+}
+.jp-item-info-sec .jp-item-info-v {
+  color: #d7d3c2;
+}
