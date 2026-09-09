@@ -95,16 +95,27 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
       return { it, x, y, w: def?.w ?? 1, h: def?.h ?? 1 };
     });
 
-  function updatePreview(cx: number, cy: number) {
+  /** 以鼠标为"物品中心"求足迹左上锚格（与持物图标中心对齐，避免错位） */
+  function anchoredTopLeft(cx: number, cy: number, gw: number, gh: number): { x: number; y: number } | null {
     const el = bagRef.current;
-    if (!el || !held) { setAnchor(null); setMode(null); return; }
+    if (!el) return null;
     const rect = el.getBoundingClientRect();
-    const gx = Math.floor((cx - rect.left - el.clientLeft) / CELL);
-    const gy = Math.floor((cy - rect.top - el.clientTop) / CELL);
-    if (gx < 0 || gx >= BAG_W || gy < 0 || gy >= BAG_H) { setAnchor(null); setMode(null); return; }
-    const slot = gy * BAG_W + gx;
-    setAnchor({ x: gx, y: gy });
-    setMode(bagTargetFor(held, slot, items).mode);
+    const cellX = Math.floor((cx - rect.left - el.clientLeft) / CELL);
+    const cellY = Math.floor((cy - rect.top - el.clientTop) / CELL);
+    if (cellX < 0 || cellX >= BAG_W || cellY < 0 || cellY >= BAG_H) return null;
+    const ax = Math.min(Math.max(cellX - Math.floor((gw - 1) / 2), 0), BAG_W - gw);
+    const ay = Math.min(Math.max(cellY - Math.floor((gh - 1) / 2), 0), BAG_H - gh);
+    return { x: ax, y: ay };
+  }
+
+  function updatePreview(cx: number, cy: number) {
+    if (!held) { setAnchor(null); setMode(null); return; }
+    const gw = defOf(held)?.w ?? 1;
+    const gh = defOf(held)?.h ?? 1;
+    const a = anchoredTopLeft(cx, cy, gw, gh);
+    if (!a) { setAnchor(null); setMode(null); return; }
+    setAnchor(a);
+    setMode(bagTargetFor(held, a.y * BAG_W + a.x, items).mode);
   }
 
   function cellFromEvent(e: { clientX: number; clientY: number }): number | null {
@@ -118,15 +129,19 @@ function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
   }
 
   function onBagPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    const slot = cellFromEvent(e);
-    if (slot === null) return;
     if (held) {
+      const gw = defOf(held)?.w ?? 1;
+      const gh = defOf(held)?.h ?? 1;
+      const a = anchoredTopLeft(e.clientX, e.clientY, gw, gh);
+      if (!a) return;
       // 拿起中：落点放置（空位/合并/换手统一），bad 忽略
-      const t = bagTargetFor(held, slot, items);
+      const t = bagTargetFor(held, a.y * BAG_W + a.x, items);
       if (t.mode === 'bad') return;
       onHoverEnd();
-      onPutSlot(slot);
+      onPutSlot(a.y * BAG_W + a.x);
     } else {
+      const slot = cellFromEvent(e);
+      if (slot === null) return;
       // 未拿起：命中哪件就拿起哪件（按覆盖格命中，含多格物品任意格）
       const p = placed.find((pp) => slotXY(slot).x >= pp.x && slotXY(slot).x < pp.x + pp.w
         && slotXY(slot).y >= pp.y && slotXY(slot).y < pp.y + pp.h);
@@ -349,6 +364,7 @@ export default function ItemPanel() {
   function onPutToBagSlot(targetSlot: number) {
     if (!held) return;
     if (held.location === 2) {
+      console.log('[bag] 卸下装备 held uid=', held.uid, 'slot=', held.slot);
       // 装备 → 背包格（脱下回背包）
       sendUnequipItem(held.slot);
       setHeldUid(null);
@@ -358,6 +374,8 @@ export default function ItemPanel() {
     if (targetSlot === held.slot) { setHeldUid(null); return; }
     // 原版语义：空位放 / 同种合并 / 单件换手(被撞件成为下一手持物)
     const t = bagTargetFor(held, targetSlot, items);
+    console.log('[bag] 放置 held uid=', held.uid, '来自slot=', held.slot, '→目标slot=', targetSlot,
+      'xy=', JSON.stringify(slotXY(targetSlot)), 'mode=', t.mode, 'conflict=', t.conflict?.uid);
     if (t.mode === 'bad') return;
     sendInventoryMove(held.uid, 0, targetSlot);
     if (t.mode === 'swap' && t.conflict) {
