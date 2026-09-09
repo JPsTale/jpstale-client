@@ -168,5 +168,9 @@ export function decodeServer(data: ArrayBuffer | Uint8Array): jpt.base.ServerMes
 }
 
 export function debugLog(msg: jpt.base.ServerMessage): void {
+    // 高频噪音：pong 心跳 / playerMove 状态广播不打日志
+    if (msg.payload === 'pong' || msg.payload === 'playerMove') {
+        return;
+    }
     console.log(JSON.stringify(jpt.base.ServerMessage.toObject(msg)));
 }
