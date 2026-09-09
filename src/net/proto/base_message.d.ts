@@ -10453,6 +10453,12 @@ export namespace jpt {
             /** ItemProto agingLevel. */
             agingLevel: number;
 
+            /** ItemProto critical. */
+            critical: number;
+
+            /** ItemProto range. */
+            range: number;
+
             /**
              * Creates a new ItemProto instance using the specified properties.
              * @param [properties] Properties to set
@@ -10632,6 +10638,12 @@ export namespace jpt {
 
                 /** ItemProto agingLevel */
                 agingLevel?: (number|null);
+
+                /** ItemProto critical */
+                critical?: (number|null);
+
+                /** ItemProto range */
+                range?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

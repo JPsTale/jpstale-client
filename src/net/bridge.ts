@@ -123,6 +123,8 @@ export function toGameItem(e: jpt.base.ItemProto.$Properties): GameItem {
     price: e.price || 0,
     jobCodeMask: e.jobCodeMask || 0,
     agingLevel: e.agingLevel || 0,
+    critical: e.critical || 0,
+    range: e.range || 0,
   };
 }
 

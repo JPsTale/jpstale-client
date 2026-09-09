@@ -118,6 +118,8 @@ export interface GameItem {
   price: number;
   jobCodeMask: number;
   agingLevel: number;
+  critical: number;
+  range: number;
 }
 
 /** 物品容器快照（uid → 实例 索引，渲染时按 location/slot 排布）。 */

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
 import { subscribeGame, getGameSnapshot, type GameItem } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
@@ -43,32 +44,93 @@ function defOf(it: GameItem): Def | undefined {
 // ==================== 背包画布 ====================
 // 图标直接相对画布定位（左上角=slot 的 x/y），占多格 w×h；格线仅用 CSS 背景画布线，不遮挡图标。
 
-function BagCanvas({ items, heldUid, canDropAt, onPick, onPut, onDrop, onHover, onHoverEnd }: {
+export type BagDropMode = 'free' | 'merge' | 'swap' | 'bad';
+
+/** 计算把 it 放到 bag 的 slot 会发生什么（对齐原版：0 冲突可放；1 件同种可叠→合并、否则换手；≥2→不可） */
+function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: BagDropMode; conflict?: GameItem } {
+  const def = defOf(it);
+  const gw = def?.w ?? 1;
+  const gh = def?.h ?? 1;
+  const { x, y } = slotXY(slot);
+  if (x + gw > BAG_W || y + gh > BAG_H) return { mode: 'bad' };
+  const hits: GameItem[] = [];
+  for (const o of items) {
+    if (o.location !== 0 || o.uid === it.uid) continue;
+    const od = defOf(o);
+    const oo = slotXY(o.slot);
+    const ow = od?.w ?? 1;
+    const oh = od?.h ?? 1;
+    if (oo.x < x + gw && oo.x + ow > x && oo.y < y + gh && oo.y + oh > y) hits.push(o);
+  }
+  if (hits.length === 0) return { mode: 'free' };
+  if (hits.length === 1) {
+    const c = hits[0];
+    const sameStack = c.itemlistId === it.itemlistId && it.count + c.count <= 1000;
+    // 可堆叠且同种 → 合并；否则换手（被撞件拿起）
+    return sameStack ? { mode: 'merge', conflict: c } : { mode: 'swap', conflict: c };
+  }
+  return { mode: 'bad' };
+}
+
+// ==================== 背包画布（原版拖放视觉） ====================
+// 拿起后物品不在原格绘制（光标持物）；拖动中落点按模式给 footprint 高亮：
+// free 可放(蓝绿) / merge 合并(亮) / swap 换手(黄?) / bad 红（≥2 件冲突/越界）。
+function BagCanvas({ items, held, onPick, onPutSlot, onHover, onHoverEnd }: {
   items: GameItem[];
-  heldUid: number | null;
-  canDropAt: (slot: number) => boolean;
+  held: GameItem | null;
   onPick: (it: GameItem) => void;
-  onPut: (slot: number) => void;
-  onDrop: (slot: number) => void;
+  onPutSlot: (slot: number) => void;
   onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
   onHoverEnd: () => void;
 }) {
+  const bagRef = useRef<HTMLDivElement>(null);
+  const [anchor, setAnchor] = useState<{ x: number; y: number } | null>(null);
+  const [mode, setMode] = useState<BagDropMode | null>(null);
+  // 拿起中的物品从原格隐藏（留在背包视觉上"空出"），不再原地绘制
   const placed = items
-    .filter((x) => x.location === 0)
+    .filter((x) => x.location === 0 && x.uid !== held?.uid)
     .map((it) => {
       const def = defOf(it);
       const { x, y } = slotXY(it.slot);
       return { it, x, y, w: def?.w ?? 1, h: def?.h ?? 1 };
     });
-  const isHeld = (uid: number) => uid === heldUid;
+
+  function updatePreview(cx: number, cy: number) {
+    const el = bagRef.current;
+    if (!el || !held) { setAnchor(null); setMode(null); return; }
+    const rect = el.getBoundingClientRect();
+    const gx = Math.floor((cx - rect.left) / CELL);
+    const gy = Math.floor((cy - rect.top) / CELL);
+    if (gx < 0 || gx >= BAG_W || gy < 0 || gy >= BAG_H) { setAnchor(null); setMode(null); return; }
+    const slot = gy * BAG_W + gx;
+    setAnchor({ x: gx, y: gy });
+    setMode(bagTargetFor(held, slot, items).mode);
+  }
+
   return (
-    <div className="jp-items-bag" style={{ width: BAG_W * CELL, height: BAG_H * CELL }}>
-      {/* 物品图标（绝对定位于画布，层级在格线之上） */}
+    <div
+      className="jp-items-bag"
+      ref={bagRef}
+      style={{ width: BAG_W * CELL, height: BAG_H * CELL }}
+      onPointerMove={(e) => updatePreview(e.clientX, e.clientY)}
+      onPointerLeave={() => { setAnchor(null); setMode(null); }}
+      onClick={(e) => {
+        if (!held || !bagRef.current) return;
+        const rect = bagRef.current.getBoundingClientRect();
+        const gx = Math.floor((e.clientX - rect.left) / CELL);
+        const gy = Math.floor((e.clientY - rect.top) / CELL);
+        if (gx < 0 || gx >= BAG_W || gy < 0 || gy >= BAG_H) return;
+        const t = bagTargetFor(held, gy * BAG_W + gx, items);
+        if (t.mode === 'bad') return; // 红格：不可放
+        onPutSlot(gy * BAG_W + gx);
+      }}
+    >
+      {/* 物品图标（拿起中的物品不绘制 → 原格空出） */}
       {placed.map((p) => (
         <button
           type="button"
           key={p.it.uid}
-          className={`jp-bag-item${isHeld(p.it.uid) ? ' jp-bag-item--held' : ''}`}
+          className="jp-bag-item"
           style={{ left: p.x * CELL, top: p.y * CELL, width: p.w * CELL, height: p.h * CELL }}
           onPointerDown={(e) => { e.stopPropagation(); onPick(p.it); }}
           onPointerEnter={(e) => { e.stopPropagation(); onHover(p.it, e); }}
@@ -78,21 +140,18 @@ function BagCanvas({ items, heldUid, canDropAt, onPick, onPut, onDrop, onHover, 
           {p.it.count > 1 ? <span className="jp-bag-count">{p.it.count}</span> : null}
         </button>
       ))}
-      {/* 点击空格 = 放置/丢弃拿起的物品（格子透明可点） */}
-      {Array.from({ length: BAG_W * BAG_H }, (_, slot) => {
-        const occ = placed.find((p) => slotXY(slot).x === p.x && slotXY(slot).y === p.y);
-        if (occ) return null; // 有物品的格交给图标处理
-        const { x, y } = slotXY(slot);
-        return (
-          <button
-            type="button"
-            key={'e' + slot}
-            className={`jp-bag-empty${canDropAt(slot) ? ' jp-bag-empty--ok' : ''}`}
-            style={{ left: x * CELL, top: y * CELL }}
-            onPointerDown={(e) => { e.stopPropagation(); if (heldUid != null) onPut(slot); else onDrop(slot); }}
-          />
-        );
-      })}
+      {/* 落点 footprint 预览（不拦截事件） */}
+      {held && anchor && mode ? (
+        <div
+          className={`jp-bag-preview jp-bag-preview--${mode}`}
+          style={{
+            left: anchor.x * CELL,
+            top: anchor.y * CELL,
+            width: (defOf(held)?.w ?? 1) * CELL,
+            height: (defOf(held)?.h ?? 1) * CELL,
+          }}
+        />
+      ) : null}
     </div>
   );
 }
@@ -111,6 +170,18 @@ function ItemImg({ it, w, h }: { it: GameItem; w: number; h: number }) {
       style={{ width: w, height: h }}
       draggable={false}
     />
+  );
+}
+
+/** 拿起中的物品跟随鼠标（原版 MouseItem 持物光标） */
+function HeldIcon({ held, pos }: { held: GameItem; pos: { x: number; y: number } | null }) {
+  if (!pos) return null;
+  return createPortal(
+    <div className="jp-hand-ic" style={{ left: pos.x - 22, top: pos.y - 22 }}>
+      <ItemImg it={held} w={44} h={44} />
+      {held.count > 1 ? <span className="jp-hand-count">{held.count}</span> : null}
+    </div>,
+    document.body,
   );
 }
 
@@ -153,35 +224,41 @@ function itemViewSize(it: GameItem, slotKind: SlotDef['kind']): { w: number; h: 
   return { w, h };
 }
 
-function EquipColumn({ items, heldUid, onPickEquip, onPutEquip, onHover, onHoverEnd }: {
+function EquipColumn({ items, held, onPickEquip, onPutEquip, allowed, onHover, onHoverEnd }: {
   items: GameItem[];
-  heldUid: number | null;
+  held: GameItem | null;
   onPickEquip: (slot: number) => void;
   onPutEquip: (slot: number) => void;
+  allowed: (slot: number) => boolean;
   onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
   onHoverEnd: () => void;
 }) {
-  const eq = (slot: number) => items.find((x) => x.location === 2 && x.slot === slot);
+  const [hoverSlot, setHoverSlot] = useState<number | null>(null);
+  const eq = (slot: number) => items.find((x) => x.location === 2 && x.slot === slot && x.uid !== held?.uid);
 
   const renderRow = (list: SlotDef[]) => (
     <div className="jp-items-equiprow">
       {list.map((s) => {
         const it = eq(s.slot);
         const box = sizeOf(s.kind);
+        const tint = held && hoverSlot === s.slot ? (allowed(s.slot) ? ' ok' : ' bad') : '';
         return (
           <button
             type="button"
             key={s.slot}
-            className={`jp-items-equip jp-items-equip--${s.kind}`}
+            className={`jp-items-equip jp-items-equip--${s.kind}${tint}`}
             style={{ width: box.w, height: box.h }}
             onPointerDown={(e) => {
               e.stopPropagation();
               if (it) onPickEquip(s.slot);
-              else if (heldUid != null) onPutEquip(s.slot);
+              else if (held) { if (allowed(s.slot)) onPutEquip(s.slot); }
             }}
             title={it ? undefined : s.label}
-            onPointerEnter={(e) => { if (it) { e.stopPropagation(); onHover(it, e); } }}
-            onPointerLeave={onHoverEnd}
+            onPointerEnter={(e) => {
+              if (held) setHoverSlot(s.slot);
+              else if (it) { e.stopPropagation(); onHover(it, e); }
+            }}
+            onPointerLeave={() => { setHoverSlot(null); onHoverEnd(); }}
           >
             {it ? (
               <ItemImg it={it} {...itemViewSize(it, s.kind)} />
@@ -210,6 +287,7 @@ export default function ItemPanel() {
   const { inventory } = snap;
   const [heldUid, setHeldUid] = useState<number | null>(null);
   const { hover, show: hoverShow, hide: hoverHide } = useItemHover();
+  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
 
   if (!inventory) return <div className="jp-nodata">{t('item.noData')}</div>;
 
@@ -236,26 +314,30 @@ export default function ItemPanel() {
   }
 
   function onPickBag(it: GameItem) {
-    // 拿起背包物品：若已拿起别的，先放回原位？简化：直接换拿起（原物品留在原格，服务端保证唯一）
+    // 拿起背包物品（源格由 BagCanvas 按 held 隐藏空出）
     setHeldUid(it.uid);
   }
 
   function onPutToBagSlot(targetSlot: number) {
     if (!held) return;
-    if (held.location === 0) {
-      // 背包 → 背包格移动
-      if (targetSlot !== held.slot) {
-        sendInventoryMove(held.uid, 0, targetSlot);
-      }
-    } else if (held.location === 2) {
-      // 装备 → 背包空格（脱装）
+    if (held.location === 2) {
+      // 装备 → 背包格（脱下回背包）
       sendUnequipItem(held.slot);
+      setHeldUid(null);
+      return;
     }
-    setHeldUid(null);
-  }
-
-  function onDropToBag(_targetSlot: number) {
-    // 丢弃走底部按钮；空画布点击无 held 时无操作
+    if (held.location !== 0) return;
+    if (targetSlot === held.slot) { setHeldUid(null); return; }
+    // 原版语义：空位放 / 同种合并 / 单件换手(被撞件成为下一手持物)
+    const t = bagTargetFor(held, targetSlot, items);
+    if (t.mode === 'bad') return;
+    sendInventoryMove(held.uid, 0, targetSlot);
+    if (t.mode === 'swap' && t.conflict) {
+      // 服务端把被撞件腾到空位；客户端乐观地把"换到的下一件"拿起继续拖
+      setHeldUid(t.conflict.uid);
+    } else {
+      setHeldUid(null);
+    }
   }
 
   function onPickEquip(slot: number) {
@@ -277,10 +359,6 @@ export default function ItemPanel() {
     }
   }
 
-  function canDropAt(_slot: number): boolean {
-    return held != null && held.location === 0;
-  }
-
   function dropHeld() {
     if (!held) return;
     sendDropItem(held.uid, held.count || 1);
@@ -288,21 +366,23 @@ export default function ItemPanel() {
   }
 
   function returnHeld() {
-    // 取消拿起：无操作，原物品仍在原位（服务端未变）
+    // 取消拿起：无操作，原物品仍在原位（服务端未变）；换手乐观态也还原为放手
     setHeldUid(null);
   }
 
   return (
     <>
-      <div className="jp-items">
+      <div
+        className="jp-items"
+        onPointerMove={(e) => { if (heldUid != null) setCursorPos({ x: e.clientX, y: e.clientY }); }}
+        onPointerLeave={() => setCursorPos(null)}
+      >
         <div className="jp-items-left">
           <BagCanvas
             items={items}
-            heldUid={heldUid}
-            canDropAt={canDropAt}
+            held={held}
             onPick={onPickBag}
-            onPut={onPutToBagSlot}
-            onDrop={onDropToBag}
+            onPutSlot={onPutToBagSlot}
             onHover={hoverShow}
             onHoverEnd={hoverHide}
           />
@@ -321,14 +401,16 @@ export default function ItemPanel() {
         </div>
         <EquipColumn
           items={items}
-          heldUid={heldUid}
+          held={held}
           onPickEquip={onPickEquip}
           onPutEquip={onPutEquip}
+          allowed={slotAllows}
           onHover={hoverShow}
           onHoverEnd={hoverHide}
         />
       </div>
       <ItemInfo hover={hover} />
+      {held ? <HeldIcon held={held} pos={cursorPos} /> : null}
     </>
   );
 }

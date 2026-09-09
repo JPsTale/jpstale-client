@@ -1237,3 +1237,17 @@
 .jp-item-info-sec .jp-item-info-v {
   color: #d7d3c2;
 }
+.jp-item-info-center { justify-content: center; }
+.jp-item-info-center .jp-item-info-v { color: #ffe9a8; }
+
+/* 背包拖放视觉（原版：悬停占格高亮 / 拿起持物 / 落点 绿=可放 黄=合并 红=冲突） */
+.jp-bag-item:hover { outline: 2px solid rgba(255, 200, 0, 0.9); outline-offset: -1px; }
+.jp-bag-preview { position: absolute; box-sizing: border-box; pointer-events: none; }
+.jp-bag-preview--free { border: 1px solid rgba(90, 220, 120, 0.95); background: rgba(90, 220, 120, 0.18); }
+.jp-bag-preview--swap { border: 1px solid rgba(120, 210, 255, 0.95); background: rgba(120, 210, 255, 0.16); }
+.jp-bag-preview--merge { border: 1px solid rgba(255, 210, 77, 0.95); background: rgba(255, 210, 77, 0.18); }
+.jp-bag-preview--bad { border: 1px solid rgba(255, 70, 70, 0.95); background: rgba(255, 70, 70, 0.22); }
+.jp-items-equip.jp-items-equip--ok { box-shadow: inset 0 0 0 2px rgba(90, 220, 120, 0.95); }
+.jp-items-equip.jp-items-equip--bad { box-shadow: inset 0 0 0 2px rgba(255, 80, 80, 0.95); }
+.jp-hand-ic { position: fixed; z-index: 1300; width: 44px; height: 44px; pointer-events: none; display: flex; align-items: center; justify-content: center; }
+.jp-hand-count { position: absolute; right: 0; bottom: 0; color: #fff; font-size: 11px; text-shadow: 0 1px 2px #000; }

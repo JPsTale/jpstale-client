@@ -447,6 +447,8 @@
       "DAGGER": "Dagger",
       "SHIELD": "Shield",
       "MACE": "Mace"
-    }
+    },
+    "crit": "Critical",
+    "range": "Range"
   }
 }

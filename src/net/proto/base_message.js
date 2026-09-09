@@ -29713,6 +29713,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [price] ItemProto price
              * @property {number|null} [jobCodeMask] ItemProto jobCodeMask
              * @property {number|null} [agingLevel] ItemProto agingLevel
+             * @property {number|null} [critical] ItemProto critical
+             * @property {number|null} [range] ItemProto range
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -30001,6 +30003,22 @@ export const jpt = $root.jpt = (() => {
             ItemProto.prototype.agingLevel = 0;
 
             /**
+             * ItemProto critical.
+             * @member {number} critical
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.critical = 0;
+
+            /**
+             * ItemProto range.
+             * @member {number} range
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.range = 0;
+
+            /**
              * Creates a new ItemProto instance using the specified properties.
              * @function create
              * @memberof jpt.base.ItemProto
@@ -30096,6 +30114,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 31, wireType 0 =*/248).int32(message.jobCodeMask);
                 if (message.agingLevel != null && $Object.hasOwnProperty.call(message, "agingLevel") && message.agingLevel !== 0)
                     writer.uint32(/* id 32, wireType 0 =*/256).int32(message.agingLevel);
+                if (message.critical != null && $Object.hasOwnProperty.call(message, "critical") && message.critical !== 0)
+                    writer.uint32(/* id 33, wireType 0 =*/264).int32(message.critical);
+                if (message.range != null && $Object.hasOwnProperty.call(message, "range") && message.range !== 0)
+                    writer.uint32(/* id 34, wireType 0 =*/272).int32(message.range);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -30441,6 +30463,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.agingLevel;
                             continue;
                         }
+                    case 33: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.critical = value;
+                            else
+                                delete message.critical;
+                            continue;
+                        }
+                    case 34: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.range = value;
+                            else
+                                delete message.range;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -30585,6 +30625,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.agingLevel != null && $Object.hasOwnProperty.call(message, "agingLevel"))
                     if (!$util.isInteger(message.agingLevel))
                         return "agingLevel: integer expected";
+                if (message.critical != null && $Object.hasOwnProperty.call(message, "critical"))
+                    if (!$util.isInteger(message.critical))
+                        return "critical: integer expected";
+                if (message.range != null && $Object.hasOwnProperty.call(message, "range"))
+                    if (!$util.isInteger(message.range))
+                        return "range: integer expected";
                 return null;
             };
 
@@ -30709,6 +30755,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.agingLevel != null)
                     if ($Number(object.agingLevel) !== 0)
                         message.agingLevel = object.agingLevel | 0;
+                if (object.critical != null)
+                    if ($Number(object.critical) !== 0)
+                        message.critical = object.critical | 0;
+                if (object.range != null)
+                    if ($Number(object.range) !== 0)
+                        message.range = object.range | 0;
                 return message;
             };
 
@@ -30766,6 +30818,8 @@ export const jpt = $root.jpt = (() => {
                     object.price = 0;
                     object.jobCodeMask = 0;
                     object.agingLevel = 0;
+                    object.critical = 0;
+                    object.range = 0;
                 }
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -30836,6 +30890,10 @@ export const jpt = $root.jpt = (() => {
                     object.jobCodeMask = message.jobCodeMask;
                 if (message.agingLevel != null && $Object.hasOwnProperty.call(message, "agingLevel"))
                     object.agingLevel = message.agingLevel;
+                if (message.critical != null && $Object.hasOwnProperty.call(message, "critical"))
+                    object.critical = message.critical;
+                if (message.range != null && $Object.hasOwnProperty.call(message, "range"))
+                    object.range = message.range;
                 return object;
             };
 

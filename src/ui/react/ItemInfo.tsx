@@ -21,7 +21,7 @@ export function useItemHover() {
   return { hover, show, hide };
 }
 
-interface Line { label?: string; value: string; red?: boolean; section?: boolean; }
+interface Line { label?: string; value: string; red?: boolean; section?: boolean; center?: boolean; }
 
 export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
@@ -49,7 +49,7 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
       {lines.map((ln, i) => (
         <div
           key={i}
-          className={`jp-item-info-line${ln.section ? ' jp-item-info-sec' : ''}${ln.red ? ' jp-item-info-red' : ''}`}
+          className={`jp-item-info-line${ln.section ? ' jp-item-info-sec' : ''}${ln.red ? ' jp-item-info-red' : ''}${ln.center ? ' jp-item-info-center' : ''}`}
         >
           {ln.label !== undefined && <span className="jp-item-info-l">{ln.label}</span>}
           <span className="jp-item-info-v">{ln.value}</span>
@@ -77,20 +77,23 @@ function weaponTypeName(code: number): string {
 
 function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Line[] {
   const out: Line[] = [];
-  const isWeapon = cls === 4 || cls === 6;
-  const isArmor = cls === 8;
-  // —— 基础能力（武器：攻击/命中；防具：防御/吸收/格挡等）——
+  const isWeapon = cls === 2 || cls === 4 || cls === 6;   // 盾/单手/双手
+  const isGear = cls === 8 || cls === 16 || cls === 32 || cls === 2048
+    || cls === 192 || cls === 512 || cls === 256;          // 甲/靴/手/腕/戒/链/宝石
+  // —— 基础能力 ——
   if (isWeapon) {
     if (it.damageMin > 0 || it.damageMax > 0) {
       out.push({ label: t('itemtip.atk'), value: `${it.damageMin} ~ ${it.damageMax}` });
     }
     if (it.attackRating > 0) out.push({ label: t('itemtip.hit'), value: String(it.attackRating) });
-  } else if (isArmor) {
-    if (it.defence > 0) out.push({ label: t('itemtip.def'), value: String(it.defence) });
-  }
-  if (cls === 8) {
-    if (it.absorb > 0) out.push({ label: t('itemtip.absorb'), value: (it.absorb / 10).toFixed(1) });
+    if (it.critical > 0) out.push({ label: t('itemtip.crit'), value: String(it.critical) });
     if (it.blockRating > 0) out.push({ label: t('itemtip.block'), value: (it.blockRating / 10).toFixed(1) });
+    if (it.range > 0) out.push({ label: t('itemtip.range'), value: String(it.range) });
+  }
+  if (isWeapon || isGear) {
+    if (it.defence > 0) out.push({ label: t('itemtip.def'), value: String(it.defence) });
+    if (it.absorb > 0) out.push({ label: t('itemtip.absorb'), value: (it.absorb / 10).toFixed(1) });
+    if (it.blockRating > 0 && !isWeapon) out.push({ label: t('itemtip.block'), value: (it.blockRating / 10).toFixed(1) });
     if (it.speed > 0) out.push({ label: t('itemtip.speed'), value: (it.speed / 10).toFixed(1) });
   }
   // 通用属性加成
@@ -138,7 +141,7 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
   }
   // —— 耐久 / 价格 ——
   if (it.durabilityMax > 0) out.push({ label: t('itemtip.durability'), value: `${it.durability}/${it.durabilityMax}` });
-  if (it.price > 0) out.push({ label: t('itemtip.price'), value: String(it.price) });
+  if (it.price > 0) out.push({ center: true, value: `${t('itemtip.price')}: ${it.price}` });
   return out;
 }
 
