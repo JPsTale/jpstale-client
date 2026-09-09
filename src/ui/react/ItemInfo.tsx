@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useSyncExternalStore } from 'react';
+import { createPortal } from 'react-dom';
 import { subscribeGame, getGameSnapshot, type GameItem } from '../../app/gameStore.js';
 import { itemDefById } from '../../game/data/itemDefs.js';
 import { getWeaponTypeFromIdCode } from '../../char/weapon-type.js';
@@ -39,7 +40,7 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
     left: Math.min(hover.x, window.innerWidth - 260),
     top: Math.min(hover.y, window.innerHeight - 60 - lines.length * 17),
   };
-  return (
+  return createPortal(
     <div className="jp-item-info" style={style}>
       <div className="jp-item-info-name">
         <span>{name}</span>
@@ -54,7 +55,8 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
           <span className="jp-item-info-v">{ln.value}</span>
         </div>
       ))}
-    </div>
+    </div>,
+    document.body,
   );
 }
 
