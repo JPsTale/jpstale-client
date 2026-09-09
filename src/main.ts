@@ -727,9 +727,10 @@ preloadAllModels((loaded) => {
   loadingScreen.setProgress(loaded, TOTAL_MODELS, `加载模型 ${loaded}/${TOTAL_MODELS}`);
   if (loaded >= TOTAL_MODELS) {
     loadingScreen.hide();
-    // 尝试会话续传（F5/重开浏览器自动回到上次界面）；失败才落到登录页
+    // 先合法进入 LOGIN（BOOT→LOGIN），确保状态机就绪；随后续传走 LOGIN→SERVER_SELECT→… 全部合法
+    go(AppScreen.LOGIN);
     if (!attemptAutoResume()) {
-      go(AppScreen.LOGIN);
+      // 无续传或续传不可用：正常停在登录页
     }
   }
 });
