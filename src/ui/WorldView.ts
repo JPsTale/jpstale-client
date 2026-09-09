@@ -196,14 +196,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfPlayerId = -1;
   let mouseDown = false;
   let mouseX = 0, mouseY = 0;
-  // tap（轻点，非拖拽按住）判定：按下时刻/位置，抬起时位移与时长在阈值内视为点击拾取
+  // tap（轻点，非拖拽按住）判定：按下时刻/位置，抬起时位移与时长在阈值内视为点击
   let tapDownX = 0, tapDownY = 0, tapDownT = 0;
   const ray = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  /** 射线命中拾取半径（世界单位）：鼠标正对命中该范围内才优先拾 */
-  const PICK_CLICK_RANGE = 3.5;
-  /** 就近兜底拾取半径（世界单位，对齐 agFindItem 近身拾取）：点击命中该范围内最近物品 */
-  const PICK_NEAR_RANGE = 3.0;
+  // 点击寻路目标（对齐原版：点地面移动 / 点掉落物自动走过去由服务端拾取）
+  let moveTarget: { x: number; z: number; itemId?: number } | null = null;
+  let moveStuckStart = 0;
+  /** 点击掉落物即时拾取半径（世界单位）：更近直接发 C2S，更远则走过去由服务端触达拾取 */
+  const PICK_ACT_RANGE = 3.0;
 
   // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
@@ -942,6 +943,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       mouseDown = true;
       mouseX = e.clientX; mouseY = e.clientY;
       tapDownX = e.clientX; tapDownY = e.clientY; tapDownT = performance.now();
+      // 玩家按下鼠标（手动转向/走动）→ 取消进行中的自动寻路目标
+      moveTarget = null;
+      moveStuckStart = 0;
     }
   }
   function onMouseUp(e: MouseEvent): void {
@@ -951,20 +955,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const dt = performance.now() - tapDownT;
       const moved = Math.hypot(e.clientX - tapDownX, e.clientY - tapDownY);
       if (dt < 400 && moved < 12) {
-        tryPickupAt(e.clientX, e.clientY);
+        onGroundTap(e.clientX, e.clientY);
       }
       // 停止上报由 renderLoop 检测 wasMoving→false 时带当前位置发送，保证位置是真正停点
     }
   }
 
-  function tryPickupAt(cx: number, cy: number): void {
-    if (!renderer || !camera || !scene || groundItems.size === 0) return;
-    // 1) 优先：鼠标射线命中某个地面物品（正对点击，PICK_CLICK_RANGE 内）
+  /** 点击交互（对齐原版）：点中掉落物 → 已够近则即时拾取，否则自动走过去（服务端触达拾取）；
+   *  点空地 → 走过去。  */
+  function onGroundTap(cx: number, cy: number): void {
+    if (!renderer || !camera || !scene) return;
     const rect = renderer.domElement.getBoundingClientRect();
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = PICK_CLICK_RANGE * 3; // 只关心近处命中
+    ray.far = 1300; // ≈ 服务端 CONNECT(1086)，可视范围内任意掉落都可点选
+
+    // 1) 点中掉落物（模型/拾取垫/名字牌）→ 近处即时拾取，远处走过去
     const targets: THREE.Object3D[] = [];
     for (const g of groundItems.values()) targets.push(g.root);
     const hits = ray.intersectObjects(targets, true);
@@ -973,29 +980,42 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       while (o) {
         const v = o.userData.pickupItemId as number | undefined;
         if (v !== undefined) {
-          const d = Math.hypot(hit.point.x - selfPos.x, hit.point.z - selfPos.z);
-          if (d <= PICK_CLICK_RANGE) {
-            console.log('[WorldView] 点击拾取(命中) groundItem=' + v + ' dist=' + d.toFixed(2) + 'm');
-            opts?.onPickupGroundItem?.(v);
-            return;
+          const g = groundItems.get(v);
+          if (g) {
+            const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
+            if (d <= PICK_ACT_RANGE) {
+              console.log('[WorldView] 点击拾取(近) gid=' + v + ' dist=' + d.toFixed(2) + 'm');
+              opts?.onPickupGroundItem?.(v);
+            } else {
+              moveTarget = { x: g.root.position.x, z: g.root.position.z, itemId: v };
+              console.log('[WorldView] 点击掉落物 gid=' + v + ' dist=' + d.toFixed(1) + 'm → 走过去');
+            }
           }
-          break;
+          return;
         }
         o = o.parent;
       }
     }
-    // 2) 兜底（对齐原版 agFindItem 就近拾取）：点击空地/附近时，
-    //    拾取自机最近、且在拾取距离内的地面物品（不必精确点中模型）
-    let bestId: number | undefined;
-    let bestD = PICK_NEAR_RANGE;
-    for (const g of groundItems.values()) {
-      const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
-      if (d <= bestD) { bestD = d; bestId = g.groundItemId; }
+    // 2) 空地 → 走点到自机高度的水平面交点（对齐原版点地面行走）
+    const pt = groundPointFromScreen(cx, cy);
+    if (pt) {
+      moveTarget = { x: pt.x, z: pt.z };
+      console.log('[WorldView] 点击移动 → (' + pt.x.toFixed(1) + ',' + pt.z.toFixed(1) + ')');
     }
-    if (bestId !== undefined) {
-      console.log('[WorldView] 点击拾取(就近) groundItem=' + bestId + ' dist=' + bestD.toFixed(2) + 'm');
-      opts?.onPickupGroundItem?.(bestId);
-    }
+  }
+
+  /** 屏幕射线与 y=selfPos.y 水平面的交点（点地面行走目标） */
+  function groundPointFromScreen(cx: number, cy: number): { x: number; z: number } | null {
+    if (!renderer || !camera) return null;
+    const rect = renderer.domElement.getBoundingClientRect();
+    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
+    ray.setFromCamera(ndc, camera);
+    const r = ray.ray;
+    if (Math.abs(r.direction.y) < 1e-4) return null;
+    const t = (selfPos.y - r.origin.y) / r.direction.y;
+    if (t <= 0) return null;
+    return { x: r.origin.x + r.direction.x * t, z: r.origin.z + r.direction.z * t };
   }
   function onMouseMove(e: MouseEvent): void {
     mouseX = e.clientX; mouseY = e.clientY;
@@ -1400,6 +1420,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       groundItems.delete(groundItemId);
       console.log('[WorldView] 地面物品消失: id=' + groundItemId);
     }
+    // 正在走过去的物品已被拾取/消失 → 取消寻路（物品已入包，人停在原地）
+    if (moveTarget?.itemId === groundItemId) {
+      moveTarget = null;
+      moveStuckStart = 0;
+    }
   }
 
   /** 每帧：掉落物高亮闪烁（scITEM::Draw 的周期提亮，非旋转动画） */
@@ -1744,9 +1769,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // ===== 自机（方向二：客户端位置上权威）=====
   // 本地即时移动（鼠标驱动 + 本地碰撞，dt 等速 → 手感跟手）；位置按节奏上报服务端做限速校验。
   // 本地即时移动（客户端位置上权威）：完整还原方案 A 之前的跨图碰撞/贴地逻辑。
-  function updateMovement(dt: number): boolean {
+  function updateMovement(dt: number, forcedFace?: number): boolean {
     if (!camera || !renderer) return false;
-    const face = mouseFacing();
+    // 自动寻路目标帧传 forcedFace；否则按按住鼠标朝向（mouseFacing 在下落中返回 null）
+    const face = forcedFace !== undefined ? forcedFace : mouseFacing();
     if (face === null) return false;
     selfAngle = face;
 
@@ -1893,7 +1919,41 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // ===== 自机（方向二）：本地即时移动 + 上报位置（无对账/回拉）=====
     const wasFallingNow = falling;
-    const moved = updateMovement(dt); // falling 中 mouseFacing=null → 不移动
+    // 点击寻路：无鼠标按下且有目标 → 每帧朝目标走；到达(物品 1m/地面点 0.35m)清目标
+    let targetFace: number | undefined;
+    let targetReached = false;
+    if (!mouseDown && moveTarget && !falling) {
+      const dx = moveTarget.x - selfPos.x;
+      const dz = moveTarget.z - selfPos.z;
+      const d = Math.hypot(dx, dz);
+      const arrive = moveTarget.itemId !== undefined ? 1.0 : 0.35;
+      if (d <= arrive) {
+        targetReached = true;
+      } else {
+        targetFace = Math.atan2(dx, dz);
+      }
+    }
+    if (targetReached) {
+      moveTarget = null;
+      moveStuckStart = 0;
+    }
+    const moved = updateMovement(dt, targetFace); // falling 中 mouseFacing=null → 不移动
+    // 卡住检测：连续 ~0.9s 无法接近目标（撞墙/不可达）→ 放弃寻路
+    if (moveTarget && !targetReached && !falling) {
+      if (moved) {
+        moveStuckStart = 0;
+      } else {
+        if (moveStuckStart === 0) moveStuckStart = rafMs;
+        else if (rafMs - moveStuckStart > 900) {
+          console.warn('[WorldView] 寻路受阻，放弃目标 (' +
+            moveTarget.x.toFixed(1) + ',' + moveTarget.z.toFixed(1) + ')');
+          moveTarget = null;
+          moveStuckStart = 0;
+        }
+      }
+    } else {
+      moveStuckStart = 0;
+    }
     const fell = updateFalling();
     if (fell && selfPos.y !== lastY) {
       // 下落/落地时角色同步 y（x/z 未变）
