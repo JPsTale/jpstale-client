@@ -30878,6 +30878,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.Position.$Properties|null} [position] GroundItemProto position
              * @property {number|Long|null} [ownerId] GroundItemProto ownerId
              * @property {number|Long|null} [expireTime] GroundItemProto expireTime
+             * @property {string|null} [name] GroundItemProto name
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -30958,6 +30959,14 @@ export const jpt = $root.jpt = (() => {
             GroundItemProto.prototype.expireTime = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
+             * GroundItemProto name.
+             * @member {string} name
+             * @memberof jpt.base.GroundItemProto
+             * @instance
+             */
+            GroundItemProto.prototype.name = "";
+
+            /**
              * Creates a new GroundItemProto instance using the specified properties.
              * @function create
              * @memberof jpt.base.GroundItemProto
@@ -31001,6 +31010,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 5, wireType 0 =*/40).int64(message.ownerId);
                 if (message.expireTime != null && $Object.hasOwnProperty.call(message, "expireTime") && (typeof message.expireTime === "object" ? message.expireTime.low || message.expireTime.high : message.expireTime !== 0))
                     writer.uint32(/* id 6, wireType 0 =*/48).int64(message.expireTime);
+                if (message.name != null && $Object.hasOwnProperty.call(message, "name") && message.name !== "")
+                    writer.uint32(/* id 7, wireType 2 =*/58).string(message.name);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -31109,6 +31120,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.expireTime;
                             continue;
                         }
+                    case 7: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.name = value;
+                            else
+                                delete message.name;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -31177,6 +31197,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.expireTime != null && $Object.hasOwnProperty.call(message, "expireTime"))
                     if (!$util.isInteger(message.expireTime) && !(message.expireTime && $util.isInteger(message.expireTime.low) && $util.isInteger(message.expireTime.high)))
                         return "expireTime: integer|Long expected";
+                if (message.name != null && $Object.hasOwnProperty.call(message, "name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
                 return null;
             };
 
@@ -31239,6 +31262,9 @@ export const jpt = $root.jpt = (() => {
                             message.expireTime = object.expireTime;
                         else if (typeof object.expireTime === "object")
                             message.expireTime = new $util.LongBits(object.expireTime.low >>> 0, object.expireTime.high >>> 0).toNumber();
+                if (object.name != null)
+                    if (typeof object.name !== "string" || object.name.length)
+                        message.name = $String(object.name);
                 return message;
             };
 
@@ -31278,6 +31304,7 @@ export const jpt = $root.jpt = (() => {
                         object.expireTime = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
                         object.expireTime = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.name = "";
                 }
                 if (message.groundItemId != null && $Object.hasOwnProperty.call(message, "groundItemId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -31306,6 +31333,8 @@ export const jpt = $root.jpt = (() => {
                         object.expireTime = options.longs === $String ? $String(message.expireTime) : message.expireTime;
                     else
                         object.expireTime = options.longs === $String ? $util.Long.prototype.toString.call(message.expireTime) : options.longs === $Number ? new $util.LongBits(message.expireTime.low >>> 0, message.expireTime.high >>> 0).toNumber() : message.expireTime;
+                if (message.name != null && $Object.hasOwnProperty.call(message, "name"))
+                    object.name = message.name;
                 return object;
             };
 

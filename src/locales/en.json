@@ -366,9 +366,14 @@
     "guildNotOpen": "Guild channel is not available yet",
     "cmd": {
       "partyUsage": "Usage: //party <player>",
+      "getUsage": "Usage: /@get <name|idCode|itemlistId>",
+      "itemNotFound": "Item not found: {token}",
       "unknownGm": "Unknown GM command: /{name} (GM system in development)",
       "unknown": "Unknown command: /{name}",
       "invalidNumber": "Invalid number in command: {cmd}"
+    },
+    "pickup": {
+      "bagFull": "Bag is full, cannot pick up"
     },
     "private": {
       "offline": "Player {name} is not online"

@@ -78,9 +78,35 @@ export function appendChatMessage(entry: Omit<ChatMessage, 'id'>): void {
   commit({ messages });
 }
 
-/** 追加系统消息（S2C_SystemMessage）。system 标记显示类型，channel 归系统。 */
-export function appendSystemMessage(text: string, timestamp = Date.now()): void {
-  appendChatMessage({ channel: Ch.SYSTEM, senderId: 0, senderName: '', system: true, message: text, timestamp });
+/**
+ * 追加系统消息（S2C_SystemMessage / S2C_Error）。
+ * @param forChannel 若指定（玩家发送操作触发的反馈），该消息同时归属该频道 tab
+ *                   （红色系统样式），且仍会出现在系统 tab；null=仅系统 tab。
+ */
+export function appendSystemMessage(text: string, timestamp = Date.now(), forChannel?: ChatChannel): void {
+  appendChatMessage({ channel: forChannel ?? Ch.SYSTEM, senderId: 0, senderName: '', system: true, message: text, timestamp });
+}
+
+// 发送反馈路由：玩家最近一次发送到哪个频道（限时记忆），
+// 到达的系统消息若有 forChannel 即在此频道 tab 内红色显示（"发消息后立刻有反馈"）。
+let pendingSentChannel: ChatChannel | null = null;
+let pendingSentExpire = 0;
+
+/** 发送成功后记录频道（限时 3s，够服务端回执）。 */
+export function noteSentOn(channel: ChatChannel): void {
+  pendingSentChannel = channel;
+  pendingSentExpire = Date.now() + 3000;
+}
+
+/** 取走并清空待关联频道（无则 null）。 */
+export function takePendingSentOn(): ChatChannel | null {
+  const ch = pendingSentChannel;
+  if (ch == null || Date.now() > pendingSentExpire) {
+    pendingSentChannel = null;
+    return null;
+  }
+  pendingSentChannel = null;
+  return ch;
 }
 
 export function setActiveChatChannel(channel: ChatChannel): void {

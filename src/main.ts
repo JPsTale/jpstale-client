@@ -19,9 +19,9 @@ import { createGameClock } from './ui/GameClock.js';
 import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
-import { installBridge } from './net/bridge.js';
+import { installBridge, sendPickupItem } from './net/bridge.js';
 import { pressQuickBinding, openSystemMenu, closeSystemMenu } from './app/gameStore.js';
-import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible } from './app/chatStore.js';
+import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -34,6 +34,8 @@ const hudPanel = createHud(app);
 const worldView = createWorldView(app, {
   // 移动上报（客户端位置上权威）：WorldView 已按节奏/模式/停止去重，这里直接转发
   onMoveInt: (angle, mode, x, y, z, anim) => sendMoveIntent(angle, mode, x, y, z, anim),
+  // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
+  onPickupGroundItem: (groundItemId) => sendPickupItem(groundItemId),
 });
 
 // 转发客户端权威移动（含位置 + 可选动画覆盖）
@@ -473,12 +475,29 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.monsterDeath(Number(msg.monsterDeath!.monsterId));
       break;
     }
+    case 'groundItemAppear': {
+      const g = msg.groundItemAppear!;
+      const it = g.item;
+      worldView.groundItemAppear(
+        it?.groundItemId ? Number(it.groundItemId) : 0,
+        it?.name || '',
+        it?.position?.x || 0,
+        it?.position?.y || 0,
+        it?.position?.z || 0,
+      );
+      break;
+    }
+    case 'groundItemDisappear': {
+      worldView.groundItemDisappear(Number(msg.groundItemDisappear!.groundItemId));
+      break;
+    }
     case 'error': {
       const e = msg.error!;
       // minecraft 式翻译：key 优先，否则纯文本
       const text = e.key ? t(e.key, e.params || {}) : (e.errorMessage || String(e.errorCode || ''));
       console.warn('[app] server error', e.errorCode, text);
-      appendSystemMessage(text, Date.now());
+      const forCh = takePendingSentOn() ?? undefined;
+      appendSystemMessage(text, Date.now(), forCh);
       break;
     }
     case 'chat': {
@@ -496,7 +515,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const sm = msg.systemMessage!;
       // minecraft 式翻译：有 key 用 i18n 渲染（缺失 fallback 到 key），否则用纯文本
       const text = sm.key ? t(sm.key, sm.params || {}) : (sm.message || '');
-      appendSystemMessage(text, Number(sm.timestamp) || Date.now());
+      const forCh = takePendingSentOn() ?? undefined;
+      appendSystemMessage(text, Number(sm.timestamp) || Date.now(), forCh);
       break;
     }
   }

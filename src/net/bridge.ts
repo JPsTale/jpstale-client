@@ -9,6 +9,7 @@ import {
   unequipItem,
   dropItem,
   switchWeapon,
+  pickupItem,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -169,6 +170,10 @@ export function sendUnequipItem(equipSlot: number): void {
 
 export function sendDropItem(uid: number, count = 1): void {
   send(dropItem(uid, count));
+}
+
+export function sendPickupItem(groundItemId: number): void {
+  send(pickupItem(groundItemId));
 }
 
 export function sendSwitchWeapon(): void {
