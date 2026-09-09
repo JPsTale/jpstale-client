@@ -1,36 +1,10 @@
-// 技能动画调试模块（验证完毕将 SKILL_DEBUG 置 false 后整体移除）。
-// 能力：把某技能临时设到 0~10 级（0=未学习）覆盖自动推断；为自机临时指定武器，
-// 以便观察"技能动画随等级 / 随手持武器（Archer 弓/弩变体）"的实际播放效果。
+// 技能等级调试模块（仅技能等级覆盖，供 SkillPanel 观察技能随等级效果）。
+// 能力：把某技能临时设到 0~10 级（0=未学习）覆盖自动推断。
+// 注：武器调试已移除（装备栏真实装备取代）；技能动画的武器类型由自机外观 selfAppearance 驱动。
 
 export const SKILL_DEBUG = true;
 
-// 调试武器清单：dorp(模型) + idcode(动画白名单匹配用) + type + 名称。
-// 依据 pviewer 验证过的挂载逻辑：idCode 决定动画匹配，dorp 决定模型。
-// dorp 前缀族（ex-machina sinItem 权威）：WA=斧 WC=锤? WS=弓/弩族 WP=枪 WM=法杖 WD=匕首 ...
-// Archer 的弓/弩全部用 WS 前缀：WS101=Short Bow(双手) WS104=CrossBow(双手) WS103=HandCrossBow(单手)。
-export interface DbgWeapon {
-  label: string;
-  dorp: string;      // DropItem 模型代码，如 'WS101' / 'WS104'
-  idcode: number;    // 32bit 武器 idcode（动画 itemCodeList 精确匹配）
-  weaponType: string | null; // 'BOW'|'CROSSBOW'|'SWORD'|...；null=空手走精确匹配
-}
-
-// idcode 前缀（weapon-type.ts）：AXE=0x0101 CLAW=0x0102 HAMMER=0x0103 STAFF=0x0104
-// SCYTHE=0x0105 BOW/CROSSBOW=0x0106 SWORD=0x0107 JAVELIN=0x0108 DAGGER=0x010A
-export const DBG_WEAPONS: DbgWeapon[] = [
-  { label: '空手', dorp: '', idcode: 0, weaponType: null },
-  { label: '弓 Short Bow (双手)', dorp: 'WS101', idcode: 0x01060100, weaponType: 'BOW' },
-  { label: '单手弩 Hand CrossBow', dorp: 'WS103', idcode: 0x01060200, weaponType: 'CROSSBOW' },
-  { label: '双手弩 CrossBow', dorp: 'WS104', idcode: 0x01060300, weaponType: 'CROSSBOW' },
-  { label: '剑 (单手)', dorp: 'WS201', idcode: 0x01070100, weaponType: 'SWORD' },
-  { label: '斧 (单手)', dorp: 'WA102', idcode: 0x01010100, weaponType: 'AXE' },
-  { label: '长枪 (双手)', dorp: 'WP115', idcode: 0x01080100, weaponType: 'JAVELIN' },
-  { label: '法杖 (双手)', dorp: 'WM102', idcode: 0x01040100, weaponType: 'STAFF' },
-  { label: '匕首 (刺客)', dorp: 'WD102', idcode: 0x010A0100, weaponType: 'DAGGER' },
-];
-
 const LS_LEVELS = 'pt.skillDbg.levels';
-const LS_WEAPON = 'pt.skillDbg.weapon';
 
 type LevelMap = Record<string, number>;
 
@@ -42,19 +16,17 @@ function load<T>(key: string, fallback: T): T {
 }
 
 let levels: LevelMap = SKILL_DEBUG ? load<LevelMap>(LS_LEVELS, {}) : {};
-let weaponIndex = SKILL_DEBUG ? load<number>(LS_WEAPON, 0) : 0;
 const listeners = new Set<() => void>();
 
 // 快照对象：useSyncExternalStore 要求 getSnapshot 返回稳定缓存引用，
 // 每次变更时替换整对象（与 gameStore 同款模式），否则无限重渲染。
-let snapshot = { levels, weaponIndex };
+let snapshot = { levels };
 
 function emit(): void {
   if (!SKILL_DEBUG) return;
-  snapshot = { levels, weaponIndex };
+  snapshot = { levels };
   try {
     localStorage.setItem(LS_LEVELS, JSON.stringify(levels));
-    localStorage.setItem(LS_WEAPON, JSON.stringify(weaponIndex));
   } catch { /* ignore */ }
   for (const l of [...listeners]) l();
 }
@@ -64,7 +36,7 @@ export function subscribeSkillDbg(fn: () => void): () => void {
   return () => { listeners.delete(fn); };
 }
 
-export function getSkillDbgSnapshot(): { levels: LevelMap; weaponIndex: number } {
+export function getSkillDbgSnapshot(): { levels: LevelMap } {
   return snapshot;
 }
 
@@ -89,19 +61,4 @@ export function setDbgLevel(iconFile: string, lv: number | null): void {
 export function resetDbgLevels(): void {
   levels = {};
   emit();
-}
-
-/** 当前调试武器索引；0=空手/不指定 */
-export function dbgWeaponIndex(): number {
-  return SKILL_DEBUG ? weaponIndex : 0;
-}
-
-export function setDbgWeapon(index: number): void {
-  if (!SKILL_DEBUG) return;
-  weaponIndex = Math.max(0, Math.min(DBG_WEAPONS.length - 1, index));
-  emit();
-}
-
-export function dbgWeapon(): DbgWeapon {
-  return DBG_WEAPONS[dbgWeaponIndex()] ?? DBG_WEAPONS[0];
 }

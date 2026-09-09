@@ -738,3 +738,83 @@
   cursor: pointer;
 }
 .jp-items-act:hover, .jp-items-switch:hover { border-color: #ffd98a; color: #ffd98a; }
+
+/* ==================== ItemPanel v2（拿起/放下交互 + 居中不拉伸） ==================== */
+/* 背包画布：格线用 css 背景画，物品图标绝对定位在其上（z 高于格线） */
+.jp-items-bag {
+  position: relative;
+  background:
+    /* 竖向格线 */
+    repeating-linear-gradient(to right, rgba(255,255,255,0.04) 0 1px, transparent 1px 22px),
+    /* 横向格线 */
+    repeating-linear-gradient(to bottom, rgba(255,255,255,0.04) 0 1px, transparent 1px 22px),
+    #0d0f12;
+  border: 1px solid #3a3f46;
+  image-rendering: pixelated;
+}
+
+.jp-bag-empty {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+}
+.jp-bag-empty:hover { background: rgba(255, 255, 255, 0.07); }
+.jp-bag-empty--ok { background: rgba(255, 217, 138, 0.18); }
+
+.jp-bag-item {
+  position: absolute;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: grab;
+  display: block;
+  z-index: 2;
+}
+.jp-bag-item--held { outline: 2px solid #ffd98a; z-index: 5; }
+.jp-bag-item:hover { filter: brightness(1.15); }
+
+.jp-item-iconimg {
+  display: block;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.jp-bag-count {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  font-size: 10px;
+  color: #fff;
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
+}
+
+/* 装备栏：槽为 flex 居中容器，图标按原始比例显示（不拉伸） */
+.jp-items-equip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(60,70,90,0.35), transparent 70%),
+    #101216;
+  border: 1px solid #3a3f46;
+  border-radius: 3px;
+  padding: 0;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+.jp-items-equip:hover { border-color: #6a7282; }
+.jp-items-equip .jp-item-iconimg { flex: none; }
+
+.jp-items-heldinfo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #ffd98a;
+}

@@ -20,6 +20,7 @@ import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
+import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import { evalSkeleton, applyToBones } from '../char/animation.js';
@@ -28,7 +29,7 @@ import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadWeaponModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
-import { SKILL_DEBUG, dbgWeapon, subscribeSkillDbg } from '../game/skillDbg.js';
+import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
@@ -149,8 +150,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let charGroup: THREE.Group | null = null;
   let selfAngle = 0; // 角色朝向（弧度）
   let selfJobId = 1;
-  let selfWeaponGroup: THREE.Group | null = null; // 调试武器（self 挂载）
-  let skillDbgUnsub: (() => void) | null = null;
+  let selfWeaponGroup: THREE.Group | null = null; // 当前挂载的自机武器（随外观/动画切换）
+  let selfAppearance: CharacterAppearance | undefined; // 当前自机外观（进图/换装更新；动画武器类型+武器挂载源）
   let animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'] | null = null;
   let bipInxInfo: Awaited<ReturnType<typeof loadCharacterModel>>['bipInxInfo'] | null = null;
   let bones: THREE.Bone[] = [];
@@ -581,21 +582,46 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState = createAnimStateMachine({
       getMotions: () => motionList,
       getClassId: () => jobId,
-      getWeaponIdCode: () => {
-        const w = dbgWeapon();
-        return w && w.idcode ? w.idcode : null;
-      },
-      getWeaponType: () => {
-        const w = dbgWeapon();
-        return w && w.weaponType ? w.weaponType : null;
-      },
+      getWeaponIdCode: () => selfAppearance?.weaponIdcode || 0,
+      getWeaponType: () => selfWeaponType(),
       onMotionChange: (motion: MotionInfo) => {
         animFrame = motion.startFrame * 160;
       },
     });
     animState.triggerIdle();
-    // 调试武器挂载：随 skillDbg 切换（SKILL_DEBUG=false 时 dbgWeapon 恒为空手）
-    await applyDbgWeapon();
+    // 真实装备武器挂载（外观决定）；随外观更新重挂
+    await mountSelfWeapon();
+  }
+
+  /** 当前自机武器语义类型（AXE/SWORD/BOW...，动画白名单匹配用）；无武器/徒手返回 null */
+  function selfWeaponType(): string | null {
+    const w = selfAppearance;
+    if (!w || !w.weaponIdcode || w.weaponIdcode <= 0) return null;
+    return getWeaponTypeFromIdCode(w.weaponIdcode);
+  }
+
+  // 挂载当前自机武器（读 selfAppearance.weaponDorp）到手部骨骼；旧武器先清。
+  async function mountSelfWeapon(): Promise<void> {
+    if (!scene || !charGroup) return;
+    if (selfWeaponGroup) {
+      // 从可能挂载的骨骼上摘除（applyDbgWeapon 曾挂到 RIGHT/LEFT 手）
+      charGroup.remove(selfWeaponGroup);
+      selfWeaponGroup = null;
+    }
+    const dorp = selfAppearance?.weaponDorp;
+    if (!dorp) return; // 空手（无装备武器）
+    try {
+      const wres = await loadWeaponModel(dorp);
+      await loadTextures(wres.texturesToLoad);
+      const boneName = selfAppearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
+      const bone = findBone(charGroup, boneName) || findBone(charGroup, WEAPON_BONES.RIGHT_HAND) || findBone(charGroup, WEAPON_BONES.LEFT_HAND);
+      if (bone) {
+        selfWeaponGroup = wres.group;
+        bone.add(wres.group);
+      }
+    } catch (e) {
+      console.warn('[WorldView] 武器挂载失败 dorp=' + dorp, e);
+    }
   }
 
   function buildMotionListFor(
@@ -621,30 +647,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function buildMotionList(): void {
     if (animSmb && bipInxInfo) motionList = buildMotionListFor(animSmb, bipInxInfo);
-  }
-
-  // ===== [调试] 技能动画播放（SKILL_DEBUG=false 时：武器恒空手 + playSkillByIcon 仅按 skillIndex 匹配）=====
-  // 挂载当前调试武器（skillDbg.dbgWeapon()）到自机手部骨骼；旧武器先移除。
-  async function applyDbgWeapon(): Promise<void> {
-    if (!scene || !charGroup) return;
-    if (selfWeaponGroup) {
-      charGroup.remove(selfWeaponGroup);
-      selfWeaponGroup = null;
-    }
-    const w = dbgWeapon();
-    if (!w.dorp) return;
-    try {
-      const wres = await loadWeaponModel(w.dorp);
-      await loadTextures(wres.texturesToLoad);
-      const boneName = WEAPON_BONES.RIGHT_HAND;
-      const bone = findBone(charGroup, boneName) || findBone(charGroup, WEAPON_BONES.LEFT_HAND);
-      if (bone) {
-        selfWeaponGroup = wres.group;
-        bone.add(wres.group);
-      }
-    } catch (e) {
-      console.warn('[WorldView][dbg] 武器挂载失败 dorp=' + w.dorp, e);
-    }
   }
 
   /**
@@ -1582,40 +1584,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // —— 外观更新（穿脱装备/武器切换 S2C_AppearanceUpdate 驱动）——
-  // 自机：重建角色模型（移除旧 charGroup → 重新 loadPlayer），位置/朝向保留（selfPos/selfAngle 权威）
+  // 自机：更新外观状态 → 重建角色模型（移除旧 charGroup → 重新 loadPlayer），位置/朝向保留
   async function reloadSelfModel(appearance: CharacterAppearance | undefined): Promise<void> {
-    if (!scene) return;
+    selfAppearance = appearance;
+    if (!scene || !charGroup) return; // 未进图/无模型：外观已记录，下次 show() 用
     if (charGroup) {
       scene.remove(charGroup);
       charGroup = null;
     }
     const jobId = appearance?.classId || selfJobId || 1;
     await loadPlayer(appearance, jobId);
-    // 真实装备武器挂载（skillDbg 调试为空手时按外观挂）；旧武器先清
-    await mountAppearanceWeapon(appearance);
-  }
-
-  // 按外观 dorpItem 挂真实武器到手部骨骼（selfWeaponGroup 已由 applyDbgWeapon 管理时先清）
-  async function mountAppearanceWeapon(appearance: CharacterAppearance | undefined): Promise<void> {
-    if (!scene || !charGroup) return;
-    const dorp = appearance?.weaponDorp;
-    if (!dorp) return; // 空手（外观无武器）
-    try {
-      const wres = await loadWeaponModel(dorp);
-      await loadTextures(wres.texturesToLoad);
-      const boneName = appearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
-      const bone = findBone(charGroup, boneName);
-      if (bone) {
-        // 移除旧自机武器（无论来自外观还是 dbg）
-        if (selfWeaponGroup) {
-          bone.remove(selfWeaponGroup);
-        }
-        selfWeaponGroup = wres.group;
-        bone.add(wres.group);
-      }
-    } catch (e) {
-      console.warn('[WorldView] 外观武器挂载失败 dorp=' + dorp, e);
-    }
   }
 
   // 远端：移除旧演员 → 用其当前位置重建（新外观）
@@ -1645,12 +1623,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         loadHooks?.onReady?.();
         return;
       }
-
-      // [调试] 订阅技能调试面板的武器切换 → 重挂自机武器（进图/切武器都触发）
-      skillDbgUnsub?.();
-      skillDbgUnsub = subscribeSkillDbg(() => {
-        if (charGroup) void applyDbgWeapon();
-      });
+      if (enterGame.appearance) {
+        selfAppearance = enterGame.appearance;
+      }
 
       // 重放进场竞态期间缓存的远端 Appear（此刻 scene 已就绪）
       if (pendingAppears.length > 0) {
@@ -1767,14 +1742,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     hide() {
       root.style.display = 'none';
       mapAudio.suspend();
-      skillDbgUnsub?.();
-      skillDbgUnsub = null;
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
     },
     destroy() {
       if (animFrameId) cancelAnimationFrame(animFrameId);
-      skillDbgUnsub?.();
-      skillDbgUnsub = null;
       for (const actor of remotes.values()) {
         scene?.remove(actor.root);
         actor.bodyGroup.children.forEach((c) => (c as THREE.SkinnedMesh).geometry?.dispose?.());
