@@ -71,12 +71,15 @@ function forceBackToLogin(reason?: string): void {
 }
 connBtn.onclick = () => { window.clearTimeout(connAutoLoginT); forceBackToLogin('连接已断开，请重新登录'); };
 
-// 断线监听：登录页的主动关闭忽略；游戏/选人期间意外断开 → 弹遮罩并 8s 后自动回登录
+// 断线监听：登录页的主动关闭忽略；游戏/选人期间意外断开 → 立即停止世界渲染并弹遮罩，
+// 8s 后自动回登录。重连/重进后由服务端 AOI（player/monster/groundItem appear）重新推场景。
 onConnState((state, ev) => {
   if (state === 'connected') { connOverlayHide(); return; }
   if (ev.intentional) return;                       // 主动登出/切页，走正常流程
   if (getScreen() === AppScreen.LOGIN) return;      // 还在登录页：登录按钮会重试，不必打扰
   window.clearTimeout(connAutoLoginT);
+  // 离场即停：隐藏世界（怪物/NPC/掉落物等网络实体不再渲染；地图/自机一并暂停）
+  worldView.hide();
   connOverlayShow();
   connAutoLoginT = window.setTimeout(() => forceBackToLogin('连接已断开，请重新登录'), 8000);
 });
