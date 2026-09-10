@@ -233,6 +233,14 @@ export function localBagMove(uid: number, toSlot: number): void {
   commit({ inventory: { ...cur, items } });
 }
 
+/** 本地即时卸下装备到指定背包格（随后上报 BagLayout；服务端落库并刷新属性/外观） */
+export function localUnequipToBag(uid: number, toSlot: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) return;
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: 0, slot: toSlot } : x));
+  commit({ inventory: { ...cur, items } });
+}
+
 /** 本地即时药水合并：src 并入 dst（随即上报 StackMerge） */
 export function localStackMerge(srcUid: number, dstUid: number): void {
   const cur = snapshot.inventory;

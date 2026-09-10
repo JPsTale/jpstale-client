@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, removeInventoryItem, type GameItem } from '../../app/gameStore.js';
+import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, localUnequipToBag, removeInventoryItem, type GameItem } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import {
   itemDefById,
@@ -72,6 +72,8 @@ function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: Ba
     if (oo.x < x + gw && oo.x + ow > x && oo.y < y + gh && oo.y + oh > y) hits.push(o);
   }
   if (hits.length === 0) return { mode: 'free' };
+  // 装备槽来源：目标格必须为空（不换手/不合并）
+  if (it.location !== 0) return { mode: 'bad' };
   if (hits.length === 1) {
     const c = hits[0];
     const sameStack = c.itemlistId === it.itemlistId && it.count + c.count <= 1000;
@@ -425,9 +427,12 @@ export default function ItemPanel() {
   function onPutToBagSlot(targetSlot: number) {
     if (!held) return;
     if (held.location === 2) {
-      console.log('[bag] 卸下装备 held uid=', held.uid, 'slot=', held.slot);
-      // 装备 → 背包格（脱下回背包）
-      sendUnequipItem(held.slot);
+      // 装备 → 指定背包格（本地即时落格 + 上报布局；服务端落库并刷新属性/外观）
+      const t = bagTargetFor(held, targetSlot, items);
+      console.log('[bag] 卸装到指定格 uid=', held.uid, '→slot=', targetSlot, 'mode=', t.mode);
+      if (t.mode === 'bad') return;
+      localUnequipToBag(held.uid, targetSlot);
+      sendBagLayout([{ uid: held.uid, slot: targetSlot }]);
       setHeldUid(null);
       return;
     }
