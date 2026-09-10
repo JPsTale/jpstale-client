@@ -84,7 +84,7 @@ export interface GamePlayer {
 /**
  * 物品实例（对齐服务端 S2C ItemProto 动态字段）。
  * 静态定义（图标/占格/名）查 itemDefs.ts（itemlistId/itemCode），此处只存实例动态值。
- * location: 0=背包画布(12×12, slot=y*12+x) 1=仓库(9×9) 2=装备槽(1~13) 6=备用武器槽
+ * location: 0=装备栏(1~13 槽) 1=副装备栏 10=背包页(12×12, slot=y*12+x) 30=仓库页(9×9) -1=手持中
  */
 export interface GameItem {
   uid: number;
@@ -226,11 +226,12 @@ export function removeInventoryItem(uid: number): void {
   commit({ inventory: { ...cur, items: cur.items.filter((x) => x.uid !== uid) } });
 }
 
-/** 本地即时背包换格（客户端网格权威，随即上报布局；服务端只落库不重建） */
-export function localBagMove(uid: number, toSlot: number): void {
+/** 本地即时背包换格（客户端网格权威，随即上报布局；服务端只落库不重建）。
+ *  toLocation 目标容器（默认背包页），支持跨容器（背包↔仓库）。 */
+export function localBagMove(uid: number, toSlot: number, toLocation = 10): void {
   const cur = snapshot.inventory;
   if (!cur) return;
-  const items = cur.items.map((x) => (x.uid === uid ? { ...x, slot: toSlot } : x));
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: toLocation, slot: toSlot } : x));
   commit({ inventory: { ...cur, items } });
 }
 
@@ -238,7 +239,7 @@ export function localBagMove(uid: number, toSlot: number): void {
 export function localUnequipToBag(uid: number, toSlot: number): void {
   const cur = snapshot.inventory;
   if (!cur) return;
-  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: 0, slot: toSlot } : x));
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: 10, slot: toSlot } : x));
   commit({ inventory: { ...cur, items } });
 }
 
@@ -246,7 +247,7 @@ export function localUnequipToBag(uid: number, toSlot: number): void {
 export function localEquipItem(uid: number, slot: number): void {
   const cur = snapshot.inventory;
   if (!cur) return;
-  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: 2, slot } : x));
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: 0, slot } : x));
   commit({ inventory: { ...cur, items } });
 }
 

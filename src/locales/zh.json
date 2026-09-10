@@ -376,12 +376,14 @@
       "partyUsage": "用法: //party 玩家名",
       "getUsage": "用法: /@get <物品名|idCode|itemlistId>",
       "itemNotFound": "找不到物品: {token}",
+      "dropOverLimit": "地面物品已满，掉落被丢弃",
       "unknownGm": "未知GM命令: /{name}（GM 系统开发中）",
       "unknown": "未知命令: /{name}",
       "invalidNumber": "命令参数格式错误: {cmd}"
     },
     "pickup": {
-      "bagFull": "背包已满，无法拾取"
+      "bagFull": "背包已满，无法拾取",
+      "overWeight": "负重超限，无法继续携带"
     },
     "private": {
       "offline": "玩家 {name} 不在线"

@@ -145,6 +145,10 @@ export function installBridge(): void {
     }
     if (msg.itemUpdate && msg.itemUpdate.item) upsertInventoryItem(toGameItem(msg.itemUpdate.item));
     if (msg.itemRemove) removeInventoryItem(Number(msg.itemRemove.uid) || 0);
+    if (msg.itemRemovedUids && msg.itemRemovedUids.uids) {
+      const ids = msg.itemRemovedUids.uids.map((u) => Number(u) || 0);
+      for (const id of ids) removeInventoryItem(id);
+    }
     if (msg.goldChange) setInventoryGold(Number(msg.goldChange.newGold) || 0);
   });
 }
@@ -181,9 +185,13 @@ export function sendPickupItem(groundItemId: number): void {
   send(pickupItem(groundItemId));
 }
 
-/** 背包布局上报（客户端网格权威）：一次手势后受影响物品最终格子 */
-export function sendBagLayout(entries: { uid: number; slot: number }[]): void {
-  send(bagLayout(entries));
+/** 物品布局上报序号（客户端全局单调递增；服务端丢弃 seq<=lastSeq 的乱序/重放包） */
+let bagLayoutSeq = 0;
+
+/** 背包布局上报（客户端网格权威，全量快照 + 单调递增 seq）：
+ * entries 为该次手势后的全部物品最终格子（含跨容器），seq 每次自增。 */
+export function sendBagLayout(entries: { uid: number; location: number; slot: number }[]): void {
+  send(bagLayout(++bagLayoutSeq, entries));
 }
 
 /** 药水堆叠合并 */

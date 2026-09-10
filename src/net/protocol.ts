@@ -79,10 +79,12 @@ export function switchWeapon(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ switchWeapon: {} });
 }
 
-/** 背包布局上报（客户端网格权威）：entries = 受影响物品的最终格子（绝对位置） */
-export function bagLayout(entries: { uid: number; slot: number }[]): jpt.base.ClientMessage.$Properties {
+/** 背包布局上报（客户端网格权威，全量快照 + 单调递增 seq）：
+ * 一次手势/整理后把全部物品最终落点上报；seq 单调递增，服务端丢弃 seq<=lastSeq 的乱序/重放包。
+ * entries 仅含 (uid, location, slot)，count 全走服务端事件点。 */
+export function bagLayout(seq: number, entries: { uid: number; location: number; slot: number }[]): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        bagLayout: { entries: entries.map((e) => ({ uid: e.uid, slot: e.slot })) },
+        bagLayout: { seq, entries: entries.map((e) => ({ uid: e.uid, location: e.location, slot: e.slot })) },
     });
 }
 

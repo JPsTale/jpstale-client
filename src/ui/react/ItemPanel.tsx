@@ -10,10 +10,11 @@ import {
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { sendEquipItem, sendUnequipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge } from '../../net/bridge.js';
 import { useItemHover, ItemInfo } from './ItemInfo.js';
+import { LOC } from '../../game/itemLocations.js';
 
 // 画布常量（对齐服务端 ItemLocations）
-const BAG_W = 12;
-const BAG_H = 12;
+const BAG_W = LOC.BAG_W;
+const BAG_H = LOC.BAG_H;
 const CELL = 22; // 一格 22px
 
 // 物品定义类型（从 itemDefs）
@@ -64,7 +65,7 @@ function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: Ba
   if (x + gw > BAG_W || y + gh > BAG_H) return { mode: 'bad' };
   const hits: GameItem[] = [];
   for (const o of items) {
-    if (o.location !== 0 || o.uid === it.uid) continue;
+    if (!(o.location === LOC.BAG || o.location === LOC.WAREHOUSE) || o.uid === it.uid) continue;
     const od = defOf(o);
     const oo = slotXY(o.slot);
     const ow = od?.w ?? 1;
@@ -73,7 +74,7 @@ function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: Ba
   }
   if (hits.length === 0) return { mode: 'free' };
   // 装备槽来源：目标格必须为空（不换手/不合并）
-  if (it.location !== 0) return { mode: 'bad' };
+  if (it.location === LOC.EQUIP || it.location === LOC.BACKUP_EQUIP) return { mode: 'bad' };
   if (hits.length === 1) {
     const c = hits[0];
     const sameStack = c.itemlistId === it.itemlistId && it.count + c.count <= 1000;
@@ -100,7 +101,7 @@ function BagCanvas({ items, held, onPick, onPutSlot, onZone, onHover, onHoverEnd
   const [mode, setMode] = useState<BagDropMode | null>(null);
   // 拿起中的物品从原格隐藏（留在背包视觉上"空出"），不再原地绘制
   const placed = items
-    .filter((x) => x.location === 0 && x.uid !== held?.uid)
+    .filter((x) => x.location === LOC.BAG && x.uid !== held?.uid)
     .map((it) => {
       const def = defOf(it);
       const { x, y } = slotXY(it.slot);
@@ -283,7 +284,7 @@ function EquipColumn({ items, held, onPickEquip, onPutEquip, allowed, onHover, o
   onHoverEnd: () => void;
 }) {
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
-  const eq = (slot: number) => items.find((x) => x.location === 2 && x.slot === slot && x.uid !== held?.uid);
+  const eq = (slot: number) => items.find((x) => x.location === LOC.EQUIP && x.slot === slot && x.uid !== held?.uid);
 
   const renderRow = (list: SlotDef[]) => (
     <div className="jp-items-equiprow">
@@ -356,12 +357,12 @@ export default function ItemPanel() {
     window.addEventListener('pointermove', mv);
     return () => window.removeEventListener('pointermove', mv);
   }, [heldUid]);
-  // 穿装备 ack：新件 location 变为 2（已穿上）→ 挂起结束
+  // 穿装备 ack：新件 location 变为 0（已穿上）→ 挂起结束
   useEffect(() => {
     const p = pendingSwap.current;
     if (!p) return;
     const n = getGameSnapshot().inventory?.items.find((x) => x.uid === p.newUid);
-    if (n && n.location === 2) {
+    if (n && n.location === LOC.EQUIP) {
       pendingSwap.current = null;
     }
   }, [snap.inventory]);
@@ -432,10 +433,22 @@ export default function ItemPanel() {
       'listId=', it.itemlistId, 'size=', defOf(it)?.w, 'x', defOf(it)?.h);
   }
 
+  /** 全量快照上报：当前 store 全部画布物品（背包/仓库页）最终格子（客户端布局权威）。
+   *  装备/副装备槽不走 BagLayout（由 EquipItem/UnequipItem/SwitchWeapon 维护）；
+   *  手持(HELD)不上报。手势/整理后调用一次；服务端按 seq 校验 + 校验失败静默（不回推）。 */
+  function reportLayout() {
+    const cur = getGameSnapshot().inventory;
+    if (!cur) return;
+    const entries = cur.items
+      .filter((x) => x.location !== LOC.HELD && !(x.location === LOC.EQUIP || x.location === LOC.BACKUP_EQUIP))
+      .map((x) => ({ uid: x.uid, location: x.location, slot: x.slot }));
+    sendBagLayout(entries);
+  }
+
   function onPutToBagSlot(targetSlot: number) {
     if (!held) return;
-    if (held.location === 2) {
-      // 装备 → 指定背包格（本地即时落格 + 上报布局；服务端落库并刷新属性/外观）
+    if (held.location === LOC.EQUIP || held.location === LOC.BACKUP_EQUIP) {
+      // 装备/副装备 → 指定背包格（本地即时落格 + 全量上报布局；服务端落库并刷新属性/外观）
       const t = bagTargetFor(held, targetSlot, items);
       console.log('[bag:unequip] 卸装到指定格 heldUid=', held.uid, 'heldLoc=', held.location, 'heldSlot=', held.slot,
         '→targetSlot=', targetSlot, 'xy=', JSON.stringify(slotXY(targetSlot)),
@@ -443,14 +456,14 @@ export default function ItemPanel() {
         '冲突=', t.conflict ? { uid: t.conflict.uid, slot: t.conflict.slot, listId: t.conflict.itemlistId } : null);
       if (t.mode === 'bad') return;
       localUnequipToBag(held.uid, targetSlot);
-      sendBagLayout([{ uid: held.uid, slot: targetSlot }]);
-      console.log('[bag:unequip] 已上报 BagLayout uid=', held.uid, '→slot=', targetSlot);
+      reportLayout();
+      console.log('[bag:unequip] 已上报全量布局（含 uid=', held.uid, '→slot=', targetSlot, '）');
       setHeldUid(null);
       return;
     }
-    if (held.location !== 0) return;
+    if (held.location !== LOC.BAG) return;
     if (targetSlot === held.slot) { console.log('[bag:move] 同格丢弃视为取消拿起'); setHeldUid(null); return; }
-    // 客户端网格权威：本地即时落子并渲染，随后上报布局；药水合并走 StackMerge
+    // 客户端网格权威：本地即时落子并渲染，随后全量上报布局；药水合并走 StackMerge
     const t = bagTargetFor(held, targetSlot, items);
     console.log('[bag:move] 背包内移动 heldUid=', held.uid, 'fromSlot=', held.slot, '→targetSlot=', targetSlot,
       'xy=', JSON.stringify(slotXY(targetSlot)), 'size=', defOf(held)?.w, 'x', defOf(held)?.h,
@@ -464,9 +477,9 @@ export default function ItemPanel() {
       return;
     }
     const srcLoc = held.location, srcSlot = held.slot;
-    localBagMove(held.uid, targetSlot);
-    sendBagLayout([{ uid: held.uid, slot: targetSlot }]);
-    console.log('[bag:move] 已上报 BagLayout uid=', held.uid, 'srcLoc=', srcLoc, 'srcSlot=', srcSlot, '→slot=', targetSlot);
+    localBagMove(held.uid, targetSlot, LOC.BAG);
+    reportLayout();
+    console.log('[bag:move] 已上报全量布局（含 uid=', held.uid, 'srcLoc=', srcLoc, 'srcSlot=', srcSlot, '→slot=', targetSlot, '）');
     if (t.mode === 'swap' && t.conflict) {
       // 换手：被撞件"拿起"（客户端本地语义；其服务端槽位保持到下次放置才上报）
       setHeldUid(t.conflict.uid);
@@ -476,7 +489,7 @@ export default function ItemPanel() {
   }
 
   function onPickEquip(slot: number) {
-    const it = items.find((x) => x.location === 2 && x.slot === slot);
+    const it = items.find((x) => x.location === LOC.EQUIP && x.slot === slot);
     if (it) {
       setHeldUid(it.uid);
       console.log('[bag:pick-eq] 拿起装备槽 uid=', it.uid, 'slot=', slot,
@@ -489,13 +502,13 @@ export default function ItemPanel() {
   function onPutEquip(slot: number) {
     if (!held) return;
     if (!slotAllows(slot)) return;
-    if (held.location === 0) {
+    if (held.location === LOC.BAG) {
       // 客户端预校验（与服务器一致）：不满足则保持手持、不发送
       if (!meetsEquipReq(held, snap.character)) {
         console.warn('[bag] 装备需求不足，穿入取消 uid=', held.uid);
         return;
       }
-      const old = items.find((x) => x.location === 2 && x.slot === slot) ?? null;
+      const old = items.find((x) => x.location === LOC.EQUIP && x.slot === slot) ?? null;
       console.log('[bag:equip] 穿装 heldUid=', held.uid, 'fromBagSlot=', held.slot, '→equipSlot=', slot,
         '旧件=', old ? { uid: old.uid, slot: old.slot } : null,
         'size=', defOf(held)?.w, 'x', defOf(held)?.h);
@@ -508,7 +521,7 @@ export default function ItemPanel() {
       if (old) localToHeld(old.uid);
       sendEquipItem(held.uid, slot);
       console.log('[bag:equip] 已上报 EquipItem uid=', held.uid, '→equipSlot=', slot);
-    } else if (held.location === 2 && held.slot !== slot) {
+    } else if ((held.location === LOC.EQUIP || held.location === LOC.BACKUP_EQUIP) && held.slot !== slot) {
       console.log('[bag:equip] 装备→装备槽换槽 heldUid=', held.uid, 'fromSlot=', held.slot, '→slot=', slot);
       // 装备 → 另一装备槽（服务端无直换）：先脱回背包（旧槽清空），held 仍指向实例，
       // 待 store 收到 ItemUpdate 后其 location 变 0，用户再点目标空槽完成穿入。

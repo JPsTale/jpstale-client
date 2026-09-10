@@ -376,12 +376,14 @@
       "partyUsage": "Usage: //party <player>",
       "getUsage": "Usage: /@get <name|idCode|itemlistId>",
       "itemNotFound": "Item not found: {token}",
+      "dropOverLimit": "Ground is full, drop discarded",
       "unknownGm": "Unknown GM command: /{name} (GM system in development)",
       "unknown": "Unknown command: /{name}",
       "invalidNumber": "Invalid number in command: {cmd}"
     },
     "pickup": {
-      "bagFull": "Bag is full, cannot pick up"
+      "bagFull": "Bag is full, cannot pick up",
+      "overWeight": "Too heavy, cannot carry more"
     },
     "private": {
       "offline": "Player {name} is not online"
