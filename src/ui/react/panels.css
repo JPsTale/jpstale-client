@@ -1217,6 +1217,7 @@
 .jp-item-info-line {
   display: flex;
   gap: 6px;
+  justify-content: space-between;
 }
 .jp-item-info-l {
   flex: 0 0 auto;
@@ -1224,6 +1225,7 @@
 }
 .jp-item-info-v {
   color: #ffffff;
+  text-align: right;
 }
 .jp-item-info-red .jp-item-info-l,
 .jp-item-info-red .jp-item-info-v {
