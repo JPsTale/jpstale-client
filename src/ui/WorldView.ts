@@ -292,6 +292,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       applyCursorStyle('attack');
       return;
     }
+    const npcTargets: THREE.Object3D[] = [];
+    for (const n of npcs.values()) npcTargets.push(n.root);
+    if (ray.intersectObjects(npcTargets, true).length > 0) {
+      applyCursorStyle('talk');
+      return;
+    }
     applyCursorStyle('default');
   }
 
@@ -322,7 +328,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const p = remotes.get(moveTarget.id);
       return p ? { x: p.root.position.x, z: p.root.position.z } : null;
     }
-    // NPC：服务端 NPC 层接入后提供 npcs(id).root 实时坐标；当前无 NPC actor → 视为目标缺失
+    if (moveTarget.kind === 'npc') {
+      const n = npcs.get(moveTarget.id);
+      return n ? { x: n.root.position.x, z: n.root.position.z } : null;
+    }
     return null;
   }
   /** 点击掉落物即时拾取半径（世界单位，对齐原版 ≈32）：该范围内点击即发 C2S；更远走 Chase */
@@ -1076,7 +1085,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 抬起时做拾取/选目标（原版点目标 vs 按住空地跑 的分界）
       const overTarget = pickGroundItemIdByRay(e.clientX, e.clientY) !== undefined
         || pickMonsterIdByRay(e.clientX, e.clientY) !== undefined
-        || pickPlayerIdByRay(e.clientX, e.clientY) !== undefined;
+        || pickPlayerIdByRay(e.clientX, e.clientY) !== undefined
+        || pickNpcIdByRay(e.clientX, e.clientY) !== undefined;
       mouseX = e.clientX; mouseY = e.clientY;
       tapDownX = e.clientX; tapDownY = e.clientY; tapDownT = performance.now();
       // 玩家按下（移动/点击）→ 取消进行中的自动追踪目标
@@ -1167,6 +1177,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       console.log('[WorldView] 选中玩家 playerId=' + pid2 + ' → Chase(实时跟随)');
       return;
     }
+    // 3b) NPC → Chase 走近（到位后触发对话，对话逻辑后续接入）
+    const npcId = pickNpcIdByRay(cx, cy);
+    if (npcId !== undefined) {
+      moveTarget = { kind: 'npc', id: npcId };
+      console.log('[WorldView] 选中 NPC npcId=' + npcId + ' → Chase');
+      return;
+    }
     // 4) 空地 → 仅取消当前 Chase 目标（原版点地不产生走点移动，只有按住跑）
     if (moveTarget) {
       console.log('[WorldView] 取消 Chase 目标');
@@ -1234,6 +1251,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       let o: THREE.Object3D | null = hit.object;
       while (o) {
         const v = o.userData.monsterId as number | undefined;
+        if (v !== undefined) return v;
+        o = o.parent;
+      }
+    }
+    return undefined;
+  }
+
+  /** 鼠标射线命中的 NPC id（近优先） */
+  function pickNpcIdByRay(cx: number, cy: number): number | undefined {
+    if (!renderer || !camera || !scene || npcs.size === 0) return undefined;
+    const rect = renderer.domElement.getBoundingClientRect();
+    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
+    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
+    ray.setFromCamera(ndc, camera);
+    ray.far = 1300;
+    const targets: THREE.Object3D[] = [];
+    for (const n of npcs.values()) targets.push(n.root);
+    for (const hit of ray.intersectObjects(targets, true)) {
+      let o: THREE.Object3D | null = hit.object;
+      while (o) {
+        const v = o.userData.npcId as number | undefined;
         if (v !== undefined) return v;
         o = o.parent;
       }
@@ -1541,6 +1579,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     void (async () => {
       try {
         const result = await loadMonsterModel(info.modelFile);
+        // [临时调试] wireframe 渲染验证模型完整性（武器 mesh 是否加载）；验证后删除
+        for (const m of result.meshes) {
+          const mats = Array.isArray(m.material) ? m.material : [m.material];
+          for (const mat of mats) {
+            (mat as THREE.MeshPhongMaterial).wireframe = true;
+            (mat as THREE.MeshPhongMaterial).transparent = false;
+            (mat as THREE.MeshPhongMaterial).opacity = 1;
+          }
+        }
         await loadTextures(result.texturesToLoad);
         if (npcs.has(nid)) return;
 
@@ -2302,6 +2349,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         console.log('[WorldView] Chase 到位(近战距离) mid=' + hit.id + '（攻击动作待接入）');
       } else if (hit && targetReached && hit.kind === 'player') {
         console.log('[WorldView] Chase 到位(贴身) player=' + hit.id + '（交互动作待接入）');
+      } else if (hit && targetReached && hit.kind === 'npc') {
+        console.log('[WorldView] Chase 到位 npc=' + hit.id + '（对话待接入）');
       } else if (targetLost) {
         console.log('[WorldView] Chase 目标消失，取消');
       }

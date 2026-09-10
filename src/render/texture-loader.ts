@@ -7,6 +7,14 @@ import { decodeTextureAsync } from '../core/texture';
 
 const cache = new Map<string, THREE.DataTexture>();
 
+/** 各向异性过滤级数（renderer 创建后由 setMaxAnisotropy 注入；1=关闭）。 */
+let maxAnisotropy = 1;
+
+/** 设置各向异性过滤（renderer.capabilities.getMaxAnisotropy()）。 */
+export function setMaxAnisotropy(v: number): void {
+  if (Number.isFinite(v) && v > 1) maxAnisotropy = v;
+}
+
 /** 资产 URL 是否为 TGA(bmp 永不 alpha,原引擎 MapOpacity 仅 TGA) */
 function detectAlpha(url: string, decodedHasAlpha: boolean): boolean {
   if (/\.tga$/i.test(url)) return true;
@@ -35,6 +43,7 @@ export async function loadGameTexture(url: string): Promise<THREE.DataTexture | 
     tex.minFilter = THREE.LinearMipmapLinearFilter;
     tex.magFilter = THREE.LinearFilter;
     tex.colorSpace = THREE.SRGBColorSpace;
+    tex.anisotropy = maxAnisotropy;
     tex.needsUpdate = true;
     tex.userData.hasAlpha = hasAlpha;
     cache.set(url, tex);
