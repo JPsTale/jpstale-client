@@ -1618,9 +1618,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         {
           const w = result.meshes.find(m => m.userData.nodeName === 'TguardWeapon');
           if (w) {
-            w.frustumCulled = false;
-            w.position.set(0, 100, 0);
-            console.log('[NPC debug] 武器 mesh 移到 NPC 头顶上方 y+100（排查遮挡）');
+            const plain = new THREE.Mesh(w.geometry, new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide }));
+            plain.frustumCulled = false;
+            plain.position.set(0, 50, 0);
+            root.add(plain);
+            console.log('[NPC debug] 武器 geometry 非蒙皮红 Mesh 已加到 NPC 上方 y+50');
           }
         }
 
