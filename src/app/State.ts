@@ -23,16 +23,16 @@ export function getScreen(): AppScreen { return _screen; }
 const VALID: Record<string, string[]> = {
   [AppScreen.BOOT]:          [AppScreen.LOGIN],
   [AppScreen.LOGIN]:         [AppScreen.SERVER_SELECT],
-  [AppScreen.SERVER_SELECT]: [AppScreen.CHAR_SELECT],
+  [AppScreen.SERVER_SELECT]: [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
   [AppScreen.CHAR_SELECT]:   [AppScreen.WORLD, AppScreen.CHAR_CREATE, AppScreen.LOGIN],
-  [AppScreen.CHAR_CREATE]:   [AppScreen.CHAR_SELECT],
+  [AppScreen.CHAR_CREATE]:   [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
   [AppScreen.WORLD]:         [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
 };
 
-export function transition(from: AppScreen, to: AppScreen, ctx: TransitionCtx): void {
+export function transition(from: AppScreen, to: AppScreen, ctx: TransitionCtx): boolean {
   if (!VALID[from]?.includes(to)) {
     console.warn(`[app] illegal transition ${from} → ${to}`);
-    return;
+    return false;
   }
   _screen = to;
   ctx.hideAll();
@@ -44,4 +44,5 @@ export function transition(from: AppScreen, to: AppScreen, ctx: TransitionCtx): 
     case AppScreen.CHAR_CREATE:   break;
     case AppScreen.WORLD:         break;
   }
+  return true;
 }

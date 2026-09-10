@@ -323,7 +323,7 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
 }
 
 function go(to: AppScreen, ...args: unknown[]) {
-  transition(getScreen(), to, ctx);
+  if (!transition(getScreen(), to, ctx)) return;
   showPanelFor(to, ...args);
 }
 
