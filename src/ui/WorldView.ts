@@ -1584,6 +1584,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       try {
         const result = await loadMonsterModel(info.modelFile);
         console.log('[NPC debug] meshes:', result.meshes.map(m => `${m.userData.nodeName}:${m.geometry.attributes.position.count}`).join(', '));
+        {
+          const w = result.meshes.find(m => m.userData.nodeName === 'TguardWeapon');
+          if (w) {
+            const si = w.geometry.attributes.skinIndex;
+            const boneIdx = si.getX(0);
+            const bone = result.bones[boneIdx];
+            const wp = new THREE.Vector3(); bone.getWorldPosition(wp);
+            console.log('[NPC debug] weapon bone idx=' + boneIdx + ' name=' + (bone && bone.name) + ' worldPos=' + wp.toArray().map(v => v.toFixed(1)));
+            w.geometry.computeBoundingBox();
+            const c = new THREE.Vector3(); w.geometry.boundingBox!.getCenter(c);
+            const s = new THREE.Vector3(); w.geometry.boundingBox!.getSize(s);
+            console.log('[NPC debug] weapon bbox center=' + c.toArray().map(v => v.toFixed(1)) + ' size=' + s.toArray().map(v => v.toFixed(1)));
+          } else {
+            console.log('[NPC debug] 无 TguardWeapon mesh');
+          }
+        }
         // [临时调试] 纯蓝不透明材质验证武器 mesh 是否加载；验证后删除
         for (const m of result.meshes) {
           m.material = new THREE.MeshBasicMaterial({ color: 0x4488ff, side: THREE.DoubleSide });
