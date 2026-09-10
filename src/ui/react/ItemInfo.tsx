@@ -21,7 +21,7 @@ export function useItemHover() {
   return { hover, show, hide };
 }
 
-interface Line { label?: string; value: string; red?: boolean; dim?: boolean; section?: boolean; center?: boolean; }
+interface Line { label?: string; value: string; red?: boolean; dim?: boolean; section?: boolean; spec?: boolean; specHeader?: boolean; }
 
 export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
@@ -49,7 +49,7 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
       {lines.map((ln, i) => (
         <div
           key={i}
-          className={`jp-item-info-line${ln.section ? ' jp-item-info-sec' : ''}${ln.red ? ' jp-item-info-red' : ''}${ln.dim ? ' jp-item-info-dim' : ''}${ln.center ? ' jp-item-info-center' : ''}`}
+          className={`jp-item-info-line${ln.section ? ' jp-item-info-sec' : ''}${ln.red ? ' jp-item-info-red' : ''}${ln.dim ? ' jp-item-info-dim' : ''}${ln.specHeader ? ' jp-item-info-specHeader' : ''}${ln.spec ? ' jp-item-info-spec' : ''}`}
         >
           {ln.label !== undefined && <span className="jp-item-info-l">{ln.label}</span>}
           <span className="jp-item-info-v">{ln.value}</span>
@@ -135,17 +135,17 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
   if (it.jobCodeMask !== 0 && hasSpec(it)) {
     out.push({ section: true, value: '' });
     const job = jobName(it.jobCodeMask);
-    if (job) out.push({ center: true, value: t('itemtip.specHeader', { job }) });
-    if (it.specAbsorb > 0) out.push({ center: true, label: t('itemtip.absorb'), value: (it.specAbsorb / 10).toFixed(1) });
-    if (it.specLevAttackRating > 0) out.push({ center: true, label: t('itemtip.hit'), value: `Lv/${it.specLevAttackRating}` });
-    if (it.specLevDamageMax > 0) out.push({ center: true, label: t('itemtip.atk'), value: `Lv/${it.specLevDamageMax}` });
-    if (it.specAttackSpeed > 0) out.push({ center: true, label: t('itemtip.attackSpeed'), value: String(it.specAttackSpeed) });
-    if (it.specCritical > 0) out.push({ center: true, label: t('itemtip.crit'), value: `${it.specCritical}%` });
-    if (it.specDefence > 0) out.push({ center: true, label: t('itemtip.def'), value: String(it.specDefence) });
-    if (it.specBlockRating > 0) out.push({ center: true, label: t('itemtip.block'), value: `${Math.round(it.specBlockRating / 10)}%` });
-    if (it.specSpeed > 0) out.push({ center: true, label: t('itemtip.speed'), value: (it.specSpeed / 10).toFixed(1) });
-    if (it.specShootingRange > 0) out.push({ center: true, label: t('itemtip.range'), value: String(it.specShootingRange) });
-    if (it.specMagicMastery > 0) out.push({ center: true, label: t('itemtip.magicMastery'), value: (it.specMagicMastery / 10).toFixed(1) });
+    if (job) out.push({ specHeader: true, value: t('itemtip.specHeader', { job }) });
+    if (it.specAbsorb > 0) out.push({ spec: true, label: t('itemtip.absorb'), value: (it.specAbsorb / 10).toFixed(1) });
+    if (it.specLevAttackRating > 0) out.push({ spec: true, label: t('itemtip.hit'), value: `Lv/${it.specLevAttackRating}` });
+    if (it.specLevDamageMax > 0) out.push({ spec: true, label: t('itemtip.atk'), value: `Lv/${it.specLevDamageMax}` });
+    if (it.specAttackSpeed > 0) out.push({ spec: true, label: t('itemtip.attackSpeed'), value: String(it.specAttackSpeed) });
+    if (it.specCritical > 0) out.push({ spec: true, label: t('itemtip.crit'), value: `${it.specCritical}%` });
+    if (it.specDefence > 0) out.push({ spec: true, label: t('itemtip.def'), value: String(it.specDefence) });
+    if (it.specBlockRating > 0) out.push({ spec: true, label: t('itemtip.block'), value: `${Math.round(it.specBlockRating / 10)}%` });
+    if (it.specSpeed > 0) out.push({ spec: true, label: t('itemtip.speed'), value: (it.specSpeed / 10).toFixed(1) });
+    if (it.specShootingRange > 0) out.push({ spec: true, label: t('itemtip.range'), value: String(it.specShootingRange) });
+    if (it.specMagicMastery > 0) out.push({ spec: true, label: t('itemtip.magicMastery'), value: (it.specMagicMastery / 10).toFixed(1) });
     const specRes: [string, number][] = [
       [t('itemtip.resBionic'), it.specResBionic],
       [t('itemtip.resEarth'), it.specResEarth],
@@ -156,7 +156,7 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
       [t('itemtip.resWater'), it.specResWater],
       [t('itemtip.resWind'), it.specResWind],
     ];
-    for (const [label, v] of specRes) if (v !== 0) out.push({ center: true, label, value: String(v) });
+    for (const [label, v] of specRes) if (v !== 0) out.push({ spec: true, label, value: String(v) });
     const specLevRes: [string, number][] = [
       [t('itemtip.resBionic'), it.specLevResBionic],
       [t('itemtip.resEarth'), it.specLevResEarth],
@@ -167,12 +167,12 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
       [t('itemtip.resWater'), it.specLevResWater],
       [t('itemtip.resWind'), it.specLevResWind],
     ];
-    for (const [label, v] of specLevRes) if (v !== 0) out.push({ center: true, label, value: `Lv/${v}` });
-    if (it.specLevLife > 0) out.push({ center: true, label: t('itemtip.incLife'), value: `Lv/${it.specLevLife}` });
-    if (it.specLevMana > 0) out.push({ center: true, label: t('itemtip.incMana'), value: `Lv/${it.specLevMana}` });
-    if (it.specPerLifeRegen > 0) out.push({ center: true, label: t('itemtip.regenLife'), value: (it.specPerLifeRegen / 100).toFixed(2) });
-    if (it.specPerManaRegen > 0) out.push({ center: true, label: t('itemtip.regenMana'), value: (it.specPerManaRegen / 100).toFixed(2) });
-    if (it.specPerStaminaRegen > 0) out.push({ center: true, label: t('itemtip.regenStm'), value: (it.specPerStaminaRegen / 100).toFixed(2) });
+    for (const [label, v] of specLevRes) if (v !== 0) out.push({ spec: true, label, value: `Lv/${v}` });
+    if (it.specLevLife > 0) out.push({ spec: true, label: t('itemtip.incLife'), value: `Lv/${it.specLevLife}` });
+    if (it.specLevMana > 0) out.push({ spec: true, label: t('itemtip.incMana'), value: `Lv/${it.specLevMana}` });
+    if (it.specPerLifeRegen > 0) out.push({ spec: true, label: t('itemtip.regenLife'), value: (it.specPerLifeRegen / 100).toFixed(2) });
+    if (it.specPerManaRegen > 0) out.push({ spec: true, label: t('itemtip.regenMana'), value: (it.specPerManaRegen / 100).toFixed(2) });
+    if (it.specPerStaminaRegen > 0) out.push({ spec: true, label: t('itemtip.regenStm'), value: (it.specPerStaminaRegen / 100).toFixed(2) });
   }
   return out;
 }

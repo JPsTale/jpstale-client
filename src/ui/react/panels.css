@@ -1179,14 +1179,16 @@
   border-radius: 0 0 6px 0;
 }
 
-/* 原版风格物品信息框（深色半透明底；名字居中加粗；右上武器类型徽标；需求不足行红字） */
+/* 原版风格物品信息框（深色半透明底；名字白色居中；右上武器类型徽标）
+   颜色对照 NewSourcePT cITEM::DrawItemText：正文数值 R254,215,163 / 标签白；
+   需求满足 R150,149,144 暗黄、不足红；职业特效标题橙 R235,143,60、属性行绿 R33,205,95。 */
 .jp-item-info {
   position: fixed;
   z-index: 1200;
   width: 236px;
   background: rgba(10, 12, 18, 0.92);
   border: 1px solid rgba(140, 140, 160, 0.4);
-  color: #e9e7da;
+  color: #fed7a3;
   font: 12px/1.6 'Microsoft YaHei', system-ui, sans-serif;
   padding: 6px 10px 8px;
   pointer-events: none;
@@ -1197,7 +1199,7 @@
   position: relative;
   text-align: center;
   font-weight: 700;
-  color: #ffe9a8;
+  color: #ffffff;
   margin: 2px 0 3px;
   padding-right: 4px;
 }
@@ -1221,35 +1223,35 @@
 }
 .jp-item-info-l {
   flex: 0 0 auto;
-  color: #cfc6ae;
+  color: #ffffff;
 }
 .jp-item-info-v {
-  color: #ffffff;
+  color: #fed7a3;
   text-align: right;
 }
 .jp-item-info-red .jp-item-info-l,
 .jp-item-info-red .jp-item-info-v {
-  color: #ff5c5c;
+  color: #ff0000;
 }
 /* 需求行满足：原版 R150,149,144 暗黄 */
 .jp-item-info-dim .jp-item-info-l,
 .jp-item-info-dim .jp-item-info-v {
   color: #969590;
 }
+/* 区块间隔：原版为空白行，无分割线 */
 .jp-item-info-sec {
-  justify-content: center;
-  color: #aab3c2;
-  border-top: 1px dashed rgba(150, 155, 170, 0.35);
-  margin-top: 3px;
-  padding-top: 3px;
+  height: 6px;
 }
-.jp-item-info-sec .jp-item-info-v {
-  color: #d7d3c2;
+/* 职业特效：标题橙 R235,143,60，属性行标签白/数值绿 R33,205,95（左标签/右数值，不居中） */
+.jp-item-info-specHeader {
+  justify-content: flex-start;
 }
-/* 职业特效块（目标版式：居中、金/黄字） */
-.jp-item-info-center { justify-content: center; }
-.jp-item-info-center .jp-item-info-l,
-.jp-item-info-center .jp-item-info-v { color: #ffe9a8; }
+.jp-item-info-specHeader .jp-item-info-v {
+  color: #eb8f3c;
+  text-align: left;
+}
+.jp-item-info-spec .jp-item-info-l { color: #ffffff; }
+.jp-item-info-spec .jp-item-info-v { color: #21cd5f; }
 
 /* 背包拖放视觉（原版：悬停占格高亮 / 拿起持物 / 落点 绿=可放 黄=合并 红=冲突） */
 .jp-bag-item:hover { outline: 2px solid rgba(255, 200, 0, 0.9); outline-offset: -1px; }
