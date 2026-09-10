@@ -2167,7 +2167,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const dx = tp.x - selfPos.x;
         const dz = tp.z - selfPos.z;
         const d = Math.hypot(dx, dz);
-        const arrive = moveTarget.kind === 'item' ? 1.0 : 2.0;
+        // 到达半径：不小于本帧步长。否则 run 步长(≈3.5)大于固定半径(1.0/2.0)，
+        // 角色会围绕目标点反复"过冲→折返"，形成高频来回跑震动。
+        const stepNow = (running ? selfRunWps : selfWalkWps) * Math.min(dt, 0.1);
+        const arrive = Math.max(moveTarget.kind === 'item' ? 1.0 : 2.0, stepNow + 0.5);
         if (d <= arrive) {
           targetReached = true;
         } else {

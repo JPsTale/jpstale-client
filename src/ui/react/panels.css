@@ -1242,16 +1242,17 @@
 .jp-item-info-sec {
   height: 6px;
 }
-/* 职业特效：标题橙 R235,143,60，属性行标签白/数值绿 R33,205,95（左标签/右数值，不居中） */
+/* 职业特效（ex-machina 客户端原版）：标题居中黄 R255,220,0；属性行橄榄绿 R164,199,41（标签/数值同色，左标签/右数值） */
 .jp-item-info-specHeader {
-  justify-content: flex-start;
+  justify-content: center;
 }
 .jp-item-info-specHeader .jp-item-info-v {
-  color: #eb8f3c;
-  text-align: left;
+  color: #ffdc00;
 }
-.jp-item-info-spec .jp-item-info-l { color: #ffffff; }
-.jp-item-info-spec .jp-item-info-v { color: #21cd5f; }
+.jp-item-info-spec .jp-item-info-l,
+.jp-item-info-spec .jp-item-info-v {
+  color: #a4c729;
+}
 
 /* 背包拖放视觉（原版：悬停占格高亮 / 拿起持物 / 落点 绿=可放 黄=合并 红=冲突） */
 .jp-bag-item:hover { outline: 2px solid rgba(255, 200, 0, 0.9); outline-offset: -1px; }
