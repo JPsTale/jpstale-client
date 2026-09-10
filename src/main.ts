@@ -630,6 +630,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // minecraft 式翻译：key 优先，否则纯文本
       const text = e.key ? t(e.key, e.params || {}) : (e.errorMessage || String(e.errorCode || ''));
       console.warn('[app] server error', e.errorCode, text);
+      // 穿装备失败 → 通知面板还原"交换拿起"的乐观状态
+      if (e.errorMessage && String(e.errorMessage).includes('equip failed')) {
+        window.dispatchEvent(new Event('pt:equipFail'));
+      }
       const forCh = takePendingSentOn() ?? undefined;
       appendSystemMessage(text, Date.now(), forCh);
       break;

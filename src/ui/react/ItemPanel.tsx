@@ -46,6 +46,15 @@ function defOf(it: GameItem): Def | undefined {
 
 export type BagDropMode = 'free' | 'merge' | 'swap' | 'bad';
 
+/** 装备需求本地预校验（与服务器 ItemService.meetsRequirements 同规则） */
+function meetsEquipReq(it: GameItem, ch: { level?: number; strength?: number; spirit?: number; talent?: number; agility?: number; health?: number } | null): boolean {
+  if (!ch) return false;
+  const lv = ch.level ?? 0, st = ch.strength ?? 0, sp = ch.spirit ?? 0;
+  const ta = ch.talent ?? 0, ag = ch.agility ?? 0, hp = ch.health ?? 0;
+  return lv >= it.reqLevel && st >= it.reqStrength && sp >= it.reqSpirit
+    && ta >= it.reqTalent && ag >= it.reqAgility && hp >= it.reqHealth;
+}
+
 /** 计算把 it 放到 bag 的 slot 会发生什么（对齐原版：0 冲突可放；1 件同种可叠→合并、否则换手；≥2→不可） */
 function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: BagDropMode; conflict?: GameItem } {
   const def = defOf(it);
@@ -331,6 +340,8 @@ export default function ItemPanel() {
   const { hover, show: hoverShow, hide: hoverHide } = useItemHover();
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const [overBag, setOverBag] = useState(false);
+  // 穿装备交换：等待服务端 ack 的挂起状态（成功=旧件保持手持；失败=还原）
+  const pendingSwap = useRef<{ newUid: number; oldUid: number | null } | null>(null);
   // 拿起/放下时信息框消失（原版：拖起时不再显示 hover 信息）
   useEffect(() => {
     if (heldUid != null) hoverHide();
@@ -342,6 +353,25 @@ export default function ItemPanel() {
     window.addEventListener('pointermove', mv);
     return () => window.removeEventListener('pointermove', mv);
   }, [heldUid]);
+  // 穿装备 ack：新件 location 变为 2（已穿上）→ 挂起结束
+  useEffect(() => {
+    const p = pendingSwap.current;
+    if (!p) return;
+    const n = getGameSnapshot().inventory?.items.find((x) => x.uid === p.newUid);
+    if (n && n.location === 2) {
+      pendingSwap.current = null;
+    }
+  }, [snap.inventory]);
+  // 穿装备失败（服务端 error）：还原手持（旧件重新显示，新件回背包）
+  useEffect(() => {
+    const onFail = () => {
+      if (!pendingSwap.current) return;
+      pendingSwap.current = null;
+      setHeldUid(null);
+    };
+    window.addEventListener('pt:equipFail', onFail);
+    return () => window.removeEventListener('pt:equipFail', onFail);
+  }, []);
 
   if (!inventory) return <div className="jp-nodata">{t('item.noData')}</div>;
 
@@ -413,9 +443,16 @@ export default function ItemPanel() {
     if (!held) return;
     if (!slotAllows(slot)) return;
     if (held.location === 0) {
-      // 背包 → 装备
+      // 客户端预校验（与服务器一致）：不满足则保持手持、不发送
+      if (!meetsEquipReq(held, snap.character)) {
+        console.warn('[bag] 装备需求不足，穿入取消 uid=', held.uid);
+        return;
+      }
+      const old = items.find((x) => x.location === 2 && x.slot === slot) ?? null;
+      // 交换：旧装备拿起（本地手持）；新装备上报穿入（服务端权威校验/落库）
+      pendingSwap.current = { newUid: held.uid, oldUid: old ? old.uid : null };
+      setHeldUid(old ? old.uid : null);
       sendEquipItem(held.uid, slot);
-      setHeldUid(null);
     } else if (held.location === 2 && held.slot !== slot) {
       // 装备 → 另一装备槽（服务端无直换）：先脱回背包（旧槽清空），held 仍指向实例，
       // 待 store 收到 ItemUpdate 后其 location 变 0，用户再点目标空槽完成穿入。
