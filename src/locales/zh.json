@@ -460,17 +460,83 @@
       "1024": "格斗家"
     },
     "jobTier": {
-      "1": ["武士", "勇战士", "狂战士", "圣殿武士", "战神"],
-      "2": ["机械兵", "机甲兵", "重甲勇士", "机甲队长", "金属狂怒"],
-      "3": ["弓箭手", "名箭手", "神射手", "箭神", "凤凰战士"],
-      "4": ["枪兵", "长枪客", "枪骑士", "皇家骑士", "Baylolunt"],
-      "5": ["魔枪兵", "暗杀者", "狙杀者", "女武神", "Queen of Valhalla"],
-      "6": ["游侠", "爵士", "突击剑士", "剑圣", "英雄"],
-      "7": ["魔法师", "术士", "魔导师", "死灵法师", "Elemental Master"],
-      "8": ["祭司", "圣徒", "贤者", "圣灵法师", "Arc Angel"],
-      "9": ["刺客", "Rogue", "Shadow", "Shadow Walker", "流星"],
-      "10": ["萨满", "Clairvoyant", "Soul Mage", "Necromancer", "灵魂之王"],
-      "11": ["格斗家", "前锋", "TrickArtist", "Gladiator", "体术大师"]
+      "1": [
+        "武士",
+        "勇战士",
+        "狂战士",
+        "圣殿武士",
+        "战神"
+      ],
+      "2": [
+        "机械兵",
+        "机甲兵",
+        "重甲勇士",
+        "机甲队长",
+        "金属狂怒"
+      ],
+      "3": [
+        "弓箭手",
+        "名箭手",
+        "神射手",
+        "箭神",
+        "凤凰战士"
+      ],
+      "4": [
+        "枪兵",
+        "长枪客",
+        "枪骑士",
+        "皇家骑士",
+        "Baylolunt"
+      ],
+      "5": [
+        "魔枪兵",
+        "暗杀者",
+        "狙杀者",
+        "女武神",
+        "Queen of Valhalla"
+      ],
+      "6": [
+        "游侠",
+        "爵士",
+        "突击剑士",
+        "剑圣",
+        "英雄"
+      ],
+      "7": [
+        "魔法师",
+        "术士",
+        "魔导师",
+        "死灵法师",
+        "Elemental Master"
+      ],
+      "8": [
+        "祭司",
+        "圣徒",
+        "贤者",
+        "圣灵法师",
+        "Arc Angel"
+      ],
+      "9": [
+        "刺客",
+        "Rogue",
+        "Shadow",
+        "Shadow Walker",
+        "流星"
+      ],
+      "10": [
+        "萨满",
+        "Clairvoyant",
+        "Soul Mage",
+        "Necromancer",
+        "灵魂之王"
+      ],
+      "11": [
+        "格斗家",
+        "前锋",
+        "TrickArtist",
+        "Gladiator",
+        "体术大师"
+      ]
     },
     "wtype": {
       "SWORD": "单手剑",
@@ -486,5 +552,580 @@
     },
     "crit": "必杀",
     "range": "射程"
+  },
+  "npc": {
+    "mushroom_cave_keeper": {
+      "name": "Mushroom Cave Keeper"
+    },
+    "miscellaneous_store_lynn": {
+      "name": "Miscellaneous Store, Lynn"
+    },
+    "miscellaneous_store_lette": {
+      "name": "Miscellaneous Store, Lette"
+    },
+    "cursed_temple_guardian": {
+      "name": "Cursed Temple Guardian"
+    },
+    "blacksmith_frain": {
+      "name": "Blacksmith Frain"
+    },
+    "blacksmith_andrew": {
+      "name": "铁匠巴特兹"
+    },
+    "event_girl": {
+      "name": "Event Girl"
+    },
+    "force_master": {
+      "name": "Force Master"
+    },
+    "gardener_omi": {
+      "name": "Gardener Omi"
+    },
+    "atlantis_guard": {
+      "name": "Atlantis Guard"
+    },
+    "hair_stylelist": {
+      "name": "Hair Stylelist"
+    },
+    "huntress": {
+      "name": "Huntress"
+    },
+    "item_collector_linh": {
+      "name": "Item Collector, Linh"
+    },
+    "item_distributor": {
+      "name": "物品发放员"
+    },
+    "mayor_maz": {
+      "name": "Mayor Maz"
+    },
+    "battle_portal": {
+      "name": "Battle Portal"
+    },
+    "precious_item_shop": {
+      "name": "管家安德斯"
+    },
+    "atlantis_prison_guard": {
+      "name": "Atlantis Prison Guard"
+    },
+    "atlantis_special_item_shop": {
+      "name": "管家安德斯"
+    },
+    "stonesmith_hong": {
+      "name": "Stonesmith Hong"
+    },
+    "supply_store_ny": {
+      "name": "Supply Store, Ny"
+    },
+    "warehouse_keeper_doj": {
+      "name": "Warehouse Keeper, Doj"
+    },
+    "clever_daemon": {
+      "name": "Clever Daemon"
+    },
+    "battle_controls": {
+      "name": "Battle Controls"
+    },
+    "battle_guard": {
+      "name": "Battle Guard"
+    },
+    "battle_master": {
+      "name": "Battle Master"
+    },
+    "mystery_portal": {
+      "name": "Mystery Portal"
+    },
+    "battle_potion_store": {
+      "name": "Battle Potion Store"
+    },
+    "secretary_dunnavan": {
+      "name": "Secretary Dunnavan"
+    },
+    "sanctuary_keeper": {
+      "name": "Sanctuary Keeper"
+    },
+    "esu_the_manager": {
+      "name": "管家安德斯"
+    },
+    "bless_castle_guard": {
+      "name": "Bless Castle Guard"
+    },
+    "rossa": {
+      "name": "卖主谢尔比"
+    },
+    "shellbi": {
+      "name": "Shellbi"
+    },
+    "rozalie": {
+      "name": "卖主罗莎"
+    },
+    "kara": {
+      "name": "杂货店克利斯"
+    },
+    "kiri": {
+      "name": "杂货店克利斯"
+    },
+    "dungeon_keeper": {
+      "name": "Dungeon Keeper"
+    },
+    "cursed_land_bridge_guard": {
+      "name": "Cursed Land Bridge Guard"
+    },
+    "miscellaneous_store_savy": {
+      "name": "卖主罗莎"
+    },
+    "eura_force_master": {
+      "name": "力量大师"
+    },
+    "eura_guard_andrei": {
+      "name": "Eura Guard, Andrei"
+    },
+    "miscellaneous_store_eura": {
+      "name": "杂货店劳伦"
+    },
+    "warehouse_keeper_eura": {
+      "name": "幽拉仓库管理员"
+    },
+    "supply_store_resia": {
+      "name": "Supply Store, Resia"
+    },
+    "eura_iron_guard": {
+      "name": "Eura Iron Guard"
+    },
+    "iron_guard": {
+      "name": "Iron Guard"
+    },
+    "miscellaneous_store_robin": {
+      "name": "卖主谢尔比"
+    },
+    "cave_guard": {
+      "name": "Cave Guard"
+    },
+    "pitchman_dela": {
+      "name": "杂货店皮利亚"
+    },
+    "lost_castle_bridge_guard": {
+      "name": "Lost Castle Bridge Guard"
+    },
+    "miscellaneous_store_evy": {
+      "name": "卖主谢尔比"
+    },
+    "cursed_milter": {
+      "name": "米特尔"
+    },
+    "miscellaneous_store_ivonne": {
+      "name": "卖主罗莎"
+    },
+    "desert_guard": {
+      "name": "Desert Guard"
+    },
+    "forest_guard": {
+      "name": "Forest Guard"
+    },
+    "civilian_minuren": {
+      "name": "Civilian Minuren"
+    },
+    "blacksmith_umph": {
+      "name": "Blacksmith Umph"
+    },
+    "blacksmith_drol": {
+      "name": "Blacksmith Drol"
+    },
+    "navisko_guard": {
+      "name": "内维斯克守卫"
+    },
+    "magic_store_3rd_branch": {
+      "name": "纽特"
+    },
+    "miscellaneous_store_byant": {
+      "name": "Miscellaneous Store, Byant"
+    },
+    "warehouse_keeper_omidor": {
+      "name": "Warehouse keeper, Omidor"
+    },
+    "arcane_moriph": {
+      "name": "Arcane Moriph"
+    },
+    "master_arad": {
+      "name": "冶炼大师阿拉德"
+    },
+    "molly_the_granny": {
+      "name": "莫莉奶奶"
+    },
+    "phillai_clan_master": {
+      "name": "公会管理员"
+    },
+    "blacksmith_bartz": {
+      "name": "铁匠巴特兹"
+    },
+    "blacksmith_defrain": {
+      "name": "Blacksmith Defrain"
+    },
+    "phillai_force_master": {
+      "name": "Phillai Force Master"
+    },
+    "phillai_guard": {
+      "name": "Phillai Guard"
+    },
+    "witchcraft_store": {
+      "name": "Witchcraft Store"
+    },
+    "clever_newter": {
+      "name": "纽特"
+    },
+    "phillai_party_shop": {
+      "name": "SOD布玛熊"
+    },
+    "phillai_prison_guard": {
+      "name": "Phillai Prison Guard"
+    },
+    "phillai_quest_shop": {
+      "name": "杂货店皮利亚"
+    },
+    "royal_mage_ray": {
+      "name": "皇家法师雷"
+    },
+    "phillai_robe_shop": {
+      "name": "Phillai Robe Shop"
+    },
+    "phillai_sheltom_shop": {
+      "name": "Phillai Sheltom Shop"
+    },
+    "witchcraft_academy_raymon": {
+      "name": "Witchcraft Academy, Raymon"
+    },
+    "phillai_special_item_shop": {
+      "name": "管家安德斯"
+    },
+    "miscellaneous_store_phillya": {
+      "name": "杂货店皮利亚"
+    },
+    "warehouse_keeper_lavendar": {
+      "name": "Warehouse keeper, Lavendar"
+    },
+    "ricarten_armor_shop": {
+      "name": "Ricarten Armor Shop"
+    },
+    "good_boy_longbo": {
+      "name": "Good boy, Longbo"
+    },
+    "ricarten_clan_master": {
+      "name": "公会管理员"
+    },
+    "knight_commander_derik": {
+      "name": "指挥官德里克"
+    },
+    "blacksmith_goden": {
+      "name": "Blacksmith Goden"
+    },
+    "blacksmith_gus": {
+      "name": "Blacksmith Gus"
+    },
+    "ricarten_force_master": {
+      "name": "Ricarten Force Master"
+    },
+    "ricarten_guard": {
+      "name": "Ricarten Guard"
+    },
+    "mixing_craftsman_morald": {
+      "name": "合成大师莫拉德"
+    },
+    "nine_fox": {
+      "name": "普拉亚"
+    },
+    "ricarten_party_shop": {
+      "name": "Ricarten Party Shop"
+    },
+    "ricarten_prison_guard": {
+      "name": "Ricarten Prison Guard"
+    },
+    "ricarten_quest_shop_wanda": {
+      "name": "Ricarten Quest Shop, Wanda"
+    },
+    "santa_girl": {
+      "name": "捐献女孩"
+    },
+    "master_shalon": {
+      "name": "制造大师赛伦"
+    },
+    "sheltom_shop_moriph_s_son": {
+      "name": "Sheltom Shop, Moriph's Son"
+    },
+    "skill_master_verkan": {
+      "name": "技能导师维尔坎"
+    },
+    "soccerfan": {
+      "name": "Soccerfan"
+    },
+    "ricarten_special_item_shop": {
+      "name": "管家安德斯"
+    },
+    "miscellaneous_store_namy": {
+      "name": "Miscellaneous Store, Namy"
+    },
+    "traveller": {
+      "name": "Traveller"
+    },
+    "warehouse_keeper_arent": {
+      "name": "仓库管理员阿伦特"
+    },
+    "inventor_of_warpgate": {
+      "name": "Inventor of Warpgate"
+    },
+    "wiseman_val": {
+      "name": "Wiseman Val"
+    },
+    "bronze_wolverine": {
+      "name": "铜狼"
+    },
+    "golden_wolverine": {
+      "name": "金狼"
+    },
+    "silver_wolverine": {
+      "name": "银狼"
+    },
+    "lost_wanderer": {
+      "name": "Lost Wanderer"
+    },
+    "blacksmith_ruga": {
+      "name": "Blacksmith Ruga"
+    },
+    "lake_guard": {
+      "name": "Lake Guard"
+    },
+    "magic_store_2nd_branch": {
+      "name": "纽特"
+    },
+    "ruinen_kiosk": {
+      "name": "Ruinen Kiosk"
+    },
+    "secretary_karina": {
+      "name": "秘书卡丽娜"
+    },
+    "ariel": {
+      "name": "水之精灵"
+    },
+    "casa": {
+      "name": "火之精灵"
+    },
+    "noas": {
+      "name": "地之精灵"
+    },
+    "sylpi": {
+      "name": "风之精灵"
+    },
+    "albus_p_w_b_dumbledore": {
+      "name": "Albus P. W. B. Dumbledore"
+    },
+    "john_the_adventurer": {
+      "name": "John, The Adventurer"
+    },
+    "daily_missions_advisor_ian": {
+      "name": "Daily Missions Advisor, Ian"
+    },
+    "atlantis_ambassador_rennan": {
+      "name": "Atlantis Ambassador, Rennan"
+    },
+    "lucy": {
+      "name": "Lucy"
+    },
+    "gm_shop": {
+      "name": "GM Shop"
+    },
+    "item_shop": {
+      "name": "Item Shop"
+    },
+    "blacksmith_solo": {
+      "name": "Blacksmith Solo"
+    },
+    "miscellaneous_store_rey": {
+      "name": "Miscellaneous Store, Rey"
+    },
+    "miscellaneous_store_leia": {
+      "name": "Miscellaneous Store, Leia"
+    },
+    "blacksmith_plagueis": {
+      "name": "Blacksmith Plagueis"
+    },
+    "the_messenger_saphir": {
+      "name": "旅行者丝卡蒂"
+    },
+    "cursed_temple_guard": {
+      "name": "Cursed Temple Guard"
+    },
+    "larry_the_retired_miner": {
+      "name": "猎人欧文"
+    },
+    "miscellaneous_store_cindy": {
+      "name": "杂货店劳伦"
+    },
+    "master_valdo": {
+      "name": "Master Valdo"
+    },
+    "instructor_annie": {
+      "name": "Instructor Annie"
+    },
+    "miscellaneous_store_valeriya": {
+      "name": "卖主谢尔比"
+    },
+    "ihin": {
+      "name": "阿欣"
+    },
+    "marina": {
+      "name": "玛丽娜"
+    },
+    "coward_hermit": {
+      "name": "隐士"
+    },
+    "warehouse_keeper": {
+      "name": "公会管理员"
+    },
+    "lee_the_rune_master": {
+      "name": "打孔工程师"
+    },
+    "dos_the_drill_master": {
+      "name": "镶嵌技术员"
+    },
+    "rudolph_the_reindeer": {
+      "name": "鲁道夫"
+    },
+    "miscellaneous_store_naalis": {
+      "name": "Miscellaneous Store, Naalis"
+    },
+    "miscellaneous_store_nimphy": {
+      "name": "Miscellaneous Store, Nimphy"
+    },
+    "boss_hunter_william": {
+      "name": "Boss Hunter, William"
+    },
+    "warehouse_keeper_buja": {
+      "name": "Warehouse Keeper, Buja"
+    },
+    "instructor_millie": {
+      "name": "Instructor Millie"
+    },
+    "kalira": {
+      "name": "水之精灵"
+    },
+    "mila": {
+      "name": "地之精灵"
+    },
+    "kira": {
+      "name": "风之精灵"
+    },
+    "quest_board": {
+      "name": "103级任务NPC"
+    },
+    "ruinen_quest_master": {
+      "name": "Ruinen Quest Master"
+    },
+    "cursed_land_quest_master": {
+      "name": "Cursed Land Quest Master"
+    },
+    "navisko_quest_master": {
+      "name": "Navisko Quest Master"
+    },
+    "dungeon_1_quest_master": {
+      "name": "Dungeon 1 Quest Master"
+    },
+    "beehive_cave_quest_master": {
+      "name": "Beehive Cave Quest Master"
+    },
+    "dark_sanctuary_quest_master": {
+      "name": "Dark Sanctuary Quest Master"
+    },
+    "cursed_temple_1_quest_master": {
+      "name": "Cursed Temple 1 Quest Master"
+    },
+    "railroad_of_chaos_quest_master": {
+      "name": "Railroad of Chaos Quest Master"
+    },
+    "heart_of_perum_quest_master": {
+      "name": "Heart of Perum Quest Master"
+    },
+    "the_lone_wolf": {
+      "name": "米特尔"
+    },
+    "cursed_temple_2_quest_master": {
+      "name": "Cursed Temple 2 Quest Master"
+    },
+    "oasis_quest_master": {
+      "name": "Oasis Quest Master"
+    },
+    "dungeon_2_quest_master": {
+      "name": "Dungeon 2 Quest Master"
+    },
+    "dungeon_3_quest_master": {
+      "name": "Dungeon 3 Quest Master"
+    },
+    "gallubia_valley_quest_master": {
+      "name": "Gallubia Valley Quest Master"
+    },
+    "miscellaneous_store_kairi": {
+      "name": "Miscellaneous Store, Kairi"
+    },
+    "miscellaneous_store_midna": {
+      "name": "Miscellaneous Store, Midna"
+    },
+    "miscellaneous_store_shepard": {
+      "name": "管家安德斯"
+    },
+    "miscellaneous_store_alyx": {
+      "name": "卖主罗莎"
+    },
+    "miscellaneous_store_tifa": {
+      "name": "卖主罗莎"
+    },
+    "miscellaneous_store_yuna": {
+      "name": "卖主谢尔比"
+    },
+    "miscellaneous_store_gorden": {
+      "name": "管家安德斯"
+    },
+    "mark_leaderboard_tracker": {
+      "name": "管家安德斯"
+    },
+    "land_of_chaos_quest_master": {
+      "name": "Land of Chaos Quest Master"
+    },
+    "elite_laboratory_guard": {
+      "name": "指挥官德里克"
+    },
+    "lost_temple_quest_master": {
+      "name": "Lost Temple Quest Master"
+    },
+    "marcus_sol": {
+      "name": "管家安德斯"
+    },
+    "s2_warehouse_keeper_aya": {
+      "name": "S2 Warehouse keeper, Aya"
+    },
+    "s2_warehouse_keeper_cedar": {
+      "name": "仓库管理员阿伦特"
+    },
+    "blacksmith_james": {
+      "name": "Blacksmith James"
+    },
+    "blacksmith_john": {
+      "name": "Blacksmith John"
+    },
+    "miscellaneous_store_natasha": {
+      "name": "Miscellaneous Store, Natasha"
+    },
+    "rosa": {
+      "name": "杂货店克利斯"
+    },
+    "mysterious_man": {
+      "name": "Mysterious man"
+    },
+    "guard_of_the_sealed": {
+      "name": "Guard of the Sealed"
+    },
+    "summer_girl": {
+      "name": "Summer Girl"
+    },
+    "battlefield_quest_master": {
+      "name": "Battlefield Quest Master"
+    }
   }
 }

@@ -87,6 +87,10 @@ export interface WorldView {
   monsterDisappear(monsterId: number): void;
   /** 怪物死亡（S2C_MonsterDeath）→ 移除(尸体由服务端后续以 Disappear 兜底) */
   monsterDeath(monsterId: number): void;
+  /** NPC 出现（S2C_NpcAppear）：静态站桩，播 idle 动画 + 头顶名字标签 */
+  npcAppear(npcId: number, nameKey: string, modelFile: string, x: number, y: number, z: number, angle: number): void;
+  /** NPC 消失（S2C_NpcDisappear）→ 移除 */
+  npcDisappear(npcId: number): void;
   /** 地面物品出现（S2C_GroundItemAppear）：加载 DropItem 模型渲染（dorpItem 可空→旗帜兜底） */
   groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void;
   /** 地面物品消失（S2C_GroundItemDisappear，拾取/过期/被清） → 移除 */
@@ -1511,6 +1515,107 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     monsterSpawning.delete(monsterId);
   }
 
+  // ==================== NPC（S2C_NpcAppear，静态站桩） ====================
+  interface NpcActor {
+    npcId: number;
+    root: THREE.Group;
+    bones: THREE.Bone[];
+    skeleton: THREE.Skeleton;
+    animSmb: MonsterModelResult['animSmb'];
+    animState: ReturnType<typeof createAnimStateMachine>;
+    motionList: MotionInfo[];
+    animFrame: number;
+  }
+  const npcs = new Map<number, NpcActor>();
+  const npcSpawning = new Set<number>();
+  const pendingNpcAppears: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
+
+  function spawnNpc(info: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }): void {
+    if (!scene) {
+      pendingNpcAppears.push(info);
+      return;
+    }
+    const nid = info.npcId;
+    if (npcs.has(nid) || npcSpawning.has(nid)) return;
+    npcSpawning.add(nid);
+    void (async () => {
+      try {
+        const result = await loadMonsterModel(info.modelFile);
+        await loadTextures(result.texturesToLoad);
+        if (npcs.has(nid)) return;
+
+        const root = new THREE.Group();
+        root.add(result.skeletonGroup);
+        root.add(result.group);
+        root.position.set(info.x, info.y, info.z);
+        root.rotation.y = info.angle || 0;
+        root.userData.npcId = nid; // 光标 Talk/点选 Chase 命中用
+        scene!.add(root);
+
+        let actorObj!: NpcActor;
+        const animState = createAnimStateMachine({
+          getMotions: () => actorObj.motionList,
+          getClassId: () => 0,
+          onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
+        });
+        actorObj = {
+          npcId: nid,
+          root,
+          bones: result.bones,
+          skeleton: result.skeleton,
+          animSmb: result.animSmb,
+          animState,
+          motionList: result.motionList,
+          animFrame: 0,
+        };
+        npcs.set(nid, actorObj);
+        animState.triggerIdle();
+
+        // 头顶名字标签（本地化 key）
+        const label = makeItemLabel(t(`npc.${info.nameKey}.name`));
+        label.position.y = modelTopY(result.group) + 0.5;
+        root.add(label);
+        console.log('[WorldView] NPC 出现: id=' + nid + ' key=' + info.nameKey + ' model=' + info.modelFile);
+      } catch (e) {
+        console.warn('[WorldView] NPC 加载失败 id=' + nid + ' model=' + info.modelFile, e);
+      } finally {
+        npcSpawning.delete(nid);
+      }
+    })();
+  }
+
+  function despawnNpc(npcId: number): void {
+    const actor = npcs.get(npcId);
+    if (actor) {
+      scene?.remove(actor.root);
+      npcs.delete(npcId);
+    }
+    npcSpawning.delete(npcId);
+  }
+
+  /** 每帧：NPC 仅播 idle 动画（静态，无位置插值） */
+  function updateNpcs(): void {
+    for (const actor of npcs.values()) {
+      const motion = actor.animState.getCurrentMotion();
+      if (!motion) continue;
+      actor.animFrame += 80;
+      const endFrame = motion.endFrame * 160;
+      const startFrame = motion.startFrame * 160;
+      if (actor.animFrame >= endFrame) {
+        if (motion.repeat) {
+          const len = endFrame - startFrame;
+          actor.animFrame = startFrame + ((actor.animFrame - startFrame) % len);
+        } else {
+          const next = actor.animState.onAnimationEnd();
+          if (next) actor.animFrame = next.startFrame * 160;
+        }
+      }
+      const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
+      applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
+      actor.skeleton.update();
+    }
+  }
+
   // ==================== 地面物品（S2C_GroundItem* / C2S_PickupItem） ====================
   // 渲染对齐 C++ 客户端 scITEM::Draw（character.cpp）：
   //  - 加载 DropItem\it{DorpItem}.smd 物品模型；无模型 → 旗帜兜底（char\flag\wow）
@@ -1859,6 +1964,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     groundItems.clear();
     pendingGroundItems.length = 0;
+
+    for (const a of npcs.values()) {
+      scene?.remove(a.root);
+    }
+    npcs.clear();
+    npcSpawning.clear();
+    pendingNpcAppears.length = 0;
 
     if (charGroup) {
       scene?.remove(charGroup);
@@ -2261,6 +2373,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateRemotes(dt);
     // 怪物（服务端权威, S2C_MonsterMove）
     updateMonsters(dt);
+    // NPC（静态站桩，仅 idle 动画）
+    updateNpcs();
     // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
     updateGroundItems(rafMs);
     // 光标 overlay：世界滚动/物品增减时静态光标下的指向也会变 → 逐帧(节流)重探测
@@ -2491,6 +2605,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
     monsterDeath: (monsterId) => despawnMonster(Number(monsterId)),
+    npcAppear: (npcId, nameKey, modelFile, x, y, z, angle) => {
+      spawnNpc({ npcId: Number(npcId), nameKey: nameKey || '', modelFile: modelFile || '', x: Number(x), y: Number(y), z: Number(z), angle: Number(angle) || 0 });
+    },
+    npcDisappear: (npcId) => despawnNpc(Number(npcId)),
     groundItemAppear: (groundItemId, name, x, y, z, dorpItem) => {
       spawnGroundItem(Number(groundItemId), name || '', Number(x), Number(y), Number(z), dorpItem || '');
     },

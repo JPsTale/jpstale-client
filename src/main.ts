@@ -608,6 +608,23 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.monsterDeath(Number(msg.monsterDeath!.monsterId));
       break;
     }
+    case 'npcAppear': {
+      const n = msg.npcAppear!;
+      worldView.npcAppear(
+        Number(n.npcId),
+        n.nameKey || '',
+        n.modelFile || '',
+        n.position?.x || 0,
+        n.position?.y || 0,
+        n.position?.z || 0,
+        n.angle || 0,
+      );
+      break;
+    }
+    case 'npcDisappear': {
+      worldView.npcDisappear(Number(msg.npcDisappear!.npcId));
+      break;
+    }
     case 'groundItemAppear': {
       const g = msg.groundItemAppear!;
       const it = g.item;

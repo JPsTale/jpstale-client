@@ -460,17 +460,83 @@
       "1024": "MartialArtist"
     },
     "jobTier": {
-      "1": ["Fighter", "Warrior", "Champion", "Immortal Warrior", "Warlord"],
-      "2": ["Mechanician", "Mechanic Master", "Metal Leader", "Metallion", "Metalrage"],
-      "3": ["Archer", "Hunter Master", "Dion's Disciple", "Sagittarion", "Iskar"],
-      "4": ["Pikeman", "Combatant", "Lancer", "Lancelot", "Baylolunt"],
-      "5": ["Atalanta", "Valkyrie", "Brunhild", "Valhalla", "Queen of Valhalla"],
-      "6": ["Knight", "Paladin", "HolyKnight", "SaintKnight", "Valiant"],
-      "7": ["Magician", "Wizard", "RoyalWizard", "ArchMage", "Elemental Master"],
-      "8": ["Priestess", "Saintess", "Bishop", "Celestial", "Arc Angel"],
-      "9": ["Assassin", "Rogue", "Shadow", "Shadow Walker", "Shadow Master"],
-      "10": ["Shaman", "Clairvoyant", "Soul Mage", "Necromancer", "Chaotic Oracle"],
-      "11": ["MartialArtist", "Striker", "TrickArtist", "Gladiator", "GrandMaster"]
+      "1": [
+        "Fighter",
+        "Warrior",
+        "Champion",
+        "Immortal Warrior",
+        "Warlord"
+      ],
+      "2": [
+        "Mechanician",
+        "Mechanic Master",
+        "Metal Leader",
+        "Metallion",
+        "Metalrage"
+      ],
+      "3": [
+        "Archer",
+        "Hunter Master",
+        "Dion's Disciple",
+        "Sagittarion",
+        "Iskar"
+      ],
+      "4": [
+        "Pikeman",
+        "Combatant",
+        "Lancer",
+        "Lancelot",
+        "Baylolunt"
+      ],
+      "5": [
+        "Atalanta",
+        "Valkyrie",
+        "Brunhild",
+        "Valhalla",
+        "Queen of Valhalla"
+      ],
+      "6": [
+        "Knight",
+        "Paladin",
+        "HolyKnight",
+        "SaintKnight",
+        "Valiant"
+      ],
+      "7": [
+        "Magician",
+        "Wizard",
+        "RoyalWizard",
+        "ArchMage",
+        "Elemental Master"
+      ],
+      "8": [
+        "Priestess",
+        "Saintess",
+        "Bishop",
+        "Celestial",
+        "Arc Angel"
+      ],
+      "9": [
+        "Assassin",
+        "Rogue",
+        "Shadow",
+        "Shadow Walker",
+        "Shadow Master"
+      ],
+      "10": [
+        "Shaman",
+        "Clairvoyant",
+        "Soul Mage",
+        "Necromancer",
+        "Chaotic Oracle"
+      ],
+      "11": [
+        "MartialArtist",
+        "Striker",
+        "TrickArtist",
+        "Gladiator",
+        "GrandMaster"
+      ]
     },
     "wtype": {
       "SWORD": "Sword",
@@ -486,5 +552,580 @@
     },
     "crit": "Critical",
     "range": "Range"
+  },
+  "npc": {
+    "mushroom_cave_keeper": {
+      "name": "Mushroom Cave Keeper"
+    },
+    "miscellaneous_store_lynn": {
+      "name": "Miscellaneous Store, Lynn"
+    },
+    "miscellaneous_store_lette": {
+      "name": "Miscellaneous Store, Lette"
+    },
+    "cursed_temple_guardian": {
+      "name": "Cursed Temple Guardian"
+    },
+    "blacksmith_frain": {
+      "name": "Blacksmith Frain"
+    },
+    "blacksmith_andrew": {
+      "name": "Blacksmith Andrew"
+    },
+    "event_girl": {
+      "name": "Event Girl"
+    },
+    "force_master": {
+      "name": "Force Master"
+    },
+    "gardener_omi": {
+      "name": "Gardener Omi"
+    },
+    "atlantis_guard": {
+      "name": "Atlantis Guard"
+    },
+    "hair_stylelist": {
+      "name": "Hair Stylelist"
+    },
+    "huntress": {
+      "name": "Huntress"
+    },
+    "item_collector_linh": {
+      "name": "Item Collector, Linh"
+    },
+    "item_distributor": {
+      "name": "Item Distributor"
+    },
+    "mayor_maz": {
+      "name": "Mayor Maz"
+    },
+    "battle_portal": {
+      "name": "Battle Portal"
+    },
+    "precious_item_shop": {
+      "name": "Precious Item Shop"
+    },
+    "atlantis_prison_guard": {
+      "name": "Atlantis Prison Guard"
+    },
+    "atlantis_special_item_shop": {
+      "name": "Atlantis Special Item Shop"
+    },
+    "stonesmith_hong": {
+      "name": "Stonesmith Hong"
+    },
+    "supply_store_ny": {
+      "name": "Supply Store, Ny"
+    },
+    "warehouse_keeper_doj": {
+      "name": "Warehouse Keeper, Doj"
+    },
+    "clever_daemon": {
+      "name": "Clever Daemon"
+    },
+    "battle_controls": {
+      "name": "Battle Controls"
+    },
+    "battle_guard": {
+      "name": "Battle Guard"
+    },
+    "battle_master": {
+      "name": "Battle Master"
+    },
+    "mystery_portal": {
+      "name": "Mystery Portal"
+    },
+    "battle_potion_store": {
+      "name": "Battle Potion Store"
+    },
+    "secretary_dunnavan": {
+      "name": "Secretary Dunnavan"
+    },
+    "sanctuary_keeper": {
+      "name": "Sanctuary Keeper"
+    },
+    "esu_the_manager": {
+      "name": "Esu, The Manager"
+    },
+    "bless_castle_guard": {
+      "name": "Bless Castle Guard"
+    },
+    "rossa": {
+      "name": "Rossa"
+    },
+    "shellbi": {
+      "name": "Shellbi"
+    },
+    "rozalie": {
+      "name": "Rozalie"
+    },
+    "kara": {
+      "name": "Kara"
+    },
+    "kiri": {
+      "name": "Kiri"
+    },
+    "dungeon_keeper": {
+      "name": "Dungeon Keeper"
+    },
+    "cursed_land_bridge_guard": {
+      "name": "Cursed Land Bridge Guard"
+    },
+    "miscellaneous_store_savy": {
+      "name": "Miscellaneous Store, Savy"
+    },
+    "eura_force_master": {
+      "name": "Eura Force Master"
+    },
+    "eura_guard_andrei": {
+      "name": "Eura Guard, Andrei"
+    },
+    "miscellaneous_store_eura": {
+      "name": "Miscellaneous Store, Eura"
+    },
+    "warehouse_keeper_eura": {
+      "name": "Warehouse keeper, Eura"
+    },
+    "supply_store_resia": {
+      "name": "Supply Store, Resia"
+    },
+    "eura_iron_guard": {
+      "name": "Eura Iron Guard"
+    },
+    "iron_guard": {
+      "name": "Iron Guard"
+    },
+    "miscellaneous_store_robin": {
+      "name": "Miscellaneous Store, Robin"
+    },
+    "cave_guard": {
+      "name": "Cave Guard"
+    },
+    "pitchman_dela": {
+      "name": "Pitchman Dela"
+    },
+    "lost_castle_bridge_guard": {
+      "name": "Lost Castle Bridge Guard"
+    },
+    "miscellaneous_store_evy": {
+      "name": "Miscellaneous Store, Evy"
+    },
+    "cursed_milter": {
+      "name": "Cursed Milter"
+    },
+    "miscellaneous_store_ivonne": {
+      "name": "Miscellaneous Store, Ivonne"
+    },
+    "desert_guard": {
+      "name": "Desert Guard"
+    },
+    "forest_guard": {
+      "name": "Forest Guard"
+    },
+    "civilian_minuren": {
+      "name": "Civilian Minuren"
+    },
+    "blacksmith_umph": {
+      "name": "Blacksmith Umph"
+    },
+    "blacksmith_drol": {
+      "name": "Blacksmith Drol"
+    },
+    "navisko_guard": {
+      "name": "Navisko Guard"
+    },
+    "magic_store_3rd_branch": {
+      "name": "Magic store, 3rd branch"
+    },
+    "miscellaneous_store_byant": {
+      "name": "Miscellaneous Store, Byant"
+    },
+    "warehouse_keeper_omidor": {
+      "name": "Warehouse keeper, Omidor"
+    },
+    "arcane_moriph": {
+      "name": "Arcane Moriph"
+    },
+    "master_arad": {
+      "name": "Master Arad"
+    },
+    "molly_the_granny": {
+      "name": "Molly, the granny"
+    },
+    "phillai_clan_master": {
+      "name": "Phillai Clan Master"
+    },
+    "blacksmith_bartz": {
+      "name": "Blacksmith Bartz"
+    },
+    "blacksmith_defrain": {
+      "name": "Blacksmith Defrain"
+    },
+    "phillai_force_master": {
+      "name": "Phillai Force Master"
+    },
+    "phillai_guard": {
+      "name": "Phillai Guard"
+    },
+    "witchcraft_store": {
+      "name": "Witchcraft Store"
+    },
+    "clever_newter": {
+      "name": "Clever Newter"
+    },
+    "phillai_party_shop": {
+      "name": "Phillai Party Shop"
+    },
+    "phillai_prison_guard": {
+      "name": "Phillai Prison Guard"
+    },
+    "phillai_quest_shop": {
+      "name": "Phillai Quest Shop"
+    },
+    "royal_mage_ray": {
+      "name": "Royal Mage, Ray"
+    },
+    "phillai_robe_shop": {
+      "name": "Phillai Robe Shop"
+    },
+    "phillai_sheltom_shop": {
+      "name": "Phillai Sheltom Shop"
+    },
+    "witchcraft_academy_raymon": {
+      "name": "Witchcraft Academy, Raymon"
+    },
+    "phillai_special_item_shop": {
+      "name": "Phillai Special Item Shop"
+    },
+    "miscellaneous_store_phillya": {
+      "name": "Miscellaneous Store, Phillya"
+    },
+    "warehouse_keeper_lavendar": {
+      "name": "Warehouse keeper, Lavendar"
+    },
+    "ricarten_armor_shop": {
+      "name": "Ricarten Armor Shop"
+    },
+    "good_boy_longbo": {
+      "name": "Good boy, Longbo"
+    },
+    "ricarten_clan_master": {
+      "name": "Ricarten Clan Master"
+    },
+    "knight_commander_derik": {
+      "name": "Knight Commander Derik"
+    },
+    "blacksmith_goden": {
+      "name": "Blacksmith Goden"
+    },
+    "blacksmith_gus": {
+      "name": "Blacksmith Gus"
+    },
+    "ricarten_force_master": {
+      "name": "Ricarten Force Master"
+    },
+    "ricarten_guard": {
+      "name": "Ricarten Guard"
+    },
+    "mixing_craftsman_morald": {
+      "name": "Mixing Craftsman, Morald"
+    },
+    "nine_fox": {
+      "name": "Nine Fox"
+    },
+    "ricarten_party_shop": {
+      "name": "Ricarten Party Shop"
+    },
+    "ricarten_prison_guard": {
+      "name": "Ricarten Prison Guard"
+    },
+    "ricarten_quest_shop_wanda": {
+      "name": "Ricarten Quest Shop, Wanda"
+    },
+    "santa_girl": {
+      "name": "Santa Girl"
+    },
+    "master_shalon": {
+      "name": "Master Shalon"
+    },
+    "sheltom_shop_moriph_s_son": {
+      "name": "Sheltom Shop, Moriph's Son"
+    },
+    "skill_master_verkan": {
+      "name": "Skill Master, Verkan"
+    },
+    "soccerfan": {
+      "name": "Soccerfan"
+    },
+    "ricarten_special_item_shop": {
+      "name": "Ricarten Special Item Shop"
+    },
+    "miscellaneous_store_namy": {
+      "name": "Miscellaneous Store, Namy"
+    },
+    "traveller": {
+      "name": "Traveller"
+    },
+    "warehouse_keeper_arent": {
+      "name": "Warehouse keeper, Arent"
+    },
+    "inventor_of_warpgate": {
+      "name": "Inventor of Warpgate"
+    },
+    "wiseman_val": {
+      "name": "Wiseman Val"
+    },
+    "bronze_wolverine": {
+      "name": "Bronze Wolverine"
+    },
+    "golden_wolverine": {
+      "name": "Golden Wolverine"
+    },
+    "silver_wolverine": {
+      "name": "Silver Wolverine"
+    },
+    "lost_wanderer": {
+      "name": "Lost Wanderer"
+    },
+    "blacksmith_ruga": {
+      "name": "Blacksmith Ruga"
+    },
+    "lake_guard": {
+      "name": "Lake Guard"
+    },
+    "magic_store_2nd_branch": {
+      "name": "Magic store, 2nd branch"
+    },
+    "ruinen_kiosk": {
+      "name": "Ruinen Kiosk"
+    },
+    "secretary_karina": {
+      "name": "Secretary Karina"
+    },
+    "ariel": {
+      "name": "Ariel"
+    },
+    "casa": {
+      "name": "Casa"
+    },
+    "noas": {
+      "name": "Noas"
+    },
+    "sylpi": {
+      "name": "Sylpi"
+    },
+    "albus_p_w_b_dumbledore": {
+      "name": "Albus P. W. B. Dumbledore"
+    },
+    "john_the_adventurer": {
+      "name": "John, The Adventurer"
+    },
+    "daily_missions_advisor_ian": {
+      "name": "Daily Missions Advisor, Ian"
+    },
+    "atlantis_ambassador_rennan": {
+      "name": "Atlantis Ambassador, Rennan"
+    },
+    "lucy": {
+      "name": "Lucy"
+    },
+    "gm_shop": {
+      "name": "GM Shop"
+    },
+    "item_shop": {
+      "name": "Item Shop"
+    },
+    "blacksmith_solo": {
+      "name": "Blacksmith Solo"
+    },
+    "miscellaneous_store_rey": {
+      "name": "Miscellaneous Store, Rey"
+    },
+    "miscellaneous_store_leia": {
+      "name": "Miscellaneous Store, Leia"
+    },
+    "blacksmith_plagueis": {
+      "name": "Blacksmith Plagueis"
+    },
+    "the_messenger_saphir": {
+      "name": "The Messenger, Saphir"
+    },
+    "cursed_temple_guard": {
+      "name": "Cursed Temple Guard"
+    },
+    "larry_the_retired_miner": {
+      "name": "Larry, The Retired Miner"
+    },
+    "miscellaneous_store_cindy": {
+      "name": "Miscellaneous Store, Cindy"
+    },
+    "master_valdo": {
+      "name": "Master Valdo"
+    },
+    "instructor_annie": {
+      "name": "Instructor Annie"
+    },
+    "miscellaneous_store_valeriya": {
+      "name": "Miscellaneous Store, Valeriya"
+    },
+    "ihin": {
+      "name": "Ihin"
+    },
+    "marina": {
+      "name": "Marina"
+    },
+    "coward_hermit": {
+      "name": "Coward Hermit"
+    },
+    "warehouse_keeper": {
+      "name": "Warehouse keeper"
+    },
+    "lee_the_rune_master": {
+      "name": "Lee, The Rune Master"
+    },
+    "dos_the_drill_master": {
+      "name": "Dos, The Drill Master"
+    },
+    "rudolph_the_reindeer": {
+      "name": "Rudolph, the Reindeer"
+    },
+    "miscellaneous_store_naalis": {
+      "name": "Miscellaneous Store, Naalis"
+    },
+    "miscellaneous_store_nimphy": {
+      "name": "Miscellaneous Store, Nimphy"
+    },
+    "boss_hunter_william": {
+      "name": "Boss Hunter, William"
+    },
+    "warehouse_keeper_buja": {
+      "name": "Warehouse Keeper, Buja"
+    },
+    "instructor_millie": {
+      "name": "Instructor Millie"
+    },
+    "kalira": {
+      "name": "Kalira"
+    },
+    "mila": {
+      "name": "Mila"
+    },
+    "kira": {
+      "name": "Kira"
+    },
+    "quest_board": {
+      "name": "Quest Board"
+    },
+    "ruinen_quest_master": {
+      "name": "Ruinen Quest Master"
+    },
+    "cursed_land_quest_master": {
+      "name": "Cursed Land Quest Master"
+    },
+    "navisko_quest_master": {
+      "name": "Navisko Quest Master"
+    },
+    "dungeon_1_quest_master": {
+      "name": "Dungeon 1 Quest Master"
+    },
+    "beehive_cave_quest_master": {
+      "name": "Beehive Cave Quest Master"
+    },
+    "dark_sanctuary_quest_master": {
+      "name": "Dark Sanctuary Quest Master"
+    },
+    "cursed_temple_1_quest_master": {
+      "name": "Cursed Temple 1 Quest Master"
+    },
+    "railroad_of_chaos_quest_master": {
+      "name": "Railroad of Chaos Quest Master"
+    },
+    "heart_of_perum_quest_master": {
+      "name": "Heart of Perum Quest Master"
+    },
+    "the_lone_wolf": {
+      "name": "The Lone Wolf"
+    },
+    "cursed_temple_2_quest_master": {
+      "name": "Cursed Temple 2 Quest Master"
+    },
+    "oasis_quest_master": {
+      "name": "Oasis Quest Master"
+    },
+    "dungeon_2_quest_master": {
+      "name": "Dungeon 2 Quest Master"
+    },
+    "dungeon_3_quest_master": {
+      "name": "Dungeon 3 Quest Master"
+    },
+    "gallubia_valley_quest_master": {
+      "name": "Gallubia Valley Quest Master"
+    },
+    "miscellaneous_store_kairi": {
+      "name": "Miscellaneous Store, Kairi"
+    },
+    "miscellaneous_store_midna": {
+      "name": "Miscellaneous Store, Midna"
+    },
+    "miscellaneous_store_shepard": {
+      "name": "Miscellaneous Store, Shepard"
+    },
+    "miscellaneous_store_alyx": {
+      "name": "Miscellaneous Store, Alyx"
+    },
+    "miscellaneous_store_tifa": {
+      "name": "Miscellaneous Store, Tifa"
+    },
+    "miscellaneous_store_yuna": {
+      "name": "Miscellaneous Store, Yuna"
+    },
+    "miscellaneous_store_gorden": {
+      "name": "Miscellaneous Store, Gorden"
+    },
+    "mark_leaderboard_tracker": {
+      "name": "Mark, Leaderboard Tracker"
+    },
+    "land_of_chaos_quest_master": {
+      "name": "Land of Chaos Quest Master"
+    },
+    "elite_laboratory_guard": {
+      "name": "Elite Laboratory Guard"
+    },
+    "lost_temple_quest_master": {
+      "name": "Lost Temple Quest Master"
+    },
+    "marcus_sol": {
+      "name": "Marcus Sol"
+    },
+    "s2_warehouse_keeper_aya": {
+      "name": "S2 Warehouse keeper, Aya"
+    },
+    "s2_warehouse_keeper_cedar": {
+      "name": "S2 Warehouse keeper, Cedar"
+    },
+    "blacksmith_james": {
+      "name": "Blacksmith James"
+    },
+    "blacksmith_john": {
+      "name": "Blacksmith John"
+    },
+    "miscellaneous_store_natasha": {
+      "name": "Miscellaneous Store, Natasha"
+    },
+    "rosa": {
+      "name": "Rosa"
+    },
+    "mysterious_man": {
+      "name": "Mysterious man"
+    },
+    "guard_of_the_sealed": {
+      "name": "Guard of the Sealed"
+    },
+    "summer_girl": {
+      "name": "Summer Girl"
+    },
+    "battlefield_quest_master": {
+      "name": "Battlefield Quest Master"
+    }
   }
 }
