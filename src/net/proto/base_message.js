@@ -31174,6 +31174,44 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [agingLevel] ItemProto agingLevel
              * @property {number|null} [critical] ItemProto critical
              * @property {number|null} [range] ItemProto range
+             * @property {number|null} [attackSpeed] ItemProto attackSpeed
+             * @property {number|null} [resEarth] ItemProto resEarth
+             * @property {number|null} [resWater] ItemProto resWater
+             * @property {number|null} [resWind] ItemProto resWind
+             * @property {number|null} [manaRegen] ItemProto manaRegen
+             * @property {number|null} [lifeRegen] ItemProto lifeRegen
+             * @property {number|null} [staminaRegen] ItemProto staminaRegen
+             * @property {number|null} [specAbsorb] ItemProto specAbsorb
+             * @property {number|null} [specDefence] ItemProto specDefence
+             * @property {number|null} [specSpeed] ItemProto specSpeed
+             * @property {number|null} [specBlockRating] ItemProto specBlockRating
+             * @property {number|null} [specAttackSpeed] ItemProto specAttackSpeed
+             * @property {number|null} [specCritical] ItemProto specCritical
+             * @property {number|null} [specShootingRange] ItemProto specShootingRange
+             * @property {number|null} [specMagicMastery] ItemProto specMagicMastery
+             * @property {number|null} [specResBionic] ItemProto specResBionic
+             * @property {number|null} [specResEarth] ItemProto specResEarth
+             * @property {number|null} [specResFire] ItemProto specResFire
+             * @property {number|null} [specResIce] ItemProto specResIce
+             * @property {number|null} [specResLighting] ItemProto specResLighting
+             * @property {number|null} [specResPoison] ItemProto specResPoison
+             * @property {number|null} [specResWater] ItemProto specResWater
+             * @property {number|null} [specResWind] ItemProto specResWind
+             * @property {number|null} [specLevMana] ItemProto specLevMana
+             * @property {number|null} [specLevLife] ItemProto specLevLife
+             * @property {number|null} [specLevAttackRating] ItemProto specLevAttackRating
+             * @property {number|null} [specLevDamageMax] ItemProto specLevDamageMax
+             * @property {number|null} [specLevResBionic] ItemProto specLevResBionic
+             * @property {number|null} [specLevResEarth] ItemProto specLevResEarth
+             * @property {number|null} [specLevResFire] ItemProto specLevResFire
+             * @property {number|null} [specLevResIce] ItemProto specLevResIce
+             * @property {number|null} [specLevResLighting] ItemProto specLevResLighting
+             * @property {number|null} [specLevResPoison] ItemProto specLevResPoison
+             * @property {number|null} [specLevResWater] ItemProto specLevResWater
+             * @property {number|null} [specLevResWind] ItemProto specLevResWind
+             * @property {number|null} [specPerManaRegen] ItemProto specPerManaRegen
+             * @property {number|null} [specPerLifeRegen] ItemProto specPerLifeRegen
+             * @property {number|null} [specPerStaminaRegen] ItemProto specPerStaminaRegen
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -31478,6 +31516,310 @@ export const jpt = $root.jpt = (() => {
             ItemProto.prototype.range = 0;
 
             /**
+             * ItemProto attackSpeed.
+             * @member {number} attackSpeed
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.attackSpeed = 0;
+
+            /**
+             * ItemProto resEarth.
+             * @member {number} resEarth
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.resEarth = 0;
+
+            /**
+             * ItemProto resWater.
+             * @member {number} resWater
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.resWater = 0;
+
+            /**
+             * ItemProto resWind.
+             * @member {number} resWind
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.resWind = 0;
+
+            /**
+             * ItemProto manaRegen.
+             * @member {number} manaRegen
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.manaRegen = 0;
+
+            /**
+             * ItemProto lifeRegen.
+             * @member {number} lifeRegen
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.lifeRegen = 0;
+
+            /**
+             * ItemProto staminaRegen.
+             * @member {number} staminaRegen
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.staminaRegen = 0;
+
+            /**
+             * ItemProto specAbsorb.
+             * @member {number} specAbsorb
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specAbsorb = 0;
+
+            /**
+             * ItemProto specDefence.
+             * @member {number} specDefence
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specDefence = 0;
+
+            /**
+             * ItemProto specSpeed.
+             * @member {number} specSpeed
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specSpeed = 0;
+
+            /**
+             * ItemProto specBlockRating.
+             * @member {number} specBlockRating
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specBlockRating = 0;
+
+            /**
+             * ItemProto specAttackSpeed.
+             * @member {number} specAttackSpeed
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specAttackSpeed = 0;
+
+            /**
+             * ItemProto specCritical.
+             * @member {number} specCritical
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specCritical = 0;
+
+            /**
+             * ItemProto specShootingRange.
+             * @member {number} specShootingRange
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specShootingRange = 0;
+
+            /**
+             * ItemProto specMagicMastery.
+             * @member {number} specMagicMastery
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specMagicMastery = 0;
+
+            /**
+             * ItemProto specResBionic.
+             * @member {number} specResBionic
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResBionic = 0;
+
+            /**
+             * ItemProto specResEarth.
+             * @member {number} specResEarth
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResEarth = 0;
+
+            /**
+             * ItemProto specResFire.
+             * @member {number} specResFire
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResFire = 0;
+
+            /**
+             * ItemProto specResIce.
+             * @member {number} specResIce
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResIce = 0;
+
+            /**
+             * ItemProto specResLighting.
+             * @member {number} specResLighting
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResLighting = 0;
+
+            /**
+             * ItemProto specResPoison.
+             * @member {number} specResPoison
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResPoison = 0;
+
+            /**
+             * ItemProto specResWater.
+             * @member {number} specResWater
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResWater = 0;
+
+            /**
+             * ItemProto specResWind.
+             * @member {number} specResWind
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specResWind = 0;
+
+            /**
+             * ItemProto specLevMana.
+             * @member {number} specLevMana
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevMana = 0;
+
+            /**
+             * ItemProto specLevLife.
+             * @member {number} specLevLife
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevLife = 0;
+
+            /**
+             * ItemProto specLevAttackRating.
+             * @member {number} specLevAttackRating
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevAttackRating = 0;
+
+            /**
+             * ItemProto specLevDamageMax.
+             * @member {number} specLevDamageMax
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevDamageMax = 0;
+
+            /**
+             * ItemProto specLevResBionic.
+             * @member {number} specLevResBionic
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResBionic = 0;
+
+            /**
+             * ItemProto specLevResEarth.
+             * @member {number} specLevResEarth
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResEarth = 0;
+
+            /**
+             * ItemProto specLevResFire.
+             * @member {number} specLevResFire
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResFire = 0;
+
+            /**
+             * ItemProto specLevResIce.
+             * @member {number} specLevResIce
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResIce = 0;
+
+            /**
+             * ItemProto specLevResLighting.
+             * @member {number} specLevResLighting
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResLighting = 0;
+
+            /**
+             * ItemProto specLevResPoison.
+             * @member {number} specLevResPoison
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResPoison = 0;
+
+            /**
+             * ItemProto specLevResWater.
+             * @member {number} specLevResWater
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResWater = 0;
+
+            /**
+             * ItemProto specLevResWind.
+             * @member {number} specLevResWind
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specLevResWind = 0;
+
+            /**
+             * ItemProto specPerManaRegen.
+             * @member {number} specPerManaRegen
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specPerManaRegen = 0;
+
+            /**
+             * ItemProto specPerLifeRegen.
+             * @member {number} specPerLifeRegen
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specPerLifeRegen = 0;
+
+            /**
+             * ItemProto specPerStaminaRegen.
+             * @member {number} specPerStaminaRegen
+             * @memberof jpt.base.ItemProto
+             * @instance
+             */
+            ItemProto.prototype.specPerStaminaRegen = 0;
+
+            /**
              * Creates a new ItemProto instance using the specified properties.
              * @function create
              * @memberof jpt.base.ItemProto
@@ -31577,6 +31919,82 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 33, wireType 0 =*/264).int32(message.critical);
                 if (message.range != null && $Object.hasOwnProperty.call(message, "range") && message.range !== 0)
                     writer.uint32(/* id 34, wireType 0 =*/272).int32(message.range);
+                if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed") && message.attackSpeed !== 0)
+                    writer.uint32(/* id 35, wireType 0 =*/280).int32(message.attackSpeed);
+                if (message.resEarth != null && $Object.hasOwnProperty.call(message, "resEarth") && message.resEarth !== 0)
+                    writer.uint32(/* id 36, wireType 0 =*/288).int32(message.resEarth);
+                if (message.resWater != null && $Object.hasOwnProperty.call(message, "resWater") && message.resWater !== 0)
+                    writer.uint32(/* id 37, wireType 0 =*/296).int32(message.resWater);
+                if (message.resWind != null && $Object.hasOwnProperty.call(message, "resWind") && message.resWind !== 0)
+                    writer.uint32(/* id 38, wireType 0 =*/304).int32(message.resWind);
+                if (message.manaRegen != null && $Object.hasOwnProperty.call(message, "manaRegen") && message.manaRegen !== 0)
+                    writer.uint32(/* id 39, wireType 0 =*/312).int32(message.manaRegen);
+                if (message.lifeRegen != null && $Object.hasOwnProperty.call(message, "lifeRegen") && message.lifeRegen !== 0)
+                    writer.uint32(/* id 40, wireType 0 =*/320).int32(message.lifeRegen);
+                if (message.staminaRegen != null && $Object.hasOwnProperty.call(message, "staminaRegen") && message.staminaRegen !== 0)
+                    writer.uint32(/* id 41, wireType 0 =*/328).int32(message.staminaRegen);
+                if (message.specAbsorb != null && $Object.hasOwnProperty.call(message, "specAbsorb") && message.specAbsorb !== 0)
+                    writer.uint32(/* id 42, wireType 0 =*/336).int32(message.specAbsorb);
+                if (message.specDefence != null && $Object.hasOwnProperty.call(message, "specDefence") && message.specDefence !== 0)
+                    writer.uint32(/* id 43, wireType 0 =*/344).int32(message.specDefence);
+                if (message.specSpeed != null && $Object.hasOwnProperty.call(message, "specSpeed") && message.specSpeed !== 0)
+                    writer.uint32(/* id 44, wireType 0 =*/352).int32(message.specSpeed);
+                if (message.specBlockRating != null && $Object.hasOwnProperty.call(message, "specBlockRating") && message.specBlockRating !== 0)
+                    writer.uint32(/* id 45, wireType 0 =*/360).int32(message.specBlockRating);
+                if (message.specAttackSpeed != null && $Object.hasOwnProperty.call(message, "specAttackSpeed") && message.specAttackSpeed !== 0)
+                    writer.uint32(/* id 46, wireType 0 =*/368).int32(message.specAttackSpeed);
+                if (message.specCritical != null && $Object.hasOwnProperty.call(message, "specCritical") && message.specCritical !== 0)
+                    writer.uint32(/* id 47, wireType 0 =*/376).int32(message.specCritical);
+                if (message.specShootingRange != null && $Object.hasOwnProperty.call(message, "specShootingRange") && message.specShootingRange !== 0)
+                    writer.uint32(/* id 48, wireType 0 =*/384).int32(message.specShootingRange);
+                if (message.specMagicMastery != null && $Object.hasOwnProperty.call(message, "specMagicMastery") && message.specMagicMastery !== 0)
+                    writer.uint32(/* id 49, wireType 0 =*/392).int32(message.specMagicMastery);
+                if (message.specResBionic != null && $Object.hasOwnProperty.call(message, "specResBionic") && message.specResBionic !== 0)
+                    writer.uint32(/* id 50, wireType 0 =*/400).int32(message.specResBionic);
+                if (message.specResEarth != null && $Object.hasOwnProperty.call(message, "specResEarth") && message.specResEarth !== 0)
+                    writer.uint32(/* id 51, wireType 0 =*/408).int32(message.specResEarth);
+                if (message.specResFire != null && $Object.hasOwnProperty.call(message, "specResFire") && message.specResFire !== 0)
+                    writer.uint32(/* id 52, wireType 0 =*/416).int32(message.specResFire);
+                if (message.specResIce != null && $Object.hasOwnProperty.call(message, "specResIce") && message.specResIce !== 0)
+                    writer.uint32(/* id 53, wireType 0 =*/424).int32(message.specResIce);
+                if (message.specResLighting != null && $Object.hasOwnProperty.call(message, "specResLighting") && message.specResLighting !== 0)
+                    writer.uint32(/* id 54, wireType 0 =*/432).int32(message.specResLighting);
+                if (message.specResPoison != null && $Object.hasOwnProperty.call(message, "specResPoison") && message.specResPoison !== 0)
+                    writer.uint32(/* id 55, wireType 0 =*/440).int32(message.specResPoison);
+                if (message.specResWater != null && $Object.hasOwnProperty.call(message, "specResWater") && message.specResWater !== 0)
+                    writer.uint32(/* id 56, wireType 0 =*/448).int32(message.specResWater);
+                if (message.specResWind != null && $Object.hasOwnProperty.call(message, "specResWind") && message.specResWind !== 0)
+                    writer.uint32(/* id 57, wireType 0 =*/456).int32(message.specResWind);
+                if (message.specLevMana != null && $Object.hasOwnProperty.call(message, "specLevMana") && message.specLevMana !== 0)
+                    writer.uint32(/* id 58, wireType 0 =*/464).int32(message.specLevMana);
+                if (message.specLevLife != null && $Object.hasOwnProperty.call(message, "specLevLife") && message.specLevLife !== 0)
+                    writer.uint32(/* id 59, wireType 0 =*/472).int32(message.specLevLife);
+                if (message.specLevAttackRating != null && $Object.hasOwnProperty.call(message, "specLevAttackRating") && message.specLevAttackRating !== 0)
+                    writer.uint32(/* id 60, wireType 0 =*/480).int32(message.specLevAttackRating);
+                if (message.specLevDamageMax != null && $Object.hasOwnProperty.call(message, "specLevDamageMax") && message.specLevDamageMax !== 0)
+                    writer.uint32(/* id 61, wireType 0 =*/488).int32(message.specLevDamageMax);
+                if (message.specLevResBionic != null && $Object.hasOwnProperty.call(message, "specLevResBionic") && message.specLevResBionic !== 0)
+                    writer.uint32(/* id 62, wireType 0 =*/496).int32(message.specLevResBionic);
+                if (message.specLevResEarth != null && $Object.hasOwnProperty.call(message, "specLevResEarth") && message.specLevResEarth !== 0)
+                    writer.uint32(/* id 63, wireType 0 =*/504).int32(message.specLevResEarth);
+                if (message.specLevResFire != null && $Object.hasOwnProperty.call(message, "specLevResFire") && message.specLevResFire !== 0)
+                    writer.uint32(/* id 64, wireType 0 =*/512).int32(message.specLevResFire);
+                if (message.specLevResIce != null && $Object.hasOwnProperty.call(message, "specLevResIce") && message.specLevResIce !== 0)
+                    writer.uint32(/* id 65, wireType 0 =*/520).int32(message.specLevResIce);
+                if (message.specLevResLighting != null && $Object.hasOwnProperty.call(message, "specLevResLighting") && message.specLevResLighting !== 0)
+                    writer.uint32(/* id 66, wireType 0 =*/528).int32(message.specLevResLighting);
+                if (message.specLevResPoison != null && $Object.hasOwnProperty.call(message, "specLevResPoison") && message.specLevResPoison !== 0)
+                    writer.uint32(/* id 67, wireType 0 =*/536).int32(message.specLevResPoison);
+                if (message.specLevResWater != null && $Object.hasOwnProperty.call(message, "specLevResWater") && message.specLevResWater !== 0)
+                    writer.uint32(/* id 68, wireType 0 =*/544).int32(message.specLevResWater);
+                if (message.specLevResWind != null && $Object.hasOwnProperty.call(message, "specLevResWind") && message.specLevResWind !== 0)
+                    writer.uint32(/* id 69, wireType 0 =*/552).int32(message.specLevResWind);
+                if (message.specPerManaRegen != null && $Object.hasOwnProperty.call(message, "specPerManaRegen") && message.specPerManaRegen !== 0)
+                    writer.uint32(/* id 70, wireType 0 =*/560).int32(message.specPerManaRegen);
+                if (message.specPerLifeRegen != null && $Object.hasOwnProperty.call(message, "specPerLifeRegen") && message.specPerLifeRegen !== 0)
+                    writer.uint32(/* id 71, wireType 0 =*/568).int32(message.specPerLifeRegen);
+                if (message.specPerStaminaRegen != null && $Object.hasOwnProperty.call(message, "specPerStaminaRegen") && message.specPerStaminaRegen !== 0)
+                    writer.uint32(/* id 72, wireType 0 =*/576).int32(message.specPerStaminaRegen);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -31940,6 +32358,348 @@ export const jpt = $root.jpt = (() => {
                                 delete message.range;
                             continue;
                         }
+                    case 35: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.attackSpeed = value;
+                            else
+                                delete message.attackSpeed;
+                            continue;
+                        }
+                    case 36: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.resEarth = value;
+                            else
+                                delete message.resEarth;
+                            continue;
+                        }
+                    case 37: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.resWater = value;
+                            else
+                                delete message.resWater;
+                            continue;
+                        }
+                    case 38: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.resWind = value;
+                            else
+                                delete message.resWind;
+                            continue;
+                        }
+                    case 39: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.manaRegen = value;
+                            else
+                                delete message.manaRegen;
+                            continue;
+                        }
+                    case 40: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.lifeRegen = value;
+                            else
+                                delete message.lifeRegen;
+                            continue;
+                        }
+                    case 41: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.staminaRegen = value;
+                            else
+                                delete message.staminaRegen;
+                            continue;
+                        }
+                    case 42: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specAbsorb = value;
+                            else
+                                delete message.specAbsorb;
+                            continue;
+                        }
+                    case 43: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specDefence = value;
+                            else
+                                delete message.specDefence;
+                            continue;
+                        }
+                    case 44: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specSpeed = value;
+                            else
+                                delete message.specSpeed;
+                            continue;
+                        }
+                    case 45: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specBlockRating = value;
+                            else
+                                delete message.specBlockRating;
+                            continue;
+                        }
+                    case 46: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specAttackSpeed = value;
+                            else
+                                delete message.specAttackSpeed;
+                            continue;
+                        }
+                    case 47: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specCritical = value;
+                            else
+                                delete message.specCritical;
+                            continue;
+                        }
+                    case 48: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specShootingRange = value;
+                            else
+                                delete message.specShootingRange;
+                            continue;
+                        }
+                    case 49: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specMagicMastery = value;
+                            else
+                                delete message.specMagicMastery;
+                            continue;
+                        }
+                    case 50: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResBionic = value;
+                            else
+                                delete message.specResBionic;
+                            continue;
+                        }
+                    case 51: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResEarth = value;
+                            else
+                                delete message.specResEarth;
+                            continue;
+                        }
+                    case 52: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResFire = value;
+                            else
+                                delete message.specResFire;
+                            continue;
+                        }
+                    case 53: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResIce = value;
+                            else
+                                delete message.specResIce;
+                            continue;
+                        }
+                    case 54: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResLighting = value;
+                            else
+                                delete message.specResLighting;
+                            continue;
+                        }
+                    case 55: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResPoison = value;
+                            else
+                                delete message.specResPoison;
+                            continue;
+                        }
+                    case 56: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResWater = value;
+                            else
+                                delete message.specResWater;
+                            continue;
+                        }
+                    case 57: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specResWind = value;
+                            else
+                                delete message.specResWind;
+                            continue;
+                        }
+                    case 58: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevMana = value;
+                            else
+                                delete message.specLevMana;
+                            continue;
+                        }
+                    case 59: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevLife = value;
+                            else
+                                delete message.specLevLife;
+                            continue;
+                        }
+                    case 60: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevAttackRating = value;
+                            else
+                                delete message.specLevAttackRating;
+                            continue;
+                        }
+                    case 61: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevDamageMax = value;
+                            else
+                                delete message.specLevDamageMax;
+                            continue;
+                        }
+                    case 62: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResBionic = value;
+                            else
+                                delete message.specLevResBionic;
+                            continue;
+                        }
+                    case 63: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResEarth = value;
+                            else
+                                delete message.specLevResEarth;
+                            continue;
+                        }
+                    case 64: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResFire = value;
+                            else
+                                delete message.specLevResFire;
+                            continue;
+                        }
+                    case 65: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResIce = value;
+                            else
+                                delete message.specLevResIce;
+                            continue;
+                        }
+                    case 66: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResLighting = value;
+                            else
+                                delete message.specLevResLighting;
+                            continue;
+                        }
+                    case 67: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResPoison = value;
+                            else
+                                delete message.specLevResPoison;
+                            continue;
+                        }
+                    case 68: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResWater = value;
+                            else
+                                delete message.specLevResWater;
+                            continue;
+                        }
+                    case 69: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specLevResWind = value;
+                            else
+                                delete message.specLevResWind;
+                            continue;
+                        }
+                    case 70: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specPerManaRegen = value;
+                            else
+                                delete message.specPerManaRegen;
+                            continue;
+                        }
+                    case 71: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specPerLifeRegen = value;
+                            else
+                                delete message.specPerLifeRegen;
+                            continue;
+                        }
+                    case 72: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.specPerStaminaRegen = value;
+                            else
+                                delete message.specPerStaminaRegen;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -32090,6 +32850,120 @@ export const jpt = $root.jpt = (() => {
                 if (message.range != null && $Object.hasOwnProperty.call(message, "range"))
                     if (!$util.isInteger(message.range))
                         return "range: integer expected";
+                if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed"))
+                    if (!$util.isInteger(message.attackSpeed))
+                        return "attackSpeed: integer expected";
+                if (message.resEarth != null && $Object.hasOwnProperty.call(message, "resEarth"))
+                    if (!$util.isInteger(message.resEarth))
+                        return "resEarth: integer expected";
+                if (message.resWater != null && $Object.hasOwnProperty.call(message, "resWater"))
+                    if (!$util.isInteger(message.resWater))
+                        return "resWater: integer expected";
+                if (message.resWind != null && $Object.hasOwnProperty.call(message, "resWind"))
+                    if (!$util.isInteger(message.resWind))
+                        return "resWind: integer expected";
+                if (message.manaRegen != null && $Object.hasOwnProperty.call(message, "manaRegen"))
+                    if (!$util.isInteger(message.manaRegen))
+                        return "manaRegen: integer expected";
+                if (message.lifeRegen != null && $Object.hasOwnProperty.call(message, "lifeRegen"))
+                    if (!$util.isInteger(message.lifeRegen))
+                        return "lifeRegen: integer expected";
+                if (message.staminaRegen != null && $Object.hasOwnProperty.call(message, "staminaRegen"))
+                    if (!$util.isInteger(message.staminaRegen))
+                        return "staminaRegen: integer expected";
+                if (message.specAbsorb != null && $Object.hasOwnProperty.call(message, "specAbsorb"))
+                    if (!$util.isInteger(message.specAbsorb))
+                        return "specAbsorb: integer expected";
+                if (message.specDefence != null && $Object.hasOwnProperty.call(message, "specDefence"))
+                    if (!$util.isInteger(message.specDefence))
+                        return "specDefence: integer expected";
+                if (message.specSpeed != null && $Object.hasOwnProperty.call(message, "specSpeed"))
+                    if (!$util.isInteger(message.specSpeed))
+                        return "specSpeed: integer expected";
+                if (message.specBlockRating != null && $Object.hasOwnProperty.call(message, "specBlockRating"))
+                    if (!$util.isInteger(message.specBlockRating))
+                        return "specBlockRating: integer expected";
+                if (message.specAttackSpeed != null && $Object.hasOwnProperty.call(message, "specAttackSpeed"))
+                    if (!$util.isInteger(message.specAttackSpeed))
+                        return "specAttackSpeed: integer expected";
+                if (message.specCritical != null && $Object.hasOwnProperty.call(message, "specCritical"))
+                    if (!$util.isInteger(message.specCritical))
+                        return "specCritical: integer expected";
+                if (message.specShootingRange != null && $Object.hasOwnProperty.call(message, "specShootingRange"))
+                    if (!$util.isInteger(message.specShootingRange))
+                        return "specShootingRange: integer expected";
+                if (message.specMagicMastery != null && $Object.hasOwnProperty.call(message, "specMagicMastery"))
+                    if (!$util.isInteger(message.specMagicMastery))
+                        return "specMagicMastery: integer expected";
+                if (message.specResBionic != null && $Object.hasOwnProperty.call(message, "specResBionic"))
+                    if (!$util.isInteger(message.specResBionic))
+                        return "specResBionic: integer expected";
+                if (message.specResEarth != null && $Object.hasOwnProperty.call(message, "specResEarth"))
+                    if (!$util.isInteger(message.specResEarth))
+                        return "specResEarth: integer expected";
+                if (message.specResFire != null && $Object.hasOwnProperty.call(message, "specResFire"))
+                    if (!$util.isInteger(message.specResFire))
+                        return "specResFire: integer expected";
+                if (message.specResIce != null && $Object.hasOwnProperty.call(message, "specResIce"))
+                    if (!$util.isInteger(message.specResIce))
+                        return "specResIce: integer expected";
+                if (message.specResLighting != null && $Object.hasOwnProperty.call(message, "specResLighting"))
+                    if (!$util.isInteger(message.specResLighting))
+                        return "specResLighting: integer expected";
+                if (message.specResPoison != null && $Object.hasOwnProperty.call(message, "specResPoison"))
+                    if (!$util.isInteger(message.specResPoison))
+                        return "specResPoison: integer expected";
+                if (message.specResWater != null && $Object.hasOwnProperty.call(message, "specResWater"))
+                    if (!$util.isInteger(message.specResWater))
+                        return "specResWater: integer expected";
+                if (message.specResWind != null && $Object.hasOwnProperty.call(message, "specResWind"))
+                    if (!$util.isInteger(message.specResWind))
+                        return "specResWind: integer expected";
+                if (message.specLevMana != null && $Object.hasOwnProperty.call(message, "specLevMana"))
+                    if (!$util.isInteger(message.specLevMana))
+                        return "specLevMana: integer expected";
+                if (message.specLevLife != null && $Object.hasOwnProperty.call(message, "specLevLife"))
+                    if (!$util.isInteger(message.specLevLife))
+                        return "specLevLife: integer expected";
+                if (message.specLevAttackRating != null && $Object.hasOwnProperty.call(message, "specLevAttackRating"))
+                    if (!$util.isInteger(message.specLevAttackRating))
+                        return "specLevAttackRating: integer expected";
+                if (message.specLevDamageMax != null && $Object.hasOwnProperty.call(message, "specLevDamageMax"))
+                    if (!$util.isInteger(message.specLevDamageMax))
+                        return "specLevDamageMax: integer expected";
+                if (message.specLevResBionic != null && $Object.hasOwnProperty.call(message, "specLevResBionic"))
+                    if (!$util.isInteger(message.specLevResBionic))
+                        return "specLevResBionic: integer expected";
+                if (message.specLevResEarth != null && $Object.hasOwnProperty.call(message, "specLevResEarth"))
+                    if (!$util.isInteger(message.specLevResEarth))
+                        return "specLevResEarth: integer expected";
+                if (message.specLevResFire != null && $Object.hasOwnProperty.call(message, "specLevResFire"))
+                    if (!$util.isInteger(message.specLevResFire))
+                        return "specLevResFire: integer expected";
+                if (message.specLevResIce != null && $Object.hasOwnProperty.call(message, "specLevResIce"))
+                    if (!$util.isInteger(message.specLevResIce))
+                        return "specLevResIce: integer expected";
+                if (message.specLevResLighting != null && $Object.hasOwnProperty.call(message, "specLevResLighting"))
+                    if (!$util.isInteger(message.specLevResLighting))
+                        return "specLevResLighting: integer expected";
+                if (message.specLevResPoison != null && $Object.hasOwnProperty.call(message, "specLevResPoison"))
+                    if (!$util.isInteger(message.specLevResPoison))
+                        return "specLevResPoison: integer expected";
+                if (message.specLevResWater != null && $Object.hasOwnProperty.call(message, "specLevResWater"))
+                    if (!$util.isInteger(message.specLevResWater))
+                        return "specLevResWater: integer expected";
+                if (message.specLevResWind != null && $Object.hasOwnProperty.call(message, "specLevResWind"))
+                    if (!$util.isInteger(message.specLevResWind))
+                        return "specLevResWind: integer expected";
+                if (message.specPerManaRegen != null && $Object.hasOwnProperty.call(message, "specPerManaRegen"))
+                    if (!$util.isInteger(message.specPerManaRegen))
+                        return "specPerManaRegen: integer expected";
+                if (message.specPerLifeRegen != null && $Object.hasOwnProperty.call(message, "specPerLifeRegen"))
+                    if (!$util.isInteger(message.specPerLifeRegen))
+                        return "specPerLifeRegen: integer expected";
+                if (message.specPerStaminaRegen != null && $Object.hasOwnProperty.call(message, "specPerStaminaRegen"))
+                    if (!$util.isInteger(message.specPerStaminaRegen))
+                        return "specPerStaminaRegen: integer expected";
                 return null;
             };
 
@@ -32220,6 +33094,120 @@ export const jpt = $root.jpt = (() => {
                 if (object.range != null)
                     if ($Number(object.range) !== 0)
                         message.range = object.range | 0;
+                if (object.attackSpeed != null)
+                    if ($Number(object.attackSpeed) !== 0)
+                        message.attackSpeed = object.attackSpeed | 0;
+                if (object.resEarth != null)
+                    if ($Number(object.resEarth) !== 0)
+                        message.resEarth = object.resEarth | 0;
+                if (object.resWater != null)
+                    if ($Number(object.resWater) !== 0)
+                        message.resWater = object.resWater | 0;
+                if (object.resWind != null)
+                    if ($Number(object.resWind) !== 0)
+                        message.resWind = object.resWind | 0;
+                if (object.manaRegen != null)
+                    if ($Number(object.manaRegen) !== 0)
+                        message.manaRegen = object.manaRegen | 0;
+                if (object.lifeRegen != null)
+                    if ($Number(object.lifeRegen) !== 0)
+                        message.lifeRegen = object.lifeRegen | 0;
+                if (object.staminaRegen != null)
+                    if ($Number(object.staminaRegen) !== 0)
+                        message.staminaRegen = object.staminaRegen | 0;
+                if (object.specAbsorb != null)
+                    if ($Number(object.specAbsorb) !== 0)
+                        message.specAbsorb = object.specAbsorb | 0;
+                if (object.specDefence != null)
+                    if ($Number(object.specDefence) !== 0)
+                        message.specDefence = object.specDefence | 0;
+                if (object.specSpeed != null)
+                    if ($Number(object.specSpeed) !== 0)
+                        message.specSpeed = object.specSpeed | 0;
+                if (object.specBlockRating != null)
+                    if ($Number(object.specBlockRating) !== 0)
+                        message.specBlockRating = object.specBlockRating | 0;
+                if (object.specAttackSpeed != null)
+                    if ($Number(object.specAttackSpeed) !== 0)
+                        message.specAttackSpeed = object.specAttackSpeed | 0;
+                if (object.specCritical != null)
+                    if ($Number(object.specCritical) !== 0)
+                        message.specCritical = object.specCritical | 0;
+                if (object.specShootingRange != null)
+                    if ($Number(object.specShootingRange) !== 0)
+                        message.specShootingRange = object.specShootingRange | 0;
+                if (object.specMagicMastery != null)
+                    if ($Number(object.specMagicMastery) !== 0)
+                        message.specMagicMastery = object.specMagicMastery | 0;
+                if (object.specResBionic != null)
+                    if ($Number(object.specResBionic) !== 0)
+                        message.specResBionic = object.specResBionic | 0;
+                if (object.specResEarth != null)
+                    if ($Number(object.specResEarth) !== 0)
+                        message.specResEarth = object.specResEarth | 0;
+                if (object.specResFire != null)
+                    if ($Number(object.specResFire) !== 0)
+                        message.specResFire = object.specResFire | 0;
+                if (object.specResIce != null)
+                    if ($Number(object.specResIce) !== 0)
+                        message.specResIce = object.specResIce | 0;
+                if (object.specResLighting != null)
+                    if ($Number(object.specResLighting) !== 0)
+                        message.specResLighting = object.specResLighting | 0;
+                if (object.specResPoison != null)
+                    if ($Number(object.specResPoison) !== 0)
+                        message.specResPoison = object.specResPoison | 0;
+                if (object.specResWater != null)
+                    if ($Number(object.specResWater) !== 0)
+                        message.specResWater = object.specResWater | 0;
+                if (object.specResWind != null)
+                    if ($Number(object.specResWind) !== 0)
+                        message.specResWind = object.specResWind | 0;
+                if (object.specLevMana != null)
+                    if ($Number(object.specLevMana) !== 0)
+                        message.specLevMana = object.specLevMana | 0;
+                if (object.specLevLife != null)
+                    if ($Number(object.specLevLife) !== 0)
+                        message.specLevLife = object.specLevLife | 0;
+                if (object.specLevAttackRating != null)
+                    if ($Number(object.specLevAttackRating) !== 0)
+                        message.specLevAttackRating = object.specLevAttackRating | 0;
+                if (object.specLevDamageMax != null)
+                    if ($Number(object.specLevDamageMax) !== 0)
+                        message.specLevDamageMax = object.specLevDamageMax | 0;
+                if (object.specLevResBionic != null)
+                    if ($Number(object.specLevResBionic) !== 0)
+                        message.specLevResBionic = object.specLevResBionic | 0;
+                if (object.specLevResEarth != null)
+                    if ($Number(object.specLevResEarth) !== 0)
+                        message.specLevResEarth = object.specLevResEarth | 0;
+                if (object.specLevResFire != null)
+                    if ($Number(object.specLevResFire) !== 0)
+                        message.specLevResFire = object.specLevResFire | 0;
+                if (object.specLevResIce != null)
+                    if ($Number(object.specLevResIce) !== 0)
+                        message.specLevResIce = object.specLevResIce | 0;
+                if (object.specLevResLighting != null)
+                    if ($Number(object.specLevResLighting) !== 0)
+                        message.specLevResLighting = object.specLevResLighting | 0;
+                if (object.specLevResPoison != null)
+                    if ($Number(object.specLevResPoison) !== 0)
+                        message.specLevResPoison = object.specLevResPoison | 0;
+                if (object.specLevResWater != null)
+                    if ($Number(object.specLevResWater) !== 0)
+                        message.specLevResWater = object.specLevResWater | 0;
+                if (object.specLevResWind != null)
+                    if ($Number(object.specLevResWind) !== 0)
+                        message.specLevResWind = object.specLevResWind | 0;
+                if (object.specPerManaRegen != null)
+                    if ($Number(object.specPerManaRegen) !== 0)
+                        message.specPerManaRegen = object.specPerManaRegen | 0;
+                if (object.specPerLifeRegen != null)
+                    if ($Number(object.specPerLifeRegen) !== 0)
+                        message.specPerLifeRegen = object.specPerLifeRegen | 0;
+                if (object.specPerStaminaRegen != null)
+                    if ($Number(object.specPerStaminaRegen) !== 0)
+                        message.specPerStaminaRegen = object.specPerStaminaRegen | 0;
                 return message;
             };
 
@@ -32279,6 +33267,44 @@ export const jpt = $root.jpt = (() => {
                     object.agingLevel = 0;
                     object.critical = 0;
                     object.range = 0;
+                    object.attackSpeed = 0;
+                    object.resEarth = 0;
+                    object.resWater = 0;
+                    object.resWind = 0;
+                    object.manaRegen = 0;
+                    object.lifeRegen = 0;
+                    object.staminaRegen = 0;
+                    object.specAbsorb = 0;
+                    object.specDefence = 0;
+                    object.specSpeed = 0;
+                    object.specBlockRating = 0;
+                    object.specAttackSpeed = 0;
+                    object.specCritical = 0;
+                    object.specShootingRange = 0;
+                    object.specMagicMastery = 0;
+                    object.specResBionic = 0;
+                    object.specResEarth = 0;
+                    object.specResFire = 0;
+                    object.specResIce = 0;
+                    object.specResLighting = 0;
+                    object.specResPoison = 0;
+                    object.specResWater = 0;
+                    object.specResWind = 0;
+                    object.specLevMana = 0;
+                    object.specLevLife = 0;
+                    object.specLevAttackRating = 0;
+                    object.specLevDamageMax = 0;
+                    object.specLevResBionic = 0;
+                    object.specLevResEarth = 0;
+                    object.specLevResFire = 0;
+                    object.specLevResIce = 0;
+                    object.specLevResLighting = 0;
+                    object.specLevResPoison = 0;
+                    object.specLevResWater = 0;
+                    object.specLevResWind = 0;
+                    object.specPerManaRegen = 0;
+                    object.specPerLifeRegen = 0;
+                    object.specPerStaminaRegen = 0;
                 }
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -32353,6 +33379,82 @@ export const jpt = $root.jpt = (() => {
                     object.critical = message.critical;
                 if (message.range != null && $Object.hasOwnProperty.call(message, "range"))
                     object.range = message.range;
+                if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed"))
+                    object.attackSpeed = message.attackSpeed;
+                if (message.resEarth != null && $Object.hasOwnProperty.call(message, "resEarth"))
+                    object.resEarth = message.resEarth;
+                if (message.resWater != null && $Object.hasOwnProperty.call(message, "resWater"))
+                    object.resWater = message.resWater;
+                if (message.resWind != null && $Object.hasOwnProperty.call(message, "resWind"))
+                    object.resWind = message.resWind;
+                if (message.manaRegen != null && $Object.hasOwnProperty.call(message, "manaRegen"))
+                    object.manaRegen = message.manaRegen;
+                if (message.lifeRegen != null && $Object.hasOwnProperty.call(message, "lifeRegen"))
+                    object.lifeRegen = message.lifeRegen;
+                if (message.staminaRegen != null && $Object.hasOwnProperty.call(message, "staminaRegen"))
+                    object.staminaRegen = message.staminaRegen;
+                if (message.specAbsorb != null && $Object.hasOwnProperty.call(message, "specAbsorb"))
+                    object.specAbsorb = message.specAbsorb;
+                if (message.specDefence != null && $Object.hasOwnProperty.call(message, "specDefence"))
+                    object.specDefence = message.specDefence;
+                if (message.specSpeed != null && $Object.hasOwnProperty.call(message, "specSpeed"))
+                    object.specSpeed = message.specSpeed;
+                if (message.specBlockRating != null && $Object.hasOwnProperty.call(message, "specBlockRating"))
+                    object.specBlockRating = message.specBlockRating;
+                if (message.specAttackSpeed != null && $Object.hasOwnProperty.call(message, "specAttackSpeed"))
+                    object.specAttackSpeed = message.specAttackSpeed;
+                if (message.specCritical != null && $Object.hasOwnProperty.call(message, "specCritical"))
+                    object.specCritical = message.specCritical;
+                if (message.specShootingRange != null && $Object.hasOwnProperty.call(message, "specShootingRange"))
+                    object.specShootingRange = message.specShootingRange;
+                if (message.specMagicMastery != null && $Object.hasOwnProperty.call(message, "specMagicMastery"))
+                    object.specMagicMastery = message.specMagicMastery;
+                if (message.specResBionic != null && $Object.hasOwnProperty.call(message, "specResBionic"))
+                    object.specResBionic = message.specResBionic;
+                if (message.specResEarth != null && $Object.hasOwnProperty.call(message, "specResEarth"))
+                    object.specResEarth = message.specResEarth;
+                if (message.specResFire != null && $Object.hasOwnProperty.call(message, "specResFire"))
+                    object.specResFire = message.specResFire;
+                if (message.specResIce != null && $Object.hasOwnProperty.call(message, "specResIce"))
+                    object.specResIce = message.specResIce;
+                if (message.specResLighting != null && $Object.hasOwnProperty.call(message, "specResLighting"))
+                    object.specResLighting = message.specResLighting;
+                if (message.specResPoison != null && $Object.hasOwnProperty.call(message, "specResPoison"))
+                    object.specResPoison = message.specResPoison;
+                if (message.specResWater != null && $Object.hasOwnProperty.call(message, "specResWater"))
+                    object.specResWater = message.specResWater;
+                if (message.specResWind != null && $Object.hasOwnProperty.call(message, "specResWind"))
+                    object.specResWind = message.specResWind;
+                if (message.specLevMana != null && $Object.hasOwnProperty.call(message, "specLevMana"))
+                    object.specLevMana = message.specLevMana;
+                if (message.specLevLife != null && $Object.hasOwnProperty.call(message, "specLevLife"))
+                    object.specLevLife = message.specLevLife;
+                if (message.specLevAttackRating != null && $Object.hasOwnProperty.call(message, "specLevAttackRating"))
+                    object.specLevAttackRating = message.specLevAttackRating;
+                if (message.specLevDamageMax != null && $Object.hasOwnProperty.call(message, "specLevDamageMax"))
+                    object.specLevDamageMax = message.specLevDamageMax;
+                if (message.specLevResBionic != null && $Object.hasOwnProperty.call(message, "specLevResBionic"))
+                    object.specLevResBionic = message.specLevResBionic;
+                if (message.specLevResEarth != null && $Object.hasOwnProperty.call(message, "specLevResEarth"))
+                    object.specLevResEarth = message.specLevResEarth;
+                if (message.specLevResFire != null && $Object.hasOwnProperty.call(message, "specLevResFire"))
+                    object.specLevResFire = message.specLevResFire;
+                if (message.specLevResIce != null && $Object.hasOwnProperty.call(message, "specLevResIce"))
+                    object.specLevResIce = message.specLevResIce;
+                if (message.specLevResLighting != null && $Object.hasOwnProperty.call(message, "specLevResLighting"))
+                    object.specLevResLighting = message.specLevResLighting;
+                if (message.specLevResPoison != null && $Object.hasOwnProperty.call(message, "specLevResPoison"))
+                    object.specLevResPoison = message.specLevResPoison;
+                if (message.specLevResWater != null && $Object.hasOwnProperty.call(message, "specLevResWater"))
+                    object.specLevResWater = message.specLevResWater;
+                if (message.specLevResWind != null && $Object.hasOwnProperty.call(message, "specLevResWind"))
+                    object.specLevResWind = message.specLevResWind;
+                if (message.specPerManaRegen != null && $Object.hasOwnProperty.call(message, "specPerManaRegen"))
+                    object.specPerManaRegen = message.specPerManaRegen;
+                if (message.specPerLifeRegen != null && $Object.hasOwnProperty.call(message, "specPerLifeRegen"))
+                    object.specPerLifeRegen = message.specPerLifeRegen;
+                if (message.specPerStaminaRegen != null && $Object.hasOwnProperty.call(message, "specPerStaminaRegen"))
+                    object.specPerStaminaRegen = message.specPerStaminaRegen;
                 return object;
             };
 

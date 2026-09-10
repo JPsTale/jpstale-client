@@ -107,6 +107,9 @@ export interface GameItem {
   resIce: number;
   resLightning: number;
   resPoison: number;
+  resEarth: number;
+  resWater: number;
+  resWind: number;
   increaseLife: number;
   increaseMana: number;
   increaseStamina: number;
@@ -121,6 +124,42 @@ export interface GameItem {
   agingLevel: number;
   critical: number;
   range: number;
+  attackSpeed: number;
+  manaRegen: number;        // 0.1 精度
+  lifeRegen: number;        // 0.1 精度
+  staminaRegen: number;     // 0.1 精度
+  // 职业特效（sITEM_SPECIAL / userdb.item.spec_*，0.1 精度同前缀规则）
+  specAbsorb: number;
+  specDefence: number;
+  specSpeed: number;
+  specBlockRating: number;
+  specAttackSpeed: number;
+  specCritical: number;
+  specShootingRange: number;
+  specMagicMastery: number;
+  specResBionic: number;
+  specResEarth: number;
+  specResFire: number;
+  specResIce: number;
+  specResLighting: number;
+  specResPoison: number;
+  specResWater: number;
+  specResWind: number;
+  specLevMana: number;
+  specLevLife: number;
+  specLevAttackRating: number;
+  specLevDamageMax: number;
+  specLevResBionic: number;
+  specLevResEarth: number;
+  specLevResFire: number;
+  specLevResIce: number;
+  specLevResLighting: number;
+  specLevResPoison: number;
+  specLevResWater: number;
+  specLevResWind: number;
+  specPerManaRegen: number; // 0.01 精度
+  specPerLifeRegen: number;
+  specPerStaminaRegen: number;
 }
 
 /** 物品容器快照（uid → 实例 索引，渲染时按 location/slot 排布）。 */

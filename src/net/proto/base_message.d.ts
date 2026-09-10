@@ -10978,6 +10978,120 @@ export namespace jpt {
             /** ItemProto range. */
             range: number;
 
+            /** ItemProto attackSpeed. */
+            attackSpeed: number;
+
+            /** ItemProto resEarth. */
+            resEarth: number;
+
+            /** ItemProto resWater. */
+            resWater: number;
+
+            /** ItemProto resWind. */
+            resWind: number;
+
+            /** ItemProto manaRegen. */
+            manaRegen: number;
+
+            /** ItemProto lifeRegen. */
+            lifeRegen: number;
+
+            /** ItemProto staminaRegen. */
+            staminaRegen: number;
+
+            /** ItemProto specAbsorb. */
+            specAbsorb: number;
+
+            /** ItemProto specDefence. */
+            specDefence: number;
+
+            /** ItemProto specSpeed. */
+            specSpeed: number;
+
+            /** ItemProto specBlockRating. */
+            specBlockRating: number;
+
+            /** ItemProto specAttackSpeed. */
+            specAttackSpeed: number;
+
+            /** ItemProto specCritical. */
+            specCritical: number;
+
+            /** ItemProto specShootingRange. */
+            specShootingRange: number;
+
+            /** ItemProto specMagicMastery. */
+            specMagicMastery: number;
+
+            /** ItemProto specResBionic. */
+            specResBionic: number;
+
+            /** ItemProto specResEarth. */
+            specResEarth: number;
+
+            /** ItemProto specResFire. */
+            specResFire: number;
+
+            /** ItemProto specResIce. */
+            specResIce: number;
+
+            /** ItemProto specResLighting. */
+            specResLighting: number;
+
+            /** ItemProto specResPoison. */
+            specResPoison: number;
+
+            /** ItemProto specResWater. */
+            specResWater: number;
+
+            /** ItemProto specResWind. */
+            specResWind: number;
+
+            /** ItemProto specLevMana. */
+            specLevMana: number;
+
+            /** ItemProto specLevLife. */
+            specLevLife: number;
+
+            /** ItemProto specLevAttackRating. */
+            specLevAttackRating: number;
+
+            /** ItemProto specLevDamageMax. */
+            specLevDamageMax: number;
+
+            /** ItemProto specLevResBionic. */
+            specLevResBionic: number;
+
+            /** ItemProto specLevResEarth. */
+            specLevResEarth: number;
+
+            /** ItemProto specLevResFire. */
+            specLevResFire: number;
+
+            /** ItemProto specLevResIce. */
+            specLevResIce: number;
+
+            /** ItemProto specLevResLighting. */
+            specLevResLighting: number;
+
+            /** ItemProto specLevResPoison. */
+            specLevResPoison: number;
+
+            /** ItemProto specLevResWater. */
+            specLevResWater: number;
+
+            /** ItemProto specLevResWind. */
+            specLevResWind: number;
+
+            /** ItemProto specPerManaRegen. */
+            specPerManaRegen: number;
+
+            /** ItemProto specPerLifeRegen. */
+            specPerLifeRegen: number;
+
+            /** ItemProto specPerStaminaRegen. */
+            specPerStaminaRegen: number;
+
             /**
              * Creates a new ItemProto instance using the specified properties.
              * @param [properties] Properties to set
@@ -11163,6 +11277,120 @@ export namespace jpt {
 
                 /** ItemProto range */
                 range?: (number|null);
+
+                /** ItemProto attackSpeed */
+                attackSpeed?: (number|null);
+
+                /** ItemProto resEarth */
+                resEarth?: (number|null);
+
+                /** ItemProto resWater */
+                resWater?: (number|null);
+
+                /** ItemProto resWind */
+                resWind?: (number|null);
+
+                /** ItemProto manaRegen */
+                manaRegen?: (number|null);
+
+                /** ItemProto lifeRegen */
+                lifeRegen?: (number|null);
+
+                /** ItemProto staminaRegen */
+                staminaRegen?: (number|null);
+
+                /** ItemProto specAbsorb */
+                specAbsorb?: (number|null);
+
+                /** ItemProto specDefence */
+                specDefence?: (number|null);
+
+                /** ItemProto specSpeed */
+                specSpeed?: (number|null);
+
+                /** ItemProto specBlockRating */
+                specBlockRating?: (number|null);
+
+                /** ItemProto specAttackSpeed */
+                specAttackSpeed?: (number|null);
+
+                /** ItemProto specCritical */
+                specCritical?: (number|null);
+
+                /** ItemProto specShootingRange */
+                specShootingRange?: (number|null);
+
+                /** ItemProto specMagicMastery */
+                specMagicMastery?: (number|null);
+
+                /** ItemProto specResBionic */
+                specResBionic?: (number|null);
+
+                /** ItemProto specResEarth */
+                specResEarth?: (number|null);
+
+                /** ItemProto specResFire */
+                specResFire?: (number|null);
+
+                /** ItemProto specResIce */
+                specResIce?: (number|null);
+
+                /** ItemProto specResLighting */
+                specResLighting?: (number|null);
+
+                /** ItemProto specResPoison */
+                specResPoison?: (number|null);
+
+                /** ItemProto specResWater */
+                specResWater?: (number|null);
+
+                /** ItemProto specResWind */
+                specResWind?: (number|null);
+
+                /** ItemProto specLevMana */
+                specLevMana?: (number|null);
+
+                /** ItemProto specLevLife */
+                specLevLife?: (number|null);
+
+                /** ItemProto specLevAttackRating */
+                specLevAttackRating?: (number|null);
+
+                /** ItemProto specLevDamageMax */
+                specLevDamageMax?: (number|null);
+
+                /** ItemProto specLevResBionic */
+                specLevResBionic?: (number|null);
+
+                /** ItemProto specLevResEarth */
+                specLevResEarth?: (number|null);
+
+                /** ItemProto specLevResFire */
+                specLevResFire?: (number|null);
+
+                /** ItemProto specLevResIce */
+                specLevResIce?: (number|null);
+
+                /** ItemProto specLevResLighting */
+                specLevResLighting?: (number|null);
+
+                /** ItemProto specLevResPoison */
+                specLevResPoison?: (number|null);
+
+                /** ItemProto specLevResWater */
+                specLevResWater?: (number|null);
+
+                /** ItemProto specLevResWind */
+                specLevResWind?: (number|null);
+
+                /** ItemProto specPerManaRegen */
+                specPerManaRegen?: (number|null);
+
+                /** ItemProto specPerLifeRegen */
+                specPerLifeRegen?: (number|null);
+
+                /** ItemProto specPerStaminaRegen */
+                specPerStaminaRegen?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

@@ -1229,6 +1229,11 @@
 .jp-item-info-red .jp-item-info-v {
   color: #ff5c5c;
 }
+/* 需求行满足：原版 R150,149,144 暗黄 */
+.jp-item-info-dim .jp-item-info-l,
+.jp-item-info-dim .jp-item-info-v {
+  color: #969590;
+}
 .jp-item-info-sec {
   justify-content: center;
   color: #aab3c2;
@@ -1239,7 +1244,9 @@
 .jp-item-info-sec .jp-item-info-v {
   color: #d7d3c2;
 }
+/* 职业特效块（目标版式：居中、金/黄字） */
 .jp-item-info-center { justify-content: center; }
+.jp-item-info-center .jp-item-info-l,
 .jp-item-info-center .jp-item-info-v { color: #ffe9a8; }
 
 /* 背包拖放视觉（原版：悬停占格高亮 / 拿起持物 / 落点 绿=可放 黄=合并 红=冲突） */
