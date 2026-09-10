@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, localUnequipToBag, removeInventoryItem, type GameItem } from '../../app/gameStore.js';
+import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, localUnequipToBag, localEquipItem, localToHeld, removeInventoryItem, type GameItem } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import {
   itemDefById,
@@ -343,7 +343,7 @@ export default function ItemPanel() {
   const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
   const [overBag, setOverBag] = useState(false);
   // 穿装备交换：等待服务端 ack 的挂起状态（成功=旧件保持手持；失败=还原）
-  const pendingSwap = useRef<{ newUid: number; oldUid: number | null } | null>(null);
+  const pendingSwap = useRef<{ newUid: number; newBagSlot: number; oldUid: number | null; oldEquipSlot: number | null } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   // 拿起/放下时信息框消失（原版：拖起时不再显示 hover 信息）
   useEffect(() => {
@@ -384,10 +384,15 @@ export default function ItemPanel() {
     document.addEventListener('pointerdown', onDown, true);
     return () => document.removeEventListener('pointerdown', onDown, true);
   }, [heldUid]);
-  // 穿装备失败（服务端 error）：还原手持（旧件重新显示，新件回背包）
+  // 穿装备失败（服务端 error）：本地即时改动还原——新件回背包原格，旧件回装备槽
   useEffect(() => {
     const onFail = () => {
-      if (!pendingSwap.current) return;
+      const p = pendingSwap.current;
+      if (!p) return;
+      localUnequipToBag(p.newUid, p.newBagSlot);
+      if (p.oldUid != null && p.oldEquipSlot != null) {
+        localEquipItem(p.oldUid, p.oldEquipSlot);
+      }
       pendingSwap.current = null;
       setHeldUid(null);
     };
@@ -474,9 +479,13 @@ export default function ItemPanel() {
         return;
       }
       const old = items.find((x) => x.location === 2 && x.slot === slot) ?? null;
-      // 交换：旧装备拿起（本地手持）；新装备上报穿入（服务端权威校验/落库）
-      pendingSwap.current = { newUid: held.uid, oldUid: old ? old.uid : null };
+      pendingSwap.current = old
+        ? { newUid: held.uid, newBagSlot: held.slot, oldUid: old.uid, oldEquipSlot: old.slot }
+        : { newUid: held.uid, newBagSlot: held.slot, oldUid: null, oldEquipSlot: null };
+      // 本地即时：新件立刻进装备槽（背包即刻消失，不存在"回闪"）；旧件若在则抽离为手持
       setHeldUid(old ? old.uid : null);
+      localEquipItem(held.uid, slot);
+      if (old) localToHeld(old.uid);
       sendEquipItem(held.uid, slot);
     } else if (held.location === 2 && held.slot !== slot) {
       // 装备 → 另一装备槽（服务端无直换）：先脱回背包（旧槽清空），held 仍指向实例，

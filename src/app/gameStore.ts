@@ -241,6 +241,22 @@ export function localUnequipToBag(uid: number, toSlot: number): void {
   commit({ inventory: { ...cur, items } });
 }
 
+/** 本地即时装入装备槽（点击瞬间背包即刻消失；随 EquipItem 上报，服务端校验/落库） */
+export function localEquipItem(uid: number, slot: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) return;
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: 2, slot } : x));
+  commit({ inventory: { ...cur, items } });
+}
+
+/** 本地把物品从当前落点抽离为"手持"（location=-1 各视图均不渲染，随 BagLayout/EquipItem 上报落点） */
+export function localToHeld(uid: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) return;
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: -1, slot: -1 } : x));
+  commit({ inventory: { ...cur, items } });
+}
+
 /** 本地即时药水合并：src 并入 dst（随即上报 StackMerge） */
 export function localStackMerge(srcUid: number, dstUid: number): void {
   const cur = snapshot.inventory;
