@@ -46,6 +46,8 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.C2S_EquipItem.$Properties|null} [equipItem] ClientMessage equipItem
              * @property {jpt.base.C2S_UnequipItem.$Properties|null} [unequipItem] ClientMessage unequipItem
              * @property {jpt.base.C2S_SwitchWeapon.$Properties|null} [switchWeapon] ClientMessage switchWeapon
+             * @property {jpt.base.C2S_BagLayout.$Properties|null} [bagLayout] ClientMessage bagLayout
+             * @property {jpt.base.C2S_StackMerge.$Properties|null} [stackMerge] ClientMessage stackMerge
              * @property {jpt.base.C2S_Attack.$Properties|null} [attack] ClientMessage attack
              * @property {jpt.base.C2S_UseSkill.$Properties|null} [useSkill] ClientMessage useSkill
              * @property {jpt.base.C2S_Chat.$Properties|null} [chat] ClientMessage chat
@@ -57,7 +59,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.C2S_PartyAccept.$Properties|null} [partyAccept] ClientMessage partyAccept
              * @property {jpt.base.C2S_PartyLeave.$Properties|null} [partyLeave] ClientMessage partyLeave
              * @property {jpt.base.C2S_Ping.$Properties|null} [ping] ClientMessage ping
-             * @property {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"attack"|"useSkill"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"} [payload] ClientMessage payload
+             * @property {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"bagLayout"|"stackMerge"|"attack"|"useSkill"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"} [payload] ClientMessage payload
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -87,6 +89,8 @@ export const jpt = $root.jpt = (() => {
              *   equipItem?: jpt.base.C2S_EquipItem.$Shape|null;
              *   unequipItem?: jpt.base.C2S_UnequipItem.$Shape|null;
              *   switchWeapon?: jpt.base.C2S_SwitchWeapon.$Shape|null;
+             *   bagLayout?: jpt.base.C2S_BagLayout.$Shape|null;
+             *   stackMerge?: jpt.base.C2S_StackMerge.$Shape|null;
              *   attack?: jpt.base.C2S_Attack.$Shape|null;
              *   useSkill?: jpt.base.C2S_UseSkill.$Shape|null;
              *   chat?: jpt.base.C2S_Chat.$Shape|null;
@@ -100,7 +104,7 @@ export const jpt = $root.jpt = (() => {
              *   ping?: jpt.base.C2S_Ping.$Shape|null;
              *   $unknowns?: Array.<Uint8Array>;
              * } & (
-             *   ({ payload?: undefined; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "loginRequest"; loginRequest: jpt.base.C2S_LoginRequest.$Shape; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "createCharacter"; loginRequest?: null; createCharacter: jpt.base.C2S_CreateCharacter.$Shape; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "selectCharacter"; loginRequest?: null; createCharacter?: null; selectCharacter: jpt.base.C2S_SelectCharacter.$Shape; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "logout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout: jpt.base.C2S_Logout.$Shape; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "backToCharacterSelect"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect: jpt.base.C2S_BackToCharacterSelect.$Shape; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove: jpt.base.C2S_PlayerMove.$Shape; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerAction"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction: jpt.base.C2S_PlayerAction.$Shape; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem: jpt.base.C2S_UseItem.$Shape; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "pickupItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem: jpt.base.C2S_PickupItem.$Shape; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "dropItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem: jpt.base.C2S_DropItem.$Shape; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "allocateStat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat: jpt.base.C2S_AllocateStat.$Shape; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "inventoryMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove: jpt.base.C2S_InventoryMove.$Shape; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "equipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem: jpt.base.C2S_EquipItem.$Shape; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "unequipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem: jpt.base.C2S_UnequipItem.$Shape; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "switchWeapon"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon: jpt.base.C2S_SwitchWeapon.$Shape; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attack"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack: jpt.base.C2S_Attack.$Shape; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useSkill"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill: jpt.base.C2S_UseSkill.$Shape; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "chat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat: jpt.base.C2S_Chat.$Shape; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeRequest"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest: jpt.base.C2S_TradeRequest.$Shape; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept: jpt.base.C2S_TradeAccept.$Shape; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAddItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem: jpt.base.C2S_TradeAddItem.$Shape; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeConfirm"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm: jpt.base.C2S_TradeConfirm.$Shape; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyInvite"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite: jpt.base.C2S_PartyInvite.$Shape; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept: jpt.base.C2S_PartyAccept.$Shape; partyLeave?: null; ping?: null }|{ payload?: "partyLeave"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave: jpt.base.C2S_PartyLeave.$Shape; ping?: null }|{ payload?: "ping"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping: jpt.base.C2S_Ping.$Shape })
+             *   ({ payload?: undefined; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "loginRequest"; loginRequest: jpt.base.C2S_LoginRequest.$Shape; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "createCharacter"; loginRequest?: null; createCharacter: jpt.base.C2S_CreateCharacter.$Shape; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "selectCharacter"; loginRequest?: null; createCharacter?: null; selectCharacter: jpt.base.C2S_SelectCharacter.$Shape; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "logout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout: jpt.base.C2S_Logout.$Shape; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "backToCharacterSelect"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect: jpt.base.C2S_BackToCharacterSelect.$Shape; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove: jpt.base.C2S_PlayerMove.$Shape; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerAction"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction: jpt.base.C2S_PlayerAction.$Shape; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem: jpt.base.C2S_UseItem.$Shape; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "pickupItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem: jpt.base.C2S_PickupItem.$Shape; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "dropItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem: jpt.base.C2S_DropItem.$Shape; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "allocateStat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat: jpt.base.C2S_AllocateStat.$Shape; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "inventoryMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove: jpt.base.C2S_InventoryMove.$Shape; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "equipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem: jpt.base.C2S_EquipItem.$Shape; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "unequipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem: jpt.base.C2S_UnequipItem.$Shape; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "switchWeapon"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon: jpt.base.C2S_SwitchWeapon.$Shape; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "bagLayout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout: jpt.base.C2S_BagLayout.$Shape; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "stackMerge"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge: jpt.base.C2S_StackMerge.$Shape; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attack"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack: jpt.base.C2S_Attack.$Shape; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useSkill"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill: jpt.base.C2S_UseSkill.$Shape; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "chat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat: jpt.base.C2S_Chat.$Shape; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeRequest"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest: jpt.base.C2S_TradeRequest.$Shape; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept: jpt.base.C2S_TradeAccept.$Shape; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAddItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem: jpt.base.C2S_TradeAddItem.$Shape; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeConfirm"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm: jpt.base.C2S_TradeConfirm.$Shape; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyInvite"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite: jpt.base.C2S_PartyInvite.$Shape; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept: jpt.base.C2S_PartyAccept.$Shape; partyLeave?: null; ping?: null }|{ payload?: "partyLeave"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave: jpt.base.C2S_PartyLeave.$Shape; ping?: null }|{ payload?: "ping"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; attack?: null; useSkill?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping: jpt.base.C2S_Ping.$Shape })
              * )} jpt.base.ClientMessage.$Shape
              */
 
@@ -240,6 +244,22 @@ export const jpt = $root.jpt = (() => {
             ClientMessage.prototype.switchWeapon = null;
 
             /**
+             * ClientMessage bagLayout.
+             * @member {jpt.base.C2S_BagLayout.$Properties|null|undefined} bagLayout
+             * @memberof jpt.base.ClientMessage
+             * @instance
+             */
+            ClientMessage.prototype.bagLayout = null;
+
+            /**
+             * ClientMessage stackMerge.
+             * @member {jpt.base.C2S_StackMerge.$Properties|null|undefined} stackMerge
+             * @memberof jpt.base.ClientMessage
+             * @instance
+             */
+            ClientMessage.prototype.stackMerge = null;
+
+            /**
              * ClientMessage attack.
              * @member {jpt.base.C2S_Attack.$Properties|null|undefined} attack
              * @memberof jpt.base.ClientMessage
@@ -332,12 +352,12 @@ export const jpt = $root.jpt = (() => {
 
             /**
              * ClientMessage payload.
-             * @member {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"attack"|"useSkill"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"|undefined} payload
+             * @member {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"bagLayout"|"stackMerge"|"attack"|"useSkill"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"|undefined} payload
              * @memberof jpt.base.ClientMessage
              * @instance
              */
             $Object.defineProperty(ClientMessage.prototype, "payload", {
-                get: $util.oneOfGetter($oneOfFields = ["loginRequest", "createCharacter", "selectCharacter", "logout", "backToCharacterSelect", "playerMove", "playerAction", "useItem", "pickupItem", "dropItem", "allocateStat", "inventoryMove", "equipItem", "unequipItem", "switchWeapon", "attack", "useSkill", "chat", "tradeRequest", "tradeAccept", "tradeAddItem", "tradeConfirm", "partyInvite", "partyAccept", "partyLeave", "ping"]),
+                get: $util.oneOfGetter($oneOfFields = ["loginRequest", "createCharacter", "selectCharacter", "logout", "backToCharacterSelect", "playerMove", "playerAction", "useItem", "pickupItem", "dropItem", "allocateStat", "inventoryMove", "equipItem", "unequipItem", "switchWeapon", "bagLayout", "stackMerge", "attack", "useSkill", "chat", "tradeRequest", "tradeAccept", "tradeAddItem", "tradeConfirm", "partyInvite", "partyAccept", "partyLeave", "ping"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -403,6 +423,10 @@ export const jpt = $root.jpt = (() => {
                     $root.jpt.base.C2S_UnequipItem.encode(message.unequipItem, writer.uint32(/* id 208, wireType 2 =*/1666).fork(), _depth + 1).ldelim();
                 if (message.switchWeapon != null && $Object.hasOwnProperty.call(message, "switchWeapon"))
                     $root.jpt.base.C2S_SwitchWeapon.encode(message.switchWeapon, writer.uint32(/* id 209, wireType 2 =*/1674).fork(), _depth + 1).ldelim();
+                if (message.bagLayout != null && $Object.hasOwnProperty.call(message, "bagLayout"))
+                    $root.jpt.base.C2S_BagLayout.encode(message.bagLayout, writer.uint32(/* id 210, wireType 2 =*/1682).fork(), _depth + 1).ldelim();
+                if (message.stackMerge != null && $Object.hasOwnProperty.call(message, "stackMerge"))
+                    $root.jpt.base.C2S_StackMerge.encode(message.stackMerge, writer.uint32(/* id 211, wireType 2 =*/1690).fork(), _depth + 1).ldelim();
                 if (message.attack != null && $Object.hasOwnProperty.call(message, "attack"))
                     $root.jpt.base.C2S_Attack.encode(message.attack, writer.uint32(/* id 300, wireType 2 =*/2402).fork(), _depth + 1).ldelim();
                 if (message.useSkill != null && $Object.hasOwnProperty.call(message, "useSkill"))
@@ -585,6 +609,20 @@ export const jpt = $root.jpt = (() => {
                                 break;
                             message.switchWeapon = $root.jpt.base.C2S_SwitchWeapon.decode(reader, reader.uint32(), $undefined, _depth + 1, message.switchWeapon);
                             message.payload = "switchWeapon";
+                            continue;
+                        }
+                    case 210: {
+                            if (wireType !== 2)
+                                break;
+                            message.bagLayout = $root.jpt.base.C2S_BagLayout.decode(reader, reader.uint32(), $undefined, _depth + 1, message.bagLayout);
+                            message.payload = "bagLayout";
+                            continue;
+                        }
+                    case 211: {
+                            if (wireType !== 2)
+                                break;
+                            message.stackMerge = $root.jpt.base.C2S_StackMerge.decode(reader, reader.uint32(), $undefined, _depth + 1, message.stackMerge);
+                            message.payload = "stackMerge";
                             continue;
                         }
                     case 300: {
@@ -861,6 +899,26 @@ export const jpt = $root.jpt = (() => {
                             return "switchWeapon." + error;
                     }
                 }
+                if (message.bagLayout != null && $Object.hasOwnProperty.call(message, "bagLayout")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.C2S_BagLayout.verify(message.bagLayout, _depth + 1);
+                        if (error)
+                            return "bagLayout." + error;
+                    }
+                }
+                if (message.stackMerge != null && $Object.hasOwnProperty.call(message, "stackMerge")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.C2S_StackMerge.verify(message.stackMerge, _depth + 1);
+                        if (error)
+                            return "stackMerge." + error;
+                    }
+                }
                 if (message.attack != null && $Object.hasOwnProperty.call(message, "attack")) {
                     if (properties.payload === 1)
                         return "payload: multiple values";
@@ -1067,6 +1125,16 @@ export const jpt = $root.jpt = (() => {
                         throw $TypeError(".jpt.base.ClientMessage.switchWeapon: object expected");
                     message.switchWeapon = $root.jpt.base.C2S_SwitchWeapon.fromObject(object.switchWeapon, _depth + 1);
                 }
+                if (object.bagLayout != null) {
+                    if (!$util.isObject(object.bagLayout))
+                        throw $TypeError(".jpt.base.ClientMessage.bagLayout: object expected");
+                    message.bagLayout = $root.jpt.base.C2S_BagLayout.fromObject(object.bagLayout, _depth + 1);
+                }
+                if (object.stackMerge != null) {
+                    if (!$util.isObject(object.stackMerge))
+                        throw $TypeError(".jpt.base.ClientMessage.stackMerge: object expected");
+                    message.stackMerge = $root.jpt.base.C2S_StackMerge.fromObject(object.stackMerge, _depth + 1);
+                }
                 if (object.attack != null) {
                     if (!$util.isObject(object.attack))
                         throw $TypeError(".jpt.base.ClientMessage.attack: object expected");
@@ -1216,6 +1284,16 @@ export const jpt = $root.jpt = (() => {
                     object.switchWeapon = $root.jpt.base.C2S_SwitchWeapon.toObject(message.switchWeapon, options, _depth + 1);
                     if (options.oneofs)
                         object.payload = "switchWeapon";
+                }
+                if (message.bagLayout != null && $Object.hasOwnProperty.call(message, "bagLayout")) {
+                    object.bagLayout = $root.jpt.base.C2S_BagLayout.toObject(message.bagLayout, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "bagLayout";
+                }
+                if (message.stackMerge != null && $Object.hasOwnProperty.call(message, "stackMerge")) {
+                    object.stackMerge = $root.jpt.base.C2S_StackMerge.toObject(message.stackMerge, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "stackMerge";
                 }
                 if (message.attack != null && $Object.hasOwnProperty.call(message, "attack")) {
                     object.attack = $root.jpt.base.C2S_Attack.toObject(message.attack, options, _depth + 1);
@@ -8578,6 +8656,956 @@ export const jpt = $root.jpt = (() => {
             };
 
             return C2S_InventoryMove;
+        })();
+
+        base.BagMoveEntry = (function() {
+
+            /**
+             * Properties of a BagMoveEntry.
+             * @typedef {Object} jpt.base.BagMoveEntry.$Properties
+             * @property {number|Long|null} [uid] BagMoveEntry uid
+             * @property {number|null} [slot] BagMoveEntry slot
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a BagMoveEntry.
+             * @memberof jpt.base
+             * @interface IBagMoveEntry
+             * @augments jpt.base.BagMoveEntry.$Properties
+             * @deprecated Use jpt.base.BagMoveEntry.$Properties instead.
+             */
+
+            /**
+             * Shape of a BagMoveEntry.
+             * @typedef {jpt.base.BagMoveEntry.$Properties} jpt.base.BagMoveEntry.$Shape
+             */
+
+            /**
+             * Constructs a new BagMoveEntry.
+             * @memberof jpt.base
+             * @classdesc Represents a BagMoveEntry.
+             * @constructor
+             * @param {jpt.base.BagMoveEntry.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const BagMoveEntry = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * BagMoveEntry uid.
+             * @member {number|Long} uid
+             * @memberof jpt.base.BagMoveEntry
+             * @instance
+             */
+            BagMoveEntry.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * BagMoveEntry slot.
+             * @member {number} slot
+             * @memberof jpt.base.BagMoveEntry
+             * @instance
+             */
+            BagMoveEntry.prototype.slot = 0;
+
+            /**
+             * Creates a new BagMoveEntry instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {jpt.base.BagMoveEntry.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.BagMoveEntry} BagMoveEntry instance
+             * @type {{
+             *   (properties: jpt.base.BagMoveEntry.$Shape): jpt.base.BagMoveEntry & jpt.base.BagMoveEntry.$Shape;
+             *   (properties?: jpt.base.BagMoveEntry.$Properties): jpt.base.BagMoveEntry;
+             * }}
+             */
+            BagMoveEntry.create = function(properties) {
+                return new BagMoveEntry(properties);
+            };
+
+            /**
+             * Encodes the specified BagMoveEntry message. Does not implicitly {@link jpt.base.BagMoveEntry.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {jpt.base.BagMoveEntry.$Properties} message BagMoveEntry message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            BagMoveEntry.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.uid != null && $Object.hasOwnProperty.call(message, "uid") && (typeof message.uid === "object" ? message.uid.low || message.uid.high : message.uid !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.uid);
+                if (message.slot != null && $Object.hasOwnProperty.call(message, "slot") && message.slot !== 0)
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.slot);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified BagMoveEntry message, length delimited. Does not implicitly {@link jpt.base.BagMoveEntry.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {jpt.base.BagMoveEntry.$Properties} message BagMoveEntry message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            BagMoveEntry.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a BagMoveEntry message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.BagMoveEntry & jpt.base.BagMoveEntry.$Shape} BagMoveEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            BagMoveEntry.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.BagMoveEntry();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.uid = value;
+                            else
+                                delete message.uid;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.slot = value;
+                            else
+                                delete message.slot;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a BagMoveEntry message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.BagMoveEntry & jpt.base.BagMoveEntry.$Shape} BagMoveEntry
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            BagMoveEntry.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a BagMoveEntry message.
+             * @function verify
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            BagMoveEntry.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
+                    if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
+                        return "uid: integer|Long expected";
+                if (message.slot != null && $Object.hasOwnProperty.call(message, "slot"))
+                    if (!$util.isInteger(message.slot))
+                        return "slot: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a BagMoveEntry message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.BagMoveEntry} BagMoveEntry
+             */
+            BagMoveEntry.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.BagMoveEntry)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.BagMoveEntry: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.BagMoveEntry();
+                if (object.uid != null)
+                    if (typeof object.uid === "object" ? object.uid.low || object.uid.high : $Number(object.uid) !== 0)
+                        if ($util.Long)
+                            message.uid = $util.Long.fromValue(object.uid, false);
+                        else if (typeof object.uid === "string")
+                            message.uid = $parseInt(object.uid, 10);
+                        else if (typeof object.uid === "number")
+                            message.uid = object.uid;
+                        else if (typeof object.uid === "object")
+                            message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+                if (object.slot != null)
+                    if ($Number(object.slot) !== 0)
+                        message.slot = object.slot | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a BagMoveEntry message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {jpt.base.BagMoveEntry} message BagMoveEntry
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            BagMoveEntry.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults) {
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.uid = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.uid = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.slot = 0;
+                }
+                if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.uid = typeof message.uid === "number" ? $BigInt(message.uid) : $util.Long.fromBits(message.uid.low >>> 0, message.uid.high >>> 0, false).toBigInt();
+                    else if (typeof message.uid === "number")
+                        object.uid = options.longs === $String ? $String(message.uid) : message.uid;
+                    else
+                        object.uid = options.longs === $String ? $util.Long.prototype.toString.call(message.uid) : options.longs === $Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+                if (message.slot != null && $Object.hasOwnProperty.call(message, "slot"))
+                    object.slot = message.slot;
+                return object;
+            };
+
+            /**
+             * Converts this BagMoveEntry to JSON.
+             * @function toJSON
+             * @memberof jpt.base.BagMoveEntry
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            BagMoveEntry.prototype.toJSON = function() {
+                return BagMoveEntry.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for BagMoveEntry
+             * @function getTypeUrl
+             * @memberof jpt.base.BagMoveEntry
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            BagMoveEntry.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.BagMoveEntry";
+            };
+
+            return BagMoveEntry;
+        })();
+
+        base.C2S_BagLayout = (function() {
+
+            /**
+             * Properties of a C2S_BagLayout.
+             * @typedef {Object} jpt.base.C2S_BagLayout.$Properties
+             * @property {Array.<jpt.base.BagMoveEntry.$Properties>|null} [entries] C2S_BagLayout entries
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a C2S_BagLayout.
+             * @memberof jpt.base
+             * @interface IC2S_BagLayout
+             * @augments jpt.base.C2S_BagLayout.$Properties
+             * @deprecated Use jpt.base.C2S_BagLayout.$Properties instead.
+             */
+
+            /**
+             * Shape of a C2S_BagLayout.
+             * @typedef {jpt.base.C2S_BagLayout.$Properties} jpt.base.C2S_BagLayout.$Shape
+             */
+
+            /**
+             * Constructs a new C2S_BagLayout.
+             * @memberof jpt.base
+             * @classdesc Represents a C2S_BagLayout.
+             * @constructor
+             * @param {jpt.base.C2S_BagLayout.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const C2S_BagLayout = function (properties) {
+                this.entries = [];
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * C2S_BagLayout entries.
+             * @member {Array.<jpt.base.BagMoveEntry.$Properties>} entries
+             * @memberof jpt.base.C2S_BagLayout
+             * @instance
+             */
+            C2S_BagLayout.prototype.entries = $util.emptyArray;
+
+            /**
+             * Creates a new C2S_BagLayout instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {jpt.base.C2S_BagLayout.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.C2S_BagLayout} C2S_BagLayout instance
+             * @type {{
+             *   (properties: jpt.base.C2S_BagLayout.$Shape): jpt.base.C2S_BagLayout & jpt.base.C2S_BagLayout.$Shape;
+             *   (properties?: jpt.base.C2S_BagLayout.$Properties): jpt.base.C2S_BagLayout;
+             * }}
+             */
+            C2S_BagLayout.create = function(properties) {
+                return new C2S_BagLayout(properties);
+            };
+
+            /**
+             * Encodes the specified C2S_BagLayout message. Does not implicitly {@link jpt.base.C2S_BagLayout.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {jpt.base.C2S_BagLayout.$Properties} message C2S_BagLayout message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_BagLayout.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.entries != null && message.entries.length)
+                    for (let i = 0; i < message.entries.length; ++i)
+                        $root.jpt.base.BagMoveEntry.encode(message.entries[i], writer.uint32(/* id 1, wireType 2 =*/10).fork(), _depth + 1).ldelim();
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified C2S_BagLayout message, length delimited. Does not implicitly {@link jpt.base.C2S_BagLayout.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {jpt.base.C2S_BagLayout.$Properties} message C2S_BagLayout message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_BagLayout.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a C2S_BagLayout message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.C2S_BagLayout & jpt.base.C2S_BagLayout.$Shape} C2S_BagLayout
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_BagLayout.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.C2S_BagLayout();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 2)
+                                break;
+                            if (!(message.entries && message.entries.length))
+                                message.entries = [];
+                            message.entries.push($root.jpt.base.BagMoveEntry.decode(reader, reader.uint32(), $undefined, _depth + 1));
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a C2S_BagLayout message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.C2S_BagLayout & jpt.base.C2S_BagLayout.$Shape} C2S_BagLayout
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_BagLayout.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a C2S_BagLayout message.
+             * @function verify
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            C2S_BagLayout.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.entries != null && $Object.hasOwnProperty.call(message, "entries")) {
+                    if (!$Array.isArray(message.entries))
+                        return "entries: array expected";
+                    for (let i = 0; i < message.entries.length; ++i) {
+                        let error = $root.jpt.base.BagMoveEntry.verify(message.entries[i], _depth + 1);
+                        if (error)
+                            return "entries." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a C2S_BagLayout message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.C2S_BagLayout} C2S_BagLayout
+             */
+            C2S_BagLayout.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.C2S_BagLayout)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.C2S_BagLayout: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.C2S_BagLayout();
+                if (object.entries) {
+                    if (!$Array.isArray(object.entries))
+                        throw $TypeError(".jpt.base.C2S_BagLayout.entries: array expected");
+                    message.entries = $Array(object.entries.length);
+                    for (let i = 0; i < object.entries.length; ++i) {
+                        if (!$util.isObject(object.entries[i]))
+                            throw $TypeError(".jpt.base.C2S_BagLayout.entries: object expected");
+                        message.entries[i] = $root.jpt.base.BagMoveEntry.fromObject(object.entries[i], _depth + 1);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a C2S_BagLayout message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {jpt.base.C2S_BagLayout} message C2S_BagLayout
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            C2S_BagLayout.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.entries = [];
+                if (message.entries && message.entries.length) {
+                    object.entries = $Array(message.entries.length);
+                    for (let j = 0; j < message.entries.length; ++j)
+                        object.entries[j] = $root.jpt.base.BagMoveEntry.toObject(message.entries[j], options, _depth + 1);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this C2S_BagLayout to JSON.
+             * @function toJSON
+             * @memberof jpt.base.C2S_BagLayout
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            C2S_BagLayout.prototype.toJSON = function() {
+                return C2S_BagLayout.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for C2S_BagLayout
+             * @function getTypeUrl
+             * @memberof jpt.base.C2S_BagLayout
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            C2S_BagLayout.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.C2S_BagLayout";
+            };
+
+            return C2S_BagLayout;
+        })();
+
+        base.C2S_StackMerge = (function() {
+
+            /**
+             * Properties of a C2S_StackMerge.
+             * @typedef {Object} jpt.base.C2S_StackMerge.$Properties
+             * @property {number|Long|null} [srcUid] C2S_StackMerge srcUid
+             * @property {number|Long|null} [dstUid] C2S_StackMerge dstUid
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a C2S_StackMerge.
+             * @memberof jpt.base
+             * @interface IC2S_StackMerge
+             * @augments jpt.base.C2S_StackMerge.$Properties
+             * @deprecated Use jpt.base.C2S_StackMerge.$Properties instead.
+             */
+
+            /**
+             * Shape of a C2S_StackMerge.
+             * @typedef {jpt.base.C2S_StackMerge.$Properties} jpt.base.C2S_StackMerge.$Shape
+             */
+
+            /**
+             * Constructs a new C2S_StackMerge.
+             * @memberof jpt.base
+             * @classdesc Represents a C2S_StackMerge.
+             * @constructor
+             * @param {jpt.base.C2S_StackMerge.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const C2S_StackMerge = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * C2S_StackMerge srcUid.
+             * @member {number|Long} srcUid
+             * @memberof jpt.base.C2S_StackMerge
+             * @instance
+             */
+            C2S_StackMerge.prototype.srcUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * C2S_StackMerge dstUid.
+             * @member {number|Long} dstUid
+             * @memberof jpt.base.C2S_StackMerge
+             * @instance
+             */
+            C2S_StackMerge.prototype.dstUid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * Creates a new C2S_StackMerge instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {jpt.base.C2S_StackMerge.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.C2S_StackMerge} C2S_StackMerge instance
+             * @type {{
+             *   (properties: jpt.base.C2S_StackMerge.$Shape): jpt.base.C2S_StackMerge & jpt.base.C2S_StackMerge.$Shape;
+             *   (properties?: jpt.base.C2S_StackMerge.$Properties): jpt.base.C2S_StackMerge;
+             * }}
+             */
+            C2S_StackMerge.create = function(properties) {
+                return new C2S_StackMerge(properties);
+            };
+
+            /**
+             * Encodes the specified C2S_StackMerge message. Does not implicitly {@link jpt.base.C2S_StackMerge.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {jpt.base.C2S_StackMerge.$Properties} message C2S_StackMerge message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_StackMerge.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.srcUid != null && $Object.hasOwnProperty.call(message, "srcUid") && (typeof message.srcUid === "object" ? message.srcUid.low || message.srcUid.high : message.srcUid !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.srcUid);
+                if (message.dstUid != null && $Object.hasOwnProperty.call(message, "dstUid") && (typeof message.dstUid === "object" ? message.dstUid.low || message.dstUid.high : message.dstUid !== 0))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int64(message.dstUid);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified C2S_StackMerge message, length delimited. Does not implicitly {@link jpt.base.C2S_StackMerge.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {jpt.base.C2S_StackMerge.$Properties} message C2S_StackMerge message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_StackMerge.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a C2S_StackMerge message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.C2S_StackMerge & jpt.base.C2S_StackMerge.$Shape} C2S_StackMerge
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_StackMerge.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.C2S_StackMerge();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.srcUid = value;
+                            else
+                                delete message.srcUid;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.dstUid = value;
+                            else
+                                delete message.dstUid;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a C2S_StackMerge message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.C2S_StackMerge & jpt.base.C2S_StackMerge.$Shape} C2S_StackMerge
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_StackMerge.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a C2S_StackMerge message.
+             * @function verify
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            C2S_StackMerge.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.srcUid != null && $Object.hasOwnProperty.call(message, "srcUid"))
+                    if (!$util.isInteger(message.srcUid) && !(message.srcUid && $util.isInteger(message.srcUid.low) && $util.isInteger(message.srcUid.high)))
+                        return "srcUid: integer|Long expected";
+                if (message.dstUid != null && $Object.hasOwnProperty.call(message, "dstUid"))
+                    if (!$util.isInteger(message.dstUid) && !(message.dstUid && $util.isInteger(message.dstUid.low) && $util.isInteger(message.dstUid.high)))
+                        return "dstUid: integer|Long expected";
+                return null;
+            };
+
+            /**
+             * Creates a C2S_StackMerge message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.C2S_StackMerge} C2S_StackMerge
+             */
+            C2S_StackMerge.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.C2S_StackMerge)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.C2S_StackMerge: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.C2S_StackMerge();
+                if (object.srcUid != null)
+                    if (typeof object.srcUid === "object" ? object.srcUid.low || object.srcUid.high : $Number(object.srcUid) !== 0)
+                        if ($util.Long)
+                            message.srcUid = $util.Long.fromValue(object.srcUid, false);
+                        else if (typeof object.srcUid === "string")
+                            message.srcUid = $parseInt(object.srcUid, 10);
+                        else if (typeof object.srcUid === "number")
+                            message.srcUid = object.srcUid;
+                        else if (typeof object.srcUid === "object")
+                            message.srcUid = new $util.LongBits(object.srcUid.low >>> 0, object.srcUid.high >>> 0).toNumber();
+                if (object.dstUid != null)
+                    if (typeof object.dstUid === "object" ? object.dstUid.low || object.dstUid.high : $Number(object.dstUid) !== 0)
+                        if ($util.Long)
+                            message.dstUid = $util.Long.fromValue(object.dstUid, false);
+                        else if (typeof object.dstUid === "string")
+                            message.dstUid = $parseInt(object.dstUid, 10);
+                        else if (typeof object.dstUid === "number")
+                            message.dstUid = object.dstUid;
+                        else if (typeof object.dstUid === "object")
+                            message.dstUid = new $util.LongBits(object.dstUid.low >>> 0, object.dstUid.high >>> 0).toNumber();
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a C2S_StackMerge message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {jpt.base.C2S_StackMerge} message C2S_StackMerge
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            C2S_StackMerge.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults) {
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.srcUid = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.srcUid = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.dstUid = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.dstUid = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                }
+                if (message.srcUid != null && $Object.hasOwnProperty.call(message, "srcUid"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.srcUid = typeof message.srcUid === "number" ? $BigInt(message.srcUid) : $util.Long.fromBits(message.srcUid.low >>> 0, message.srcUid.high >>> 0, false).toBigInt();
+                    else if (typeof message.srcUid === "number")
+                        object.srcUid = options.longs === $String ? $String(message.srcUid) : message.srcUid;
+                    else
+                        object.srcUid = options.longs === $String ? $util.Long.prototype.toString.call(message.srcUid) : options.longs === $Number ? new $util.LongBits(message.srcUid.low >>> 0, message.srcUid.high >>> 0).toNumber() : message.srcUid;
+                if (message.dstUid != null && $Object.hasOwnProperty.call(message, "dstUid"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.dstUid = typeof message.dstUid === "number" ? $BigInt(message.dstUid) : $util.Long.fromBits(message.dstUid.low >>> 0, message.dstUid.high >>> 0, false).toBigInt();
+                    else if (typeof message.dstUid === "number")
+                        object.dstUid = options.longs === $String ? $String(message.dstUid) : message.dstUid;
+                    else
+                        object.dstUid = options.longs === $String ? $util.Long.prototype.toString.call(message.dstUid) : options.longs === $Number ? new $util.LongBits(message.dstUid.low >>> 0, message.dstUid.high >>> 0).toNumber() : message.dstUid;
+                return object;
+            };
+
+            /**
+             * Converts this C2S_StackMerge to JSON.
+             * @function toJSON
+             * @memberof jpt.base.C2S_StackMerge
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            C2S_StackMerge.prototype.toJSON = function() {
+                return C2S_StackMerge.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for C2S_StackMerge
+             * @function getTypeUrl
+             * @memberof jpt.base.C2S_StackMerge
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            C2S_StackMerge.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.C2S_StackMerge";
+            };
+
+            return C2S_StackMerge;
         })();
 
         base.C2S_EquipItem = (function() {

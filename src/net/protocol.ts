@@ -79,6 +79,18 @@ export function switchWeapon(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ switchWeapon: {} });
 }
 
+/** 背包布局上报（客户端网格权威）：entries = 受影响物品的最终格子（绝对位置） */
+export function bagLayout(entries: { uid: number; slot: number }[]): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        bagLayout: { entries: entries.map((e) => ({ uid: e.uid, slot: e.slot })) },
+    });
+}
+
+/** 药水堆叠合并：src 并入 dst（服务端校验同种可叠后计数并入、src 软删） */
+export function stackMerge(srcUid: number, dstUid: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ stackMerge: { srcUid, dstUid } });
+}
+
 /** 拾取地面物品（服务端按距离裁决 + 入背包 + 广播消失） */
 export function pickupItem(groundItemId: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({

@@ -225,6 +225,31 @@ export function removeInventoryItem(uid: number): void {
   commit({ inventory: { ...cur, items: cur.items.filter((x) => x.uid !== uid) } });
 }
 
+/** 本地即时背包换格（客户端网格权威，随即上报布局；服务端只落库不重建） */
+export function localBagMove(uid: number, toSlot: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) return;
+  const items = cur.items.map((x) => (x.uid === uid ? { ...x, slot: toSlot } : x));
+  commit({ inventory: { ...cur, items } });
+}
+
+/** 本地即时药水合并：src 并入 dst（随即上报 StackMerge） */
+export function localStackMerge(srcUid: number, dstUid: number): void {
+  const cur = snapshot.inventory;
+  if (!cur) return;
+  const src = cur.items.find((x) => x.uid === srcUid);
+  const dst = cur.items.find((x) => x.uid === dstUid);
+  if (!src || !dst) return;
+  commit({
+    inventory: {
+      ...cur,
+      items: cur.items
+        .filter((x) => x.uid !== srcUid)
+        .map((x) => (x.uid === dstUid ? { ...x, count: x.count + src.count } : x)),
+    },
+  });
+}
+
 /** 金币变更。 */
 export function setInventoryGold(gold: number): void {
   const cur = snapshot.inventory;

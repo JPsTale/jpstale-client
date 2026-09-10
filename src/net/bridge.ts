@@ -10,6 +10,8 @@ import {
   dropItem,
   switchWeapon,
   pickupItem,
+  bagLayout,
+  stackMerge,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -176,6 +178,16 @@ export function sendDropItem(uid: number, count = 1): void {
 
 export function sendPickupItem(groundItemId: number): void {
   send(pickupItem(groundItemId));
+}
+
+/** 背包布局上报（客户端网格权威）：一次手势后受影响物品最终格子 */
+export function sendBagLayout(entries: { uid: number; slot: number }[]): void {
+  send(bagLayout(entries));
+}
+
+/** 药水堆叠合并 */
+export function sendStackMerge(srcUid: number, dstUid: number): void {
+  send(stackMerge(srcUid, dstUid));
 }
 
 export function sendSwitchWeapon(): void {

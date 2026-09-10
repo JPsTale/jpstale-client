@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { subscribeGame, getGameSnapshot, type GameItem } from '../../app/gameStore.js';
+import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, type GameItem } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import {
   itemDefById,
   itemIconUrl,
 } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
-import { sendInventoryMove, sendEquipItem, sendUnequipItem, sendDropItem, sendSwitchWeapon } from '../../net/bridge.js';
+import { sendEquipItem, sendUnequipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge } from '../../net/bridge.js';
 import { useItemHover, ItemInfo } from './ItemInfo.js';
 
 // 画布常量（对齐服务端 ItemLocations）
@@ -383,14 +383,21 @@ export default function ItemPanel() {
     }
     if (held.location !== 0) return;
     if (targetSlot === held.slot) { setHeldUid(null); return; }
-    // 原版语义：空位放 / 同种合并 / 单件换手(被撞件成为下一手持物)
+    // 客户端网格权威：本地即时落子并渲染，随后上报布局；药水合并走 StackMerge
     const t = bagTargetFor(held, targetSlot, items);
     console.log('[bag] 放置 held uid=', held.uid, '来自slot=', held.slot, '→目标slot=', targetSlot,
       'xy=', JSON.stringify(slotXY(targetSlot)), 'mode=', t.mode, 'conflict=', t.conflict?.uid);
     if (t.mode === 'bad') return;
-    sendInventoryMove(held.uid, 0, targetSlot);
+    if (t.mode === 'merge' && t.conflict) {
+      localStackMerge(held.uid, t.conflict.uid);
+      sendStackMerge(held.uid, t.conflict.uid);
+      setHeldUid(null);
+      return;
+    }
+    localBagMove(held.uid, targetSlot);
+    sendBagLayout([{ uid: held.uid, slot: targetSlot }]);
     if (t.mode === 'swap' && t.conflict) {
-      // 服务端把被撞件腾到空位；客户端乐观地把"换到的下一件"拿起继续拖
+      // 换手：被撞件"拿起"（客户端本地语义；其服务端槽位保持到下次放置才上报）
       setHeldUid(t.conflict.uid);
     } else {
       setHeldUid(null);
