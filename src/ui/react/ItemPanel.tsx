@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, type GameItem } from '../../app/gameStore.js';
+import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, removeInventoryItem, type GameItem } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import {
   itemDefById,
@@ -342,6 +342,7 @@ export default function ItemPanel() {
   const [overBag, setOverBag] = useState(false);
   // 穿装备交换：等待服务端 ack 的挂起状态（成功=旧件保持手持；失败=还原）
   const pendingSwap = useRef<{ newUid: number; oldUid: number | null } | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   // 拿起/放下时信息框消失（原版：拖起时不再显示 hover 信息）
   useEffect(() => {
     if (heldUid != null) hoverHide();
@@ -362,6 +363,25 @@ export default function ItemPanel() {
       pendingSwap.current = null;
     }
   }, [snap.inventory]);
+  // 拿起中：点击背包面板外区域 → 丢到地面（原版 ThrowItem；不是摧毁）
+  useEffect(() => {
+    if (heldUid == null) return;
+    const onDown = (e: PointerEvent) => {
+      const el = panelRef.current;
+      const t = e.target as Node | null;
+      if (el && t && el.contains(t)) return; // 面板内交互照常
+      const it = getGameSnapshot().inventory?.items.find((x) => x.uid === heldUid);
+      if (!it) { setHeldUid(null); return; }
+      console.log('[bag] 丢到地面 uid=', it.uid, 'count=', it.count);
+      removeInventoryItem(it.uid);      // 本地即时移除
+      sendDropItem(it.uid, it.count || 1);
+      setHeldUid(null);
+      e.stopPropagation();
+      e.preventDefault();
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, [heldUid]);
   // 穿装备失败（服务端 error）：还原手持（旧件重新显示，新件回背包）
   useEffect(() => {
     const onFail = () => {
@@ -460,21 +480,9 @@ export default function ItemPanel() {
     }
   }
 
-  function dropHeld() {
-    if (!held) return;
-    sendDropItem(held.uid, held.count || 1);
-    setHeldUid(null);
-  }
-
-  function returnHeld() {
-    // 取消拿起：无操作，原物品仍在原位（服务端未变）；换手乐观态也还原为放手
-    setHeldUid(null);
-  }
-
   return (
     <>
-      <div className="jp-items">
-
+      <div className="jp-items" ref={panelRef}>
         <div className="jp-items-left">
           <BagCanvas
             items={items}
@@ -485,16 +493,9 @@ export default function ItemPanel() {
             onHover={hoverShow}
             onHoverEnd={hoverHide}
           />
-          {/* 底部功能区 */}
+          {/* 底部功能区（拿起时不显示物品名/丢弃按钮；丢到地面=点击面板外区域） */}
           <div className="jp-items-foot">
             <span className="jp-items-gold">{t('item.gold')}: {inventory.gold}</span>
-            {held ? (
-              <span className="jp-items-heldinfo">
-                <b>{heldDef?.name ?? `#${held.itemlistId}`}</b>
-                <button type="button" className="jp-items-act" onClick={dropHeld}>{t('item.drop')}</button>
-                <button type="button" className="jp-items-act" onClick={returnHeld}>{t('panel.close')}</button>
-              </span>
-            ) : null}
             <button type="button" className="jp-items-switch" onClick={() => sendSwitchWeapon()} title="W">⇄</button>
           </div>
         </div>
