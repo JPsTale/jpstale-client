@@ -1570,7 +1570,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   const npcs = new Map<number, NpcActor>();
   const npcSpawning = new Set<number>();
-  let npcWaraxeLogged = false;
   const pendingNpcAppears: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
 
   function spawnNpc(info: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }): void {
@@ -1584,27 +1583,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     void (async () => {
       try {
         const result = await loadMonsterModel(info.modelFile);
-        console.log('[NPC debug] meshes:', result.meshes.map(m => `${m.userData.nodeName}:${m.geometry.attributes.position.count}`).join(', '));
-        {
-          const w = result.meshes.find(m => m.userData.nodeName === 'TguardWeapon');
-          if (w) {
-            const si = w.geometry.attributes.skinIndex;
-            const boneIdx = si.getX(0);
-            const bone = result.bones[boneIdx];
-            const wp = new THREE.Vector3(); bone.getWorldPosition(wp);
-            console.log('[NPC debug] weapon bone idx=' + boneIdx + ' name=' + (bone && bone.name) + ' worldPos=' + wp.toArray().map(v => v.toFixed(1)));
-            w.geometry.computeBoundingBox();
-            const c = new THREE.Vector3(); w.geometry.boundingBox!.getCenter(c);
-            const s = new THREE.Vector3(); w.geometry.boundingBox!.getSize(s);
-            console.log('[NPC debug] weapon bbox center=' + c.toArray().map(v => v.toFixed(1)) + ' size=' + s.toArray().map(v => v.toFixed(1)));
-          } else {
-            console.log('[NPC debug] 无 TguardWeapon mesh');
-          }
-        }
-        // [临时调试] 纯蓝不透明材质验证武器 mesh 是否加载；验证后删除
-        for (const m of result.meshes) {
-          m.material = new THREE.MeshBasicMaterial({ color: 0x4488ff, side: THREE.DoubleSide });
-        }
         await loadTextures(result.texturesToLoad);
         if (npcs.has(nid)) return;
 
@@ -1615,16 +1593,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.rotation.y = info.angle || 0;
         root.userData.npcId = nid; // 光标 Talk/点选 Chase 命中用
         scene!.add(root);
-        {
-          const w = result.meshes.find(m => m.userData.nodeName === 'TguardWeapon');
-          if (w) {
-            const plain = new THREE.Mesh(w.geometry, new THREE.MeshBasicMaterial({ color: 0xff0000, side: THREE.DoubleSide }));
-            plain.frustumCulled = false;
-            plain.position.set(0, 50, 0);
-            root.add(plain);
-            console.log('[NPC debug] 武器 geometry 非蒙皮红 Mesh 已加到 NPC 上方 y+50');
-          }
-        }
 
         let actorObj!: NpcActor;
         const animState = createAnimStateMachine({
@@ -1693,12 +1661,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
       applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
+      // 关键：手动更新每个骨骼的 matrixWorld。Skeleton.update() 只读 matrixWorld 算 boneMatrices，
+      // 不会更新 matrixWorld；孤立根骨骼（如武器 waraxe，不在场景图）否则会停在 bind 值 → 武器不显示。
+      actor.bones.forEach(b => b.updateMatrixWorld(true));
       actor.skeleton.update();
-      if (!npcWaraxeLogged && actor.bones.length > 49) {
-        npcWaraxeLogged = true;
-        const wb = actor.bones[49];
-        console.log('[NPC debug] bone[49] name=' + wb.name + ' parent=' + (wb.parent ? wb.parent.name : '(null)') + ' matrixWorld=' + wb.matrixWorld.elements.map(v => Number(v.toFixed(2))));
-      }
     }
   }
 
@@ -1920,6 +1886,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
         const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
         applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
+        actor.bones.forEach(b => b.updateMatrixWorld(true));
         actor.skeleton.update();
       }
     }
@@ -2122,6 +2089,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
         const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
         applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
+        actor.bones.forEach(b => b.updateMatrixWorld(true));
         actor.skeleton.update();
       }
     }
@@ -2346,6 +2314,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
         const skelFrames = evalSkeleton(animSmb, animFrame, false);
         applyToBones(bones, skelFrames, tmp, posV, quatQ, sclV);
+        bones.forEach(b => b.updateMatrixWorld(true));
         skeleton.update();
       }
     }

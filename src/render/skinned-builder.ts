@@ -99,7 +99,11 @@ export function buildSkeleton(smb: SmbData, rawMode: boolean): SkeletonResult {
   skeleton.calculateInverses();
 
   const skeletonGroup = new THREE.Group();
-  skeletonGroup.add(bones[0]);
+  // 所有 root 骨骼（无 parent）都加入，确保孤立根骨骼（如武器 waraxe）的 matrixWorld 随动画/场景更新。
+  // 只加 bones[0] 会让其他根骨骼脱离场景图 → 蒙皮矩阵僵死 → 武器等不显示。
+  for (const b of bones) {
+    if (!b.parent) skeletonGroup.add(b);
+  }
   bones.forEach(b => { b.updateMatrixWorld(true); });
 
   return { bones, skeleton, skeletonGroup, boneByObj, bindLocalByName, bindWorldByName, boneIndexByName };
