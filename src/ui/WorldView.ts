@@ -1615,6 +1615,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.rotation.y = info.angle || 0;
         root.userData.npcId = nid; // 光标 Talk/点选 Chase 命中用
         scene!.add(root);
+        {
+          const w = result.meshes.find(m => m.userData.nodeName === 'TguardWeapon');
+          if (w) {
+            w.frustumCulled = false;
+            w.position.set(0, 100, 0);
+            console.log('[NPC debug] 武器 mesh 移到 NPC 头顶上方 y+100（排查遮挡）');
+          }
+        }
 
         let actorObj!: NpcActor;
         const animState = createAnimStateMachine({
