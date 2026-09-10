@@ -1583,14 +1583,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     void (async () => {
       try {
         const result = await loadMonsterModel(info.modelFile);
-        // [临时调试] wireframe 渲染验证模型完整性（武器 mesh 是否加载）；验证后删除
+        // [临时调试] 纯蓝不透明材质验证武器 mesh 是否加载；验证后删除
         for (const m of result.meshes) {
-          const mats = Array.isArray(m.material) ? m.material : [m.material];
-          for (const mat of mats) {
-            (mat as THREE.MeshPhongMaterial).wireframe = true;
-            (mat as THREE.MeshPhongMaterial).transparent = false;
-            (mat as THREE.MeshPhongMaterial).opacity = 1;
-          }
+          m.material = new THREE.MeshBasicMaterial({ color: 0x4488ff, side: THREE.DoubleSide });
         }
         await loadTextures(result.texturesToLoad);
         if (npcs.has(nid)) return;
