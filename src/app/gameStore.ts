@@ -55,6 +55,7 @@ export interface GameCharacter {
   avoid: number;
   shootingRange: number;
   maxWeight: number;
+  currentWeight: number;
   resBionic: number;
   resPoison: number;
   resFire: number;

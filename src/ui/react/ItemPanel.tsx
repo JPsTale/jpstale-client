@@ -404,6 +404,7 @@ export default function ItemPanel() {
 
   const items = inventory.items;
   const held = heldUid != null ? items.find((x) => x.uid === heldUid) ?? null : null;
+  const overload = !!snap.character && (snap.character.currentWeight ?? 0) > (snap.character.maxWeight ?? 0);
   const heldDef = held ? defOf(held) : undefined;
 
   /** 目标装备槽是否允许当前 held 物品 */
@@ -510,6 +511,9 @@ export default function ItemPanel() {
           {/* 底部功能区（拿起时不显示物品名/丢弃按钮；丢到地面=点击面板外区域） */}
           <div className="jp-items-foot">
             <span className="jp-items-gold">{t('item.gold')}: {inventory.gold}</span>
+            <span className={overload ? 'jp-items-wt jp-items-wt-over' : 'jp-items-wt'}>
+              {t('item.weight')}: {snap.character?.currentWeight ?? 0}/{snap.character?.maxWeight ?? 0}
+            </span>
             <button type="button" className="jp-items-switch" onClick={() => sendSwitchWeapon()} title="W">⇄</button>
           </div>
         </div>

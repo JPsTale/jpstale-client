@@ -63,6 +63,7 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     avoid: e.avoid || 0,
     shootingRange: e.shootingRange || 0,
     maxWeight: e.maxWeight || 0,
+    currentWeight: e.currentWeight ?? 0,
     resBionic: e.resBionic || 0,
     resPoison: e.resPoison || 0,
     resFire: e.resFire || 0,

@@ -14012,6 +14012,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [hpRegen] S2C_CharacterStatus hpRegen
              * @property {number|null} [mpRegen] S2C_CharacterStatus mpRegen
              * @property {number|null} [stmRegen] S2C_CharacterStatus stmRegen
+             * @property {number|null} [currentWeight] S2C_CharacterStatus currentWeight
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -14380,6 +14381,14 @@ export const jpt = $root.jpt = (() => {
             S2C_CharacterStatus.prototype.stmRegen = 0;
 
             /**
+             * S2C_CharacterStatus currentWeight.
+             * @member {number} currentWeight
+             * @memberof jpt.base.S2C_CharacterStatus
+             * @instance
+             */
+            S2C_CharacterStatus.prototype.currentWeight = 0;
+
+            /**
              * Creates a new S2C_CharacterStatus instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_CharacterStatus
@@ -14495,6 +14504,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 41, wireType 5 =*/333).float(message.mpRegen);
                 if (message.stmRegen != null && $Object.hasOwnProperty.call(message, "stmRegen") && !$Object.is(message.stmRegen, 0))
                     writer.uint32(/* id 42, wireType 5 =*/341).float(message.stmRegen);
+                if (message.currentWeight != null && $Object.hasOwnProperty.call(message, "currentWeight") && message.currentWeight !== 0)
+                    writer.uint32(/* id 43, wireType 0 =*/344).int32(message.currentWeight);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -14930,6 +14941,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.stmRegen;
                             continue;
                         }
+                    case 43: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.currentWeight = value;
+                            else
+                                delete message.currentWeight;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -15104,6 +15124,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.stmRegen != null && $Object.hasOwnProperty.call(message, "stmRegen"))
                     if (typeof message.stmRegen !== "number")
                         return "stmRegen: number expected";
+                if (message.currentWeight != null && $Object.hasOwnProperty.call(message, "currentWeight"))
+                    if (!$util.isInteger(message.currentWeight))
+                        return "currentWeight: integer expected";
                 return null;
             };
 
@@ -15279,6 +15302,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.stmRegen != null)
                     if (!$Object.is($Number(object.stmRegen), 0))
                         message.stmRegen = $Number(object.stmRegen);
+                if (object.currentWeight != null)
+                    if ($Number(object.currentWeight) !== 0)
+                        message.currentWeight = object.currentWeight | 0;
                 return message;
             };
 
@@ -15358,6 +15384,7 @@ export const jpt = $root.jpt = (() => {
                     object.hpRegen = 0;
                     object.mpRegen = 0;
                     object.stmRegen = 0;
+                    object.currentWeight = 0;
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -15463,6 +15490,8 @@ export const jpt = $root.jpt = (() => {
                     object.mpRegen = options.json && !$isFinite(message.mpRegen) ? $String(message.mpRegen) : message.mpRegen;
                 if (message.stmRegen != null && $Object.hasOwnProperty.call(message, "stmRegen"))
                     object.stmRegen = options.json && !$isFinite(message.stmRegen) ? $String(message.stmRegen) : message.stmRegen;
+                if (message.currentWeight != null && $Object.hasOwnProperty.call(message, "currentWeight"))
+                    object.currentWeight = message.currentWeight;
                 return object;
             };
 

@@ -276,6 +276,7 @@
   "item": {
     "bag": "背包",
     "gold": "金币",
+    "weight": "负重",
     "equip": "装备",
     "unequip": "卸下",
     "drop": "丢弃",

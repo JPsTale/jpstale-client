@@ -276,6 +276,7 @@
   "item": {
     "bag": "Bag",
     "gold": "Gold",
+    "weight": "Weight",
     "equip": "Equip",
     "unequip": "Unequip",
     "drop": "Drop",

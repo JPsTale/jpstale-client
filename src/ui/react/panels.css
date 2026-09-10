@@ -719,6 +719,8 @@
   min-height: 22px;
 }
 .jp-items-gold { font-size: 13px; color: #ffd98a; font-variant-numeric: tabular-nums; }
+.jp-items-wt { font-size: 13px; color: #c8ccd2; font-variant-numeric: tabular-nums; }
+.jp-items-wt-over { color: #ff6b5e; font-weight: 600; }
 .jp-items-actions { display: inline-flex; align-items: center; gap: 6px; }
 .jp-items-slotpick {
   font-size: 12px;
