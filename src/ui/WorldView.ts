@@ -1583,6 +1583,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     void (async () => {
       try {
         const result = await loadMonsterModel(info.modelFile);
+        console.log('[NPC debug] meshes:', result.meshes.map(m => `${m.userData.nodeName}:${m.geometry.attributes.position.count}`).join(', '));
         // [临时调试] 纯蓝不透明材质验证武器 mesh 是否加载；验证后删除
         for (const m of result.meshes) {
           m.material = new THREE.MeshBasicMaterial({ color: 0x4488ff, side: THREE.DoubleSide });
