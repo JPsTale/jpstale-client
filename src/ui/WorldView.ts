@@ -1570,6 +1570,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   const npcs = new Map<number, NpcActor>();
   const npcSpawning = new Set<number>();
+  let npcWaraxeLogged = false;
   const pendingNpcAppears: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
 
   function spawnNpc(info: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }): void {
@@ -1683,6 +1684,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
       applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
       actor.skeleton.update();
+      if (!npcWaraxeLogged && actor.bones.length > 49) {
+        npcWaraxeLogged = true;
+        const wb = actor.bones[49];
+        console.log('[NPC debug] bone[49] name=' + wb.name + ' parent=' + (wb.parent ? wb.parent.name : '(null)') + ' matrixWorld=' + wb.matrixWorld.elements.map(v => Number(v.toFixed(2))));
+      }
     }
   }
 
