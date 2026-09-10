@@ -54,7 +54,7 @@ export interface AnimStateMachine {
   triggerSkill: (skillIndex?: number | null) => boolean;
   triggerWalk: () => boolean;
   triggerRun: () => boolean;
-  triggerIdle: () => boolean;
+  triggerIdle: (excludeCurrent?: boolean) => boolean;
   triggerFallDown: () => boolean;
   triggerFallStand: () => boolean;
   triggerFallDamage: () => boolean;
@@ -206,8 +206,8 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
-  function triggerIdle(): boolean {
-    const motion = findMotionForState(STATE.STAND, false);
+  function triggerIdle(excludeCurrent = false): boolean {
+    const motion = findMotionForState(STATE.STAND, excludeCurrent);
     if (!motion) return false;
     currentState = STATE.STAND;
     applyMotion(motion);

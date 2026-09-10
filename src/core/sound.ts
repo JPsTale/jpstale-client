@@ -24,6 +24,7 @@ let kind: UiScreenKind = 'none';
 let music: HTMLAudioElement | null = null;
 let curUrl = '';
 let unlocked = false;
+let hidden = false; // 页面不可见（最小化/切后台）时静音
 
 function getMusic(): HTMLAudioElement {
   if (!music) {
@@ -45,7 +46,7 @@ function applyMusic(): void {
   const url = kindUrl(kind);
   const m = getMusic();
   if (url === curUrl) {
-    if (url && unlocked && m.paused) m.play().catch(() => { });
+    if (url && unlocked && !hidden && m.paused) m.play().catch(() => { });
     return;
   }
   curUrl = url;
@@ -56,14 +57,26 @@ function applyMusic(): void {
     return;
   }
   m.src = url;
-  if (unlocked) m.play().catch(() => { });
+  if (unlocked && !hidden) m.play().catch(() => { });
 }
 
 function unlock(): void {
   unlocked = true;
   const m = getMusic();
-  if (curUrl && m.paused) m.play().catch(() => { });
+  if (curUrl && !hidden && m.paused) m.play().catch(() => { });
 }
+
+// 页面最小化/切后台（visibilitychange）静音，回前台恢复（对齐 map-audio 的 BGM 处理）
+function onVisibilityChange(): void {
+  hidden = document.visibilityState === 'hidden';
+  const m = getMusic();
+  if (hidden) {
+    m.pause();
+  } else if (curUrl && unlocked) {
+    m.play().catch(() => { });
+  }
+}
+document.addEventListener('visibilitychange', onVisibilityChange);
 
 const sfxCache = new Map<string, HTMLAudioElement>();
 function playSfx(url: string): void {

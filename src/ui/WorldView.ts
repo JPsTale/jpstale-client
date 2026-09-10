@@ -13,6 +13,7 @@ import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
+import { setMaxAnisotropy } from '../render/texture-loader.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
@@ -556,6 +557,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function ensure3D(): void {
     if (renderer) return;
     renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+    setMaxAnisotropy(renderer.capabilities.getMaxAnisotropy());
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(root.clientWidth, root.clientHeight, false);
     renderer.domElement.style.width = '100%';
@@ -694,6 +696,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const tex = new THREE.DataTexture(new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat);
       tex.flipY = true;
       tex.colorSpace = THREE.SRGBColorSpace;
+      if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
       tex.needsUpdate = true;
       return tex;
     } catch { return null; }
@@ -1563,6 +1566,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState: ReturnType<typeof createAnimStateMachine>;
     motionList: MotionInfo[];
     animFrame: number;
+    standSwitchAt: number; // 下次随机切换 STAND 动画的时间（ms）
   }
   const npcs = new Map<number, NpcActor>();
   const npcSpawning = new Set<number>();
@@ -1614,6 +1618,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState,
           motionList: result.motionList,
           animFrame: 0,
+          standSwitchAt: performance.now() + 3000 + Math.random() * 5000,
         };
         npcs.set(nid, actorObj);
         animState.triggerIdle();
@@ -1640,9 +1645,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     npcSpawning.delete(npcId);
   }
 
-  /** 每帧：NPC 仅播 idle 动画（静态，无位置插值） */
+  /** 每帧：NPC 仅播 idle 动画（静态，无位置插值）；STAND 播一段时间后随机切换另一个 STAND（更鲜活） */
   function updateNpcs(): void {
+    const now = performance.now();
     for (const actor of npcs.values()) {
+      // 多 STAND 随机切换：STAND 态播 3~8s 后随机换另一个 STAND（排除当前）
+      if (actor.animState.getCurrentState() === actor.animState.STATE.STAND && now >= actor.standSwitchAt) {
+        actor.standSwitchAt = now + 3000 + Math.random() * 5000;
+        actor.animState.triggerIdle(true);
+      }
       const motion = actor.animState.getCurrentMotion();
       if (!motion) continue;
       actor.animFrame += 80;
