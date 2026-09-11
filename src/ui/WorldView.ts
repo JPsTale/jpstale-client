@@ -233,9 +233,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   /** 诊断（临时）：步长采样主 framebuffer，统计三类目标色像素，判定光圈是否落在屏幕上。 */
   function hoverOutlineScanDiag(): void {
     try {
-      const gl = renderer.getContext() as WebGL2RenderingContext;
-      const w = Math.floor(renderer.domElement.width * renderer.getPixelRatio());
-      const h = Math.floor(renderer.domElement.height * renderer.getPixelRatio());
+      const r = renderer;
+      if (!r) return;
+      const gl = r.getContext() as WebGL2RenderingContext;
+      const w = Math.floor(r.domElement.width * r.getPixelRatio());
+      const h = Math.floor(r.domElement.height * r.getPixelRatio());
       const full = new Uint8Array(w * h * 4);
       gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, full);
       const step = 6;
