@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
-import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackMonster } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackStart, attackHit } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -36,8 +36,9 @@ const worldView = createWorldView(app, {
   onMoveInt: (angle, mode, x, y, z, anim) => sendMoveIntent(angle, mode, x, y, z, anim),
   // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
   onPickupGroundItem: (groundItemId) => sendPickupItem(groundItemId),
-  // 自机普攻意图 → C2S_Attack（服务端按距离/攻速冷却权威裁决 + 广播 S2C_AttackResult）
-  onAttackMonster: (monsterId) => send(attackMonster(monsterId)),
+  // 攻击起手（挥拳开始）→ C2S_AttackStart；命中帧（每段）→ C2S_AttackHit。服务端权威裁决+结算。
+  onAttackStart: (monsterId) => send(attackStart(monsterId)),
+  onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
 });
 
 // 转发客户端权威移动（含位置 + 可选动画覆盖）
@@ -621,15 +622,18 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.monsterDeath(Number(msg.monsterDeath!.monsterId));
       break;
     }
+    case 'attackStart': {
+      // 起手广播：远端玩家立刻挥拳（自机由本地攻击循环驱动，内部忽略）
+      const as = msg.attackStart!;
+      worldView.signalAttackStart(Number(as.attackerId ?? 0), Number(as.targetId ?? 0), Number(as.attackSpeed ?? 0));
+      break;
+    }
     case 'attackResult': {
-      // 攻击结算（服务端只广播 damage/暴击/missed，无 currentHp）：
-      // 命中 → 目标怪物飘伤害+自减血；missed → 头顶 MISS；自机出手 → 战斗窗口
+      // 攻击结算（命中帧逐段）：目标怪物飘伤害+自减血；missed → 头顶 MISS
       const ar = msg.attackResult!;
       const attackerId = Number(ar.attackerId ?? 0);
       const targetId = Number(ar.targetId ?? 0);
       if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
-      // 旁观同步：远端玩家挥拳（按攻速变速）+ 朝目标怪转向；自机由本地攻击循环驱动（内部忽略）
-      worldView.signalAttack(attackerId, targetId, Number(ar.attackSpeed ?? 0));
       if (ar.missed) {
         worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false);
       } else {

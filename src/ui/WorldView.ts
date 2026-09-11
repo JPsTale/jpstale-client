@@ -84,10 +84,10 @@ export interface WorldView {
   /** 自机发起攻击 → 进入 3 秒战斗窗口（玩家血条显示） */
   markSelfCombat(): void;
   /**
-   * S2C_AttackResult 旁观同步：attackerId 为视野内远端玩家 → 触发其挥拳动画（按 attackSpeed 变速）+ 朝 targetId 怪转向。
+   * S2C_AttackStart 旁观同步：attackerId 为视野内远端玩家 → 触发其挥拳动画（按 attackSpeed 变速）+ 朝 targetId 怪转向。
    * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动。
    */
-  signalAttack(attackerId: number, targetId: number, attackSpeed: number): void;
+  signalAttackStart(attackerId: number, targetId: number, attackSpeed: number): void;
   /**
    * S2C_Damage 受击硬直：targetId 为自机 → 站立/走/跑时播受击动画（攻击/技能中不打断）；
    * 为远端玩家 → 同规则作用到该 actor。damage<=0（抵抗/吸收）不播。
@@ -147,8 +147,10 @@ export interface WorldViewOpts {
   onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim?: number) => void;
   /** 点击地面物品（拾取意图）→ main.ts 发 C2S_PickupItem。拾取距离由服务端权威裁决。 */
   onPickupGroundItem?: (groundItemId: number) => void;
-  /** 自机普攻意图 → main.ts 发 C2S_Attack(targetId)。服务端按距离/攻速冷却权威裁决。 */
-  onAttackMonster?: (monsterId: number) => void;
+  /** 攻击起手（挥拳开始）→ main.ts 发 C2S_AttackStart(targetId)。 */
+  onAttackStart?: (monsterId: number) => void;
+  /** 命中帧（每段一次）→ main.ts 发 C2S_AttackHit(targetId, hitIndex)。 */
+  onAttackHit?: (monsterId: number, hitIndex: number) => void;
 }
 
 // 动画状态 wire token（与 S2C_PlayerMove.anim_state / C2S anim_state 同义）
@@ -264,6 +266,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let animFrame = 0;
   // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
   let selfAnimRate = 1;
+  // 本次挥拳的命中帧跟踪：motion + 目标 + 事件帧（相对 startFrame×160，非零）+ 已触发段数
+  let selfAttackMotion: MotionInfo | null = null;
+  let selfAttackTargetId = 0;
+  let selfAttackEventFrames: number[] = [];
+  let selfAttackHitFired = 0;
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
   // 进图加载 hooks（show() 每次重置；首帧渲染后触发 onReady，供 main.ts 收起加载页）
@@ -2160,11 +2167,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
-   * S2C_AttackResult 旁观同步（design-player-combat.md §6.5）：
-   * attackerId 为视野内远端玩家 → 触发挥拳（按 attackSpeed 对应时长变速）+ 朝 targetId 怪转向。
+   * S2C_AttackStart 旁观同步（design-player-combat.md §6.5）：
+   * attackerId 为视野内远端玩家 → 起手即触发挥拳（按 attackSpeed 对应时长变速）+ 朝 targetId 怪转向。
    * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动，避免双重触发。
    */
-  function signalAttack(attackerId: number, targetId: number, attackSpeed: number): void {
+  function signalAttackStart(attackerId: number, targetId: number, attackSpeed: number): void {
     if (attackerId === selfPlayerId) return;
     const actor = remotes.get(attackerId);
     if (!actor) return;
@@ -2942,6 +2949,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用触发攻击时按攻速设的 selfAnimRate
         if (animState.getCurrentState() !== animState.STATE.ATTACK) selfAnimRate = 1;
         animFrame += ANIM_UNITS_PER_SEC * selfAnimRate * Math.min(dt, 0.1);
+        // 命中帧检测（原版 exm character.cpp:2631）：compFrame 跨过 eventFrame[i] → 发该段 C2S_AttackHit
+        if (animState.getCurrentState() === animState.STATE.ATTACK && selfAttackMotion) {
+          const compFrame = animFrame - selfAttackMotion.startFrame * 160;
+          while (selfAttackHitFired < selfAttackEventFrames.length
+                 && compFrame >= selfAttackEventFrames[selfAttackHitFired]) {
+            opts?.onAttackHit?.(selfAttackTargetId, selfAttackHitFired);
+            selfAttackHitFired++;
+          }
+        }
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (animFrame >= endFrame) {
@@ -3087,8 +3103,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 非攻击/技能/受击中 → 发起下一次挥拳（普攻动画）
         if (animState.triggerAttack(true)) {
           const m = animState.getCurrentMotion();
-          if (m) selfAnimRate = attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
-          opts?.onAttackMonster?.(moveTarget.id);
+          const targetId = moveTarget.id;
+          if (m) {
+            selfAnimRate = attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
+            // 记录本次挥拳的命中帧（非零 eventFrame，相对 startFrame×160；原版最多 4 段）
+            selfAttackMotion = m;
+            selfAttackTargetId = targetId;
+            selfAttackEventFrames = Array.from(m.eventFrame).filter((f) => f > 0);
+            selfAttackHitFired = 0;
+            // 无命中帧数据 → 兜底：起手后立即结算 1 段
+            if (selfAttackEventFrames.length === 0) {
+              opts?.onAttackHit?.(targetId, 0);
+            }
+          }
+          // 起手广播（旁观者立刻挥拳）；伤害在命中帧由 onAttackHit 结算
+          opts?.onAttackStart?.(targetId);
         }
       }
     }
@@ -3325,7 +3354,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     markSelfCombat,
     applyUnitHp,
     applyMonsterHit,
-    signalAttack,
+    signalAttackStart,
     onTakeDamage,
     showFloater,
     applyPlayerMove: (playerId, x, y, z, angle, animState) => {

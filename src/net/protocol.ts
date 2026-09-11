@@ -100,10 +100,17 @@ export function pickupItem(groundItemId: number): jpt.base.ClientMessage.$Proper
     });
 }
 
-/** 普通攻击指定怪物（服务端按距离/攻速冷却裁决 + 广播 S2C_AttackResult） */
-export function attackMonster(targetId: number): jpt.base.ClientMessage.$Properties {
+/** 攻击起手（挥拳开始）：只广播开始攻击，伤害在命中帧结算 */
+export function attackStart(targetId: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        attack: { targetId },
+        attackStart: { targetId },
+    });
+}
+
+/** 命中帧（每段一次）：hitIndex = 段序号（0..3，对应 motion.eventFrame 第几个非零帧） */
+export function attackHit(targetId: number, hitIndex: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        attackHit: { targetId, hitIndex },
     });
 }
 
