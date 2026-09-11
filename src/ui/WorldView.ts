@@ -234,6 +234,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let hoverTarget: { root: THREE.Object3D; color: number } | null = null;
   let lastHoverScanAt = 0;
 
+  // 可视拾取候选过滤：只让"在相机视锥内 且 ≤ 该距离"的目标参与射线，避免全场景对象无差别遍历/被隔墙或远处误选
+  const PICK_RAY_FAR = 2400;
+  const _pickProj = new THREE.Matrix4();
+  const _pickFrustum = new THREE.Frustum();
+  const _pickWp = new THREE.Vector3();
+  function buildPickFrustum(): THREE.Frustum {
+    _pickProj.multiplyMatrices(camera!.projectionMatrix, camera!.matrixWorldInverse);
+    _pickFrustum.setFromProjectionMatrix(_pickProj);
+    return _pickFrustum;
+  }
+  function isPickVisible(f: THREE.Frustum, root: THREE.Object3D): boolean {
+    if (!root || !root.visible) return false;
+    if (root.getWorldPosition(_pickWp).distanceTo(camera!.position) > PICK_RAY_FAR) return false;
+    return f.intersectsObject(root);
+  }
+
   /** 诊断（临时）：步长采样主 framebuffer，统计三类目标色像素，判定光圈是否落在屏幕上。 */
   function hoverOutlineScanDiag(): void {
     try {
@@ -337,13 +353,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 3900;
+    ray.far = PICK_RAY_FAR;
 
+    const pf = buildPickFrustum();
     const roots: THREE.Object3D[] = [];
-    for (const g of groundItems.values()) roots.push(g.root);
-    for (const m of monsters.values()) roots.push(m.root);
-    for (const n of npcs.values()) roots.push(n.root);
-    for (const r of remotes.values()) roots.push(r.root);
+    for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) roots.push(g.root);
+    for (const m of monsters.values()) if (isPickVisible(pf, m.root)) roots.push(m.root);
+    for (const n of npcs.values()) if (isPickVisible(pf, n.root)) roots.push(n.root);
+    for (const r of remotes.values()) if (isPickVisible(pf, r.root)) roots.push(r.root);
 
     const hit = ray.intersectObjects(roots, true);
     if (hit.length === 0) {
@@ -1296,9 +1313,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 3900;
+    ray.far = PICK_RAY_FAR;
+    const pf = buildPickFrustum();
     const targets: THREE.Object3D[] = [];
-    for (const r of remotes.values()) targets.push(r.root);
+    for (const r of remotes.values()) if (isPickVisible(pf, r.root)) targets.push(r.root);
     for (const hit of ray.intersectObjects(targets, true)) {
       let o: THREE.Object3D | null = hit.object;
       while (o) {
@@ -1320,9 +1338,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 3900; // ≈ 服务端 CONNECT(1086)：可视内任意掉落可选中
+    ray.far = PICK_RAY_FAR; // 服务端 CONNECT(1086) 语义：可视内任意掉落可选中
+    const pf = buildPickFrustum();
     const targets: THREE.Object3D[] = [];
-    for (const g of groundItems.values()) targets.push(g.root);
+    for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) targets.push(g.root);
     for (const hit of ray.intersectObjects(targets, true)) {
       let o: THREE.Object3D | null = hit.object;
       while (o) {
@@ -1341,9 +1360,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 3900;
+    ray.far = PICK_RAY_FAR;
+    const pf = buildPickFrustum();
     const targets: THREE.Object3D[] = [];
-    for (const m of monsters.values()) targets.push(m.root);
+    for (const m of monsters.values()) if (isPickVisible(pf, m.root)) targets.push(m.root);
     for (const hit of ray.intersectObjects(targets, true)) {
       let o: THREE.Object3D | null = hit.object;
       while (o) {
@@ -1362,9 +1382,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 3900;
+    ray.far = PICK_RAY_FAR;
+    const pf = buildPickFrustum();
     const targets: THREE.Object3D[] = [];
-    for (const n of npcs.values()) targets.push(n.root);
+    for (const n of npcs.values()) if (isPickVisible(pf, n.root)) targets.push(n.root);
     for (const hit of ray.intersectObjects(targets, true)) {
       let o: THREE.Object3D | null = hit.object;
       while (o) {
