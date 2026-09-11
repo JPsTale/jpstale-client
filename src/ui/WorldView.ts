@@ -187,6 +187,15 @@ function attackRate(motion: MotionInfo, attackSpeed: number): number {
   return Math.max(0.01, naturalMs / swingMs);
 }
 
+/**
+ * 自机攻击距离：远程武器（射程>0，如弓）用其射程，否则近战固定距离。
+ * 与服务端 CombatService.attackRange 同公式（防客户端停步距离与服务端裁决不一致）。
+ */
+function selfAttackRange(): number {
+  const sr = getGameSnapshot().character?.shootingRange ?? 0;
+  return sr > ATTACK_RANGE ? sr : ATTACK_RANGE;
+}
+
 // 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1086；见 design-nameplate-hpbar.md）
 const NAME_TAG_RANGE = 600; // 怪物名牌常显范围（防漏怪）；范围外选中/悬停才显示
 const NPC_TAG_RANGE = 768;  // NPC 名牌 12 格（对齐 exm：NPC RendPoint.z < 12*64*fONE）
@@ -2351,13 +2360,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
         const model = res.group;
         model.rotation.x = Math.PI / 2; // 立轴 → 平躺地面
-        model.position.y = GROUND_LIFT; // 贴地微浮
+        // 贴地：PT 掉落模型 origin 不在底面（原版 scITEM::Draw 固定 Posi.y = pY + 6*fONE 抬升）。
+        // 这里按旋转后包围盒把底面抬到地面（等价且对不同模型稳健；origin 已在底面时抬升≈0）。
+        model.updateMatrixWorld(true);
+        const mbox = new THREE.Box3().setFromObject(model);
+        model.position.y = (Number.isFinite(mbox.min.y) ? -mbox.min.y : 0) + GROUND_LIFT; // 底面贴地 + 微浮
         pivot.add(model);
         root.add(pivot);
 
         const label = makeItemLabel(name);
         label.visible = false; // 名牌悬停可见（design-nameplate-hpbar.md）
-        label.position.y = GROUND_LIFT + modelTopY(model) + 0.55;
+        label.position.y = model.position.y + modelTopY(model) + 0.55;
         root.add(label);
 
         // 躺平模型低矮，加一块隐形拾取垫（贴近地面、透明）扩大点击目标
@@ -2965,7 +2978,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const d = Math.hypot(dx, dz);
         if (moveTarget.kind === 'monster') {
           // 怪物目标：攻击距离内 → 停步进入攻击循环（不移动）；超出 → 持续 Chase
-          if (d <= ATTACK_RANGE) {
+          if (d <= selfAttackRange()) {
             monsterEngaged = true;
             selfAngle = Math.atan2(dx, dz);
           } else {
