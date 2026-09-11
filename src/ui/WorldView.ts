@@ -244,10 +244,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     _pickFrustum.setFromProjectionMatrix(_pickProj);
     return _pickFrustum;
   }
+  const _pickSphere = new THREE.Sphere();
   function isPickVisible(f: THREE.Frustum, root: THREE.Object3D): boolean {
     if (!root || !root.visible) return false;
     if (root.getWorldPosition(_pickWp).distanceTo(camera!.position) > PICK_RAY_FAR) return false;
-    return f.intersectsObject(root);
+    // 逐个遍历目标子树的 Mesh，取 geometry.boundingSphere（缺失则计算）做视锥球测试。
+    // 不用 Frustum.intersectsObject：它对"有 geometry 但 boundingSphere 未算"的对象会抛异常。
+    let hit = false;
+    root.traverse((o) => {
+      if (hit) return;
+      const g = (o as THREE.Mesh).geometry;
+      if (!g) return;
+      if (!g.boundingSphere) g.computeBoundingSphere();
+      _pickSphere.copy(g.boundingSphere!).applyMatrix4(o.matrixWorld);
+      if (f.intersectsSphere(_pickSphere)) hit = true;
+    });
+    return hit;
   }
 
   /** 诊断（临时）：步长采样主 framebuffer，统计三类目标色像素，判定光圈是否落在屏幕上。 */
