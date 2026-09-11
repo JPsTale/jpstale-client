@@ -19,7 +19,7 @@ import { createGameClock } from './ui/GameClock.js';
 import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
-import { installBridge, sendPickupItem } from './net/bridge.js';
+import { installBridge, sendPickupItem, sendSwitchWeapon } from './net/bridge.js';
 import { pressQuickBinding, openSystemMenu, closeSystemMenu } from './app/gameStore.js';
 import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
@@ -227,6 +227,10 @@ keyBinding.onKeyDown((action) => {
     case 'chat':
       setChatInputOpen(true);
       break;
+    case 'switchWeapon':
+      // W 键：当前装备套 ↔ 备用武器套（主手+副手整对互换，服务端裁决）
+      sendSwitchWeapon();
+      break;
     // F1~F8 快捷技能：把绑定在该键的技能自动切到对应拳（skill1=F1→index0）
     case 'skill1': case 'skill2': case 'skill3': case 'skill4':
     case 'skill5': case 'skill6': case 'skill7': case 'skill8': {
@@ -415,6 +419,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
           weaponDorp: c.appearance.weaponDorp || undefined,
           weaponIdcode: c.appearance.weaponIdcode || 0,
           weaponPos: c.appearance.weaponPos || 0,
+          offHandDorp: c.appearance.offHandDorp || undefined,
+          offHandIdcode: c.appearance.offHandIdcode || 0,
+          offHandKind: c.appearance.offHandKind || 0,
+          offHandPos: c.appearance.offHandPos || 0,
           sizeLevel: c.appearance.sizeLevel || 0,
         } : undefined,
       }));
@@ -506,6 +514,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
           weaponDorp: eg.appearance.weaponDorp || undefined,
           weaponIdcode: eg.appearance.weaponIdcode || 0,
           weaponPos: eg.appearance.weaponPos || 0,
+          offHandDorp: eg.appearance.offHandDorp || undefined,
+          offHandIdcode: eg.appearance.offHandIdcode || 0,
+          offHandKind: eg.appearance.offHandKind || 0,
+          offHandPos: eg.appearance.offHandPos || 0,
           sizeLevel: eg.appearance.sizeLevel || 0,
         } : undefined,
       };
@@ -554,6 +566,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
           weaponDorp: pa.weaponDorp || undefined,
           weaponIdcode: pa.weaponIdcode || 0,
           weaponPos: pa.weaponPos || 0,
+          offHandDorp: pa.offHandDorp || undefined,
+          offHandIdcode: pa.offHandIdcode || 0,
+          offHandKind: pa.offHandKind || 0,
+          offHandPos: pa.offHandPos || 0,
           sizeLevel: pa.sizeLevel || 0,
         } : undefined,
       );
@@ -575,6 +591,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
         weaponDorp: pa.weaponDorp || undefined,
         weaponIdcode: pa.weaponIdcode || 0,
         weaponPos: pa.weaponPos || 0,
+        offHandDorp: pa.offHandDorp || undefined,
+        offHandIdcode: pa.offHandIdcode || 0,
+        offHandKind: pa.offHandKind || 0,
+        offHandPos: pa.offHandPos || 0,
         sizeLevel: pa.sizeLevel || 0,
       } : undefined;
       const pid = Number(a.playerId);
@@ -747,6 +767,10 @@ onJsonMessage((type, data) => {
           weaponDorp: c.appearance.weaponDorp ?? undefined,
           weaponIdcode: c.appearance.weaponIdcode ?? 0,
           weaponPos: c.appearance.weaponPos ?? 0,
+          offHandDorp: c.appearance.offHandDorp ?? undefined,
+          offHandIdcode: c.appearance.offHandIdcode ?? 0,
+          offHandKind: c.appearance.offHandKind ?? 0,
+          offHandPos: c.appearance.offHandPos ?? 0,
           sizeLevel: c.appearance.sizeLevel ?? 0,
         } : undefined,
       }));

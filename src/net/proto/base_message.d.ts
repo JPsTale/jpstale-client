@@ -12690,6 +12690,18 @@ export namespace jpt {
             /** CharacterAppearance sizeLevel. */
             sizeLevel: number;
 
+            /** CharacterAppearance offHandDorp. */
+            offHandDorp: string;
+
+            /** CharacterAppearance offHandIdcode. */
+            offHandIdcode: number;
+
+            /** CharacterAppearance offHandKind. */
+            offHandKind: number;
+
+            /** CharacterAppearance offHandPos. */
+            offHandPos: number;
+
             /**
              * Creates a new CharacterAppearance instance using the specified properties.
              * @param [properties] Properties to set
@@ -12800,6 +12812,18 @@ export namespace jpt {
 
                 /** CharacterAppearance sizeLevel */
                 sizeLevel?: (number|null);
+
+                /** CharacterAppearance offHandDorp */
+                offHandDorp?: (string|null);
+
+                /** CharacterAppearance offHandIdcode */
+                offHandIdcode?: (number|null);
+
+                /** CharacterAppearance offHandKind */
+                offHandKind?: (number|null);
+
+                /** CharacterAppearance offHandPos */
+                offHandPos?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

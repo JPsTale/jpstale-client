@@ -11,6 +11,7 @@ export type GameAction =
   | 'potion1' | 'potion2' | 'potion3' | 'potion4' | 'potion5' | 'potion6'
   | 'potion7' | 'potion8' | 'potion9' | 'potion10' | 'potion11' | 'potion12'
   | 'chat' | 'closePanel'
+  | 'switchWeapon'
 
 export interface KeyBinding {
   get(action: GameAction): string | null
@@ -51,6 +52,7 @@ const DEFAULT_BINDINGS: Record<GameAction, string | null> = {
   potion10: 'Digit0', potion11: 'Minus', potion12: 'Equal',
   chat: 'Enter',
   closePanel: 'Escape',
+  switchWeapon: 'KeyW',
 }
 
 export function createKeyBinding(): KeyBinding {

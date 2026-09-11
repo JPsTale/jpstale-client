@@ -37143,6 +37143,10 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [weaponIdcode] CharacterAppearance weaponIdcode
              * @property {number|null} [weaponPos] CharacterAppearance weaponPos
              * @property {number|null} [sizeLevel] CharacterAppearance sizeLevel
+             * @property {string|null} [offHandDorp] CharacterAppearance offHandDorp
+             * @property {number|null} [offHandIdcode] CharacterAppearance offHandIdcode
+             * @property {number|null} [offHandKind] CharacterAppearance offHandKind
+             * @property {number|null} [offHandPos] CharacterAppearance offHandPos
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -37247,6 +37251,38 @@ export const jpt = $root.jpt = (() => {
             CharacterAppearance.prototype.sizeLevel = 0;
 
             /**
+             * CharacterAppearance offHandDorp.
+             * @member {string} offHandDorp
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.offHandDorp = "";
+
+            /**
+             * CharacterAppearance offHandIdcode.
+             * @member {number} offHandIdcode
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.offHandIdcode = 0;
+
+            /**
+             * CharacterAppearance offHandKind.
+             * @member {number} offHandKind
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.offHandKind = 0;
+
+            /**
+             * CharacterAppearance offHandPos.
+             * @member {number} offHandPos
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.offHandPos = 0;
+
+            /**
              * Creates a new CharacterAppearance instance using the specified properties.
              * @function create
              * @memberof jpt.base.CharacterAppearance
@@ -37296,6 +37332,14 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 8, wireType 0 =*/64).int32(message.weaponPos);
                 if (message.sizeLevel != null && $Object.hasOwnProperty.call(message, "sizeLevel") && message.sizeLevel !== 0)
                     writer.uint32(/* id 9, wireType 0 =*/72).int32(message.sizeLevel);
+                if (message.offHandDorp != null && $Object.hasOwnProperty.call(message, "offHandDorp") && message.offHandDorp !== "")
+                    writer.uint32(/* id 10, wireType 2 =*/82).string(message.offHandDorp);
+                if (message.offHandIdcode != null && $Object.hasOwnProperty.call(message, "offHandIdcode") && message.offHandIdcode !== 0)
+                    writer.uint32(/* id 11, wireType 0 =*/88).int32(message.offHandIdcode);
+                if (message.offHandKind != null && $Object.hasOwnProperty.call(message, "offHandKind") && message.offHandKind !== 0)
+                    writer.uint32(/* id 12, wireType 0 =*/96).int32(message.offHandKind);
+                if (message.offHandPos != null && $Object.hasOwnProperty.call(message, "offHandPos") && message.offHandPos !== 0)
+                    writer.uint32(/* id 13, wireType 0 =*/104).int32(message.offHandPos);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -37434,6 +37478,42 @@ export const jpt = $root.jpt = (() => {
                                 delete message.sizeLevel;
                             continue;
                         }
+                    case 10: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.offHandDorp = value;
+                            else
+                                delete message.offHandDorp;
+                            continue;
+                        }
+                    case 11: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.offHandIdcode = value;
+                            else
+                                delete message.offHandIdcode;
+                            continue;
+                        }
+                    case 12: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.offHandKind = value;
+                            else
+                                delete message.offHandKind;
+                            continue;
+                        }
+                    case 13: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.offHandPos = value;
+                            else
+                                delete message.offHandPos;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -37509,6 +37589,18 @@ export const jpt = $root.jpt = (() => {
                 if (message.sizeLevel != null && $Object.hasOwnProperty.call(message, "sizeLevel"))
                     if (!$util.isInteger(message.sizeLevel))
                         return "sizeLevel: integer expected";
+                if (message.offHandDorp != null && $Object.hasOwnProperty.call(message, "offHandDorp"))
+                    if (!$util.isString(message.offHandDorp))
+                        return "offHandDorp: string expected";
+                if (message.offHandIdcode != null && $Object.hasOwnProperty.call(message, "offHandIdcode"))
+                    if (!$util.isInteger(message.offHandIdcode))
+                        return "offHandIdcode: integer expected";
+                if (message.offHandKind != null && $Object.hasOwnProperty.call(message, "offHandKind"))
+                    if (!$util.isInteger(message.offHandKind))
+                        return "offHandKind: integer expected";
+                if (message.offHandPos != null && $Object.hasOwnProperty.call(message, "offHandPos"))
+                    if (!$util.isInteger(message.offHandPos))
+                        return "offHandPos: integer expected";
                 return null;
             };
 
@@ -37557,6 +37649,18 @@ export const jpt = $root.jpt = (() => {
                 if (object.sizeLevel != null)
                     if ($Number(object.sizeLevel) !== 0)
                         message.sizeLevel = object.sizeLevel | 0;
+                if (object.offHandDorp != null)
+                    if (typeof object.offHandDorp !== "string" || object.offHandDorp.length)
+                        message.offHandDorp = $String(object.offHandDorp);
+                if (object.offHandIdcode != null)
+                    if ($Number(object.offHandIdcode) !== 0)
+                        message.offHandIdcode = object.offHandIdcode | 0;
+                if (object.offHandKind != null)
+                    if ($Number(object.offHandKind) !== 0)
+                        message.offHandKind = object.offHandKind | 0;
+                if (object.offHandPos != null)
+                    if ($Number(object.offHandPos) !== 0)
+                        message.offHandPos = object.offHandPos | 0;
                 return message;
             };
 
@@ -37587,6 +37691,10 @@ export const jpt = $root.jpt = (() => {
                     object.weaponIdcode = 0;
                     object.weaponPos = 0;
                     object.sizeLevel = 0;
+                    object.offHandDorp = "";
+                    object.offHandIdcode = 0;
+                    object.offHandKind = 0;
+                    object.offHandPos = 0;
                 }
                 if (message.classId != null && $Object.hasOwnProperty.call(message, "classId"))
                     object.classId = message.classId;
@@ -37606,6 +37714,14 @@ export const jpt = $root.jpt = (() => {
                     object.weaponPos = message.weaponPos;
                 if (message.sizeLevel != null && $Object.hasOwnProperty.call(message, "sizeLevel"))
                     object.sizeLevel = message.sizeLevel;
+                if (message.offHandDorp != null && $Object.hasOwnProperty.call(message, "offHandDorp"))
+                    object.offHandDorp = message.offHandDorp;
+                if (message.offHandIdcode != null && $Object.hasOwnProperty.call(message, "offHandIdcode"))
+                    object.offHandIdcode = message.offHandIdcode;
+                if (message.offHandKind != null && $Object.hasOwnProperty.call(message, "offHandKind"))
+                    object.offHandKind = message.offHandKind;
+                if (message.offHandPos != null && $Object.hasOwnProperty.call(message, "offHandPos"))
+                    object.offHandPos = message.offHandPos;
                 return object;
             };
 

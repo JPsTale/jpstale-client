@@ -350,7 +350,8 @@
       "potion11": "Potion 11",
       "potion12": "Potion 12",
       "chat": "Chat Input",
-      "closePanel": "Close Panel"
+      "closePanel": "Close Panel",
+      "switchWeapon": "Switch Weapon"
     },
     "back": "Back",
     "comingSoon": "Coming soon"

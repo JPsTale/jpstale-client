@@ -20,6 +20,10 @@ export interface CharacterAppearance {
   weaponDorp?: string;
   weaponIdcode: number;
   weaponPos: number;
+  offHandDorp?: string;
+  offHandIdcode?: number;
+  offHandKind?: number; // 0=无 1=盾 2=匕首
+  offHandPos?: number;
   sizeLevel: number;
 }
 

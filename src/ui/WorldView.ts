@@ -251,7 +251,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let charGroup: THREE.Group | null = null;
   let selfAngle = 0; // 角色朝向（弧度）
   let selfJobId = 1;
-  let selfWeaponGroup: THREE.Group | null = null; // 当前挂载的自机武器（随外观/动画切换）
+  let selfWeaponGroup: THREE.Group | null = null; // 当前挂载的自机主手武器（随外观/动画切换）
+  let selfOffHandGroup: THREE.Group | null = null; // 当前挂载的自机副手（盾/匕首）
   // 自机武器姿态：'combat'=挂手部（攻击姿态）；'sheathed'=收到腰间/背后（安全区村庄态）。对齐 CharSelect。
   let selfWeaponStance: 'combat' | 'sheathed' = 'combat';
   let selfCombatBone = WEAPON_BONES.RIGHT_HAND; // 战斗姿态挂载骨（weaponPos 决定；挂武器时更新）
@@ -1120,39 +1121,58 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  /** 切换自机武器姿态：战斗态挂手部骨，收鞘态改挂腰间/背后骨。 */
+  /** 切换自机武器姿态：战斗态挂手部骨，收鞘态改挂腰间/背后骨。副手：盾留左臂；匕首 战斗左手↔收鞘左腰。 */
   function setSelfWeaponStance(stance: 'combat' | 'sheathed') {
-    if (!selfWeaponGroup || !charGroup || selfWeaponStance === stance) return;
-    const fromBone = stance === 'combat' ? sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4) : selfCombatBone;
-    const toBone = stance === 'combat' ? selfCombatBone : sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4);
-    if (!fromBone || !toBone || fromBone === toBone) return;
-    const from = findBone(charGroup, fromBone);
-    const to = findBone(charGroup, toBone);
-    if (!from || !to) return;
-    selfWeaponGroup.parent?.remove(selfWeaponGroup);
-    to.add(selfWeaponGroup);
+    if (!charGroup || selfWeaponStance === stance) return;
+    // 主手
+    if (selfWeaponGroup) {
+      const fromBone = stance === 'combat' ? sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4) : selfCombatBone;
+      const toBone = stance === 'combat' ? selfCombatBone : sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4);
+      if (fromBone && toBone && fromBone !== toBone) {
+        const to = findBone(charGroup, toBone);
+        if (to) {
+          selfWeaponGroup.parent?.remove(selfWeaponGroup);
+          to.add(selfWeaponGroup);
+        }
+      }
+    }
+    // 副手：盾(kind=1)始终留左臂不动；匕首(kind=2) 战斗左手 ↔ 收鞘左腰
+    if (selfOffHandGroup && (selfAppearance?.offHandKind || 0) === 2) {
+      const boneName = stance === 'combat' ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.SHEATHE_DAGGER_L;
+      const bone = findBone(charGroup, boneName);
+      if (bone) {
+        selfOffHandGroup.parent?.remove(selfOffHandGroup);
+        bone.add(selfOffHandGroup);
+      }
+    }
     selfWeaponStance = stance;
-    console.log('[WorldView] 自机武器姿态: ' + selfWeaponStance + ' -> ' + toBone);
+    console.log('[WorldView] 自机武器姿态: ' + selfWeaponStance);
   }
 
-  // 挂载当前自机武器（读 selfAppearance.weaponDorp）到手骨/腰骨；旧武器先清。初始姿态按当前区域。
+  // 挂载当前自机武器（主手 + 副手）；旧武器先清。初始姿态按当前区域。
   async function mountSelfWeapon(): Promise<void> {
     if (!scene || !charGroup) return;
-    // 摘除旧武器：它挂在手部骨骼（charGroup 深层），需沿骨架找
+    const sheathed = currentFieldState() === 1;
+    // 摘除旧的主手 + 副手（挂在骨架深层，需沿树找）
     if (selfWeaponGroup) {
       removeFromAnywhere(charGroup, selfWeaponGroup);
       selfWeaponGroup = null;
-      console.log('[WorldView] 自机武器摘除');
     }
+    if (selfOffHandGroup) {
+      removeFromAnywhere(charGroup, selfOffHandGroup);
+      selfOffHandGroup = null;
+    }
+
+    // ---- 主手 ----
     const dorp = selfAppearance?.weaponDorp;
     if (dorp) {
       try {
         const wres = await loadWeaponModel(dorp);
         await loadTextures(wres.texturesToLoad);
-        // 战斗骨由 weaponPos 决定（2=左手，其余右手）；初始姿态按当前区域（村庄=收鞘腰间/背）。 
+        // 战斗骨由 weaponPos 决定（2=左手，其余右手）；初始姿态按当前区域（村庄=收鞘腰间/背）。
         const combatBoneName = selfAppearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
         selfCombatBone = combatBoneName;
-        const weightBoneName = currentFieldState() === 1
+        const weightBoneName = sheathed
           ? sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4)
           : combatBoneName;
         const bone = findBone(charGroup, weightBoneName)
@@ -1162,13 +1182,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (bone) {
           selfWeaponGroup = wres.group;
           bone.add(wres.group);
-          selfWeaponStance = currentFieldState() === 1 ? 'sheathed' : 'combat';
-          console.log('[WorldView] 自机武器挂载: dorp=' + dorp + ' bone=' + bone.name + ' stance=' + selfWeaponStance);
+          selfWeaponStance = sheathed ? 'sheathed' : 'combat';
+          console.log('[WorldView] 自机主手挂载: dorp=' + dorp + ' bone=' + bone.name);
         }
       } catch (e) {
-        console.warn('[WorldView] 武器挂载失败 dorp=' + dorp, e);
+        console.warn('[WorldView] 主手挂载失败 dorp=' + dorp, e);
       }
     }
+
+    // ---- 副手（盾 → 左臂；匕首 → 战斗左手/收鞘左腰；念珠不挂）----
+    const offDorp = selfAppearance?.offHandDorp;
+    const offKind = selfAppearance?.offHandKind || 0;
+    if (offDorp && offKind !== 0) {
+      try {
+        const ores = await loadWeaponModel(offDorp);
+        await loadTextures(ores.texturesToLoad);
+        const boneName = offKind === 1
+          ? WEAPON_BONES.SHIELD                                              // 盾：左臂（收鞘也留臂）
+          : (sheathed ? WEAPON_BONES.SHEATHE_DAGGER_L : WEAPON_BONES.LEFT_HAND); // 匕首
+        const bone = findBone(charGroup, boneName)
+          || findBone(charGroup, WEAPON_BONES.LEFT_HAND)
+          || findBone(charGroup, WEAPON_BONES.SHIELD);
+        if (bone) {
+          selfOffHandGroup = ores.group;
+          bone.add(ores.group);
+          console.log('[WorldView] 自机副手挂载: dorp=' + offDorp + ' kind=' + offKind + ' bone=' + bone.name);
+        }
+      } catch (e) {
+        console.warn('[WorldView] 副手挂载失败 dorp=' + offDorp, e);
+      }
+    }
+
     // 武器已变：按当前状态重选动画实例（持剑/持弓站姿等随武器切换），一次性状态不打断
     animState?.reselectForCurrentState();
   }

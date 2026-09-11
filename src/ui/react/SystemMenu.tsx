@@ -139,6 +139,7 @@ const ACTION_LABELS: Record<string, string> = {
   potion7: 'menu.bind.potion7', potion8: 'menu.bind.potion8', potion9: 'menu.bind.potion9',
   potion10: 'menu.bind.potion10', potion11: 'menu.bind.potion11', potion12: 'menu.bind.potion12',
   chat: 'menu.bind.chat', closePanel: 'menu.bind.closePanel',
+  switchWeapon: 'menu.bind.switchWeapon',
 };
 
 function MenBtn({ label, onClick }: { label: string; onClick: () => void }) {

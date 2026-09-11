@@ -350,7 +350,8 @@
       "potion11": "药水11",
       "potion12": "药水12",
       "chat": "聊天输入",
-      "closePanel": "关闭面板"
+      "closePanel": "关闭面板",
+      "switchWeapon": "切换武器"
     },
     "back": "返回",
     "comingSoon": "功能开发中，敬请期待"
