@@ -1709,6 +1709,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   const monsters = new Map<number, MonsterActor>();
   const monsterSpawning = new Set<number>();
+  // 加载途中被 despawn（死亡/消失）的怪 id：异步加载完成后若命中则放弃挂载，避免"尸体复活"孤儿
+  const monsterCancelled = new Set<number>();
   // 进场竞态：与玩家 pendingAppears 同理（世界未建好时暂存，show() 后重放）
   const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number }[] = [];
 
@@ -1746,7 +1748,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       try {
         const result = await loadMonsterModel(actorInfo.modelFile);
         await loadTextures(result.texturesToLoad);
-        if (monsters.has(mid)) return;
+        if (monsters.has(mid) || monsterCancelled.has(mid)) return; // 加载途中已被 despawn → 放弃
 
         const root = new THREE.Group();
         root.add(result.skeletonGroup);
@@ -1787,6 +1789,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         console.warn('[WorldView] 怪物加载失败 id=' + mid + ' model=' + actorInfo.modelFile, e);
       } finally {
         monsterSpawning.delete(mid);
+        monsterCancelled.delete(mid);
       }
     })();
   }
@@ -1797,6 +1800,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       scene?.remove(actor.root);
       monsters.delete(monsterId);
     }
+    if (monsterSpawning.has(monsterId)) monsterCancelled.add(monsterId); // 加载途中 → 标记取消
     monsterSpawning.delete(monsterId);
   }
 
@@ -2608,6 +2612,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     monsters.clear();
     monsterSpawning.clear();
+    monsterCancelled.clear();
     pendingMonsterAppears.length = 0;
 
     for (const g of groundItems.values()) {
@@ -3379,6 +3384,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       monsters.clear();
       monsterSpawning.clear();
+      monsterCancelled.clear();
       pendingMonsterAppears.length = 0;
       for (const g of groundItems.values()) {
         scene?.remove(g.root);
