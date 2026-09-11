@@ -116,12 +116,21 @@ export class HoverOutline {
     r.autoClear = prevAutoClear;
   }
 
-  /** 记录目标子树中的非 Mesh 可见对象并临时隐藏，渲染 mask 后恢复。 */
+  /**
+   * 记录目标子树中"会真正画进 mask 的叶子渲染对象"（名字标签等 Sprite/Line/Points）并临时隐藏，
+   * 渲染 mask 后恢复。
+   * 注意：绝不能隐藏 Group/Bone 这类容器 —— 它们自己不渲染，但隐藏会连带其下所有 Mesh
+   * 一起消失（如 NPC result.group 容器），导致 mask 空白、光圈不可见。
+   */
   private hideNonMesh(root: THREE.Object3D): void {
     this.hidden.length = 0;
     root.traverse((o) => {
       if (o === root) return;
-      if (!(o instanceof THREE.Mesh) && o.visible) {
+      const isRenderLeaf =
+        (o as THREE.Sprite).isSprite === true ||
+        (o as THREE.Line).isLine === true ||
+        (o as THREE.Points).isPoints === true;
+      if (isRenderLeaf && o.visible) {
         this.hidden.push({ obj: o, vis: true });
         o.visible = false;
       }
