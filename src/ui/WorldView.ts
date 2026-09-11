@@ -67,6 +67,8 @@ export interface WorldView {
   toggleRun(): boolean;
   /** 当前是否跑 */
   isRunning(): boolean;
+  /** 设置客户端帧率上限（0=跟随显示器刷新率）；持久化到 localStorage 'pt.fps' */
+  setTargetFps(fps: number): void;
   /** 记录自机 playerId（enterGame.playerId），供 S2C_PlayerMove 路由收敛 */
   setSelfId(playerId: number): void;
   /** 自机移动速度（世界单位/秒，服务端权威属性）；默认 EU 最高档，S2C_PlayerState 到达后覆盖 */
@@ -159,8 +161,12 @@ const ANIM_FALLDAMAGE = 0x0072;
 const ATTACK_RANGE = 48;
 // 挥拳动画时长 = 服务端攻击间隔 + 此冗余，保证客户端节奏不慢于服务端冷却（结构性防丢刀）
 const SWING_SLACK_MS = 40;
-// 动画推进基准节拍（全站 animFrame += 80 的 60fps 语义；用于把动画时长换算成变速步进）
-const TICK_MS = 1000 / 60;
+
+// ===== 动画播放（delta-time，与帧率解耦）=====
+// animFrame 单位：1 动画帧 = 160 单位。原「每渲染帧 += 80」在 60fps 下等价于 4800 单位/秒。
+// 现按真实 dt 推进 → 帧率任意（30/60/120/144…）动画速度一致，客户端帧率可调。
+const ANIM_UNITS_PER_SEC = 4800; // = 30 动画帧/秒 × 160
+const ANIM_FPS_BASE = 30;        // 动画数据基准帧率（1 动画帧 = 1/30 秒）
 
 /**
  * 攻击间隔公式（与服务端 CombatService.attackIntervalMs 逐字一致）：
@@ -171,11 +177,12 @@ function attackIntervalMs(attackSpeed: number): number {
   return Math.round((60 - 3 * clamped) * 1000 / 60);
 }
 
-/** 把某攻击动画播完时长压缩/拉伸到 swingMs 所需的每帧步进（基准 80） */
-function attackStep(motion: MotionInfo, attackSpeed: number): number {
+/** 攻击动画播放速率倍率（1=基准速度）：使该动画播完时长 = 攻击间隔 + slack */
+function attackRate(motion: MotionInfo, attackSpeed: number): number {
   const swingMs = attackIntervalMs(attackSpeed) + SWING_SLACK_MS;
   const span = motion.endFrame - motion.startFrame;
-  return Math.max(1, Math.round(span * 160 * TICK_MS / swingMs));
+  const naturalMs = (span / ANIM_FPS_BASE) * 1000;
+  return Math.max(0.01, naturalMs / swingMs);
 }
 
 // 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1086；见 design-nameplate-hpbar.md）
@@ -198,7 +205,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 名牌/血条 2D overlay（叠在 3D 层上方，pointer-events:none；design-nameplate-hpbar.md）
   let npOverlay: HTMLCanvasElement | null = null;
   let npCtx: CanvasRenderingContext2D | null = null;
-  let dbgFrame = 0; // 名牌诊断节流计数（临时）
 
   // 动画区域位（对齐原版 StageVillage）：1=村庄 2=野外；查服务端 enterGame 下发的安全区表，未知图按野外
   function currentFieldState(): number {
@@ -245,8 +251,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let motionList: MotionInfo[] = [];
   let animFrameId = 0;
   let animFrame = 0;
-  // 自机动画变速步进（默认 80）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
-  let selfMotionStep = 80;
+  // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
+  let selfAnimRate = 1;
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
   // 进图加载 hooks（show() 每次重置；首帧渲染后触发 onReady，供 main.ts 收起加载页）
@@ -750,13 +756,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     npCtx = npOverlay.getContext('2d');
     if (npCtx) npCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // 绘制用 CSS px
     root.appendChild(npOverlay);
-    console.log('[NP] overlay created css=' + npOverlay.clientWidth + 'x' + npOverlay.clientHeight
-      + ' (root=' + root.clientWidth + 'x' + root.clientHeight + ') dpr=' + dpr
-      + ' rootPos=' + getComputedStyle(root).position
-      + ' webglZ=' + getComputedStyle(renderer.domElement).zIndex
-      + ' webglIdx=' + Array.prototype.indexOf.call(root.children, renderer.domElement)
-      + ' overlayIdx=' + Array.prototype.indexOf.call(root.children, npOverlay)
-      + ' overlayZ=' + getComputedStyle(npOverlay).zIndex);
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
@@ -1549,10 +1548,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // 鼠标指向（屏幕投影 → 世界方向角）：用于本地移动朝向
+  /**
+   * 定身：下落 或 受击硬直（DAMAGE）中 → 禁止水平移动/转向（对齐原版：DAMAGE 与 FALLDOWN 均定身）。
+   * 硬直播完（onAnimationEnd→STAND）后自动解除，若仍按住鼠标则恢复走/跑。
+   */
+  function isRooted(): boolean {
+    return falling || (!!animState && animState.getCurrentState() === animState.STATE.DAMAGE);
+  }
+
   function mouseFacing(): number | null {
     if (!camera || !renderer) return null;
     if (!mouseDown) return null;
-    if (falling) return null; // 掉落中禁止水平移动/转向（对齐原版：下落时不动）
+    if (isRooted()) return null; // 掉落/受击硬直中禁止水平移动/转向（对齐原版：定身）
 
     const rect = renderer.domElement.getBoundingClientRect();
     // 1. 角色在屏幕上的投影坐标
@@ -1617,7 +1624,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState: ReturnType<typeof createAnimStateMachine>;
     motionList: MotionInfo[];
     animFrame: number;
-    motionStep: number; // 动画变速步进（默认 80；挥拳按攻速对应时长改写，离开 ATTACK 复原）
+    animRate: number; // 动画播放速率倍率（1=基准；挥拳按攻速对应时长改写，离开 ATTACK 复原）
     faceAngle: number | null; // 挥拳期间强制朝向（signalAttack 算，updateRemotes 在 ATTACK 态采用）
     snaps: RemoteSnap[];
     lastAnimState: number;
@@ -1872,7 +1879,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 每帧：NPC 仅播 idle 动画（静态，无位置插值）；STAND 播一段时间后随机切换另一个 STAND（更鲜活） */
-  function updateNpcs(): void {
+  function updateNpcs(dt: number): void {
     const now = performance.now();
     for (const actor of npcs.values()) {
       // 多 STAND 随机切换：STAND 态播 3~8s 后随机换另一个 STAND（排除当前）
@@ -1882,7 +1889,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const motion = actor.animState.getCurrentMotion();
       if (!motion) continue;
-      actor.animFrame += 80;
+      actor.animFrame += ANIM_UNITS_PER_SEC * Math.min(dt, 0.1);
       const endFrame = motion.endFrame * 160;
       const startFrame = motion.startFrame * 160;
       if (actor.animFrame >= endFrame) {
@@ -2148,7 +2155,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!actor) return;
     if (actor.animState.triggerAttack(true)) {
       const m = actor.animState.getCurrentMotion();
-      if (m) actor.motionStep = attackStep(m, attackSpeed || 0);
+      if (m) actor.animRate = attackRate(m, attackSpeed || 0);
     }
     const mon = monsters.get(targetId);
     if (mon) {
@@ -2223,21 +2230,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.clearRect(0, 0, W, H);
     const now = performance.now();
 
-    // 名牌诊断（临时，默认关）：console 执行 window.__npDbg=1 开启；每 180 帧(=3s)打一轮汇总
-    const dbg = (window as unknown as { __npDbg?: number }).__npDbg === 1;
-    let npcOk = 0, npcDrop = 0, monOk = 0, monDrop = 0, remOk = 0, remDrop = 0, selfDrawn = 0, selfDrop = 0;
-
     // NPC：名牌 12 格(768)内常显（浅蓝），选中/悬停不受距离限制；对齐 exm NPC RendPoint.z < 12*64*fONE
     for (const a of npcs.values()) {
       if (!a.root.visible) continue;
       const sel = isSelected(a.root);
       if (!sel) {
         const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
-        if (dx * dx + dz * dz > NPC_TAG_RANGE * NPC_TAG_RANGE) { npcDrop++; continue; }
+        if (dx * dx + dz * dz > NPC_TAG_RANGE * NPC_TAG_RANGE) { continue; }
       }
       const pt = anchorToScreen(a.root, a.topY);
-      if (!pt) { npcDrop++; continue; }
-      npcOk++;
+      if (!pt) { continue; }
       drawPill(ctx, pt.x, pt.y, t(`npc.${a.nameKey}.name`), {
         nameColor: sel ? '#ffffff' : '#a8d8ff',
         showHp: false, ratio: 0, selected: sel,
@@ -2252,8 +2254,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const sel = isSelected(a.root);
       if (far && !sel) continue;
       const pt = anchorToScreen(a.root, a.topY);
-      if (!pt) { monDrop++; continue; }
-      monOk++;
+      if (!pt) { continue; }
       const showHp = sel || a.stateBar || (a.maxHp > 0 && a.hp < a.maxHp);
       drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: '#ff8080',
@@ -2267,8 +2268,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     for (const a of remotes.values()) {
       if (!a.root.visible) continue;
       const pt = anchorToScreen(a.root, a.topY);
-      if (!pt) { remDrop++; continue; }
-      remOk++;
+      if (!pt) { continue; }
       const sel = isSelected(a.root);
       drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: sel ? '#ffffff' : '#ffe9a8',
@@ -2283,14 +2283,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (charGroup && charGroup.visible && selfName) {
       const pt = anchorToScreen(charGroup, selfTopY);
       if (pt) {
-        selfDrawn = 1;
         drawPill(ctx, pt.x, pt.y, selfName, {
           nameColor: '#ffe9a8',
           showHp: now < selfCombatUntil || (selfMaxHp > 0 && selfHp < selfMaxHp),
           ratio: selfMaxHp > 0 ? selfHp / selfMaxHp : 1,
           selected: false,
         });
-      } else selfDrop = 1;
+      }
     }
 
     // 伤害/躲闪飘字：头顶起点上飘 48px 并在 1s 内线性淡出（对齐原版 SHOW_DMG 动画）
@@ -2319,19 +2318,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       floaters.length = 0;
       for (const f of keep) floaters.push(f);
-    }
-
-    if (dbg && (dbgFrame = (dbgFrame + 1) % 180) === 0) {
-      console.log('[NP] frame size=' + ov.clientWidth + 'x' + ov.clientHeight
-        + ' docVis=' + document.visibilityState
-        + ' npc=' + npcOk + '+' + npcDrop + '/' + npcs.size
-        + ' mon=' + monOk + '+' + monDrop + '/' + monsters.size
-        + ' rem=' + remOk + '+' + remDrop + '/' + remotes.size
-        + ' self=' + (selfDrawn ? 1 : 0) + (selfDrop ? ' drop' : '')
-        + (selfName ? '' : ' selfName=EMPTY') + ' selfHp=' + selfHp + '/' + selfMaxHp
-        + ' combat=' + (now < selfCombatUntil)
-        + ' selfTopY=' + selfTopY.toFixed(2)
-        + ' selfPos=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')');
     }
   }
 
@@ -2474,7 +2460,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
-        actor.animFrame += 80;
+        actor.animFrame += ANIM_UNITS_PER_SEC * Math.min(dt, 0.1);
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (actor.animFrame >= endFrame) {
@@ -2562,7 +2548,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState: animState2,
           motionList: motionList2,
           animFrame: 0,
-          motionStep: 80,
+          animRate: 1,
           faceAngle: null,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
@@ -2689,9 +2675,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
-        // 挥拳变速：非 ATTACK 态复原基准步进；ATTACK 用 signalAttack 设的 motionStep
-        if (actor.animState.getCurrentState() !== actor.animState.STATE.ATTACK) actor.motionStep = 80;
-        actor.animFrame += actor.motionStep;
+        // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用 signalAttack 设的 animRate（delta-time）
+        if (actor.animState.getCurrentState() !== actor.animState.STATE.ATTACK) actor.animRate = 1;
+        actor.animFrame += ANIM_UNITS_PER_SEC * actor.animRate * Math.min(dt, 0.1);
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (actor.animFrame >= endFrame) {
@@ -2788,7 +2774,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 本地即时移动（客户端位置上权威）：完整还原方案 A 之前的跨图碰撞/贴地逻辑。
   function updateMovement(dt: number, forcedFace?: number): boolean {
     if (!camera || !renderer) return false;
-    // 自动寻路目标帧传 forcedFace；否则按按住鼠标朝向（mouseFacing 在下落中返回 null）
+    if (isRooted()) return false; // 掉落/受击硬直定身：即便 chase 传入 forcedFace 也不移动
+    // 自动寻路目标帧传 forcedFace；否则按按住鼠标朝向（mouseFacing 在定身中返回 null）
     const face = forcedFace !== undefined ? forcedFace : mouseFacing();
     if (face === null) return false;
     selfAngle = face;
@@ -2899,8 +2886,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z, anim);
   }
 
-  function renderLoop(): void {
+  // 可调客户端帧率（0=跟随显示器刷新率；>0=上限 fps）。localStorage 'pt.fps' 持久化；window.__ptSetFps(n) 调整。
+  let targetFps = Number(localStorage.getItem('pt.fps') || 0) || 0;
+  let lastFrameMs = -1e9; // 保证首帧（含直接调用的 tsMs=0）必定渲染
+  function setTargetFps(fps: number): void {
+    targetFps = fps > 0 ? Math.round(fps) : 0;
+    localStorage.setItem('pt.fps', String(targetFps));
+  }
+  (window as unknown as { __ptSetFps?: (n: number) => void }).__ptSetFps = setTargetFps;
+
+  function renderLoop(tsMs = 0): void {
     animFrameId = requestAnimationFrame(renderLoop);
+    // 帧率上限：未到目标间隔则跳过本帧（动画/移动已 delta-time 化，任意帧率速度一致）
+    if (targetFps > 0) {
+      const minInterval = 1000 / targetFps;
+      if (tsMs - lastFrameMs < minInterval - 1) return;
+      lastFrameMs = tsMs;
+    }
     if (!renderer || !scene || !camera) return;
     // 自适应视口尺寸
     const w = root.clientWidth, h = root.clientHeight;
@@ -2913,13 +2915,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const dt = clock.getDelta();
     rafMs += dt * 1000;
 
-    // 自机动画
+    // 自机动画（delta-time：帧率无关）
     if (animState && animSmb && skeleton && bones.length) {
       const motion = animState.getCurrentMotion();
       if (motion) {
-        // 挥拳变速：非 ATTACK 态复原基准步进；ATTACK 用触发攻击时按攻速设的 selfMotionStep
-        if (animState.getCurrentState() !== animState.STATE.ATTACK) selfMotionStep = 80;
-        animFrame += selfMotionStep;
+        // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用触发攻击时按攻速设的 selfAnimRate
+        if (animState.getCurrentState() !== animState.STATE.ATTACK) selfAnimRate = 1;
+        animFrame += ANIM_UNITS_PER_SEC * selfAnimRate * Math.min(dt, 0.1);
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (animFrame >= endFrame) {
@@ -2946,7 +2948,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     let targetReached = false;
     let targetLost = false;
     let monsterEngaged = false; // moveTarget=存活怪 且已进入攻击距离（停步挥拳，moveTarget 保留）
-    if (!mouseDown && moveTarget && !falling) {
+    if (!mouseDown && moveTarget && !isRooted()) {
       const tp = chaseTargetPos();
       if (tp === null) {
         targetLost = true; // 目标已消失/离视野 → 取消
@@ -2993,7 +2995,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     const moved = updateMovement(dt, targetFace); // falling 中 mouseFacing=null → 不移动
     // 卡住检测：连续 ~0.9s 无法接近目标（撞墙/不可达）→ 放弃寻路
-    if (moveTarget && !targetReached && !falling && !monsterEngaged) {
+    if (moveTarget && !targetReached && !isRooted() && !monsterEngaged) {
       if (moved) {
         moveStuckStart = 0;
       } else {
@@ -3065,7 +3067,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 非攻击/技能/受击中 → 发起下一次挥拳（普攻动画）
         if (animState.triggerAttack(true)) {
           const m = animState.getCurrentMotion();
-          if (m) selfMotionStep = attackStep(m, getGameSnapshot().character?.attackSpeed ?? 0);
+          if (m) selfAnimRate = attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
           opts?.onAttackMonster?.(moveTarget.id);
         }
       }
@@ -3076,7 +3078,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 怪物（服务端权威, S2C_MonsterMove）
     updateMonsters(dt);
     // NPC（静态站桩，仅 idle 动画）
-    updateNpcs();
+    updateNpcs(dt);
     // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
     updateGroundItems(rafMs);
     // 光标 overlay：世界滚动/物品增减时静态光标下的指向也会变 → 逐帧(节流)重探测
@@ -3293,6 +3295,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     toggleMinimap,
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
+    setTargetFps,
     setSelfId: (id: number) => { selfPlayerId = id; },
     isSelf: (id: number) => id === selfPlayerId,
     // 名牌/血条数据（main.ts 消息派发喂入；design-nameplate-hpbar.md）

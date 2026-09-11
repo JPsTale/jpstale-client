@@ -634,16 +634,22 @@ animState = createAnimStateMachine({
 
   function startRenderLoop() {
     if (animFrameId) return;
+    let lastMs = 0;
     function loop() {
       animFrameId = requestAnimationFrame(loop);
       if (!renderer || !scene || !camera || !canvas) return;
       const host = canvas.parentElement;
       if (!host) return;
 
+      // 动画 delta-time（与帧率解耦）：原 80/帧@60fps = 4800 单位/秒
+      const nowMs = performance.now();
+      const adt = lastMs ? Math.min((nowMs - lastMs) / 1000, 0.1) : 1 / 60;
+      lastMs = nowMs;
+
       if (charResult && animState) {
         const motion = animState.getCurrentMotion();
         if (motion) {
-          animFrame += 80;
+          animFrame += 4800 * adt;
           const endFrame = motion.endFrame * 160;
           const startFrame = motion.startFrame * 160;
           if (animFrame >= endFrame) {
