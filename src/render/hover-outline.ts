@@ -42,6 +42,7 @@ export class HoverOutline {
   private rtDiagLogged = false;
   private diagRaw = false;
   private rawMaskMatCache: THREE.MeshBasicMaterial | null = null;
+  private maskSceneLogged = false;
   private diagProbe = false;
   private probeTex: THREE.DataTexture | null = null;
   private diagFlat = false;
@@ -223,6 +224,11 @@ export class HoverOutline {
         if (prevIdx >= 0 && prevParent) prevParent.children.splice(prevIdx, 0, target);
         else if (prevParent) prevParent.add(target);
       }
+      // 探针：target 未还原回主场景会累积在 maskScene —— 正是"之前指向过的目标也一起黑"的根因
+      if (this.maskScene.children.length !== 0 && !this.maskSceneLogged) {
+        this.maskSceneLogged = true;
+        console.warn(`[hover-diag] !! maskScene 残留目标 ${this.maskScene.children.length} 个 ← target 还原失败!`);
+      }
       // 诊断：readRenderTargetPixels 读 maskRT，判定内容是否真的写入（无头下 readPixels 是假阴，真机可能可读）
       if (this.diagRT && !this.rtDiagLogged) {
         this.rtDiagLogged = true;
@@ -346,11 +352,11 @@ export class HoverOutline {
     this.hidden.length = 0;
   }
 
-  /** 诊断 raw 用的亮绿色不透明材质（叠加在主画面上，一眼可辨）。 */
+  /** 诊断 raw 用的材质（白色不透明，叠加在主画面上，一眼可辨）。 */
   private rawMaskMat(): THREE.MeshBasicMaterial {
     if (!this.rawMaskMatCache) {
       this.rawMaskMatCache = new THREE.MeshBasicMaterial({
-        color: 0x00ff00,
+        color: 0xffffff,
         depthTest: false,
         depthWrite: false,
       });
