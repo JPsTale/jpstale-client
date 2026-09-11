@@ -463,6 +463,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
       } else {
         hudPanel.show(hudState);
       }
+      // 名牌/血条：自机 hp（权威值；hp 下降=受击 → 战斗窗口）与名牌名
+      worldView.setSelfName(ps.playerName || '');
+      worldView.setSelfHp(ps.hp || 0, ps.maxHp || 0);
       break;
     }
     case 'enterGame': {
@@ -529,6 +532,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.name || '',
         a.classId || 0,
         Number(a.level) || 1,
+        a.hp || 0,
+        a.maxHp || 0,
+        a.clanName || '',
+        a.clanMark || '',
         a.position?.x || 0,
         a.position?.y || 0,
         a.position?.z || 0,
@@ -581,6 +588,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.name || '',
         a.modelFile || '',
         Number(a.level) || 1,
+        a.hp || 0,
+        a.maxHp || 0,
         a.position?.x || 0,
         a.position?.y || 0,
         a.position?.z || 0,
@@ -606,6 +615,25 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'monsterDeath': {
       worldView.monsterDeath(Number(msg.monsterDeath!.monsterId));
+      break;
+    }
+    case 'attackResult': {
+      // 攻击结算（服务端只广播 damage/是否暴击，无 currentHp）：
+      // 自机发起攻击 → 战斗窗口；怪物受击 → 从出现血量自减
+      const ar = msg.attackResult!;
+      if (worldView.isSelf(Number(ar.attackerId ?? 0))) worldView.markSelfCombat();
+      worldView.applyMonsterHit(Number(ar.targetId ?? 0), ar.damage || 0);
+      break;
+    }
+    case 'damage': {
+      // 权威剩余血量覆盖（服务端当前不发送；留作 S2C_Damage 启用后的兜底）
+      const d = msg.damage!;
+      worldView.applyUnitHp(Number(d.targetId ?? 0), d.currentHp || 0, true);
+      break;
+    }
+    case 'heal': {
+      const h = msg.heal!;
+      worldView.applyUnitHp(Number(h.targetId ?? 0), h.currentHp || 0, false);
       break;
     }
     case 'npcAppear': {

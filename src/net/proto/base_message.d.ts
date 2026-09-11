@@ -3665,6 +3665,12 @@ export namespace jpt {
             /** S2C_PlayerAppear angle. */
             angle: number;
 
+            /** S2C_PlayerAppear clanName. */
+            clanName: string;
+
+            /** S2C_PlayerAppear clanMark. */
+            clanMark: string;
+
             /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -3775,6 +3781,12 @@ export namespace jpt {
 
                 /** S2C_PlayerAppear angle */
                 angle?: (number|null);
+
+                /** S2C_PlayerAppear clanName */
+                clanName?: (string|null);
+
+                /** S2C_PlayerAppear clanMark */
+                clanMark?: (string|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

@@ -73,10 +73,20 @@ export interface WorldView {
   setSpeed(walkWps: number, runWps: number): void;
   /** playerId 是否为自机（供 S2C_PlayerAppear 丢弃自己的外观快照） */
   isSelf(playerId: number): boolean;
+  /** 自机 hp/maxHp（S2C_PlayerState 喂入；名牌血条用） */
+  setSelfHp(hp: number, maxHp: number): void;
+  /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
+  setSelfName(name: string): void;
+  /** 自机发起攻击 → 进入 3 秒战斗窗口（玩家血条显示） */
+  markSelfCombat(): void;
+  /** S2C_Damage/Heal：targetId 命中怪物/远端玩家/自机 → 更新其 currentHp；isDamage 才触发自机战斗窗口 */
+  applyUnitHp(targetId: number, hp: number, isDamage: boolean): void;
+  /** S2C_AttackResult：怪物受击 → 自减血量（服务端暂只广播 damage）；attackerId=self 触发自机战斗窗口 */
+  applyMonsterHit(monsterId: number, damage: number): void;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
-  playerAppear(playerId: number, name: string, classId: number, level: number, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
+  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
   /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型 */
@@ -85,7 +95,7 @@ export interface WorldView {
   /** 换头（转职换头饰/道具换发型）：只替换头部网格，骨架/身体/动画不动 */
   changeSelfHead(jobId: number, faceNum: number, tier: number): void;
   /** 怪物出现（S2C_MonsterAppear）：modelFile 资产路径 + 位置/朝向 → 渲染怪物演员 */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, x: number, y: number, z: number, angle: number): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除 */
@@ -130,6 +140,11 @@ const ANIM_FALLDOWN = 0x0070;
 const ANIM_FALLSTAND = 0x0071;
 const ANIM_FALLDAMAGE = 0x0072;
 
+// 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1086；见 design-nameplate-hpbar.md）
+const NAME_TAG_RANGE = 600;
+// "进入战斗"窗口：最近 N 毫秒自机受击/发起攻击 → 玩家血条显示
+const COMBAT_WINDOW_MS = 3000;
+
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
   const root = document.createElement('div');
   root.id = 'world-root';
@@ -141,6 +156,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
+  // 名牌/血条 2D overlay（叠在 3D 层上方，pointer-events:none；design-nameplate-hpbar.md）
+  let npOverlay: HTMLCanvasElement | null = null;
+  let npCtx: CanvasRenderingContext2D | null = null;
 
   // 动画区域位（对齐原版 StageVillage）：1=村庄 2=野外；查服务端 enterGame 下发的安全区表，未知图按野外
   function currentFieldState(): number {
@@ -204,6 +222,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // ── 自机（方向二：客户端位置上权威）：本地即时移动（即时跟手）+ 按节奏上报位置 ──
   // 无对账/回拉：上报的就是本地正在渲染的位置，服务端限速校验后转发，远端看到即此处。
   let selfPlayerId = -1;
+  // 自机名牌/血条数据（playerState 喂 hp；damage/heal targetId=self 喂战斗窗口与 hp）
+  let selfName = '';
+  let selfHp = 100, selfMaxHp = 100;
+  let selfCombatUntil = 0; // performance.now() 截止：在此刻前视为"战斗中"
+  let selfTopY = 1.7; // 自机模型顶高（loadPlayer 后由 modelTopY 计算）
   let mouseDown = false;
   let mouseX = 0, mouseY = 0;
   // tap（轻点，非拖拽按住）判定：按下时刻/位置，抬起时位移与时长在阈值内视为点击
@@ -378,6 +401,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (hit.length === 0) {
       hoverTarget = null;
       applyCursorStyle('default');
+      syncItemHoverLabels();
       return;
     }
     const root = rootOfGroup(hit[0].object, roots);
@@ -404,6 +428,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         applyCursorStyle('default');
         break;
     }
+    syncItemHoverLabels();
+  }
+
+  /** hover 名牌联动：只会把"正在 hover 的掉落物"名牌设为可见，其余保持隐藏 */
+  function syncItemHoverLabels(): void {
+    for (const g of groundItems.values()) g.label.visible = g.root === hoverTarget?.root;
   }
 
   // 点击目标（对齐原版 lpCharMsTrace/lpMsTraceItem 引用式追踪）：
@@ -669,6 +699,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     renderer.domElement.style.width = '100%';
     renderer.domElement.style.height = '100%';
     root.appendChild(renderer.domElement);
+    // 名牌/血条 overlay canvas（叠在 3D 之上，pointer-events:none）
+    npOverlay = document.createElement('canvas');
+    npOverlay.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;';
+    const dpr = renderer.getPixelRatio();
+    npOverlay.width = Math.max(1, Math.floor(root.clientWidth * dpr));
+    npOverlay.height = Math.max(1, Math.floor(root.clientHeight * dpr));
+    npCtx = npOverlay.getContext('2d');
+    if (npCtx) npCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // 绘制用 CSS px
+    root.appendChild(npOverlay);
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
@@ -900,6 +939,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     scene.add(charGroup);
     charGroup.position.copy(selfPos);
     charGroup.rotation.y = selfAngle;
+    selfTopY = modelTopY(charGroup) + 0.5; // 自机名牌锚点顶高
 
     buildMotionList();
     animState = createAnimStateMachine({
@@ -1418,6 +1458,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function onMouseLeave(): void {
     mouseSeen = false;
     hoverTarget = null;
+    syncItemHoverLabels();
     lastCursorUrl = null;
     if (renderer) renderer.domElement.style.cursor = 'auto';
   }
@@ -1513,6 +1554,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     name: string;
     jobId: number;
     level: number;
+    hp: number;
+    maxHp: number;
+    clanName: string;
+    clanMark: string;
+    topY: number; // 模型顶高（名牌锚点偏移，modelTopY(group)+0.5）
     root: THREE.Group;
     bodyGroup: THREE.Group;
     headGroup: THREE.Group;
@@ -1530,7 +1576,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // 进场竞态缓存：服务端 onPlayerEnter 广播的 Appear 早于本机 enterGame 到达
   // （此刻 scene 未建、show() 未调用）→ 暂存，show() 建好 scene 后重放，避免被吞。
-  const pendingAppears: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; angle?: number }[] = [];
+  const pendingAppears: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number }[] = [];
 
   // 克隆骨骼树：按原 bones 数组顺序生成克隆并重建父/子关系（顺序即 skinIndex 语义）
   // 克隆层级/局部变换与源完全一致 ⇒ boneInverses 必须沿用源（bind() 用当前恒等世界矩阵
@@ -1587,6 +1633,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface MonsterActor {
     monsterId: number;
     name: string;
+    hp: number;
+    maxHp: number;
+    topY: number; // 模型顶高（名牌锚点偏移，modelTopY(group)+0.5）
     root: THREE.Group;
     bones: THREE.Bone[];
     skeleton: THREE.Skeleton;
@@ -1600,7 +1649,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const monsters = new Map<number, MonsterActor>();
   const monsterSpawning = new Set<number>();
   // 进场竞态：与玩家 pendingAppears 同理（世界未建好时暂存，show() 后重放）
-  const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
+  const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number }[] = [];
 
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number): void {
     const isAttack = animState === ANIM_ATTACK;
@@ -1622,7 +1671,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function spawnMonster(actorInfo: {
-    monsterId: number; name: string; modelFile: string; x: number; y: number; z: number; angle: number;
+    monsterId: number; name: string; modelFile: string;
+    hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number;
   }): void {
     if (!scene) {
       pendingMonsterAppears.push(actorInfo);
@@ -1655,6 +1705,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         actorObj = {
           monsterId: mid,
           name: actorInfo.name,
+          hp: actorInfo.hp || 0,
+          maxHp: actorInfo.maxHp || 0,
+          topY: modelTopY(result.group) + 0.5,
           root,
           bones: result.bones,
           skeleton: result.skeleton,
@@ -1689,6 +1742,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface NpcActor {
     npcId: number;
     root: THREE.Group;
+    nameKey: string;
+    topY: number; // 模型顶高（名牌锚点偏移，modelTopY(group)+0.5）
     bones: THREE.Bone[];
     skeleton: THREE.Skeleton;
     animSmb: MonsterModelResult['animSmb'];
@@ -1733,6 +1788,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         actorObj = {
           npcId: nid,
           root,
+          nameKey: info.nameKey,
+          topY: modelTopY(result.group) + 0.5,
           bones: result.bones,
           skeleton: result.skeleton,
           animSmb: result.animSmb,
@@ -1743,11 +1800,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         };
         npcs.set(nid, actorObj);
         animState.triggerIdle();
-
-        // 头顶名字标签（本地化 key）
-        const label = makeItemLabel(t(`npc.${info.nameKey}.name`));
-        label.position.y = modelTopY(result.group) + 0.5;
-        root.add(label);
         console.log('[WorldView] NPC 出现: id=' + nid + ' key=' + info.nameKey + ' model=' + info.modelFile);
       } catch (e) {
         console.warn('[WorldView] NPC 加载失败 id=' + nid + ' model=' + info.modelFile, e);
@@ -1865,6 +1917,212 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return top;
   }
 
+  // ==================== 名牌/血条（Canvas overlay，design-nameplate-hpbar.md）====================
+  /** 血条颜色：绿(≥50%)→黄(≥25%)→橙(≥10%)→红(<10%)，段内线性插值 */
+  function hpColor(ratio: number): string {
+    const r = Math.max(0, Math.min(1, ratio));
+    let hue = 0;
+    if (r >= 0.5) hue = 120 - 120 * ((r - 0.5) / 0.5);
+    else if (r >= 0.25) hue = 60 - 30 * ((r - 0.25) / 0.25);
+    else if (r >= 0.1) hue = 30 - 30 * ((r - 0.1) / 0.1);
+    return `hsl(${hue.toFixed(0)} 85% 50%)`;
+  }
+
+  function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+    const rr = Math.min(r, w / 2, h / 2);
+    ctx.beginPath();
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+
+  /** 世界锚点 → 屏幕坐标（CSS px）。背后/离屏返回 null。 */
+  const _npProj = new THREE.Vector3();
+  function anchorToScreen(root: THREE.Object3D, topY: number): { x: number; y: number } | null {
+    if (!npOverlay || !camera) return null;
+    _npProj.setFromMatrixPosition(root.matrixWorld);
+    _npProj.y += topY;
+    _npProj.project(camera);
+    if (_npProj.z > 1) return null; // 相机背后
+    const W = npOverlay.clientWidth, H = npOverlay.clientHeight;
+    if (W <= 0 || H <= 0) return null;
+    const x = (_npProj.x * 0.5 + 0.5) * W;
+    const y = (1 - (_npProj.y * 0.5 + 0.5)) * H;
+    if (x < -80 || x > W + 80 || y < -80 || y > H + 80) return null;
+    return { x, y };
+  }
+
+  /** 名牌是否被"点选/悬停"锁定（选中高亮与怪物血条显隐共用） */
+  function isSelected(root: THREE.Object3D): boolean {
+    if (hoverTarget?.root === root) return true;
+    const t = moveTarget;
+    if (!t || t.kind === 'ground') return false;
+    if (t.kind === 'monster' && root.userData.monsterId === t.id) return true;
+    if (t.kind === 'player' && root.userData.playerId === t.id) return true;
+    if (t.kind === 'npc' && root.userData.npcId === t.id) return true;
+    return false;
+  }
+
+  interface PillStyle {
+    nameColor: string;
+    clan?: string;       // 公会名（玩家有公会时显示在名字下方）
+    showHp: boolean;
+    ratio: number;       // hp/maxHp（showHp 时有效）
+    selected: boolean;
+  }
+  /** 在锚点 (x,y) 上方画一块名牌 pill（深色半透明底 + 名字 + 可选公会行 + 可选血条） */
+  function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): void {
+    const NAME_FONT = '600 13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+    const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+    ctx.font = NAME_FONT;
+    const nameW = ctx.measureText(name).width;
+    const clanW = s.clan ? ctx.measureText('◆ ' + s.clan).width : 0;
+    const barW = s.showHp ? Math.max(nameW + 14, clanW + 14, 72) : 0;
+    const pillW = Math.max(nameW, clanW) + 16;
+    let contentH = 18;                        // 名字行
+    if (s.clan) contentH += 3 + 14;           // 公会行
+    if (s.showHp) contentH += 4 + 7;          // 血条
+    const pillTop = y - contentH - 4;         // 名牌底边略高于头顶锚点
+
+    ctx.fillStyle = 'rgba(8, 11, 16, 0.55)';
+    rrect(ctx, x - pillW / 2, pillTop, pillW, contentH, 4);
+    ctx.fill();
+    if (s.selected) {
+      ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+      ctx.lineWidth = 1;
+      rrect(ctx, x - pillW / 2, pillTop, pillW, contentH, 4);
+      ctx.stroke();
+    }
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    let rowY = pillTop + 9;
+    ctx.font = NAME_FONT;
+    ctx.fillStyle = s.nameColor;
+    ctx.fillText(name, x, rowY);
+    if (s.clan) {
+      rowY += 18;
+      ctx.font = CLAN_FONT;
+      ctx.fillStyle = 'rgba(184, 212, 240, 0.9)';
+      ctx.fillText('◆ ' + s.clan, x, rowY);
+    }
+    if (s.showHp) {
+      rowY += 18;
+      const bw = Math.min(barW, pillW - 10);
+      const bx = x - bw / 2;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+      rrect(ctx, bx, rowY - 3.5, bw, 7, 3);
+      ctx.fill();
+      const ratio = Math.max(0, Math.min(1, s.ratio));
+      const fw = Math.max(1, bw * ratio);
+      ctx.fillStyle = hpColor(ratio);
+      rrect(ctx, bx, rowY - 3.5, fw, 7, 3);
+      ctx.fill();
+    }
+  }
+
+  /** 名牌数据变更 / overlay 创建（自机 hp 数据等入口） */
+  function setSelfHp(hp: number, maxHp: number): void {
+    if (!Number.isFinite(hp) || !Number.isFinite(maxHp)) return;
+    if (hp < selfHp) markSelfCombat(); // hp 权威下降 = 受击（怪物反击等目前只经 PlayerState）→ 进入战斗窗口
+    selfHp = hp;
+    selfMaxHp = Math.max(hp, maxHp);
+  }
+  function setSelfName(name: string): void {
+    selfName = name;
+  }
+  /** 自机发起攻击 → 进入战斗窗口 */
+  function markSelfCombat(): void {
+    selfCombatUntil = performance.now() + COMBAT_WINDOW_MS;
+  }
+  /** S2C_Damage/Heal：按 targetId 更新对应实体血量；isDamage=true（受击）才触发自机战斗窗口 */
+  function applyUnitHp(targetId: number, hp: number, isDamage: boolean): void {
+    if (targetId === selfPlayerId) {
+      selfHp = hp;
+      if (isDamage) markSelfCombat();
+      return;
+    }
+    const m = monsters.get(targetId);
+    if (m) { m.hp = hp; return; }
+    const r = remotes.get(targetId);
+    if (r) r.hp = hp;
+  }
+  /** S2C_AttackResult：服务端当前只广播 damage（无 currentHp），客户端从出现血量自减 */
+  function applyMonsterHit(monsterId: number, damage: number): void {
+    const m = monsters.get(monsterId);
+    if (m) m.hp = Math.max(0, m.hp - damage);
+  }
+
+  /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
+  function drawNameplateOverlay(): void {
+    const ctx = npCtx;
+    if (!ctx) return;
+    const ov = npOverlay!;
+    const W = ov.clientWidth, H = ov.clientHeight;
+    if (W <= 0 || H <= 0) return;
+    ctx.clearRect(0, 0, W, H);
+    const now = performance.now();
+
+    // NPC：名牌常显（浅蓝），选中/悬停变白
+    for (const a of npcs.values()) {
+      if (!a.root.visible) continue;
+      const pt = anchorToScreen(a.root, a.topY);
+      if (!pt) continue;
+      const sel = isSelected(a.root);
+      drawPill(ctx, pt.x, pt.y, t(`npc.${a.nameKey}.name`), {
+        nameColor: sel ? '#ffffff' : '#a8d8ff',
+        showHp: false, ratio: 0, selected: sel,
+      });
+    }
+
+    // 怪物：名牌+血条按 NAME_TAG_RANGE 显隐；血条 = 名牌显示 且（点选 或 血不满）
+    for (const a of monsters.values()) {
+      if (!a.root.visible) continue;
+      const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
+      if (dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE) continue;
+      const pt = anchorToScreen(a.root, a.topY);
+      if (!pt) continue;
+      const sel = isSelected(a.root);
+      drawPill(ctx, pt.x, pt.y, a.name || '', {
+        nameColor: '#ff8080',
+        showHp: sel || (a.maxHp > 0 && a.hp < a.maxHp),
+        ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
+        selected: false,
+      });
+    }
+
+    // 远端玩家：名牌常显（淡黄），选中变白；血条 = 血不满；有公会显示公会名
+    for (const a of remotes.values()) {
+      if (!a.root.visible) continue;
+      const pt = anchorToScreen(a.root, a.topY);
+      if (!pt) continue;
+      const sel = isSelected(a.root);
+      drawPill(ctx, pt.x, pt.y, a.name || '', {
+        nameColor: sel ? '#ffffff' : '#ffe9a8',
+        clan: a.clanName || undefined,
+        showHp: a.maxHp > 0 && a.hp < a.maxHp,
+        ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
+        selected: sel,
+      });
+    }
+
+    // 自机：名牌常显；血条 = 战斗中（3s 窗口）或血不满
+    if (charGroup && charGroup.visible && selfName) {
+      const pt = anchorToScreen(charGroup, selfTopY);
+      if (pt) {
+        drawPill(ctx, pt.x, pt.y, selfName, {
+          nameColor: '#ffe9a8',
+          showHp: now < selfCombatUntil || (selfMaxHp > 0 && selfHp < selfMaxHp),
+          ratio: selfMaxHp > 0 ? selfHp / selfMaxHp : 1,
+          selected: false,
+        });
+      }
+    }
+  }
+
   function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void {
     if (!scene) {
       pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem });
@@ -1894,6 +2152,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.add(pivot);
 
         const label = makeItemLabel(name);
+        label.visible = false; // 名牌悬停可见（design-nameplate-hpbar.md）
         label.position.y = GROUND_LIFT + modelTopY(model) + 0.55;
         root.add(label);
 
@@ -2023,7 +2282,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance }): void {
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
@@ -2080,6 +2339,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           name: actorInfo.name,
           jobId,
           level: actorInfo.level,
+          hp: actorInfo.hp || 0,
+          maxHp: actorInfo.maxHp || 0,
+          clanName: actorInfo.clanName || '',
+          clanMark: actorInfo.clanMark || '',
+          topY: modelTopY(root) + 0.5,
           root, bodyGroup, headGroup,
           bones, skeleton,
           animSmb: result.animSmb,
@@ -2604,6 +2868,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
     if (composer) composer.render();
+    // 名牌/血条 overlay（Canvas，压制被测遮挡）
+    drawNameplateOverlay();
     // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
     if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && hoverTarget && rafMs - lastHoverScanAt > 1500) {
       lastHoverScanAt = rafMs;
@@ -2646,6 +2912,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     camera.updateProjectionMatrix();
     renderer.setSize(root.clientWidth, root.clientHeight, false);
     composer?.setSize(root.clientWidth, root.clientHeight);
+    if (npOverlay && npCtx) {
+      const dpr = renderer.getPixelRatio();
+      npOverlay.width = Math.max(1, Math.floor(root.clientWidth * dpr));
+      npOverlay.height = Math.max(1, Math.floor(root.clientHeight * dpr));
+      npCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
   }
 
   // —— 外观更新（穿脱装备/武器切换/转职换头 S2C_AppearanceUpdate 驱动）——
@@ -2674,6 +2946,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     despawnRemote(playerId);
     spawnRemote({
       playerId, name, classId: jobId, level,
+      hp: old.hp, maxHp: old.maxHp,
+      clanName: old.clanName, clanMark: old.clanMark,
       x: p.x, y: p.y, z: p.z, angle,
       appearance,
     });
@@ -2773,6 +3047,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     isRunning: () => running,
     setSelfId: (id: number) => { selfPlayerId = id; },
     isSelf: (id: number) => id === selfPlayerId,
+    // 名牌/血条数据（main.ts 消息派发喂入；design-nameplate-hpbar.md）
+    setSelfHp,
+    setSelfName,
+    markSelfCombat,
+    applyUnitHp,
+    applyMonsterHit,
     applyPlayerMove: (playerId, x, y, z, angle, animState) => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {
@@ -2792,8 +3072,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     },
-    playerAppear: (playerId, name, classId, level, x, y, z, angle, appearance) => {
-      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, x, y, z, angle, appearance });
+    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance });
     },
     setSpeed: (walkWps, runWps) => {
       // 服务端权威属性速度（世界/秒）；非法值忽略，保留当前值
@@ -2804,8 +3084,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateSelfAppearance: (appearance) => { void reloadSelfModel(appearance); },
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, x, y, z, angle) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, x, y, z, angle: angle || 0 });
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0 });
     },
     monsterMove: (monsterId, x, y, z, angle, animState) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState);
@@ -2857,6 +3137,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
         renderer.domElement.remove();
       }
+      npOverlay?.remove();
+      npOverlay = null;
+      npCtx = null;
       if (composer) { composer.dispose(); composer = null; }
       if (outlinePass) outlinePass = null;
       if (renderer) renderer.dispose();

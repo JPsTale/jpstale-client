@@ -10933,6 +10933,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [maxHp] S2C_PlayerAppear maxHp
              * @property {jpt.base.CharacterAppearance.$Properties|null} [appearance] S2C_PlayerAppear appearance
              * @property {number|null} [angle] S2C_PlayerAppear angle
+             * @property {string|null} [clanName] S2C_PlayerAppear clanName
+             * @property {string|null} [clanMark] S2C_PlayerAppear clanMark
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -11037,6 +11039,22 @@ export const jpt = $root.jpt = (() => {
             S2C_PlayerAppear.prototype.angle = 0;
 
             /**
+             * S2C_PlayerAppear clanName.
+             * @member {string} clanName
+             * @memberof jpt.base.S2C_PlayerAppear
+             * @instance
+             */
+            S2C_PlayerAppear.prototype.clanName = "";
+
+            /**
+             * S2C_PlayerAppear clanMark.
+             * @member {string} clanMark
+             * @memberof jpt.base.S2C_PlayerAppear
+             * @instance
+             */
+            S2C_PlayerAppear.prototype.clanMark = "";
+
+            /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_PlayerAppear
@@ -11086,6 +11104,10 @@ export const jpt = $root.jpt = (() => {
                     $root.jpt.base.CharacterAppearance.encode(message.appearance, writer.uint32(/* id 8, wireType 2 =*/66).fork(), _depth + 1).ldelim();
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle") && !$Object.is(message.angle, 0))
                     writer.uint32(/* id 9, wireType 5 =*/77).float(message.angle);
+                if (message.clanName != null && $Object.hasOwnProperty.call(message, "clanName") && message.clanName !== "")
+                    writer.uint32(/* id 10, wireType 2 =*/82).string(message.clanName);
+                if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark") && message.clanMark !== "")
+                    writer.uint32(/* id 11, wireType 2 =*/90).string(message.clanMark);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -11218,6 +11240,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.angle;
                             continue;
                         }
+                    case 10: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.clanName = value;
+                            else
+                                delete message.clanName;
+                            continue;
+                        }
+                    case 11: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.clanMark = value;
+                            else
+                                delete message.clanMark;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -11297,6 +11337,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle"))
                     if (typeof message.angle !== "number")
                         return "angle: number expected";
+                if (message.clanName != null && $Object.hasOwnProperty.call(message, "clanName"))
+                    if (!$util.isString(message.clanName))
+                        return "clanName: string expected";
+                if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
+                    if (!$util.isString(message.clanMark))
+                        return "clanMark: string expected";
                 return null;
             };
 
@@ -11356,6 +11402,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.angle != null)
                     if (!$Object.is($Number(object.angle), 0))
                         message.angle = $Number(object.angle);
+                if (object.clanName != null)
+                    if (typeof object.clanName !== "string" || object.clanName.length)
+                        message.clanName = $String(object.clanName);
+                if (object.clanMark != null)
+                    if (typeof object.clanMark !== "string" || object.clanMark.length)
+                        message.clanMark = $String(object.clanMark);
                 return message;
             };
 
@@ -11390,6 +11442,8 @@ export const jpt = $root.jpt = (() => {
                     object.maxHp = 0;
                     object.appearance = null;
                     object.angle = 0;
+                    object.clanName = "";
+                    object.clanMark = "";
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -11414,6 +11468,10 @@ export const jpt = $root.jpt = (() => {
                     object.appearance = $root.jpt.base.CharacterAppearance.toObject(message.appearance, options, _depth + 1);
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle"))
                     object.angle = options.json && !$isFinite(message.angle) ? $String(message.angle) : message.angle;
+                if (message.clanName != null && $Object.hasOwnProperty.call(message, "clanName"))
+                    object.clanName = message.clanName;
+                if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
+                    object.clanMark = message.clanMark;
                 return object;
             };
 
