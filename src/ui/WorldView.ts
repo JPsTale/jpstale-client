@@ -2130,10 +2130,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       else return;
     }
     const font = crit
-      ? '700 18px Verdana, "Microsoft YaHei", sans-serif'
+      ? '700 28px Verdana, "Microsoft YaHei", sans-serif'
       : k === 'monster'
-        ? '700 15px Verdana, "Microsoft YaHei", sans-serif'
-        : '700 14px Verdana, "Microsoft YaHei", sans-serif';
+        ? '700 21px Verdana, "Microsoft YaHei", sans-serif'
+        : '700 19px Verdana, "Microsoft YaHei", sans-serif';
     while (floaters.length >= 64) floaters.shift(); // 防爆上限
     floaters.push({ kind: k, id, text, color, font, born: performance.now(), life: 1000 });
   }
@@ -2235,7 +2235,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 4;
         ctx.strokeText(f.text, pt.x, fy);
         ctx.fillStyle = f.color;
         ctx.fillText(f.text, pt.x, fy);
