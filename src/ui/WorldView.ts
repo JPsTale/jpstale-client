@@ -2395,8 +2395,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 原版 scITEM::Draw：物品模型默认长度轴朝上，须绕 X 转 90°「躺平」贴地
         // （武器类 angle.x = ANGLE_90）。pivot 负责由位置决定的水平朝向（绕世界 Y）。
         const pivot = new THREE.Group();
-        pivot.rotation.y = (Math.floor(x * 256) + Math.floor(z * 256)) >> 2 & 0xFFF;
-        pivot.rotation.y = pivot.rotation.y / 0xFFF * Math.PI * 2;
+        pivot.rotation.y = Math.random() * Math.PI * 2; // 随机水平朝向
 
         const model = res.group;
         model.rotation.x = Math.PI / 2; // 立轴 → 平躺地面
