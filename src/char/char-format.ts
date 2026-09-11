@@ -97,6 +97,8 @@ export interface MotionInfo {
   keyCode: number;
   fxValue: number[];
   motionFrame: number;
+  /** 该条目所属动画 .smb：仅子模型(subModelFile)条目携带，缺省用主体 animSmb */
+  animSmb?: SmbData;
 }
 
 export interface ModelGroup {

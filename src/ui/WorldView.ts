@@ -1967,7 +1967,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (next) actor.animFrame = next.startFrame * 160;
         }
       }
-      const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
+      const skelFrames = evalSkeleton(motion.animSmb ?? actor.animSmb, actor.animFrame, false);
       applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
       // 关键：手动更新每个骨骼的 matrixWorld。Skeleton.update() 只读 matrixWorld 算 boneMatrices，
       // 不会更新 matrixWorld；孤立根骨骼（如武器 waraxe，不在场景图）否则会停在 bind 值 → 武器不显示。
@@ -2542,7 +2542,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) actor.animFrame = next.startFrame * 160;
           }
         }
-        const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
+        const skelFrames = evalSkeleton(motion.animSmb ?? actor.animSmb, actor.animFrame, false);
         applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
         actor.bones.forEach(b => b.updateMatrixWorld(true));
         actor.skeleton.update();
@@ -2760,7 +2760,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) actor.animFrame = next.startFrame * 160;
           }
         }
-        const skelFrames = evalSkeleton(actor.animSmb, actor.animFrame, false);
+        const skelFrames = evalSkeleton(motion.animSmb ?? actor.animSmb, actor.animFrame, false);
         applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
         actor.bones.forEach(b => b.updateMatrixWorld(true));
         actor.skeleton.update();

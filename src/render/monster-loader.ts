@@ -56,10 +56,10 @@ async function loadAnim(baseCandidates: string[]): Promise<SmbData | null> {
   return null;
 }
 
-/** 解析一个 .inx（可能 .in 实际为 .inx 文件，两种路径都试） */
+/** 解析一个 .inx（可能 .in/.ini 实际为 .inx 文件，几种路径都试） */
 async function loadInxWithFallback(link: string): Promise<InxData | null> {
   const lc = link.replace(/\\/g, '/').toLowerCase();
-  const candidates = [lc, lc.replace(/\.in$/, '.inx'), lc + '.inx'];
+  const candidates = [lc, lc.replace(/\.ini$/, '.inx'), lc.replace(/\.in$/, '.inx'), lc + '.inx'];
   for (const c of candidates) {
     try {
       const buf = await fetchAB('/res/' + c);
@@ -72,7 +72,7 @@ async function loadInxWithFallback(link: string): Promise<InxData | null> {
 }
 
 /** 由动画 .smb + 动画条目源 .inx 构建 MotionInfo[]（同玩家 buildMotionListFor 语义） */
-function buildMotionList(animSmb: SmbData, inx: InxData): MotionInfo[] {
+export function buildMotionList(animSmb: SmbData, inx: InxData): MotionInfo[] {
   const list: MotionInfo[] = [];
   const tmFrame = animSmb.tmFrame;
   for (let i = CHRMOTION_EXT; i < inx.motionCount; i++) {
@@ -158,6 +158,26 @@ export async function loadMonsterModel(inxPath: string): Promise<MonsterModelRes
   const skel = buildSkeleton(animSmb, false);
   const built = buildSkinnedMesh(mesh, animSmb, meshNames, false, skel);
 
+  // 子模型：攻击/受击/死亡等动作常定义在 subModelFile 的 inx + 另一套 .smb
+  // （如 Minigue：a1 只有 RUN/WALK/STAND，a2 才有 ATTACK/DAMAGE/DEAD）。
+  // 合并其条目，并让每条携带所属 animSmb 供渲染时按当前 motion 切换采样源。
+  let motionList = buildMotionList(animSmb, motionInx);
+  if (inxInfo.subModelFile && inxInfo.subModelFile.trim().length > 0) {
+    const subInx = await loadInxWithFallback(inxInfo.subModelFile);
+    if (subInx) {
+      const subModelBase = lowerBase(subInx.modelFile);
+      const subAnimBase = subInx.motionFile && subInx.motionFile.trim().length > 0
+        ? lowerBase(subInx.motionFile)
+        : subModelBase;
+      const subSmb = await loadAnim([subAnimBase, subModelBase].filter(Boolean) as string[]);
+      if (subSmb) {
+        motionList = motionList.concat(
+          buildMotionList(subSmb, subInx).map(m => ({ ...m, animSmb: subSmb })),
+        );
+      }
+    }
+  }
+
   return {
     inxPath,
     modelBase,
@@ -170,6 +190,6 @@ export async function loadMonsterModel(inxPath: string): Promise<MonsterModelRes
     group: built.group,
     meshes: built.meshes,
     texturesToLoad: built.texturesToLoad,
-    motionList: buildMotionList(animSmb, motionInx),
+    motionList,
   };
 }
