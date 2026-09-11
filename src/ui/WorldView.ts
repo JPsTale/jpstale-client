@@ -629,7 +629,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (renderer) return;
     renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
     setMaxAnisotropy(renderer.capabilities.getMaxAnisotropy());
-    outlinePass = new HoverOutline(renderer);
+    outlinePass = new HoverOutline(renderer, scene);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(root.clientWidth, root.clientHeight, false);
     renderer.domElement.style.width = '100%';

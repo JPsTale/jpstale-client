@@ -25,6 +25,8 @@ void main() {
 `;
 export class HoverOutline {
   private renderer: THREE.WebGLRenderer;
+  /** 目标平时挂载的主场景：maskScene 临时移入渲染后必须还原回来的地方。 */
+  private mainScene: THREE.Scene | null;
   private maskRT: THREE.WebGLRenderTarget;
   private maskMat: THREE.MeshBasicMaterial;
   private quadScene: THREE.Scene;
@@ -63,8 +65,9 @@ export class HoverOutline {
   /** 发光强度（透明度系数），0~1。 */
   opacity: number;
 
-  constructor(renderer: THREE.WebGLRenderer, radius = 2.5, opacity = 0.9) {
+  constructor(renderer: THREE.WebGLRenderer, mainScene: THREE.Scene | null, radius = 2.5, opacity = 0.9) {
     this.renderer = renderer;
+    this.mainScene = mainScene;
     this.radius = radius;
     this.opacity = opacity;
 
@@ -220,9 +223,17 @@ export class HoverOutline {
         r.setRenderTarget(prevTarget);
         r.autoClear = prevAutoClear;
         this.restoreVisibility();
-        // 按原 parent/索引挂回主场景（matrixWorld 两端单位父矩阵，值不变）
-        if (prevIdx >= 0 && prevParent) prevParent.children.splice(prevIdx, 0, target);
-        else if (prevParent) prevParent.add(target);
+        // 绝对可靠还原：只要目标还在 maskScene 就强制加回主场景（add 会 removeFromParent 后挂入）。
+        // 旧的"按原索引 splice 回插"在部分真机协议下会还原失败，导致目标残留累积、目标被 mask 重复渲染成剪影。
+        if (target.parent === this.maskScene) {
+          if (this.mainScene) {
+            this.mainScene.add(target);
+          } else if (prevParent) {
+            prevParent.add(target);
+          }
+        } else if (prevIdx >= 0 && prevParent) {
+          prevParent.children.splice(prevIdx, 0, target);
+        }
       }
       // 探针：target 未还原回主场景会累积在 maskScene —— 正是"之前指向过的目标也一起黑"的根因
       if (this.maskScene.children.length !== 0 && !this.maskSceneLogged) {
