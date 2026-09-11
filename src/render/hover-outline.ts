@@ -23,6 +23,7 @@ export class HoverOutline {
   private hidden: { obj: THREE.Object3D; vis: boolean }[] = [];
   /** mask 渲染用临时场景：renderer.render() 直接传 Group 不渲染其子树，需临时挂到独立场景。 */
   private maskScene = new THREE.Scene();
+  private diagLogged = false;
 
   /** 发光光圈宽度（屏像素）。 */
   radius: number;
@@ -68,8 +69,38 @@ export class HoverOutline {
 
   /** 设置要高亮的目标；传 null 清除。 */
   setTarget(target: THREE.Object3D | null, color = 0xffffff): void {
-    if (target !== this.target) this.target = target;
+    if (target !== this.target) {
+      const kind = target?.userData?.['kind'] as string | undefined;
+      const nm = (target?.userData?.['name'] as string | undefined) || target?.name || '?';
+      console.log(`[hover] 目标切换: ${target ? `kind=${kind} name=${nm}` : '(清除)'}`);
+      this.target = target;
+    }
     if (target) this.color.setHex(color);
+  }
+
+  /** 当前是否有轮廓目标（诊断/渲染循环用）。 */
+  hasTarget(): boolean {
+    return this.target !== null;
+  }
+
+  /** 一次性 shader 链接自检（诊断用），打印 mask/quad 材质是否链接成功。 */
+  private diagLinkStatus(): void {
+    const gl = (this.renderer as unknown as { getContext?: () => WebGL2RenderingContext }).getContext?.();
+    if (!gl) return;
+    const statOf = (m: THREE.Material): string => {
+      const p = (m as unknown as { program?: WebGLProgram }).program;
+      if (!p) return '无 program（未用/未编译）';
+      return gl.getProgramParameter(p, gl.LINK_STATUS)
+        ? 'link OK'
+        : `LINK FAIL: ${gl.getProgramInfoLog(p) || '(空)'}`;
+    };
+    console.log('[hover-diag] 初始化', {
+      rt: `${this.maskRT.width}x${this.maskRT.height}`,
+      logDepth: (this.renderer as unknown as { logarithmicDepthBuffer?: boolean }).logarithmicDepthBuffer,
+      pixelRatio: this.renderer.getPixelRatio(),
+      mask: statOf(this.maskMat),
+      quad: statOf(this.quadMat),
+    });
   }
 
   /**
@@ -79,6 +110,11 @@ export class HoverOutline {
   render(camera: THREE.Camera): void {
     const target = this.target;
     if (!target) return;
+
+    if (!this.diagLogged) {
+      this.diagLogged = true;
+      this.diagLinkStatus();
+    }
 
     const r = this.renderer;
     const w = Math.max(1, Math.floor(r.domElement.width * r.getPixelRatio()));

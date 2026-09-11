@@ -228,6 +228,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const HOVER_COLOR_PLAYER = 0x54ff9f;
   let outlinePass: HoverOutline | null = null;
   let hoverTarget: { root: THREE.Object3D; color: number } | null = null;
+  let lastHoverScanAt = 0;
+
+  /** 诊断（临时）：步长采样主 framebuffer，统计三类目标色像素，判定光圈是否落在屏幕上。 */
+  function hoverOutlineScanDiag(): void {
+    try {
+      const gl = renderer.getContext() as WebGL2RenderingContext;
+      const w = Math.floor(renderer.domElement.width * renderer.getPixelRatio());
+      const h = Math.floor(renderer.domElement.height * renderer.getPixelRatio());
+      const full = new Uint8Array(w * h * 4);
+      gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, full);
+      const step = 6;
+      let green = 0, red = 0, gold = 0;
+      const key = hoverTarget ? hoverTarget.color : 0;
+      for (let y = 0; y < h; y += step) {
+        for (let x = 0; x < w; x += step) {
+          const i = (y * w + x) * 4;
+          const R = full[i], G = full[i + 1], B = full[i + 2];
+          if (G > 110 && R < 130 && B < 95 && G > R + 30) green++;
+          else if (R > 150 && G < 95 && B < 95) red++;
+          else if (R > 170 && G > 110 && B < 90 && R > B + 60) gold++;
+        }
+      }
+      const targetColorName = key === HOVER_COLOR_ITEM ? '金黄(item)' : key === HOVER_COLOR_MONSTER ? '红(monster)' : '绿(npc/player)';
+      console.log(`[hover-diag] 屏幕扫描(步长${step}): green=${green} red=${red} gold=${gold} | hover目标色=${targetColorName}`);
+      // 红/金/绿任何一类有像素 → 光圈已画出（但需先排除背景本身含亮色）
+    } catch (e) {
+      console.error('[hover-diag] 屏幕扫描失败:', e);
+    }
+  }
 
   async function cursorDataUrl(file: string): Promise<string | null> {
     try {
@@ -2511,6 +2540,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (outlinePass) {
       outlinePass.setTarget(hoverTarget ? hoverTarget.root : null, hoverTarget ? hoverTarget.color : 0xffffff);
       outlinePass.render(camera);
+      // 诊断（临时）：每 ~1.5s 扫描主 framebuffer 统计目标色像素，判定合成 pass 是否真的画了光圈
+      if (outlinePass.hasTarget() && rafMs - lastHoverScanAt > 1500) {
+        lastHoverScanAt = rafMs;
+        hoverOutlineScanDiag();
+      }
     }
 
     // 首帧渲染完成 → 通知 main.ts 收起加载页
