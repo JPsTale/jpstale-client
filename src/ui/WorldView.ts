@@ -1896,7 +1896,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.fillText(text, c.width / 2, c.height / 2 + 2);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
-    const mat = new THREE.SpriteMaterial({ map: tex, depthWrite: false, transparent: true });
+    const mat = new THREE.SpriteMaterial({ map: tex, depthWrite: false, transparent: true, depthTest: false });
     const sprite = new THREE.Sprite(mat);
     sprite.scale.set(1.6, 0.4, 1);
     sprite.renderOrder = 10;
@@ -1927,13 +1927,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // ==================== 名牌/血条（Canvas overlay，design-nameplate-hpbar.md）====================
-  /** 血条颜色：绿(≥50%)→黄(≥25%)→橙(≥10%)→红(<10%)，段内线性插值 */
+  /** 血条颜色：满血绿(hsl120) → 半血红橙(hsl60) → 低血红(hsl0)，随血量线性渐变（对齐 exm DrawStateBar2 绿区更缓的方向） */
   function hpColor(ratio: number): string {
     const r = Math.max(0, Math.min(1, ratio));
-    let hue = 0;
-    if (r >= 0.5) hue = 120 - 120 * ((r - 0.5) / 0.5);
-    else if (r >= 0.25) hue = 60 - 30 * ((r - 0.25) / 0.25);
-    else if (r >= 0.1) hue = 30 - 30 * ((r - 0.1) / 0.1);
+    const hue = 120 * r; // r=1 绿 / 0.5 黄 / 0.25 橙 / ~0 红
     return `hsl(${hue.toFixed(0)} 85% 50%)`;
   }
 
@@ -1984,13 +1981,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   /** 在锚点 (x,y) 上方画一块名牌 pill（深色半透明底 + 名字 + 可选公会行 + 可选血条） */
   function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): void {
-    const NAME_FONT = '600 13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+    const NAME_FONT = '13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
     const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+    const HP_BAR_W = 84; // 血条固定宽度（不随名字/血量长度变化，对齐 exm STATE_BAR_WIDTH）
     ctx.font = NAME_FONT;
     const nameW = ctx.measureText(name).width;
     const clanW = s.clan ? ctx.measureText('◆ ' + s.clan).width : 0;
-    const barW = s.showHp ? Math.max(nameW + 14, clanW + 14, 72) : 0;
-    const pillW = Math.max(nameW, clanW) + 16;
+    let pillW = Math.max(nameW, clanW) + 16;
+    if (s.showHp) pillW = Math.max(pillW, HP_BAR_W + 12); // 血条比背景略窄，居中
     let contentH = 18;                        // 名字行
     if (s.clan) contentH += 3 + 14;           // 公会行
     if (s.showHp) contentH += 4 + 7;          // 血条
@@ -2020,7 +2018,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (s.showHp) {
       rowY += 18;
-      const bw = Math.min(barW, pillW - 10);
+      const bw = Math.min(HP_BAR_W, pillW - 10);
       const bx = x - bw / 2;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       rrect(ctx, bx, rowY - 3.5, bw, 7, 3);
@@ -2092,20 +2090,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       });
     }
 
-    // 怪物：名牌+血条按 NAME_TAG_RANGE 显隐；血条 = 名牌显示 且（点选 或 血不满）
+    // 怪物：范围内常显；远处仅"悬停/点击选中"才显示（对齐 exm：普通怪名的默认行为是选中才显示）
     for (const a of monsters.values()) {
       if (!a.root.visible) continue;
       const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
-      if (dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE) continue;
+      const far = dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE;
+      const sel = isSelected(a.root);
+      if (far && !sel) continue;
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { monDrop++; continue; }
       monOk++;
-      const sel = isSelected(a.root);
+      const showHp = sel || (a.maxHp > 0 && a.hp < a.maxHp);
       drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: '#ff8080',
-        showHp: sel || (a.maxHp > 0 && a.hp < a.maxHp),
+        showHp,
         ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
-        selected: false,
+        selected: sel,
       });
     }
 
@@ -2188,7 +2188,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
         // 躺平模型低矮，加一块隐形拾取垫（贴近地面、透明）扩大点击目标
         const pad = new THREE.Mesh(
-          new THREE.CircleGeometry(1.3, 24),
+          new THREE.CircleGeometry(2.0, 24),
           new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }),
         );
         pad.rotation.x = -Math.PI / 2; // XY → 平贴地面
