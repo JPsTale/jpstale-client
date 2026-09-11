@@ -231,6 +231,9 @@ keyBinding.onKeyDown((action) => {
       // W 键：当前装备套 ↔ 备用武器套（主手+副手整对互换，服务端裁决）
       sendSwitchWeapon();
       break;
+    case 'showGroundItems':
+      worldView.toggleGroundItemLabels();
+      break;
     // F1~F8 快捷技能：把绑定在该键的技能自动切到对应拳（skill1=F1→index0）
     case 'skill1': case 'skill2': case 'skill3': case 'skill4':
     case 'skill5': case 'skill6': case 'skill7': case 'skill8': {
