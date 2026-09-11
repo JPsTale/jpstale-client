@@ -129,6 +129,14 @@ export class HoverOutline {
     const target = this.target;
     if (!target) return;
 
+    // 真机诊断入口：console 执行 window.__hoverDiag='green'（纯绿合成）/ 'mask'（显示 mask 剪影）切换
+    if (typeof window !== 'undefined') {
+      const wd = (window as unknown as { __hoverDiag?: string }).__hoverDiag;
+      this.diagPureGreen = wd === 'green';
+      this.diagShowMask = wd === 'mask';
+      this.diagWhiteMask = wd === 'white';
+    }
+
     try {
       this.renderInner(camera);
     } catch (e) {

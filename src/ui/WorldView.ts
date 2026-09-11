@@ -2542,8 +2542,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (outlinePass) {
       outlinePass.setTarget(hoverTarget ? hoverTarget.root : null, hoverTarget ? hoverTarget.color : 0xffffff);
       outlinePass.render(camera);
-      // 诊断（临时）：每 ~1.5s 扫描主 framebuffer 统计目标色像素，判定合成 pass 是否真的画了光圈
-      if (outlinePass.hasTarget() && rafMs - lastHoverScanAt > 1500) {
+      // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
+      if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && outlinePass.hasTarget() && rafMs - lastHoverScanAt > 1500) {
         lastHoverScanAt = rafMs;
         hoverOutlineScanDiag();
       }

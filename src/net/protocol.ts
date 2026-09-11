@@ -182,8 +182,14 @@ export function decodeServer(data: ArrayBuffer | Uint8Array): jpt.base.ServerMes
 }
 
 export function debugLog(msg: jpt.base.ServerMessage): void {
-    // 高频噪音：pong 心跳 / playerMove 状态广播不打日志
-    if (msg.payload === 'pong' || msg.payload === 'playerMove') {
+    // 高频噪音过滤：心跳 / 状态广播 / 高频移动类消息不打日志
+    if (
+        msg.payload === 'pong' ||
+        msg.payload === 'playerMove' ||
+        msg.payload === 'monsterMove' ||
+        msg.payload === 'monsterState' ||
+        msg.payload === 'npcMove'
+    ) {
         return;
     }
     console.log(JSON.stringify(jpt.base.ServerMessage.toObject(msg)));
