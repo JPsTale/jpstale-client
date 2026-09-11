@@ -38,6 +38,8 @@ export class HoverOutline {
   private maskScene = new THREE.Scene();
   private diagLogged = false;
   private maskPassLogged = false;
+  private diagRT = false;
+  private rtDiagLogged = false;
   /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
   private diagWhiteMask = false;
   private whiteTex: THREE.DataTexture | null = null;
@@ -135,6 +137,7 @@ export class HoverOutline {
       this.diagPureGreen = wd === 'green';
       this.diagShowMask = wd === 'mask';
       this.diagWhiteMask = wd === 'white';
+      this.diagRT = wd === 'rt';
     }
 
     try {
@@ -201,6 +204,25 @@ export class HoverOutline {
         // 按原 parent/索引挂回主场景（matrixWorld 两端单位父矩阵，值不变）
         if (prevIdx >= 0 && prevParent) prevParent.children.splice(prevIdx, 0, target);
         else if (prevParent) prevParent.add(target);
+      }
+      // 诊断：readRenderTargetPixels 读 maskRT，判定内容是否真的写入（无头下 readPixels 是假阴，真机可能可读）
+      if (this.diagRT && !this.rtDiagLogged) {
+        this.rtDiagLogged = true;
+        try {
+          const w = this.maskRT.width, h = this.maskRT.height;
+          const buf = new Uint8Array(w * h * 4);
+          r.readRenderTargetPixels(this.maskRT, 0, 0, w, h, buf);
+          let nonZero = 0, whitePix = 0, maxV = 0;
+          for (let i = 0; i < buf.length; i += 4) {
+            const v = Math.max(buf[i], buf[i + 1], buf[i + 2]);
+            if (v > 0) nonZero++;
+            if (v > 200) whitePix++;
+            if (v > maxV) maxV = v;
+          }
+          console.log(`[hover-diag] maskRT=${w}x${h} readPixels: 非零=${nonZero} 白色(>200)=${whitePix} max=${maxV}`);
+        } catch (e) {
+          console.log('[hover-diag] maskRT 读取失败:', e);
+        }
       }
     }
 
