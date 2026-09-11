@@ -15,6 +15,7 @@
 
 import type { Vector3 } from 'three';
 import soundConfig from './sounds.json';
+import { audioPrefs, saveAudioPrefs } from '../audio/prefs';
 
 /** 3D 声源点：[x, y, z, round, code]，z 为 GL 约定（正北为正），世界域 */
 export type SoundPoint = [number, number, number, number, number]
@@ -56,32 +57,11 @@ const MUSIC_VOLUME = 0.55;      // 各通道上限（基线音量）
 const AMBIENT_VOLUME = 0.48;
 const EFFECT_VOLUME = 0.85;
 
-/* ─────────── 用户音频偏好（系统设置面板 ⇄ localStorage，0..1 为滑块倍率）─────────── */
-let bgmOn = true, ambOn = true, effOn = true;
-let bgmLevel = 1, ambLevel = 1, effLevel = 1;
-
-const PREFS_KEY = 'pt.audio.prefs';
-function loadPrefs(): void {
-  try {
-    const p = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
-    if (typeof p.bgmOn === 'boolean') bgmOn = p.bgmOn;
-    if (typeof p.ambOn === 'boolean') ambOn = p.ambOn;
-    if (typeof p.effOn === 'boolean') effOn = p.effOn;
-    if (typeof p.bgmLevel === 'number') bgmLevel = Math.min(1, Math.max(0, p.bgmLevel));
-    if (typeof p.ambLevel === 'number') ambLevel = Math.min(1, Math.max(0, p.ambLevel));
-    if (typeof p.effLevel === 'number') effLevel = Math.min(1, Math.max(0, p.effLevel));
-  } catch { /* ignore */ }
-}
-function savePrefs(): void {
-  try {
-    localStorage.setItem(PREFS_KEY, JSON.stringify({ bgmOn, ambOn, effOn, bgmLevel, ambLevel, effLevel }));
-  } catch { /* ignore */ }
-}
-loadPrefs();
-
-function bgmTarget(): number { return bgmOn ? MUSIC_VOLUME * bgmLevel : 0; }
-function ambTarget(): number { return ambOn ? AMBIENT_VOLUME * ambLevel : 0; }
-function effTarget(): number { return effOn ? EFFECT_VOLUME * effLevel : 0; }
+/* ─────────── 用户音频偏好 ───────────
+ * 存储与音效子系统共用（audio/prefs.ts），避免两处各自读写 pt.audio.prefs 互相覆盖。 */
+function bgmTarget(): number { return audioPrefs.bgmOn ? MUSIC_VOLUME * audioPrefs.bgmLevel : 0; }
+function ambTarget(): number { return audioPrefs.ambOn ? AMBIENT_VOLUME * audioPrefs.ambLevel : 0; }
+function effTarget(): number { return audioPrefs.effOn ? EFFECT_VOLUME * audioPrefs.effLevel : 0; }
 
 /* ─────────── 运行时状态 ─────────── */
 let unlocked = false;      // 首次用户手势后放行
@@ -305,47 +285,47 @@ export const mapAudio = {
   /* ─────────── 音频控制（系统设置面板）─────────── */
   /** BGM 开关（设置后立即生效 + 持久化） */
   setBgmOn(on: boolean): void {
-    bgmOn = on; savePrefs();
+    audioPrefs.bgmOn = on; saveAudioPrefs();
     if (!bgmEl) return;
     bgmEl.volume = bgmTarget();
     if (on && unlocked && active) bgmEl.play().catch(() => { });
     else if (!on && bgmEl.src) bgmEl.pause();
   },
-  get bgmOn(): boolean { return bgmOn; },
+  get bgmOn(): boolean { return audioPrefs.bgmOn; },
   /** BGM 音量 0..1 */
   setBgmLevel(v: number): void {
-    bgmLevel = v; savePrefs();
+    audioPrefs.bgmLevel = v; saveAudioPrefs();
     if (bgmEl) bgmEl.volume = bgmTarget();
   },
-  get bgmLevel(): number { return bgmLevel; },
+  get bgmLevel(): number { return audioPrefs.bgmLevel; },
 
   /** 环境音开关（设置后立即生效 + 持久化） */
   setAmbOn(on: boolean): void {
-    ambOn = on; savePrefs();
+    audioPrefs.ambOn = on; saveAudioPrefs();
     if (!ambEl) return;
     ambEl.volume = ambTarget();
     if (on && unlocked && active) ambEl.play().catch(() => { });
     else if (!on && ambEl.src) ambEl.pause();
   },
-  get ambOn(): boolean { return ambOn; },
+  get ambOn(): boolean { return audioPrefs.ambOn; },
   /** 环境音音量 0..1 */
   setAmbLevel(v: number): void {
-    ambLevel = v; savePrefs();
+    audioPrefs.ambLevel = v; saveAudioPrefs();
     if (ambEl) ambEl.volume = ambTarget();
   },
-  get ambLevel(): number { return ambLevel; },
+  get ambLevel(): number { return audioPrefs.ambLevel; },
 
   /** 场景音效开关（更新由逐帧 updateStations 驱动） */
   setEffOn(on: boolean): void {
-    effOn = on; savePrefs();
+    audioPrefs.effOn = on; saveAudioPrefs();
     for (const s of stations) s.el.volume = 0;
   },
-  get effOn(): boolean { return effOn; },
+  get effOn(): boolean { return audioPrefs.effOn; },
   /** 场景音效音量 0..1 */
   setEffLevel(v: number): void {
-    effLevel = v; savePrefs();
+    audioPrefs.effLevel = v; saveAudioPrefs();
   },
-  get effLevel(): number { return effLevel; },
+  get effLevel(): number { return audioPrefs.effLevel; },
 
   dispose(): void {
     if (bgm) for (const m of bgm) { m.pause(); m.src = ''; }

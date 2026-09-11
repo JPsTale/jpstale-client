@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, CharLoadResult } from '../render/char-loader.js';
 import { createAnimStateMachine, AnimStateMachine } from '../char/anim-state-machine.js';
-import { evalSkeleton, applyToBones } from '../char/animation.js';
-import { decodeTextureAsync, encodeAssetPath } from '../core/texture.js';
+import { evalSkeleton, applyToBones, advanceAnimFrame } from '../char/animation.js';
+import { loadCharTextures } from '../render/char-texture-loader.js';
 import { createCameraControls } from './camera-controls.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import type { MotionInfo } from '../char/char-format.js';
@@ -115,35 +115,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   // BGM
   let bgm: HTMLAudioElement | null = null;
 
-  // Texture loading (same as char-demo.ts)
-  async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | null> {
-    try {
-      const resp = await fetch(encodeAssetPath(url), { cache: 'no-store' });
-      if (!resp.ok) return null;
-      const buf = await resp.arrayBuffer();
-      const decoded = await decodeTextureAsync(buf);
-      if (!decoded) return null;
-      const tex = new THREE.DataTexture(new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat);
-      tex.flipY = true;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      tex.needsUpdate = true;
-      return tex;
-    } catch { return null; }
-  }
-
-  async function loadTextures(textures: { url: string; mat: THREE.MeshPhongMaterial }[]): Promise<void> {
-    await Promise.allSettled(textures.map(async (t) => {
-      const texPath = t.url.replace(/\\/g, '/').toLowerCase();
-      const tex = await fetchAndDecodeTexture('/res/' + texPath);
-      if (tex) {
-        t.mat.map = tex;
-        t.mat.color.set(0xffffff);
-        t.mat.alphaTest = 0.5;
-        t.mat.transparent = true;
-        t.mat.needsUpdate = true;
-      }
-    }));
-  }
+  // 角色纹理加载（共享实现：render/char-texture-loader.ts）
 
   // --- list mode ---
   const listEl = document.createElement('div');
@@ -497,7 +469,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       skeletonGroup!.add(result.bodyGroup);
       skeletonGroup!.add(result.headGroup);
       // Load textures
-      await loadTextures([...result.bodyTextures, ...result.headTextures]);
+      await loadCharTextures([...result.bodyTextures, ...result.headTextures]);
       if (gen !== loadGeneration) return;
       result.bodyGroup.visible = true;
       result.headGroup.visible = true; // stale after texture load
@@ -579,7 +551,7 @@ animState = createAnimStateMachine({
         }
         bone.add(weaponGroup);
         weaponStance = 'combat';
-        await loadTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
+        await loadCharTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
       } catch (err) {
         console.warn('CharSelect: 姝﹀櫒鍔犺浇澶辫触', dorpItem, err);
         weaponGroup = null;
@@ -653,19 +625,12 @@ animState = createAnimStateMachine({
       if (charResult && animState) {
         const motion = animState.getCurrentMotion();
         if (motion) {
-          animFrame += 4800 * adt;
-          const endFrame = motion.endFrame * 160;
-          const startFrame = motion.startFrame * 160;
-          if (animFrame >= endFrame) {
-            if (motion.repeat) {
-              const len = endFrame - startFrame;
-              animFrame = startFrame + ((animFrame - startFrame) % len);
-            } else {
-              const next = animState.onAnimationEnd();
-              if (next) {
-                animFrame = next.startFrame * 160;
-              }
-            }
+          // 帧推进走共享实现（char/animation.ts），避免各处各写一份导致语义漂移
+          const step = advanceAnimFrame(animFrame, motion, adt);
+          animFrame = step.frame;
+          if (step.ended) {
+            const next = animState.onAnimationEnd();
+            if (next) animFrame = next.startFrame * 160;
           }
           const skelFrames = evalSkeleton(charResult.animSmb, animFrame, false);
           applyToBones(charResult.bones, skelFrames, tmp, posV, quatQ, sclV);

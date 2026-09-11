@@ -298,6 +298,7 @@
     "bgm": "BGM",
     "amb": "Ambient",
     "eff": "Effects",
+    "sfx": "Combat SFX",
     "quality": "Quality",
     "quality.low": "Low",
     "quality.medium": "Medium",

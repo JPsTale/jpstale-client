@@ -1,0 +1,4284 @@
+{
+  "wav/effects/monster/acero": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/amesyst": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/amonk": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/aragonian": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/arcuda": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/arma": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/avelinarcher": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/avelinqueen": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/avelisk": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1-s.wav",
+      "dead 1.wav",
+      "dead 2-s.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/babel": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/bargon": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/bear": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/bebechick": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/beedog": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/beevil": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/billy": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/blizzardgiant": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/bloodyknight": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/boitata": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/brazilbear": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/buma": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/chaingolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/chalybs": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill impact 1.wav"
+    ]
+  },
+  "wav/effects/monster/chaoscara": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/chimera": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/coldeye": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/coma": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/crios": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/crip": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/crystalwrath": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/cstone": {
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/cyclops": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/cyclops_w": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/d-machine": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill impact 1.wav"
+    ]
+  },
+  "wav/effects/monster/darkguard": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/darkknight": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav",
+      "neutral 4.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/darkmage": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/darkphalanx": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/dawlin": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/deadhopt": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/deadkinghopy": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/deadzone": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/deathknight": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav",
+      "neutral 4.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/decoy": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_HAMMER": [
+      "hammer 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/devilbird": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/devilshy": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/dmystery": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/doral": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/draxos": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav",
+      "neutral 4.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav",
+      "skill 3.wav"
+    ]
+  },
+  "wav/effects/monster/d_ar": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/d_atal": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/d_fi": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/d_kn": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav",
+      "attack 4.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/d_magi": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav",
+      "dead 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/monster/d_meca": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav",
+      "damage 4.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/d_pa": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/monster/d_pr": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/monster/egan": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/evilplant": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/figon": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/fireworm": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/flamemaiden": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/flamo": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/frost": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/frozen": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/fury": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav",
+      "neutral 4.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav",
+      "skill 3.wav"
+    ]
+  },
+  "wav/effects/monster/goblinshaman": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/gorgon": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/greven": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/grotesque": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/guardian-saint": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/hauntingplant": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_HAMMER": [
+      "hammer 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/headcutter": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/heavygoblin": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/hellhound": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/hest": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hestian": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav",
+      "skill 3.wav"
+    ]
+  },
+  "wav/effects/monster/hob goblin": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_HAMMER": [
+      "hammer 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hobogolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/hongky": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_WARP": [
+      "change 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hopt": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hopyking": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hound": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hulk": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hungky": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_WARP": [
+      "change 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/hypermachine": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/ibomber": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/iceserpent": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav",
+      "neutral 4.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/iceworm": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/ielite": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/igniculus": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/ignis": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/igolation": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/illusionknight": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/imp": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage1.wav",
+      "damage2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/inferno": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/insec": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/ironfist": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/ironguard": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/isoldier": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/itechnician": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/kakoa": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/kelvezu": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/kingbat": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/korpion": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lavaarcher": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lavaarmor": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lavagiant": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lavagolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/leech": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/lena": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lengineer": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/lguardian": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/lizardfolk": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/lizard_bigmama": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lizard_commander": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lizard_doctor": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lizard_elder": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lizard_papa": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/lizard_soldier": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/ltechnician": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/marionette": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/metalgolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/monster/metron": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill base.wav"
+    ]
+  },
+  "wav/effects/monster/midranda": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/mimic": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/minebat": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/minegolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/minig": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav",
+      "attack 4.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 2.wav",
+      "damage 3.wav",
+      "damage 4.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav",
+      "dead 3.wav",
+      "dead 4.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mirekeeper": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/monkingspider": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/monmokova": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav",
+      "neutral 4.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/monseto": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/montempleguard": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/morgon": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/mountain": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/mrghost": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav",
+      "dead 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mudy": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/muffin": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mummy": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mushroom": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mutantrabie": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mutanttree": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/mystic": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/monster/m_lord": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/najan": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/naz": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/nazsenior": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/nightmare": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/nihil": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/niken": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/obit": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/omicron": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/omu": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/papachick": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/plant": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/pumpkinghost": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/quartzbat": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/quartzsaurus": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/rabie": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/rampage": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/ratoo": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/rguard": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/ruca": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/runicguardian": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/sadness": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/sandlem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/monster/scorpion": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/sealcrasher": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/monster/sen": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/shadow": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/skeleton": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/skeletonmelee": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/skeletonrange": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/sliver": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/snowman": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/solidsnail": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/spider": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/spidertrooper": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/sprin": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/stingray": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/stonegiant": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/stonegolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_WALK": [
+      "move 1.wav",
+      "move 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/strider": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/stygianlord": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/succubus": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/tarantulika": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/thorncrawler": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/tiger": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/towergolem": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/tulla": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav",
+      "skill 2.wav"
+    ]
+  },
+  "wav/effects/monster/turtlecannon": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/undeadmanager": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/undeadmaple": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/undeadminer": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/undeadslave": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/undeadstalker": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/vampiricbat": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/vampiricbee": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/monster/vampiricmachine": {
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/watermelon": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/web": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/wlord": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/monster/wolverin": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav",
+      "dead 3.wav"
+    ],
+    "CHRMOTION_STATE_WARP": [
+      "disappear 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/monster/worldcup": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/monster/xetan": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/monster/zombi": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/npc/castledoor": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 10.wav",
+      "damage 11.wav",
+      "damage 12.wav",
+      "damage 13.wav",
+      "damage 2.wav",
+      "damage 3.wav",
+      "damage 4.wav",
+      "damage 5.wav",
+      "damage 6.wav",
+      "damage 7.wav",
+      "damage 8.wav",
+      "damage 9.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/npc/crystal_b": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/npc/crystal_g": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/npc/crystal_r": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_SKILL": [
+      "skill 1.wav"
+    ]
+  },
+  "wav/effects/npc/magicmaster": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav",
+      "neutral 3.wav"
+    ]
+  },
+  "wav/effects/npc/mollywolf": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav",
+      "dead 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/npc/morif": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/npc/skillmaster": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav",
+      "attack 3.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav",
+      "neutral 2.wav"
+    ]
+  },
+  "wav/effects/npc/soldier_a": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/npc/soldier_b": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/npc/soldier_c": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/npc/soldier_d": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/npc/tower-b": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/npc/worldcup": {
+    "CHRMOTION_STATE_ATTACK": [
+      "attack 1.wav",
+      "attack 2.wav"
+    ],
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ],
+    "CHRMOTION_STATE_STAND": [
+      "neutral 1.wav"
+    ]
+  },
+  "wav/effects/player/archer": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/player/assassin": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/player/atalanta": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/player/fighter": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/player/knight": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/player/magician": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav",
+      "dead 3.wav"
+    ]
+  },
+  "wav/effects/player/mechanician": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav",
+      "damage 4.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  },
+  "wav/effects/player/pikeman": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/player/priestess": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav"
+    ]
+  },
+  "wav/effects/player/shaman": {
+    "CHRMOTION_STATE_DAMAGE": [
+      "damage 1.wav",
+      "damage 2.wav",
+      "damage 3.wav"
+    ],
+    "CHRMOTION_STATE_DEAD": [
+      "dead 1.wav",
+      "dead 2.wav"
+    ]
+  }
+}

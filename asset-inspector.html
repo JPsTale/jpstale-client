@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JPsTale - 资产检查器</title>
+    <style>
+      :root {
+        --bg: #14161c;
+        --panel: #1b1f27;
+        --line: #2c3340;
+        --fg: #cfd6e0;
+        --dim: #7c8798;
+        --ok: #6ee7a8;
+        --bad: #ff7676;
+        --warn: #ffc857;
+        --accent: #5b8ff9;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg);
+        font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      }
+      body {
+        display: grid;
+        grid-template-columns: 300px 1fr 380px;
+        grid-template-rows: auto 1fr auto;
+      }
+      #hud {
+        grid-column: 1 / 4; grid-row: 1;
+        padding: 6px 10px; background: #10131a; border-bottom: 1px solid var(--line);
+        color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      #left  { grid-column: 1; grid-row: 2; border-right: 1px solid var(--line); }
+      #app   { grid-column: 2; grid-row: 2; position: relative; min-width: 0; }
+      #right { grid-column: 3; grid-row: 2; border-left: 1px solid var(--line); }
+      #left, #right { overflow: auto; background: var(--panel); }
+      #bottom {
+        grid-column: 1 / 4; grid-row: 3; overflow: auto;
+        background: var(--panel); border-top: 1px solid var(--line); max-height: 42vh;
+      }
+      #app canvas { display: block; }
+      #log {
+        position: absolute; left: 8px; bottom: 8px; max-width: 60%; max-height: 30%;
+        overflow: auto; padding: 6px 8px; background: rgba(0, 0, 0, .72);
+        border: 1px solid var(--line); color: #a8d8b9; white-space: pre-wrap;
+        pointer-events: none; user-select: none; font-size: 11px;
+      }
+
+      /* 分组 */
+      .ins-sec { border-bottom: 1px solid var(--line); }
+      .ins-sec-head {
+        padding: 6px 10px; background: #222836; cursor: pointer; user-select: none;
+        font-weight: 600; color: #dbe3ee;
+      }
+      .ins-sec-head::before { content: '▾ '; color: var(--dim); }
+      .ins-sec-body { padding: 6px 10px 10px; }
+      .ins-sec--collapsed .ins-sec-body { display: none; }
+      .ins-sec--collapsed .ins-sec-head::before { content: '▸ '; }
+
+      /* 行 */
+      .ins-row { display: flex; align-items: center; gap: 6px; margin: 5px 0; }
+      .ins-label { flex: 0 0 auto; color: var(--dim); min-width: 96px; }
+      .ins-select, .ins-text {
+        flex: 1 1 auto; min-width: 0; background: #10131a; color: var(--fg);
+        border: 1px solid var(--line); padding: 3px 5px; font: inherit;
+      }
+      .ins-range { flex: 1 1 auto; min-width: 0; }
+      .ins-val { flex: 0 0 44px; text-align: right; color: var(--dim); }
+      .ins-row--check { gap: 6px; }
+      .ins-row--check .ins-label { min-width: 0; }
+      .ins-btns { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+      .ins-btn {
+        background: #263041; color: var(--fg); border: 1px solid var(--line);
+        padding: 4px 8px; cursor: pointer; font: inherit;
+      }
+      .ins-btn:hover { background: #31405a; border-color: var(--accent); }
+
+      /* 信息 / 提示 */
+      .ins-info { display: flex; gap: 6px; margin: 3px 0; }
+      .ins-info-k { color: var(--dim); min-width: 96px; }
+      .ins-info-v { flex: 1 1 auto; word-break: break-all; }
+      .ins-info--warn .ins-info-v { color: var(--warn); }
+      .ins-note { white-space: pre-wrap; color: #b9c6d6; margin: 6px 0; word-break: break-all; }
+      .ins-bonelist {
+        max-height: 220px; overflow: auto; white-space: pre; color: #9fb0c4;
+        background: #10131a; border: 1px solid var(--line); padding: 4px 6px; margin-top: 4px;
+      }
+      .ins-disabled { filter: grayscale(0.6); }
+      .ins-dim { color: var(--dim); }
+      .ins-ok { color: var(--ok); }
+      .ins-bad { color: var(--bad); }
+
+      /* 动作 */
+      .ins-act {
+        display: flex; gap: 8px; padding: 3px 4px; cursor: pointer; border-radius: 2px;
+      }
+      .ins-act:hover { background: #263041; }
+      .ins-act-name { flex: 0 0 76px; }
+      .ins-motion { padding: 2px 4px; cursor: pointer; color: #b9c6d6; }
+      .ins-motion:hover { background: #263041; }
+
+      /* 技能 */
+      .ins-skill {
+        display: flex; gap: 8px; align-items: baseline; padding: 3px 4px;
+        cursor: pointer; border-bottom: 1px dashed #232a35;
+      }
+      .ins-skill:hover { background: #263041; }
+      .ins-skill-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+      /* 诊断 */
+      .ins-diag { display: flex; gap: 8px; padding: 2px 4px; border-bottom: 1px dashed #232a35; }
+      .ins-diag--bad { background: #2a1c1e; }
+      .ins-diag-g { flex: 0 0 52px; color: var(--accent); }
+      .ins-diag-l { flex: 0 0 160px; }
+      .ins-diag-e { flex: 1 1 auto; color: var(--dim); word-break: break-all; }
+    </style>
+  </head>
+  <body>
+    <div id="hud">初始化…</div>
+    <div id="left"></div>
+    <div id="app"><div id="log"></div></div>
+    <div id="right"></div>
+    <div id="bottom"></div>
+    <script type="module" src="/src/tools/asset-inspector.ts"></script>
+  </body>
+</html>

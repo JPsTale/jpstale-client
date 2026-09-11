@@ -1,0 +1,2926 @@
+[
+ {
+  "p": "char/monster/acero/acero.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/adevayo/world_togo.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/adevayo/worldtogo_attack.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/amesyst/amesyst.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/amonk/amonk.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ancientgolem/ancientgolem_d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ancientgolem/ancientgolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/aragonian/aragonian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/arcuda/arcuda.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/arhdyra/arhdyra.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/arhdyra/arhdyra1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/armbeetle/armbeetle.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/badwolf/badwolf.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bal_crystal/bal_crystal_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bal_crystal/bal_crystal.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bear/ginkgobear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bear/hallobear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bear/hallobearroot.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bear/maplebear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bebechick/bebechick.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/beetle/beetle.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bguardian/bguardian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/billy_s/billy_s.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/billy/billy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/blizzardgiant/blizzardgiant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bloodyknight/bknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/boitata/boitata.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/brazilbear/apple_bear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/brazilbear/banana_bear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/brazilbear/jaboti_bear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/brazilbear/maracuja_bear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/brazilbear/pittangka_bear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/brazilbear/strawberry_bear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bs_midranda/bs_midranda.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bsnake/bsnake.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/buma/buma.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/buma/monbuma-boss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bumb/buma.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/bumb/fptlunatic.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/castledoor/castledoor.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/cavemush/cmush.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/chaingolem/chaingolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/chalybs/chalybs.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/chaoscara/chaoscara.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/chaoscaraqueen/chaoscara.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/chimera/kimera_a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/cokris/cokris.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/coldeye/coldeye.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/coldeye/redeye.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/coma/coma.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/crios/crios.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/crios/crios1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/crow/crow_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/crow/crow.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/crystalwrath/crystalwrath.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/cstone/cstone.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/cyclopswarrior/cyclopswarrior.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_ar/dar.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_atal/datal.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_fi/dfi.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_kn/dkn.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_magi/dmagi.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_meca/dmeca.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_pa/dpike.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/d_pr/dpr.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkguard/skullac_a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkguard/skullac.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkmage/skullma_a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkmage/skullma.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkphalanx/darkphalanx.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkstalker/darkstalker.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/darkwitch_fpt/darkwitchfpt.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/deadhopy/deadhopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/deadkinghopy/deadkinghopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/deadzone/deadzone.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/deadzone/deadzoned.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/death_knight/death_knight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/decoy/decoy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/decoy/mondecoy-boss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/devilbird/devilbird.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/devilshy/devilshy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/dey/dey.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/dey/dey1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/doral/doral.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/draxos/draxos.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/esnail/esnail.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/evilmaple/evilmaple.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/evilplant/evilplant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/evilspirit/evilspirit.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/evilspirit/evilspiritd.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/faugn/faugn.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/faugn/faugn1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/figon/figon-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/figon/figon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/figon/inferno-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/figon/inferno.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/figon/monfigon-boss-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/figon/monfigon-boss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/firechick/firechick.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/firegolem/firegolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/firegolem/firegolemd.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/firegremlin/firegremlin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fireworm/fireworm.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/flame/flame.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/flamemaiden/flamemaiden.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/flamo/flamo.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptargos/fpt-argos.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptcrystal/crystaltower.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fpthell/fpthellbeast.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fpthulkzh/fpthulk-zh.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptomicron/fptdomicron.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptomicron/monomicron.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptratu/fptratu.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptratu/monaratoo.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptshurikar/fptshurikar.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptshurikar/fptshurikardie.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptshurikar/monnazz.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptslicer/fptslicer-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptslicer/fptslicer.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptslicer/monsliver-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptslicer/monsliver.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/fptxxxprince/fptprince.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/frost/frost.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/frozen/frozen.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ghost/ghost.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ghost/halloghost.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ghostship/ghostship-d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ghostship/ghostship.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/goblinchief/goblinchief.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/goblinchief/noschief.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/goblinshaman/goblinshaman.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/goldenhopy/goldenhopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/golem/golem-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/golem/golem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/gorgon_boss/gorgon_bak.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/gorgon/gorgon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/gorgon/gorgonboss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/gorgonboss/gorgonboss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/great_greven/great_greven.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/greedy/greedy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/grotesque/grotesque.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/guardian/guardian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/gurkob/gurkob.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hammer_decoy/hammer_decoy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hammer_goblin/hammer_goblin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hammer_plant/hammer_plant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/headcut/headcut.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/headcut/headcutaxe.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hellhound/bonehound-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hellhound/bonehound.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hellhound/hellhound-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hellhound/hellhound.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hellplant/hellplant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hellplantboss/monhauntmaple.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hest/hest.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hestian/hestian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hobogolem/hobogolem-d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hobogolem/hobogolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hongky/hongky.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hopy/hopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hopy/mechahopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hopy/mopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hopyking/hopyking.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hound_s/hound_s.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hound/hound.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/hyper/hyper.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ibomber/ibomber.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/iceelemental/iceelemental.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/icegoblin/icegoblin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/icegolem/icegolem-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/icegolem/icegolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/iceserpent/iceserpent.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/iceworm/iceworm.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ielite/ielite.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/igniculus/igniculus.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ignis/ignis.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/igolation/igolation.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/incubussummer/incubussummer.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/insec/insec.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ironfist/ironfist.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ironfitt/ironfist.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/isoldier/isoldier.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/itechnician/itechnician.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/kakoa/kakoa.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/kelvezu/kelvezu.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/khandoor/khandoor.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/kingbat/kingbat.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/koon/koon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/koon/koon1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/korpion/korpion.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lavaarcher/lavaarcher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lavaarmor/lavaarmor.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lavagiant/lavagiant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lavagolem/lavagolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/leech/leech.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lena_s/lena_s.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lena/lena.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lengineer_1/lengineer.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lengineer/lengineer.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lguardian/lguardian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_bigmama/lizard_bigmama_blue-u.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_bigmama/lizard_bigmama_blue.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_bigmama/lizard_bigmama_green.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_bigmama/lizard_bigmama-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_bigmama/lizard_bigmama.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_commander/lizard_commander_blue.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_commander/lizard_commander_green.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_commander/lizard_commander-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_commander/lizard_commander-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_commander/lizard_commander.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_doctor/lizard_doctor_blue.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_doctor/lizard_doctor_red.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_doctor/lizard_doctor-g.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_doctor/lizard_doctor-h.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_doctor/lizard_doctor.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_elder/lizard_elder_blue.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_elder/lizard_elder_red.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_elder/lizard_elder-j.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_elder/lizard_elder-u.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_elder/lizard_elder.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_papa/lizard papa_blue-w.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_papa/lizard papa_blue.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_papa/lizard papa_green.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_papa/lizard papa-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_papa/lizard papa-t.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_papa/lizard papa.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier_blue.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier_green.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier-j.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier-v.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizard_soldier/lizard_soldier.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizarddoor/lizarddoor.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizardfolk/lizardfolk-e.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lizardfolk/lizardfolk.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/lltiger/tiger.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ltechnician_1/ltechnician.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ltechnician/ltechnician.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/m_lord/m_load_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/m_lord/m_load.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/m_priest/m_load_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/m_priest/m_load.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/marionette_s/marionette_s.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/marionette/marionette.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/metalgolem/metalgolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/metalgolem/metalgolemd.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/midranda/midranda.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mimic/mimic.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/minebat/minebat.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/minegolem/minegolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mirekeeper/mirekeeper.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monavellriskbow/monavelriskbow.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monavellriskstf/monavelriskstf.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monavelrisk/monavelrisk-mass.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monavelrisk/monavelrisk-spear.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monavelrisk/monavelrisk-sword.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbabyhulk/monbabyhulk.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbagon/monbagon-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbagon/monbagon-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbagon/monbagon-boss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbagon/monbagon-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbagon/monbagon-die-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbagon/monbagon-die-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbeechief/monbeechief.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monbeedog/monbeedog.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monberserker/monberserker.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monburntree/monburntree.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/moncavemummy/moncavemummy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monclip/monclip-boss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monclip/monclip.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/moncyclops/moncyclops-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/moncyclops/moncyclops-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/moncyclops/moncyclops-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/moncyclops/moncyclops-d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mondawlin/mondawlin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mondirebee/mondirebee.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mondmachine/mondmachine.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mondmachint/mondmachine.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monegan/monegan.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/moneye/eye.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monfury/fptsphinx.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monfury/kingfury.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monfury/monfury.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mongknight/mong2knight-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mongknight/mong2knight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mongknight/mongknight-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mongknight/mongknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mongreven/mongreven.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhauntplant/monhauntmaple.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhauntplant/monhauntplant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monheavygoblin/monheavygoblin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhobgoblin/monhobgoblin-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhobgoblin/monhobgoblin-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhobsanta/monhobsanta.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhulk-1/monhulk-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monhulk/monhulk.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monigad/monigad.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monigad/rguard.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monimp/monimp-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monimp/monimp-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monimp/monimp-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monkingspider/ks.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monlordgordon/monmightygoblin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmetron/monmetron.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmetrot/monmetron.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmightygoblin/monmightygoblin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monminig/monminig-a1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monminig/monminig-a2.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monminig/monminig-b1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monminig/monminig-b2.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monminig/monminig-c1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monminig/monminig-c2.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmokova/mokova.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmudy/monmudy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmudy/monmudyjel.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmummy/monmummy_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmummy/monmummy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmushroom-mo/monmushroom-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmushroom-mo/monmushroom.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmushroom/monmushroom-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monmushroom/monmushroom.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monnazz-1/monnazz-1-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monnazz-1/monnazz-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monnazz/monnazz-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monnazz/monnazz.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monomicron-1/monomicron-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monomicron-2/monomicron-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monomicron/monomicron.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monplant/monplant-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monplant/monplant-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monplant/monplant-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monplant/monplant-d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monplant/mudygolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrafra/monrafra.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monratoo-1/monratoo-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monratoo/monaratoo.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi-1-m.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi-1-v.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi-1-w.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi-k.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi-x.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebi/monrebi.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebion/monrebion-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebion/monrebion-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebion/monrebion-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monrebion/monrebion.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsarcher/fptsarcher-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsarcher/fptsarcher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsarcher/monsarcher-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsarcher/monsarcher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsen/monsen.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monseto/seto.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsguard/mondoomguard-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsguard/mondoomguard.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsguard/monhauntguard-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsguard/monhauntguard.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monshadow-1/dmystery-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monshadow-1/dmystery.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monshadow-1/monshadow-1-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monshadow-1/monshadow-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monshadow/monshadow-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monshadow/monshadow.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/fptskel-die-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/fptskel-die-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/fptskela.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/fptskelb.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/monskeleton-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/monskeleton-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/monskeleton-die-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/monskeleton-die-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/rptskel-die-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/rptskel-die-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/rptskela.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/rptskelb.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton/skeletonxmas.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton2/monskeleton-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton2/monskeleton-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton2/monskeleton-die-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton2/monskeleton-die-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monskeleton2/skeletonxmas.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/fptsknight-a-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/fptsknight-b-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/fptsknight-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/fptsknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/monsknight-b-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/monsknight-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/monsknight-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/monsknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/rptsknight-a-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/rptsknight-b-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/rptsknight-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsknight/rptsknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsliver/monsliver-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsliver/monsliver.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsrazorarcher/fptsrazorarcher-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsrazorarcher/fptsrazorarcher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsrazorarcher/monsrazorarcher-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsrazorarcher/monsrazorarcher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsrazorarcher/rptsrazorarcher-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monsrazorarcher/rptsrazorarcher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monstonegolem/monstonegolem-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monstonegolem/monstonegolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monstygianlord-1/monstygianlord-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monstygianlord/monstygianlord.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monswarrior/fptswarrior-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monswarrior/fptswarrior.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monswarrior/monswarrior-die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monswarrior/monswarrior.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/montempleguard/templeguard.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monthorncrowler/monthorncrowler.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monwitch/monwitch.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monwitch/monwitch1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monwitch/monwitch2.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monwolverin/monwolverin-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monwolverin/monwolverin-02.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monwolverin/monwolverin-03.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monzombi/monzombi-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monzombi/monzombi-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/monzombi/monzombi-c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/morgon/morgon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/morgon/morgonia.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/morgot/morgon-o.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/morgot/morgon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/morgot/morgonia.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mountain/b_mountain.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mountain/mountain.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mountait/b_mountain.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mountait/mountain.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mouse/mouse.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mystic/mystic_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/mystic/mystic.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/najan/najan.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/nazsenior/nazsenior-01.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/nazsenior/nazsenior.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/nihil_pet/nihil.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/nihil/nihil_1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/nihil/nihil.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/nihil/nihil1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/niken/niken.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/omicronos/omicronos.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/omu/omu.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/omu/omud.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/papachick/papachick.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/phmgod/phmgod.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteuavellriskstf/monavelriskstf.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteubloodyknight/bknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteuchaoscara/chaoscara.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteufury/rpthellbeast.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteugreat_greven/great_greven.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteuhellplant/hellplant.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteuhongky/monbabyhulk.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumimic/mimic.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumoncyclops/moncyclops-a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumoncyclops/moncyclops-d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonegan/monegan.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonfury/monfury.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonmightygoblin/monmightygoblin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonmudy/monmudy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonomicron-1/monomicron-1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonrebion/monrebion.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumontempleguard/templeguard.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteumonzombi/monzombi-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pteuspider/spider.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/pumpkinghost/pumpkinghost.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/quartzbat/quartzbat.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/quartzsaurus/quartzsaurus.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/rampage/rampage.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/reptilking/reptilking.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ribbonhopy/ribbonhopy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/royalmummy/royalmummy_d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/royalmummy/royalmummy.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/rpt_pagan/rpt_pagan.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/rpthulkzh/rpthulk-zh.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/rptxxxprince/rptprince.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ruca/ruca.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/runicguardian/gurdian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/runicguardiat/gurdian-e.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/runicguardiat/gurdian.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_ar/sar.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_atal/satal.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_bloodyknight/s_bknight.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_fi/sfi.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_kn/skn.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_magi/smagi.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_meca/smeca.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_pa/spike.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/s_pr/spr.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sadness/sadness.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sadnest/sadness.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/saint_turtle/saintturtle.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sakura/sakura.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sandlem/monsandlem-boss.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sandlem/sandlem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sathla/sathla.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sathla/sathla1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/scorpion/dscorpion.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/scorpion/scorpion.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/scorpion/scorpion2.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sealcrasher/sealcrasher_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sealcrasher/sealcrasher.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sendelost/world_swi.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sendelost/worldswi_attack.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/shogoth/shogoth.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/slayer/slayer_d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/slayer/slayer.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/snowman/snowman.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/soldier_a/soldier_a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/soldier_b/soldier_b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/soldier_c/soldier_c.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/soldier_d/soldier_d.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/spider/spider.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/sprin/sprin.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ssnail/ssnail.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/stingray/stingray.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/strider/strider.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_b/t_crystal_b_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_b/t_crystal_b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_g/t_crystal_g_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_g/t_crystal_g.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_n/t_crystal_n_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_n/t_crystal_n.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_r/t_crystal_r_die.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/t_crystal_r/t_crystal_r.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/tarantulika/tarantulika.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/tbomber/tbomber.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/telite/telite.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/towergolem/towergolem.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/towergolem/towergolemd.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/tsoldier/tsoldier.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ttechnician/ttechnician.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/tulla/tulla.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/turtlecannon/turtlecannon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/turtlecannon/turtledragon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadmanager/undeadmanager.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadmaple/undeadmaple.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadminer/undeadminer.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadslave/undeadslave.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadstalker_s/undeadstalker_s.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadstalker/undeadstalker-b.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/undeadstalker/undeadstalker.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/v_bee/v_bee.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/vampiric/vemp.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/vampiricbat/vampiricbat.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/watermelon/watermelon.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/web/web.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/wlord/wlord.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/wlord/wlord1.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/wolverin/wolverin_a.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/xetan/xetan.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/xetan/xetan2.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/yagditha/yagditha.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ziddane/world_fran.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/monster/ziddane/worldfran_attack.inx",
+  "cat": "monster"
+ },
+ {
+  "p": "char/npc/ahin/ahin.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/ahin/ahinf.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/arad/arad.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/ascam/ascam.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/ascam/ascamf.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atl007/atl03.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atl007/atl03f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atl008/atl04.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atl008/atl04f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/1/1.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/2/2.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/3/3.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/4/4.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/5/5.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/6/6.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/7/7.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/atlantis/8/8a.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/barba/barba.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/barba/tn-011f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/baurin/baurin.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn01/bcn01.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn01/bcn01f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn02/bcn02.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn02/bcn02f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn03/bcn03.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn03/bcn03f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn04/bcn04.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn04/bcn04f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn05/bcn05.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn05/bcn05f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn06/bcn06.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bcn06/bcn06f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/broomman/broomman.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt01/battlemaster.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt02/battlepotion.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt03/battleportal.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt04/battleguard.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt05/battlecontrols.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt06/battlequest.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt07/mysteryportal.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/bt08/battleguard.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/caravans/arma/armacaravan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/caravans/buma/bumacaravan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/caravans/cuepy/cuepycaravan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/caravans/hungky/hungkycaravan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/caravans/rabie/rabiecaravan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/caravans/tobie/tobiecaravan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/cashshop/cash.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/dailyquest/dailyquest.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/derik/derik.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/derik/derikf.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/enzo/enzo.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/evenmorif/evenmorif.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/eventmolly/eventmolly.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/hermit/hermit.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/hobsanta/hobsanta.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/hosean/hosean.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/hunter/hunter.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/icen-01/icen-01.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/icen-01/icen-01f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/icen-02/icen-02.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/icen-02/icen-02f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/icen-03/icen-03.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/icen-03/icen-03f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/ji_woo/jiwoo.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/jin/jin.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/m_messenger/m_messenger.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mage/mage.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mapletree/mapletree.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/marek/derik.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/marek/derikf.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/marina/marina.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/maskedman/maskedman.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/maskedwoman/maskedwoman.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/milter/milter.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/milter/milterf.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-001/gm-001.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-001/gm-001f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-001/mn-001.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-001/mn-001f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-002/mn-002.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-002/mn-002f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-003/mn-003.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-003/mn-003f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-004/mn-004.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-004/mn-004f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-005/mn-005.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-005/mn-005f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-006/mn-006.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-007/mn-007.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-007/mn-007f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-008/mn-008.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-008/mn-008f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-009/mn-009.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-009/mn-009f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-010/mn-010.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-010/mn-010f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-011/mn-011.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-011/mn011f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-012/mn-012.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/mn-013/mn-013.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/nadia/nadia.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/ninefox/npc_ninefox.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/ninefox/npc_ninefoxf.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/packjjangpy/packjjangpy.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/pcmanager/pcmanager.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/phl/phl.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/quest_ray/quest_ray.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/reddevil-01/world_kor_01.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/reddevil/world_kor.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/rpt_guard_01/rpt_guard_01.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/rudolf/snowboard.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sakura/sakura.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/salon/salon.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sambagirl/sambagirl.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/shunter/shunter.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/skadi/skadi.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/skillmaster/skillmaster.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-001/sn-001.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-001/sn-001f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-002/sn-002.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-002/sn-002f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-003/sn-003.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-003/sn-003f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-004/sn-004.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-004/sn-004f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-005/sn-005.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/sn-005/sn-005f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/stella/stella_ghost.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/stella/stella.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/t_messenger/t_messenger.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/teacher/teacher01.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/teacher/teacher02.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/teacher/teacher03.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-001/tn-001.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-001/tn-001f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-002/tn-002.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-002/tn-002f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-002/tn-013.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-002/tn-013f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-003/tn-003.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-003/tn-003f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-004/tn-004.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-004/tn-004f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-005/tn-005.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-005/tn-005f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-006/tn-006.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-006/tn-006f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-007/tn-007.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-007/tn-007f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-008/tn-008.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-008/tn-008f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-009/tn-009.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-010/tn-010.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-010/tn-010f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-011/tn-011.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-011/tn-011f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-012/tn-012.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-012/tn-012f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-014/tn-014.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-014/tn-014f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-015/tn-015.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-015/tn-015f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-016/tn-016.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-017/tn-017.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/tn-017/tn-017f.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/wickedbunny/wickedbunny.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/bonbori/bonbori.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/chtree_longbo.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/hinadan/hinadan.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/koinobori/koinobori.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/sakura/sakura.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/xmas_tree.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/xmas_tree2.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/xm/zizzyadorii.inx",
+  "cat": "npc"
+ },
+ {
+  "p": "char/npc/zarad/zarad.inx",
+  "cat": "npc"
+ }
+]

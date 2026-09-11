@@ -659,10 +659,12 @@ onMessage((msg: jpt.base.ServerMessage) => {
       if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
       if (ar.missed) {
         worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false);
+        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(true, false);
       } else {
         const crit = !!ar.isCritical;
         worldView.showFloater('monster', targetId, String(ar.damage || 0), crit ? '#ff9d4d' : '#ffd166', crit);
         worldView.applyMonsterHit(targetId, ar.damage || 0);
+        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(false, crit);
       }
       break;
     }

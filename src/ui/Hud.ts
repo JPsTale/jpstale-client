@@ -2,6 +2,7 @@ import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
 import { getGameSnapshot, subscribeGame, type FistBinding } from '../app/gameStore.js';
+import { sfx } from '../audio/sfx.js';
 
 export interface HudState {
   hp: number; maxHp: number
@@ -270,15 +271,16 @@ export function createHud(container: HTMLElement): Hud {
     const mx = (ptrX - rect.left) / s - 240;
     const my = (ptrY - rect.top) / s - 120;
     if (mx >= 569 && mx < 595 && my >= 555 && my < 581) {
+      sfx.playUi('click');
       onAction?.('toggleRun');
     }
     // 6 功能按钮（b0..b5）：b0=角色状态、b1=背包、b2=技能面板、b5=系统
     for (let bt = 0; bt < 6; bt++) {
       if (mx >= 648 + bt * 25 && mx < 648 + bt * 25 + 25 && my >= 560 && my < 587) {
-        if (bt === 0) onAction?.('status');
-        if (bt === 1) onAction?.('inventory');
-        if (bt === 2) onAction?.('skills');
-        if (bt === 5) onAction?.('system');
+        if (bt === 0) { sfx.playUi('click'); onAction?.('status'); }
+        if (bt === 1) { sfx.playUi('click'); onAction?.('inventory'); }
+        if (bt === 2) { sfx.playUi('click'); onAction?.('skills'); }
+        if (bt === 5) { sfx.playUi('click'); onAction?.('system'); }
         break;
       }
     }

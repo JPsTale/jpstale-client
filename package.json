@@ -10,7 +10,9 @@
     "dev": "vite",
     "build": "npm run proto && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "proto": "npx tsx scripts/gen-proto.ts"
+    "proto": "npx tsx scripts/gen-proto.ts",
+    "sfx": "npx tsx scripts/extract-sfx.ts",
+    "models": "npx tsx scripts/extract-models.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

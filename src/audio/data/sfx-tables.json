@@ -1,0 +1,1970 @@
+{
+  "motion": [
+    {
+      "prefix": "attack",
+      "state": "CHRMOTION_STATE_ATTACK"
+    },
+    {
+      "prefix": "damage",
+      "state": "CHRMOTION_STATE_DAMAGE"
+    },
+    {
+      "prefix": "dead",
+      "state": "CHRMOTION_STATE_DEAD"
+    },
+    {
+      "prefix": "neutral",
+      "state": "CHRMOTION_STATE_STAND"
+    },
+    {
+      "prefix": "move",
+      "state": "CHRMOTION_STATE_WALK"
+    },
+    {
+      "prefix": "disappear",
+      "state": "CHRMOTION_STATE_WARP"
+    },
+    {
+      "prefix": "change",
+      "state": "CHRMOTION_STATE_WARP"
+    },
+    {
+      "prefix": "skill",
+      "state": "CHRMOTION_STATE_SKILL"
+    },
+    {
+      "prefix": "hammer",
+      "state": "CHRMOTION_STATE_HAMMER"
+    }
+  ],
+  "weapon": [
+    {
+      "prefix": "one hand swing axe",
+      "code": 1
+    },
+    {
+      "prefix": "two hand swing axe",
+      "code": 2
+    },
+    {
+      "prefix": "one hand swing sword",
+      "code": 3
+    },
+    {
+      "prefix": "two hand swing sword",
+      "code": 4
+    },
+    {
+      "prefix": "one hand swing spear",
+      "code": 5
+    },
+    {
+      "prefix": "two hand swing spear",
+      "code": 6
+    },
+    {
+      "prefix": "one hand scratch",
+      "code": 7
+    },
+    {
+      "prefix": "bow shoot",
+      "code": 8
+    },
+    {
+      "prefix": "one hand swing blunt",
+      "code": 9
+    },
+    {
+      "prefix": "two hand swing blunt",
+      "code": 10
+    },
+    {
+      "prefix": "throwing",
+      "code": 11
+    },
+    {
+      "prefix": "one hand miss",
+      "code": 12
+    },
+    {
+      "prefix": "two hand miss",
+      "code": 13
+    },
+    {
+      "prefix": "punch hit",
+      "code": 14
+    },
+    {
+      "prefix": "one hand small swing",
+      "code": 15
+    },
+    {
+      "prefix": "critical hit",
+      "code": 16
+    },
+    {
+      "prefix": "one hand casting",
+      "code": 17
+    },
+    {
+      "prefix": "two hand casting",
+      "code": 18
+    }
+  ],
+  "generic": [
+    "wav/effects/footsteps/step01.wav",
+    "wav/effects/footsteps/step02.wav",
+    "wav/effects/footsteps/stonerun1.wav",
+    "wav/effects/footsteps/stonerun2.wav",
+    "wav/effects/footsteps/stonerun3.wav",
+    "wav/ambient/stone-mill.wav",
+    "wav/effects/event/fieldstart.wav",
+    "wav/effects/event/level up.wav",
+    "wav/effects/event/hosound.wav",
+    "wav/ambient/tempskron-town.wav",
+    "wav/effects/monster/figon/impact 1.wav",
+    "wav/effects/footsteps/stone-dun1.wav",
+    "wav/effects/footsteps/stone-dun2.wav",
+    "wav/effects/footsteps/stone-dun3.wav",
+    "wav/effects/footsteps/inwater 1.wav",
+    "wav/effects/footsteps/inwater 2.wav",
+    "wav/effects/footsteps/inwater 3.wav",
+    "wav/effects/footsteps/inwater 3.wav",
+    "wav/sod/turn.wav",
+    "wav/sod/sod-item.wav",
+    "wav/effects/menu/event/meteo 1.wav",
+    "wav/effects/menu/event/meteo 2.wav",
+    "wav/effects/event/sheltom_b.wav",
+    "wav/effects/event/firecracker01.wav",
+    "wav/effects/event/firecracker02.wav",
+    "wav/effects/event/firecracker03.wav"
+  ],
+  "charFolders": [
+    {
+      "dir": "wav/effects/monster/cyclops",
+      "code": 4096,
+      "symbol": "snCHAR_SOUND_CYCLOPS"
+    },
+    {
+      "dir": "wav/effects/monster/hob goblin",
+      "code": 4112,
+      "symbol": "snCHAR_SOUND_HOBGOBLIN"
+    },
+    {
+      "dir": "wav/effects/monster/imp",
+      "code": 4128,
+      "symbol": "snCHAR_SOUND_IMP"
+    },
+    {
+      "dir": "wav/effects/monster/minig",
+      "code": 4144,
+      "symbol": "snCHAR_SOUND_MINIG"
+    },
+    {
+      "dir": "wav/effects/monster/plant",
+      "code": 4160,
+      "symbol": "snCHAR_SOUND_PLANT"
+    },
+    {
+      "dir": "wav/effects/monster/skeleton",
+      "code": 4176,
+      "symbol": "snCHAR_SOUND_SKELETON"
+    },
+    {
+      "dir": "wav/effects/monster/zombi",
+      "code": 4192,
+      "symbol": "snCHAR_SOUND_ZOMBI"
+    },
+    {
+      "dir": "wav/effects/monster/obit",
+      "code": 4208,
+      "symbol": "snCHAR_SOUND_OBIT"
+    },
+    {
+      "dir": "wav/effects/monster/hopt",
+      "code": 4224,
+      "symbol": "snCHAR_SOUND_HOPT"
+    },
+    {
+      "dir": "wav/effects/monster/bargon",
+      "code": 4240,
+      "symbol": "snCHAR_SOUND_BARGON"
+    },
+    {
+      "dir": "wav/effects/monster/leech",
+      "code": 4256,
+      "symbol": "snCHAR_SOUND_LEECH"
+    },
+    {
+      "dir": "wav/effects/monster/mushroom",
+      "code": 4272,
+      "symbol": "snCHAR_SOUND_MUSHROOM"
+    },
+    {
+      "dir": "wav/effects/monster/arma",
+      "code": 4288,
+      "symbol": "snCHAR_SOUND_ARMA"
+    },
+    {
+      "dir": "wav/effects/monster/scorpion",
+      "code": 4304,
+      "symbol": "snCHAR_SOUND_SCORPION"
+    },
+    {
+      "dir": "wav/effects/monster/headcutter",
+      "code": 4352,
+      "symbol": "snCHAR_SOUND_HEADCUTTER"
+    },
+    {
+      "dir": "wav/effects/monster/sandlem",
+      "code": 4368,
+      "symbol": "snCHAR_SOUND_SANDLEM"
+    },
+    {
+      "dir": "wav/effects/monster/web",
+      "code": 4384,
+      "symbol": "snCHAR_SOUND_WEB"
+    },
+    {
+      "dir": "wav/effects/monster/hopyking",
+      "code": 4400,
+      "symbol": "snCHAR_SOUND_HOPYKING"
+    },
+    {
+      "dir": "wav/effects/monster/crip",
+      "code": 4416,
+      "symbol": "snCHAR_SOUND_CRIP"
+    },
+    {
+      "dir": "wav/effects/monster/buma",
+      "code": 4432,
+      "symbol": "snCHAR_SOUND_BUMA"
+    },
+    {
+      "dir": "wav/effects/monster/decoy",
+      "code": 4448,
+      "symbol": "snCHAR_SOUND_DECOY"
+    },
+    {
+      "dir": "wav/effects/monster/doral",
+      "code": 4464,
+      "symbol": "snCHAR_SOUND_DORAL"
+    },
+    {
+      "dir": "wav/effects/monster/figon",
+      "code": 4480,
+      "symbol": "snCHAR_SOUND_FIGON"
+    },
+    {
+      "dir": "wav/effects/monster/stonegiant",
+      "code": 4496,
+      "symbol": "snCHAR_SOUND_STONEGIANT"
+    },
+    {
+      "dir": "wav/effects/monster/greven",
+      "code": 4512,
+      "symbol": "snCHAR_SOUND_GREVEN"
+    },
+    {
+      "dir": "wav/effects/monster/illusionknight",
+      "code": 4528,
+      "symbol": "snCHAR_SOUND_ILLUSIONKNIGHT"
+    },
+    {
+      "dir": "wav/effects/monster/skeletonrange",
+      "code": 4544,
+      "symbol": "snCHAR_SOUND_SKELETONRANGE"
+    },
+    {
+      "dir": "wav/effects/monster/skeletonmelee",
+      "code": 4560,
+      "symbol": "snCHAR_SOUND_SKELETONMELEE"
+    },
+    {
+      "dir": "wav/effects/monster/wolverin",
+      "code": 4576,
+      "symbol": "snCHAR_SOUND_WOLVERLIN"
+    },
+    {
+      "dir": "wav/effects/monster/rabie",
+      "code": 4608,
+      "symbol": "snCHAR_SOUND_RABIE"
+    },
+    {
+      "dir": "wav/effects/monster/mudy",
+      "code": 4624,
+      "symbol": "snCHAR_SOUND_MUDY"
+    },
+    {
+      "dir": "wav/effects/monster/sen",
+      "code": 4640,
+      "symbol": "snCHAR_SOUND_SEN"
+    },
+    {
+      "dir": "wav/effects/monster/egan",
+      "code": 4656,
+      "symbol": "snCHAR_SOUND_EGAN"
+    },
+    {
+      "dir": "wav/effects/monster/beedog",
+      "code": 4672,
+      "symbol": "snCHAR_SOUND_BEEDOG"
+    },
+    {
+      "dir": "wav/effects/monster/mutantplant",
+      "code": 4688,
+      "symbol": "snCHAR_SOUND_MUTANTPLANT"
+    },
+    {
+      "dir": "wav/effects/monster/mutantrabie",
+      "code": 4704,
+      "symbol": "snCHAR_SOUND_MUTANTRABIE"
+    },
+    {
+      "dir": "wav/effects/monster/mutanttree",
+      "code": 4720,
+      "symbol": "snCHAR_SOUND_MUTANTTREE"
+    },
+    {
+      "dir": "wav/effects/monster/avelisk",
+      "code": 4736,
+      "symbol": "snCHAR_SOUND_AVELISK"
+    },
+    {
+      "dir": "wav/effects/monster/naz",
+      "code": 4752,
+      "symbol": "snCHAR_SOUND_NAZ"
+    },
+    {
+      "dir": "wav/effects/monster/mummy",
+      "code": 4768,
+      "symbol": "snCHAR_SOUND_MUMMY"
+    },
+    {
+      "dir": "wav/effects/monster/hulk",
+      "code": 4784,
+      "symbol": "snCHAR_SOUND_HULK"
+    },
+    {
+      "dir": "wav/effects/monster/hungky",
+      "code": 4912,
+      "symbol": "snCHAR_SOUND_HUNGKY"
+    },
+    {
+      "dir": "wav/effects/monster/succubus",
+      "code": 4800,
+      "symbol": "snCHAR_SOUND_SUCCUBUS"
+    },
+    {
+      "dir": "wav/effects/monster/dawlin",
+      "code": 4816,
+      "symbol": "snCHAR_SOUND_DAWLIN"
+    },
+    {
+      "dir": "wav/effects/monster/shadow",
+      "code": 4832,
+      "symbol": "snCHAR_SOUND_SHADOW"
+    },
+    {
+      "dir": "wav/effects/monster/berserker",
+      "code": 4848,
+      "symbol": "snCHAR_SOUND_BERSERKER"
+    },
+    {
+      "dir": "wav/effects/monster/ironguard",
+      "code": 4864,
+      "symbol": "snCHAR_SOUND_IRONGUARD"
+    },
+    {
+      "dir": "wav/effects/monster/fury",
+      "code": 4880,
+      "symbol": "snCHAR_SOUND_FURY"
+    },
+    {
+      "dir": "wav/effects/monster/sliver",
+      "code": 4896,
+      "symbol": "snCHAR_SOUND_SLIVER"
+    },
+    {
+      "dir": "wav/effects/monster/ratoo",
+      "code": 4928,
+      "symbol": "snCHAR_SOUND_RATOO"
+    },
+    {
+      "dir": "wav/effects/monster/stygianlord",
+      "code": 4944,
+      "symbol": "snCHAR_SOUND_STYGIANLORD"
+    },
+    {
+      "dir": "wav/effects/monster/omicron",
+      "code": 4960,
+      "symbol": "snCHAR_SOUND_OMICRON"
+    },
+    {
+      "dir": "wav/effects/monster/d-machine",
+      "code": 4976,
+      "symbol": "snCHAR_SOUND_DMACHINE"
+    },
+    {
+      "dir": "wav/effects/monster/metron",
+      "code": 4992,
+      "symbol": "snCHAR_SOUND_METRON"
+    },
+    {
+      "dir": "wav/effects/monster/mrghost",
+      "code": 5008,
+      "symbol": "snCHAR_SOUND_MRGHOST"
+    },
+    {
+      "dir": "wav/effects/monster/vampiricbat",
+      "code": 5024,
+      "symbol": "snCHAR_SOUND_VAMPIRICBAT"
+    },
+    {
+      "dir": "wav/effects/monster/mirekeeper",
+      "code": 5040,
+      "symbol": "snCHAR_SOUND_MIREKEEPER"
+    },
+    {
+      "dir": "wav/effects/monster/muffin",
+      "code": 5056,
+      "symbol": "snCHAR_SOUND_MUFFIN"
+    },
+    {
+      "dir": "wav/effects/monster/solidsnail",
+      "code": 5072,
+      "symbol": "snCHAR_SOUND_SOLIDSNAIL"
+    },
+    {
+      "dir": "wav/effects/monster/beevil",
+      "code": 5088,
+      "symbol": "snCHAR_SOUND_BEEVIL"
+    },
+    {
+      "dir": "wav/effects/monster/nightmare",
+      "code": 5120,
+      "symbol": "snCHAR_SOUND_NIGHTMARE"
+    },
+    {
+      "dir": "wav/effects/monster/stonegolem",
+      "code": 5136,
+      "symbol": "snCHAR_SOUND_STONEGOLEM"
+    },
+    {
+      "dir": "wav/effects/monster/thorncrawler",
+      "code": 5152,
+      "symbol": "snCHAR_SOUND_THORNCRAWLER"
+    },
+    {
+      "dir": "wav/effects/monster/heavygoblin",
+      "code": 5168,
+      "symbol": "snCHAR_SOUND_HEAVYGOBLIN"
+    },
+    {
+      "dir": "wav/effects/monster/evilplant",
+      "code": 5184,
+      "symbol": "snCHAR_SOUND_EVILPLANT"
+    },
+    {
+      "dir": "wav/effects/monster/hauntingplant",
+      "code": 5200,
+      "symbol": "snCHAR_SOUND_HAUNTINGPLANT"
+    },
+    {
+      "dir": "wav/effects/monster/darkknight",
+      "code": 5216,
+      "symbol": "snCHAR_SOUND_DARKKNIGHT"
+    },
+    {
+      "dir": "wav/effects/monster/guardian-saint",
+      "code": 5232,
+      "symbol": "snCHAR_SOUND_GUARDIAN_SAINT"
+    },
+    {
+      "dir": "wav/effects/monster/chaingolem",
+      "code": 5376,
+      "symbol": "snCHAR_SOUND_CHAINGOLEM"
+    },
+    {
+      "dir": "wav/effects/monster/deadzone",
+      "code": 5392,
+      "symbol": "snCHAR_SOUND_DEADZONE"
+    },
+    {
+      "dir": "wav/effects/monster/grotesque",
+      "code": 5408,
+      "symbol": "snCHAR_SOUND_GROTESQUE"
+    },
+    {
+      "dir": "wav/effects/monster/hypermachine",
+      "code": 5424,
+      "symbol": "snCHAR_SOUND_HYPERMACHINE"
+    },
+    {
+      "dir": "wav/effects/monster/ironfist",
+      "code": 5440,
+      "symbol": "snCHAR_SOUND_IRONFIST"
+    },
+    {
+      "dir": "wav/effects/monster/morgon",
+      "code": 5456,
+      "symbol": "snCHAR_SOUND_MORGON"
+    },
+    {
+      "dir": "wav/effects/monster/mountain",
+      "code": 5472,
+      "symbol": "snCHAR_SOUND_MOUNTAIN"
+    },
+    {
+      "dir": "wav/effects/monster/rampage",
+      "code": 5488,
+      "symbol": "snCHAR_SOUND_RAMPAGE"
+    },
+    {
+      "dir": "wav/effects/monster/runicguardian",
+      "code": 5504,
+      "symbol": "snCHAR_SOUND_RUNICGUARDIAN"
+    },
+    {
+      "dir": "wav/effects/monster/sadness",
+      "code": 5520,
+      "symbol": "snCHAR_SOUND_SADNESS"
+    },
+    {
+      "dir": "wav/effects/monster/towergolem",
+      "code": 5536,
+      "symbol": "snCHAR_SOUND_TOWERGOLEM"
+    },
+    {
+      "dir": "wav/effects/monster/vampiricbee",
+      "code": 5552,
+      "symbol": "snCHAR_SOUND_VAMPRICBEE"
+    },
+    {
+      "dir": "wav/effects/monster/vampiricmachine",
+      "code": 5568,
+      "symbol": "snCHAR_SOUND_VAMPRICMACHINE"
+    },
+    {
+      "dir": "wav/effects/monster/omu",
+      "code": 5584,
+      "symbol": "snCHAR_SOUND_OMU"
+    },
+    {
+      "dir": "wav/effects/monster/avelinarcher",
+      "code": 5600,
+      "symbol": "snCHAR_SOUND_AVELIN_ARCHER"
+    },
+    {
+      "dir": "wav/effects/monster/avelinqueen",
+      "code": 5616,
+      "symbol": "snCHAR_SOUND_AVELIN_QUEEN"
+    },
+    {
+      "dir": "wav/effects/monster/babel",
+      "code": 5632,
+      "symbol": "snCHAR_SOUND_BABEL"
+    },
+    {
+      "dir": "wav/effects/monster/mystic",
+      "code": 5648,
+      "symbol": "snCHAR_SOUND_MYSTIC"
+    },
+    {
+      "dir": "wav/effects/monster/heavygoblin",
+      "code": 5664,
+      "symbol": "snCHAR_SOUND_ICEGOBLIN"
+    },
+    {
+      "dir": "wav/effects/monster/coldeye",
+      "code": 5680,
+      "symbol": "snCHAR_SOUND_COLDEYE"
+    },
+    {
+      "dir": "wav/effects/monster/frozen",
+      "code": 5696,
+      "symbol": "snCHAR_SOUND_FROZEN"
+    },
+    {
+      "dir": "wav/effects/monster/stonegolem",
+      "code": 5712,
+      "symbol": "snCHAR_SOUND_ICEGOLEM"
+    },
+    {
+      "dir": "wav/effects/monster/frost",
+      "code": 5728,
+      "symbol": "snCHAR_SOUND_FROST"
+    },
+    {
+      "dir": "wav/effects/monster/chaoscara",
+      "code": 5744,
+      "symbol": "snCHAR_SOUND_CHAOSCARA"
+    },
+    {
+      "dir": "wav/effects/monster/deathknight",
+      "code": 5760,
+      "symbol": "snCHAR_SOUND_DEATHKNIGHT"
+    },
+    {
+      "dir": "wav/effects/monster/greategreven",
+      "code": 5888,
+      "symbol": "snCHAR_SOUND_GREATE_GREVEN"
+    },
+    {
+      "dir": "wav/effects/monster/lizardfolk",
+      "code": 5904,
+      "symbol": "snCHAR_SOUND_LIZARDFOLK"
+    },
+    {
+      "dir": "wav/effects/monster/m_lord",
+      "code": 5920,
+      "symbol": "snCHAR_SOUND_M_LORD"
+    },
+    {
+      "dir": "wav/effects/monster/spider",
+      "code": 5936,
+      "symbol": "snCHAR_SOUND_SPIDER"
+    },
+    {
+      "dir": "wav/effects/monster/stingray",
+      "code": 5952,
+      "symbol": "snCHAR_SOUND_STINGRAY"
+    },
+    {
+      "dir": "wav/effects/monster/strider",
+      "code": 5968,
+      "symbol": "snCHAR_SOUND_STRIDER"
+    },
+    {
+      "dir": "wav/effects/monster/turtlecannon",
+      "code": 6144,
+      "symbol": "snCHAR_SOUND_TURTLE_CANNON"
+    },
+    {
+      "dir": "wav/effects/monster/devilbird",
+      "code": 6160,
+      "symbol": "snCHAR_SOUND_DEVIL_BIRD"
+    },
+    {
+      "dir": "wav/effects/monster/blizzardgiant",
+      "code": 6176,
+      "symbol": "snCHAR_SOUND_BLIZZARD_GIANT"
+    },
+    {
+      "dir": "wav/effects/monster/kelvezu",
+      "code": 6192,
+      "symbol": "snCHAR_SOUND_KELVEZU"
+    },
+    {
+      "dir": "wav/effects/monster/darkphalanx",
+      "code": 6208,
+      "symbol": "snCHAR_SOUND_DARKPHALANX"
+    },
+    {
+      "dir": "wav/effects/monster/bloodyknight",
+      "code": 6224,
+      "symbol": "snCHAR_SOUND_BLOODYKNIGHT"
+    },
+    {
+      "dir": "wav/effects/monster/chimera",
+      "code": 6240,
+      "symbol": "snCHAR_SOUND_CHIMERA"
+    },
+    {
+      "dir": "wav/effects/monster/fireworm",
+      "code": 6256,
+      "symbol": "snCHAR_SOUND_FIREWORM"
+    },
+    {
+      "dir": "wav/effects/monster/hellhound",
+      "code": 6272,
+      "symbol": "snCHAR_SOUND_HELLHOUND"
+    },
+    {
+      "dir": "wav/effects/monster/darkguard",
+      "code": 6288,
+      "symbol": "snCHAR_SOUND_DARKGUARD"
+    },
+    {
+      "dir": "wav/effects/monster/darkmage",
+      "code": 6304,
+      "symbol": "snCHAR_SOUND_DARKMAGE"
+    },
+    {
+      "dir": "wav/effects/monster/monmokova",
+      "code": 6320,
+      "symbol": "snCHAR_SOUND_MOKOVA"
+    },
+    {
+      "dir": "wav/effects/monster/montempleguard",
+      "code": 6336,
+      "symbol": "snCHAR_SOUND_TEMPLEGUARD"
+    },
+    {
+      "dir": "wav/effects/monster/monseto",
+      "code": 6352,
+      "symbol": "snCHAR_SOUND_SETO"
+    },
+    {
+      "dir": "wav/effects/monster/monkingspider",
+      "code": 6368,
+      "symbol": "snCHAR_SOUND_KINGSPIDER"
+    },
+    {
+      "dir": "wav/effects/monster/d_kn",
+      "code": 6384,
+      "symbol": "snCHAR_SOUND_REVIVED_KNIGHT"
+    },
+    {
+      "dir": "wav/effects/monster/d_magi",
+      "code": 6400,
+      "symbol": "snCHAR_SOUND_REVIVED_MAGICIAN"
+    },
+    {
+      "dir": "wav/effects/monster/d_atal",
+      "code": 6432,
+      "symbol": "snCHAR_SOUND_REVIVED_ATALANTA"
+    },
+    {
+      "dir": "wav/effects/monster/d_fi",
+      "code": 6448,
+      "symbol": "snCHAR_SOUND_REVIVED_FIGTHER"
+    },
+    {
+      "dir": "wav/effects/monster/d_ar",
+      "code": 6416,
+      "symbol": "snCHAR_SOUND_REVIVED_ARCHER"
+    },
+    {
+      "dir": "wav/effects/monster/d_meca",
+      "code": 6464,
+      "symbol": "snCHAR_SOUND_REVIVED_MECANICIAN"
+    },
+    {
+      "dir": "wav/effects/monster/d_pa",
+      "code": 6480,
+      "symbol": "snCHAR_SOUND_REVIVED_PIKEMAN"
+    },
+    {
+      "dir": "wav/effects/monster/d_pr",
+      "code": 6496,
+      "symbol": "snCHAR_SOUND_REVIVED_PRIESTESS"
+    },
+    {
+      "dir": "wav/effects/monster/deadhopt",
+      "code": 6512,
+      "symbol": "snCHAR_SOUND_DEADHOPT"
+    },
+    {
+      "dir": "wav/effects/monster/deadkinghopy",
+      "code": 6528,
+      "symbol": "snCHAR_SOUND_DEADKINGHOPY"
+    },
+    {
+      "dir": "wav/effects/monster/gorgon",
+      "code": 6544,
+      "symbol": "snCHAR_SOUND_GORGON"
+    },
+    {
+      "dir": "wav/effects/monster/hobogolem",
+      "code": 6560,
+      "symbol": "snCHAR_SOUND_HOBOGOLEM"
+    },
+    {
+      "dir": "wav/effects/monster/niken",
+      "code": 6576,
+      "symbol": "snCHAR_SOUND_NIKEN"
+    },
+    {
+      "dir": "wav/effects/monster/mimic",
+      "code": 6592,
+      "symbol": "snCHAR_SOUND_MIMIC"
+    },
+    {
+      "dir": "wav/effects/monster/kingbat",
+      "code": 6608,
+      "symbol": "snCHAR_SOUND_KINGBAT"
+    },
+    {
+      "dir": "wav/effects/monster/goblinshaman",
+      "code": 6624,
+      "symbol": "snCHAR_SOUND_GOBLINSHAMAN"
+    },
+    {
+      "dir": "wav/effects/monster/hest",
+      "code": 6640,
+      "symbol": "snCHAR_SOUND_HEST"
+    },
+    {
+      "dir": "wav/effects/monster/ruca",
+      "code": 8448,
+      "symbol": "snCHAR_SOUND_RUCA"
+    },
+    {
+      "dir": "wav/effects/monster/nazsenior",
+      "code": 8464,
+      "symbol": "snCHAR_SOUND_NAZSENIOR"
+    },
+    {
+      "dir": "wav/effects/monster/igolation",
+      "code": 8480,
+      "symbol": "snCHAR_SOUND_IGOLATION"
+    },
+    {
+      "dir": "wav/effects/monster/kakoa",
+      "code": 8496,
+      "symbol": "snCHAR_SOUND_KAKOA"
+    },
+    {
+      "dir": "wav/effects/monster/sprin",
+      "code": 8512,
+      "symbol": "snCHAR_SOUND_SPRIN"
+    },
+    {
+      "dir": "wav/effects/monster/undeadmaple",
+      "code": 8528,
+      "symbol": "snCHAR_SOUND_UNDEADMAPLE"
+    },
+    {
+      "dir": "wav/effects/monster/xetan",
+      "code": 8544,
+      "symbol": "snCHAR_SOUND_XETAN"
+    },
+    {
+      "dir": "wav/effects/monster/bebechick",
+      "code": 8560,
+      "symbol": "snCHAR_SOUND_BEBECHICK"
+    },
+    {
+      "dir": "wav/effects/monster/papachick",
+      "code": 8576,
+      "symbol": "snCHAR_SOUND_PAPACHICK"
+    },
+    {
+      "dir": "wav/effects/npc/morif",
+      "code": 8208,
+      "symbol": "snCHAR_SOUND_NPC_MORIF"
+    },
+    {
+      "dir": "wav/effects/npc/mollywolf",
+      "code": 8210,
+      "symbol": "snCHAR_SOUND_NPC_MOLLYWOLF"
+    },
+    {
+      "dir": "wav/effects/npc/skillmaster",
+      "code": 8224,
+      "symbol": "snCHAR_SOUND_NPC_SKILLMASTER"
+    },
+    {
+      "dir": "wav/effects/npc/magicmaster",
+      "code": 8240,
+      "symbol": "snCHAR_SOUND_NPC_MAGICMASTER"
+    },
+    {
+      "dir": "wav/effects/npc/worldcup",
+      "code": 6656,
+      "symbol": "snCHAR_SOUND_WORLDCUP"
+    },
+    {
+      "dir": "wav/effects/npc/castledoor",
+      "code": 20496,
+      "symbol": "snCHAR_SOUND_CASTLE_DOOR"
+    },
+    {
+      "dir": "wav/effects/npc/crystal_r",
+      "code": 20512,
+      "symbol": "snCHAR_SOUND_CASTLE_CRYSTAL_R"
+    },
+    {
+      "dir": "wav/effects/npc/crystal_g",
+      "code": 20513,
+      "symbol": "snCHAR_SOUND_CASTLE_CRYSTAL_G"
+    },
+    {
+      "dir": "wav/effects/npc/crystal_b",
+      "code": 20514,
+      "symbol": "snCHAR_SOUND_CASTLE_CRYSTAL_B"
+    },
+    {
+      "dir": "wav/effects/npc/crystal_n",
+      "code": 20515,
+      "symbol": "snCHAR_SOUND_CASTLE_CRYSTAL_N"
+    },
+    {
+      "dir": "wav/effects/npc/tower-b",
+      "code": 20528,
+      "symbol": "snCHAR_SOUND_CASTLE_TOWER_B"
+    },
+    {
+      "dir": "wav/effects/npc/soldier_a",
+      "code": 20736,
+      "symbol": "snCHAR_SOUND_CASTLE_SOLDER_A"
+    },
+    {
+      "dir": "wav/effects/npc/soldier_b",
+      "code": 20752,
+      "symbol": "snCHAR_SOUND_CASTLE_SOLDER_B"
+    },
+    {
+      "dir": "wav/effects/npc/soldier_c",
+      "code": 20768,
+      "symbol": "snCHAR_SOUND_CASTLE_SOLDER_C"
+    },
+    {
+      "dir": "wav/effects/monster/wolverin",
+      "code": 12304,
+      "symbol": "snCHAR_SOUND_S_WOLVERLIN"
+    },
+    {
+      "dir": "wav/effects/monster/metalgolem",
+      "code": 12320,
+      "symbol": "snCHAR_SOUND_S_METALGOLEM"
+    },
+    {
+      "dir": "wav/effects/monster/figon",
+      "code": 12336,
+      "symbol": "snCHAR_SOUND_S_F_ELEMENTAL"
+    },
+    {
+      "dir": "wav/effects/player/fighter",
+      "code": 1,
+      "symbol": "snCHAR_SOUND_FIGHTER"
+    },
+    {
+      "dir": "wav/effects/player/mechanician",
+      "code": 2,
+      "symbol": "snCHAR_SOUND_MECHANICAN"
+    },
+    {
+      "dir": "wav/effects/player/archer",
+      "code": 3,
+      "symbol": "snCHAR_SOUND_ARCHER"
+    },
+    {
+      "dir": "wav/effects/player/pikeman",
+      "code": 4,
+      "symbol": "snCHAR_SOUND_PIKEMAN"
+    },
+    {
+      "dir": "wav/effects/player/knight",
+      "code": 6,
+      "symbol": "snCHAR_SOUND_KNIGHT"
+    },
+    {
+      "dir": "wav/effects/player/atalanta",
+      "code": 5,
+      "symbol": "snCHAR_SOUND_ATALANTA"
+    },
+    {
+      "dir": "wav/effects/player/priestess",
+      "code": 8,
+      "symbol": "snCHAR_SOUND_PRIESTESS"
+    },
+    {
+      "dir": "wav/effects/player/magician",
+      "code": 7,
+      "symbol": "snCHAR_SOUND_MAGICIAN"
+    },
+    {
+      "dir": "wav/effects/monster/watermelon",
+      "code": 20784,
+      "symbol": "snCHAR_SOUND_WATERMELON"
+    }
+  ],
+  "skillSounds": [
+    {
+      "file": "wav/effects/skill/learn_skill.wav",
+      "code": 4096,
+      "symbol": "SKILL_SOUND_LEARN"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/extreme_shield 01.wav",
+      "code": 4112,
+      "symbol": "SKILL_SOUND_EXTREME_SHIELD"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/jumping_crash 01.wav",
+      "code": 4400,
+      "symbol": "SKILL_SOUND_JUMPING_CRASH1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/jumping_crash 02.wav",
+      "code": 4401,
+      "symbol": "SKILL_SOUND_JUMPING_CRASH2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/mechanic_bomb 01.wav",
+      "code": 4128,
+      "symbol": "SKILL_SOUND_MECHANIC_BOMB1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/mechanic_bomb 02.wav",
+      "code": 4129,
+      "symbol": "SKILL_SOUND_MECHANIC_BOMB2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/perfect aim 01.wav",
+      "code": 4912,
+      "symbol": "SKILL_SOUND_PERFECT_AIM"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/physical_absorption 01.wav",
+      "code": 4144,
+      "symbol": "SKILL_SOUND_PHYSICAL_ABSORB1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/physical_absorption 02.wav",
+      "code": 4145,
+      "symbol": "SKILL_SOUND_PHYSICAL_ABSORB2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/physical_absorption 03.wav",
+      "code": 4146,
+      "symbol": "SKILL_SOUND_PHYSICAL_ABSORB3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/pike_wind 01.wav",
+      "code": 4608,
+      "symbol": "SKILL_SOUND_PIKE_WIND"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/scout_hawk 01.wav",
+      "code": 4880,
+      "symbol": "SKILL_SOUND_SCOUT_HAWK1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/scout_hawk 02.wav",
+      "code": 4881,
+      "symbol": "SKILL_SOUND_SCOUT_HAWK2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/wind_arrow 01.wav",
+      "code": 4896,
+      "symbol": "SKILL_SOUND_WIND_ARROW"
+    },
+    {
+      "file": "wav/effects/skill/bow_skill_hit 01.wav",
+      "code": 4865,
+      "symbol": "SKILL_SOUND_ARROW_HIT1"
+    },
+    {
+      "file": "wav/effects/skill/bow_skill_hit 02.wav",
+      "code": 4866,
+      "symbol": "SKILL_SOUND_ARROW_HIT2"
+    },
+    {
+      "file": "wav/effects/skill/skill_swing 01.wav",
+      "code": 8192,
+      "symbol": "SKILL_SOUND_SKILL_SWING1"
+    },
+    {
+      "file": "wav/effects/skill/skill_swing 02.wav",
+      "code": 8193,
+      "symbol": "SKILL_SOUND_SKILL_SWING2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/automation 01.wav",
+      "code": 8208,
+      "symbol": "SKILL_SOUND_SKILL_AUTOMATION1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/automation 02.wav",
+      "code": 8209,
+      "symbol": "SKILL_SOUND_SKILL_AUTOMATION2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/automation 03.wav",
+      "code": 8210,
+      "symbol": "SKILL_SOUND_SKILL_AUTOMATION3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/maximize 01.wav",
+      "code": 8224,
+      "symbol": "SKILL_SOUND_SKILL_MAXIMIZE1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/maximize 01.wav",
+      "code": 8225,
+      "symbol": "SKILL_SOUND_SKILL_MAXIMIZE2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/maximize 01.wav",
+      "code": 8226,
+      "symbol": "SKILL_SOUND_SKILL_MAXIMIZE3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/spark 01.wav",
+      "code": 8240,
+      "symbol": "SKILL_SOUND_SKILL_SPARK1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/spark 02.wav",
+      "code": 8241,
+      "symbol": "SKILL_SOUND_SKILL_SPARK2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/spark 03.wav",
+      "code": 8242,
+      "symbol": "SKILL_SOUND_SKILL_SPARK3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/ground pike 01.wav",
+      "code": 8464,
+      "symbol": "SKILL_SOUND_SKILL_GROUND_PIKE"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/tornado 01.wav",
+      "code": 8480,
+      "symbol": "SKILL_SOUND_SKILL_TORNADO1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/falcon 02.wav",
+      "code": 8976,
+      "symbol": "SKILL_SOUND_SKILL_FALCON"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/falcon attack 01.wav",
+      "code": 8977,
+      "symbol": "SKILL_SOUND_SKILL_FALCON_ATTACK1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/falcon attack 02.wav",
+      "code": 8978,
+      "symbol": "SKILL_SOUND_SKILL_FALCON_ATTACK2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/avalanche 01.wav",
+      "code": 8994,
+      "symbol": "SKILL_SOUND_SKILL_AVALANCHE1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/avalanche 02.wav",
+      "code": 8994,
+      "symbol": "SKILL_SOUND_SKILL_AVALANCHE2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/avalanche 03.wav",
+      "code": 8994,
+      "symbol": "SKILL_SOUND_SKILL_AVALANCHE3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/expansion 01.wav",
+      "code": 8496,
+      "symbol": "SKILL_SOUND_SKILL_EXPANSION1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/expansion 02.wav",
+      "code": 8497,
+      "symbol": "SKILL_SOUND_SKILL_EXPANSION2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/roz 01.wav",
+      "code": 8721,
+      "symbol": "SKILL_SOUND_SKILL_RAGE_OF_ZECRAM1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/roz 02.wav",
+      "code": 8722,
+      "symbol": "SKILL_SOUND_SKILL_RAGE_OF_ZECRAM2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/roz 04.wav",
+      "code": 8723,
+      "symbol": "SKILL_SOUND_SKILL_RAGE_OF_ZECRAM3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/roar 01.wav",
+      "code": 8705,
+      "symbol": "SKILL_SOUND_SKILL_ROAR1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/roar 02.wav",
+      "code": 8706,
+      "symbol": "SKILL_SOUND_SKILL_ROAR2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/aofr 01.wav",
+      "code": 9010,
+      "symbol": "SKILL_SOUND_SKILL_ARROW_OF_RANGE"
+    },
+    {
+      "file": "wav/effects/skill/morion/casting_m.wav",
+      "code": 6144,
+      "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN"
+    },
+    {
+      "file": "wav/effects/skill/morion/casting_p.wav",
+      "code": 5888,
+      "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST"
+    },
+    {
+      "file": "wav/effects/skill/morion/agony 1.wav",
+      "code": 6160,
+      "symbol": "SKILL_SOUND_SKILL_AGONY"
+    },
+    {
+      "file": "wav/effects/skill/morion/farina 1.wav",
+      "code": 5664,
+      "symbol": "SKILL_SOUND_SKILL_FARINA"
+    },
+    {
+      "file": "wav/effects/skill/morion/fireball 1.wav",
+      "code": 6208,
+      "symbol": "SKILL_SOUND_SKILL_FIREBALL1"
+    },
+    {
+      "file": "wav/effects/skill/morion/fireball 2.wav",
+      "code": 6209,
+      "symbol": "SKILL_SOUND_SKILL_FIREBALL2"
+    },
+    {
+      "file": "wav/effects/skill/morion/firebolt 1.wav",
+      "code": 6176,
+      "symbol": "SKILL_SOUND_SKILL_FIREBOLT1"
+    },
+    {
+      "file": "wav/effects/skill/morion/firebolt 2.wav",
+      "code": 6177,
+      "symbol": "SKILL_SOUND_SKILL_FIREBOLT2"
+    },
+    {
+      "file": "wav/effects/skill/morion/healing 1.wav",
+      "code": 5904,
+      "symbol": "SKILL_SOUND_SKILL_HEALING"
+    },
+    {
+      "file": "wav/effects/skill/morion/holybody 1.wav",
+      "code": 5408,
+      "symbol": "SKILL_SOUND_SKILL_HOLYBODY"
+    },
+    {
+      "file": "wav/effects/skill/morion/holybolt 1.wav",
+      "code": 5920,
+      "symbol": "SKILL_SOUND_SKILL_HOLYBOLT"
+    },
+    {
+      "file": "wav/effects/skill/morion/holymind 1.wav",
+      "code": 5952,
+      "symbol": "SKILL_SOUND_SKILL_HOLYMIND"
+    },
+    {
+      "file": "wav/effects/skill/morion/multispark 1.wav",
+      "code": 5936,
+      "symbol": "SKILL_SOUND_SKILL_MULTISPARK"
+    },
+    {
+      "file": "wav/effects/skill/morion/shieldspake 1.wav",
+      "code": 5648,
+      "symbol": "SKILL_SOUND_SKILL_SHIELDSTRIKE"
+    },
+    {
+      "file": "wav/effects/skill/morion/swordblast 1.wav",
+      "code": 5392,
+      "symbol": "SKILL_SOUND_SKILL_SWORDBLAST1"
+    },
+    {
+      "file": "wav/effects/skill/morion/swordblast 2.wav",
+      "code": 5393,
+      "symbol": "SKILL_SOUND_SKILL_SWORDBLAST2"
+    },
+    {
+      "file": "wav/effects/skill/morion/vigorspear 1.wav",
+      "code": 5696,
+      "symbol": "SKILL_SOUND_SKILL_VIGORSPEAR"
+    },
+    {
+      "file": "wav/effects/skill/morion/zenith 1.wav",
+      "code": 6192,
+      "symbol": "SKILL_SOUND_SKILL_ZENITH"
+    },
+    {
+      "file": "wav/effects/skill/morion/holyvalor 1.wav",
+      "code": 9488,
+      "symbol": "SKILL_SOUND_SKILL_HOLY_VALOR1"
+    },
+    {
+      "file": "wav/effects/skill/morion/holyvalor 3.wav",
+      "code": 9491,
+      "symbol": "SKILL_SOUND_SKILL_HOLY_VALOR3"
+    },
+    {
+      "file": "wav/effects/skill/morion/brandish 1.wav",
+      "code": 9504,
+      "symbol": "SKILL_SOUND_SKILL_BLANDISH1"
+    },
+    {
+      "file": "wav/effects/skill/morion/brandish 2.wav",
+      "code": 9505,
+      "symbol": "SKILL_SOUND_SKILL_BLANDISH2"
+    },
+    {
+      "file": "wav/effects/skill/morion/piercing 2.wav",
+      "code": 9520,
+      "symbol": "SKILL_SOUND_SKILL_PIERCING"
+    },
+    {
+      "file": "wav/effects/skill/morion/drasticspirit 1.wav",
+      "code": 9536,
+      "symbol": "SKILL_SOUND_SKILL_DRASTICSPIRIT1"
+    },
+    {
+      "file": "wav/effects/skill/morion/drasticspirit 3.wav",
+      "code": 9539,
+      "symbol": "SKILL_SOUND_SKILL_DRASTICSPIRIT3"
+    },
+    {
+      "file": "wav/effects/skill/morion/windy 1.wav",
+      "code": 9744,
+      "symbol": "SKILL_SOUND_SKILL_WINDY1"
+    },
+    {
+      "file": "wav/effects/skill/morion/windy 3.wav",
+      "code": 9747,
+      "symbol": "SKILL_SOUND_SKILL_WINDY3"
+    },
+    {
+      "file": "wav/effects/skill/morion/twistjavelin.wav",
+      "code": 9760,
+      "symbol": "SKILL_SOUND_SKILL_TWISTJAVELIN"
+    },
+    {
+      "file": "wav/effects/skill/morion/soulsucker 2.wav",
+      "code": 9762,
+      "symbol": "SKILL_SOUND_SKILL_SOULSUCKER2"
+    },
+    {
+      "file": "wav/effects/skill/morion/soulsucker 3.wav",
+      "code": 9763,
+      "symbol": "SKILL_SOUND_SKILL_SOULSUCKER3"
+    },
+    {
+      "file": "wav/effects/skill/morion/soulsucker 4.wav",
+      "code": 9764,
+      "symbol": "SKILL_SOUND_SKILL_SOULSUCKER4"
+    },
+    {
+      "file": "wav/effects/skill/morion/firejavelin 1.wav",
+      "code": 9776,
+      "symbol": "SKILL_SOUND_SKILL_FIREJAVELIN"
+    },
+    {
+      "file": "wav/effects/skill/morion/divinelightning 1.wav",
+      "code": 10000,
+      "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING1"
+    },
+    {
+      "file": "wav/effects/skill/morion/divinelightning 2.wav",
+      "code": 10001,
+      "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING2"
+    },
+    {
+      "file": "wav/effects/skill/morion/divinelightning 3.wav",
+      "code": 10002,
+      "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING3"
+    },
+    {
+      "file": "wav/effects/skill/morion/holyreflection 1.wav",
+      "code": 10016,
+      "symbol": "SKILL_SOUND_SKILL_HOLYREFLECTION1"
+    },
+    {
+      "file": "wav/effects/skill/morion/holyreflection 2.wav",
+      "code": 10018,
+      "symbol": "SKILL_SOUND_SKILL_HOLYREFLECTION2"
+    },
+    {
+      "file": "wav/effects/skill/morion/grandhealing 1.wav",
+      "code": 10032,
+      "symbol": "SKILL_SOUND_SKILL_GRANDHEALING"
+    },
+    {
+      "file": "wav/effects/skill/morion/watornado 1.wav",
+      "code": 10256,
+      "symbol": "SKILL_SOUND_SKILL_WATORNADO1"
+    },
+    {
+      "file": "wav/effects/skill/morion/watornado 2.wav",
+      "code": 10257,
+      "symbol": "SKILL_SOUND_SKILL_WATORNADO2"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_add_c 1.wav",
+      "code": 10273,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_ICE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_add_c 2.wav",
+      "code": 10274,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_ICE2"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_add_f 1.wav",
+      "code": 10275,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_FIRE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_add_f 2.wav",
+      "code": 10276,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_FIRE2"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_add_l 1.wav",
+      "code": 10277,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_LIGHTNING1"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_add_l 2.wav",
+      "code": 10278,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_LIGHTNING2"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_cast.wav",
+      "code": 10272,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_CAST"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_magic_l 1.wav",
+      "code": 10279,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_MAGIC_LIGHTNING1"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_magic_l 2.wav",
+      "code": 10280,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_MAGIC_LIGHTNING2"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_magic_c 1.wav",
+      "code": 10304,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_MAGIC_ICE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/enchantwpn_magic_c 2.wav",
+      "code": 10305,
+      "symbol": "SKILL_SOUND_SKILL_ENCHANTWEAPON_MAGIC_ICE2"
+    },
+    {
+      "file": "wav/effects/skill/morion/deathray 1.wav",
+      "code": 10288,
+      "symbol": "SKILL_SOUND_SKILL_DEATHRAY"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/avengingcrash 01.wav",
+      "code": 12576,
+      "symbol": "SKILL_SOUND_SKILL_AVANGING_CRASH"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/elementalshot 01.wav",
+      "code": 13072,
+      "symbol": "SKILL_SOUND_SKILL_ELEMENTAL_SHOT"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/bombshot 01.wav",
+      "code": 13120,
+      "symbol": "SKILL_SOUND_SKILL_BOMB_SHOT1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/bombshot 02.wav",
+      "code": 13121,
+      "symbol": "SKILL_SOUND_SKILL_BOMB_SHOT2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/bonecrash 01.wav",
+      "code": 12608,
+      "symbol": "SKILL_SOUND_SKILL_BONE_CRASH1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/chainlance 01.wav",
+      "code": 12864,
+      "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/chainlance 02.wav",
+      "code": 12865,
+      "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/chainlance 03.wav",
+      "code": 12866,
+      "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/concentration 01.wav",
+      "code": 12560,
+      "symbol": "SKILL_SOUND_SKILL_CONCENTRATION1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/concentration 02.wav",
+      "code": 12561,
+      "symbol": "SKILL_SOUND_SKILL_CONCENTRATION2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/goldfalcon 02.wav",
+      "code": 13088,
+      "symbol": "SKILL_SOUND_SKILL_GOLDEN_FALCON"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/metalarmor 01.wav",
+      "code": 12304,
+      "symbol": "SKILL_SOUND_SKILL_METAL_ARMOR"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/perforation 01.wav",
+      "code": 13104,
+      "symbol": "SKILL_SOUND_SKILL_PERFORATION"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/sparkshield 02.wav",
+      "code": 12352,
+      "symbol": "SKILL_SOUND_SKILL_SPARK_SHIELD"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/swiftaxe 01.wav",
+      "code": 12592,
+      "symbol": "SKILL_SOUND_SKILL_SWIFT_AXE1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/swiftaxe 02.wav",
+      "code": 12593,
+      "symbol": "SKILL_SOUND_SKILL_SWIFT_AXE2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/venomspear 01.wav",
+      "code": 12816,
+      "symbol": "SKILL_SOUND_SKILL_VENOM_SPEAR1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/venomspear 02.wav",
+      "code": 12817,
+      "symbol": "SKILL_SOUND_SKILL_VENOM_SPEAR2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/vanish 01.wav",
+      "code": 12832,
+      "symbol": "SKILL_SOUND_SKILL_VANISH1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/vanish 02.wav",
+      "code": 12833,
+      "symbol": "SKILL_SOUND_SKILL_VANISH2"
+    },
+    {
+      "file": "wav/effects/skill/morion/dancingsword 1.wav",
+      "code": 14144,
+      "symbol": "SKILL_SOUND_SKILL_DANCING_SWORD"
+    },
+    {
+      "file": "wav/effects/skill/morion/dancingsword_atk_1.wav",
+      "code": 14145,
+      "symbol": "SKILL_SOUND_SKILL_DANCING_SWORD_ATK1"
+    },
+    {
+      "file": "wav/effects/skill/morion/dancingsword_atk_2.wav",
+      "code": 14146,
+      "symbol": "SKILL_SOUND_SKILL_DANCING_SWORD_ATK2"
+    },
+    {
+      "file": "wav/effects/skill/morion/diastrophism 2.wav",
+      "code": 14112,
+      "symbol": "SKILL_SOUND_SKILL_DIASTROPHISM"
+    },
+    {
+      "file": "wav/effects/skill/morion/divineinhalation 1.wav",
+      "code": 13344,
+      "symbol": "SKILL_SOUND_SKILL_DIVINE_INHALATION"
+    },
+    {
+      "file": "wav/effects/skill/morion/energyshield 1.wav",
+      "code": 14096,
+      "symbol": "SKILL_SOUND_SKILL_ENERGY_SHIELD"
+    },
+    {
+      "file": "wav/effects/skill/morion/extinct 1.wav",
+      "code": 13872,
+      "symbol": "SKILL_SOUND_SKILL_EXTINTION"
+    },
+    {
+      "file": "wav/effects/skill/morion/flamebrandish 2.wav",
+      "code": 13328,
+      "symbol": "SKILL_SOUND_SKILL_FLAME_BRANDISH"
+    },
+    {
+      "file": "wav/effects/skill/morion/grandcross 2.wav",
+      "code": 13376,
+      "symbol": "SKILL_SOUND_SKILL_GRAND_CROSS"
+    },
+    {
+      "file": "wav/effects/skill/morion/holy incantation 1.wav",
+      "code": 13360,
+      "symbol": "SKILL_SOUND_SKILL_HOLY_INCANTATION"
+    },
+    {
+      "file": "wav/effects/skill/morion/lightningjavelin 1.wav",
+      "code": 13616,
+      "symbol": "SKILL_SOUND_SKILL_LIGHTNING_JAVELIN1"
+    },
+    {
+      "file": "wav/effects/skill/morion/lightningjavelin 2.wav",
+      "code": 13617,
+      "symbol": "SKILL_SOUND_SKILL_LIGHTNING_JAVELIN2"
+    },
+    {
+      "file": "wav/effects/skill/morion/resurrection 2.wav",
+      "code": 13856,
+      "symbol": "SKILL_SOUND_SKILL_RESURRECTION"
+    },
+    {
+      "file": "wav/effects/skill/morion/spiritelemental 1.wav",
+      "code": 14128,
+      "symbol": "SKILL_SOUND_SKILL_SPIRIT_ELEMENTAL"
+    },
+    {
+      "file": "wav/effects/skill/morion/splitjavelin 1.wav",
+      "code": 13584,
+      "symbol": "SKILL_SOUND_SKILL_SPLIT_JAVELIN1"
+    },
+    {
+      "file": "wav/effects/skill/morion/splitjavelin 2.wav",
+      "code": 13585,
+      "symbol": "SKILL_SOUND_SKILL_SPLIT_JAVELIN2"
+    },
+    {
+      "file": "wav/effects/skill/morion/stormjavelin 1.wav",
+      "code": 13632,
+      "symbol": "SKILL_SOUND_SKILL_STORM_JAVELIN1"
+    },
+    {
+      "file": "wav/effects/skill/morion/stormjavelin 2.wav",
+      "code": 13633,
+      "symbol": "SKILL_SOUND_SKILL_STORM_JAVELIN2"
+    },
+    {
+      "file": "wav/effects/skill/morion/triumphofvalhalla 1.wav",
+      "code": 13600,
+      "symbol": "SKILL_SOUND_SKILL_TRIUMPH_OF_VALHALLA1"
+    },
+    {
+      "file": "wav/effects/skill/morion/triumphofvalhalla 3.wav",
+      "code": 13601,
+      "symbol": "SKILL_SOUND_SKILL_TRIUMPH_OF_VALHALLA2"
+    },
+    {
+      "file": "wav/effects/skill/morion/vigorball 1.wav",
+      "code": 13840,
+      "symbol": "SKILL_SOUND_SKILL_VIGOR_BALL1"
+    },
+    {
+      "file": "wav/effects/skill/morion/vigorball 2.wav",
+      "code": 13841,
+      "symbol": "SKILL_SOUND_SKILL_VIGOR_BALL2"
+    },
+    {
+      "file": "wav/effects/skill/morion/virtuallife 1.wav",
+      "code": 13888,
+      "symbol": "SKILL_SOUND_SKILL_VIRTUAL_LIFE"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/assassineye 01.wav",
+      "code": 16912,
+      "symbol": "SKILL_SOUND_SKILL_ASSASSIN_EYE"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/berserker 01.wav",
+      "code": 16672,
+      "symbol": "SKILL_SOUND_SKILL_BERSERKER"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/charging 01.wav",
+      "code": 16928,
+      "symbol": "SKILL_SOUND_SKILL_CHARGING"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/chargingstrike 03.wav",
+      "code": 16929,
+      "symbol": "SKILL_SOUND_SKILL_CHARGING_STRIKE"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/compulsion 01.wav",
+      "code": 16417,
+      "symbol": "SKILL_SOUND_SKILL_COMPULSION1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/compulsion 05.wav",
+      "code": 16418,
+      "symbol": "SKILL_SOUND_SKILL_COMPULSION2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/compulsion 06.wav",
+      "code": 16419,
+      "symbol": "SKILL_SOUND_SKILL_COMPULSION3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/cyclonestrike 01.wav",
+      "code": 16688,
+      "symbol": "SKILL_SOUND_SKILL_CYCLONE_STRIKE"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/forceofnature 01.wav",
+      "code": 17216,
+      "symbol": "SKILL_SOUND_SKILL_FORCE_OF_NATURE"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/godsbless 01.wav",
+      "code": 17456,
+      "symbol": "SKILL_SOUND_SKILL_GODS_BLESS"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/godlyshield 01.wav",
+      "code": 17440,
+      "symbol": "SKILL_SOUND_SKILL_GODLY_SHIELD"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/impulsion 02.wav",
+      "code": 16400,
+      "symbol": "SKILL_SOUND_SKILL_IMPULSION"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/metalgolem 01.wav",
+      "code": 16448,
+      "symbol": "SKILL_SOUND_SKILL_METAL_GOLEM"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/phoenixshot 01.wav",
+      "code": 17200,
+      "symbol": "SKILL_SOUND_SKILL_PHOENIX_SHOT"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/recallwolverin 01.wav",
+      "code": 17168,
+      "symbol": "SKILL_SOUND_SKILL_RECALL_WOLVERIN"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/shadowstrike 01.wav",
+      "code": 16961,
+      "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE1"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/shadowstrike 02.wav",
+      "code": 16962,
+      "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE2"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/shadowstrike 03.wav",
+      "code": 16963,
+      "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE3"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/shadowstrikefinish 01.wav",
+      "code": 16964,
+      "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE4"
+    },
+    {
+      "file": "wav/effects/skill/tempskron/vague 01.wav",
+      "code": 16944,
+      "symbol": "SKILL_SOUND_SKILL_VAGUE"
+    },
+    {
+      "file": "wav/effects/skill/morion/chainlightning 01.wav",
+      "code": 17969,
+      "symbol": "SKILL_SOUND_SKILL_CHAIN_LIGHTNING1"
+    },
+    {
+      "file": "wav/effects/skill/morion/chainlightning 02.wav",
+      "code": 17970,
+      "symbol": "SKILL_SOUND_SKILL_CHAIN_LIGHTNING2"
+    },
+    {
+      "file": "wav/effects/skill/morion/distortion 01.wav",
+      "code": 18224,
+      "symbol": "SKILL_SOUND_SKILL_DISTORTION"
+    },
+    {
+      "file": "wav/effects/skill/morion/divinepiercing 07.wav",
+      "code": 17424,
+      "symbol": "SKILL_SOUND_SKILL_DVINE_PIERCING"
+    },
+    {
+      "file": "wav/effects/skill/morion/extremerage 01.wav",
+      "code": 17697,
+      "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/extremerage 02.wav",
+      "code": 17698,
+      "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE2"
+    },
+    {
+      "file": "wav/effects/skill/morion/extremerage 03.wav",
+      "code": 17699,
+      "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE3"
+    },
+    {
+      "file": "wav/effects/skill/morion/fireelemental 01.wav",
+      "code": 18192,
+      "symbol": "SKILL_SOUND_SKILL_FIRE_ELEMENTAL"
+    },
+    {
+      "file": "wav/effects/skill/morion/flamewave 01.wav",
+      "code": 18209,
+      "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/flamewave 02.wav",
+      "code": 18210,
+      "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE2"
+    },
+    {
+      "file": "wav/effects/skill/morion/flamewavea 01.wav",
+      "code": 18211,
+      "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE3"
+    },
+    {
+      "file": "wav/effects/skill/morion/frostjavelin 01.wav",
+      "code": 17712,
+      "symbol": "SKILL_SOUND_SKILL_FROST_JAVELIN"
+    },
+    {
+      "file": "wav/effects/skill/morion/glacialspike 01.wav",
+      "code": 17937,
+      "symbol": "SKILL_SOUND_SKILL_GLACIAL_SPIKE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/glacialspike 02.wav",
+      "code": 17938,
+      "symbol": "SKILL_SOUND_SKILL_GLACIAL_SPIKE2"
+    },
+    {
+      "file": "wav/effects/skill/morion/hallofvalhalla 01.wav",
+      "code": 17680,
+      "symbol": "SKILL_SOUND_SKILL_HALL_OF_VALHALLA"
+    },
+    {
+      "file": "wav/effects/skill/morion/meteo 01.wav",
+      "code": 18241,
+      "symbol": "SKILL_SOUND_SKILL_METEO1"
+    },
+    {
+      "file": "wav/effects/skill/morion/meteo 02.wav",
+      "code": 18242,
+      "symbol": "SKILL_SOUND_SKILL_METEO2"
+    },
+    {
+      "file": "wav/effects/skill/morion/meteo 03.wav",
+      "code": 18243,
+      "symbol": "SKILL_SOUND_SKILL_METEO3"
+    },
+    {
+      "file": "wav/effects/skill/morion/muspell 01.wav",
+      "code": 17985,
+      "symbol": "SKILL_SOUND_SKILL_MUSPELL1"
+    },
+    {
+      "file": "wav/effects/skill/morion/muspell 02.wav",
+      "code": 17986,
+      "symbol": "SKILL_SOUND_SKILL_MUSPELL2"
+    },
+    {
+      "file": "wav/effects/skill/morion/regenfield 01.wav",
+      "code": 17953,
+      "symbol": "SKILL_SOUND_SKILL_REGEN_FIELD1"
+    },
+    {
+      "file": "wav/effects/skill/morion/regenfield 02.wav",
+      "code": 17954,
+      "symbol": "SKILL_SOUND_SKILL_REGEN_FIELD2"
+    },
+    {
+      "file": "wav/effects/skill/morion/swordofjustice 01.wav",
+      "code": 17472,
+      "symbol": "SKILL_SOUND_SKILL_SWORD_OF_JUSTICE"
+    },
+    {
+      "file": "wav/effects/skill/morion/vengeance 01.wav",
+      "code": 17729,
+      "symbol": "SKILL_SOUND_SKILL_VENGEANCE1"
+    },
+    {
+      "file": "wav/effects/skill/morion/vengeance 02.wav",
+      "code": 17730,
+      "symbol": "SKILL_SOUND_SKILL_VENGEANCE2"
+    }
+  ],
+  "weaponSounds": {
+    "1": [
+      "wav/effects/weapon/one hand swing axe 1.wav",
+      "wav/effects/weapon/one hand swing axe 2.wav",
+      "wav/effects/weapon/one hand swing axe 3.wav"
+    ],
+    "2": [
+      "wav/effects/weapon/two hand swing axe 1.wav",
+      "wav/effects/weapon/two hand swing axe 2.wav"
+    ],
+    "3": [
+      "wav/effects/weapon/one hand swing sword 1.wav",
+      "wav/effects/weapon/one hand swing sword 2.wav",
+      "wav/effects/weapon/one hand swing sword 3.wav"
+    ],
+    "4": [
+      "wav/effects/weapon/two hand swing sword 1.wav",
+      "wav/effects/weapon/two hand swing sword 2.wav",
+      "wav/effects/weapon/two hand swing sword 3.wav",
+      "wav/effects/weapon/two hand swing sword 4.wav"
+    ],
+    "5": [
+      "wav/effects/weapon/one hand swing spear 1.wav"
+    ],
+    "6": [
+      "wav/effects/weapon/two hand swing spear 1.wav",
+      "wav/effects/weapon/two hand swing spear 2.wav"
+    ],
+    "7": [
+      "wav/effects/weapon/one hand scratch 1.wav",
+      "wav/effects/weapon/one hand scratch 2.wav",
+      "wav/effects/weapon/one hand scratch 3.wav"
+    ],
+    "8": [
+      "wav/effects/weapon/bow shoot 1.wav",
+      "wav/effects/weapon/bow shoot 2.wav",
+      "wav/effects/weapon/bow shoot 3.wav"
+    ],
+    "9": [
+      "wav/effects/weapon/one hand swing blunt 1.wav",
+      "wav/effects/weapon/one hand swing blunt 2.wav",
+      "wav/effects/weapon/one hand swing blunt 3.wav"
+    ],
+    "10": [
+      "wav/effects/weapon/two hand swing blunt 1.wav",
+      "wav/effects/weapon/two hand swing blunt 2.wav"
+    ],
+    "11": [
+      "wav/effects/weapon/throwing 1.wav",
+      "wav/effects/weapon/throwing 2.wav"
+    ],
+    "12": [
+      "wav/effects/weapon/one hand miss.wav"
+    ],
+    "13": [
+      "wav/effects/weapon/two hand miss.wav"
+    ],
+    "14": [
+      "wav/effects/weapon/punch hit 1.wav",
+      "wav/effects/weapon/punch hit 2.wav",
+      "wav/effects/weapon/punch hit 3.wav"
+    ],
+    "15": [
+      "wav/effects/weapon/one hand small swing 1.wav",
+      "wav/effects/weapon/one hand small swing 2.wav"
+    ],
+    "16": [
+      "wav/effects/weapon/critical hit 1.wav",
+      "wav/effects/weapon/critical hit 2.wav"
+    ],
+    "17": [
+      "wav/effects/weapon/one hand casting 1.wav",
+      "wav/effects/weapon/one hand casting 2.wav"
+    ],
+    "18": [
+      "wav/effects/weapon/two hand casting 1.wav",
+      "wav/effects/weapon/two hand casting 2.wav"
+    ]
+  }
+}

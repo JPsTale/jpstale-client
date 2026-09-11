@@ -26,11 +26,14 @@ import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
 import { isSafeMap } from '../game/safeZones.js';
-import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
+import { getWeaponTypeFromIdCode, getHandType } from '../char/weapon-type.js';
+import { sfx, weaponSoundCode, type HandType } from '../audio/sfx.js';
+import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
-import { evalSkeleton, applyToBones } from '../char/animation.js';
-import { decodeTextureAsync, encodeAssetPath } from '../core/texture.js';
+import { evalSkeleton, applyToBones, advanceAnimFrame, ANIM_UNITS_PER_SEC } from '../char/animation.js';
+import { decodeTextureAsync } from '../core/texture.js';
+import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { cachedFetch } from '../core/asset-cache.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
@@ -40,6 +43,9 @@ import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
+
+/** idcode → classItem（4=单手 / 6=双手），武器音效选码用（原版 WeaponPlaySound 的 HandType） */
+const ITEM_CLASS_BY_CODE = new Map<number, number>(ITEM_DEFS.map((d) => [d.code, d.class]));
 
 export interface EnterGameInfo {
   playerId: number;
@@ -99,6 +105,11 @@ export interface WorldView {
   applyUnitHp(targetId: number, hp: number, isDamage: boolean): void;
   /** S2C_AttackResult：怪物受击 → 自减血量（服务端暂只广播 damage）；attackerId=self 触发自机战斗窗口 */
   applyMonsterHit(monsterId: number, damage: number): void;
+  /**
+   * S2C_AttackResult 音反馈（自机为攻击者）：MISS → 挥空音；暴击 → 追加暴击音。
+   * 对应原版 WeaponPlaySound 末尾的 AttackCritcal / 暴击追加码 16。
+   */
+  playSelfAttackResult(missed: boolean, critical: boolean): void;
   /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
   showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
@@ -171,7 +182,7 @@ const SWING_SLACK_MS = 40;
 // ===== 动画播放（delta-time，与帧率解耦）=====
 // animFrame 单位：1 动画帧 = 160 单位。原「每渲染帧 += 80」在 60fps 下等价于 4800 单位/秒。
 // 现按真实 dt 推进 → 帧率任意（30/60/120/144…）动画速度一致，客户端帧率可调。
-const ANIM_UNITS_PER_SEC = 4800; // = 30 动画帧/秒 × 160
+// ANIM_UNITS_PER_SEC 已移至 char/animation.ts（游戏与工具共用同一常量，避免两处各定义一份）
 const ANIM_FPS_BASE = 30;        // 动画数据基准帧率（1 动画帧 = 1/30 秒）
 
 /**
@@ -909,35 +920,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     mapAudio.setGameTime(hour);
   }
 
-  // 角色纹理加载（复刻 CharSelect：隐藏→加载纹理→显示）
-  async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | null> {
-    try {
-      const resp = await fetch(encodeAssetPath(url), { cache: 'no-store' });
-      if (!resp.ok) return null;
-      const buf = await resp.arrayBuffer();
-      const decoded = await decodeTextureAsync(buf);
-      if (!decoded) return null;
-      const tex = new THREE.DataTexture(new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat);
-      tex.flipY = true;
-      tex.colorSpace = THREE.SRGBColorSpace;
-      if (renderer) tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      tex.needsUpdate = true;
-      return tex;
-    } catch { return null; }
-  }
-
-  async function loadTextures(textures: { url: string; mat: THREE.MeshPhongMaterial }[]): Promise<void> {
-    await Promise.allSettled(textures.map(async (t) => {
-      const texPath = t.url.replace(/\\/g, '/').toLowerCase();
-      const tex = await fetchAndDecodeTexture('/res/' + texPath);
-      if (tex) {
-        t.mat.map = tex;
-        t.mat.color.set(0xffffff);
-        t.mat.alphaTest = 0.5;
-        t.mat.transparent = true;
-        t.mat.needsUpdate = true;
-      }
-    }));
+  // 角色/怪物/武器纹理加载：实现已抽到 render/char-texture-loader.ts（与 CharSelect / 检查器共用一份）。
+  // 这里只包一层，把本场景的各向异性级别注入进去。
+  async function loadTextures(textures: TextureTarget[]): Promise<void> {
+    await loadCharTextures(textures, renderer ? renderer.capabilities.getMaxAnisotropy() : 1);
   }
 
   let selfBodyGroup: THREE.Group | null = null;   // 自机身体（可替换：换甲/换衣）
@@ -1104,6 +1090,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const w = selfAppearance;
     if (!w || !w.weaponIdcode || w.weaponIdcode <= 0) return null;
     return getWeaponTypeFromIdCode(w.weaponIdcode);
+  }
+
+  /** 自机武器单双手（ITEM_DEFS.classItem → getHandType：4=单手 / 6=双手） */
+  function selfHandType(): HandType {
+    const idcode = selfAppearance?.weaponIdcode || 0;
+    const cls = idcode > 0 ? ITEM_CLASS_BY_CODE.get(idcode) : undefined;
+    return cls === undefined ? 'UNDEFINED' : (getHandType(cls) as HandType);
+  }
+
+  /** 自机武器音效码（原版 WeaponPlaySound）：武器类型 + 单双手；法师/祭司的钝器走吟唱音 */
+  function selfWeaponSoundCode(): number {
+    const job = getGameSnapshot().character?.job ?? 0;
+    return weaponSoundCode(selfWeaponType(), selfHandType(), job === 7 || job === 8);
+  }
+
+  /** 普攻结算音（自机）：MISS → 挥空音；暴击 → 暴击音。自机音量满且高优先级 */
+  function playSelfAttackResult(missed: boolean, critical: boolean): void {
+    if (missed) sfx.playWeaponMiss(selfHandType(), { priority: true });
+    else if (critical) sfx.playCritical({ priority: true });
   }
 
   /** 收鞘姿态的挂载骨（对齐 CharSelect）：剑/斧/锤/标枪/镰/杖→背，弓→in-bow，十字弓→in-cro，匕首→腰左右。 */
@@ -1747,6 +1752,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface MonsterActor {
     monsterId: number;
     name: string;
+    /** 模型资产路径（音效目录名解析用：<怪物名>/<怪物名>.smd → 目录 basename） */
+    modelKey: string;
     hp: number;
     maxHp: number;
     stateBar: boolean; // 血条锁存：受击/选中后常显（对齐 exm EnableStateBar，离开视野重置）
@@ -1783,7 +1790,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     actor.lastAnimState = animState;
     if (animState === ANIM_RUN) { if (!actor.animState.triggerRun()) actor.animState.triggerWalk(); }
     else if (animState === ANIM_WALK) { if (!actor.animState.triggerWalk()) actor.animState.triggerIdle(); }
-    else if (animState === ANIM_ATTACK) { if (!actor.animState.triggerAttack(true)) actor.animState.triggerIdle(); }
+    else if (animState === ANIM_ATTACK) {
+      const wasStand = actor.animState.getCurrentState() === actor.animState.STATE.STAND;
+      if (!actor.animState.triggerAttack(true)) actor.animState.triggerIdle();
+      else if (wasStand) {
+        // 怪物挥击音（原版 CharPlaySound：动作态 ATTACK → <怪物目录>/attack N.wav）
+        sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_ATTACK', actor.root.position);
+      }
+    }
     else actor.animState.triggerIdle();
   }
 
@@ -1822,6 +1836,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         actorObj = {
           monsterId: mid,
           name: actorInfo.name,
+          modelKey: actorInfo.modelFile,
           hp: actorInfo.hp || 0,
           maxHp: actorInfo.maxHp || 0,
           stateBar: false,
@@ -2210,12 +2225,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function onTakeDamage(targetId: number, damage: number): void {
     if (damage <= 0) return;
+    const job = getGameSnapshot().character?.job ?? 0;
     if (targetId === selfPlayerId) {
       animState?.triggerDamage();
+      // 受击音（原版 CharPlaySound：wav/effects/player/<职业>/damage N.wav）
+      sfx.playPlayerSound(job, 'CHRMOTION_STATE_DAMAGE', selfPos);
       return;
     }
     const actor = remotes.get(targetId);
-    if (actor) actor.animState.triggerDamage();
+    if (actor) {
+      actor.animState.triggerDamage();
+      sfx.playPlayerSound(actor.jobId ?? 0, 'CHRMOTION_STATE_DAMAGE', actor.root.position);
+    }
   }
 
   // ==================== 伤害/躲闪飘字（对齐原版 SHOW_DMG：头顶 1s 上飘 + 线性淡出） ====================
@@ -2977,26 +2998,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (motion) {
         // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用触发攻击时按攻速设的 selfAnimRate
         if (animState.getCurrentState() !== animState.STATE.ATTACK) selfAnimRate = 1;
-        animFrame += ANIM_UNITS_PER_SEC * selfAnimRate * Math.min(dt, 0.1);
+        // 帧推进走共享实现（char/animation.ts，与检查器/char-demo 同一函数）
+        const step = advanceAnimFrame(animFrame, motion, dt, selfAnimRate);
+        animFrame = step.frame;
         // 命中帧检测（原版 exm character.cpp:2631）：compFrame 跨过 eventFrame[i] → 发该段 C2S_AttackHit
+        // 用 step.raw（未回绕）判定，否则循环动作回绕后会漏判/重判
         if (animState.getCurrentState() === animState.STATE.ATTACK && selfAttackMotion) {
-          const compFrame = animFrame - selfAttackMotion.startFrame * 160;
+          const compFrame = step.raw - selfAttackMotion.startFrame * 160;
           while (selfAttackHitFired < selfAttackEventFrames.length
                  && compFrame >= selfAttackEventFrames[selfAttackHitFired]) {
             opts?.onAttackHit?.(selfAttackTargetId, selfAttackHitFired);
             selfAttackHitFired++;
           }
         }
-        const endFrame = motion.endFrame * 160;
-        const startFrame = motion.startFrame * 160;
-        if (animFrame >= endFrame) {
-          if (motion.repeat) {
-            const len = endFrame - startFrame;
-            animFrame = startFrame + ((animFrame - startFrame) % len);
-          } else {
-            const next = animState.onAnimationEnd();
-            if (next) animFrame = next.startFrame * 160;
-          }
+        if (step.ended) {
+          const next = animState.onAnimationEnd();
+          if (next) animFrame = next.startFrame * 160;
         }
         const skelFrames = evalSkeleton(animSmb, animFrame, false);
         applyToBones(bones, skelFrames, tmp, posV, quatQ, sclV);
@@ -3147,6 +3164,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
           // 起手广播（旁观者立刻挥拳）；伤害在命中帧由 onAttackHit 结算
           opts?.onAttackStart?.(targetId);
+          // 挥击音（原版 WeaponPlaySound）：随起手播放，自机高优先级
+          sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true });
         }
       }
     }
@@ -3173,6 +3192,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // 地图音效：3D 声源按角色距离更新音量（BGM/环境音已在进入/换图时设置）
     mapAudio.updateAt(selfPos);
+    // 音效听者位置（战斗/技能音效按此做距离衰减）
+    sfx.update(selfPos);
 
     // 小地图
     drawMinimap();
@@ -3384,6 +3405,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     markSelfCombat,
     applyUnitHp,
     applyMonsterHit,
+    playSelfAttackResult,
     signalAttackStart,
     onTakeDamage,
     showFloater,

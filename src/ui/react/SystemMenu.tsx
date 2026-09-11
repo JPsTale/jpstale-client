@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { t } from '../../i18n/index.js';
 import { mapAudio } from '../../maps/map-audio.js';
+import { sfx } from '../../audio/sfx.js';
 import { closeSystemMenu } from '../../app/gameStore.js';
 import { KeyBinding, GameAction } from '../KeyBinding.js';
 
@@ -185,6 +186,7 @@ export default function SystemMenu({ settings }: { settings: SystemMenuSettings 
               <AudioRow title={t('menu.bgm')} getOn={() => mapAudio.bgmOn} setOn={(v) => mapAudio.setBgmOn(v)} getLevel={() => mapAudio.bgmLevel} setLevel={(v) => mapAudio.setBgmLevel(v)} />
               <AudioRow title={t('menu.amb')} getOn={() => mapAudio.ambOn} setOn={(v) => mapAudio.setAmbOn(v)} getLevel={() => mapAudio.ambLevel} setLevel={(v) => mapAudio.setAmbLevel(v)} />
               <AudioRow title={t('menu.eff')} getOn={() => mapAudio.effOn} setOn={(v) => mapAudio.setEffOn(v)} getLevel={() => mapAudio.effLevel} setLevel={(v) => mapAudio.setEffLevel(v)} />
+              <AudioRow title={t('menu.sfx')} getOn={() => sfx.on} setOn={(v) => sfx.setOn(v)} getLevel={() => sfx.level} setLevel={(v) => sfx.setLevel(v)} />
             </div>
           )}
           {page === 'video' && <VideoPage settings={settings} />}

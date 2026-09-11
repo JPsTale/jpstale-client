@@ -112,8 +112,8 @@ export default defineConfig(({ mode }) => {
       rollupOptions: {
         input: {
           main: resolve(import.meta.dirname, 'index.html'),
-          'char-demo': resolve(import.meta.dirname, 'char-demo.html'),
           'map-demo': resolve(import.meta.dirname, 'map-demo.html'),
+          'asset-inspector': resolve(import.meta.dirname, 'asset-inspector.html'),
         },
       },
     },

@@ -298,6 +298,7 @@
     "bgm": "背景音乐",
     "amb": "环境音效",
     "eff": "场景音效",
+    "sfx": "战斗音效",
     "quality": "画质",
     "quality.low": "低",
     "quality.medium": "中",

@@ -209,3 +209,47 @@ export function applyToBones(
     bone.matrixWorldNeedsUpdate = true;
   }
 }
+
+/* ─────────── 动画帧推进（游戏与工具共用） ─────────── */
+
+/** 每秒推进的子帧数 = 30 动画帧/秒 × 160 子帧/帧（与 WorldView 一致） */
+export const ANIM_UNITS_PER_SEC = 4800;
+
+export interface AnimStep {
+  /** 推进后应采用的帧位置（已处理循环回绕 / 非循环截到末尾） */
+  frame: number;
+  /** 推进后的原始帧位置（未回绕）——命中帧跨帧检测必须用这个值 */
+  raw: number;
+  /** 非循环动作是否已推进到末尾；调用方决定后续（状态机切换等） */
+  ended: boolean;
+}
+
+/**
+ * 推进一步动画帧位置。
+ *
+ * 抽出来的原因：此前 WorldView / CharSelect / 资产检查器各写了一份帧推进，
+ * 其中一处甚至把 4800 写成字面量 —— 语义一旦漂移就会"游戏里改了、工具里没跟着改"。
+ * 现在三处统一走这里（原 char-demo 已删除）。
+ *
+ * @param frame 当前帧位置（子帧单位，1 动画帧 = 160）
+ * @param motion 当前动作（用 startFrame/endFrame/repeat）
+ * @param dt 秒
+ * @param rate 速率倍率（攻击动画按攻速改写；检查器用 speed）
+ * @param maxDt 单步 dt 上限（防切后台回来跳帧），默认 0.1
+ */
+export function advanceAnimFrame(
+  frame: number,
+  motion: { startFrame: number; endFrame: number; repeat: number },
+  dt: number,
+  rate = 1,
+  maxDt = 0.1,
+): AnimStep {
+  const start = motion.startFrame * 160;
+  const end = motion.endFrame * 160;
+  const len = end - start;
+  if (len <= 0) return { frame, raw: frame, ended: false };
+  const raw = frame + ANIM_UNITS_PER_SEC * rate * Math.min(dt, maxDt);
+  if (raw < end) return { frame: raw, raw, ended: false };
+  if (motion.repeat) return { frame: start + ((raw - start) % len), raw, ended: false };
+  return { frame: end, raw, ended: true };
+}
