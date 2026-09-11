@@ -140,6 +140,7 @@ export class HoverOutline {
     // 真机诊断入口：console 执行 window.__hoverDiag='green'（纯绿合成）/ 'mask'（显示 mask 剪影）切换
     if (typeof window !== 'undefined') {
       const wd = (window as unknown as { __hoverDiag?: string }).__hoverDiag;
+      if (wd) console.log(`[hover-diag] 诊断模式生效: '${wd}'`);
       this.diagPureGreen = wd === 'green';
       this.diagShowMask = wd === 'mask';
       this.diagWhiteMask = wd === 'white';
@@ -172,7 +173,7 @@ export class HoverOutline {
     }
 
 // ---- mask 渲染（除非诊断强制白 mask）----
-    if (!this.diagWhiteMask) {
+    if (!this.diagWhiteMask && !this.diagFlat) {
       // 名字标签等非 Mesh 对象不参与 mask（避免名字/图标也画出光晕）
       this.hideNonMesh(target);
 
@@ -252,7 +253,8 @@ export class HoverOutline {
       // 诊断 probe：用内容已知的中灰程序纹理替代 maskRT 走正常合成路径——
       // 若全屏出现目标色光圈 → 合成/uMask 连接正常，maskRT 内容黑；若无 → 合成连接本身坏了
       if (!this.probeTex) {
-        this.probeTex = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255, 128, 128, 128, 255, 128, 128, 128, 255, 128, 128, 128, 255]), 2, 2);
+        // 0.2 灰度：避开合成 shader 的 m>0.5 discard 阈值(128/255≈0.502 会被整屏 discard→黑，造成假阴性)
+        this.probeTex = new THREE.DataTexture(new Uint8Array([51, 51, 51, 255, 51, 51, 51, 255, 51, 51, 51, 255, 51, 51, 51, 255]), 2, 2);
         this.probeTex.needsUpdate = true;
       }
       uMask = this.probeTex;
