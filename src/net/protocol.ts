@@ -187,8 +187,7 @@ export function debugLog(msg: jpt.base.ServerMessage): void {
         msg.payload === 'pong' ||
         msg.payload === 'playerMove' ||
         msg.payload === 'monsterMove' ||
-        msg.payload === 'monsterState' ||
-        msg.payload === 'npcMove'
+        msg.payload === 'monsterState'
     ) {
         return;
     }
