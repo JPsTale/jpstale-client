@@ -302,6 +302,8 @@
     "quality.low": "低",
     "quality.medium": "中",
     "quality.high": "高",
+    "fps": "帧率",
+    "fpsUnlimited": "不限制",
     "reset": "重置默认",
     "save": "保存",
     "none": "未绑定",

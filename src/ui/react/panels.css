@@ -920,6 +920,47 @@
   accent-color: #c9a24b;
 }
 
+/* 画面设置：选项行（标签 + 按钮组） */
+.jp-men-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  background: #20242b;
+  border: 1px solid #3a3f46;
+  border-radius: 4px;
+}
+
+.jp-men-opts {
+  display: flex;
+  gap: 6px;
+}
+
+.jp-men-opt {
+  min-width: 56px;
+  padding: 5px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  text-align: center;
+  color: #e8e6e1;
+  background: #20242b;
+  border: 1px solid #3a3f46;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.jp-men-opt:hover {
+  border-color: #6b7078;
+}
+
+.jp-men-opt--on {
+  color: #1a1206;
+  background: #c9a24b;
+  border-color: #c9a24b;
+  font-weight: 600;
+}
+
 .jp-men-keys {
   display: flex;
   flex-direction: column;
@@ -927,7 +968,6 @@
   max-height: 420px;
   overflow-y: auto;
 }
-
 .jp-men-key-row {
   display: flex;
   align-items: center;

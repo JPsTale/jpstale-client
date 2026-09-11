@@ -11,9 +11,38 @@ export interface SystemMenuSettings {
   keyBinding: KeyBinding;
   onBackToCharSelect?: () => void;
   onLogout?: () => void;
+  /** 客户端帧率上限（0=不限制/跟随显示器）；画面设置里可调 */
+  getFps?: () => number;
+  setFps?: (fps: number) => void;
 }
 
 type SubPage = 'main' | 'audio' | 'keys' | 'video' | 'function';
+
+// 画面设置：帧率档位（0=不限制）
+const FPS_OPTIONS: number[] = [30, 60, 120, 0];
+
+function VideoPage({ settings }: { settings: SystemMenuSettings }) {
+  const [fps, setFpsState] = useState(settings.getFps?.() ?? 0);
+  return (
+    <div className="jp-men-page">
+      <div className="jp-men-row">
+        <span className="jp-men-key-label">{t('menu.fps')}</span>
+        <div className="jp-men-opts">
+          {FPS_OPTIONS.map((v) => (
+            <button
+              key={v}
+              type="button"
+              className={fps === v ? 'jp-men-opt jp-men-opt--on' : 'jp-men-opt'}
+              onClick={() => { setFpsState(v); settings.setFps?.(v); }}
+            >
+              {v === 0 ? t('menu.fpsUnlimited') : String(v)}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function AudioRow({
   title, getOn, setOn, getLevel, setLevel,
@@ -157,11 +186,7 @@ export default function SystemMenu({ settings }: { settings: SystemMenuSettings 
               <AudioRow title={t('menu.eff')} getOn={() => mapAudio.effOn} setOn={(v) => mapAudio.setEffOn(v)} getLevel={() => mapAudio.effLevel} setLevel={(v) => mapAudio.setEffLevel(v)} />
             </div>
           )}
-          {page === 'video' && (
-            <div className="jp-men-page jp-men-func">
-              <p className="jp-nodata">{t('menu.comingSoon')}</p>
-            </div>
-          )}
+          {page === 'video' && <VideoPage settings={settings} />}
           {page === 'keys' && <KeyBindPage keyBinding={settings.keyBinding} />}
           {page === 'function' && (
             <div className="jp-men-page jp-men-func">

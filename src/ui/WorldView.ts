@@ -69,6 +69,8 @@ export interface WorldView {
   isRunning(): boolean;
   /** 设置客户端帧率上限（0=跟随显示器刷新率）；持久化到 localStorage 'pt.fps' */
   setTargetFps(fps: number): void;
+  /** 当前帧率上限（0=不限制） */
+  getTargetFps(): number;
   /** 记录自机 playerId（enterGame.playerId），供 S2C_PlayerMove 路由收敛 */
   setSelfId(playerId: number): void;
   /** 自机移动速度（世界单位/秒，服务端权威属性）；默认 EU 最高档，S2C_PlayerState 到达后覆盖 */
@@ -3296,6 +3298,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
     setTargetFps,
+    getTargetFps: () => targetFps,
     setSelfId: (id: number) => { selfPlayerId = id; },
     isSelf: (id: number) => id === selfPlayerId,
     // 名牌/血条数据（main.ts 消息派发喂入；design-nameplate-hpbar.md）

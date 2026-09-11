@@ -302,6 +302,8 @@
     "quality.low": "Low",
     "quality.medium": "Medium",
     "quality.high": "High",
+    "fps": "FPS",
+    "fpsUnlimited": "Unlimited",
     "reset": "Reset",
     "save": "Save",
     "none": "Unbound",

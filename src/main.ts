@@ -355,6 +355,8 @@ reactPanels.setSystemMenuSettings({
   keyBinding,
   onBackToCharSelect: performBackToCharSelect,
   onLogout: performSystemLogout,
+  getFps: () => worldView.getTargetFps(),
+  setFps: (fps) => worldView.setTargetFps(fps),
 });
 
 
