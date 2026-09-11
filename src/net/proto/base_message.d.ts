@@ -6383,6 +6383,9 @@ export namespace jpt {
             /** S2C_AttackResult missed. */
             missed: boolean;
 
+            /** S2C_AttackResult attackSpeed. */
+            attackSpeed: number;
+
             /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @param [properties] Properties to set
@@ -6481,6 +6484,9 @@ export namespace jpt {
 
                 /** S2C_AttackResult missed */
                 missed?: (boolean|null);
+
+                /** S2C_AttackResult attackSpeed */
+                attackSpeed?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

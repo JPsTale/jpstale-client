@@ -79,6 +79,16 @@ export interface WorldView {
   setSelfName(name: string): void;
   /** 自机发起攻击 → 进入 3 秒战斗窗口（玩家血条显示） */
   markSelfCombat(): void;
+  /**
+   * S2C_AttackResult 旁观同步：attackerId 为视野内远端玩家 → 触发其挥拳动画（按 attackSpeed 变速）+ 朝 targetId 怪转向。
+   * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动。
+   */
+  signalAttack(attackerId: number, targetId: number, attackSpeed: number): void;
+  /**
+   * S2C_Damage 受击硬直：targetId 为自机 → 站立/走/跑时播受击动画（攻击/技能中不打断）；
+   * 为远端玩家 → 同规则作用到该 actor。damage<=0（抵抗/吸收）不播。
+   */
+  onTakeDamage(targetId: number, damage: number): void;
   /** S2C_Damage/Heal：targetId 命中怪物/远端玩家/自机 → 更新其 currentHp；isDamage 才触发自机战斗窗口 */
   applyUnitHp(targetId: number, hp: number, isDamage: boolean): void;
   /** S2C_AttackResult：怪物受击 → 自减血量（服务端暂只广播 damage）；attackerId=self 触发自机战斗窗口 */
@@ -133,6 +143,8 @@ export interface WorldViewOpts {
   onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim?: number) => void;
   /** 点击地面物品（拾取意图）→ main.ts 发 C2S_PickupItem。拾取距离由服务端权威裁决。 */
   onPickupGroundItem?: (groundItemId: number) => void;
+  /** 自机普攻意图 → main.ts 发 C2S_Attack(targetId)。服务端按距离/攻速冷却权威裁决。 */
+  onAttackMonster?: (monsterId: number) => void;
 }
 
 // 动画状态 wire token（与 S2C_PlayerMove.anim_state / C2S anim_state 同义）
@@ -141,6 +153,30 @@ const ANIM_RUN = 0x0060;
 const ANIM_FALLDOWN = 0x0070;
 const ANIM_FALLSTAND = 0x0071;
 const ANIM_FALLDAMAGE = 0x0072;
+
+// ===== 玩家普通攻击（design-player-combat.md）=====
+// 近战攻击距离：与服务端 CombatService.ATTACK_RANGE 同值（≤ 此距离停步攻击，超出追击）
+const ATTACK_RANGE = 48;
+// 挥拳动画时长 = 服务端攻击间隔 + 此冗余，保证客户端节奏不慢于服务端冷却（结构性防丢刀）
+const SWING_SLACK_MS = 40;
+// 动画推进基准节拍（全站 animFrame += 80 的 60fps 语义；用于把动画时长换算成变速步进）
+const TICK_MS = 1000 / 60;
+
+/**
+ * 攻击间隔公式（与服务端 CombatService.attackIntervalMs 逐字一致）：
+ * frames = 60 − 3·clamp(as−6, 0, 6) @60fps → as=0..6:1000ms，12+:700ms
+ */
+function attackIntervalMs(attackSpeed: number): number {
+  const clamped = Math.max(0, Math.min(attackSpeed - 6, 6));
+  return Math.round((60 - 3 * clamped) * 1000 / 60);
+}
+
+/** 把某攻击动画播完时长压缩/拉伸到 swingMs 所需的每帧步进（基准 80） */
+function attackStep(motion: MotionInfo, attackSpeed: number): number {
+  const swingMs = attackIntervalMs(attackSpeed) + SWING_SLACK_MS;
+  const span = motion.endFrame - motion.startFrame;
+  return Math.max(1, Math.round(span * 160 * TICK_MS / swingMs));
+}
 
 // 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1086；见 design-nameplate-hpbar.md）
 const NAME_TAG_RANGE = 600; // 怪物名牌常显范围（防漏怪）；范围外选中/悬停才显示
@@ -209,6 +245,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let motionList: MotionInfo[] = [];
   let animFrameId = 0;
   let animFrame = 0;
+  // 自机动画变速步进（默认 80）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
+  let selfMotionStep = 80;
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
   // 进图加载 hooks（show() 每次重置；首帧渲染后触发 onReady，供 main.ts 收起加载页）
@@ -1579,6 +1617,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState: ReturnType<typeof createAnimStateMachine>;
     motionList: MotionInfo[];
     animFrame: number;
+    motionStep: number; // 动画变速步进（默认 80；挥拳按攻速对应时长改写，离开 ATTACK 复原）
+    faceAngle: number | null; // 挥拳期间强制朝向（signalAttack 算，updateRemotes 在 ATTACK 态采用）
     snaps: RemoteSnap[];
     lastAnimState: number;
   }
@@ -2097,6 +2137,41 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
+  /**
+   * S2C_AttackResult 旁观同步（design-player-combat.md §6.5）：
+   * attackerId 为视野内远端玩家 → 触发挥拳（按 attackSpeed 对应时长变速）+ 朝 targetId 怪转向。
+   * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动，避免双重触发。
+   */
+  function signalAttack(attackerId: number, targetId: number, attackSpeed: number): void {
+    if (attackerId === selfPlayerId) return;
+    const actor = remotes.get(attackerId);
+    if (!actor) return;
+    if (actor.animState.triggerAttack(true)) {
+      const m = actor.animState.getCurrentMotion();
+      if (m) actor.motionStep = attackStep(m, attackSpeed || 0);
+    }
+    const mon = monsters.get(targetId);
+    if (mon) {
+      const dx = mon.root.position.x - actor.root.position.x;
+      const dz = mon.root.position.z - actor.root.position.z;
+      actor.faceAngle = Math.atan2(dx, dz);
+    }
+  }
+
+  /**
+   * S2C_Damage 受击硬直（§6.4）：targetId 为自机或远端玩家 → 站立/走/跑时播受击动画，
+   * 攻击/技能/受击中不打断（状态机 triggerDamage 内建守卫）；damage<=0（抵抗/吸收）不播。
+   */
+  function onTakeDamage(targetId: number, damage: number): void {
+    if (damage <= 0) return;
+    if (targetId === selfPlayerId) {
+      animState?.triggerDamage();
+      return;
+    }
+    const actor = remotes.get(targetId);
+    if (actor) actor.animState.triggerDamage();
+  }
+
   // ==================== 伤害/躲闪飘字（对齐原版 SHOW_DMG：头顶 1s 上飘 + 线性淡出） ====================
   interface DmgFloater {
     kind: 'self' | 'monster' | 'remote';
@@ -2487,6 +2562,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState: animState2,
           motionList: motionList2,
           animFrame: 0,
+          motionStep: 80,
+          faceAngle: null,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
         };
@@ -2603,12 +2680,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       while (snaps.length > 1 && snaps[1].t < keepAfter) snaps.shift();
 
       actor.root.position.set(px, py, pz);
-      actor.root.rotation.y = pAng;
+      // 挥拳期间强制朝向目标（signalAttack 算）；否则用移动快照插值角
+      actor.root.rotation.y =
+        (actor.animState.getCurrentState() === actor.animState.STATE.ATTACK && actor.faceAngle !== null)
+          ? actor.faceAngle
+          : pAng;
       setRemoteAnim(actor, s0.anim);
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
-        actor.animFrame += 80;
+        // 挥拳变速：非 ATTACK 态复原基准步进；ATTACK 用 signalAttack 设的 motionStep
+        if (actor.animState.getCurrentState() !== actor.animState.STATE.ATTACK) actor.motionStep = 80;
+        actor.animFrame += actor.motionStep;
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (actor.animFrame >= endFrame) {
@@ -2834,7 +2917,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (animState && animSmb && skeleton && bones.length) {
       const motion = animState.getCurrentMotion();
       if (motion) {
-        animFrame += 80;
+        // 挥拳变速：非 ATTACK 态复原基准步进；ATTACK 用触发攻击时按攻速设的 selfMotionStep
+        if (animState.getCurrentState() !== animState.STATE.ATTACK) selfMotionStep = 80;
+        animFrame += selfMotionStep;
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (animFrame >= endFrame) {
@@ -2860,6 +2945,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     let targetFace: number | undefined;
     let targetReached = false;
     let targetLost = false;
+    let monsterEngaged = false; // moveTarget=存活怪 且已进入攻击距离（停步挥拳，moveTarget 保留）
     if (!mouseDown && moveTarget && !falling) {
       const tp = chaseTargetPos();
       if (tp === null) {
@@ -2868,14 +2954,24 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const dx = tp.x - selfPos.x;
         const dz = tp.z - selfPos.z;
         const d = Math.hypot(dx, dz);
-        // 到达半径：不小于本帧步长。否则 run 步长(≈3.5)大于固定半径(1.0/2.0)，
-        // 角色会围绕目标点反复"过冲→折返"，形成高频来回跑震动。
-        const stepNow = (running ? selfRunWps : selfWalkWps) * Math.min(dt, 0.1);
-        const arrive = Math.max(moveTarget.kind === 'item' ? 1.0 : 2.0, stepNow + 0.5);
-        if (d <= arrive) {
-          targetReached = true;
+        if (moveTarget.kind === 'monster') {
+          // 怪物目标：攻击距离内 → 停步进入攻击循环（不移动）；超出 → 持续 Chase
+          if (d <= ATTACK_RANGE) {
+            monsterEngaged = true;
+            selfAngle = Math.atan2(dx, dz);
+          } else {
+            targetFace = Math.atan2(dx, dz);
+          }
         } else {
-          targetFace = Math.atan2(dx, dz);
+          // 到达半径：不小于本帧步长。否则 run 步长(≈3.5)大于固定半径(1.0/2.0)，
+          // 角色会围绕目标点反复"过冲→折返"，形成高频来回跑震动。
+          const stepNow = (running ? selfRunWps : selfWalkWps) * Math.min(dt, 0.1);
+          const arrive = Math.max(moveTarget.kind === 'item' ? 1.0 : 2.0, stepNow + 0.5);
+          if (d <= arrive) {
+            targetReached = true;
+          } else {
+            targetFace = Math.atan2(dx, dz);
+          }
         }
       }
     }
@@ -2887,8 +2983,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 到位 → 对"选中的这一件"发拾取请求（服务端裁决并入包推送）
         console.log('[WorldView] Chase 到位拾取 gid=' + hit.id);
         opts?.onPickupGroundItem?.(hit.id);
-      } else if (hit && targetReached && hit.kind === 'monster') {
-        console.log('[WorldView] Chase 到位(近战距离) mid=' + hit.id + '（攻击动作待接入）');
       } else if (hit && targetReached && hit.kind === 'player') {
         console.log('[WorldView] Chase 到位(贴身) player=' + hit.id + '（交互动作待接入）');
       } else if (hit && targetReached && hit.kind === 'npc') {
@@ -2899,7 +2993,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     const moved = updateMovement(dt, targetFace); // falling 中 mouseFacing=null → 不移动
     // 卡住检测：连续 ~0.9s 无法接近目标（撞墙/不可达）→ 放弃寻路
-    if (moveTarget && !targetReached && !falling) {
+    if (moveTarget && !targetReached && !falling && !monsterEngaged) {
       if (moved) {
         moveStuckStart = 0;
       } else {
@@ -2958,6 +3052,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 静止但按着鼠标（光标贴角色，方向无效）：保持朝向即时
       const f = mouseFacing();
       if (f !== null && charGroup) charGroup.rotation.y = f;
+    }
+
+    // ===== 自机普通攻击循环（design-player-combat.md §6.2）=====
+    // 动画驱动：进入攻击距离后挥拳，挥拳播完（onAnimationEnd→STAND）自动下一击；不挂定时器。
+    // 攻速→挥拳时长镜像服务端公式；离 ATTACK 态复原基准步进（见上方自机动画推进）。
+    if (monsterEngaged && moveTarget && moveTarget.kind === 'monster' && !falling && charGroup) {
+      charGroup.rotation.y = selfAngle; // 面向目标（停步时 updateMovement 不接管旋转）
+      const st = animState?.getCurrentState();
+      const busy = st === animState?.STATE.ATTACK || st === animState?.STATE.SKILL || st === animState?.STATE.DAMAGE;
+      if (!busy && animState) {
+        // 非攻击/技能/受击中 → 发起下一次挥拳（普攻动画）
+        if (animState.triggerAttack(true)) {
+          const m = animState.getCurrentMotion();
+          if (m) selfMotionStep = attackStep(m, getGameSnapshot().character?.attackSpeed ?? 0);
+          opts?.onAttackMonster?.(moveTarget.id);
+        }
+      }
     }
 
     // 远端玩家（Phase 2/3）
@@ -3190,6 +3301,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     markSelfCombat,
     applyUnitHp,
     applyMonsterHit,
+    signalAttack,
+    onTakeDamage,
     showFloater,
     applyPlayerMove: (playerId, x, y, z, angle, animState) => {
       const pid = Number(playerId);

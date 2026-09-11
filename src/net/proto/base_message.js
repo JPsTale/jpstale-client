@@ -19415,6 +19415,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [damage] S2C_AttackResult damage
              * @property {boolean|null} [isCritical] S2C_AttackResult isCritical
              * @property {boolean|null} [missed] S2C_AttackResult missed
+             * @property {number|null} [attackSpeed] S2C_AttackResult attackSpeed
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -19487,6 +19488,14 @@ export const jpt = $root.jpt = (() => {
             S2C_AttackResult.prototype.missed = false;
 
             /**
+             * S2C_AttackResult attackSpeed.
+             * @member {number} attackSpeed
+             * @memberof jpt.base.S2C_AttackResult
+             * @instance
+             */
+            S2C_AttackResult.prototype.attackSpeed = 0;
+
+            /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_AttackResult
@@ -19528,6 +19537,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 4, wireType 0 =*/32).bool(message.isCritical);
                 if (message.missed != null && $Object.hasOwnProperty.call(message, "missed") && message.missed !== false)
                     writer.uint32(/* id 5, wireType 0 =*/40).bool(message.missed);
+                if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed") && message.attackSpeed !== 0)
+                    writer.uint32(/* id 6, wireType 0 =*/48).sint32(message.attackSpeed);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -19630,6 +19641,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.missed;
                             continue;
                         }
+                    case 6: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.sint32())
+                                message.attackSpeed = value;
+                            else
+                                delete message.attackSpeed;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -19693,6 +19713,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.missed != null && $Object.hasOwnProperty.call(message, "missed"))
                     if (typeof message.missed !== "boolean")
                         return "missed: boolean expected";
+                if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed"))
+                    if (!$util.isInteger(message.attackSpeed))
+                        return "attackSpeed: integer expected";
                 return null;
             };
 
@@ -19743,6 +19766,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.missed != null)
                     if (object.missed)
                         message.missed = $Boolean(object.missed);
+                if (object.attackSpeed != null)
+                    if ($Number(object.attackSpeed) !== 0)
+                        message.attackSpeed = object.attackSpeed | 0;
                 return message;
             };
 
@@ -19777,6 +19803,7 @@ export const jpt = $root.jpt = (() => {
                     object.damage = 0;
                     object.isCritical = false;
                     object.missed = false;
+                    object.attackSpeed = 0;
                 }
                 if (message.attackerId != null && $Object.hasOwnProperty.call(message, "attackerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -19798,6 +19825,8 @@ export const jpt = $root.jpt = (() => {
                     object.isCritical = message.isCritical;
                 if (message.missed != null && $Object.hasOwnProperty.call(message, "missed"))
                     object.missed = message.missed;
+                if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed"))
+                    object.attackSpeed = message.attackSpeed;
                 return object;
             };
 

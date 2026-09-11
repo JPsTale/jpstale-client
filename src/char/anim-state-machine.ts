@@ -55,6 +55,7 @@ export interface AnimStateMachine {
   triggerWalk: () => boolean;
   triggerRun: () => boolean;
   triggerIdle: (excludeCurrent?: boolean) => boolean;
+  triggerDamage: () => boolean;
   triggerFallDown: () => boolean;
   triggerFallStand: () => boolean;
   triggerFallDamage: () => boolean;
@@ -125,6 +126,13 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     currentMotion = motion;
     onMotionChange(motion);
     return true;
+  }
+
+  /** 一次性动画状态：播完自动回 STAND，期间不接受 STAND（防同步包/自然停步掐断播放） */
+  function isOneShotState(state: number): boolean {
+    return state === STATE.ATTACK || state === STATE.SKILL ||
+      state === STATE.DAMAGE || state === STATE.TAUNT || state === STATE.YAHOO ||
+      state === STATE.FALLSTAND || state === STATE.FALLDAMAGE;
   }
 
   function triggerAttack(retry: boolean = false): boolean {
@@ -207,10 +215,30 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
   }
 
   function triggerIdle(excludeCurrent = false): boolean {
+    // 一次性态（ATTACK/SKILL/DAMAGE 等）不回 STAND：STAND 同步包/自然停步不掐断挥拳与受击
+    if (isOneShotState(currentState)) return false;
     const motion = findMotionForState(STATE.STAND, excludeCurrent);
     if (!motion) return false;
     currentState = STATE.STAND;
     applyMotion(motion);
+    return true;
+  }
+
+  /**
+   * 受击硬直（对齐 exm character.cpp:8459）：
+   * 伤害>1 且当前状态 ∉ {DAMAGE, EAT, ATTACK, SKILL} → 切到 DAMAGE；
+   * 攻击/技能/吃喝中不打断，已在受击中不重播；无 DAMAGE 动画数据则安全回退（不播）。
+   */
+  function triggerDamage(): boolean {
+    if (currentState === STATE.DAMAGE || currentState === STATE.EAT ||
+        currentState === STATE.ATTACK || currentState === STATE.SKILL) {
+      return false;
+    }
+    const motion = findMotionForState(STATE.DAMAGE, false);
+    if (!motion) { log2('No matching damage animation'); return false; }
+    currentState = STATE.DAMAGE;
+    applyMotion(motion);
+    log2('Damage: 0x' + motion.state.toString(16) + ' [' + motion.startFrame + ',' + motion.endFrame + ']');
     return true;
   }
 
@@ -255,12 +283,19 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
   }
 
   function onAnimationEnd(): MotionInfo | null {
-    if (currentState === STATE.ATTACK || currentState === STATE.SKILL ||
-        currentState === STATE.TAUNT || currentState === STATE.YAHOO ||
-        currentState === STATE.FALLSTAND || currentState === STATE.FALLDAMAGE) {
-      return triggerIdle() ? currentMotion : null;
+    if (isOneShotState(currentState)) { // 含 DAMAGE（受击播完回 STAND）
+      return toStand() ? currentMotion : null;
     }
     return null;
+  }
+
+  /** 内部专用：从任意一次性态回 STAND（不走 triggerIdle 的守卫） */
+  function toStand(): boolean {
+    const motion = findMotionForState(STATE.STAND, false);
+    if (!motion) return false;
+    currentState = STATE.STAND;
+    applyMotion(motion);
+    return true;
   }
 
   function getCurrentState(): number { return currentState; }
@@ -296,6 +331,7 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     triggerWalk,
     triggerRun,
     triggerIdle,
+    triggerDamage,
     triggerFallDown,
     triggerFallStand,
     triggerFallDamage,

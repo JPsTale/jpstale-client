@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
-import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackMonster } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -36,6 +36,8 @@ const worldView = createWorldView(app, {
   onMoveInt: (angle, mode, x, y, z, anim) => sendMoveIntent(angle, mode, x, y, z, anim),
   // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
   onPickupGroundItem: (groundItemId) => sendPickupItem(groundItemId),
+  // 自机普攻意图 → C2S_Attack（服务端按距离/攻速冷却权威裁决 + 广播 S2C_AttackResult）
+  onAttackMonster: (monsterId) => send(attackMonster(monsterId)),
 });
 
 // 转发客户端权威移动（含位置 + 可选动画覆盖）
@@ -624,6 +626,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const attackerId = Number(ar.attackerId ?? 0);
       const targetId = Number(ar.targetId ?? 0);
       if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
+      // 旁观同步：远端玩家挥拳（按攻速变速）+ 朝目标怪转向；自机由本地攻击循环驱动（内部忽略）
+      worldView.signalAttack(attackerId, targetId, Number(ar.attackSpeed ?? 0));
       if (ar.missed) {
         worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false);
       } else {
@@ -639,6 +643,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const tid = Number(d.targetId ?? 0);
       worldView.showFloater(null, tid, '-' + (d.damage || 0), '#ff6b6b', false);
       worldView.applyUnitHp(tid, d.currentHp || 0, true);
+      // 受击硬直：自机/远端玩家站立被打播 DAMAGE（攻击/技能中不打断）
+      worldView.onTakeDamage(tid, d.damage || 0);
       break;
     }
     case 'heal': {

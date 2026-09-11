@@ -100,6 +100,13 @@ export function pickupItem(groundItemId: number): jpt.base.ClientMessage.$Proper
     });
 }
 
+/** 普通攻击指定怪物（服务端按距离/攻速冷却裁决 + 广播 S2C_AttackResult） */
+export function attackMonster(targetId: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        attack: { targetId },
+    });
+}
+
 /** 技能释放（服务端权威）。
  *  skillId 占位：当前传 SKILLS[职业] 列表下标（0-19），由服务端当普攻处理；
  *  接入真实技能时改为服务端技能表（skilldata.skillid）的技能 id。
