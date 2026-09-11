@@ -159,6 +159,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 名牌/血条 2D overlay（叠在 3D 层上方，pointer-events:none；design-nameplate-hpbar.md）
   let npOverlay: HTMLCanvasElement | null = null;
   let npCtx: CanvasRenderingContext2D | null = null;
+  let dbgFrame = 0; // 名牌诊断节流计数（临时）
 
   // 动画区域位（对齐原版 StageVillage）：1=村庄 2=野外；查服务端 enterGame 下发的安全区表，未知图按野外
   function currentFieldState(): number {
@@ -708,6 +709,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     npCtx = npOverlay.getContext('2d');
     if (npCtx) npCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // 绘制用 CSS px
     root.appendChild(npOverlay);
+    console.log('[NP] overlay created css=' + npOverlay.clientWidth + 'x' + npOverlay.clientHeight
+      + ' (root=' + root.clientWidth + 'x' + root.clientHeight + ') dpr=' + dpr
+      + ' rootPos=' + getComputedStyle(root).position
+      + ' webglZ=' + getComputedStyle(renderer.domElement).zIndex
+      + ' webglIdx=' + Array.prototype.indexOf.call(root.children, renderer.domElement)
+      + ' overlayIdx=' + Array.prototype.indexOf.call(root.children, npOverlay)
+      + ' overlayZ=' + getComputedStyle(npOverlay).zIndex);
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
@@ -2066,11 +2074,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.clearRect(0, 0, W, H);
     const now = performance.now();
 
+    // 名牌诊断（临时，默认关）：console 执行 window.__npDbg=1 开启；每 180 帧(=3s)打一轮汇总
+    const dbg = (window as unknown as { __npDbg?: number }).__npDbg === 1;
+    let npcOk = 0, npcDrop = 0, monOk = 0, monDrop = 0, remOk = 0, remDrop = 0, selfDrawn = 0, selfDrop = 0;
+
     // NPC：名牌常显（浅蓝），选中/悬停变白
     for (const a of npcs.values()) {
       if (!a.root.visible) continue;
       const pt = anchorToScreen(a.root, a.topY);
-      if (!pt) continue;
+      if (!pt) { npcDrop++; continue; }
+      npcOk++;
       const sel = isSelected(a.root);
       drawPill(ctx, pt.x, pt.y, t(`npc.${a.nameKey}.name`), {
         nameColor: sel ? '#ffffff' : '#a8d8ff',
@@ -2084,7 +2097,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
       if (dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE) continue;
       const pt = anchorToScreen(a.root, a.topY);
-      if (!pt) continue;
+      if (!pt) { monDrop++; continue; }
+      monOk++;
       const sel = isSelected(a.root);
       drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: '#ff8080',
@@ -2098,7 +2112,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     for (const a of remotes.values()) {
       if (!a.root.visible) continue;
       const pt = anchorToScreen(a.root, a.topY);
-      if (!pt) continue;
+      if (!pt) { remDrop++; continue; }
+      remOk++;
       const sel = isSelected(a.root);
       drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: sel ? '#ffffff' : '#ffe9a8',
@@ -2113,13 +2128,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (charGroup && charGroup.visible && selfName) {
       const pt = anchorToScreen(charGroup, selfTopY);
       if (pt) {
+        selfDrawn = 1;
         drawPill(ctx, pt.x, pt.y, selfName, {
           nameColor: '#ffe9a8',
           showHp: now < selfCombatUntil || (selfMaxHp > 0 && selfHp < selfMaxHp),
           ratio: selfMaxHp > 0 ? selfHp / selfMaxHp : 1,
           selected: false,
         });
-      }
+      } else selfDrop = 1;
+    }
+
+    if (dbg && (dbgFrame = (dbgFrame + 1) % 180) === 0) {
+      console.log('[NP] frame size=' + ov.clientWidth + 'x' + ov.clientHeight
+        + ' docVis=' + document.visibilityState
+        + ' npc=' + npcOk + '+' + npcDrop + '/' + npcs.size
+        + ' mon=' + monOk + '+' + monDrop + '/' + monsters.size
+        + ' rem=' + remOk + '+' + remDrop + '/' + remotes.size
+        + ' self=' + (selfDrawn ? 1 : 0) + (selfDrop ? ' drop' : '')
+        + (selfName ? '' : ' selfName=EMPTY') + ' selfHp=' + selfHp + '/' + selfMaxHp
+        + ' combat=' + (now < selfCombatUntil)
+        + ' selfTopY=' + selfTopY.toFixed(2)
+        + ' selfPos=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')');
     }
   }
 
