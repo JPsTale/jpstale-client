@@ -63,6 +63,8 @@ export interface WorldView {
   setGameTime(hour: number, min: number): void;
   /** 切换场内小地图显示（原版 TAB） */
   toggleMinimap(): void;
+  /** 切换"显示附近所有掉落物名牌"（A 键） */
+  toggleGroundItemLabels(): void;
   /** 走/跑模式（真源）；返回切换后的值 */
   toggleRun(): boolean;
   /** 当前是否跑 */
@@ -468,7 +470,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (hit.length === 0) {
       hoverTarget = null;
       applyCursorStyle('default');
-      syncItemHoverLabels();
       return;
     }
     const root = rootOfGroup(hit[0].object, roots);
@@ -495,12 +496,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         applyCursorStyle('default');
         break;
     }
-    syncItemHoverLabels();
-  }
-
-  /** hover 名牌联动：只会把"正在 hover 的掉落物"名牌设为可见，其余保持隐藏 */
-  function syncItemHoverLabels(): void {
-    for (const g of groundItems.values()) g.label.visible = g.root === hoverTarget?.root;
   }
 
   // 点击目标（对齐原版 lpCharMsTrace/lpMsTraceItem 引用式追踪）：
@@ -1568,7 +1563,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function onMouseLeave(): void {
     mouseSeen = false;
     hoverTarget = null;
-    syncItemHoverLabels();
     lastCursorUrl = null;
     if (renderer) renderer.domElement.style.cursor = 'auto';
   }
@@ -1985,41 +1979,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     groundItemId: number;
     name: string;
     root: THREE.Group;
-    label: THREE.Sprite;
+    topY: number;
     model: THREE.Group;
     /** 闪烁相位（对齐 scITEM::Draw：周期提亮 vs 正常，交替渲染） */
     blinkOn: boolean;
     mats: { mat: THREE.MeshPhongMaterial; base: THREE.Color }[];
   }
   const groundItems = new Map<number, GroundItemActor>();
+  let groundItemLabelsOn = false;
+  function toggleGroundItemLabels(): void { groundItemLabelsOn = !groundItemLabelsOn; }
   const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string }[] = [];
   /** 掉落物离地高度（模型躺在 XZ 地面上、略浮起避免嵌地，≈scITEM 的 pY+6 微升） */
   const GROUND_LIFT = 0.35;
   /** 掉落物高亮闪烁周期（ms 半个周期）：对齐原版 Color+100 周期脉冲 */
   const GROUND_BLINK_MS = 650;
-
-  /** 简易名字牌（canvas → Sprite，THREE.Sprite 自动朝相机） */
-  function makeItemLabel(text: string): THREE.Sprite {
-    const c = document.createElement('canvas');
-    c.width = 256;
-    c.height = 64;
-    const ctx = c.getContext('2d')!;
-    ctx.clearRect(0, 0, c.width, c.height);
-    ctx.font = 'bold 32px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = 'rgba(0,0,0,0.9)';
-    ctx.shadowBlur = 8;
-    ctx.fillStyle = '#ffe9a8';
-    ctx.fillText(text, c.width / 2, c.height / 2 + 2);
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const mat = new THREE.SpriteMaterial({ map: tex, depthWrite: false, transparent: true, depthTest: false });
-    const sprite = new THREE.Sprite(mat);
-    sprite.scale.set(1.6, 0.4, 1);
-    sprite.renderOrder = 10;
-    return sprite;
-  }
 
   /** 模型组在自身空间里的最高点（用于把名字牌抬到模型顶上，不含模型所处世界平移） */
   function modelTopY(model: THREE.Object3D): number {
@@ -2296,6 +2269,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.clearRect(0, 0, W, H);
     const now = performance.now();
 
+    // 掉落物：hover 命中 或 A 键开启且在附近范围内 → 白字名牌
+    for (const g of groundItems.values()) {
+      if (!g.root.visible) continue;
+      const hovered = hoverTarget?.root === g.root;
+      if (!hovered) {
+        if (!groundItemLabelsOn) continue;
+        const dx = g.root.position.x - selfPos.x, dz = g.root.position.z - selfPos.z;
+        if (dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE) continue;
+      }
+      const pt = anchorToScreen(g.root, g.topY);
+      if (!pt) continue;
+      drawPill(ctx, pt.x, pt.y, g.name || '', {
+        nameColor: '#ffffff', showHp: false, ratio: 1, selected: hovered,
+      });
+    }
+
     // NPC：名牌 12 格(768)内常显（浅蓝），选中/悬停不受距离限制；对齐 exm NPC RendPoint.z < 12*64*fONE
     for (const a of npcs.values()) {
       if (!a.root.visible) continue;
@@ -2419,10 +2408,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         pivot.add(model);
         root.add(pivot);
 
-        const label = makeItemLabel(name);
-        label.visible = false; // 名牌悬停可见（design-nameplate-hpbar.md）
-        label.position.y = model.position.y + modelTopY(model) + 0.55;
-        root.add(label);
+        const topY = model.position.y + modelTopY(model) + 0.55; // overlay 名牌锚点
 
         // 躺平模型低矮，加一块隐形拾取垫（贴近地面、透明）扩大点击目标
         const pad = new THREE.Mesh(
@@ -2447,7 +2433,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
         });
 
-        groundItems.set(groundItemId, { groundItemId, name, root, label, model, blinkOn: false, mats });
+        groundItems.set(groundItemId, { groundItemId, name, root, topY, model, blinkOn: false, mats });
         console.log('[WorldView] 地面物品出现: id=' + groundItemId + ' name=' + name
           + ' dorp=' + (dorpItem || '(flag)')
           + ' @(' + x.toFixed(2) + ',' + y.toFixed(2) + ',' + z.toFixed(2) + ')');
@@ -3386,6 +3372,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     setGameTime,
     toggleMinimap,
+    toggleGroundItemLabels,
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
     setTargetFps,
