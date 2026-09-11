@@ -1982,34 +1982,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ratio: number;       // hp/maxHp（showHp 时有效）
     selected: boolean;
   }
-  /** 在锚点 (x,y) 上方画一块名牌 pill（深色半透明底 + 名字 + 可选公会行 + 可选血条） */
+  /** 在锚点 (x,y) 上方画一块名牌：名牌块(名字+公会)尺寸恒定；血条出现时仅让整块上移，自身不变高 */
   function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): void {
     const NAME_FONT = '13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
     const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
-    const HP_BAR_W = 84; // 血条固定宽度（不随名字/血量长度变化，对齐 exm STATE_BAR_WIDTH）
     ctx.font = NAME_FONT;
     const nameW = ctx.measureText(name).width;
     const clanW = s.clan ? ctx.measureText('◆ ' + s.clan).width : 0;
     let pillW = Math.max(nameW, clanW) + 16;
-    if (s.showHp) pillW = Math.max(pillW, HP_BAR_W + 12); // 血条比背景略窄，居中
-    let contentH = 18;                        // 名字行
-    if (s.clan) contentH += 3 + 14;           // 公会行
-    if (s.showHp) contentH += 4 + 7;          // 血条
-    const pillTop = y - contentH - 4;         // 名牌底边略高于头顶锚点
 
+    // 名牌块（名字+公会）固定高；血条独立于名牌块下方，出现仅抬高名牌块
+    const blockH = 18 + (s.clan ? 3 + 14 : 0);
+    const HP_BAR_W = 84, HP_BAR_H = 7;
+    const GAP = s.showHp ? 3 : 0; // 名牌块底边与血条顶间距
+    if (s.showHp) pillW = Math.max(pillW, HP_BAR_W + 12 + 4); // 血条(含轮廓)比名牌块略宽，居中
+    const blockBottom = y - (s.showHp ? HP_BAR_H + GAP : 0) - 4; // 名牌块底边贴着血条下方留 4px
+    const blockTop = blockBottom - blockH;
+
+    // 名牌块背景 + 选中描边（描边只圈名牌块，不圈血条）
     ctx.fillStyle = 'rgba(8, 11, 16, 0.55)';
-    rrect(ctx, x - pillW / 2, pillTop, pillW, contentH, 4);
+    rrect(ctx, x - pillW / 2, blockTop, pillW, blockH, 4);
     ctx.fill();
     if (s.selected) {
       ctx.strokeStyle = 'rgba(255,255,255,0.7)';
       ctx.lineWidth = 1;
-      rrect(ctx, x - pillW / 2, pillTop, pillW, contentH, 4);
+      rrect(ctx, x - pillW / 2, blockTop, pillW, blockH, 4);
       ctx.stroke();
     }
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    let rowY = pillTop + 9;
+    let rowY = blockTop + 9;
     ctx.font = NAME_FONT;
     ctx.fillStyle = s.nameColor;
     ctx.fillText(name, x, rowY);
@@ -2019,19 +2022,42 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       ctx.fillStyle = 'rgba(184, 212, 240, 0.9)';
       ctx.fillText('◆ ' + s.clan, x, rowY);
     }
+
+    // 血条：名牌块下方，深色外轮廓 + 玻璃质感
     if (s.showHp) {
-      rowY += 18;
-      const bw = Math.min(HP_BAR_W, pillW - 10);
-      const bx = x - bw / 2;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      rrect(ctx, bx, rowY - 3.5, bw, 7, 3);
-      ctx.fill();
-      const ratio = Math.max(0, Math.min(1, s.ratio));
-      const fw = Math.max(1, bw * ratio);
-      ctx.fillStyle = hpColor(ratio);
-      rrect(ctx, bx, rowY - 3.5, fw, 7, 3);
-      ctx.fill();
+      drawHpBar(ctx, x, blockBottom + GAP, HP_BAR_W + 4, HP_BAR_H, s.ratio);
     }
+  }
+
+  /** 血条（圆形玻璃质感）: 深色外轮廓 → 深色槽 → 渐变填充 + 顶部高光 */
+  function drawHpBar(ctx: CanvasRenderingContext2D, cx: number, top: number, w: number, h: number, ratio: number): void {
+    const r = h / 2;
+    // 外轮廓（深色描边底板，比槽大一圈）
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+    rrect(ctx, cx - w / 2, top - 1, w, h + 2, r + 1);
+    ctx.fill();
+    // 槽
+    const iw = w - 4; // 内缩 2px/边
+    ctx.fillStyle = 'rgba(16, 22, 30, 0.92)';
+    rrect(ctx, cx - iw / 2, top, iw, h, r);
+    ctx.fill();
+    // 填充（含 1px 上下内缩，两端圆头）
+    const r0 = Math.max(0, Math.min(1, ratio));
+    const fw = Math.max(2, (iw - 2) * r0);
+    const fx = cx - (iw - 2) / 2;
+    const fy = top + 1, fh = h - 2;
+    ctx.fillStyle = hpColor(r0);
+    rrect(ctx, fx, fy, fw, fh, fh / 2);
+    ctx.fill();
+    // 玻璃高光：上亮下暗渐变叠加
+    const gloss = ctx.createLinearGradient(0, fy, 0, fy + fh);
+    gloss.addColorStop(0, 'rgba(255,255,255,0.40)');
+    gloss.addColorStop(0.45, 'rgba(255,255,255,0.10)');
+    gloss.addColorStop(0.6, 'rgba(255,255,255,0.03)');
+    gloss.addColorStop(1, 'rgba(0,0,0,0.30)');
+    ctx.fillStyle = gloss;
+    rrect(ctx, fx, fy, fw, fh, fh / 2);
+    ctx.fill();
   }
 
   /** 名牌数据变更 / overlay 创建（自机 hp 数据等入口） */
