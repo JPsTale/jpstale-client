@@ -42,6 +42,8 @@ export class HoverOutline {
   private rtDiagLogged = false;
   private diagRaw = false;
   private rawMaskMatCache: THREE.MeshBasicMaterial | null = null;
+  private diagProbe = false;
+  private probeTex: THREE.DataTexture | null = null;
   /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
   private diagWhiteMask = false;
   private whiteTex: THREE.DataTexture | null = null;
@@ -141,6 +143,7 @@ export class HoverOutline {
       this.diagWhiteMask = wd === 'white';
       this.diagRT = wd === 'rt';
       this.diagRaw = wd === 'raw';
+      this.diagProbe = wd === 'probe';
     }
 
     try {
@@ -242,6 +245,15 @@ export class HoverOutline {
       return;
     }
     let uMask: THREE.Texture = this.maskRT.texture;
+    if (this.diagProbe) {
+      // 诊断 probe：用内容已知的中灰程序纹理替代 maskRT 走正常合成路径——
+      // 若全屏出现目标色光圈 → 合成/uMask 连接正常，maskRT 内容黑；若无 → 合成连接本身坏了
+      if (!this.probeTex) {
+        this.probeTex = new THREE.DataTexture(new Uint8Array([128, 128, 128, 255, 128, 128, 128, 255, 128, 128, 128, 255, 128, 128, 128, 255]), 2, 2);
+        this.probeTex.needsUpdate = true;
+      }
+      uMask = this.probeTex;
+    }
     if (this.diagWhiteMask) {
       if (!this.whiteTex) {
         this.whiteTex = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
@@ -334,6 +346,7 @@ export class HoverOutline {
     this.maskRT.dispose();
     this.maskMat.dispose();
     this.quadMat.dispose();
+    this.probeTex?.dispose();
     for (const c of this.quadScene.children) (c as THREE.Mesh).geometry.dispose();
   }
 }
