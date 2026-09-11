@@ -18,7 +18,7 @@ void main() {
 
   // 对 mask 做一圈环绕采样：只有距离 mask 边缘 <= uRadius（屏像素）的像素 g > 0，
   // 且越贴近边缘 g 越大 → 沿目标外法线方向渐变衰减，形成"发光"。
-  float rad = uRadius * px;
+  vec2 rad = uRadius * px;
   float g = 0.0;
   for (int i = 0; i < N; i++) {
     float a = 6.28318530718 * float(i) / float(N);
