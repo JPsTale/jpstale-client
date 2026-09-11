@@ -14,6 +14,7 @@ import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
+import { HoverOutline } from '../render/hover-outline.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
@@ -219,6 +220,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let cursorModeNow: 'default' | 'pickup' | 'attack' | 'talk' = 'default';
   let mouseSeen = false;
 
+  // ---- hover 发光外轮廓（design-hover-outline.md）----
+  // 颜色常量：掉落物金黄 / 怪物淡红 / NPC+其他玩家绿；自机不描边。
+  const HOVER_COLOR_ITEM = 0xffd24a;
+  const HOVER_COLOR_MONSTER = 0xff6b6b;
+  const HOVER_COLOR_NPC = 0x54ff9f;
+  const HOVER_COLOR_PLAYER = 0x54ff9f;
+  let outlinePass: HoverOutline | null = null;
+  let hoverTarget: { root: THREE.Object3D; color: number } | null = null;
+
   async function cursorDataUrl(file: string): Promise<string | null> {
     try {
       const buf = await cachedFetch(CURSOR_ROOT + file);
@@ -269,7 +279,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     });
   }
 
-  /** 按屏幕坐标探测指向目标 → 光标模式（节流） */
+  /** 命中的 object 向上找到所属的 root（多为 group 树，命中点在深层 mesh） */
+  function rootOfGroup(hitObj: THREE.Object3D, roots: THREE.Object3D[]): THREE.Object3D {
+    const set = new Set<THREE.Object3D>(roots);
+    let o: THREE.Object3D | null = hitObj;
+    while (o) {
+      if (set.has(o)) return o;
+      o = o.parent;
+    }
+    return roots[0] ?? hitObj;
+  }
+
+  /** 按屏幕坐标探测指向目标 → 光标模式 + hover 外轮廓目标（节流）。
+   *  掉落物/怪物/NPC/玩家四类统一放一个目标数组做一次射线检测，最近命中者优先
+   *  （先命中谁就是谁，不硬编码 if 顺序）；命中后靠 root.userData.kind 分类决定光标与轮廓色。 */
   function probeCursorAt(cx: number, cy: number): void {
     const now = performance.now();
     if (now - cursorProbeAt < 66) return; // ~15Hz 足够（配合世界滚动静态光标）
@@ -281,25 +304,42 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ray.setFromCamera(ndc, camera);
     ray.far = 1300;
 
-    const itemTargets: THREE.Object3D[] = [];
-    for (const g of groundItems.values()) itemTargets.push(g.root);
-    if (ray.intersectObjects(itemTargets, true).length > 0) {
-      applyCursorStyle('pickup');
+    const roots: THREE.Object3D[] = [];
+    for (const g of groundItems.values()) roots.push(g.root);
+    for (const m of monsters.values()) roots.push(m.root);
+    for (const n of npcs.values()) roots.push(n.root);
+    for (const r of remotes.values()) roots.push(r.root);
+
+    const hit = ray.intersectObjects(roots, true);
+    if (hit.length === 0) {
+      hoverTarget = null;
+      applyCursorStyle('default');
       return;
     }
-    const mobTargets: THREE.Object3D[] = [];
-    for (const m of monsters.values()) mobTargets.push(m.root);
-    if (ray.intersectObjects(mobTargets, true).length > 0) {
-      applyCursorStyle('attack');
-      return;
+    const root = rootOfGroup(hit[0].object, roots);
+    const kind = (root.userData.kind as string) || '';
+    switch (kind) {
+      case 'item':
+        hoverTarget = { root, color: HOVER_COLOR_ITEM };
+        applyCursorStyle('pickup');
+        break;
+      case 'monster':
+        hoverTarget = { root, color: HOVER_COLOR_MONSTER };
+        applyCursorStyle('attack');
+        break;
+      case 'npc':
+        hoverTarget = { root, color: HOVER_COLOR_NPC };
+        applyCursorStyle('talk');
+        break;
+      case 'player':
+        hoverTarget = { root, color: HOVER_COLOR_PLAYER };
+        applyCursorStyle('default');
+        break;
+      default:
+        hoverTarget = { root, color: HOVER_COLOR_ITEM };
+        applyCursorStyle('default');
+        break;
     }
-    const npcTargets: THREE.Object3D[] = [];
-    for (const n of npcs.values()) npcTargets.push(n.root);
-    if (ray.intersectObjects(npcTargets, true).length > 0) {
-      applyCursorStyle('talk');
-      return;
-    }
-    applyCursorStyle('default');
   }
 
   // 点击目标（对齐原版 lpCharMsTrace/lpMsTraceItem 引用式追踪）：
@@ -558,6 +598,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (renderer) return;
     renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
     setMaxAnisotropy(renderer.capabilities.getMaxAnisotropy());
+    outlinePass = new HoverOutline(renderer);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(root.clientWidth, root.clientHeight, false);
     renderer.domElement.style.width = '100%';
@@ -1290,6 +1331,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function onMouseLeave(): void {
     mouseSeen = false;
+    hoverTarget = null;
     lastCursorUrl = null;
     if (renderer) renderer.domElement.style.cursor = 'auto';
   }
@@ -1515,6 +1557,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.set(actorInfo.x, actorInfo.y, actorInfo.z);
         root.rotation.y = actorInfo.angle || 0;
         root.userData.monsterId = mid; // 光标 Attack/点选 Chase 命中用
+        root.userData.kind = 'monster'; // hover 统一射线命中 → 分类（外轮廓色/光标）
         scene!.add(root);
 
         let actorObj!: MonsterActor;
@@ -1592,6 +1635,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.set(info.x, info.y, info.z);
         root.rotation.y = info.angle || 0;
         root.userData.npcId = nid; // 光标 Talk/点选 Chase 命中用
+        root.userData.kind = 'npc'; // hover 统一射线命中 → 分类（外轮廓色/光标）
         scene!.add(root);
 
         let actorObj!: NpcActor;
@@ -1778,6 +1822,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.add(pad);
 
         scene!.add(root);
+        root.userData.kind = 'item'; // hover 统一射线命中 → 分类（外轮廓色/光标）
 
         // 收集可提亮材质（对齐 scITEM::Draw 的 Color+=100 白闪：周期整体提亮）
         const mats: { mat: THREE.MeshPhongMaterial; base: THREE.Color }[] = [];
@@ -1934,6 +1979,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.copy(pos);
         root.rotation.y = actorInfo.angle ?? 0;
         root.userData.playerId = pid; // 点选/追踪（Chase）命中用
+        root.userData.kind = 'player'; // hover 统一射线命中 → 分类（外轮廓色/光标）
         scene.add(root);
 
         const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
@@ -2461,6 +2507,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     renderer.render(scene, camera);
 
+    // hover 发光外轮廓（目标单色 mask + 发光光圈叠加）——必须在主场景渲染之后绘制
+    if (outlinePass) {
+      outlinePass.setTarget(hoverTarget ? hoverTarget.root : null, hoverTarget ? hoverTarget.color : 0xffffff);
+      outlinePass.render(camera);
+    }
+
     // 首帧渲染完成 → 通知 main.ts 收起加载页
     if (firstFramePending) {
       firstFramePending = false;
@@ -2707,6 +2759,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
         renderer.domElement.remove();
       }
+      if (outlinePass) { outlinePass.dispose(); outlinePass = null; }
       if (renderer) renderer.dispose();
       renderer = null;
       scene = null;
