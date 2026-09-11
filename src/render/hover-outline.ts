@@ -40,6 +40,8 @@ export class HoverOutline {
   private maskPassLogged = false;
   private diagRT = false;
   private rtDiagLogged = false;
+  private diagRaw = false;
+  private rawMaskMatCache: THREE.MeshBasicMaterial | null = null;
   /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
   private diagWhiteMask = false;
   private whiteTex: THREE.DataTexture | null = null;
@@ -138,6 +140,7 @@ export class HoverOutline {
       this.diagShowMask = wd === 'mask';
       this.diagWhiteMask = wd === 'white';
       this.diagRT = wd === 'rt';
+      this.diagRaw = wd === 'raw';
     }
 
     try {
@@ -180,21 +183,29 @@ export class HoverOutline {
       const prevTarget = r.getRenderTarget();
       const prevAutoClear = r.autoClear;
       try {
-        ren.overrideMaterial = this.maskMat;
-        r.setRenderTarget(this.maskRT);
-        r.autoClear = true;
-        // 捕获本机 mask pass 的实际 draw（临时关 autoReset，避免 render 末尾被清掉）
-        const inf = (r as unknown as { info?: { autoReset: boolean; reset: () => void; render: { calls: number; triangles: number } } }).info;
-        const prevAR = inf?.autoReset ?? true;
-        if (inf) inf.autoReset = false;
-        r.render(this.maskScene, camera);
-        if (inf && !this.maskPassLogged) {
-          this.maskPassLogged = true;
-          console.log(`[hover-diag] mask pass: calls=${inf.render.calls} triangles=${inf.render.triangles}${inf.render.calls === 0 ? ' ← mask 未渲染任何网格!' : ''}`);
-        }
-        if (inf) {
-          inf.autoReset = prevAR;
-          inf.reset();
+        if (this.diagRaw) {
+          // 诊断 raw：mask 渲染直接画到主屏（绿色剪影叠加），不经 RT/合成——
+          // 判定"mask 渲染本身能否画出目标形状"（绿=画出来了；无=渲染根本没画）
+          ren.overrideMaterial = this.rawMaskMat();
+          r.autoClear = false;
+          r.render(this.maskScene, camera);
+        } else {
+          ren.overrideMaterial = this.maskMat;
+          r.setRenderTarget(this.maskRT);
+          r.autoClear = true;
+          // 捕获本机 mask pass 的实际 draw（临时关 autoReset，避免 render 末尾被清掉）
+          const inf = (r as unknown as { info?: { autoReset: boolean; reset: () => void; render: { calls: number; triangles: number } } }).info;
+          const prevAR = inf?.autoReset ?? true;
+          if (inf) inf.autoReset = false;
+          r.render(this.maskScene, camera);
+          if (inf && !this.maskPassLogged) {
+            this.maskPassLogged = true;
+            console.log(`[hover-diag] mask pass: calls=${inf.render.calls} triangles=${inf.render.triangles}${inf.render.calls === 0 ? ' ← mask 未渲染任何网格!' : ''}`);
+          }
+          if (inf) {
+            inf.autoReset = prevAR;
+            inf.reset();
+          }
         }
       } finally {
         ren.overrideMaterial = prevOverride;
@@ -227,6 +238,9 @@ export class HoverOutline {
     }
 
     // 合成 uMask：正常 = maskRT；白 mask 诊断 = 全白 1x1 纹理（跳过实际 mask 内容）
+    if (this.diagRaw) {
+      return;
+    }
     let uMask: THREE.Texture = this.maskRT.texture;
     if (this.diagWhiteMask) {
       if (!this.whiteTex) {
@@ -302,6 +316,18 @@ export class HoverOutline {
   private restoreVisibility(): void {
     for (const { obj, vis } of this.hidden) obj.visible = vis;
     this.hidden.length = 0;
+  }
+
+  /** 诊断 raw 用的亮绿色不透明材质（叠加在主画面上，一眼可辨）。 */
+  private rawMaskMat(): THREE.MeshBasicMaterial {
+    if (!this.rawMaskMatCache) {
+      this.rawMaskMatCache = new THREE.MeshBasicMaterial({
+        color: 0x00ff00,
+        depthTest: false,
+        depthWrite: false,
+      });
+    }
+    return this.rawMaskMatCache;
   }
 
   dispose(): void {
