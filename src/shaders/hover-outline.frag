@@ -8,8 +8,8 @@ uniform float uOpacity;
 
 varying vec2 vUv;
 
-// 环形采样方向数（圆卷积近似高斯）
-const int N = 8;
+// 环形采样方向数（圆卷积近似高斯）；提高方向数让光圈更平滑。
+const int N = 16;
 
 void main() {
   vec2 px = 1.0 / uRes;
@@ -18,7 +18,7 @@ void main() {
 
   // 对 mask 做一圈环绕采样：只有距离 mask 边缘 <= uRadius（屏像素）的像素 g > 0，
   // 且越贴近边缘 g 越大 → 沿目标外法线方向渐变衰减，形成"发光"。
-  vec2 rad = uRadius * px;
+  vec2 rad = (uRadius + 0.5) * px;
   float g = 0.0;
   for (int i = 0; i < N; i++) {
     float a = 6.28318530718 * float(i) / float(N);
@@ -27,7 +27,9 @@ void main() {
   }
   g /= float(N);
 
-  float alpha = g * uOpacity;
+  // 增益：g 在 0~0.45 左右 → 放大 + 二次曲线，让紧贴边缘处接近满强度、向外仍平滑衰减到 0。
+  float glow = clamp(g * 2.5, 0.0, 1.0);
+  float alpha = uOpacity * (1.0 - m) * glow * glow;
   if (alpha < 0.004) discard;
 
   gl_FragColor = vec4(uColor, alpha);

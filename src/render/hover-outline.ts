@@ -10,6 +10,19 @@ import hoverOutlineFrag from '../shaders/hover-outline.frag?raw';
 //  1) 把当前指向的目标（root 子树）用单色材质（保留蒙皮）渲染进 mask RT；
 //  2) 全屏 quad 合成：环形采样 mask，只保留 mask 外沿 <= radius（屏像素）的一圈，
 //     紧贴边缘处强度最高、向外渐变衰减到 0 → 分类色发光光圈。
+//
+// 诊断开关（默认全关，临时排查用）：
+//  diagPureGreen — 合成 quad 换成半透明纯绿，验证合成 pass 能否上屏；
+//  diagShowMask  — 直接把 maskRT 灰度画到屏幕上，判读 mask 内容是否为空。
+const DIAG_SHOW_MASK_FRAG = `
+varying vec2 vUv;
+uniform sampler2D uMask;
+uniform vec3 uColor;
+void main() {
+  float m = texture2D(uMask, vUv).r;
+  gl_FragColor = vec4(uColor, m);
+}
+`;
 export class HoverOutline {
   private renderer: THREE.WebGLRenderer;
   private maskRT: THREE.WebGLRenderTarget;
@@ -24,6 +37,16 @@ export class HoverOutline {
   /** mask 渲染用临时场景：renderer.render() 直接传 Group 不渲染其子树，需临时挂到独立场景。 */
   private maskScene = new THREE.Scene();
   private diagLogged = false;
+  /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
+  private diagWhiteMask = false;
+  private whiteTex: THREE.DataTexture | null = null;
+  /** 诊断：true 时把合成 quad 换成纯绿半透明（忽略 mask），判定合成 pass 本身能否画到屏幕。 */
+  private diagPureGreen = false;
+  private greenMat: THREE.MeshBasicMaterial | null = null;
+  /** 诊断：true 时直接在屏幕上显示 mask 内容灰度（判断 maskRT 是否为空）。 */
+  private diagShowMask = false;
+  private showMaskMat: THREE.ShaderMaterial | null = null;
+  private quad!: THREE.Mesh;
 
   /** 发光光圈宽度（屏像素）。 */
   radius: number;
@@ -65,6 +88,7 @@ export class HoverOutline {
     this.quadCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     this.quadScene = new THREE.Scene();
     this.quadScene.add(quad);
+    this.quad = quad;
   }
 
   /** 设置要高亮的目标；传 null 清除。 */
@@ -83,24 +107,17 @@ export class HoverOutline {
     return this.target !== null;
   }
 
-  /** 一次性 shader 链接自检（诊断用），打印 mask/quad 材质是否链接成功。渲染完成后调用。 */
+  /** 一次性诊断：渲染完成后打印真实 RT 尺寸与已编译 program 列表（区分 mask/quad 是否被渲染器使用）。 */
   private diagLinkStatus(): void {
-    const gl = (this.renderer as unknown as { getContext?: () => WebGL2RenderingContext }).getContext?.();
-    if (!gl) return;
-    const statOf = (m: THREE.Material): string => {
-      const p = (m as unknown as { program?: WebGLProgram }).program;
-      if (!p) return '无 program（渲染中被跳过）';
-      return gl.getProgramParameter(p, gl.LINK_STATUS)
-        ? 'link OK'
-        : `LINK FAIL: ${gl.getProgramInfoLog(p) || '(空)'}`;
-    };
     const r = this.renderer;
+    const info = (r as unknown as { info?: { programs: { name: string }[]; render: { calls: number; triangles: number } } }).info;
     console.log('[hover-diag] 渲染后', {
       rt: `${this.maskRT.width}x${this.maskRT.height}`,
       canvas: `${r.domElement.width}x${r.domElement.height} (CSS ${r.domElement.clientWidth}x${r.domElement.clientHeight})`,
       pixelRatio: r.getPixelRatio(),
-      mask: statOf(this.maskMat),
-      quad: statOf(this.quadMat),
+      renderCalls: info?.render.calls,
+      triangles: info?.render.triangles,
+      programs: info?.programs.map((p) => p.name).join(', '),
     });
   }
 
@@ -112,6 +129,20 @@ export class HoverOutline {
     const target = this.target;
     if (!target) return;
 
+    try {
+      this.renderInner(camera);
+    } catch (e) {
+      console.error('[hover] render 异常:', e);
+    }
+
+    if (!this.diagLogged && this.target) {
+      this.diagLogged = true;
+      this.diagLinkStatus();
+    }
+  }
+
+  private renderInner(camera: THREE.Camera): void {
+    const target = this.target as THREE.Object3D;
     const r = this.renderer;
     const w = Math.max(1, Math.floor(r.domElement.width * r.getPixelRatio()));
     const h = Math.max(1, Math.floor(r.domElement.height * r.getPixelRatio()));
@@ -120,48 +151,89 @@ export class HoverOutline {
       (this.quadMat.uniforms.uRes.value as THREE.Vector2).set(w, h);
     }
 
-    // 名字标签等非 Mesh 对象不参与 mask（避免名字/图标也画出光晕）
-    this.hideNonMesh(target);
+// ---- mask 渲染（除非诊断强制白 mask）----
+    if (!this.diagWhiteMask) {
+      // 名字标签等非 Mesh 对象不参与 mask（避免名字/图标也画出光晕）
+      this.hideNonMesh(target);
 
-    // renderer.render() 直接传 Group 时其子树不会被渲染（mask 会全空）。
-    // 因此把目标临时挂到独立 maskScene（会从主 scene 移出；主渲染在本调用之前已完成，
-    // 移出/还原对主画面无副作用），渲染 mask 后按原 parent/索引挂回。
-    const prevParent = target.parent;
-    const prevIdx = prevParent ? prevParent.children.indexOf(target) : -1;
-    this.maskScene.add(target);
+      // renderer.render() 直接传 Group 时其子树不会被渲染（mask 会全空）。
+      // 因此把目标临时挂到独立 maskScene（会从主 scene 移出；主渲染在本调用之前已完成，
+      // 移出/还原对主画面无副作用），渲染 mask 后按原 parent/索引挂回。
+      const prevParent = target.parent;
+      const prevIdx = prevParent ? prevParent.children.indexOf(target) : -1;
+      this.maskScene.add(target);
 
-    // @types/three 未暴露 overrideMaterial 属性，这里窄化为实际存在该属性的形态
-    const ren = r as unknown as { overrideMaterial: THREE.Material | null };
-    const prevOverride = ren.overrideMaterial;
-    const prevTarget = r.getRenderTarget();
-    const prevAutoClear = r.autoClear;
-    try {
-      ren.overrideMaterial = this.maskMat;
-      r.setRenderTarget(this.maskRT);
-      r.autoClear = true;
-      r.render(this.maskScene, camera);
-    } finally {
-      ren.overrideMaterial = prevOverride;
-      r.setRenderTarget(prevTarget);
-      r.autoClear = prevAutoClear;
-      this.restoreVisibility();
-      // 按原 parent/索引挂回主场景（matrixWorld 两端单位父矩阵，值不变）
-      if (prevIdx >= 0 && prevParent) prevParent.children.splice(prevIdx, 0, target);
-      else if (prevParent) prevParent.add(target);
+      // @types/three 未暴露 overrideMaterial 属性，这里窄化为实际存在该属性的形态
+      const ren = r as unknown as { overrideMaterial: THREE.Material | null };
+      const prevOverride = ren.overrideMaterial;
+      const prevTarget = r.getRenderTarget();
+      const prevAutoClear = r.autoClear;
+      try {
+        ren.overrideMaterial = this.maskMat;
+        r.setRenderTarget(this.maskRT);
+        r.autoClear = true;
+        r.render(this.maskScene, camera);
+      } finally {
+        ren.overrideMaterial = prevOverride;
+        r.setRenderTarget(prevTarget);
+        r.autoClear = prevAutoClear;
+        this.restoreVisibility();
+        // 按原 parent/索引挂回主场景（matrixWorld 两端单位父矩阵，值不变）
+        if (prevIdx >= 0 && prevParent) prevParent.children.splice(prevIdx, 0, target);
+        else if (prevParent) prevParent.add(target);
+      }
+    }
+
+    // 合成 uMask：正常 = maskRT；白 mask 诊断 = 全白 1x1 纹理（跳过实际 mask 内容）
+    let uMask: THREE.Texture = this.maskRT.texture;
+    if (this.diagWhiteMask) {
+      if (!this.whiteTex) {
+        this.whiteTex = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+        this.whiteTex.needsUpdate = true;
+      }
+      uMask = this.whiteTex;
+    }
+    (this.quadMat.uniforms.uMask.value as THREE.Texture) = uMask;
+
+    // 纯绿/显 mask 诊断：替换合成 quad 的材质（绕开正常 mask 合成逻辑）
+    if (this.diagPureGreen) {
+      if (!this.greenMat) {
+        this.greenMat = new THREE.MeshBasicMaterial({
+          color: 0x54ff9f,
+          transparent: true,
+          opacity: 0.5,
+          depthTest: false,
+          depthWrite: false,
+        });
+      }
+      this.quad.material = this.greenMat;
+    } else if (this.diagShowMask) {
+      if (!this.showMaskMat) {
+        this.showMaskMat = new THREE.ShaderMaterial({
+          uniforms: {
+            uMask: { value: this.maskRT.texture },
+            uColor: { value: new THREE.Color(0x54ff9f) },
+          },
+          vertexShader: hoverOutlineVert,
+          fragmentShader: DIAG_SHOW_MASK_FRAG,
+          transparent: true,
+          depthTest: false,
+          depthWrite: false,
+        });
+      }
+      this.quad.material = this.showMaskMat;
+    } else {
+      this.quad.material = this.quadMat;
     }
 
     // 合成到屏幕：绝不能 clear（会擦掉刚渲染的主画面 → 黑屏）。
     // mask 渲染时 autoClear=true 清的是 maskRT，合成这里必须关掉再渲染。
+    const prevAuto = r.autoClear;
     r.autoClear = false;
     r.clearDepth();
     (this.quadMat.uniforms.uColor.value as THREE.Color).copy(this.color);
     r.render(this.quadScene, this.quadCam);
-    r.autoClear = prevAutoClear;
-
-    if (!this.diagLogged) {
-      this.diagLogged = true;
-      this.diagLinkStatus();
-    }
+    r.autoClear = prevAuto;
   }
 
   /**
