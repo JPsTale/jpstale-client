@@ -141,7 +141,8 @@ const ANIM_FALLSTAND = 0x0071;
 const ANIM_FALLDAMAGE = 0x0072;
 
 // 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1086；见 design-nameplate-hpbar.md）
-const NAME_TAG_RANGE = 600;
+const NAME_TAG_RANGE = 600; // 怪物名牌常显范围（防漏怪）；范围外选中/悬停才显示
+const NPC_TAG_RANGE = 768;  // NPC 名牌 12 格（对齐 exm：NPC RendPoint.z < 12*64*fONE）
 // "进入战斗"窗口：最近 N 毫秒自机受击/发起攻击 → 玩家血条显示
 const COMBAT_WINDOW_MS = 3000;
 
@@ -1643,6 +1644,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     name: string;
     hp: number;
     maxHp: number;
+    stateBar: boolean; // 血条锁存：受击/选中后常显（对齐 exm EnableStateBar，离开视野重置）
     topY: number; // 模型顶高（名牌锚点偏移，modelTopY(group)+0.5）
     root: THREE.Group;
     bones: THREE.Bone[];
@@ -1715,6 +1717,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           name: actorInfo.name,
           hp: actorInfo.hp || 0,
           maxHp: actorInfo.maxHp || 0,
+          stateBar: false,
           topY: modelTopY(result.group) + 0.5,
           root,
           bones: result.bones,
@@ -2057,10 +2060,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const r = remotes.get(targetId);
     if (r) r.hp = hp;
   }
-  /** S2C_AttackResult：服务端当前只广播 damage（无 currentHp），客户端从出现血量自减 */
+  /** S2C_AttackResult：服务端当前只广播 damage（无 currentHp），客户端从出现血量自减；受击即锁存血条 */
   function applyMonsterHit(monsterId: number, damage: number): void {
     const m = monsters.get(monsterId);
-    if (m) m.hp = Math.max(0, m.hp - damage);
+    if (m) {
+      m.hp = Math.max(0, m.hp - damage);
+      m.stateBar = true;
+    }
   }
 
   /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
@@ -2077,13 +2083,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const dbg = (window as unknown as { __npDbg?: number }).__npDbg === 1;
     let npcOk = 0, npcDrop = 0, monOk = 0, monDrop = 0, remOk = 0, remDrop = 0, selfDrawn = 0, selfDrop = 0;
 
-    // NPC：名牌常显（浅蓝），选中/悬停变白
+    // NPC：名牌 12 格(768)内常显（浅蓝），选中/悬停不受距离限制；对齐 exm NPC RendPoint.z < 12*64*fONE
     for (const a of npcs.values()) {
       if (!a.root.visible) continue;
+      const sel = isSelected(a.root);
+      if (!sel) {
+        const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
+        if (dx * dx + dz * dz > NPC_TAG_RANGE * NPC_TAG_RANGE) { npcDrop++; continue; }
+      }
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { npcDrop++; continue; }
       npcOk++;
-      const sel = isSelected(a.root);
       drawPill(ctx, pt.x, pt.y, t(`npc.${a.nameKey}.name`), {
         nameColor: sel ? '#ffffff' : '#a8d8ff',
         showHp: false, ratio: 0, selected: sel,
@@ -2100,7 +2110,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { monDrop++; continue; }
       monOk++;
-      const showHp = sel || (a.maxHp > 0 && a.hp < a.maxHp);
+      const showHp = sel || a.stateBar || (a.maxHp > 0 && a.hp < a.maxHp);
       drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: '#ff8080',
         showHp,
