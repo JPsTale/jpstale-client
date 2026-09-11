@@ -21,6 +21,8 @@ export class HoverOutline {
   private target: THREE.Object3D | null = null;
   private color = new THREE.Color(0xffffff);
   private hidden: { obj: THREE.Object3D; vis: boolean }[] = [];
+  /** mask 渲染用临时场景：renderer.render() 直接传 Group 不渲染其子树，需临时挂到独立场景。 */
+  private maskScene = new THREE.Scene();
 
   /** 发光光圈宽度（屏像素）。 */
   radius: number;
@@ -86,8 +88,15 @@ export class HoverOutline {
       (this.quadMat.uniforms.uRes.value as THREE.Vector2).set(w, h);
     }
 
-    // 名字标签等非 Mesh 对象不参与 mask（避免唯一字符/图标也画出光晕）
+    // 名字标签等非 Mesh 对象不参与 mask（避免名字/图标也画出光晕）
     this.hideNonMesh(target);
+
+    // renderer.render() 直接传 Group 时其子树不会被渲染（mask 会全空）。
+    // 因此把目标临时挂到独立 maskScene（会从主 scene 移出；主渲染在本调用之前已完成，
+    // 移出/还原对主画面无副作用），渲染 mask 后按原 parent/索引挂回。
+    const prevParent = target.parent;
+    const prevIdx = prevParent ? prevParent.children.indexOf(target) : -1;
+    this.maskScene.add(target);
 
     // @types/three 未暴露 overrideMaterial 属性，这里窄化为实际存在该属性的形态
     const ren = r as unknown as { overrideMaterial: THREE.Material | null };
@@ -98,13 +107,15 @@ export class HoverOutline {
       ren.overrideMaterial = this.maskMat;
       r.setRenderTarget(this.maskRT);
       r.autoClear = true;
-      target.updateMatrixWorld(true);
-      r.render(target, camera);
+      r.render(this.maskScene, camera);
     } finally {
       ren.overrideMaterial = prevOverride;
       r.setRenderTarget(prevTarget);
       r.autoClear = prevAutoClear;
       this.restoreVisibility();
+      // 按原 parent/索引挂回主场景（matrixWorld 两端单位父矩阵，值不变）
+      if (prevIdx >= 0 && prevParent) prevParent.children.splice(prevIdx, 0, target);
+      else if (prevParent) prevParent.add(target);
     }
 
     // 合成到屏幕：绝不能 clear（会擦掉刚渲染的主画面 → 黑屏）。
