@@ -37,6 +37,7 @@ export class HoverOutline {
   /** mask 渲染用临时场景：renderer.render() 直接传 Group 不渲染其子树，需临时挂到独立场景。 */
   private maskScene = new THREE.Scene();
   private diagLogged = false;
+  private maskPassLogged = false;
   /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
   private diagWhiteMask = false;
   private whiteTex: THREE.DataTexture | null = null;
@@ -179,7 +180,19 @@ export class HoverOutline {
         ren.overrideMaterial = this.maskMat;
         r.setRenderTarget(this.maskRT);
         r.autoClear = true;
+        // 捕获本机 mask pass 的实际 draw（临时关 autoReset，避免 render 末尾被清掉）
+        const inf = (r as unknown as { info?: { autoReset: boolean; reset: () => void; render: { calls: number; triangles: number } } }).info;
+        const prevAR = inf?.autoReset ?? true;
+        if (inf) inf.autoReset = false;
         r.render(this.maskScene, camera);
+        if (inf && !this.maskPassLogged) {
+          this.maskPassLogged = true;
+          console.log(`[hover-diag] mask pass: calls=${inf.render.calls} triangles=${inf.render.triangles}${inf.render.calls === 0 ? ' ← mask 未渲染任何网格!' : ''}`);
+        }
+        if (inf) {
+          inf.autoReset = prevAR;
+          inf.reset();
+        }
       } finally {
         ren.overrideMaterial = prevOverride;
         r.setRenderTarget(prevTarget);
