@@ -5,6 +5,10 @@
  * 坐标：出生点 world = (-z, y, -x)；地图顶点 world = raw/256 + 轴交换（map-renderer 内部处理）。
  */
 import * as THREE from 'three';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { loadMap, updateFrameAnimations, getMapWorldBounds } from '../maps/fore1.js';
 import { mapSmdPath, MAP_CATALOG } from '../maps/map-catalog.js';
 import { minimapBase } from '../maps/map-data.js';
@@ -14,7 +18,6 @@ import { neighborMaps } from '../maps/map-gates.js';
 import { CollisionMesh } from '../maps/collision.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
-import { HoverOutline } from '../render/hover-outline.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
@@ -226,7 +229,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const HOVER_COLOR_MONSTER = 0xff6b6b;
   const HOVER_COLOR_NPC = 0x54ff9f;
   const HOVER_COLOR_PLAYER = 0x54ff9f;
-  let outlinePass: HoverOutline | null = null;
+  let outlinePass: OutlinePass | null = null;
+  let composer: EffectComposer | null = null;
   let hoverTarget: { root: THREE.Object3D; color: number } | null = null;
   let lastHoverScanAt = 0;
 
@@ -627,9 +631,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function ensure3D(): void {
     if (renderer) return;
-    renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true });
+    // 深度精度经 /maps/ 对照诊断：不再使用 logarithmicDepthBuffer（原先 z-fighting 并非深度精度问题，
+    // 而是贴地物共面；而 logdepth 会阻断官方 OutlinePass 的深度纹理）。近远平面 near=20/far=4000 已足够健康。
+    renderer = new THREE.WebGLRenderer({ antialias: true });
     setMaxAnisotropy(renderer.capabilities.getMaxAnisotropy());
-    outlinePass = new HoverOutline(renderer, scene);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(root.clientWidth, root.clientHeight, false);
     renderer.domElement.style.width = '100%';
@@ -638,6 +643,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     scene = new THREE.Scene();
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
+    // 官方后处理管线：RenderPass(主场景) → OutlinePass(hover 发光描边) → OutputPass(色彩空间输出)
+    composer = new EffectComposer(renderer);
+    composer.addPass(new RenderPass(scene, camera));
+    const op = new OutlinePass(
+      new THREE.Vector2(renderer.domElement.width, renderer.domElement.height),
+      scene,
+      camera,
+    );
+    op.edgeStrength = 3.0;
+    op.edgeGlow = 0.5;
+    op.edgeThickness = 1.0;
+    op.visibleEdgeColor.set(0x54ff9f);
+    op.hiddenEdgeColor.set(0x003321);
+    op.enabled = false; // 无 hover 目标时不产生任何后处理开销
+    outlinePass = op;
+    composer.addPass(op);
+    composer.addPass(new OutputPass());
     camera.position.set(0, 200, 400);
     const amb = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(amb);
@@ -2369,6 +2391,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       renderer.setSize(w, h, false);
+      composer?.setSize(w, h);
     }
     const dt = clock.getDelta();
     rafMs += dt * 1000;
@@ -2536,17 +2559,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       mh.mapRenderer.updateWater(rafMs);
       updateFrameAnimations(mh.animatedMeshes, rafMs);
     }
-    renderer.render(scene, camera);
-
-    // hover 发光外轮廓（目标单色 mask + 发光光圈叠加）——必须在主场景渲染之后绘制
-    if (outlinePass) {
-      outlinePass.setTarget(hoverTarget ? hoverTarget.root : null, hoverTarget ? hoverTarget.color : 0xffffff);
-      outlinePass.render(camera);
-      // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
-      if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && outlinePass.hasTarget() && rafMs - lastHoverScanAt > 1500) {
-        lastHoverScanAt = rafMs;
-        hoverOutlineScanDiag();
+    // hover 发光外轮廓（官方 OutlinePass 后处理）：设置目标与分类色后再整帧渲染
+    if (composer && outlinePass) {
+      if (hoverTarget) {
+        outlinePass.selectedObjects = [hoverTarget.root];
+        outlinePass.visibleEdgeColor.set(hoverTarget.color);
+        outlinePass.enabled = true;
+      } else {
+        outlinePass.selectedObjects = [];
+        outlinePass.enabled = false;
       }
+    }
+    if (composer) composer.render();
+    // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
+    if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && hoverTarget && rafMs - lastHoverScanAt > 1500) {
+      lastHoverScanAt = rafMs;
+      hoverOutlineScanDiag();
     }
 
     // 首帧渲染完成 → 通知 main.ts 收起加载页
@@ -2584,6 +2612,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     camera.aspect = root.clientWidth / root.clientHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(root.clientWidth, root.clientHeight, false);
+    composer?.setSize(root.clientWidth, root.clientHeight);
   }
 
   // —— 外观更新（穿脱装备/武器切换/转职换头 S2C_AppearanceUpdate 驱动）——
@@ -2795,7 +2824,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
         renderer.domElement.remove();
       }
-      if (outlinePass) { outlinePass.dispose(); outlinePass = null; }
+      if (composer) { composer.dispose(); composer = null; }
+      if (outlinePass) outlinePass = null;
       if (renderer) renderer.dispose();
       renderer = null;
       scene = null;
