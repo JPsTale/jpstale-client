@@ -8,7 +8,7 @@ import { loadCharacterModel, JOB_DATA } from '../render/char-loader.js';
 import { evalSkeleton, applyToBones } from './animation.js';
 import { createAnimStateMachine } from './anim-state-machine.js';
 import { motionStateName } from './char-format.js';
-import { decodeTextureAsync } from '../core/texture.js';
+import { decodeTextureAsync, encodeAssetPath } from '../core/texture.js';
 import type { MotionInfo } from './char-format.js';
 
 const app = document.getElementById('app') as HTMLElement;
@@ -58,7 +58,7 @@ scene.add(dirLight);
 
 async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | null> {
   try {
-    const resp = await fetch(url, { cache: 'no-store' });
+    const resp = await fetch(encodeAssetPath(url), { cache: 'no-store' });
     if (!resp.ok) return null;
     const buf = await resp.arrayBuffer();
     const decoded = await decodeTextureAsync(buf);

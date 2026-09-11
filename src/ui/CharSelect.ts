@@ -3,7 +3,7 @@ import { t } from '../i18n/index.js';
 import { loadCharacterModel, CharLoadResult } from '../render/char-loader.js';
 import { createAnimStateMachine, AnimStateMachine } from '../char/anim-state-machine.js';
 import { evalSkeleton, applyToBones } from '../char/animation.js';
-import { decodeTextureAsync } from '../core/texture.js';
+import { decodeTextureAsync, encodeAssetPath } from '../core/texture.js';
 import { createCameraControls } from './camera-controls.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import type { MotionInfo } from '../char/char-format.js';
@@ -118,7 +118,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   // Texture loading (same as char-demo.ts)
   async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | null> {
     try {
-      const resp = await fetch(url, { cache: 'no-store' });
+      const resp = await fetch(encodeAssetPath(url), { cache: 'no-store' });
       if (!resp.ok) return null;
       const buf = await resp.arrayBuffer();
       const decoded = await decodeTextureAsync(buf);

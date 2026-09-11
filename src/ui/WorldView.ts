@@ -30,7 +30,7 @@ import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import { evalSkeleton, applyToBones } from '../char/animation.js';
-import { decodeTextureAsync } from '../core/texture.js';
+import { decodeTextureAsync, encodeAssetPath } from '../core/texture.js';
 import { cachedFetch } from '../core/asset-cache.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
@@ -917,7 +917,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 角色纹理加载（复刻 CharSelect：隐藏→加载纹理→显示）
   async function fetchAndDecodeTexture(url: string): Promise<THREE.DataTexture | null> {
     try {
-      const resp = await fetch(url, { cache: 'no-store' });
+      const resp = await fetch(encodeAssetPath(url), { cache: 'no-store' });
       if (!resp.ok) return null;
       const buf = await resp.arrayBuffer();
       const decoded = await decodeTextureAsync(buf);

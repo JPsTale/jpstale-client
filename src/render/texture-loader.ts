@@ -3,7 +3,7 @@
  * 迁移自 maps/index.html loadGameTexture。翻转、mipmap、colorSpace、alpha 语义复刻原引擎。
  */
 import * as THREE from 'three';
-import { decodeTextureAsync } from '../core/texture';
+import { decodeTextureAsync, encodeAssetPath } from '../core/texture';
 
 const cache = new Map<string, THREE.DataTexture>();
 
@@ -27,7 +27,7 @@ export async function loadGameTexture(url: string): Promise<THREE.DataTexture | 
   const hit = cache.get(url);
   if (hit) return hit;
   try {
-    const r = await fetch(url);
+    const r = await fetch(encodeAssetPath(url));
     if (!r.ok) return null;
     const buf = await r.arrayBuffer();
     const decoded = await decodeTextureAsync(buf);

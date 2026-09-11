@@ -21,6 +21,14 @@ export function decodeTexture(arrayBuffer: ArrayBuffer): DecodedTexture | null {
   return decodeTGA(data);
 }
 
+/**
+ * 资产相对路径 → URL 安全路径。逐段 encodeURIComponent，
+ * 避免 `#`(fragment)/`?`(query) 等字符被浏览器截断（如 Monsco#1.bmp 会只请求到 Monsco）。
+ */
+export function encodeAssetPath(path: string): string {
+  return path.split('/').map(encodeURIComponent).join('/');
+}
+
 /** 判断是否为未加密 PNG（PNG 魔数 89 50 4E 47） */
 export function isPng(arrayBuffer: ArrayBuffer): boolean {
   const data = new Uint8Array(arrayBuffer, 0, 4);
