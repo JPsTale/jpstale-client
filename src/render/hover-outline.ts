@@ -107,8 +107,13 @@ export class HoverOutline {
       this.restoreVisibility();
     }
 
+    // 合成到屏幕：绝不能 clear（会擦掉刚渲染的主画面 → 黑屏）。
+    // mask 渲染时 autoClear=true 清的是 maskRT，合成这里必须关掉再渲染。
+    r.autoClear = false;
+    r.clearDepth();
     (this.quadMat.uniforms.uColor.value as THREE.Color).copy(this.color);
     r.render(this.quadScene, this.quadCam);
+    r.autoClear = prevAutoClear;
   }
 
   /** 记录目标子树中的非 Mesh 可见对象并临时隐藏，渲染 mask 后恢复。 */
