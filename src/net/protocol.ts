@@ -182,14 +182,7 @@ export function decodeServer(data: ArrayBuffer | Uint8Array): jpt.base.ServerMes
 }
 
 export function debugLog(msg: jpt.base.ServerMessage): void {
-    // 高频噪音过滤：心跳 / 状态广播 / 高频移动类消息不打日志
-    if (
-        msg.payload === 'pong' ||
-        msg.payload === 'playerMove' ||
-        msg.payload === 'monsterMove' ||
-        msg.payload === 'monsterState'
-    ) {
-        return;
-    }
-    console.log(JSON.stringify(jpt.base.ServerMessage.toObject(msg)));
+    // 调试期默认关闭整包日志（需要时放开下行）
+    // console.log(JSON.stringify(jpt.base.ServerMessage.toObject(msg)));
+    void msg;
 }

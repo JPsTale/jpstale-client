@@ -70,7 +70,7 @@ export interface AnimStateMachine {
 
 export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMachine {
   const { getMotions, getClassId, getWeaponIdCode, getWeaponType, getFieldState, onStanceChange, onMotionChange, log: logFn } = opts;
-  const log2 = logFn || ((msg: string) => console.log(msg));
+  const log2 = logFn || ((_msg: string) => { /* 调试期日志默认关闭 */ });
 
   let currentState = STATE.STAND;
   let currentMotion: MotionInfo | null = null;
