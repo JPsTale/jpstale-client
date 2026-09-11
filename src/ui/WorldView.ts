@@ -83,6 +83,8 @@ export interface WorldView {
   applyUnitHp(targetId: number, hp: number, isDamage: boolean): void;
   /** S2C_AttackResult：怪物受击 → 自减血量（服务端暂只广播 damage）；attackerId=self 触发自机战斗窗口 */
   applyMonsterHit(monsterId: number, damage: number): void;
+  /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
+  showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
@@ -2095,6 +2097,47 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
+  // ==================== 伤害/躲闪飘字（对齐原版 SHOW_DMG：头顶 1s 上飘 + 线性淡出） ====================
+  interface DmgFloater {
+    kind: 'self' | 'monster' | 'remote';
+    id: number;
+    text: string;
+    color: string;
+    font: string;
+    born: number;
+    life: number;
+  }
+  const floaters: DmgFloater[] = [];
+
+  /** 飘字锚点 = 实体当前头顶锚（每帧重解析，始终贴角色） */
+  function floaterAnchor(f: DmgFloater): { root: THREE.Object3D; topY: number } | null {
+    if (f.kind === 'self') return charGroup && charGroup.visible ? { root: charGroup, topY: selfTopY } : null;
+    if (f.kind === 'monster') {
+      const m = monsters.get(f.id);
+      return m && m.root.visible ? { root: m.root, topY: m.topY } : null;
+    }
+    const r = remotes.get(f.id);
+    return r && r.root.visible ? { root: r.root, topY: r.topY } : null;
+  }
+
+  /** 入一只飘字；kind=null 时按 targetId 自动解析归属；不在视野的实体直接丢弃（原版服务端 64 格 AOI 过滤的等价物） */
+  function showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void {
+    let k = kind;
+    if (!k) {
+      if (id === selfPlayerId) k = 'self';
+      else if (monsters.has(id)) k = 'monster';
+      else if (remotes.has(id)) k = 'remote';
+      else return;
+    }
+    const font = crit
+      ? '700 18px Verdana, "Microsoft YaHei", sans-serif'
+      : k === 'monster'
+        ? '700 15px Verdana, "Microsoft YaHei", sans-serif'
+        : '700 14px Verdana, "Microsoft YaHei", sans-serif';
+    while (floaters.length >= 64) floaters.shift(); // 防爆上限
+    floaters.push({ kind: k, id, text, color, font, born: performance.now(), life: 1000 });
+  }
+
   /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
   function drawNameplateOverlay(): void {
     const ctx = npCtx;
@@ -2173,6 +2216,34 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           selected: false,
         });
       } else selfDrop = 1;
+    }
+
+    // 伤害/躲闪飘字：头顶起点上飘 48px 并在 1s 内线性淡出（对齐原版 SHOW_DMG 动画）
+    if (floaters.length) {
+      const keep: DmgFloater[] = [];
+      for (const f of floaters) {
+        const el = now - f.born;
+        if (el >= f.life) continue;
+        const a = floaterAnchor(f);
+        if (!a) continue;
+        const pt = anchorToScreen(a.root, a.topY);
+        if (!pt) continue;
+        const t = el / f.life;
+        const fy = pt.y - 10 - t * 48;
+        ctx.globalAlpha = Math.max(0, 1 - t);
+        ctx.font = f.font;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+        ctx.lineWidth = 3;
+        ctx.strokeText(f.text, pt.x, fy);
+        ctx.fillStyle = f.color;
+        ctx.fillText(f.text, pt.x, fy);
+        ctx.globalAlpha = 1;
+        keep.push(f);
+      }
+      floaters.length = 0;
+      for (const f of keep) floaters.push(f);
     }
 
     if (dbg && (dbgFrame = (dbgFrame + 1) % 180) === 0) {
@@ -3119,6 +3190,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     markSelfCombat,
     applyUnitHp,
     applyMonsterHit,
+    showFloater,
     applyPlayerMove: (playerId, x, y, z, angle, animState) => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {

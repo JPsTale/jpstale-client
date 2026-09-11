@@ -6380,6 +6380,9 @@ export namespace jpt {
             /** S2C_AttackResult isCritical. */
             isCritical: boolean;
 
+            /** S2C_AttackResult missed. */
+            missed: boolean;
+
             /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @param [properties] Properties to set
@@ -6475,6 +6478,9 @@ export namespace jpt {
 
                 /** S2C_AttackResult isCritical */
                 isCritical?: (boolean|null);
+
+                /** S2C_AttackResult missed */
+                missed?: (boolean|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

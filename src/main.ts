@@ -618,22 +618,34 @@ onMessage((msg: jpt.base.ServerMessage) => {
       break;
     }
     case 'attackResult': {
-      // 攻击结算（服务端只广播 damage/是否暴击，无 currentHp）：
-      // 自机发起攻击 → 战斗窗口；怪物受击 → 从出现血量自减
+      // 攻击结算（服务端只广播 damage/暴击/missed，无 currentHp）：
+      // 命中 → 目标怪物飘伤害+自减血；missed → 头顶 MISS；自机出手 → 战斗窗口
       const ar = msg.attackResult!;
-      if (worldView.isSelf(Number(ar.attackerId ?? 0))) worldView.markSelfCombat();
-      worldView.applyMonsterHit(Number(ar.targetId ?? 0), ar.damage || 0);
+      const attackerId = Number(ar.attackerId ?? 0);
+      const targetId = Number(ar.targetId ?? 0);
+      if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
+      if (ar.missed) {
+        worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false);
+      } else {
+        const crit = !!ar.isCritical;
+        worldView.showFloater('monster', targetId, String(ar.damage || 0), crit ? '#ff9d4d' : '#ffd166', crit);
+        worldView.applyMonsterHit(targetId, ar.damage || 0);
+      }
       break;
     }
     case 'damage': {
-      // 权威剩余血量覆盖（服务端当前不发送；留作 S2C_Damage 启用后的兜底）
+      // 怪→玩家伤害（S2C_Damage：targetId=受害者，damage+权威 currentHp）→ 受害者头顶飘红字
       const d = msg.damage!;
-      worldView.applyUnitHp(Number(d.targetId ?? 0), d.currentHp || 0, true);
+      const tid = Number(d.targetId ?? 0);
+      worldView.showFloater(null, tid, '-' + (d.damage || 0), '#ff6b6b', false);
+      worldView.applyUnitHp(tid, d.currentHp || 0, true);
       break;
     }
     case 'heal': {
       const h = msg.heal!;
-      worldView.applyUnitHp(Number(h.targetId ?? 0), h.currentHp || 0, false);
+      const tid = Number(h.targetId ?? 0);
+      worldView.showFloater(null, tid, '+' + (h.healAmount || 0), '#5cff8a', false);
+      worldView.applyUnitHp(tid, h.currentHp || 0, false);
       break;
     }
     case 'npcAppear': {

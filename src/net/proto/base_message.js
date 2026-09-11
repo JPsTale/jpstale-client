@@ -19414,6 +19414,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|Long|null} [targetId] S2C_AttackResult targetId
              * @property {number|null} [damage] S2C_AttackResult damage
              * @property {boolean|null} [isCritical] S2C_AttackResult isCritical
+             * @property {boolean|null} [missed] S2C_AttackResult missed
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -19478,6 +19479,14 @@ export const jpt = $root.jpt = (() => {
             S2C_AttackResult.prototype.isCritical = false;
 
             /**
+             * S2C_AttackResult missed.
+             * @member {boolean} missed
+             * @memberof jpt.base.S2C_AttackResult
+             * @instance
+             */
+            S2C_AttackResult.prototype.missed = false;
+
+            /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_AttackResult
@@ -19517,6 +19526,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.damage);
                 if (message.isCritical != null && $Object.hasOwnProperty.call(message, "isCritical") && message.isCritical !== false)
                     writer.uint32(/* id 4, wireType 0 =*/32).bool(message.isCritical);
+                if (message.missed != null && $Object.hasOwnProperty.call(message, "missed") && message.missed !== false)
+                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.missed);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -19610,6 +19621,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.isCritical;
                             continue;
                         }
+                    case 5: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.bool())
+                                message.missed = value;
+                            else
+                                delete message.missed;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -19670,6 +19690,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.isCritical != null && $Object.hasOwnProperty.call(message, "isCritical"))
                     if (typeof message.isCritical !== "boolean")
                         return "isCritical: boolean expected";
+                if (message.missed != null && $Object.hasOwnProperty.call(message, "missed"))
+                    if (typeof message.missed !== "boolean")
+                        return "missed: boolean expected";
                 return null;
             };
 
@@ -19717,6 +19740,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.isCritical != null)
                     if (object.isCritical)
                         message.isCritical = $Boolean(object.isCritical);
+                if (object.missed != null)
+                    if (object.missed)
+                        message.missed = $Boolean(object.missed);
                 return message;
             };
 
@@ -19750,6 +19776,7 @@ export const jpt = $root.jpt = (() => {
                         object.targetId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.damage = 0;
                     object.isCritical = false;
+                    object.missed = false;
                 }
                 if (message.attackerId != null && $Object.hasOwnProperty.call(message, "attackerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -19769,6 +19796,8 @@ export const jpt = $root.jpt = (() => {
                     object.damage = message.damage;
                 if (message.isCritical != null && $Object.hasOwnProperty.call(message, "isCritical"))
                     object.isCritical = message.isCritical;
+                if (message.missed != null && $Object.hasOwnProperty.call(message, "missed"))
+                    object.missed = message.missed;
                 return object;
             };
 
