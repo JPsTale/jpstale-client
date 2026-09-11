@@ -44,6 +44,8 @@ export class HoverOutline {
   private rawMaskMatCache: THREE.MeshBasicMaterial | null = null;
   private diagProbe = false;
   private probeTex: THREE.DataTexture | null = null;
+  private diagFlat = false;
+  private flatMat: THREE.ShaderMaterial | null = null;
   /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
   private diagWhiteMask = false;
   private whiteTex: THREE.DataTexture | null = null;
@@ -144,6 +146,7 @@ export class HoverOutline {
       this.diagRT = wd === 'rt';
       this.diagRaw = wd === 'raw';
       this.diagProbe = wd === 'probe';
+      this.diagFlat = wd === 'flat';
     }
 
     try {
@@ -263,8 +266,19 @@ export class HoverOutline {
     }
     (this.quadMat.uniforms.uMask.value as THREE.Texture) = uMask;
 
-    // 纯绿/显 mask 诊断：替换合成 quad 的材质（绕开正常 mask 合成逻辑）
-    if (this.diagPureGreen) {
+    // 纯绿/显 mask/纯红诊断：替换合成 quad 的材质（绕开正常 mask 合成逻辑）
+    if (this.diagFlat) {
+      // 不采样任何纹理、忽略所有 uniform，纯 red shader：判定 ShaderMaterial 合成路径在真机是否真的输出
+      if (!this.flatMat) {
+        this.flatMat = new THREE.ShaderMaterial({
+          vertexShader: `void main(){ gl_Position = vec4(position.xy, 0.0, 1.0); }`,
+          fragmentShader: `void main(){ gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); }`,
+          depthTest: false,
+          depthWrite: false,
+        });
+      }
+      this.quad.material = this.flatMat;
+    } else if (this.diagPureGreen) {
       if (!this.greenMat) {
         this.greenMat = new THREE.MeshBasicMaterial({
           color: 0x54ff9f,
