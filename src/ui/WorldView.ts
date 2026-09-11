@@ -337,7 +337,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 1300;
+    ray.far = 3900;
 
     const roots: THREE.Object3D[] = [];
     for (const g of groundItems.values()) roots.push(g.root);
@@ -1296,7 +1296,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 1300;
+    ray.far = 3900;
     const targets: THREE.Object3D[] = [];
     for (const r of remotes.values()) targets.push(r.root);
     for (const hit of ray.intersectObjects(targets, true)) {
@@ -1320,7 +1320,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 1300; // ≈ 服务端 CONNECT(1086)：可视内任意掉落可选中
+    ray.far = 3900; // ≈ 服务端 CONNECT(1086)：可视内任意掉落可选中
     const targets: THREE.Object3D[] = [];
     for (const g of groundItems.values()) targets.push(g.root);
     for (const hit of ray.intersectObjects(targets, true)) {
@@ -1341,7 +1341,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 1300;
+    ray.far = 3900;
     const targets: THREE.Object3D[] = [];
     for (const m of monsters.values()) targets.push(m.root);
     for (const hit of ray.intersectObjects(targets, true)) {
@@ -1362,7 +1362,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = 1300;
+    ray.far = 3900;
     const targets: THREE.Object3D[] = [];
     for (const n of npcs.values()) targets.push(n.root);
     for (const hit of ray.intersectObjects(targets, true)) {
