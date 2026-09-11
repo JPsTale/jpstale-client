@@ -1903,7 +1903,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return sprite;
   }
 
-  /** 模型组在自身空间里的最高点（用于把名字牌抬到模型顶上） */
+  /** 模型组在自身空间里的最高点（用于把名字牌抬到模型顶上，不含模型所处世界平移） */
   function modelTopY(model: THREE.Object3D): number {
     let top = 0;
     model.updateMatrixWorld(true);
@@ -1915,10 +1915,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (!g) return;
       if (!g.boundingBox) g.computeBoundingBox();
       const bb = g.boundingBox!;
-      // 把局部 bbox 顶点变换到 group 空间取最大 y（模型躺在 XZ，顶部为 +Y）
+      // 局部 bbox 顶点 → world → group 空间，取最大 y（去掉 group 世界平移后即自身相对高度）
       for (const [x, y, z] of [[bb.min.x, bb.min.y, bb.min.z], [bb.max.x, bb.max.y, bb.max.z]] as const) {
         v.set(x, y, z);
         mesh.localToWorld(v);
+        model.worldToLocal(v);
         top = Math.max(top, v.y);
       }
     });
