@@ -49,6 +49,7 @@ export class HoverOutline {
   private probeTex: THREE.DataTexture | null = null;
   private diagFlat = false;
   private flatMat: THREE.ShaderMaterial | null = null;
+  private lastDiagMode: string | undefined;
   /** 诊断：true 时跳过 mask 渲染、用全白 uMask 强制合成，判定合成 pass 是否本身可用。 */
   private diagWhiteMask = false;
   private whiteTex: THREE.DataTexture | null = null;
@@ -144,7 +145,10 @@ export class HoverOutline {
     // 真机诊断入口：console 执行 window.__hoverDiag='green'（纯绿合成）/ 'mask'（显示 mask 剪影）切换
     if (typeof window !== 'undefined') {
       const wd = (window as unknown as { __hoverDiag?: string }).__hoverDiag;
-      if (wd) console.log(`[hover-diag] 诊断模式生效: '${wd}'`);
+      if (this.lastDiagMode !== wd) {
+        this.lastDiagMode = wd;
+        if (wd) console.log(`[hover-diag] 诊断模式生效: '${wd}'`);
+      }
       this.diagPureGreen = wd === 'green';
       this.diagShowMask = wd === 'mask';
       this.diagWhiteMask = wd === 'white';
@@ -195,10 +199,10 @@ export class HoverOutline {
       const prevAutoClear = r.autoClear;
       try {
         if (this.diagRaw) {
-          // 诊断 raw：mask 渲染直接画到主屏（绿色剪影叠加），不经 RT/合成——
-          // 判定"mask 渲染本身能否画出目标形状"（绿=画出来了；无=渲染根本没画）
+          // 诊断 raw：mask 渲染直接画主屏（清屏后单画目标）——
+          // 白底黑/黑底白的颜色对比判定 maskScene 渲染本身的色彩是否正确
           ren.overrideMaterial = this.rawMaskMat();
-          r.autoClear = false;
+          r.autoClear = true;
           r.render(this.maskScene, camera);
         } else {
           ren.overrideMaterial = this.maskMat;
