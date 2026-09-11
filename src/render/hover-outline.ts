@@ -110,14 +110,13 @@ export class HoverOutline {
   /** 一次性诊断：渲染完成后打印真实 RT 尺寸与已编译 program 列表（区分 mask/quad 是否被渲染器使用）。 */
   private diagLinkStatus(): void {
     const r = this.renderer;
-    const info = (r as unknown as { info?: { programs: { name: string }[]; render: { calls: number; triangles: number } } }).info;
-    console.log('[hover-diag] 渲染后', {
+    const info = (r as unknown as { info?: { programs: unknown[]; render: { calls: number; triangles: number } } }).info;
+    console.log('[hover-diag] 渲染后 (programs 数量=' + (info?.programs.length ?? 0) + ')', {
       rt: `${this.maskRT.width}x${this.maskRT.height}`,
       canvas: `${r.domElement.width}x${r.domElement.height} (CSS ${r.domElement.clientWidth}x${r.domElement.clientHeight})`,
       pixelRatio: r.getPixelRatio(),
       renderCalls: info?.render.calls,
       triangles: info?.render.triangles,
-      programs: info?.programs.map((p) => p.name).join(', '),
     });
   }
 
