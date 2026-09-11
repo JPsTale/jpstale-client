@@ -2407,7 +2407,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         pivot.add(model);
         root.add(pivot);
 
-        const topY = model.position.y + modelTopY(model) + 0.55; // overlay 名牌锚点
+        const topY = 0.5; // overlay 名牌锚点：掉落物多平躺于地，固定贴近地面（勿用模型顶高）
 
         // 躺平模型低矮，加一块隐形拾取垫（贴近地面、透明）扩大点击目标
         const pad = new THREE.Mesh(
