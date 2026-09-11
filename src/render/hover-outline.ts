@@ -83,21 +83,22 @@ export class HoverOutline {
     return this.target !== null;
   }
 
-  /** 一次性 shader 链接自检（诊断用），打印 mask/quad 材质是否链接成功。 */
+  /** 一次性 shader 链接自检（诊断用），打印 mask/quad 材质是否链接成功。渲染完成后调用。 */
   private diagLinkStatus(): void {
     const gl = (this.renderer as unknown as { getContext?: () => WebGL2RenderingContext }).getContext?.();
     if (!gl) return;
     const statOf = (m: THREE.Material): string => {
       const p = (m as unknown as { program?: WebGLProgram }).program;
-      if (!p) return '无 program（未用/未编译）';
+      if (!p) return '无 program（渲染中被跳过）';
       return gl.getProgramParameter(p, gl.LINK_STATUS)
         ? 'link OK'
         : `LINK FAIL: ${gl.getProgramInfoLog(p) || '(空)'}`;
     };
-    console.log('[hover-diag] 初始化', {
+    const r = this.renderer;
+    console.log('[hover-diag] 渲染后', {
       rt: `${this.maskRT.width}x${this.maskRT.height}`,
-      logDepth: (this.renderer as unknown as { logarithmicDepthBuffer?: boolean }).logarithmicDepthBuffer,
-      pixelRatio: this.renderer.getPixelRatio(),
+      canvas: `${r.domElement.width}x${r.domElement.height} (CSS ${r.domElement.clientWidth}x${r.domElement.clientHeight})`,
+      pixelRatio: r.getPixelRatio(),
       mask: statOf(this.maskMat),
       quad: statOf(this.quadMat),
     });
@@ -110,11 +111,6 @@ export class HoverOutline {
   render(camera: THREE.Camera): void {
     const target = this.target;
     if (!target) return;
-
-    if (!this.diagLogged) {
-      this.diagLogged = true;
-      this.diagLinkStatus();
-    }
 
     const r = this.renderer;
     const w = Math.max(1, Math.floor(r.domElement.width * r.getPixelRatio()));
@@ -161,6 +157,11 @@ export class HoverOutline {
     (this.quadMat.uniforms.uColor.value as THREE.Color).copy(this.color);
     r.render(this.quadScene, this.quadCam);
     r.autoClear = prevAutoClear;
+
+    if (!this.diagLogged) {
+      this.diagLogged = true;
+      this.diagLinkStatus();
+    }
   }
 
   /**
