@@ -20,8 +20,13 @@ export interface Hud {
   dispose(): void
   /** 同步走/跑状态到 tooltip 展示 */
   setRunFlag(run: boolean): void
-  /** 用户动作回调（走跑按钮 / 系统按钮 / 角色状态按钮 / 技能面板按钮等） */
-  onAction?: (action: 'toggleRun' | 'system' | 'status' | 'skills' | 'inventory') => void
+  /** 同步相机模式到按钮图标（0=手动 1=自动 2=固定） */
+  setCamFlag(mode: number): void
+  /** 同步小地图开关到按钮图标 */
+  setMapFlag(on: boolean): void
+  /** 用户动作回调（走跑/相机/地图按钮 / 系统按钮 / 角色状态按钮 / 技能面板按钮等） */
+  onAction?: (action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap'
+    | 'system' | 'status' | 'skills' | 'inventory') => void
 }
 
 const W = 1280
@@ -107,17 +112,28 @@ export function createHud(container: HTMLElement): Hud {
   // 点击拦截：不对 HUD 底部整带设一个 pointer-events:auto 大坝（会吞掉玩家在空白
   // 区的移动点击），而是仅在真正的交互控件矩形上覆盖小的 pointer-events:auto 层。
   // 因此点 HUD 时世界画布收不到事件（不误触移动），点按钮旁的底带空白处则正常穿透移动。
-  // 各矩形为内容坐标（800×600），fitCanvas 换算为物理坐标。坐标与 draw() 中按钮一致。
+  // 各矩形为内容坐标（800×600），fitCanvas 换算为物理坐标。
+  // ⚠ **命中判定与拦截层共用同一张表**：原先拦截层(cam/map 在 599/623,y565) 与 tooltip 绘制(595/621,y536)
+  // 各写一份坐标，导致"看得见却点不到/点了没反应"（用户 2026-09-12 报的相机/地图按钮）。见 SMALL_BTN。
+  // 走跑/相机/地图三个小按钮矩形（内容坐标 800×600）：**tooltip 绘制、命中判定、拦截层共用这一张表** ——
+  // 原先三处各写一份坐标（tooltip 569/595/621@555、拦截层 599/623@565、点击判定还漏了相机/地图），
+  // 于是"看得见却点不到 / 按钮点了没反应"（用户 2026-09-12 报的相机/地图按钮）。
+  const SMALL_BTN = {
+    run:  { x: 569, y: 555, w: 26, h: 26 },
+    cam:  { x: 595, y: 555, w: 26, h: 26 },
+    map:  { x: 621, y: 555, w: 26, h: 26 },
+  } as const;
+  const inRect = (mx: number, my: number, r: { x: number; y: number; w: number; h: number }) =>
+    mx >= r.x && mx < r.x + r.w && my >= r.y && my < r.y + r.h;
+
   const INTERACT_RECTS = [
-    { x: 569, y: 555, w: 26, h: 26 }, // 走跑
-    { x: 599, y: 565, w: 24, h: 25 }, // cam
-    { x: 623, y: 565, w: 24, h: 25 }, // map
-    { x: 648, y: 560, w: 25, h: 27 }, // b0
-    { x: 673, y: 560, w: 25, h: 27 }, // b1
-    { x: 698, y: 560, w: 25, h: 27 }, // b2
-    { x: 723, y: 560, w: 25, h: 27 }, // b3
-    { x: 748, y: 560, w: 25, h: 27 }, // b4
-    { x: 773, y: 560, w: 25, h: 27 }, // b5
+    SMALL_BTN.run, SMALL_BTN.cam, SMALL_BTN.map,
+    { x: 648, y: 560, w: 25, h: 27 }, // b0 角色状态
+    { x: 673, y: 560, w: 25, h: 27 }, // b1 背包
+    { x: 698, y: 560, w: 25, h: 27 }, // b2 技能
+    { x: 723, y: 560, w: 25, h: 27 }, // b3 组队（未接线）
+    { x: 748, y: 560, w: 25, h: 27 }, // b4 任务（未接线）
+    { x: 773, y: 560, w: 25, h: 27 }, // b5 系统
   ];
   const barriers = INTERACT_RECTS.map(() => {
     const el = document.createElement('div');
@@ -171,7 +187,7 @@ export function createHud(container: HTMLElement): Hud {
   // 指针（悬停/按下；HUD canvas 为 pointer-events:none，事件走 window 只读检测，不拦截世界点击）
   let ptrX = -1, ptrY = -1, ptrDown = false;
   // 功能/交互小状态（暂为 tooltip 用；后续动作接线后由行为更新）
-  const uiState = { runFlag: true, camFlag: 2, mapOnFlag: true };
+  const uiState = { runFlag: true, camFlag: 1, mapOnFlag: true };
   window.addEventListener('pointermove', (e) => { ptrX = e.clientX; ptrY = e.clientY; });
   window.addEventListener('pointerdown', (e) => { if (e.button === 0) ptrDown = true; });
   window.addEventListener('pointerup', (e) => { if (e.button === 0) ptrDown = false; });
@@ -206,32 +222,54 @@ export function createHud(container: HTMLElement): Hud {
     const t = textures[name];
     if (!t?.el) return;
     const ratio = max > 0 ? Math.max(0, Math.min(1, value / max)) : 0;
+    // 底槽：这些 bar_*.bmp 本身就是**纯填充条**（如 bar_exp.bmp 只有 6×86 一列），
+    // 只画填充的话"进度为 0"就等于整条消失（用户 2026-09-12 报"经验条完全消失"）。
+    // 先以低透明度铺一条底槽，条的位置与长度在任何数值下都看得见。
+    const alpha = ctx.globalAlpha;
+    ctx.globalAlpha = alpha * 0.18;
+    ctx.drawImage(t.el, 0, 0, t.w, t.h, x, y, w, h);
+    ctx.globalAlpha = alpha;
     const fillH = Math.max(1, Math.round(t.h * ratio));
     const sy = t.h - fillH;
-    const dh = h * ratio;
+    const dh = Math.max(1, h * ratio);   // ≥1px：进度 0 也留一格，不做"高度 0 的 drawImage"（那什么都不画）
     ctx.drawImage(t.el, 0, sy, t.w, fillH, x, y + h - dh, w, dh);
+  }
+
+  /** 走跑/相机/地图三个小按钮的状态泡泡（内容坐标 y536；map 泡泡与状态相反）。
+   *  悬停时显示 + **状态刚被切换时闪现 1.2s** —— 闪现这条**不能放在 drawHoverFx 里**：
+   *  那里开头会因"指针不在画布内"提前 return（ptrX=-1 时永远不画），闪现就永远看不到。 */
+  function drawSmallButtonBubble(hoverKey: 'run' | 'cam' | 'map' | null) {
+    const nowMs = performance.now();
+    if (hoverKey === 'run' || nowMs < flashUntil.run) {
+      drawTex(uiState.runFlag ? 'iRun' : 'iWalk', 575 + 12 - 38, 536, 77, 27);
+      return;
+    }
+    if (hoverKey === 'cam' || nowMs < flashUntil.cam) {
+      if (uiState.camFlag === 1) drawTex('iCamAuto', 575 + 26 + 13 - 38, 536, 77, 27);
+      else drawTex(uiState.camFlag === 2 ? 'iCamFix' : 'iCamHand', 575 + 24 + 12 - 38, 536, 77, 27);
+      return;
+    }
+    if (hoverKey === 'map' || nowMs < flashUntil.map) {
+      drawTex(uiState.mapOnFlag ? 'iMapOff' : 'iMapOn', 575 + 48 + 12 - 38, 536, 77, 27);
+    }
   }
 
   // 悬停反馈：把指针换算到内容(800×600)坐标后画 tooltip 泡泡/条数值（都在内容坐标）
   function drawHoverFx() {
     if (!currentState) return;
     const rect = canvas.getBoundingClientRect();
-    if (rect.width <= 0 || ptrX < rect.left || ptrX > rect.right || ptrY < rect.top || ptrY > rect.bottom) return;
+    const ptrInside = rect.width > 0 && ptrX >= rect.left && ptrX <= rect.right && ptrY >= rect.top && ptrY <= rect.bottom;
     const s = rect.width / W;
-    const mx = (ptrX - rect.left) / s - 240;
-    const my = (ptrY - rect.top) / s - 120;
-    const hit = (x0: number, y0: number, x1: number, y1: number) => mx >= x0 && mx < x1 && my >= y0 && my < y1;
+    const mx = ptrInside ? (ptrX - rect.left) / s - 240 : -1;
+    const my = ptrInside ? (ptrY - rect.top) / s - 120 : -1;
+    const hit = (x0: number, y0: number, x1: number, y1: number) => ptrInside && mx >= x0 && mx < x1 && my >= y0 && my < y1;
 
-    // 小按钮 tooltip（原版 y536；map 泡泡与状态相反）
+    // 小按钮泡泡：悬停优先，其次闪现（闪现不依赖指针位置）
     if (!ptrDown) {
-      if (hit(569, 555, 595, 581)) {
-        drawTex(uiState.runFlag ? 'iRun' : 'iWalk', 575 + 12 - 38, 536, 77, 27);
-      } else if (hit(595, 555, 621, 581)) {
-        if (uiState.camFlag === 1) drawTex('iCamAuto', 575 + 26 + 13 - 38, 536, 77, 27);
-        else drawTex(uiState.camFlag === 2 ? 'iCamFix' : 'iCamHand', 575 + 24 + 12 - 38, 536, 77, 27);
-      } else if (hit(621, 555, 647, 581)) {
-        drawTex(uiState.mapOnFlag ? 'iMapOff' : 'iMapOn', 575 + 48 + 12 - 38, 536, 77, 27);
-      }
+      drawSmallButtonBubble(
+        inRect(mx, my, SMALL_BTN.run) ? 'run'
+          : inRect(mx, my, SMALL_BTN.cam) ? 'cam'
+          : inRect(mx, my, SMALL_BTN.map) ? 'map' : null);
     }
     // 6 功能按钮 hover 泡泡（595+t*25,533）；按下时原版换 pressed sprite（缺资源）暂只隐泡泡
     for (let bt = 0; bt < 6; bt++) {
@@ -250,16 +288,40 @@ export function createHud(container: HTMLElement): Hud {
     if (hit(315, 500, 337, 594)) ctx.fillText(t('hud.life', { cur: Math.round(currentState.hp), max: Math.round(currentState.maxHp) }), 343, 500);
     if (hit(463, 498, 483, 595)) ctx.fillText(t('hud.mana', { cur: Math.round(currentState.mp), max: Math.round(currentState.maxMp) }), 490, 498);
     if (hit(300, 513, 313, 595)) ctx.fillText(t('hud.stm', { cur: Math.round(currentState.stm), max: Math.round(currentState.maxStm) }), 320, 513);
+    // 经验条悬停：只给一个比例（"EXP: 49.12%"）—— 玩家要的是进度，不是一段说明文字
+    if (hit(483, 505, 500, 597)) {
+      const need = currentState.maxExp;                    // 已按本级口径传入（nextExp - levelExp）
+      const pct = need > 0 ? Math.max(0, Math.min(100, (Math.max(0, currentState.exp) / need) * 100)) : 0;
+      ctx.fillText(t('hud.exp', { pct: pct.toFixed(2) }), 500, 512);
+    }
     ctx.shadowBlur = 0;
   }
 
+  /** 状态切换后的"气泡闪现"截止时刻：按键/按钮改了状态就在该格上把 tooltip 显示一会儿，
+   *  否则小按钮的图标只在鼠标悬停时才画出来，玩家按 R/Z/TAB 看不到任何反馈（用户 2026-09-12 报"图标不会改变"） */
+  const flashUntil: Record<'run' | 'cam' | 'map', number> = { run: 0, cam: 0, map: 0 };
+  const FLASH_MS = 1200;
+  const flash = (k: 'run' | 'cam' | 'map') => { flashUntil[k] = performance.now() + FLASH_MS; };
+
   function setRunFlag(run: boolean): void {
+    if (uiState.runFlag !== run) flash('run');
     uiState.runFlag = run;
   }
+  /** 同步相机模式到按钮图标（0=手动 1=自动 2=固定） */
+  function setCamFlag(mode: number): void {
+    if (uiState.camFlag !== mode) flash('cam');
+    uiState.camFlag = mode;
+  }
+  /** 同步小地图开关到按钮图标 */
+  function setMapFlag(on: boolean): void {
+    if (uiState.mapOnFlag !== on) flash('map');
+    uiState.mapOnFlag = on;
+  }
 
-  let onAction: ((action: 'toggleRun' | 'system' | 'status' | 'skills' | 'inventory') => void) | undefined;
+  let onAction: ((action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap'
+    | 'system' | 'status' | 'skills' | 'inventory') => void) | undefined;
 
-  // 走跑按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
+  // 走跑/相机/地图按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
   let prevPtrDown = false;
   function checkButtonClick(): void {
     const justPressed = ptrDown && !prevPtrDown;
@@ -270,10 +332,9 @@ export function createHud(container: HTMLElement): Hud {
     const s = rect.width / W;
     const mx = (ptrX - rect.left) / s - 240;
     const my = (ptrY - rect.top) / s - 120;
-    if (mx >= 569 && mx < 595 && my >= 555 && my < 581) {
-      sfx.playUi('click');
-      onAction?.('toggleRun');
-    }
+    if (inRect(mx, my, SMALL_BTN.run)) { sfx.playUi('click'); onAction?.('toggleRun'); return; }
+    if (inRect(mx, my, SMALL_BTN.cam)) { sfx.playUi('click'); onAction?.('toggleCamera'); return; }
+    if (inRect(mx, my, SMALL_BTN.map)) { sfx.playUi('click'); onAction?.('toggleMinimap'); return; }
     // 6 功能按钮（b0..b5）：b0=角色状态、b1=背包、b2=技能面板、b5=系统
     for (let bt = 0; bt < 6; bt++) {
       if (mx >= 648 + bt * 25 && mx < 648 + bt * 25 + 25 && my >= 560 && my < 587) {
@@ -390,6 +451,8 @@ export function createHud(container: HTMLElement): Hud {
       barriers.forEach((b) => b.remove());
     },
     setRunFlag,
+    setCamFlag,
+    setMapFlag,
     get onAction() { return onAction; },
     set onAction(fn) { onAction = fn; },
   };

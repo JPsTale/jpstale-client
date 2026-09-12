@@ -92,7 +92,11 @@
       .ins-bad { color: var(--bad); }
 
       /* 动作 */
-      .ins-act {
+      .ins-cands { padding: 2px 0 4px 26px; }
+.ins-cand { font-size: 11px; color: #9fb6cc; cursor: pointer; padding: 1px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ins-cand:hover { background: #1c2836; }
+.ins-cand--sel { color: #7fd6a0; }
+.ins-act {
         display: flex; gap: 8px; padding: 3px 4px; cursor: pointer; border-radius: 2px;
       }
       .ins-act:hover { background: #263041; }
@@ -107,6 +111,29 @@
       }
       .ins-skill:hover { background: #263041; }
       .ins-skill-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ins-chips { display: flex; gap: 3px; flex-wrap: wrap; align-items: center; }
+      .ins-chip {
+        background: #22303f; border: 1px solid var(--line); border-radius: 2px;
+        padding: 0 4px; color: #9fd0e8; cursor: pointer; font-size: 11px; white-space: nowrap;
+      }
+      .ins-chip:hover { background: #2e4356; border-color: var(--accent); color: #d8f0ff; }
+      .ins-chip--play { background: #1f3a2a; border-color: #2f6b47; color: #8fe0ad; }
+
+      /* 动画映射对照：左=原版直出 右=派生语义 */
+      .ins-xref-host { max-height: 46vh; overflow: auto; font-size: 11px; }
+      .ins-xr { border-left: 3px solid #444; padding: 3px 6px; margin-bottom: 3px; background: #171b22; }
+      .ins-xr--ok  { border-left-color: #2f6b47; }
+      .ins-xr--bad { border-left-color: #a33; background: #241a1c; }
+      .ins-xr--na  { border-left-color: #555; }
+      .ins-xr-l { color: #8fa3b8; }
+      .ins-xr-r { color: #cfe3f5; }
+      .ins-xr-c { color: #ff9d7a; }
+      /* 内联在 motion 条目下的派生语义行 */
+      .ins-xr-inline { color: #93a7bd; font-size: 11px; padding-left: 10px; }
+      .ins-xr-inline--bad { color: #ff9d7a; }
+.ins-xr-inline--in { color: #7fd6a0; }
+.ins-motion-bar { border-bottom: 1px solid #2b3644; margin-bottom: 6px; padding-bottom: 4px; }
+
 
       /* 诊断 */
       .ins-diag { display: flex; gap: 8px; padding: 2px 4px; border-bottom: 1px dashed #232a35; }
@@ -114,7 +141,38 @@
       .ins-diag-g { flex: 0 0 52px; color: var(--accent); }
       .ins-diag-l { flex: 0 0 160px; }
       .ins-diag-e { flex: 1 1 auto; color: var(--dim); word-break: break-all; }
-    </style>
+    
+.ins-modal { position: fixed; inset: 0; background: rgba(4,8,12,.72); z-index: 999; display: flex; align-items: center; justify-content: center; }
+.ins-modal-box { background: #131b23; border: 1px solid #33465c; width: min(920px, 94vw); max-height: 88vh; display: flex; flex-direction: column; }
+.ins-mk-row { display: flex; gap: 6px; padding: 6px 8px; flex-wrap: wrap; align-items: center; }
+.ins-mk-lvl1 { border-bottom: 1px solid #22303d; }
+.ins-mk-lvl2 { border-bottom: 1px solid #22303d; }
+.ins-mk-tab { background: #1b2733; color: #a9c2d8; border: 1px solid #2f4256; padding: 3px 9px; cursor: pointer; font-size: 12px; }
+.ins-mk-tab--on { background: #2d5c86; color: #eaf3fb; border-color: #4d87bb; }
+.ins-mk-tab:disabled { opacity: .45; cursor: not-allowed; }
+.ins-mk-body { display: flex; flex: 1 1 auto; min-height: 0; }
+.ins-mk-list { flex: 1 1 52%; overflow: auto; border-right: 1px solid #22303d; }
+.ins-mk-head { position: sticky; top: 0; background: #16202a; color: #83a0ba; font-size: 11px; padding: 4px 8px; border-bottom: 1px solid #22303d; }
+.ins-mk-item { display: flex; justify-content: space-between; padding: 3px 8px; cursor: pointer; font-size: 12px; }
+.ins-mk-item:hover { background: #1c2836; }
+.ins-mk-item--sel { background: #2d5c86; }
+.ins-mk-item--cur { color: #7fd6a0; }
+.ins-mk-ilv { color: #8aa6bf; }
+.ins-mk-slot { width: 34px; flex: 0 0 auto; color: #c8a26a; font-size: 11px; }
+.ins-mk-hand { width: 26px; flex: 0 0 auto; color: #7fb0d8; font-size: 11px; }
+.ins-mk-iname { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ins-mk-detail { flex: 1 1 48%; overflow: auto; padding: 8px 10px; }
+.ins-mk-name { color: #eaf3fb; font-size: 13px; margin: 4px 0 6px; }
+.ins-mk-sec { color: #7fb0d8; font-size: 12px; border-bottom: 1px solid #22303d; margin-top: 8px; padding-bottom: 2px; }
+.ins-mk-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.ins-mk-k { color: #8aa6bf; width: 46%; padding: 2px 0; }
+.ins-mk-v { color: #cfe3f5; }
+.ins-mk-prev { height: 120px; display: flex; align-items: center; justify-content: center; background: #0b1016; border: 1px solid #22303d; }
+.ins-mk-img { max-width: 100%; max-height: 116px; image-rendering: pixelated; }
+.ins-mk-foot { border-top: 1px solid #22303d; justify-content: flex-end; }
+.ins-mk-btn { background: #1b2733; color: #a9c2d8; border: 1px solid #2f4256; padding: 4px 12px; cursor: pointer; }
+.ins-mk-btn--ok { background: #2d5c86; color: #eaf3fb; border-color: #4d87bb; }
+</style>
   </head>
   <body>
     <div id="hud">初始化…</div>

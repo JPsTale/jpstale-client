@@ -76,7 +76,8 @@
     "statePoint": "剩余点数",
     "undo": "撤销上次分配",
     "exp": "经验值",
-    "expLeft": "还需经验",
+    "expInLevel": "本级经验 {cur} / {need}",
+    "expProgress": "{cur} / {need}　{pct}%",
     "regen": "恢复",
     "bio": "生物",
     "poison": "剧毒",
@@ -91,7 +92,8 @@
   "hud": {
     "life": "生命 {cur}/{max}",
     "mana": "魔力 {cur}/{max}",
-    "stm": "体力 {cur}/{max}"
+    "stm": "体力 {cur}/{max}",
+    "exp": "经验: {pct}%"
   },
   "job": {
     "fighter": "武士",
@@ -370,6 +372,7 @@
     },
     "guild": "公会",
     "trade": "交易",
+    "battle": "战斗",
     "system": "系统",
     "fold": "折叠聊天窗",
     "readonly": "该频道仅查看，请输入 /玩家名: 消息 私聊",
@@ -395,7 +398,13 @@
     "log": {
       "monsterKilled": "你击败了 {monster}！获得经验 {exp} 点、金币 {gold} 枚。",
       "playerHurt": "{monster} 对你造成 {damage} 点伤害！",
-      "levelUp": "恭喜你升到了 {level} 级！获得 {points} 点自由属性点。"
+      "playerHit": "你对 {monster} 造成 {damage} 点伤害。",
+      "playerCrit": "暴击！你对 {monster} 造成 {damage} 点伤害。",
+      "playerMiss": "你攻击 {monster} 未命中。",
+      "playerWhiff": "你的攻击落空了。",
+      "monsterMiss": "{monster} 的攻击未命中。",
+      "levelUp": "恭喜你升到了 {level} 级！获得 {points} 点自由属性点。",
+      "playerRespawn": "你已死亡，已在复活点重生。"
     }
   },
   "game": {
@@ -1130,6 +1139,20 @@
     },
     "battlefield_quest_master": {
       "name": "Battlefield Quest Master"
+    }
+  },
+  "death": {
+    "title": "你已死亡",
+    "timer": "{sec} 秒后将被强制送回村庄",
+    "pending": "复活中…",
+    "respawning": "正在返回复活点…",
+    "option": {
+      "field": "在此处附近的复活点复活",
+      "fieldCost": "代价：本级经验 {exp} 点、金币 {gold} 枚",
+      "town": "回到村庄复活（坦普族：理查登 / 魔灵族：菲尔拉）",
+      "townCost": "代价：本级经验 {exp} 点",
+      "wait": "继续躺着，什么都不做",
+      "waitCost": "倒计时结束后强制回村庄复活（代价同上）"
     }
   }
 }

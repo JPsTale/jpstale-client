@@ -1,0 +1,1572 @@
+{
+ "note": "技能图标 → 动画索引(skillCode) 的**提案**，来源 11 职业服务端 .in 明文。src=/in-name 表示名称匹配（证据强）；positional 表示按同职业代码块顺序推（中等）；none 表示被动或无动画。人工核对后再决定是否覆盖 skillIndexByIcon.ts。生成物，勿手改。",
+ "evidenceLevels": {
+  "/in-name": "强",
+  "positional": "中",
+  "none": "无"
+ },
+ "classes": {
+  "fighter": [
+   {
+    "iconFile": "tf10 m_mastery.bmp",
+    "name": "Melee Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tf12 f_attribute.bmp",
+    "name": "Fire Attribute",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tf14 raving.bmp",
+    "name": "Raving",
+    "code": 5,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf17 impact.bmp",
+    "name": "Impact",
+    "code": 24,
+    "src": "/in-name",
+    "evidence": "名称匹配「impact」"
+   },
+   {
+    "iconFile": "tf20 t_impact.bmp",
+    "name": "Triple Impact",
+    "code": 25,
+    "src": "/in-name",
+    "evidence": "名称匹配「tripleimpact」"
+   },
+   {
+    "iconFile": "tf23 b_swing.bmp",
+    "name": "Brutal Swing",
+    "code": 26,
+    "src": "/in-name",
+    "evidence": "名称匹配「brutalswing」"
+   },
+   {
+    "iconFile": "tf26 roar.bmp",
+    "name": "Roar",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「roar」"
+   },
+   {
+    "iconFile": "tf30 r_zecram.bmp",
+    "name": "Rage of Zecram",
+    "code": 28,
+    "src": "/in-name",
+    "evidence": "名称匹配「rageofzecram」"
+   },
+   {
+    "iconFile": "tf40 concentration.bmp",
+    "name": "Concentration",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「concentration」"
+   },
+   {
+    "iconFile": "tf43 a_crash.bmp",
+    "name": "Avenging Crash",
+    "code": 12,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf46 s_axe.bmp",
+    "name": "Swiftness",
+    "code": 13,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf50 b_crash.bmp",
+    "name": "Bone Crash",
+    "code": 14,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf60 destoryer.bmp",
+    "name": "Destroyer",
+    "code": 33,
+    "src": "/in-name",
+    "evidence": "名称匹配「Destroyer」"
+   },
+   {
+    "iconFile": "tf63 berserker.bmp",
+    "name": "Berserker",
+    "code": 34,
+    "src": "/in-name",
+    "evidence": "名称匹配「Berserker」"
+   },
+   {
+    "iconFile": "tf66 c_strike.bmp",
+    "name": "Cyclone Strike",
+    "code": 35,
+    "src": "/in-name",
+    "evidence": "名称匹配「CycloneStrike」"
+   },
+   {
+    "iconFile": "tf70 b_health.bmp",
+    "name": "Boost Health",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tf100 survival_instinct.bmp",
+    "name": "Charge",
+    "code": 19,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf103 sesmic_impact.bmp",
+    "name": "Inner Soul",
+    "code": 20,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf106 ruthless_zecram.bmp",
+    "name": "Hellion",
+    "code": 21,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   },
+   {
+    "iconFile": "tf110 whirlwind.bmp",
+    "name": "Flame Vortex",
+    "code": 22,
+    "src": "positional",
+    "evidence": "按块起点 3 顺序推"
+   }
+  ],
+  "mecha": [
+   {
+    "iconFile": "tm10 ex_shield.bmp",
+    "name": "Extreme Shield",
+    "code": 1,
+    "src": "/in-name",
+    "evidence": "名称匹配「extremeshield」"
+   },
+   {
+    "iconFile": "tm12 m_bomb.bmp",
+    "name": "Mechanic Bomb",
+    "code": 2,
+    "src": "/in-name",
+    "evidence": "名称匹配「mechanicbomb」"
+   },
+   {
+    "iconFile": "tm14 p_attribute.bmp",
+    "name": "Reverse Engineering",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tm17 ph_absorb.bmp",
+    "name": "Physical Absorption",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「physicalabsorption」"
+   },
+   {
+    "iconFile": "tm20 g_smash.bmp",
+    "name": "Great Smash",
+    "code": 5,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "tm23 maximize.bmp",
+    "name": "Maximize",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「maximize」"
+   },
+   {
+    "iconFile": "tm26 automation.bmp",
+    "name": "Automation",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「automation」"
+   },
+   {
+    "iconFile": "tm30 spark.bmp",
+    "name": "Spark",
+    "code": 8,
+    "src": "/in-name",
+    "evidence": "名称匹配「spark」"
+   },
+   {
+    "iconFile": "tm40 m_armor.bmp",
+    "name": "Metal Armor",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「metalarmor」"
+   },
+   {
+    "iconFile": "tm43 grand_smash.bmp",
+    "name": "Grand Smash",
+    "code": 10,
+    "src": "/in-name",
+    "evidence": "名称匹配「grandsmash」"
+   },
+   {
+    "iconFile": "tm44 m_weapon.bmp",
+    "name": "Mechanic Weapon Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tm50 s_shield.bmp",
+    "name": "Spark Shield",
+    "code": 12,
+    "src": "/in-name",
+    "evidence": "名称匹配「sparkshield」"
+   },
+   {
+    "iconFile": "tm60 impulsion.bmp",
+    "name": "Impulsion",
+    "code": 13,
+    "src": "/in-name",
+    "evidence": "名称匹配「Impulsion」"
+   },
+   {
+    "iconFile": "tm63 compulsion.bmp",
+    "name": "Compulsion",
+    "code": 14,
+    "src": "/in-name",
+    "evidence": "名称匹配「Compulsion」"
+   },
+   {
+    "iconFile": "tm66 m_sphere.bmp",
+    "name": "Magnetic Sphere",
+    "code": 12,
+    "src": "/in-name",
+    "evidence": "名称匹配「MagneticSphere」"
+   },
+   {
+    "iconFile": "tm70 m_golem.bmp",
+    "name": "Metal Golem",
+    "code": 16,
+    "src": "/in-name",
+    "evidence": "名称匹配「metalgolem」"
+   },
+   {
+    "iconFile": "tm100 rupture.bmp",
+    "name": "Precision",
+    "code": 17,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "tm103 parasit_shot.bmp",
+    "name": "Trine Shield",
+    "code": 18,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "tm106 hardening_shield.bmp",
+    "name": "Gravitation",
+    "code": 19,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "tm110 magnetic_discharge.bmp",
+    "name": "Obliterate",
+    "code": 20,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   }
+  ],
+  "archer": [
+   {
+    "iconFile": "ta10 s_hawk.bmp",
+    "name": "Scout Hawk",
+    "code": 61,
+    "src": "/in-name",
+    "evidence": "名称匹配「scouthawk」"
+   },
+   {
+    "iconFile": "ta12 s_mastery.bmp",
+    "name": "Shooting Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ta14 w_arrow.bmp",
+    "name": "Wind Arrow",
+    "code": 63,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta17 p_aim.bmp",
+    "name": "Perfect Aim",
+    "code": 64,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta20 d_eye.bmp",
+    "name": "Dion's Eye",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ta23 falcon.bmp",
+    "name": "Falcon",
+    "code": 61,
+    "src": "/in-name",
+    "evidence": "名称匹配「falcon」"
+   },
+   {
+    "iconFile": "ta26 a_rage.bmp",
+    "name": "Arrow of Rage",
+    "code": 67,
+    "src": "/in-name",
+    "evidence": "名称匹配「arrowofrage」"
+   },
+   {
+    "iconFile": "ta30 avalanchie.bmp",
+    "name": "Avalanche",
+    "code": 68,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta40 e_shot.bmp",
+    "name": "Elemental Shot",
+    "code": 69,
+    "src": "/in-name",
+    "evidence": "名称匹配「elementalshot」"
+   },
+   {
+    "iconFile": "ta43 g_falcon.bmp",
+    "name": "Golden Falcon",
+    "code": 61,
+    "src": "/in-name",
+    "evidence": "名称匹配「goldenfalcon」"
+   },
+   {
+    "iconFile": "ta46 b_shot.bmp",
+    "name": "Bomb Shot",
+    "code": 71,
+    "src": "/in-name",
+    "evidence": "名称匹配「bombshot」"
+   },
+   {
+    "iconFile": "ta50 perforation.bmp",
+    "name": "Perforation",
+    "code": 69,
+    "src": "/in-name",
+    "evidence": "名称匹配「perforation」"
+   },
+   {
+    "iconFile": "ta60 r_wolverin.bmp",
+    "name": "Wolverine",
+    "code": 73,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta63 e_mastery.bmp",
+    "name": "Evasion Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ta66 p_shot.bmp",
+    "name": "Phoenix Shot",
+    "code": 75,
+    "src": "/in-name",
+    "evidence": "名称匹配「PhoenixShot」"
+   },
+   {
+    "iconFile": "ta70 f_o_nature.bmp",
+    "name": "Force of Nature",
+    "code": 76,
+    "src": "/in-name",
+    "evidence": "名称匹配「ForceofNature」"
+   },
+   {
+    "iconFile": "ta100 lethal_sight.bmp",
+    "name": "Stun Arrow",
+    "code": 77,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta103 fierce_wind.bmp",
+    "name": "Phoenix Speed",
+    "code": 78,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta106 entailing_roots.bmp",
+    "name": "Leap Shot",
+    "code": 79,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   },
+   {
+    "iconFile": "ta110 bombardment.bmp",
+    "name": "Solar Arrow",
+    "code": 80,
+    "src": "positional",
+    "evidence": "按块起点 61 顺序推"
+   }
+  ],
+  "pikeman": [
+   {
+    "iconFile": "tp10 p_wind.bmp",
+    "name": "Pike Wind",
+    "code": 41,
+    "src": "/in-name",
+    "evidence": "名称匹配「pikewind」"
+   },
+   {
+    "iconFile": "tp12 i_attribute.bmp",
+    "name": "Ice Attribute",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tp14 cri_hit.bmp",
+    "name": "Critical Hit",
+    "code": 43,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   },
+   {
+    "iconFile": "tp17 j_crash.bmp",
+    "name": "Jumping Crash",
+    "code": 44,
+    "src": "/in-name",
+    "evidence": "名称匹配「jumpingcrash」"
+   },
+   {
+    "iconFile": "tp20 g_pike.bmp",
+    "name": "Ground Pike",
+    "code": 45,
+    "src": "/in-name",
+    "evidence": "名称匹配「groundpike」"
+   },
+   {
+    "iconFile": "tp23 tornado.bmp",
+    "name": "Tornado",
+    "code": 46,
+    "src": "/in-name",
+    "evidence": "名称匹配「tornado」"
+   },
+   {
+    "iconFile": "tp26 w_d_mastery.bmp",
+    "name": "Weapon Defense Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tp30 expasion.bmp",
+    "name": "Expansion",
+    "code": 48,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   },
+   {
+    "iconFile": "tp40 v_spear.bmp",
+    "name": "Venom Spear",
+    "code": 45,
+    "src": "/in-name",
+    "evidence": "名称匹配「venomspear」"
+   },
+   {
+    "iconFile": "tp43 vanish.bmp",
+    "name": "Vanish",
+    "code": 41,
+    "src": "/in-name",
+    "evidence": "名称匹配「vanish」"
+   },
+   {
+    "iconFile": "tp46 c_mastery.bmp",
+    "name": "Critical Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tp50 c_lance.bmp",
+    "name": "Chain Lancer",
+    "code": 52,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   },
+   {
+    "iconFile": "tp60 a_eye.bmp",
+    "name": "Assassin's Eye",
+    "code": 53,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   },
+   {
+    "iconFile": "tp63 c_strike.bmp",
+    "name": "Charging Strike",
+    "code": 54,
+    "src": "/in-name",
+    "evidence": "名称匹配「ChargingStrike」"
+   },
+   {
+    "iconFile": "tp66 vague.bmp",
+    "name": "Vague",
+    "code": 55,
+    "src": "/in-name",
+    "evidence": "名称匹配「Vague」"
+   },
+   {
+    "iconFile": "tp70 s_master.bmp",
+    "name": "Shadow Master",
+    "code": 56,
+    "src": "/in-name",
+    "evidence": "名称匹配「ShadowMaster」"
+   },
+   {
+    "iconFile": "tp100 ring_spears.bmp",
+    "name": "Attack Rating Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tp103 focus.bmp",
+    "name": "Lethal Strike",
+    "code": 58,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   },
+   {
+    "iconFile": "tp106 death_master.bmp",
+    "name": "Dodge",
+    "code": 59,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   },
+   {
+    "iconFile": "tp110 twister.bmp",
+    "name": "Vorpal Dive",
+    "code": 60,
+    "src": "positional",
+    "evidence": "按块起点 41 顺序推"
+   }
+  ],
+  "atalanta": [
+   {
+    "iconFile": "ma10 s_strike.bmp",
+    "name": "Shield Strike",
+    "code": 103,
+    "src": "/in-name",
+    "evidence": "名称匹配「shieldstrike」"
+   },
+   {
+    "iconFile": "ma12 farina.bmp",
+    "name": "Farina",
+    "code": 104,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma14 t_mastery.bmp",
+    "name": "Throwing Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ma17 v_spear.bmp",
+    "name": "Vigor Spear",
+    "code": 106,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma20 windy.bmp",
+    "name": "Windy",
+    "code": 107,
+    "src": "/in-name",
+    "evidence": "名称匹配「windy」"
+   },
+   {
+    "iconFile": "ma23 t_javelin.bmp",
+    "name": "Twist Javelin",
+    "code": 108,
+    "src": "/in-name",
+    "evidence": "名称匹配「twistjavelin」"
+   },
+   {
+    "iconFile": "ma26 s_sucker.bmp",
+    "name": "Soul Sucker",
+    "code": 103,
+    "src": "/in-name",
+    "evidence": "名称匹配「soulsucker」"
+   },
+   {
+    "iconFile": "ma30 f_javelin.bmp",
+    "name": "Fire Javelin",
+    "code": 110,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma40 split_javelin.bmp",
+    "name": "Split Javelin",
+    "code": 108,
+    "src": "/in-name",
+    "evidence": "名称匹配「splitjavelin」"
+   },
+   {
+    "iconFile": "ma43 t_of_valhalla.bmp",
+    "name": "Triumph of Valhalla",
+    "code": 107,
+    "src": "/in-name",
+    "evidence": "名称匹配「triumphofvalhalla」"
+   },
+   {
+    "iconFile": "ma46 l_javelin.bmp",
+    "name": "Lightning Javelin",
+    "code": 108,
+    "src": "/in-name",
+    "evidence": "名称匹配「Lightningjavelin」"
+   },
+   {
+    "iconFile": "ma50 storm_javelin.bmp",
+    "name": "Storm Javelin",
+    "code": 108,
+    "src": "/in-name",
+    "evidence": "名称匹配「stormjavelin」"
+   },
+   {
+    "iconFile": "ma60 h_o_valhalla.bmp",
+    "name": "Hall of Valhalla",
+    "code": 107,
+    "src": "/in-name",
+    "evidence": "名称匹配「HallofValhalla」"
+   },
+   {
+    "iconFile": "ma63 x_rage.bmp",
+    "name": "Extreme Rage",
+    "code": 116,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma66 f_javelin.bmp",
+    "name": "Frost Javelin",
+    "code": 107,
+    "src": "/in-name",
+    "evidence": "名称匹配「FrostJavelin」"
+   },
+   {
+    "iconFile": "ma70 vengeance.bmp",
+    "name": "Vengeance",
+    "code": 118,
+    "src": "/in-name",
+    "evidence": "名称匹配「Vengeance」"
+   },
+   {
+    "iconFile": "ma100 s_tiger.bmp",
+    "name": "Chimera of Light",
+    "code": 119,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma103 golden_apple.bmp",
+    "name": "Poison Javelin",
+    "code": 120,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma106 plague_javelin.bmp",
+    "name": "Amazon Rage",
+    "code": 121,
+    "src": "positional",
+    "evidence": "按块起点 103 顺序推"
+   },
+   {
+    "iconFile": "ma110 combo_javelin.bmp",
+    "name": "Javelin Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   }
+  ],
+  "knight": [
+   {
+    "iconFile": "mn10 s_blast.bmp",
+    "name": "Sword Blast",
+    "code": 81,
+    "src": "/in-name",
+    "evidence": "名称匹配「swordblast」"
+   },
+   {
+    "iconFile": "mn12 h_body.bmp",
+    "name": "Holy Body",
+    "code": 3,
+    "src": "/in-name",
+    "evidence": "名称匹配「holybody」"
+   },
+   {
+    "iconFile": "mn14 p_traning.bmp",
+    "name": "Physical Training",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "mn17 d_crash.bmp",
+    "name": "Double Crash",
+    "code": 84,
+    "src": "/in-name",
+    "evidence": "名称匹配「Doublecrash」"
+   },
+   {
+    "iconFile": "mn20 h_valor.bmp",
+    "name": "Holy Valor",
+    "code": 5,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "mn23 brandish.bmp",
+    "name": "Brandish",
+    "code": 86,
+    "src": "/in-name",
+    "evidence": "名称匹配「brandish」"
+   },
+   {
+    "iconFile": "mn26 piercing.bmp",
+    "name": "Piercing",
+    "code": 87,
+    "src": "/in-name",
+    "evidence": "名称匹配「piercing」"
+   },
+   {
+    "iconFile": "mn30 d_spirit.bmp",
+    "name": "Drastic Spirit",
+    "code": 9,
+    "src": "/in-name",
+    "evidence": "名称匹配「drasticspirit」"
+   },
+   {
+    "iconFile": "mn40 s_mastery.bmp",
+    "name": "Sword Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "mn43 d_inhalation.bmp",
+    "name": "Divine Shield",
+    "code": 10,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "mn46 h_incantation.bmp",
+    "name": "Holy Incantation",
+    "code": 91,
+    "src": "/in-name",
+    "evidence": "名称匹配「holyincantation」"
+   },
+   {
+    "iconFile": "mn50 g_cross.bmp",
+    "name": "Grand Cross",
+    "code": 92,
+    "src": "/in-name",
+    "evidence": "名称匹配「grandcross」"
+   },
+   {
+    "iconFile": "mn60 s_o_justice.bmp",
+    "name": "Sword of Justice",
+    "code": 98,
+    "src": "/in-name",
+    "evidence": "名称匹配「SwordOfJustice」"
+   },
+   {
+    "iconFile": "mn63 g_shield.bmp",
+    "name": "Godly Shield",
+    "code": 1,
+    "src": "/in-name",
+    "evidence": "名称匹配「GodlyShield」"
+   },
+   {
+    "iconFile": "mn66 g_bless.bmp",
+    "name": "God's Blessing",
+    "code": 15,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "mn70 d_piercing.bmp",
+    "name": "Divine Piercing",
+    "code": 93,
+    "src": "/in-name",
+    "evidence": "名称匹配「DivinePiercing」"
+   },
+   {
+    "iconFile": "mn100 holy_conviction.bmp",
+    "name": "Lightning Sword",
+    "code": 17,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "mn103 divine_inquisiton.bmp",
+    "name": "Undead Bane",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "mn106 glorious_shield.bmp",
+    "name": "Zealous Reach",
+    "code": 19,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   },
+   {
+    "iconFile": "mn110 divine_cross.bmp",
+    "name": "Holy Aura",
+    "code": 20,
+    "src": "positional",
+    "evidence": "按块起点 1 顺序推"
+   }
+  ],
+  "magician": [
+   {
+    "iconFile": "mm10 agony.bmp",
+    "name": "Agony",
+    "code": 143,
+    "src": "/in-name",
+    "evidence": "名称匹配「agony」"
+   },
+   {
+    "iconFile": "mm12 firebolt.bmp",
+    "name": "Fire Bolt",
+    "code": 144,
+    "src": "/in-name",
+    "evidence": "名称匹配「firebolt」"
+   },
+   {
+    "iconFile": "mm14 zenith.bmp",
+    "name": "Zenith",
+    "code": 143,
+    "src": "/in-name",
+    "evidence": "名称匹配「zenith」"
+   },
+   {
+    "iconFile": "mm17 fireball.bmp",
+    "name": "Fire Ball",
+    "code": 146,
+    "src": "/in-name",
+    "evidence": "名称匹配「fireball」"
+   },
+   {
+    "iconFile": "mm20 m_mastery.bmp",
+    "name": "Mental Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "mm23 watornado.bmp",
+    "name": "Watornado",
+    "code": 148,
+    "src": "positional",
+    "evidence": "按块起点 143 顺序推"
+   },
+   {
+    "iconFile": "mm26 e_weapon.bmp",
+    "name": "Enchant Weapon",
+    "code": 149,
+    "src": "/in-name",
+    "evidence": "名称匹配「enchantweapon」"
+   },
+   {
+    "iconFile": "mm30 d_ray.bmp",
+    "name": "Death Ray",
+    "code": 150,
+    "src": "positional",
+    "evidence": "按块起点 143 顺序推"
+   },
+   {
+    "iconFile": "mm40 e_shield.bmp",
+    "name": "Energy Shield",
+    "code": 149,
+    "src": "/in-name",
+    "evidence": "名称匹配「energyshield」"
+   },
+   {
+    "iconFile": "mm43 diastrophism.bmp",
+    "name": "Diastrophism",
+    "code": 152,
+    "src": "/in-name",
+    "evidence": "名称匹配「diastrophism」"
+   },
+   {
+    "iconFile": "mm46 s_elemental.bmp",
+    "name": "Spirit Elemental",
+    "code": 149,
+    "src": "/in-name",
+    "evidence": "名称匹配「spiritelemental」"
+   },
+   {
+    "iconFile": "mm50 d_sword.bmp",
+    "name": "Dancing Sword",
+    "code": 154,
+    "src": "/in-name",
+    "evidence": "名称匹配「dancingsword」"
+   },
+   {
+    "iconFile": "mm60 f_elemental.bmp",
+    "name": "Fire Elemental",
+    "code": 149,
+    "src": "/in-name",
+    "evidence": "名称匹配「fireelemental」"
+   },
+   {
+    "iconFile": "mm63 f_wave.bmp",
+    "name": "Flame Wave",
+    "code": 156,
+    "src": "/in-name",
+    "evidence": "名称匹配「FlameWave」"
+   },
+   {
+    "iconFile": "mm66 distortion.bmp",
+    "name": "Distortion",
+    "code": 154,
+    "src": "/in-name",
+    "evidence": "名称匹配「Distortion」"
+   },
+   {
+    "iconFile": "mm70 meteo.bmp",
+    "name": "Meteorite",
+    "code": 158,
+    "src": "positional",
+    "evidence": "按块起点 143 顺序推"
+   },
+   {
+    "iconFile": "mm100 wizardtrance.bmp",
+    "name": "Magic Source",
+    "code": 159,
+    "src": "positional",
+    "evidence": "按块起点 143 顺序推"
+   },
+   {
+    "iconFile": "mm103 stone_skin.bmp",
+    "name": "Amplify",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "mm106 redray.bmp",
+    "name": "Stone Spike",
+    "code": 161,
+    "src": "positional",
+    "evidence": "按块起点 143 顺序推"
+   },
+   {
+    "iconFile": "mm110 cataclysm.bmp",
+    "name": "Dance of Calamity",
+    "code": 162,
+    "src": "positional",
+    "evidence": "按块起点 143 顺序推"
+   }
+  ],
+  "priestess": [
+   {
+    "iconFile": "mp10 healing.bmp",
+    "name": "Healing",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「healing」"
+   },
+   {
+    "iconFile": "mp12 holybolt.bmp",
+    "name": "Holy Bolt",
+    "code": 124,
+    "src": "/in-name",
+    "evidence": "名称匹配「holybolt」"
+   },
+   {
+    "iconFile": "mp14 m_spark.bmp",
+    "name": "Multi Spark",
+    "code": 124,
+    "src": "/in-name",
+    "evidence": "名称匹配「multispark」"
+   },
+   {
+    "iconFile": "mp17 holymind.bmp",
+    "name": "Holy Mind",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「holymind」"
+   },
+   {
+    "iconFile": "mp20 meditation.bmp",
+    "name": "Meditation",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "mp23 d_lightning.bmp",
+    "name": "Divine Lightning",
+    "code": 128,
+    "src": "/in-name",
+    "evidence": "名称匹配「divinelightning」"
+   },
+   {
+    "iconFile": "mp26 h_reflection.bmp",
+    "name": "Holy Reflection",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「holyreflection」"
+   },
+   {
+    "iconFile": "mp30 g_healing.bmp",
+    "name": "Grand Healing",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「grandhealing」"
+   },
+   {
+    "iconFile": "mp40 v_ball.bmp",
+    "name": "Vigor Ball",
+    "code": 131,
+    "src": "/in-name",
+    "evidence": "名称匹配「vigorball」"
+   },
+   {
+    "iconFile": "mp43 resurrection.bmp",
+    "name": "Resurrection",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「resurrection」"
+   },
+   {
+    "iconFile": "mp46 extinction.bmp",
+    "name": "Extinction",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「extinction」"
+   },
+   {
+    "iconFile": "mp50 v_life.bmp",
+    "name": "Virtual Life",
+    "code": 123,
+    "src": "/in-name",
+    "evidence": "名称匹配「virtuallife」"
+   },
+   {
+    "iconFile": "mp60 g_spike.bmp",
+    "name": "Glacial Spike",
+    "code": 135,
+    "src": "/in-name",
+    "evidence": "名称匹配「GlacialSpike」"
+   },
+   {
+    "iconFile": "mp63 r_field.bmp",
+    "name": "Regeneration Field",
+    "code": 136,
+    "src": "/in-name",
+    "evidence": "名称匹配「RegenerationField」"
+   },
+   {
+    "iconFile": "mp66 c_lightning.bmp",
+    "name": "Chain Lightning",
+    "code": 137,
+    "src": "/in-name",
+    "evidence": "名称匹配「ChainLightning」"
+   },
+   {
+    "iconFile": "mp70 s_muspell.bmp",
+    "name": "Summon Muspell",
+    "code": 138,
+    "src": "/in-name",
+    "evidence": "名称匹配「SummonMuspell」"
+   },
+   {
+    "iconFile": "mp100 ice_elemental.bmp",
+    "name": "Divine Force",
+    "code": 139,
+    "src": "positional",
+    "evidence": "按块起点 123 顺序推"
+   },
+   {
+    "iconFile": "mp103 lightning_surge.bmp",
+    "name": "Ice Meteorite",
+    "code": 140,
+    "src": "positional",
+    "evidence": "按块起点 123 顺序推"
+   },
+   {
+    "iconFile": "mp106 heavenly_light.bmp",
+    "name": "Thunderstorm",
+    "code": 141,
+    "src": "positional",
+    "evidence": "按块起点 123 顺序推"
+   },
+   {
+    "iconFile": "mp110 consecration.bmp",
+    "name": "Divine Cleansing",
+    "code": 142,
+    "src": "positional",
+    "evidence": "按块起点 123 顺序推"
+   }
+  ],
+  "assassin": [
+   {
+    "iconFile": "ta10 stingger.bmp",
+    "name": "Stinger",
+    "code": 166,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta12 r_hit.bmp",
+    "name": "Double Blow",
+    "code": 167,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta14 d_mastery.bmp",
+    "name": "Dual Wield Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ta17 wisp.bmp",
+    "name": "Wisp",
+    "code": 166,
+    "src": "/in-name",
+    "evidence": "名称匹配「Wisp」"
+   },
+   {
+    "iconFile": "ta20 v_throne.bmp",
+    "name": "Venom Thorn",
+    "code": 170,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta23 alas.bmp",
+    "name": "Alas",
+    "code": 168,
+    "src": "/in-name",
+    "evidence": "名称匹配「Alas」"
+   },
+   {
+    "iconFile": "ta26 s_shock.bmp",
+    "name": "Soul Shock",
+    "code": 169,
+    "src": "/in-name",
+    "evidence": "名称匹配「SoulShock」"
+   },
+   {
+    "iconFile": "ta30 a_mastery.bmp",
+    "name": "Blade Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ta40 s_sword.bmp",
+    "name": "Finishing Blow",
+    "code": 174,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta43 b_up.bmp",
+    "name": "Gust Slash",
+    "code": 175,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta46 inpes.bmp",
+    "name": "Inpes",
+    "code": 168,
+    "src": "/in-name",
+    "evidence": "名称匹配「Inpes」"
+   },
+   {
+    "iconFile": "ta50 blind.bmp",
+    "name": "Deception",
+    "code": 177,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta60 f_wind.bmp",
+    "name": "Frost Wind",
+    "code": 175,
+    "src": "/in-name",
+    "evidence": "名称匹配「FrostWind」"
+   },
+   {
+    "iconFile": "ta63 f_mastery.bmp",
+    "name": "Fatal Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ta66 polluted.bmp",
+    "name": "Pollute",
+    "code": 180,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ta70 p_shadow.bmp",
+    "name": "Ninja Shadow",
+    "code": 181,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ts80 j_bomb.bmp",
+    "name": "Shadow Bomb",
+    "code": 179,
+    "src": "/in-name",
+    "evidence": "名称匹配「ShadowBomb」"
+   },
+   {
+    "iconFile": "ts83 r_slash.bmp",
+    "name": "Rising Slash",
+    "code": 180,
+    "src": "/in-name",
+    "evidence": "名称匹配「RisingSlash」"
+   },
+   {
+    "iconFile": "ts86 v_stab.bmp",
+    "name": "Violent Stab",
+    "code": 184,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   },
+   {
+    "iconFile": "ts90 storm.bmp",
+    "name": "Shadow Storm",
+    "code": 185,
+    "src": "positional",
+    "evidence": "按块起点 166 顺序推"
+   }
+  ],
+  "shaman": [
+   {
+    "iconFile": "ms10 darkbolt.bmp",
+    "name": "Dark Bolt",
+    "code": 183,
+    "src": "/in-name",
+    "evidence": "名称匹配「DarkBolt」"
+   },
+   {
+    "iconFile": "ms12 darkwave.bmp",
+    "name": "Dark Wave",
+    "code": 184,
+    "src": "/in-name",
+    "evidence": "名称匹配「DarkWave」"
+   },
+   {
+    "iconFile": "ms14 curselazy.bmp",
+    "name": "Inertia",
+    "code": 185,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms17 i_peace.bmp",
+    "name": "Inner Peace",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "ms20 s_flare.bmp",
+    "name": "Spiritual Flare",
+    "code": 187,
+    "src": "/in-name",
+    "evidence": "名称匹配「SpiritualFlare」"
+   },
+   {
+    "iconFile": "ms23 s_manacle.bmp",
+    "name": "Spiritual Manacle",
+    "code": 188,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms26 c_hunt.bmp",
+    "name": "Chasing Hunt",
+    "code": 189,
+    "src": "/in-name",
+    "evidence": "名称匹配「ChasingHunt」"
+   },
+   {
+    "iconFile": "ms30 a_migal.bmp",
+    "name": "Advent Migal",
+    "code": 190,
+    "src": "/in-name",
+    "evidence": "名称匹配「AdventMigal」"
+   },
+   {
+    "iconFile": "ms40 r_maker.bmp",
+    "name": "Rainmaker",
+    "code": 191,
+    "src": "/in-name",
+    "evidence": "名称匹配「RainMaker」"
+   },
+   {
+    "iconFile": "ms43 l_ghost.bmp",
+    "name": "Phantom Call",
+    "code": 192,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms46 haunt.bmp",
+    "name": "Haunt",
+    "code": 193,
+    "src": "/in-name",
+    "evidence": "名称匹配「Haunt」"
+   },
+   {
+    "iconFile": "ms50 scratch.bmp",
+    "name": "Scratch",
+    "code": 194,
+    "src": "/in-name",
+    "evidence": "名称匹配「Scratch」"
+   },
+   {
+    "iconFile": "ms60 r_knight.bmp",
+    "name": "Crimson Knight",
+    "code": 195,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms63 judge.bmp",
+    "name": "Judgement",
+    "code": 196,
+    "src": "/in-name",
+    "evidence": "名称匹配「Judgement」"
+   },
+   {
+    "iconFile": "ms66 a_midranda.bmp",
+    "name": "Advent Midranda",
+    "code": 197,
+    "src": "/in-name",
+    "evidence": "名称匹配「AdventMidranda」"
+   },
+   {
+    "iconFile": "ms70 m_pray.bmp",
+    "name": "Mourning Pray",
+    "code": 198,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms80 creed.bmp",
+    "name": "Creed",
+    "code": 199,
+    "src": "/in-name",
+    "evidence": "名称匹配「Creed」"
+   },
+   {
+    "iconFile": "ms83 p_deity.bmp",
+    "name": "Press Deity",
+    "code": 200,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms86 g_nail.bmp",
+    "name": "Phantom Nail",
+    "code": 201,
+    "src": "positional",
+    "evidence": "按块起点 183 顺序推"
+   },
+   {
+    "iconFile": "ms90 h_regene.bmp",
+    "name": "Occult Life",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   }
+  ],
+  "martial": [
+   {
+    "iconFile": "tma10 lowkick.bmp",
+    "name": "Lowkick",
+    "code": 203,
+    "src": "/in-name",
+    "evidence": "名称匹配「Lowkick」"
+   },
+   {
+    "iconFile": "tma12 s_mastery.bmp",
+    "name": "Spirit Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tma14 dbblow.bmp",
+    "name": "Double Blow",
+    "code": 205,
+    "src": "positional",
+    "evidence": "按块起点 203 顺序推"
+   },
+   {
+    "iconFile": "tma17 h_straight.bmp",
+    "name": "Half Straight",
+    "code": 206,
+    "src": "positional",
+    "evidence": "按块起点 203 顺序推"
+   },
+   {
+    "iconFile": "tma20 rage up.bmp",
+    "name": "Rage Up",
+    "code": 207,
+    "src": "/in-name",
+    "evidence": "名称匹配「RageUp」"
+   },
+   {
+    "iconFile": "tma23 patriot.bmp",
+    "name": "Patriot",
+    "code": 208,
+    "src": "/in-name",
+    "evidence": "名称匹配「Patriot」"
+   },
+   {
+    "iconFile": "tma26 r_elbow.bmp",
+    "name": "Rolling Elbow",
+    "code": 209,
+    "src": "positional",
+    "evidence": "按块起点 203 顺序推"
+   },
+   {
+    "iconFile": "tma30 s_mastery.bmp",
+    "name": "Speed Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tma40 i_bulkup.bmp",
+    "name": "Iron Bulkup",
+    "code": 211,
+    "src": "positional",
+    "evidence": "按块起点 203 顺序推"
+   },
+   {
+    "iconFile": "tma43 t_cannon.bmp",
+    "name": "Tiger Cannon",
+    "code": 212,
+    "src": "/in-name",
+    "evidence": "名称匹配「TigerCannon」"
+   },
+   {
+    "iconFile": "tma46 war cry.bmp",
+    "name": "War Cry",
+    "code": 213,
+    "src": "/in-name",
+    "evidence": "名称匹配「WarCry」"
+   },
+   {
+    "iconFile": "tma50 j_heelkick.bmp",
+    "name": "Jump Heelkick",
+    "code": 214,
+    "src": "positional",
+    "evidence": "按块起点 203 顺序推"
+   },
+   {
+    "iconFile": "tma60 combination.bmp",
+    "name": "Combination",
+    "code": 215,
+    "src": "/in-name",
+    "evidence": "名称匹配「Combination」"
+   },
+   {
+    "iconFile": "tma63 steelers.bmp",
+    "name": "Steelers",
+    "code": 216,
+    "src": "/in-name",
+    "evidence": "名称匹配「Steelers」"
+   },
+   {
+    "iconFile": "tma66 b_check.bmp",
+    "name": "Body Check",
+    "code": 217,
+    "src": "/in-name",
+    "evidence": "名称匹配「BodyCheck」"
+   },
+   {
+    "iconFile": "tma70 typhoon.bmp",
+    "name": "Typhoon",
+    "code": 218,
+    "src": "/in-name",
+    "evidence": "名称匹配「Typhoon」"
+   },
+   {
+    "iconFile": "tma80 d_mastery.bmp",
+    "name": "Defence Mastery",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   },
+   {
+    "iconFile": "tma83 h_hawk.bmp",
+    "name": "Hunting Hawk",
+    "code": 220,
+    "src": "/in-name",
+    "evidence": "名称匹配「HuntingHawk」"
+   },
+   {
+    "iconFile": "tma86 l_breaking.bmp",
+    "name": "Leg Breaking",
+    "code": 221,
+    "src": "positional",
+    "evidence": "按块起点 203 顺序推"
+   },
+   {
+    "iconFile": "tma90 h_training.bmp",
+    "name": "Hawk Training",
+    "code": null,
+    "src": "none",
+    "evidence": "被动技能，无动画"
+   }
+  ]
+ }
+}

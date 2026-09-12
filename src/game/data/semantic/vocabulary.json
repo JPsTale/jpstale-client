@@ -1,0 +1,3306 @@
+{
+ "format": "jpstale.vocabulary/1",
+ "note": "语义词汇表：所有跨文件复用的枚举。生成物，勿手改。",
+ "fps": 30,
+ "states": {
+  "NONE": 0,
+  "STAND": 64,
+  "WALK": 80,
+  "RUN": 96,
+  "SPRINT": 112,
+  "FALLDOWN": 128,
+  "ATTACK": 256,
+  "DAMAGE": 272,
+  "DEAD": 288,
+  "SOMETIME": 304,
+  "EAT": 320,
+  "SKILL": 336,
+  "FALLSTAND": 368,
+  "FALLDAMAGE": 384,
+  "RESTART": 512,
+  "WARP": 528,
+  "YAHOO": 544,
+  "TAUNT": 560,
+  "HAMMER": 768,
+  "TALK_AR": 1024,
+  "TALK_E": 1040,
+  "TALK_OH": 1056,
+  "TALK_EYE": 1072,
+  "SMILE": 1088,
+  "GRUMBLE": 1104,
+  "SORROW": 1120,
+  "STARTLED": 1136,
+  "NATURE": 1152,
+  "SPECIAL": 1168
+ },
+ "weaponTypes": [
+  "AXE",
+  "BOW",
+  "CLAW",
+  "CROSSBOW",
+  "DAGGER",
+  "HAMMER",
+  "JAVELIN",
+  "KNUCKLE",
+  "PHANTOM",
+  "SCYTHE",
+  "SHIELD",
+  "STAFF",
+  "SWORD",
+  "UNKNOWN"
+ ],
+ "hands": [
+  "1H",
+  "2H",
+  "?",
+  "classitem=2"
+ ],
+ "weaponCodes": {
+  "DS101": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS102": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS103": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS104": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS105": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS106": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS107": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS108": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS109": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS110": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS111": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS112": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS113": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS114": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS115": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS116": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS117": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS118": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS119": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS120": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS121": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "DS122": {
+   "type": "SHIELD",
+   "hand": "classitem=2",
+   "src": {
+    "type": "scan.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA101": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA102": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA103": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA104": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA105": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA106": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA107": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA108": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA109": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA110": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA111": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA112": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA113": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA114": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA115": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA116": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA117": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA118": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA119": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA120": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA121": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA122": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA123": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA124": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA125": {
+   "type": "AXE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA126": {
+   "type": "UNKNOWN",
+   "hand": "?",
+   "src": {
+    "type": "db.category",
+    "hand": "缺失"
+   }
+  },
+  "WA127": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WA128": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WA129": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WA130": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/5条2H)"
+   }
+  },
+  "WA131": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(0条1H/5条2H)"
+   }
+  },
+  "WA151": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "items.dat@76(EU源·已声明有误)"
+   }
+  },
+  "WA152": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WA153": {
+   "type": "AXE",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WC101": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC102": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC103": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC104": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC105": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(33条1H/0条2H)"
+   }
+  },
+  "WC106": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC107": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC108": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(33条1H/0条2H)"
+   }
+  },
+  "WC109": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC110": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC111": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC112": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC113": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC114": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC115": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC116": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC117": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC118": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC119": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC120": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC121": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC122": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC123": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC124": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC125": {
+   "type": "UNKNOWN",
+   "hand": "1H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(44条1H/0条2H)"
+   }
+  },
+  "WC126": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC127": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC128": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC129": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(4条1H/0条2H)"
+   }
+  },
+  "WC130": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(4条1H/0条2H)"
+   }
+  },
+  "WC151": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC152": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WC153": {
+   "type": "CLAW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(48条1H/0条2H)"
+   }
+  },
+  "WD101": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD102": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD103": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD104": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD105": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD106": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD107": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD108": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD109": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD110": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD111": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD112": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD113": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD114": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD115": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD116": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD117": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD118": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD119": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD120": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD121": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/22条2H)"
+   }
+  },
+  "WD122": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD123": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD124": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD125": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD126": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD127": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD128": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD151": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD152": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD153": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WD157": {
+   "type": "DAGGER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/21条2H)"
+   }
+  },
+  "WH101": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH102": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH103": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH104": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH105": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH106": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH107": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/47条2H)"
+   }
+  },
+  "WH108": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH109": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH110": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH111": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH112": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH113": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH114": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH115": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH116": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH117": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH118": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH119": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH120": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH121": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/46条2H)"
+   }
+  },
+  "WH122": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/48条2H)"
+   }
+  },
+  "WH123": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/48条2H)"
+   }
+  },
+  "WH124": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/48条2H)"
+   }
+  },
+  "WH125": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/48条2H)"
+   }
+  },
+  "WH126": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(49条1H/0条2H)"
+   }
+  },
+  "WH127": {
+   "type": "UNKNOWN",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "manual-override"
+   }
+  },
+  "WH128": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/43条2H)"
+   }
+  },
+  "WH129": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WH130": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WH131": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WH132": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WH151": {
+   "type": "HAMMER",
+   "hand": "1H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WH152": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WH153": {
+   "type": "HAMMER",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WM101": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM102": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM103": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM104": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/64条2H)"
+   }
+  },
+  "WM105": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/64条2H)"
+   }
+  },
+  "WM106": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM107": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM108": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM109": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM110": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM111": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM112": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM113": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM114": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM115": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM116": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM117": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM118": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM119": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM120": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM121": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM122": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM123": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM124": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM125": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM126": {
+   "type": "STAFF",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WM127": {
+   "type": "UNKNOWN",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(0条1H/57条2H)"
+   }
+  },
+  "WM128": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM129": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WM130": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WM131": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WM132": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(0条1H/5条2H)"
+   }
+  },
+  "WM151": {
+   "type": "STAFF",
+   "hand": "?",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "缺失"
+   }
+  },
+  "WM152": {
+   "type": "STAFF",
+   "hand": "?",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "缺失"
+   }
+  },
+  "WM153": {
+   "type": "STAFF",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/62条2H)"
+   }
+  },
+  "WM157": {
+   "type": "UNKNOWN",
+   "hand": "1H",
+   "src": {
+    "type": "db.category",
+    "hand": "manual-override"
+   }
+  },
+  "WN101": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN102": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN103": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN104": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN105": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN106": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN107": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN108": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN109": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN110": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN111": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN112": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN113": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN114": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN115": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN116": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN117": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN118": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN119": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN120": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN121": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN122": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN123": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN124": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN125": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN126": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN151": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN152": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN153": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WN157": {
+   "type": "PHANTOM",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WP101": {
+   "type": "SCYTHE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP102": {
+   "type": "SCYTHE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP103": {
+   "type": "SCYTHE",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP104": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP105": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/70条2H)"
+   }
+  },
+  "WP106": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP107": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP108": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/70条2H)"
+   }
+  },
+  "WP109": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP110": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP111": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP112": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP113": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/72条2H)"
+   }
+  },
+  "WP114": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP115": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP116": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP117": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP118": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP119": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP120": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP121": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP122": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP123": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP124": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP125": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP126": {
+   "type": "UNKNOWN",
+   "hand": "?",
+   "src": {
+    "type": "db.category",
+    "hand": "缺失"
+   }
+  },
+  "WP127": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WP128": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WP129": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WP130": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/4条2H)"
+   }
+  },
+  "WP131": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(0条1H/4条2H)"
+   }
+  },
+  "WP151": {
+   "type": "SCYTHE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "items.dat@76(EU源·已声明有误)"
+   }
+  },
+  "WP152": {
+   "type": "SCYTHE",
+   "hand": "?",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "缺失"
+   }
+  },
+  "WP153": {
+   "type": "SCYTHE",
+   "hand": "?",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "缺失"
+   }
+  },
+  "WS101": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS102": {
+   "type": "CROSSBOW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(26条1H/0条2H)"
+   }
+  },
+  "WS103": {
+   "type": "CROSSBOW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(26条1H/0条2H)"
+   }
+  },
+  "WS104": {
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS105": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS106": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS107": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS108": {
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS109": {
+   "type": "CROSSBOW",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(26条1H/0条2H)"
+   }
+  },
+  "WS110": {
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS111": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS112": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS113": {
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS114": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS115": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS116": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS117": {
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS118": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WS119": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS120": {
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/40条2H)"
+   }
+  },
+  "WS121": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS122": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS123": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS124": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS125": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS126": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS127": {
+   "type": "UNKNOWN",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "manual-override"
+   }
+  },
+  "WS128": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/41条2H)"
+   }
+  },
+  "WS129": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WS130": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WS131": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/4条2H)"
+   }
+  },
+  "WS132": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(0条1H/4条2H)"
+   }
+  },
+  "WS151": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WS152": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WS153": {
+   "type": "BOW",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WS201": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS202": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS203": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS204": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS205": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS206": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS207": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS208": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS209": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS210": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS211": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS212": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS213": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS214": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS215": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS216": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS217": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS218": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS219": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS220": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS221": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS222": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS223": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS224": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS225": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS226": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS227": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS228": {
+   "type": "SWORD",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS229": {
+   "type": "UNKNOWN",
+   "hand": "?",
+   "src": {
+    "type": "db.category",
+    "hand": "缺失"
+   }
+  },
+  "WS230": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WS231": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WS232": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "manual-override",
+    "hand": "manual-override"
+   }
+  },
+  "WS233": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(0条1H/5条2H)"
+   }
+  },
+  "WS234": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(0条1H/5条2H)"
+   }
+  },
+  "WS252": {
+   "type": "SWORD",
+   "hand": "?",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "缺失"
+   }
+  },
+  "WS253": {
+   "type": "SWORD",
+   "hand": "?",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "缺失"
+   }
+  },
+  "WS254": {
+   "type": "SWORD",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WT101": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT102": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT103": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT104": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT105": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT106": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT107": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT108": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT109": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT110": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT111": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT112": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT113": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT114": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT115": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT116": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT117": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT118": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "db.classitem(EU源·已声明有误)"
+   }
+  },
+  "WT119": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(38条1H/0条2H)"
+   }
+  },
+  "WT120": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(43条1H/0条2H)"
+   }
+  },
+  "WT121": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT122": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT123": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT124": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT125": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT126": {
+   "type": "UNKNOWN",
+   "hand": "1H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(38条1H/0条2H)"
+   }
+  },
+  "WT127": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT128": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT129": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT130": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(5条1H/0条2H)"
+   }
+  },
+  "WT131": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "db.category",
+    "hand": "in-entry-membership(5条1H/0条2H)"
+   }
+  },
+  "WT151": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(43条1H/0条2H)"
+   }
+  },
+  "WT152": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WT153": {
+   "type": "JAVELIN",
+   "hand": "1H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "in-entry-membership(42条1H/0条2H)"
+   }
+  },
+  "WV101": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV102": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV103": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV104": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV105": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV106": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV107": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV108": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV109": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV110": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV111": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV112": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV113": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV114": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV115": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV116": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV117": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV118": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV119": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV120": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV121": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV122": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV123": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV124": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV125": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV126": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV127": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV128": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV129": {
+   "type": "UNKNOWN",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "manual-override"
+   }
+  },
+  "WV130": {
+   "type": "UNKNOWN",
+   "hand": "2H",
+   "src": {
+    "type": "db.category",
+    "hand": "manual-override"
+   }
+  },
+  "WV151": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV152": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV153": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV154": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV155": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV156": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  },
+  "WV157": {
+   "type": "KNUCKLE",
+   "hand": "2H",
+   "src": {
+    "type": "idcode-prefix(含弓/弩细分)",
+    "hand": "manual-override"
+   }
+  }
+ },
+ "classes": {
+  "Fighter": 1,
+  "Mechanician": 2,
+  "Archer": 4,
+  "Pikeman": 8,
+  "Atalanta": 16,
+  "Knight": 32,
+  "Magician": 64,
+  "Priestess": 128,
+  "Assassin": 256,
+  "Shaman": 512,
+  "MartialArtist": 1024
+ },
+ "classDirs": {
+  "1": "fighter",
+  "2": "mecha",
+  "3": "archer",
+  "4": "pikeman",
+  "5": "atalanta",
+  "6": "knight",
+  "7": "magician",
+  "8": "priestess",
+  "9": "assassin",
+  "10": "shaman",
+  "11": "martial"
+ },
+ "classDirToId": {
+  "fighter": 1,
+  "mecha": 2,
+  "archer": 3,
+  "pikeman": 4,
+  "atalanta": 5,
+  "knight": 6,
+  "magician": 7,
+  "priestess": 8,
+  "assassin": 9,
+  "shaman": 10,
+  "martial": 11
+ },
+ "classNameToDir": {
+  "Fighter": "fighter",
+  "Mechanician": "mecha",
+  "Archer": "archer",
+  "Pikeman": "pikeman",
+  "Atalanta": "atalanta",
+  "Knight": "knight",
+  "Magician": "magician",
+  "Priest": "priestess",
+  "Prayer": "priestess",
+  "Assassin": "assassin",
+  "Shaman": "shaman",
+  "MartialArtist": "martial",
+  "Rogue": "pikeman"
+ }
+}

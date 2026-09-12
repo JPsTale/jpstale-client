@@ -1,0 +1,18 @@
+{
+ "note": "手工覆盖表 —— 脚本永不覆盖本文件。key = 技能名（skillData 里的官方英文名）。空白字段留空即沿用自动生成的结果。",
+ "_format": {
+  "castSfx": ["起手时播放的音效文件（相对资产根的路径，或文件名）"],
+  "eventFx": ["事件帧（命中/落地）时播放的特效名（.part / .ini 的裸名）"],
+  "eventSfx": ["事件帧时播放的音效"],
+  "animIndex": "覆盖动画索引；null 表示明确无专属动画",
+  "note": "依据说明"
+ },
+ "skills": {
+  "Brandish": {
+   "castSfx": ["brandish 1.wav"],
+   "eventFx": ["skill3knightflamebrandish", "skill3knightflamebrandish1"],
+   "eventSfx": ["brandish 2.wav"],
+   "note": "实机校对（2026-09-12）：动画 #86 高高跳起举武器→落地砸地板。起跳『嗖』= brandish 1；落地『轰』= brandish 2，同时地上起火（skill3knightflamebrandish）并出现火圈（skill3knightflamebrandish1）。核对人：用户。"
+  }
+ }
+}

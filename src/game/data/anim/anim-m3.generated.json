@@ -1,0 +1,6038 @@
+{
+ "note": "由 scripts/extract-anim-semantics.ts 从当前客户端 .inx/.smb 提取的语义表（生成物，勿手改）。武器要求已从 sItem 索引翻为 (weaponType,handType) 语义；与 glTF 无关，只描述\"这是什么动作\"。",
+ "group": "m3",
+ "smb": "m3.smb",
+ "entryCount": 69,
+ "entries": [
+  {
+   "id": "stand_unarmed",
+   "state": "STAND",
+   "frames": [
+    10,
+    40
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 10,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#2",
+   "state": "STAND",
+   "frames": [
+    50,
+    130
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 11,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "restart",
+   "state": "RESTART",
+   "frames": [
+    140,
+    190
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 12,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fall",
+   "state": "FALLDOWN",
+   "frames": [
+    200,
+    220
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 13,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fallstand",
+   "state": "FALLSTAND",
+   "frames": [
+    230,
+    260
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 14,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "falldamage",
+   "state": "FALLDAMAGE",
+   "frames": [
+    270,
+    310
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 15,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "walk_unarmed",
+   "state": "WALK",
+   "frames": [
+    321,
+    351
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 16,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     243,
+     244,
+     245,
+     246,
+     247,
+     248,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed",
+   "state": "WALK",
+   "frames": [
+    361,
+    391
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 17,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     249,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#2",
+   "state": "WALK",
+   "frames": [
+    361,
+    391
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 18,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     276
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#3",
+   "state": "WALK",
+   "frames": [
+    401,
+    431
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 19,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     240,
+     241,
+     242,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     250,
+     251,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#4",
+   "state": "WALK",
+   "frames": [
+    401,
+    431
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 20,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     277,
+     278,
+     279,
+     280,
+     281
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#5",
+   "state": "WALK",
+   "frames": [
+    441,
+    471
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 21,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 17
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#6",
+   "state": "WALK",
+   "frames": [
+    441,
+    471
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 22,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     264,
+     265,
+     266,
+     267,
+     268,
+     269
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_1h_javelin",
+   "state": "WALK",
+   "frames": [
+    481,
+    511
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 23,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     122,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     282,
+     283,
+     284,
+     285,
+     286,
+     287
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 33,
+     "resolved": 17
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#7",
+   "state": "WALK",
+   "frames": [
+    521,
+    551
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 24,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#8",
+   "state": "WALK",
+   "frames": [
+    561,
+    591
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 25,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     270,
+     271,
+     272,
+     273,
+     274,
+     275
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 27,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_unarmed",
+   "state": "RUN",
+   "frames": [
+    601,
+    621
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 26,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     243,
+     244,
+     245,
+     246,
+     247,
+     248,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed",
+   "state": "RUN",
+   "frames": [
+    631,
+    651
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 27,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     249,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#2",
+   "state": "RUN",
+   "frames": [
+    631,
+    651
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 28,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     276
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#3",
+   "state": "RUN",
+   "frames": [
+    661,
+    681
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 29,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     240,
+     241,
+     242,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     250,
+     251,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 49,
+     "resolved": 37
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#4",
+   "state": "RUN",
+   "frames": [
+    661,
+    681
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 30,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     277,
+     278,
+     279,
+     280,
+     281
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#5",
+   "state": "RUN",
+   "frames": [
+    691,
+    711
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 31,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 17
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#6",
+   "state": "RUN",
+   "frames": [
+    691,
+    711
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 32,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     264,
+     265,
+     266,
+     267,
+     268,
+     269
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_1h_javelin",
+   "state": "RUN",
+   "frames": [
+    721,
+    741
+   ],
+   "repeat": true,
+   "eventFrames": [
+    2080,
+    3680
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 33,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     282,
+     283,
+     284,
+     285,
+     286,
+     287
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 35,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#7",
+   "state": "RUN",
+   "frames": [
+    751,
+    771
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 34,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#8",
+   "state": "RUN",
+   "frames": [
+    781,
+    801
+   ],
+   "repeat": true,
+   "eventFrames": [
+    320,
+    1920
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 35,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     270,
+     271,
+     272,
+     273,
+     274,
+     275
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 27,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "eat",
+   "state": "EAT",
+   "frames": [
+    812,
+    832
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 36,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#3",
+   "state": "STAND",
+   "frames": [
+    842,
+    872
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 37,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     243,
+     244,
+     245,
+     246,
+     247,
+     248,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed",
+   "state": "STAND",
+   "frames": [
+    882,
+    912
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 38,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     249,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#2",
+   "state": "STAND",
+   "frames": [
+    882,
+    912
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 39,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     276
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#3",
+   "state": "STAND",
+   "frames": [
+    922,
+    952
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 40,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     240,
+     241,
+     242,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     250,
+     251,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 49,
+     "resolved": 37
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#4",
+   "state": "STAND",
+   "frames": [
+    922,
+    952
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 41,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     277,
+     278,
+     279,
+     280,
+     281
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#5",
+   "state": "STAND",
+   "frames": [
+    962,
+    992
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 42,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 17
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#6",
+   "state": "STAND",
+   "frames": [
+    962,
+    992
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 43,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     264,
+     265,
+     266,
+     267,
+     268,
+     269
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_1h_javelin",
+   "state": "STAND",
+   "frames": [
+    1002,
+    1032
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 44,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     282,
+     283,
+     284,
+     285,
+     286,
+     287
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 35,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#7",
+   "state": "STAND",
+   "frames": [
+    1042,
+    1072
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 45,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#8",
+   "state": "STAND",
+   "frames": [
+    1082,
+    1112
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 46,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     270,
+     271,
+     272,
+     273,
+     274,
+     275
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 27,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "damage",
+   "state": "DAMAGE",
+   "frames": [
+    1122,
+    1144
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 47,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "dead",
+   "state": "DEAD",
+   "frames": [
+    1152,
+    1214
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 48,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_unarmed",
+   "state": "ATTACK",
+   "frames": [
+    1233,
+    1273
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 49,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_mixed",
+   "state": "ATTACK",
+   "frames": [
+    1283,
+    1323
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 50,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     249,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#2",
+   "state": "ATTACK",
+   "frames": [
+    1283,
+    1323
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 51,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     276
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#3",
+   "state": "ATTACK",
+   "frames": [
+    1333,
+    1383
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 52,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     240,
+     241,
+     242,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     250,
+     251,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#4",
+   "state": "ATTACK",
+   "frames": [
+    1333,
+    1383
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 53,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     277,
+     278,
+     279,
+     280,
+     281
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#5",
+   "state": "ATTACK",
+   "frames": [
+    1393,
+    1443
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4480
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 54,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 17
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#6",
+   "state": "ATTACK",
+   "frames": [
+    1393,
+    1443
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4480
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 55,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     264,
+     265,
+     266,
+     267,
+     268,
+     269
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin",
+   "state": "ATTACK",
+   "frames": [
+    1453,
+    1493
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 56,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     282,
+     283,
+     284,
+     285,
+     286,
+     287
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#7",
+   "state": "ATTACK",
+   "frames": [
+    1503,
+    1543
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 57,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     270,
+     271,
+     272,
+     273,
+     274,
+     275
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 27,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#8",
+   "state": "ATTACK",
+   "frames": [
+    1553,
+    1593
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 58,
+    "itemCodes": [
+     15,
+     16,
+     17,
+     18,
+     20,
+     21,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     243,
+     244,
+     245,
+     246,
+     247,
+     248
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_claw",
+   "state": "ATTACK",
+   "frames": [
+    1603,
+    1643
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 59,
+    "itemCodes": [
+     19,
+     22
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW"
+    ],
+    "iconFamilies": [
+     "wc"
+    ],
+    "coverage": {
+     "total": 2,
+     "resolved": 2
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#9",
+   "state": "ATTACK",
+   "frames": [
+    1653,
+    1693
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 60,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 5,
+     "resolved": 5
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#10",
+   "state": "ATTACK",
+   "frames": [
+    1703,
+    1743
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 61,
+    "itemCodes": [
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 3
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "yahoo",
+   "state": "YAHOO",
+   "frames": [
+    1753,
+    1803
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 62,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "skill_agony",
+   "state": "SKILL",
+   "frames": [
+    1934,
+    1984
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Agony",
+    "Zenith"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 63,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [
+     143,
+     145
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 17,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_agony#2",
+   "state": "SKILL",
+   "frames": [
+    1994,
+    2044
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Agony",
+    "Zenith"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 64,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     143,
+     145
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 23,
+     "resolved": 18
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_fire_bolt",
+   "state": "SKILL",
+   "frames": [
+    2114,
+    2164
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Fire Bolt",
+    "Death Ray"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 65,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [
+     144,
+     150
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 17,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_fire_bolt#2",
+   "state": "SKILL",
+   "frames": [
+    2174,
+    2224
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Fire Bolt",
+    "Death Ray"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 66,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     144,
+     150
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 23,
+     "resolved": 18
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_fire_ball",
+   "state": "SKILL",
+   "frames": [
+    2234,
+    2284
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Fire Ball",
+    "Watornado"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 67,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     146,
+     148
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_dancing_sword",
+   "state": "SKILL",
+   "frames": [
+    2294,
+    2344
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Dancing Sword",
+    "Distortion"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 68,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     154,
+     157
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_energy_shield",
+   "state": "SKILL",
+   "frames": [
+    2354,
+    2404
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5760
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Energy Shield",
+    "Enchant Weapon",
+    "Spirit Elemental",
+    "Fire Elemental"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 69,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     151,
+     149,
+     153,
+     155
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed",
+   "state": "SKILL",
+   "frames": [
+    2614,
+    2709
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 70,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_flame_wave",
+   "state": "SKILL",
+   "frames": [
+    2713,
+    2791
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6080
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Flame Wave"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 71,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     156
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_meteorite",
+   "state": "SKILL",
+   "frames": [
+    2797,
+    2863
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6720
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Meteorite"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 72,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     158
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_diastrophism",
+   "state": "SKILL",
+   "frames": [
+    3419,
+    3505
+   ],
+   "repeat": false,
+   "eventFrames": [
+    9760
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Diastrophism"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 73,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     255,
+     256,
+     261,
+     262,
+     263
+    ],
+    "skillCodes": [
+     152
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 17,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_diastrophism#2",
+   "state": "SKILL",
+   "frames": [
+    3529,
+    3615
+   ],
+   "repeat": false,
+   "eventFrames": [
+    9760
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Diastrophism"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 74,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     152
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 22,
+     "resolved": 17
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#2",
+   "state": "SKILL",
+   "frames": [
+    3630,
+    3673
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3040
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 75,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     159
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#3",
+   "state": "SKILL",
+   "frames": [
+    3729,
+    3782
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4960
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 76,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     160
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#4",
+   "state": "SKILL",
+   "frames": [
+    3797,
+    3872
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6400
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 77,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     161
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#5",
+   "state": "SKILL",
+   "frames": [
+    3887,
+    3952
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6560
+   ],
+   "classes": [
+    "Magician",
+    "Shaman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 78,
+    "itemCodes": [
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     49,
+     50,
+     53,
+     54,
+     55,
+     56,
+     57,
+     59,
+     60,
+     61,
+     170,
+     171,
+     172,
+     173,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     255,
+     257,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [
+     162
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "BOW",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  }
+ ]
+}

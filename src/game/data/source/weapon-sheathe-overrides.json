@@ -1,0 +1,4 @@
+{
+ "note": "收械挂点的人工覆盖表。**优先级最高**，用于改掉源码三张表（NewSourcePT-2023/SrcGame/src/character.cpp 的 dwItemCodeFromVillage 系列）的判定，或补充表外武器。slot 取值：hand=留手上 / back=通用入背(in01) / bow=入背(in-bow) / crossbow=入背(in-cro)。\n【2026-09-12 清空旧条目】曾有一条 `WS118 → hand`，依据是用户说它外形像低级单手弩。查 11 职业源码后**撤回**：`sinWS1|sin18`（=WS118）明确列在 `dwItemCodeFromVillage_Cross[]` → dwItemSetting=3 → 「Bip in-bow」（弓背）。用户那句话讲的是**类型/外形**，我把它外推成了**挂载**，越界了（用户 2026-09-12 更正「WS118 是弓」→ 类型已改回 BOW，与此处 bow 槽一致）；而且源码对它与低级手弩（WS102/103/109 在 Village 表 = 留手上）的判定本就不同。表为空 = 全部按源码。",
+ "codes": {}
+}

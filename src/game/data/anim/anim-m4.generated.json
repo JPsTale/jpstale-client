@@ -1,0 +1,8530 @@
+{
+ "note": "由 scripts/extract-anim-semantics.ts 从当前客户端 .inx/.smb 提取的语义表（生成物，勿手改）。武器要求已从 sItem 索引翻为 (weaponType,handType) 语义；与 glTF 无关，只描述\"这是什么动作\"。",
+ "group": "m4",
+ "smb": "m4.smb",
+ "entryCount": 92,
+ "entries": [
+  {
+   "id": "stand_unarmed",
+   "state": "STAND",
+   "frames": [
+    1,
+    51
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 10,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#2",
+   "state": "STAND",
+   "frames": [
+    64,
+    154
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 11,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "restart",
+   "state": "RESTART",
+   "frames": [
+    167,
+    225
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 12,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fall",
+   "state": "FALLDOWN",
+   "frames": [
+    238,
+    248
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 13,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fallstand",
+   "state": "FALLSTAND",
+   "frames": [
+    261,
+    295
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 14,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "falldamage",
+   "state": "FALLDAMAGE",
+   "frames": [
+    308,
+    343
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 15,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "walk_unarmed",
+   "state": "WALK",
+   "frames": [
+    344,
+    372
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 16,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed",
+   "state": "WALK",
+   "frames": [
+    385,
+    413
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 17,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#2",
+   "state": "WALK",
+   "frames": [
+    385,
+    413
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 18,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#3",
+   "state": "WALK",
+   "frames": [
+    426,
+    454
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 19,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#4",
+   "state": "WALK",
+   "frames": [
+    426,
+    454
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 20,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#5",
+   "state": "WALK",
+   "frames": [
+    467,
+    495
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 21,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_1h_javelin",
+   "state": "WALK",
+   "frames": [
+    508,
+    536
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 22,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#6",
+   "state": "WALK",
+   "frames": [
+    549,
+    577
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 23,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#7",
+   "state": "WALK",
+   "frames": [
+    590,
+    618
+   ],
+   "repeat": true,
+   "eventFrames": [
+    640,
+    2880
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 24,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_unarmed",
+   "state": "RUN",
+   "frames": [
+    631,
+    651
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 25,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed",
+   "state": "RUN",
+   "frames": [
+    664,
+    684
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 26,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#2",
+   "state": "RUN",
+   "frames": [
+    664,
+    684
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 27,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#3",
+   "state": "RUN",
+   "frames": [
+    697,
+    717
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 28,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     13,
+     14,
+     129,
+     130,
+     132,
+     133,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#4",
+   "state": "RUN",
+   "frames": [
+    697,
+    717
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 29,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#5",
+   "state": "RUN",
+   "frames": [
+    730,
+    750
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 30,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_1h_javelin",
+   "state": "RUN",
+   "frames": [
+    763,
+    783
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 31,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#6",
+   "state": "RUN",
+   "frames": [
+    796,
+    816
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 32,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#7",
+   "state": "RUN",
+   "frames": [
+    829,
+    849
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 33,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "eat",
+   "state": "EAT",
+   "frames": [
+    851,
+    871
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 34,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#3",
+   "state": "STAND",
+   "frames": [
+    894,
+    924
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 35,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed",
+   "state": "STAND",
+   "frames": [
+    937,
+    967
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 36,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#2",
+   "state": "STAND",
+   "frames": [
+    937,
+    967
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 37,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#3",
+   "state": "STAND",
+   "frames": [
+    980,
+    1010
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 38,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#4",
+   "state": "STAND",
+   "frames": [
+    980,
+    1010
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 39,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#5",
+   "state": "STAND",
+   "frames": [
+    1023,
+    1053
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 40,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_1h_javelin",
+   "state": "STAND",
+   "frames": [
+    1066,
+    1096
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 41,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#6",
+   "state": "STAND",
+   "frames": [
+    1109,
+    1139
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 42,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#7",
+   "state": "STAND",
+   "frames": [
+    1152,
+    1182
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 43,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "damage",
+   "state": "DAMAGE",
+   "frames": [
+    1228,
+    1250
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 44,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "dead",
+   "state": "DEAD",
+   "frames": [
+    1263,
+    1337
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 45,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_unarmed",
+   "state": "ATTACK",
+   "frames": [
+    1347,
+    1387
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 46,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_mixed",
+   "state": "ATTACK",
+   "frames": [
+    1400,
+    1440
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 47,
+    "itemCodes": [
+     1,
+     3,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 29
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#2",
+   "state": "ATTACK",
+   "frames": [
+    1453,
+    1493
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4000
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 48,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#3",
+   "state": "ATTACK",
+   "frames": [
+    1453,
+    1493
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4000
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 49,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#4",
+   "state": "ATTACK",
+   "frames": [
+    1506,
+    1556
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 50,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#5",
+   "state": "ATTACK",
+   "frames": [
+    1506,
+    1556
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 51,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#6",
+   "state": "ATTACK",
+   "frames": [
+    1569,
+    1619
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 52,
+    "itemCodes": [
+     36,
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 20,
+     "resolved": 11
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#7",
+   "state": "ATTACK",
+   "frames": [
+    1632,
+    1682
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4000
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 53,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#8",
+   "state": "ATTACK",
+   "frames": [
+    1695,
+    1745
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 54,
+    "itemCodes": [
+     49,
+     50,
+     65,
+     67,
+     68,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wm",
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin",
+   "state": "ATTACK",
+   "frames": [
+    1758,
+    1798
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 55,
+    "itemCodes": [
+     122,
+     227,
+     258
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 1
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin#2",
+   "state": "ATTACK",
+   "frames": [
+    1811,
+    1851
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 56,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#9",
+   "state": "ATTACK",
+   "frames": [
+    1864,
+    1904
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 57,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#10",
+   "state": "ATTACK",
+   "frames": [
+    1917,
+    1957
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 58,
+    "itemCodes": [
+     15,
+     16,
+     17,
+     18,
+     20,
+     21,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_claw",
+   "state": "ATTACK",
+   "frames": [
+    1970,
+    2010
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 59,
+    "itemCodes": [
+     19,
+     22
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW"
+    ],
+    "iconFamilies": [
+     "wc"
+    ],
+    "coverage": {
+     "total": 2,
+     "resolved": 2
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#11",
+   "state": "ATTACK",
+   "frames": [
+    2023,
+    2063
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 60,
+    "itemCodes": [
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 3
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#12",
+   "state": "ATTACK",
+   "frames": [
+    2076,
+    2116
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 61,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "yahoo",
+   "state": "YAHOO",
+   "frames": [
+    2126,
+    2176
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 62,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "skill_ground_pike",
+   "state": "SKILL",
+   "frames": [
+    2444,
+    2514
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6240
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Ground Pike",
+    "Venom Spear"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 63,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     45,
+     49
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_pike_wind",
+   "state": "SKILL",
+   "frames": [
+    2527,
+    2597
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Pike Wind",
+    "Vanish"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 64,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     41,
+     50
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_jumping_crash",
+   "state": "SKILL",
+   "frames": [
+    2610,
+    2660
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Jumping Crash"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 65,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8,
+     9,
+     10,
+     11,
+     12,
+     13,
+     14,
+     129,
+     130,
+     131,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     138,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239
+    ],
+    "skillCodes": [
+     44
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 27
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_jumping_crash#2",
+   "state": "SKILL",
+   "frames": [
+    2610,
+    2660
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Jumping Crash"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 66,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     99,
+     100,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     211,
+     213,
+     214,
+     215,
+     216,
+     217,
+     218,
+     219,
+     220,
+     221,
+     222,
+     223,
+     255,
+     256,
+     257
+    ],
+    "skillCodes": [
+     44
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD",
+     "HAMMER",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "ws",
+     "wh",
+     "wt"
+    ],
+    "coverage": {
+     "total": 33,
+     "resolved": 20
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_jumping_crash#3",
+   "state": "SKILL",
+   "frames": [
+    2610,
+    2664
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Jumping Crash"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 67,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     44
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_tornado",
+   "state": "SKILL",
+   "frames": [
+    2677,
+    2727
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Tornado"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 68,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     46
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed",
+   "state": "SKILL",
+   "frames": [
+    2740,
+    2790
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 69,
+    "itemCodes": [
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242
+    ],
+    "skillCodes": [],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 27
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#2",
+   "state": "SKILL",
+   "frames": [
+    2803,
+    2853
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 70,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     211,
+     212,
+     213,
+     214,
+     215,
+     216,
+     217,
+     218,
+     219,
+     220,
+     221,
+     222,
+     223,
+     255,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD",
+     "HAMMER",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wh",
+     "wt"
+    ],
+    "coverage": {
+     "total": 38,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#3",
+   "state": "SKILL",
+   "frames": [
+    2866,
+    2916
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 71,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#4",
+   "state": "SKILL",
+   "frames": [
+    2929,
+    2989
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 72,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251,
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225
+    ],
+    "skillCodes": [],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 50,
+     "resolved": 44
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#5",
+   "state": "SKILL",
+   "frames": [
+    2929,
+    2989
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 73,
+    "itemCodes": [
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     211,
+     212,
+     213,
+     214,
+     215,
+     216,
+     217,
+     218,
+     219,
+     220,
+     221,
+     222,
+     223,
+     255,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD",
+     "HAMMER",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "ws",
+     "wh",
+     "wt"
+    ],
+    "coverage": {
+     "total": 49,
+     "resolved": 22
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_chain_lancer",
+   "state": "SKILL",
+   "frames": [
+    3847,
+    3910
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880,
+    4000,
+    6240
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Chain Lancer"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 74,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     52
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_chain_lancer#2",
+   "state": "SKILL",
+   "frames": [
+    3921,
+    3984
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880,
+    4000,
+    6240
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Chain Lancer"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 75,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [
+     52
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_chain_lancer#3",
+   "state": "SKILL",
+   "frames": [
+    3994,
+    4057
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880,
+    4000,
+    6240
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Chain Lancer"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 76,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [
+     52
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_chain_lancer#4",
+   "state": "SKILL",
+   "frames": [
+    4067,
+    4130
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880,
+    4000,
+    6240
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Chain Lancer"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 77,
+    "itemCodes": [
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242
+    ],
+    "skillCodes": [
+     52
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 27
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_assassin_s_eye",
+   "state": "SKILL",
+   "frames": [
+    4141,
+    4211
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5280
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Assassin's Eye"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 78,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     53
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_charging_strike",
+   "state": "SKILL",
+   "frames": [
+    4231,
+    4391
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400,
+    16800,
+    17920,
+    20160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Charging Strike"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 79,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     54
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_charging_strike#2",
+   "state": "SKILL",
+   "frames": [
+    4401,
+    4563
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400,
+    16800,
+    17920,
+    20160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Charging Strike"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 80,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [
+     54
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_charging_strike#3",
+   "state": "SKILL",
+   "frames": [
+    4401,
+    4563
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400,
+    16800,
+    17920,
+    20160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Charging Strike"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 81,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [
+     54
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_charging_strike#4",
+   "state": "SKILL",
+   "frames": [
+    4581,
+    4743
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400,
+    16800,
+    17920,
+    20160
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Charging Strike"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 82,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [
+     54
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_vague",
+   "state": "SKILL",
+   "frames": [
+    4761,
+    4821
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Vague"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 83,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     55
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_shadow_master",
+   "state": "SKILL",
+   "frames": [
+    4841,
+    4959
+   ],
+   "repeat": false,
+   "eventFrames": [
+    640,
+    3360,
+    6240,
+    9120
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [
+    "Shadow Master"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 84,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     56
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 28
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_shadow_master#2",
+   "state": "SKILL",
+   "frames": [
+    4841,
+    4959
+   ],
+   "repeat": false,
+   "eventFrames": [
+    640,
+    3360,
+    6240,
+    9120
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [
+    "Shadow Master"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 85,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     99,
+     100,
+     101,
+     102,
+     103,
+     104,
+     105,
+     106,
+     107,
+     108,
+     109,
+     110,
+     111,
+     112,
+     210,
+     211,
+     212,
+     213,
+     214,
+     215,
+     216,
+     217,
+     218,
+     219,
+     220,
+     221,
+     222,
+     223,
+     255,
+     256,
+     257
+    ],
+    "skillCodes": [
+     56
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD",
+     "HAMMER",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "ws",
+     "wh",
+     "wt"
+    ],
+    "coverage": {
+     "total": 35,
+     "resolved": 22
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#6",
+   "state": "SKILL",
+   "frames": [
+    4994,
+    5060
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5600
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 86,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     57
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#7",
+   "state": "SKILL",
+   "frames": [
+    4994,
+    5060
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5600
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 87,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [
+     57
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#8",
+   "state": "SKILL",
+   "frames": [
+    4994,
+    5060
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5600
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 88,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [
+     57
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#9",
+   "state": "SKILL",
+   "frames": [
+    4994,
+    5060
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5600
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 89,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [
+     57
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#10",
+   "state": "SKILL",
+   "frames": [
+    5075,
+    5145
+   ],
+   "repeat": false,
+   "eventFrames": [
+    7200
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 90,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     58
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#11",
+   "state": "SKILL",
+   "frames": [
+    5075,
+    5145
+   ],
+   "repeat": false,
+   "eventFrames": [
+    7200
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 91,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [
+     58
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#12",
+   "state": "SKILL",
+   "frames": [
+    5075,
+    5145
+   ],
+   "repeat": false,
+   "eventFrames": [
+    7200
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 92,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [
+     58
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#13",
+   "state": "SKILL",
+   "frames": [
+    5075,
+    5145
+   ],
+   "repeat": false,
+   "eventFrames": [
+    7200
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 93,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [
+     58
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#14",
+   "state": "SKILL",
+   "frames": [
+    5160,
+    5213
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 94,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     59
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#15",
+   "state": "SKILL",
+   "frames": [
+    5160,
+    5213
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 95,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [
+     59
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#16",
+   "state": "SKILL",
+   "frames": [
+    5160,
+    5213
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 96,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [
+     59
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#17",
+   "state": "SKILL",
+   "frames": [
+    5160,
+    5213
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4640
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 97,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [
+     59
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#18",
+   "state": "SKILL",
+   "frames": [
+    5228,
+    5286
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560,
+    6560
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 98,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [
+     60
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#19",
+   "state": "SKILL",
+   "frames": [
+    5228,
+    5286
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560,
+    6560
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 99,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [
+     60
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#20",
+   "state": "SKILL",
+   "frames": [
+    5228,
+    5286
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560,
+    6560
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 100,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [
+     60
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "skill_mixed#21",
+   "state": "SKILL",
+   "frames": [
+    5228,
+    5286
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560,
+    6560
+   ],
+   "classes": [
+    "Pikeman"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 101,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [
+     60
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  }
+ ]
+}

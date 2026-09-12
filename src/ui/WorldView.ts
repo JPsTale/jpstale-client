@@ -25,9 +25,13 @@ import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
 import { createAnimStateMachine } from '../char/anim-state-machine.js';
+import { semanticEntryOfMotion } from '../char/anim-match.js';
+import { reportFallback } from '../char/fallback-log.js';
+import { semanticEntriesForJob } from '../char/semantic-anim.js';
 import { isSafeMap } from '../game/safeZones.js';
-import { getWeaponTypeFromIdCode, getHandType } from '../char/weapon-type.js';
-import { sfx, weaponSoundCode, type HandType } from '../audio/sfx.js';
+import { getWeaponTypeFromIdCode, getHandType, getHandTypeFromIdCode } from '../char/weapon-type.js';
+import { sfx, weaponSoundCode, type HandType, type VoiceHandle } from '../audio/sfx.js';
+import { createEffectManager } from '../render/effects/effect-manager.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
@@ -35,10 +39,12 @@ import { evalSkeleton, applyToBones, advanceAnimFrame, ANIM_UNITS_PER_SEC } from
 import { decodeTextureAsync } from '../core/texture.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { cachedFetch } from '../core/asset-cache.js';
+import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
+import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
+import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, WeaponMount } from '../render/weapon-loader.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
@@ -46,6 +52,57 @@ import { getGameSnapshot } from '../app/gameStore.js';
 
 /** idcode → classItem（4=单手 / 6=双手），武器音效选码用（原版 WeaponPlaySound 的 HandType） */
 const ITEM_CLASS_BY_CODE = new Map<number, number>(ITEM_DEFS.map((d) => [d.code, d.class]));
+
+/* ─────────── 武器语义查询（自机与远端**唯一实现**，不要各写一份） ───────────
+ * 远端 actor 的动画曾因"只有自机接了武器语义"而永远播通用动画（用户实测）。 */
+
+/** idcode → 武器语义类型（AXE/SWORD/BOW…）；无武器/徒手 → null */
+export function weaponTypeOfIdCode(idcode: number | null | undefined): string | null {
+  if (!idcode || idcode <= 0) return null;
+  return getWeaponTypeFromIdCode(idcode);
+}
+
+/** idcode → 单双手。语义表（含人工覆盖）优先，DB classItem 兜底；无武器 → UNDEFINED */
+export function handTypeOfIdCode(idcode: number | null | undefined): HandType {
+  if (!idcode) return 'UNDEFINED';
+  const fromSem = getHandTypeFromIdCode(idcode);
+  if (fromSem === '1H' || fromSem === '2H') return fromSem as HandType;
+  const cls = ITEM_CLASS_BY_CODE.get(idcode);
+  return cls === undefined ? 'UNDEFINED' : (getHandType(cls) as HandType);
+}
+
+/**
+ * 变体种子派生（服务端未下发 seed 时的确定性回退）。
+ * 只用 **(实体 id, 状态)** 两个所有客户端都相同的输入 → 同一实体在所有客户端播同一条变体。
+ * 旧行为是各客户端各自 `Math.random()`，同一角色在不同客户端上动作不一致（用户实测）。
+ */
+export function deriveAnimSeed(id: number, state: number): number {
+  return (Math.imul(id >>> 0, 0x9E3779B1) ^ Math.imul(state >>> 0, 0x85EBCA6B)) >>> 0;
+}
+
+/**
+ * 副手件姿态搬运：盾留左臂不动，匕首在左手 ↔ 左腰之间搬移。
+ * （**主手**不在这里 —— 它连同"双手武器的镜像份"由 `WeaponMount` 统一管，见 weapon-loader。）
+ * 找不到目标骨时**不静默丢弃**：返回骨名由调用方上报（纠错 #12：降级必须可见）。
+ */
+export function moveOffHandForStance(opts: {
+  root: THREE.Object3D;
+  off: THREE.Object3D | null;
+  idcode: number;
+  offKind: number;
+  stance: 'combat' | 'sheathed';
+}): { moved: boolean; missingBone: string | null } {
+  const { root, off, idcode, offKind, stance } = opts;
+  if (!off || offKind !== 2) return { moved: false, missingBone: null }; // 只有匕首参与搬运
+  const target = stance === 'combat'
+    ? offMountBoneOf(idcode, offKind, 'combat')
+    : offMountBoneOf(idcode, offKind, 'sheathed');
+  const bone = findBone(root, target);
+  if (!bone) return { moved: false, missingBone: target };
+  off.parent?.remove(off);
+  bone.add(off);
+  return { moved: true, missingBone: null };
+}
 
 export interface EnterGameInfo {
   playerId: number;
@@ -67,8 +124,17 @@ export interface WorldView {
   destroy(): void;
   /** 游戏时间（0-23时/0-59分）：昼夜驱动源（忠实 /pt/maps darkLevel/BackColor 渐变） */
   setGameTime(hour: number, min: number): void;
-  /** 切换场内小地图显示（原版 TAB） */
-  toggleMinimap(): void;
+  /** 切换场内小地图显示（原版 TAB）；返回切换后是否显示 */
+  toggleMinimap(): boolean;
+  /** 小地图当前是否显示（HUD 的 TAB 按钮图标同步用） */
+  isMinimapOn(): boolean;
+  /**
+   * 相机模式（原版小按钮 Z）：0=手动（方向键/滚轮俯仰/鼠标贴左右边缘旋转）、
+   * 1=自动（松手后慢慢回到角色背后）、2=固定（视角始终跟在角色背后）。返回切换后的值。
+   */
+  toggleCameraMode(): number;
+  /** 当前相机模式 */
+  cameraMode(): number;
   /** 切换"显示附近所有掉落物名牌"（A 键） */
   toggleGroundItemLabels(): void;
   /** 走/跑模式（真源）；返回切换后的值 */
@@ -87,6 +153,19 @@ export interface WorldView {
   isSelf(playerId: number): boolean;
   /** 自机 hp/maxHp（S2C_PlayerState 喂入；名牌血条用） */
   setSelfHp(hp: number, maxHp: number): void;
+  /**
+   * 服务端权威复活（`game.playerRespawn`）：送回出生地图、半血。
+   * **自机位置权威在客户端** —— 必须由客户端把自己搬过去，否则服务端认为你在出生地、
+   * 你还在原地继续挨打（两边状态错乱）。`y<=0` 时用本地地形补。
+   */
+  applyRespawn(info: { mapId: number; x: number; z: number; y: number; hp: number; maxHp: number }): Promise<void>;
+  /**
+   * 玩家死亡（`S2C_PlayerDeath`）：躺下停在 DEAD 动画末帧，直到 applyRespawn。
+   * 自机期间定身（不能移动/攻击）；旁观者的尸体同样可见。
+   */
+  applyPlayerDeath(playerId: number): void;
+  /** 复活目标图是否与当前图不同（main.ts 据此决定要不要盖加载遮罩） */
+  respawnNeedsMapLoad(mapId: number): boolean;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
   setSelfName(name: string): void;
   /** 自机发起攻击 → 进入 3 秒战斗窗口（玩家血条显示） */
@@ -95,7 +174,7 @@ export interface WorldView {
    * S2C_AttackStart 旁观同步：attackerId 为视野内远端玩家 → 触发其挥拳动画（按 attackSpeed 变速）+ 朝 targetId 怪转向。
    * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动。
    */
-  signalAttackStart(attackerId: number, targetId: number, attackSpeed: number): void;
+  signalAttackStart(attackerId: number, targetId: number, attackSpeed: number, animIndex?: number, animClip?: string): void;
   /**
    * S2C_Damage 受击硬直：targetId 为自机 → 站立/走/跑时播受击动画（攻击/技能中不打断）；
    * 为远端玩家 → 同规则作用到该 actor。damage<=0（抵抗/吸收）不播。
@@ -109,11 +188,22 @@ export interface WorldView {
    * S2C_AttackResult 音反馈（自机为攻击者）：MISS → 挥空音；暴击 → 追加暴击音。
    * 对应原版 WeaponPlaySound 末尾的 AttackCritcal / 暴击追加码 16。
    */
-  playSelfAttackResult(missed: boolean, critical: boolean): void;
+  playSelfAttackResult(missed: boolean, critical: boolean, hitIndex?: number): void;
+  /** 应用服务端下发的攻击计划（B 方案）：起手即知各段结果 → 事件帧可直接播正确的音 */
+  applyAttackPlan(plan: {
+    clientSeq?: number | null;
+    segments?: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null }> | null;
+  }): void;
+  /**
+   * 在单位身上放一个 INI 广告牌特效（命中/暴击/升级等）。
+   * targetId 可为怪物/远端玩家/自机；无法定位目标时静默忽略。
+   * 特效名对应 `effect/animationdata/<名>.ini`（如 NormalHit1 / CriticalHit1 / Light1）。
+   */
+  spawnEffectOnUnit(targetId: number, name: string): void;
   /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
   showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
-  applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number): void;
+  applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
   playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
@@ -156,12 +246,18 @@ export function rawToWorld(x: number, y: number, z: number): THREE.Vector3 {
 export interface WorldViewOpts {
   /** 移动上报（客户端位置上权威，方向二）：angle=弧度(0=+Z北)、mode=0 IDLE/1 WALK/2 RUN、
    *  x/y/z=当前世界位置。WorldView 控制上报节奏（移动中 ~25Hz + 启动/停止/转向即时）。
-   *  anim=动画覆盖：0=按 mode 推导；下落 FALLDOWN=0x70、落地 FALLSTAND=0x71/FALLDAMAGE=0x72。 */
-  onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim?: number) => void;
+   *  anim=动画覆盖：0=按 mode 推导；下落 FALLDOWN=0x70、落地 FALLSTAND=0x71/FALLDAMAGE=0x72。
+   *  animIndex/animClip=**自机此刻播的那一条动画**（.inx 条目索引 + 语义 ID）。
+   *  服务端原样透传，旁观者据此直接播同一条 —— 不再各自匹配/随机（否则同一角色在不同
+   *  客户端上动作不一致）。clip 仅供两端校验数据是否同代（人可读，日志用）。 */
+  onMoveInt?: (angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim?: number,
+               animIndex?: number, animClip?: string) => void;
   /** 点击地面物品（拾取意图）→ main.ts 发 C2S_PickupItem。拾取距离由服务端权威裁决。 */
   onPickupGroundItem?: (groundItemId: number) => void;
-  /** 攻击起手（挥拳开始）→ main.ts 发 C2S_AttackStart(targetId)。 */
-  onAttackStart?: (monsterId: number) => void;
+  /** 攻击起手（挥拳开始）→ main.ts 发 C2S_AttackStart(targetId, clientSeq, segments)。
+   *  animIndex/animClip = 本次挥击动画（旁观者据此播同一条，见 onMoveInt 说明）。 */
+  onAttackStart?: (monsterId: number, clientSeq: number, segments: number,
+                   animIndex?: number, animClip?: string) => void;
   /** 命中帧（每段一次）→ main.ts 发 C2S_AttackHit(targetId, hitIndex)。 */
   onAttackHit?: (monsterId: number, hitIndex: number) => void;
 }
@@ -172,12 +268,16 @@ const ANIM_RUN = 0x0060;
 const ANIM_FALLDOWN = 0x0070;
 const ANIM_FALLSTAND = 0x0071;
 const ANIM_FALLDAMAGE = 0x0072;
+/** 死亡（对齐原版 CHRMOTION_STATE_DEAD；S2C_PlayerDeath 走的不是 anim_state，这里只用于"复活了没有"的比较） */
+const ANIM_DEAD = 0x0120;
 
 // ===== 玩家普通攻击（design-player-combat.md）=====
 // 近战攻击距离：与服务端 CombatService.ATTACK_RANGE 同值（≤ 此距离停步攻击，超出追击）
 const ATTACK_RANGE = 48;
 // 挥拳动画时长 = 服务端攻击间隔 + 此冗余，保证客户端节奏不慢于服务端冷却（结构性防丢刀）
 const SWING_SLACK_MS = 40;
+// 起手闸门余量：动画播完到触发下次起手之间的帧级抖动（2 动画帧 ≈ 67ms，见 selfAttackGateMs）
+const ATTACK_START_MARGIN_MS = 67;
 
 // ===== 动画播放（delta-time，与帧率解耦）=====
 // animFrame 单位：1 动画帧 = 160 单位。原「每渲染帧 += 80」在 60fps 下等价于 4800 单位/秒。
@@ -200,6 +300,17 @@ function attackRate(motion: MotionInfo, attackSpeed: number): number {
   const span = motion.endFrame - motion.startFrame;
   const naturalMs = (span / ANIM_FPS_BASE) * 1000;
   return Math.max(0.01, naturalMs / swingMs);
+}
+
+/**
+ * 起手闸门：两次起手之间至少要隔这么久（毫秒）。
+ * 服务端 AttackStart 有一道 `checkAttackCooldown` 硬闸（间隔 = attackIntervalMs，与上面同式），
+ * 落在冷却内会被**整条拒绝**：这次挥拳没有计划可裁定，命中帧就会退回重掷甚至被当作上一计划的
+ * 重复段吞掉。动画播完到下次起手之间有几帧/几毫秒的抖动，正好能压进冷却边界，
+ * 所以客户端自己也要留出这段余量（2 个动画帧 ≈ 67ms），让上报的节奏始终落在服务端允许的速率内。
+ */
+function selfAttackGateMs(): number {
+  return attackIntervalMs(getGameSnapshot().character?.attackSpeed ?? 0) + ATTACK_START_MARGIN_MS;
 }
 
 /**
@@ -228,6 +339,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
+  /** 上次"按坐标检查区域是否已加载"的时间（节流；见移动分支里的 mapsAtPoint 检查） */
+  let lastRegionCheck = 0;
+  /** 最近一次区域同步"想要的图"集合：进行中的分帧构建据此判断自己是否已被抛弃 */
+  let wantedMaps = new Set<number>();
+  /** 待卸载地图 → 到期时刻。**延迟卸载**：边界来回时避免"卸了又装"（每次装约 0.3s） */
+  const pendingUnload = new Map<number, number>();
+  const MAP_UNLOAD_DECAY_MS = 8000;
   // 名牌/血条 2D overlay（叠在 3D 层上方，pointer-events:none；design-nameplate-hpbar.md）
   let npOverlay: HTMLCanvasElement | null = null;
   let npCtx: CanvasRenderingContext2D | null = null;
@@ -238,8 +356,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // ---- 走/跑模式（真源；移动中切换经 onMoveInt 出口上报 C2S）---
-  let running = true; // 默认跑
+  // 初值取持久化偏好（用户 2026-09-13：原先每次重进都被重置回"跑"）
+  const uiPrefs0 = loadUiPrefs();
+  let running = uiPrefs0.running;
   let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
+  let effects: ReturnType<typeof createEffectManager> | null = null; // INI 广告牌特效
 
   // ── 昼夜状态（移植 /pt/maps index.html:512-615，忠实原版 Winmain.cpp:5394 + playmain.cpp:2981）──
   let dayNightHour = 12;          // 当前游戏小时（由 main.ts 喂入）
@@ -256,7 +377,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     { hLo: 23, hHi: 24, dark: 145, back: [-50, 0, 10] }, // 夜 23
     { hLo: 0,  hHi: 4,  dark: 145, back: [-50, 0, 10] }, // 夜 0-3
   ];
-  const mapHandles = new Map<number, Awaited<ReturnType<typeof loadMap>>>();
+  // loadMap 现在可能返回 null（分帧构建期间被取消）—— 能进这张表的**一定是建好的**，
+  // 所以显式取 NonNullable（否则每个遍历点都要判空，取消语义反而被稀释）。
+  const mapHandles = new Map<number, NonNullable<Awaited<ReturnType<typeof loadMap>>>>();
   const collisionMeshes = new Map<number, CollisionMesh>();
   const decorGroups = new Map<number, THREE.Group[]>(); // mapId → 装饰 group 列表
   // 全部 44 图 world AABB（预取，用于 findCurrentMap 判归属，不依赖是否已加载）
@@ -264,11 +387,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let charGroup: THREE.Group | null = null;
   let selfAngle = 0; // 角色朝向（弧度）
   let selfJobId = 1;
-  let selfWeaponGroup: THREE.Group | null = null; // 当前挂载的自机主手武器（随外观/动画切换）
+  // 自机主手武器挂载器（含双手武器镜像份、姿态搬运）—— 与远端/检查器同一实现
+  const selfWeaponMount = new WeaponMount();
   let selfOffHandGroup: THREE.Group | null = null; // 当前挂载的自机副手（盾/匕首）
   // 自机武器姿态：'combat'=挂手部（攻击姿态）；'sheathed'=收到腰间/背后（安全区村庄态）。对齐 CharSelect。
   let selfWeaponStance: 'combat' | 'sheathed' = 'combat';
-  let selfCombatBone = WEAPON_BONES.RIGHT_HAND; // 战斗姿态挂载骨（weaponPos 决定；挂武器时更新）
+  /** 自机是否处于死亡态（躺下等复活）—— 期间定身、不接受移动/攻击 */
+  let selfDead = false;
+  /** 自机当前动画的**语义 ID**（`SemanticEntry.clip`，如 `stand_unarmed.m4.10`）。
+   *  随移动/起手上报给服务端 → 旁观者据此直接播同一条，并校验两端动画数据是否同代。 */
+  let selfAnimClip = '';
   let selfAppearance: CharacterAppearance | undefined; // 当前自机外观（进图/换装更新；动画武器类型+武器挂载源）
   let animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'] | null = null;
   let bipInxInfo: Awaited<ReturnType<typeof loadCharacterModel>>['bipInxInfo'] | null = null;
@@ -284,6 +412,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfAttackMotion: MotionInfo | null = null;
   let selfAttackTargetId = 0;
   let selfAttackEventFrames: number[] = [];
+  /** 本次挥拳**各段**的挥击音句柄（key = hit_index）。miss 结果到达时按段替换那一声（见 playSelfAttackResult） */
+  const selfAttackVoices = new Map<number, VoiceHandle | null>();
+  /** 本机攻击序号（每次起手自增），用于把 S2C_AttackPlan 与本次攻击对齐 */
+  let selfAttackSeq = 0;
+  /** 上次起手的时刻（rafMs）：起手闸门用，见下方 selfAttackGateMs() */
+  let lastSelfAttackStartMs = -1e9;
+  /** 服务端下发的攻击计划（B 方案）：key = hit_index。**有计划的段在事件帧直接播正确结果音**，
+   *  不再走"乐观命中 → 结果到达再替换"；没有计划的段才退回乐观路径（计划未到/起手被拒）。 */
+  let selfAttackPlan: Map<number, { missed: boolean; critical: boolean }> | null = null;
+  /** 已按计划播过音的段 → **当时播的是哪套判定**（missed/critical）。结果到达时用它判断要不要修正 */
+  const selfPlanSounded = new Map<number, { missed: boolean; critical: boolean }>();
   let selfAttackHitFired = 0;
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
@@ -554,6 +693,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let wasMoving = false;        // 上一帧是否在移动（本地动画/停止上报去重）
   let lastMoveReportAt = 0;
   const MOVE_REPORT_MS = 40;    // 移动中上报节奏 ≈25Hz（服务端 20Hz tick 消费）
+  /** "按坐标检查区域是否已加载"的节流（跑图时最多每 500ms 查一次 AABB，开销可忽略） */
+  const REGION_CHECK_MS = 500;
   // 掉落状态（对齐原版：下落有 FALLDOWN 动画，下落中不能水平移动/转向）
   let falling = false;          // 是否正在下落
   let fallHeight = 0;           // 下落起始高度差（触发 FALLDAMAGE 判定）
@@ -574,6 +715,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   window.addEventListener('keydown', (e) => { if (!typingActive()) keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  // 失焦清键：按住方向键时切窗口/点别的应用 → keyup 落在别处，按键状态会**永久卡住**
+  // （实测：keys['ArrowUp'] 卡住后相机距离每帧 -8 一直缩到下限）。失焦即全部松开。
+  window.addEventListener('blur', () => { for (const k of Object.keys(keys)) keys[k] = false; });
   // C 键已由全局 KeyBinding 接管（角色状态面板），这里不再注册 debugDump。
   // 调试输出改为挂到 KeyJ（不会与游戏键位冲突）。
   window.addEventListener('keydown', (e) => {
@@ -599,18 +743,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   });
 
   // 相机状态（对应 /pt/maps/ debug 相机，Winmain.cpp 自由模式初始值）
-  // 俯仰角 anx 初始 33.75°（引擎角度 384 → 弧度），any=0；fov=40.9, near=20, far=4000（JS 世界单位）
+  // 俯仰角 anx 默认 33.75°（引擎角度 384 → 弧度），any=0；fov=40.9, near=20, far=4000（JS 世界单位）
+  // **初值与改动都持久化**（localStorage，见 camera-prefs.ts）：重进游戏不必重设观察距离/角度。
+  const camInit = loadCameraPrefs();
   const cam = {
-    dist: 100,
-    viewDist: 100,
-    anx: (384 / 4096) * Math.PI * 2,   // 33.75°
-    viewAnx: (384 / 4096) * Math.PI * 2,
-    any: 0,
+    dist: camInit.dist,
+    viewDist: camInit.dist,
+    anx: camInit.anx,
+    viewAnx: camInit.anx,
+    any: camInit.any,
     fov: 40.9,
   };
+  /** 已落盘的相机读数：与当前值比对，避免每帧写 localStorage */
+  let camSaved = { dist: camInit.dist, anx: camInit.anx, any: camInit.any, mode: camInit.mode, autoRecenter: camInit.autoRecenter };
+  let camDirty = false;
+  let camSavedAt = 0;
   const CAM_ROT_STEP = (16 / 4096) * Math.PI * 2; // 引擎角度 ±16 → 弧度
-  const CAM_ANX_MIN = (40 / 4096) * Math.PI * 2;
-  const CAM_ANX_MAX = (976 / 4096) * Math.PI * 2;
   const statsEl = document.createElement('div');
   statsEl.style.cssText = 'position:absolute;left:8px;bottom:8px;padding:6px 10px;background:rgba(0,0,0,0.72);color:#cfc;font:12px/1.5 monospace;border:1px solid #486;z-index:60;user-select:none;pointer-events:none;white-space:pre;';
   root.appendChild(statsEl);
@@ -625,7 +773,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   mmEl.style.cssText = 'position:absolute;z-index:60;pointer-events:none;';
   root.appendChild(mmEl);
   const mmCtx = mmEl.getContext('2d')!;
-  let mmVisible = true;
+  let mmVisible = uiPrefs0.minimapOpen;   // 持久化：小地图开关
+  mmEl.style.display = mmVisible ? 'block' : 'none';   // 元素入场即按偏好显隐（否则会先闪一下）
   const mmImg = new Map<string, HTMLImageElement>(); // url → image
   const mmLoading = new Set<string>();
   let mmAssetsInit = false;          // arrow/mapbox 一次性
@@ -750,9 +899,81 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  function toggleMinimap(): void {
+  function toggleMinimap(): boolean {
     mmVisible = !mmVisible;
     mmEl.style.display = mmVisible ? 'block' : 'none';
+    saveUiPrefs({ running, minimapOpen: mmVisible });   // 落盘（用户 2026-09-13）
+    return mmVisible;
+  }
+
+  /** 当前小地图是否显示（HUD 的 TAB 按钮图标同步用） */
+  function isMinimapOn(): boolean {
+    return mmVisible;
+  }
+
+  // ===== 相机模式（原版小按钮 Z）：0=手动 1=自动 2=固定 =====
+  // 原版证据（ex-machina `src/game/Main.cpp`）：
+  //   · `int PlayCameraMode = 1;`            → **默认是自动**
+  //   · 切模式：`if (CameraAutoFlag == 2) any = ANGLE_45;`  → 进固定时朝向重置 45°
+  //   · `PlayD3D`：`if (PlayCameraMode == 2) { dist = 400; anx = ANGLE_45 - 128;
+  //                  ViewAnx = anx; ViewDist = dist; }`   → **固定 = 每帧把距离与俯仰按死**
+  //     （用户 2026-09-12 指出："固定摄像机是有固定角度、固定距离的" —— 我原先只锁了朝向，漏了这两个）
+  //   · 自动：`PlayCameraMode == 1 && ... && lpCurPlayer->MoveFlag` → 只在角色移动时追朝向
+  const TAU2 = Math.PI * 2;
+  /** 固定相机（原版模式 2）的硬编码读数 */
+  const CAM_FIXED_DIST = 400;                     // dist = 400
+  const CAM_FIXED_ANX = (384 / 4096) * Math.PI * 2;  // anx = ANGLE_45 - 128 = 384 引擎角
+  const CAM_FIXED_ANY = (512 / 4096) * Math.PI * 2;  // 进入固定时 any = ANGLE_45 = 512 引擎角（45°）
+  let camMode = camInit.mode;   // 持久化（原版 PlayCameraMode：0 手动/1 自动/2 固定）
+  /** 鼠标贴左右边缘 N px 内持续旋转视角（**仅手动模式**） */
+  const CAM_EDGE_PX = 24;
+  const CAM_EDGE_RATE = 1.7;     // 边缘旋转角速度（弧度/秒）
+  /** 视角平滑时间常数（秒）：滚轮/按键微调时按指数趋近，不要"阶梯跳" */
+  const CAM_SMOOTH_TAU = 0.12;
+
+  // 自动相机（原版 Main.cpp:1590-1635）——目的不是"转圈"，而是**稳住观察方向**：
+  //   · 只在角色**移动中**（`lpCurPlayer->MoveFlag`）才追；
+  //   · 外守卫：朝向偏差 < ANGLE_90+180（=1204 引擎角 ≈ 105.8°）才追 —— 角色朝镜头走时**不甩镜头**；
+  //   · 死区：偏差 ≤ AC_MOVE_MIN（256 ≈ 22.5°）**一点不动**，避免小抖动带着镜头摇；
+  //   · 步长按偏差比例：`max(|Δ|>>6, AC_MOVE_STEP=4)` 引擎角/**帧**（原版 70Hz），远差转得快、近差收得慢。
+  //   · 还要 `AutoCameraFlag`（= 本文件的 autoRecenter）：**任何手动相机操作都关掉它**，操作完成再打开 ——
+  //     所以"手动调过之后跑着跑着镜头就不动了"是原版设计（不回正、不跟手斗），不是 bug（用户 2026-09-12 问）。
+  const CAM_AUTO_DEAD_ZONE = (256 / 4096) * TAU2;          // 22.5°
+  const CAM_AUTO_MAX_DEV = ((1024 + 180) / 4096) * TAU2;   // 105.8°
+  const CAM_AUTO_STEP_MIN = (4 / 4096) * TAU2 * 70;        // 4 单位/帧 @70Hz → 弧度/秒
+  const CAM_AUTO_GAIN = 70 / 64;                           // (|Δ|>>6) 每帧 → 每秒
+  /** 自动回正开关（原版 AutoCameraFlag）：贴边旋转/滚轮/相机键都会置 false，操作结束（平滑到位/松开/离开边缘）再置 true */
+  let autoRecenter = camInit.autoRecenter;   // 持久化（原版 AutoCameraFlag）
+
+  /**
+   * 改自动回正开关。**所有改动都走这里** —— 它顺带把相机偏好标脏，交给 500ms 的节流块
+   * 统一落盘（用户 2026-09-13：这个开关原先只在内存里，重进游戏就回到默认）。
+   */
+  function setAutoRecenter(v: boolean): void {
+    if (autoRecenter === v) return;
+    autoRecenter = v;
+    camDirty = true;
+  }
+
+  /** 角度差归一化到 (-π, π] */
+  function wrapPi(d: number): number {
+    return Math.atan2(Math.sin(d), Math.cos(d));
+  }
+
+  /** 切换相机模式：固定 → 手动 → 自动 → 固定（返回切换后的值）；进固定时朝向重置为原版的 45° */
+  function toggleCameraMode(): number {
+    camMode = camMode === 2 ? 0 : camMode === 0 ? 1 : 2;
+    if (camMode === 2) cam.any = CAM_FIXED_ANY;
+    return camMode;
+  }
+
+  /** 滚轮调俯仰（原版 WM_MOUSEWHEEL：`whAnx = anx + zDelta`，然后 anx 每帧 ±8 引擎角趋近）。
+   *  模式 ≠ 固定时可用；**任何手动相机操作都关掉自动回正**（原版 `AutoCameraFlag = FALSE`）。 */
+  function onWheel(e: WheelEvent): void {
+    if (camMode === 2) return;
+    e.preventDefault();
+    cam.anx = Math.max(CAM_ANX_MIN, Math.min(CAM_ANX_MAX, cam.anx - e.deltaY * 0.0006));
+    setAutoRecenter(false);   // 交回给"平滑到位"那一刻再打开（见 updateCamera）
   }
 
   const tmp = new THREE.Matrix4();
@@ -808,6 +1029,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     dir.position.set(200, 400, 200);
     scene.add(dir);
     dirLight = dir;
+
+    // 特效实例管理（INI 广告牌特效；depthWrite=false + 按 BlendType 混合）
+    effects = createEffectManager(scene);
   }
 
   // 有效小时：调试键覆盖优先，否则跟随 GameClock
@@ -995,10 +1219,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       getClassId: () => jobId,
       getWeaponIdCode: () => selfAppearance?.weaponIdcode || 0,
       getWeaponType: () => selfWeaponType(),
+      getHandType: () => { const h = selfHandType(); return h === '1H' || h === '2H' ? h : null; },
+      // 语义匹配优先（唯一实现）；怪物/NPC 无 sidecar → 空数组 → 回退旧链
+      getSemanticEntries: () => semanticEntriesForJob(jobId),
       getFieldState: () => currentFieldState(),
       onStanceChange: (stance) => { setSelfWeaponStance(stance); },
       onMotionChange: (motion: MotionInfo) => {
         animFrame = motion.startFrame * 160;
+        // 记下这条动画的语义 ID：移动/起手上报时要把它同步出去（旁观者据此播同一条）
+        selfAnimClip = semanticEntryOfMotion(motionList, semanticEntriesForJob(jobId), motion)?.clip ?? '';
       },
     });
     animState.triggerIdle();
@@ -1087,107 +1316,171 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 当前自机武器语义类型（AXE/SWORD/BOW...，动画白名单匹配用）；无武器/徒手返回 null */
   function selfWeaponType(): string | null {
-    const w = selfAppearance;
-    if (!w || !w.weaponIdcode || w.weaponIdcode <= 0) return null;
-    return getWeaponTypeFromIdCode(w.weaponIdcode);
+    return weaponTypeOfIdCode(selfAppearance?.weaponIdcode);
   }
 
-  /** 自机武器单双手（ITEM_DEFS.classItem → getHandType：4=单手 / 6=双手） */
+  /** 自机武器单双手（唯一实现见 handTypeOfIdCode） */
   function selfHandType(): HandType {
-    const idcode = selfAppearance?.weaponIdcode || 0;
-    const cls = idcode > 0 ? ITEM_CLASS_BY_CODE.get(idcode) : undefined;
-    return cls === undefined ? 'UNDEFINED' : (getHandType(cls) as HandType);
+    return handTypeOfIdCode(selfAppearance?.weaponIdcode);
   }
 
-  /** 自机武器音效码（原版 WeaponPlaySound）：武器类型 + 单双手；法师/祭司的钝器走吟唱音 */
+  /** 自机武器音效码（原版 WeaponPlaySound）：武器类型 + 单双手；法师/祭司的法杖走吟唱音。
+   *  传 idcode 是因为**剑族要用低字判短剑**（WS201-203 → small swing 15）。 */
   function selfWeaponSoundCode(): number {
     const job = getGameSnapshot().character?.job ?? 0;
-    return weaponSoundCode(selfWeaponType(), selfHandType(), job === 7 || job === 8);
+    return weaponSoundCode(selfWeaponType(), selfHandType(), job === 7 || job === 8, selfAppearance?.weaponIdcode || 0);
   }
 
-  /** 普攻结算音（自机）：MISS → 挥空音；暴击 → 暴击音。自机音量满且高优先级 */
-  function playSelfAttackResult(missed: boolean, critical: boolean): void {
-    if (missed) sfx.playWeaponMiss(selfHandType(), { priority: true });
-    else if (critical) sfx.playCritical({ priority: true });
+  /**
+   * 普攻结算音（自机，**按段**）：MISS → 挥空音；暴击 → 暴击音（追加）。
+   *
+   * ⚠ **MISS 是"替换"不是"叠加"**：原版命中帧那一声由结果决定 —— `WeaponPlaySound` 先判
+   * `AttackCritcal < 0`，成立时那一帧**只播挥空音**（12/13），不播武器音。
+   * 我们按 B 方案在事件帧**乐观按"命中"**先播了该段的挥击音（与原版 `AttackCritcal = 0` 同义），
+   * 所以结果回来说是 miss 时，必须**把**该段**那一声淡出停掉**再播挥空音 ——
+   * 否则会听到"打击声 + 挥空声"两层（与原版不符，且是玩家可感知的自相矛盾反馈）。
+   * 暴击相反：原版本就是"命中后追加一枚"（码 16），故只追加、不替换。
+   *
+   * ⚠ 已知的**最差情形**（用户 2026-09-12 认可）：高延迟/丢包时结果晚于事件帧到达 ——
+   * 那时玩家**看到 MISS/暴击，听到的却已是命中音**（该声已被淡出，替换音随后才响）。
+   * 这是纯音频层的错配：MISS 飘字、伤害数字、HP 全部仍以服务端为准，**结果从不撒谎**。
+   * 响应用时赶在事件帧之前时（常见情形）该错配完全不出现。
+   */
+  /**
+   * 应用服务端下发的攻击计划（B 方案）。`clientSeq` 与本次攻击不一致则忽略（过期计划）。
+   * 计划一到就缓存起来，事件帧据此直接播正确的结果音 —— 这是把"音效延迟"消掉的关键一步。
+   */
+  function applyAttackPlan(plan: {
+    clientSeq?: number | null;
+    attackerId?: number | string | bigint | null;
+    segments?: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null }> | null;
+  }): void {
+    // 旁观分支：计划不是打给自己的（attacker 是视野内别人）→ 交给对应的远端 actor，
+    // 让它在自己挥拳的事件帧按同一份计划播正确的结果音（miss/暴击）。
+    const attackerId = Number(plan.attackerId ?? 0);
+    if (attackerId && attackerId !== selfPlayerId) {
+      const actor = remotes.get(attackerId);
+      if (actor) applyRemoteAttackPlan(actor, plan.segments ?? []);
+      return;
+    }
+    const seq = Number(plan.clientSeq ?? 0);
+    if (seq !== selfAttackSeq) {
+      console.log(`[计划] 忽略过期攻击计划 seq=${seq}（当前 ${selfAttackSeq}）`);
+      return;
+    }
+    const map = new Map<number, { missed: boolean; critical: boolean }>();
+    const segs = plan.segments ?? [];
+    for (let i = 0; i < segs.length; i++) {
+      const s = segs[i]!;
+      map.set(Number(s.index ?? i), { missed: !!s.missed, critical: !!s.isCritical });
+    }
+    selfAttackPlan = map;
+    const miss = [...map.values()].filter((x) => x.missed).length;
+    const crit = [...map.values()].filter((x) => !x.missed && x.critical).length;
+    console.log(`[计划] 收到攻击计划 seq=${seq} 段数=${map.size}（miss ${miss} / 暴击 ${crit}）→ 各段将直接播对应音`);
   }
 
-  /** 收鞘姿态的挂载骨（对齐 CharSelect）：剑/斧/锤/标枪/镰/杖→背，弓→in-bow，十字弓→in-cro，匕首→腰左右。 */
-  function sheatheBoneForType(weaponType: string | null, weaponPos: number): string {
-    switch (weaponType) {
-      case 'BOW': return WEAPON_BONES.SHEATHE_BOW;
-      case 'CROSSBOW': return WEAPON_BONES.SHEATHE_CROSSBOW;
-      case 'DAGGER': return weaponPos === 2 ? WEAPON_BONES.SHEATHE_DAGGER_L : WEAPON_BONES.SHEATHE_DAGGER_R;
-      default: return WEAPON_BONES.SHEATHE_BACK;
+  function playSelfAttackResult(missed: boolean, critical: boolean, hitIndex = 0): void {
+    // 这一段在事件帧已按**服务端计划**播过音了（见事件帧派发）。是否要再动：
+    //   计划判定 == 结果判定 → 音已经对了，**不重播**（否则同一段响两声）
+    //   计划判定 != 结果判定 → **以服务端结果为准修正**：淡掉计划那一声，改播结果对应的音。
+    // 后者就是「miss 时把命中音换成挥空音」——少了这一步，玩家会听到一声命中音，
+    // 而账本上这一刀根本没打中（可感知的自相矛盾）。
+    const planned = selfPlanSounded.get(hitIndex);
+    if (planned) {
+      selfPlanSounded.delete(hitIndex);
+      const crit = critical && !missed;
+      if (planned.missed === missed && planned.critical === crit) return;
+      // 计划与结果不一致（起手时判命中、命中帧判定落空，或反之）→ 以结果为准修正。
+      // 这条路径罕见但必须可见：它意味着玩家先听到了一声按计划播的音，然后被纠正。
+      console.log(`[音效] 第 ${hitIndex} 段：计划=${planned.missed ? 'miss' : planned.critical ? 'crit' : 'hit'}，`
+        + `结果=${missed ? 'miss' : crit ? 'crit' : 'hit'} → 以结果为准修正`);
+    }
+    const voice = selfAttackVoices.get(hitIndex);
+    if (missed) {
+      voice?.stop(40);                 // 淡出 40ms：硬停会在波形中间爆音
+      selfAttackVoices.delete(hitIndex);
+      sfx.playWeaponMiss(selfHandType(), { priority: true });
+    } else if (critical) {
+      sfx.playCritical({ priority: true });
+    } else {
+      selfAttackVoices.delete(hitIndex);   // 命中：让该段那声自然播完
     }
   }
 
-  /** 切换自机武器姿态：战斗态挂手部骨，收鞘态改挂腰间/背后骨。副手：盾留左臂；匕首 战斗左手↔收鞘左腰。 */
+  /** 命中/暴击等特效：摆到目标单位身体中部（怪物/远端玩家/自机） */
+  function spawnEffectOnUnit(targetId: number, name: string): void {
+    if (!effects) return;
+    let x: number, y: number, z: number;
+    if (targetId === selfPlayerId) {
+      x = selfPos.x; y = selfPos.y + selfTopY * 0.5; z = selfPos.z;
+    } else {
+      const mon = monsters.get(targetId);
+      const rem = mon ? null : remotes.get(targetId);
+      const root = mon?.root ?? rem?.root;
+      if (!root) return;
+      const topY = mon?.topY ?? rem?.topY ?? 1.7;
+      x = root.position.x; y = root.position.y + topY * 0.5; z = root.position.z;
+    }
+    void effects.spawn(name, { pos: { x, y, z } });
+  }
+
+  /**
+   * 切换自机武器姿态：战斗态挂手部骨，收鞘态改挂腰间/背后骨。
+   * 主手（含刺客匕首的**镜像份**）交给 `WeaponMount` —— 与远端/检查器同一实现；
+   * 本函数只管副手（盾留左臂；匕首 战斗左手 ↔ 收鞘左腰）。
+   */
   function setSelfWeaponStance(stance: 'combat' | 'sheathed') {
     if (!charGroup || selfWeaponStance === stance) return;
-    // 主手
-    if (selfWeaponGroup) {
-      const fromBone = stance === 'combat' ? sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4) : selfCombatBone;
-      const toBone = stance === 'combat' ? selfCombatBone : sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4);
-      if (fromBone && toBone && fromBone !== toBone) {
-        const to = findBone(charGroup, toBone);
-        if (to) {
-          selfWeaponGroup.parent?.remove(selfWeaponGroup);
-          to.add(selfWeaponGroup);
-        }
-      }
-    }
-    // 副手：盾(kind=1)始终留左臂不动；匕首(kind=2) 战斗左手 ↔ 收鞘左腰
-    if (selfOffHandGroup && (selfAppearance?.offHandKind || 0) === 2) {
-      const boneName = stance === 'combat' ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.SHEATHE_DAGGER_L;
-      const bone = findBone(charGroup, boneName);
-      if (bone) {
-        selfOffHandGroup.parent?.remove(selfOffHandGroup);
-        bone.add(selfOffHandGroup);
-      }
-    }
+    const mainRes = selfWeaponMount.setStance(charGroup, stance);
+    const offRes = moveOffHandForStance({
+      root: charGroup,
+      off: selfOffHandGroup,
+      idcode: selfAppearance?.weaponIdcode ?? 0,
+      offKind: selfAppearance?.offHandKind || 0,
+      stance,
+    });
     selfWeaponStance = stance;
-    console.log('[WorldView] 自机武器姿态: ' + selfWeaponStance);
+    const missing = mainRes.missingBone ?? offRes.missingBone;
+    if (missing) {
+      reportFallback('mount', `自机武器姿态 ${stance}：目标骨 ${missing} 不在骨架里 → 该件留在原挂点（未搬运）`);
+    }
+    console.log('[WorldView] 自机武器姿态: ' + selfWeaponStance
+      + ' 主手=' + (mainRes.mainBone ?? '(无)')
+      + (mainRes.mirrorBone ? ' 镜像=' + mainRes.mirrorBone : ''));
   }
 
   // 挂载当前自机武器（主手 + 副手）；旧武器先清。初始姿态按当前区域。
   async function mountSelfWeapon(): Promise<void> {
     if (!scene || !charGroup) return;
     const sheathed = currentFieldState() === 1;
-    // 摘除旧的主手 + 副手（挂在骨架深层，需沿树找）
-    if (selfWeaponGroup) {
-      removeFromAnywhere(charGroup, selfWeaponGroup);
-      selfWeaponGroup = null;
-    }
+    // 摘除旧的副手（主手连同镜像份由 WeaponMount 自己摘）
     if (selfOffHandGroup) {
       removeFromAnywhere(charGroup, selfOffHandGroup);
       selfOffHandGroup = null;
     }
 
-    // ---- 主手 ----
+    // ---- 主手（含双手武器的镜像份）----
     const dorp = selfAppearance?.weaponDorp;
+    let mainGroup: THREE.Group | null = null;
     if (dorp) {
       try {
         const wres = await loadWeaponModel(dorp);
         await loadTextures(wres.texturesToLoad);
-        // 战斗骨由 weaponPos 决定（2=左手，其余右手）；初始姿态按当前区域（村庄=收鞘腰间/背）。
-        const combatBoneName = selfAppearance?.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
-        selfCombatBone = combatBoneName;
-        const weightBoneName = sheathed
-          ? sheatheBoneForType(selfWeaponType(), selfAppearance?.weaponPos || 4)
-          : combatBoneName;
-        const bone = findBone(charGroup, weightBoneName)
-          || findBone(charGroup, combatBoneName)
-          || findBone(charGroup, WEAPON_BONES.RIGHT_HAND)
-          || findBone(charGroup, WEAPON_BONES.LEFT_HAND);
-        if (bone) {
-          selfWeaponGroup = wres.group;
-          bone.add(wres.group);
-          selfWeaponStance = sheathed ? 'sheathed' : 'combat';
-          console.log('[WorldView] 自机主手挂载: dorp=' + dorp + ' bone=' + bone.name);
-        }
+        mainGroup = wres.group;
       } catch (e) {
         console.warn('[WorldView] 主手挂载失败 dorp=' + dorp, e);
       }
+    }
+    // 挂载与姿态判定**全部**在 WeaponMount 里（含刺客匕首克隆一份到另一侧）
+    const res = selfWeaponMount.mount(charGroup, mainGroup,
+      selfAppearance?.weaponIdcode ?? 0, selfAppearance?.weaponPos, sheathed ? 'sheathed' : 'combat');
+    selfWeaponStance = sheathed ? 'sheathed' : 'combat';
+    if (res.missingBone) {
+      reportFallback('mount', `自机主手挂点缺失 dorp=${dorp} 目标骨=${res.missingBone}（已按回退链挂载）`);
+    } else if (mainGroup) {
+      console.log('[WorldView] 自机主手挂载: dorp=' + dorp + ' bone=' + res.mainBone
+        + (res.mirrorBone ? ' 镜像=' + res.mirrorBone : ''));
     }
 
     // ---- 副手（盾 → 左臂；匕首 → 战斗左手/收鞘左腰；念珠不挂）----
@@ -1197,9 +1490,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       try {
         const ores = await loadWeaponModel(offDorp);
         await loadTextures(ores.texturesToLoad);
-        const boneName = offKind === 1
-          ? WEAPON_BONES.SHIELD                                              // 盾：左臂（收鞘也留臂）
-          : (sheathed ? WEAPON_BONES.SHEATHE_DAGGER_L : WEAPON_BONES.LEFT_HAND); // 匕首
+        // 挂载骨规则**不在这里重写**：盾固定左小臂、匕首按 mirrorLeftBone（战斗左手 / 收鞘左腰），
+        // 统一由 weapon-loader.offMountBoneOf 判定（自机 / 远端 / 检查器同一实现）。
+        const boneName = offMountBoneOf(selfAppearance?.weaponIdcode ?? 0, offKind, sheathed ? 'sheathed' : 'combat');
         const bone = findBone(charGroup, boneName)
           || findBone(charGroup, WEAPON_BONES.LEFT_HAND)
           || findBone(charGroup, WEAPON_BONES.SHIELD);
@@ -1293,25 +1586,91 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // 相机跟随角色（/pt/maps/ updateDummy 同款，Winmain.cpp 卫星相机）
-  function updateCamera(): void {
+  function updateCamera(dt = 0): void {
     if (!camera) return;
     // 键盘控制相机（复刻 /pt/maps/ updateDummy：Winmain.cpp:2494-2542，角度改弧度）
     const TAU = Math.PI * 2;
-    if (keys['ArrowLeft'])  cam.any = (cam.any + CAM_ROT_STEP) % TAU;
-    if (keys['ArrowRight']) cam.any = (cam.any - CAM_ROT_STEP + TAU) % TAU;
-    if (keys['ArrowUp'])    cam.dist = Math.max(40, cam.dist - 8);
-    if (keys['ArrowDown'])  cam.dist = Math.min(440, cam.dist + 8);
+    // 视角朝向：固定模式下由角色朝向决定，所以左右方向键只在手动/自动下生效
+    if (camMode !== 2) {
+      if (keys['ArrowLeft'])  cam.any = (cam.any + CAM_ROT_STEP) % TAU;
+      if (keys['ArrowRight']) cam.any = (cam.any - CAM_ROT_STEP + TAU) % TAU;
+    }
+    if (keys['ArrowUp'])    cam.dist = Math.max(CAM_DIST_MIN, cam.dist - 8);
+    if (keys['ArrowDown'])  cam.dist = Math.min(CAM_DIST_MAX, cam.dist + 8);
     if (keys['ControlLeft'] || keys['ControlRight']) {
       if (keys['ArrowUp'])   cam.anx = Math.min(CAM_ANX_MAX, cam.anx + CAM_ROT_STEP * 0.5);
       if (keys['ArrowDown']) cam.anx = Math.max(CAM_ANX_MIN, cam.anx - CAM_ROT_STEP * 0.5);
     }
     if (keys['PageUp'])   cam.anx = Math.min(CAM_ANX_MAX, cam.anx + CAM_ROT_STEP);
     if (keys['PageDown']) cam.anx = Math.max(CAM_ANX_MIN, cam.anx - CAM_ROT_STEP);
+    // 相机键也是"手动操作" → 关掉自动回正（原版 Main.cpp:1297-1329 同样置 FALSE）
+    const camKeysHeld = !!(keys['ArrowLeft'] || keys['ArrowRight'] || keys['ArrowUp'] || keys['ArrowDown']
+      || keys['PageUp'] || keys['PageDown']);
+    if (camKeysHeld) setAutoRecenter(false);
 
-    if (cam.viewAnx < cam.anx) cam.viewAnx = Math.min(cam.viewAnx + 8, cam.anx);
-    if (cam.viewAnx > cam.anx) cam.viewAnx = Math.max(cam.viewAnx - 8, cam.anx);
-    if (cam.viewDist < cam.dist) cam.viewDist = Math.min(cam.viewDist + 8, cam.dist);
-    if (cam.viewDist > cam.dist) cam.viewDist = Math.max(cam.viewDist - 8, cam.dist);
+    // —— 相机模式（原版小按钮 Z，见文件上方 camMode 注释）——
+    // 边缘旋转：原版条件是 `CameraAutoFlag != 2`，即**手动/自动都有、只有固定没有**；
+    // 但每次贴边旋转都会把 AutoCameraFlag 置 FALSE（关掉自动回正）——所以两者不会互相打架，
+    // 这才是"点画面两侧不乱转"的正确做法（我先前只在自己模式里开边缘，是错的方向）。
+    let edgeYaw = 0;
+    if (camMode !== 2 && mouseSeen && !typingActive()) {
+      const cw = root.clientWidth || 1;
+      if (mouseX <= CAM_EDGE_PX) edgeYaw = CAM_EDGE_RATE * dt;
+      else if (mouseX >= cw - CAM_EDGE_PX) edgeYaw = -CAM_EDGE_RATE * dt;
+      if (edgeYaw !== 0) setAutoRecenter(false);   // 原版：贴边即 AutoCameraFlag = FALSE
+      // 注意：光标回到内侧**不**自动重新打开（原版那分支只复位 dsCameraRotation）；
+      // 重新打开靠"点空地走路"（见 onGroundTap）——所以手动调过、鼠标又停在边缘时，
+      // 跑起来镜头也不再回正，这正是用户观察到的"跑着跑着摄像机就不再变了"。
+    }
+    if (edgeYaw !== 0) cam.any = (cam.any + edgeYaw + TAU * 2) % TAU;
+    // 固定(2)：**每帧把距离与俯仰按死**（原版 PlayD3D 就是这么写的），朝向已在切模式时重置为 45°；
+    // 手动挡不了它，因为下一帧就被覆盖 —— 这正是"固定"的意义。
+    if (camMode === 2) {
+      cam.dist = CAM_FIXED_DIST;
+      cam.anx = CAM_FIXED_ANX;
+      cam.viewDist = cam.dist;
+      cam.viewAnx = cam.anx;
+    }
+
+    // 自动(1)：移动中 + **自动回正开着**（没被手动操作打断）时，按"死区 + 外守卫 + 比例步长"
+    // 把镜头稳到角色背后（见上方常量注释）。手动调过之后就不再回正 —— 这就是"跑着跑着镜头就不变了"。
+    if (camMode === 1 && autoRecenter && wasMoving) {
+      const d = wrapPi(selfAngle - cam.any);
+      const ad = Math.abs(d);
+      if (ad < CAM_AUTO_MAX_DEV && ad > CAM_AUTO_DEAD_ZONE) {
+        const step = Math.min(ad, Math.max(ad * CAM_AUTO_GAIN, CAM_AUTO_STEP_MIN) * dt);
+        cam.any = (cam.any + Math.sign(d) * step + TAU2 * 2) % TAU2;
+      }
+    }
+
+    // 视角平滑：指数趋近（帧率无关）。原先是 `±8/帧` 的固定步长，而角度范围只有 ~1.4 弧度
+    // → 俯仰实际是"一帧跳到目标"，滚轮微调非常卡（用户 2026-09-12 实测）。
+    const kSmooth = 1 - Math.exp(-dt / CAM_SMOOTH_TAU);
+    cam.viewAnx += (cam.anx - cam.viewAnx) * kSmooth;
+    cam.viewDist += (cam.dist - cam.viewDist) * kSmooth;
+    if (Math.abs(cam.anx - cam.viewAnx) < 0.001) cam.viewAnx = cam.anx;
+    if (Math.abs(cam.dist - cam.viewDist) < 0.01) cam.viewDist = cam.dist;
+
+    // 手动操作"做完"就把自动回正打开（对应原版：滚轮平滑到位 whAnx 归零 → AutoCameraFlag = TRUE）
+    if (!camKeysHeld && edgeYaw === 0
+        && Math.abs(cam.anx - cam.viewAnx) < 0.002 && Math.abs(cam.dist - cam.viewDist) < 0.05) {
+      setAutoRecenter(true);
+    }
+
+    // 距离/角度/**模式/自动回正**被改了就落盘（节流 500ms：方向键连按、贴边旋转、
+    // 跑动中的自动回正都会逐帧改动，不能逐帧写 localStorage）
+    if (cam.dist !== camSaved.dist || cam.anx !== camSaved.anx || cam.any !== camSaved.any
+        || camMode !== camSaved.mode || autoRecenter !== camSaved.autoRecenter) {
+      camDirty = true;
+    }
+    if (camDirty && rafMs - camSavedAt > 500) {
+      const next = { dist: cam.dist, anx: cam.anx, any: cam.any, mode: camMode, autoRecenter };
+      saveCameraPrefs(next);
+      camSaved = next;
+      camDirty = false;
+      camSavedAt = rafMs;
+    }
+
     const pitchRad = cam.viewAnx;
     const yawRad = cam.any;
     const d = cam.viewDist;
@@ -1327,11 +1686,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // ===== 移动（复刻 /pt/maps/ updateDummy 鼠标移动：Winmain.cpp 左键朝鼠标方向走）=====
   // 加载地图（含碰撞网格）到 mapHandles/collisionMeshes，已加载则跳过
-  async function loadMapById(mapId: number): Promise<boolean> {
+  /**
+   * 加载一张地图并登记（几何构建走**分帧**，见 `MapRenderer.buildAsync`）。
+   * @param shouldCancel 构建期间返回 true → 放弃这次加载（玩家已经跑远/该图不再需要）。
+   *   分帧构建会持续若干帧，期间玩家可能又跑到别处去了 —— 没有取消就会白建一张图，
+   *   而且它会带着 `dispose()` 掉的几何留在场景里。
+   */
+  async function loadMapById(mapId: number, shouldCancel?: () => boolean): Promise<boolean> {
     if (!scene || mapHandles.has(mapId)) return false;
     const smdPath = mapSmdPath(mapId);
     if (!smdPath) return false;
-    const mh = await loadMap(scene, smdPath);
+    const t0 = performance.now();
+    const mh = await loadMap(scene, smdPath, shouldCancel);
+    if (!mh) {
+      console.log('[WorldView] 地图' + mapId + ' 构建被取消（已不需要），耗时 '
+        + (performance.now() - t0).toFixed(0) + 'ms');
+      return false;   // 不入场景、不登记
+    }
     mapHandles.set(mapId, mh);
     // 新地图的昼夜光照由 renderLoop 每帧 dnUpdate 统一写入（updateDayNight），无需在此处理
     const cm = new CollisionMesh();
@@ -1344,7 +1715,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       decorGroups.set(mapId, gs);
     }
     console.log('[WorldView] 地图' + mapId + ' 加载: 材质=' + mh.mapRenderer.materials.length +
-      ' tris=' + mh.mapRenderer.totalFaceCount + ' 碰撞面=' + cm.triangles.length);
+      ' tris=' + mh.mapRenderer.totalFaceCount + ' 碰撞面=' + cm.triangles.length
+      + ' 构建=' + mh.mapRenderer.buildTimeMs.toFixed(0) + 'ms 合计=' + (performance.now() - t0).toFixed(0) + 'ms');
     return true;
   }
 
@@ -1408,9 +1780,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    *  点空地 → 取消当前 Chase 目标（不移动）。 */
   function onGroundTap(cx: number, cy: number): void {
     if (!renderer || !camera || !scene) return;
+    // 左键语义对自动回正的影响（原版 Main.cpp:1988-2005）：
+    //   点目标/物品（选目标、开打）→ `AutoCameraFlag = FALSE`（不打镜头）
+    //   点空地（走路）→ `AutoCameraFlag = TRUE`（跑起来镜头回正）
+    // 这里在每条"选中目标"的分支里置 false，落到最后的空地分支再置 true。
     // 1) 掉落物
     const itemId = pickGroundItemIdByRay(cx, cy);
     if (itemId !== undefined) {
+      setAutoRecenter(false);
       const g = groundItems.get(itemId);
       if (g) {
         const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
@@ -1434,6 +1811,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (d <= nearD) { nearD = d; nearId = g.groundItemId; }
       }
       if (nearId !== undefined) {
+        setAutoRecenter(false);
         console.log('[WorldView] 近身拾取(兜底) gid=' + nearId + ' dist=' + nearD.toFixed(2) + 'm');
         opts?.onPickupGroundItem?.(nearId);
         return;
@@ -1442,6 +1820,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 2) 怪物
     const mobId = pickMonsterIdByRay(cx, cy);
     if (mobId !== undefined) {
+      setAutoRecenter(false);
       moveTarget = { kind: 'monster', id: mobId };
       console.log('[WorldView] 选中怪物 mid=' + mobId + ' → Chase(实时跟随)');
       return;
@@ -1449,6 +1828,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 3) 其他玩家（跟随目标，实时取位）
     const pid2 = pickPlayerIdByRay(cx, cy);
     if (pid2 !== undefined) {
+      setAutoRecenter(false);
       moveTarget = { kind: 'player', id: pid2 };
       console.log('[WorldView] 选中玩家 playerId=' + pid2 + ' → Chase(实时跟随)');
       return;
@@ -1456,11 +1836,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 3b) NPC → Chase 走近（到位后触发对话，对话逻辑后续接入）
     const npcId = pickNpcIdByRay(cx, cy);
     if (npcId !== undefined) {
+      setAutoRecenter(false);
       moveTarget = { kind: 'npc', id: npcId };
       console.log('[WorldView] 选中 NPC npcId=' + npcId + ' → Chase');
       return;
     }
     // 4) 空地 → 仅取消当前 Chase 目标（原版点地不产生走点移动，只有按住跑）
+    setAutoRecenter(true);   // 原版：点空地 = 走路意图 → 自动回正打开
     if (moveTarget) {
       console.log('[WorldView] 取消 Chase 目标');
       moveTarget = null;
@@ -1575,27 +1957,40 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 判断角色所属地图（对齐服务端 MapRegionService.findMapPrecise）：
   // 先 AABB 粗筛；多命中或无命中（桥口在图 AABB 外）用已加载图碰撞网格高度判定
   // （对齐原版：遍历 stage 用 GetFloorHeight，谁有地面就在哪）。
+  /**
+   * 坐标 → 所属地图。**口径与服务端 `MapRegionService.findMapPrecise` 对齐**：
+   * ① AABB 唯一命中 → 采纳；② 多命中（图 AABB 重叠的交界）→ 用脚下有没有站立面精判；
+   * ③ 无 AABB 命中 → 桥口情形（图 AABB 外但网格有面）由"已加载图"兜底；④ 都判不出 → 保持当前图。
+   *
+   * ⚠ 旧实现把 ③ 提到了最前面（"优先在已加载图里找实际落地"）—— 后果是**跨图边界时旧图的
+   * 地面一直兜着脚，判定永远返回旧图**：`currentMapId` 不更新 → 不触发区域同步 → 新图永远
+   * 不加载 → 玩家看到前方一片空白。用户实测：从内维斯克往东跑，古代战场一直刷不出来，
+   * 重进游戏（走服务端给的 mapId）才出现。
+   */
   function findCurrentMap(wx: number, wz: number): number {
     const fx = wx * 256, fz = wz * 256; // world → collision (z already matches world convention)
     const hits: number[] = [];
     for (const [mapId, [xMin, xMax, zMin, zMax]] of allBounds) {
       if (wx >= xMin && wx <= xMax && wz >= zMin && wz <= zMax) hits.push(mapId);
     }
-    // 优先在已加载图里找实际落地（含桥口：图 AABB 外但网格有面）
+    // ① 唯一命中：直接采纳
+    if (hits.length === 1) return hits[0];
+    // ② 多命中：用脚下有没有面精判（同服务端"多命中 → GetHeight"）；仍分不出 → 保持当前图防抖
+    if (hits.length > 1) {
+      for (const id of hits) {
+        const cm = collisionMeshes.get(id);
+        if (cm && cm.getPolyHeight(fx, fz).found) return id;
+      }
+      return hits.includes(currentMapId) ? currentMapId : hits[0];
+    }
+    // ③ 无 AABB 命中 → 桥口兜底：已加载图里取脚下最高的地面
     let fallback: { mapId: number; y: number } | null = null;
     for (const [mapId, cm] of collisionMeshes) {
       const h = cm.getPolyHeight(fx, fz);
-      if (h.found) {
-        // 高度最高者（对齐原版取最高地面）
-        if (!fallback || h.height > fallback.y) fallback = { mapId, y: h.height };
-      }
+      if (h.found && (!fallback || h.height > fallback.y)) fallback = { mapId, y: h.height };
     }
-    if (fallback) {
-      return fallback.mapId;
-    }
-    if (hits.length === 1) return hits[0];
-    if (hits.length > 1) return hits.includes(currentMapId) ? currentMapId : hits[0];
-    return currentMapId; // 完全无命中 → 保持当前图
+    if (fallback) return fallback.mapId;
+    return currentMapId; // ④ 完全无命中 → 保持当前图
   }
 
   // 走/跑切换核心：翻转本地状态并经 onMoveInt 出口通报（mode 1/2）；移动中立即切对应动画
@@ -1603,8 +1998,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setRunMode(next: boolean): boolean {
     if (running === next) return running;
     running = next;
+    saveUiPrefs({ running, minimapOpen: mmVisible });   // 立即落盘（低频操作，不必节流）
+    // 移动中切换走/跑：**本地动画要立刻换**。原先只在"开始移动"那一刻选一次动画（见 updateMovement
+    // 的 !wasMoving 分支），所以跑动中按 R 只变速度、动画仍停在 RUN（用户 2026-09-12 报的就是这个）。
+    if (wasMoving && !isRooted() && animState) {
+      if (running) animState.triggerRun();
+      else animState.triggerWalk();
+    }
     // 移动中切换走/跑：立即带当前位置通报新档位（服务端据此广播新动画）
-    if (mouseDown) opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z, 0);
+    if (wasMoving || mouseDown) reportMoveNow(running ? 2 : 1, 0);
     return running;
   }
 
@@ -1613,8 +2015,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 定身：下落 或 受击硬直（DAMAGE）中 → 禁止水平移动/转向（对齐原版：DAMAGE 与 FALLDOWN 均定身）。
    * 硬直播完（onAnimationEnd→STAND）后自动解除，若仍按住鼠标则恢复走/跑。
    */
+  /** 定身：掉落中、受击硬直、**死亡躺下** —— 期间不接受移动/转向/攻击（原版 DEAD 时点击无效） */
   function isRooted(): boolean {
-    return falling || (!!animState && animState.getCurrentState() === animState.STATE.DAMAGE);
+    return falling || selfDead
+      || (!!animState && (animState.getCurrentState() === animState.STATE.DAMAGE
+                          || animState.getCurrentState() === animState.STATE.DEAD));
   }
 
   function mouseFacing(): number | null {
@@ -1665,6 +2070,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     x: number; y: number; z: number;
     angle: number;
     anim: number;
+    /** 该玩家**自己播的那一条动画的条目索引**（其客户端随移动上报同步过来）。
+     *  有值时旁观者直接播同一条 —— 不再各自匹配/随机（0=未提供，回退本地匹配并上报降级）。 */
+    animIndex?: number;
+    /** 同一条动画的语义 ID（`SemanticEntry.clip`）：仅用于校验两端动画数据是否同代 */
+    animClip?: string;
   }
   interface RemoteActor {
     playerId: number;
@@ -1689,6 +2099,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     faceAngle: number | null; // 挥拳期间强制朝向（signalAttack 算，updateRemotes 在 ATTACK 态采用）
     snaps: RemoteSnap[];
     lastAnimState: number;
+    /** 上一次应用过的动画条目索引（对方上报值；用于"同状态内换变体"的识别） */
+    lastAnimIndex: number;
+    /** 该远端的外观（武器/副手/头/甲）—— **远端动画 getter 的唯一数据源**。
+     *  缺失时动画退化成"通用/空手"（正是此前远端不随武器变化的原因）。 */
+    appearance?: CharacterAppearance;
+    /** 主手武器挂载器（含双手武器的镜像份与姿态搬运）—— 与自机/检查器同一实现 */
+    weaponMount: WeaponMount;
+    /** 副手武器组（0=无 1=盾 2=匕首） */
+    offHandGroup: THREE.Object3D | null;
+    /** 本次攻击的动画与逐段音效状态（旁观者按服务端计划在事件帧直接播正确结果音） */
+    attack: {
+      motion: MotionInfo;
+      /** 非零事件帧（子帧偏移，相对动作起点） */
+      eventFrames: number[];
+      hitFired: number;
+      plan: Map<number, { missed: boolean; critical: boolean }> | null;
+      voices: Map<number, VoiceHandle>;
+      /** "计划未到"时乐观播过命中音的段号（计划迟到时据此纠正，见 applyRemoteAttackPlan） */
+      optimistic: Set<number>;
+    } | null;
+    /** 比 S2C_AttackStart 先到的攻击计划（起手广播到达时消费；超时作废） */
+    pendingAttackPlan: { map: Map<number, { missed: boolean; critical: boolean }>; at: number } | null;
   }
   const remotes = new Map<number, RemoteActor>();
   const remoteSpawning = new Set<number>();
@@ -1734,10 +2166,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return m;
   }
 
-  /** 权威动画值 → actor 状态机（0x0050 WALK / 0x0060 RUN / 0x70~0x72 掉落 / 其余 STAND） */
-  function setRemoteAnim(actor: RemoteActor, animState: number): void {
-    if (animState === actor.lastAnimState) return;
+  /**
+   * 权威动画值 → actor 状态机（0x0050 WALK / 0x0060 RUN / 0x70~0x72 掉落 / 其余 STAND）。
+   *
+   * `animIndex` = **该玩家自己播的那一条动画的条目索引**（随 C2S_PlayerMove 上报、服务端透传）。
+   * 有值就直接播同一条 —— 旁观者不需要重跑匹配器，也就不会因为"各自随机"
+   * （旧实现用 Math.random 选变体）而在不同客户端上看到同一个角色播不同动作。
+   * 无值（旧服务端/怪物等没有上报者）→ 回退本地匹配并上报降级。
+   */
+  function setRemoteAnim(actor: RemoteActor, animState: number, animIndex = 0, animClip = ''): void {
+    // 对方复活了（anim_state 不再是死亡）→ **必须先解除死亡态**：
+    // DEAD 属于"不可被站姿同步打断"的状态，不清掉它，后面所有 triggerIdle 都会被守卫拦下，
+    // 远端会永远躺在原地。
+    if (animState !== ANIM_DEAD && actor.animState.getCurrentState() === actor.animState.STATE.DEAD) {
+      actor.animState.resurrect();
+    }
+    // 两者都要看：同一个状态里也可能换变体（例：站着换武器 → 站姿条目变，anim_state 不变）
+    if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex) return;
     actor.lastAnimState = animState;
+    actor.lastAnimIndex = animIndex;
+    // 指定条目优先：状态机只负责"该播什么状态"，具体是哪一条由对方客户端说了算
+    if (animIndex > 0) {
+      const picked = actor.motionList.find((m) => m.index === animIndex) ?? null;
+      if (picked && actor.animState.playMotion(picked)) {
+        verifyRemoteAnimData(actor, animClip);
+        return;
+      }
+      reportFallback('anim', `远端 id=${actor.playerId} 上报动画条目 #${animIndex} 在本地动作表里不存在`
+        + `（job=${actor.jobId}）→ 回退本地匹配（两端动画数据版本可能不一致）`);
+    }
     if (animState === ANIM_RUN) actor.animState.triggerRun();
     else if (animState === ANIM_WALK) actor.animState.triggerWalk();
     else if (animState === ANIM_FALLDOWN) { if (!actor.animState.triggerFallDown()) actor.animState.triggerIdle(); }
@@ -1831,6 +2288,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const animState = createAnimStateMachine({
           getMotions: () => actorObj.motionList,
           getClassId: () => 0,
+          // 怪物没有"上报者"（它的动画是各客户端自己选的）→ 用**所有客户端共有**的输入
+          // (monsterId, 状态) 确定性派生变体：同一只怪在所有人屏幕上播同一条。
+          // 这是过渡方案 —— 设计目标是服务端持有怪物动画数据、直接下发条目 ID（见
+          // docs/chars/语义化动画系统.md）；届时删掉本行即可。
+          getAnimSeed: () => deriveAnimSeed(mid, 0),
           onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
         });
         actorObj = {
@@ -1918,6 +2380,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const animState = createAnimStateMachine({
           getMotions: () => actorObj.motionList,
           getClassId: () => 0,
+          // 同怪物：NPC 无上报者 → 由 (npcId, 状态) 确定性派生，各客户端站姿一致
+          getAnimSeed: () => deriveAnimSeed(nid, 0),
           onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
         });
         actorObj = {
@@ -2170,6 +2634,86 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfHp = hp;
     selfMaxHp = Math.max(hp, maxHp);
   }
+  /**
+   * 服务端权威复活（`game.playerRespawn`）：回到出生地图、半血。
+   *
+   * **为什么必须由客户端搬自己**：自机位置是客户端权威（方向二），服务端只能改自己的账本，
+   * 改不了你屏幕上的坐标。不接这条消息，就会出现"服务端在出生地、客户端还站在怪物堆里挨打"。
+   * 服务端另有一条 `S2C_PlayerState`（半血）刷新 HUD 数字，这里只管世界层。
+   */
+  async function applyRespawn(info: { mapId: number; x: number; z: number; y: number; hp: number; maxHp: number }): Promise<void> {
+    if (!scene || !charGroup) return; // 未进图：忽略（下次 enterGame 会用服务端给的出生点）
+    // 0) 解除死亡态：尸体起身（DEAD 是唯一需要显式解除的状态，stance 同步包推不动它）
+    selfDead = false;
+    animState?.resurrect();
+    // 1) 先打断本地移动/追击/下落 —— 否则复活后仍会朝旧目标跑，或被"下落中"状态接管
+    moveTarget = null;
+    moveStuckStart = 0;
+    mouseDown = false;
+    wasMoving = false;
+    falling = false;
+    fallHeight = 0;
+
+    // 2) y：服务端已按**目标地图**地形算过；为 0（该点无可站立地面）时用本地地形补，
+    //    否则复活瞬间就会自由落体（那个坏 y 还会被写回存档，见服务端 respawnPlayer 注释）。
+    let wy = info.y;
+    if (!(wy > 0)) {
+      const cm = collisionMeshes.get(info.mapId);
+      const h = cm?.getFloorHeight(info.x * 256, info.z * 256, 0);
+      if (h?.found) wy = h.height / 256;
+      else reportFallback('respawn', `复活点无地形数据 map=${info.mapId} (${info.x},${info.z}) → 用服务端 y=${info.y}`);
+    }
+    selfPos.set(info.x, wy, info.z);
+    charGroup.position.copy(selfPos);
+    charGroup.userData.teleportedAt = performance.now(); // 供调试/后续做复活特效锚点
+
+    // 3) 换图：目标图可能还没加载（复活点与当前图不同）→ **等加载完再继续**，
+    //    调用方（main.ts）据此在期间显示加载遮罩（原版做法：加载界面盖住，好了再进画面）
+    if (info.mapId !== currentMapId) {
+      await loadMapById(info.mapId);
+      currentMapId = info.mapId;
+      mapAudio.enterMap(currentMapId);
+      await syncMapRegions(currentMapId);
+    }
+    animState?.reselectForCurrentState(); // 村庄↔野外姿态随图变
+
+    // 4) 血量（半血）：HUD 数字由随后的 S2C_PlayerState 刷新，这里同步血条与名牌
+    if (info.maxHp > 0) setSelfHp(info.hp, info.maxHp);
+    else selfHp = info.hp;
+
+    console.log('[WorldView] 复活: map=' + info.mapId
+      + ' world=(' + info.x.toFixed(1) + ',' + wy.toFixed(1) + ',' + info.z.toFixed(1) + ')'
+      + ' hp=' + info.hp + '/' + info.maxHp);
+  }
+
+  /**
+   * 玩家死亡（`S2C_PlayerDeath`）：播 DEAD 动画躺下并**停在末帧**，等待复活选择。
+   *
+   * 自机额外：打断移动/追击/下落、置 `selfDead`（期间 isRooted() 为真 → 定身）、播死亡音；
+   * 倒计时与三个选项的 UI 由 main.ts 负责（WorldView 不碰 DOM）。
+   * 远端：同样躺下（旁观者看得到尸体）。
+   */
+  function applyPlayerDeath(playerId: number): void {
+    if (playerId === selfPlayerId) {
+      moveTarget = null;
+      moveStuckStart = 0;
+      mouseDown = false;
+      wasMoving = false;
+      falling = false;
+      fallHeight = 0;
+      selfDead = true;
+      // 死亡音（原版 CharPlaySound → wav/effects/player/<职业>/dead N.wav）
+      sfx.playPlayerSound(getGameSnapshot().character?.job ?? 0, 'CHRMOTION_STATE_DEAD', selfPos);
+      if (!animState?.triggerDead()) {
+        console.warn('[WorldView] 自机没有 DEAD 动画条目 → 只停止操作，不播躺下');
+      }
+      console.log('[WorldView] 自机死亡：已躺下，等待复活选择');
+      return;
+    }
+    const actor = remotes.get(playerId);
+    if (actor) actor.animState.triggerDead();
+  }
+
   function setSelfName(name: string): void {
     selfName = name;
   }
@@ -2203,13 +2747,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * attackerId 为视野内远端玩家 → 起手即触发挥拳（按 attackSpeed 对应时长变速）+ 朝 targetId 怪转向。
    * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动，避免双重触发。
    */
-  function signalAttackStart(attackerId: number, targetId: number, attackSpeed: number): void {
+  function signalAttackStart(attackerId: number, targetId: number, attackSpeed: number, animIndex = 0, animClip = ''): void {
     if (attackerId === selfPlayerId) return;
     const actor = remotes.get(attackerId);
     if (!actor) return;
-    if (actor.animState.triggerAttack(true)) {
+    // 攻击者**自己播的那一条**（随 C2S_AttackStart 上报、服务端透传）→ 旁观者直接播同一条，
+    // 不再本地重跑匹配器（否则各客户端各自随机，同一刀在不同客户端上动作/长度都不一样）。
+    const specified = animIndex > 0 ? actor.motionList.find((m) => m.index === animIndex) ?? null : null;
+    if (animIndex > 0 && !specified) {
+      reportFallback('anim', `远端 id=${actor.playerId} 攻击动画条目 #${animIndex} 在本地动作表里不存在`
+        + `（job=${actor.jobId}）→ 回退本地匹配（两端动画数据版本可能不一致）`);
+    }
+    const started = specified ? actor.animState.playMotion(specified) : actor.animState.triggerAttack(true);
+    if (specified) verifyRemoteAnimData(actor, animClip);
+    if (started) {
       const m = actor.animState.getCurrentMotion();
-      if (m) actor.animRate = attackRate(m, attackSpeed || 0);
+      if (m) {
+        actor.animRate = attackRate(m, attackSpeed || 0);
+        // 本次攻击的逐段音效状态：段序号来自动画事件帧，结果来自服务端计划（见 playRemoteAttackSegment）
+        // 计划通常先到（服务端先发计划、再广播起手）；**超过 2s 的作废** —— 否则一次被拒/放弃的
+        // 起手会把它的计划留到下一次挥拳上（那一段的结果音就会按上一次的裁定播）。
+        const pending = actor.pendingAttackPlan;
+        actor.attack = {
+          motion: m,
+          eventFrames: Array.from(m.eventFrame).filter((f) => f > 0),
+          hitFired: 0,
+          plan: pending && performance.now() - pending.at < 2000 ? pending.map : null,
+          voices: new Map(),
+          optimistic: new Set(),
+        };
+        actor.pendingAttackPlan = null;
+      }
     }
     const mon = monsters.get(targetId);
     if (mon) {
@@ -2220,11 +2788,82 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
+   * 播远端玩家攻击的**这一段**结果音（原版 WeaponPlaySound 在命中帧，每段一次）。
+   * 有服务端计划 → 直接播正确结果（miss 挥空 / hit 武器音 / crit 追加暴击音），无需等往返；
+   * 计划未到（旧服务端/丢包）→ **乐观按命中播**并上报降级，计划迟到时由 applyRemoteAttackPlan 纠正。
+   */
+  function playRemoteAttackSegment(actor: RemoteActor): void {
+    if (!actor.attack) return;
+    const seg = actor.attack.hitFired;
+    const planned = actor.attack.plan?.get(seg);
+    const idcode = actor.appearance?.weaponIdcode ?? 0;
+    const pos = actor.root.position;
+    if (planned?.missed) {
+      sfx.playWeaponMiss(handTypeOfIdCode(idcode), { pos });
+      return;
+    }
+    const code = weaponSoundCode(
+      weaponTypeOfIdCode(idcode), handTypeOfIdCode(idcode),
+      actor.jobId === 7 || actor.jobId === 8, idcode,
+    );
+    const voice = sfx.playWeaponAttack(code, { pos });
+    if (voice) actor.attack.voices.set(seg, voice);
+    if (planned?.critical) sfx.playCritical({ pos });
+    if (!planned) {
+      actor.attack.optimistic.add(seg);
+      reportFallback('anim', `远端攻击 id=${actor.playerId} 第 ${seg} 段：计划未到 → 乐观按命中播音（结果包到达前无法判定 miss/暴击）`);
+    }
+  }
+
+  /**
+   * 远端攻击计划（S2C_AttackPlan 的旁观分支）。
+   * 常见次序是"计划先到、起手广播后到"（服务端先发计划）→ 暂存待起手消费；
+   * 若起手已在播（计划迟到）→ 立即挂到本次攻击，并**纠正**此前乐观播出的段。
+   */
+  function applyRemoteAttackPlan(actor: RemoteActor, segments: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null }>): void {
+    const map = new Map<number, { missed: boolean; critical: boolean }>();
+    for (let i = 0; i < segments.length; i++) {
+      const s = segments[i]!;
+      map.set(Number(s.index ?? i), { missed: !!s.missed, critical: !!s.isCritical });
+    }
+    const atk = actor.attack;
+    if (!atk || atk.hitFired === 0) {
+      // 起手还没发生（或还没走到第一个事件帧）→ 直接挂上
+      if (atk) atk.plan = map;
+      else actor.pendingAttackPlan = { map, at: performance.now() };
+      return;
+    }
+    atk.plan = map;
+    // 纠正乐观段：当时按"命中"播的音，若计划说 miss/暴击 → 换掉/追加
+    for (const seg of atk.optimistic) {
+      if (seg >= atk.hitFired) continue;
+      const p = map.get(seg);
+      if (!p) continue;
+      const voice = atk.voices.get(seg);
+      if (p.missed) {
+        voice?.stop(40);
+        atk.voices.delete(seg);
+        sfx.playWeaponMiss(handTypeOfIdCode(actor.appearance?.weaponIdcode ?? 0), { pos: actor.root.position });
+      } else if (p.critical) {
+        sfx.playCritical({ pos: actor.root.position });
+      }
+    }
+    if (atk.optimistic.size) {
+      console.log(`[计划] 远端 id=${actor.playerId} 计划迟到（已乐观播 ${atk.optimistic.size} 段）→ 已按计划纠正`);
+      atk.optimistic.clear();
+    }
+  }
+
+  /**
    * S2C_Damage 受击硬直（§6.4）：targetId 为自机或远端玩家 → 站立/走/跑时播受击动画，
    * 攻击/技能/受击中不打断（状态机 triggerDamage 内建守卫）；damage<=0（抵抗/吸收）不播。
    */
   function onTakeDamage(targetId: number, damage: number): void {
-    if (damage <= 0) return;
+    // 受击硬直只在**有效伤害**时触发 —— 原版 character.cpp:8463：
+    //   `... && cnt > 1` 才 SetMotionFromCode(CHRMOTION_STATE_DAMAGE)（cnt = 吸收后、下限 1 的实际伤害）。
+    // 所以扣 1 点血的一刀**不定身**、也不播受击音：低等级怪被高等级玩家的防御压到 1 点时，
+    // 摸一下就把人定住的现象由此消除（用户 2026-09-12 指出）。
+    if (damage <= 1) return;
     const job = getGameSnapshot().character?.job ?? 0;
     if (targetId === selfPlayerId) {
       animState?.triggerDamage();
@@ -2240,12 +2879,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // ==================== 伤害/躲闪飘字（对齐原版 SHOW_DMG：头顶 1s 上飘 + 线性淡出） ====================
+  // 字号：暴击 = 普通伤害的 2 倍（要一眼看出来）。描边按字号等比放大，否则大字会被细描边糊住。
+  const FLOATER_PX_MONSTER = 21;   // 怪物/玩家头顶的普通伤害
+  const FLOATER_PX_SELF = 19;      // 自机与远端玩家的受击/治疗（层级低一档）
+  const FLOATER_CRIT_SCALE = 2;
   interface DmgFloater {
     kind: 'self' | 'monster' | 'remote';
     id: number;
     text: string;
     color: string;
     font: string;
+    px: number;            // 字号（px）：描边宽度按它等比算
     born: number;
     life: number;
   }
@@ -2271,13 +2915,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       else if (remotes.has(id)) k = 'remote';
       else return;
     }
-    const font = crit
-      ? '700 28px Verdana, "Microsoft YaHei", sans-serif'
+    const px = crit
+      ? FLOATER_PX_MONSTER * FLOATER_CRIT_SCALE
       : k === 'monster'
-        ? '700 21px Verdana, "Microsoft YaHei", sans-serif'
-        : '700 19px Verdana, "Microsoft YaHei", sans-serif';
+        ? FLOATER_PX_MONSTER
+        : FLOATER_PX_SELF;
+    const font = `700 ${px}px Verdana, "Microsoft YaHei", sans-serif`;
     while (floaters.length >= 64) floaters.shift(); // 防爆上限
-    floaters.push({ kind: k, id, text, color, font, born: performance.now(), life: 1000 });
+    floaters.push({ kind: k, id, text, color, font, px, born: performance.now(), life: 1000 });
   }
 
   /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
@@ -2385,7 +3030,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = Math.max(4, Math.round(f.px * 0.19));   // 与字号等比，大字不被细描边糊住
         ctx.strokeText(f.text, pt.x, fy);
         ctx.fillStyle = f.color;
         ctx.fillText(f.text, pt.x, fy);
@@ -2556,6 +3201,103 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
+  /**
+   * 两端动画数据同代校验：对端上报的语义 ID（clip）在本端找不到 → **明确上报**。
+   * 索引能对上并不保证数据同源（条目顺序/数量变了仍可能命中错的那一条），
+   * 语义 ID 让"两端资产不同代"这件事在日志里可见，而不是表现为"动画莫名其妙不对"。
+   */
+  function verifyRemoteAnimData(actor: RemoteActor, clip: string): void {
+    if (!clip) return;
+    const entries = semanticEntriesForJob(actor.jobId);
+    if (entries.length && !entries.some((e) => e.clip === clip)) {
+      reportFallback('anim', `远端 id=${actor.playerId} 上报语义动画 ${clip} 不在本地语义数据里`
+        + `（job=${actor.jobId}）→ 两端动画数据不同代，条目索引可能已错位`);
+    }
+  }
+
+  /** 该远端是否仍挂在场上（异步加载后校验，防止把武器挂到已移除的骨架上） */
+  function remoteAlive(actor: RemoteActor): boolean {
+    return remotes.get(actor.playerId) === actor;
+  }
+
+  /**
+   * 挂载远端玩家的主手/副手武器。骨规则与自机**同源**（主手走 `WeaponMount`，副手走
+   * `offMountBoneOf`），初始姿态按当前区域；之后由状态机 onStanceChange 驱动持械/收械搬运。
+   * 旧实现只用 `weaponPos===2 ? 左手 : 右手` 挂主手、完全不管副手，也不随姿态搬运。
+   */
+  async function mountRemoteWeapon(actor: RemoteActor): Promise<void> {
+    const app = actor.appearance;
+    if (!app) return;
+    const root = actor.root;
+    const sheathed = currentFieldState() === 1;
+    if (actor.offHandGroup) {
+      actor.offHandGroup.parent?.remove(actor.offHandGroup);
+      actor.offHandGroup = null;
+    }
+    const idcode = app.weaponIdcode ?? 0;
+    const stance: 'combat' | 'sheathed' = sheathed ? 'sheathed' : 'combat';
+
+    // ---- 主手（含双手武器的镜像份）----
+    let mainGroup: THREE.Group | null = null;
+    if (app.weaponDorp) {
+      try {
+        const wres = await loadWeaponModel(app.weaponDorp);
+        await loadTextures(wres.texturesToLoad);
+        if (!remoteAlive(actor)) return;
+        mainGroup = wres.group;
+      } catch (e) {
+        console.warn('[WorldView] 远端武器加载失败: id=' + actor.playerId + ' dorp=' + app.weaponDorp, e);
+      }
+    }
+    const mainRes = actor.weaponMount.mount(root, mainGroup, idcode, app.weaponPos, stance);
+    if (mainRes.missingBone) {
+      reportFallback('mount', `远端主手挂点缺失 id=${actor.playerId} dorp=${app.weaponDorp} 目标骨=${mainRes.missingBone}（已按回退链挂载）`);
+    }
+
+    // ---- 副手（盾 → 左臂；匕首 → 战斗左手 / 收械左腰）----
+    const offDorp = app.offHandDorp;
+    const offKind = app.offHandKind || 0;
+    if (offDorp && offKind !== 0) {
+      try {
+        const ores = await loadWeaponModel(offDorp);
+        await loadTextures(ores.texturesToLoad);
+        if (!remoteAlive(actor)) return;
+        const boneName = offMountBoneOf(idcode, offKind, stance);
+        const bone = findBone(root, boneName)
+          || findBone(root, WEAPON_BONES.LEFT_HAND)
+          || findBone(root, WEAPON_BONES.SHIELD);
+        if (bone) {
+          actor.offHandGroup = ores.group;
+          bone.add(ores.group);
+        } else {
+          reportFallback('mount', `远端副手挂点缺失 id=${actor.playerId} kind=${offKind} bone=${boneName}`);
+        }
+      } catch (e) {
+        console.warn('[WorldView] 远端副手挂载失败: id=' + actor.playerId + ' dorp=' + offDorp, e);
+      }
+    }
+
+    // 武器就位 → 按当前状态重选动画实例（持剑站姿 / 收械姿态等）
+    if (remoteAlive(actor)) actor.animState.reselectForCurrentState();
+  }
+
+  /** 远端武器姿态切换（主手走 WeaponMount，副手走 moveOffHandForStance —— 与自机同一实现） */
+  function setRemoteWeaponStance(actor: RemoteActor, stance: 'combat' | 'sheathed'): void {
+    if (actor.weaponMount.currentStance === stance) return;
+    const mainRes = actor.weaponMount.setStance(actor.root, stance);
+    const offRes = moveOffHandForStance({
+      root: actor.root,
+      off: actor.offHandGroup,
+      idcode: actor.appearance?.weaponIdcode ?? 0,
+      offKind: actor.appearance?.offHandKind || 0,
+      stance,
+    });
+    const missing = mainRes.missingBone ?? offRes.missingBone;
+    if (missing) {
+      reportFallback('mount', `远端武器姿态 ${stance}：目标骨 ${missing} 不在骨架里 id=${actor.playerId}`);
+    }
+  }
+
   function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
@@ -2603,9 +3345,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
         const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
         let actorObj!: RemoteActor;
+        // 远端动画状态机：**getter 与自机同一套**（此前只有 getMotions/getClassId/onMotionChange
+        // 三个 → 没有武器语义、也没有场所位，于是远端永远播通用/空手动画、进安全区也不换姿态）。
         const animState2 = createAnimStateMachine({
           getMotions: () => actorObj.motionList,
-          getClassId: () => jobId,
+          getClassId: () => actorObj.jobId,
+          getWeaponIdCode: () => actorObj.appearance?.weaponIdcode || 0,
+          getWeaponType: () => weaponTypeOfIdCode(actorObj.appearance?.weaponIdcode),
+          getHandType: () => {
+            const h = handTypeOfIdCode(actorObj.appearance?.weaponIdcode);
+            return h === '1H' || h === '2H' ? h : null;
+          },
+          getSemanticEntries: () => semanticEntriesForJob(actorObj.jobId),
+          // AOI 只含同图玩家 → 本地图即远端所在地图，村庄/野外判定与自机共用同一个函数
+          getFieldState: () => currentFieldState(),
+          onStanceChange: (stance) => { setRemoteWeaponStance(actorObj, stance); },
           onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
         });
         actorObj = {
@@ -2628,23 +3382,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           faceAngle: null,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
+          lastAnimIndex: 0,
+          appearance: app,
+          weaponMount: new WeaponMount(),
+          offHandGroup: null,
+          attack: null,
+          pendingAttackPlan: null,
         };
         remotes.set(pid, actorObj);
         animState2.triggerIdle();
-        console.log('[WorldView] 远端玩家出现: id=' + pid + ' job=' + jobId + ' name=' + actorInfo.name);
-        // 武器：挂到克隆骨架的手部骨骼（WEAPON_BONES），随动画姿态移动
-        if (app?.weaponDorp) {
-          try {
-            const wres = await loadWeaponModel(app.weaponDorp);
-            await loadTextures(wres.texturesToLoad);
-            const boneName = app.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
-            const bone = findBone(root, boneName);
-            if (bone) bone.add(wres.group);
-            else console.warn('[WorldView] 远端武器挂点缺失: id=' + pid + ' bone=' + boneName);
-          } catch (e) {
-            console.warn('[WorldView] 远端武器加载失败: id=' + pid + ' dorp=' + app.weaponDorp, e);
-          }
-        }
+        console.log('[WorldView] 远端玩家出现: id=' + pid + ' job=' + jobId + ' name=' + actorInfo.name
+          + ' weapon=' + (app?.weaponIdcode ? app.weaponIdcode.toString(16) : '(无)'));
+        await mountRemoteWeapon(actorObj);
       } catch (e) {
         console.warn('[WorldView] 远端玩家加载失败 id=' + pid, e);
       } finally {
@@ -2748,19 +3497,29 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         (actor.animState.getCurrentState() === actor.animState.STATE.ATTACK && actor.faceAngle !== null)
           ? actor.faceAngle
           : pAng;
-      setRemoteAnim(actor, s0.anim);
+      setRemoteAnim(actor, s0.anim, s0.animIndex ?? 0, s0.animClip ?? '');
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
         // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用 signalAttack 设的 animRate（delta-time）
         if (actor.animState.getCurrentState() !== actor.animState.STATE.ATTACK) actor.animRate = 1;
-        actor.animFrame += ANIM_UNITS_PER_SEC * actor.animRate * Math.min(dt, 0.1);
-        const endFrame = motion.endFrame * 160;
-        const startFrame = motion.startFrame * 160;
-        if (actor.animFrame >= endFrame) {
-          if (motion.repeat) {
-            const len = endFrame - startFrame;
-            actor.animFrame = startFrame + ((actor.animFrame - startFrame) % len);
+        // 帧推进走共享实现（与自机/检查器同一函数）—— 命中帧判定必须用未回绕的 raw
+        const step = advanceAnimFrame(actor.animFrame, motion, dt, actor.animRate);
+        actor.animFrame = step.frame;
+        // 命中帧派发（旁观者看别人挥拳）：判定与自机同一条（compFrame 跨过事件帧），
+        // 区别只是结果音来自**服务端广播的攻击计划**，而不是本机的段序号上报。
+        if (actor.animState.getCurrentState() === actor.animState.STATE.ATTACK
+            && actor.attack && actor.attack.motion === motion) {
+          const compFrame = step.raw - motion.startFrame * 160;
+          while (actor.attack.hitFired < actor.attack.eventFrames.length
+                 && compFrame >= actor.attack.eventFrames[actor.attack.hitFired]!) {
+            playRemoteAttackSegment(actor);
+            actor.attack.hitFired++;
+          }
+        }
+        if (step.ended) {
+          if (actor.animState.getCurrentState() === actor.animState.STATE.DEAD) {
+            actor.animFrame = Math.max(motion.startFrame, motion.endFrame - 1) * 160;   // 尸体停在末帧
           } else {
             const next = actor.animState.onAnimationEnd();
             if (next) actor.animFrame = next.startFrame * 160;
@@ -2816,31 +3575,79 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 下落超 32*fONE 触发 FALLDOWN 动画；落地时 FALLDOWN → FallHeight>200 → FALLDAMAGE 否则 FALLSTAND。
   // 同步地图区域：加载当前图的相邻图（含 2 跳，保留回程中间图），卸载更远的图
   let regionLoading = new Set<number>();
+  /**
+   * 坐标落在**哪些图的 AABB 内**（全量 `allBounds`）。
+   *
+   * ⚠ 不能用 `findCurrentMap` 代替它：那个函数**优先看"脚下在已加载图里有没有面"**
+   * （为处理桥口：图 AABB 外但网格有面），跨图边界时旧图的地面还兜着脚 → 它会一直判回旧图。
+   * 而"该不该预加载某张图"要看**坐标属于谁**，不是"脚下此刻踩的是谁"。
+   */
+  function mapsAtPoint(wx: number, wz: number): number[] {
+    const out: number[] = [];
+    for (const [mapId, [xMin, xMax, zMin, zMax]] of allBounds) {
+      if (wx >= xMin && wx <= xMax && wz >= zMin && wz <= zMax) out.push(mapId);
+    }
+    return out;
+  }
+
   async function syncMapRegions(centerMapId: number): Promise<void> {
     // wanted = 当前图 + 直接相邻（1 跳）
     const wanted = new Set<number>([centerMapId, ...neighborMaps(centerMapId)]);
-    // 加载 wanted 中未加载的图
+    // **玩家坐标实际落进的图也必须加载** —— 包括还没成为 currentMapId 的那张。
+    // 不这么做会死锁：换图判定（findCurrentMap）用"脚下有没有面"，跨边界时一直被旧图兜住 →
+    // currentMapId 不变 → syncMapRegions 不被调用 → 新图永远不加载，也就永远走不进去。
+    // 用户实测：从内维斯克(navisko,9) 往东跑，古代战场(desert3,11) 一直刷不出来，重进游戏才出现
+    // （重进走的是服务端给的 mapId，直接 syncMapRegions(9)，所以正常）。
+    for (const id of mapsAtPoint(selfPos.x, selfPos.z)) {
+      wanted.add(id);
+      for (const n of neighborMaps(id)) wanted.add(n);   // 即将进入的图，它的邻居也要跟上
+    }
+    // 记下"当前想要的图"：进行中的分帧构建据此判断自己是否已被抛弃（玩家跑远 → 取消）
+    wantedMaps = wanted;
+    // 加载 wanted 中未加载的图（构建是分帧的，这里 await 的是"建完"，不是"阻塞主线程建完"）
     const toLoad = [...wanted].filter(id => !mapHandles.has(id) && !regionLoading.has(id));
     if (toLoad.length) {
       regionLoading = new Set([...regionLoading, ...toLoad]);
       try {
-        await Promise.all(toLoad.map(id => loadMapById(id)));
+        await Promise.all(toLoad.map(id => loadMapById(id, () => !wantedMaps.has(id))));
       } finally {
         for (const id of toLoad) regionLoading.delete(id);
       }
     }
-    // 卸载非相邻图
+    // **延迟卸载**：不再需要的图不立刻卸，先登记到期时间。
+    // 玩家在地图边界来回走动时，wanted 会反复抖动；立即卸载会导致"卸了又装"
+    // （每装一次要走一遍解析 + 分帧构建），表现为边界处的持续卡顿（用户 2026-09-13 指出）。
+    const now = performance.now();
     for (const id of [...mapHandles.keys()]) {
-      if (!wanted.has(id)) {
-        const mh = mapHandles.get(id);
-        if (mh) mh.mapRenderer.dispose?.();
-        mapHandles.delete(id);
-        collisionMeshes.delete(id);
-        // 清装饰
-        const dg = decorGroups.get(id);
-        if (dg) { unloadDecor(dg, scene!); decorGroups.delete(id); }
-        console.log('[WorldView] 卸载地图' + id);
+      if (wanted.has(id)) {
+        pendingUnload.delete(id);        // 又需要了 → 取消卸载
+      } else if (!pendingUnload.has(id)) {
+        pendingUnload.set(id, now + MAP_UNLOAD_DECAY_MS);
       }
+    }
+    flushPendingUnload(now);
+  }
+
+  /** 真正卸载一张地图（几何/材质/碰撞/装饰一并释放） */
+  function unloadMap(mapId: number): void {
+    const mh = mapHandles.get(mapId);
+    if (!mh) return;
+    mh.mapRenderer.dispose?.();
+    mapHandles.delete(mapId);
+    collisionMeshes.delete(mapId);
+    const dg = decorGroups.get(mapId);
+    if (dg && scene) { unloadDecor(dg, scene); decorGroups.delete(mapId); }
+    console.log('[WorldView] 卸载地图' + mapId);
+  }
+
+  /** 到期且仍不在需要集合里的图 → 卸载 */
+  function flushPendingUnload(now: number): void {
+    if (pendingUnload.size === 0) return;
+    for (const [id, at] of [...pendingUnload]) {
+      if (now < at) continue;
+      pendingUnload.delete(id);
+      if (wantedMaps.has(id)) continue;   // 这段时间里又变成需要的了 → 留着
+      unloadMap(id);
     }
   }
 
@@ -2907,6 +3714,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 村庄↔野外姿态：跨图后重选待机/走/跑动画（安全区查服务端下发表）
         animState?.reselectForCurrentState();
       }
+      // 坐标已经落进某张**尚未加载**的图 → 立刻触发区域同步。
+      // 这一条不能省：换图判定被"脚下有面"兜住时 currentMapId 不会变，上面那个分支永不执行，
+      // 于是玩家会看到东边一片空白且再也刷不出来（用户实测的古代战场）。
+      if (rafMs - lastRegionCheck > REGION_CHECK_MS) {
+        lastRegionCheck = rafMs;
+        if (mapsAtPoint(selfPos.x, selfPos.z).some(id => !mapHandles.has(id) && !regionLoading.has(id))) {
+          void syncMapRegions(currentMapId);
+        }
+        // 延迟卸载也在这里到期检查（与加载检查同一节奏，无需另设定时器）
+        flushPendingUnload(rafMs);
+      }
       // 更新角色位置
       if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
       return true;
@@ -2951,16 +3769,39 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 上报客户端权威移动。mode=0（停止）立即发；移动中按 MOVE_REPORT_MS 节流。
    *  anim=动画覆盖（0=按 mode 推导；下落/落地传 FALL* token 让远端播放）。 */
+  /**
+   * 随移动上报的动画条目 —— **只报持续姿态**（站/走/跑/掉落）。
+   *
+   * 攻击/技能/受击这类一次性动画**不随移动上报**（它们的条目由 C2S_AttackStart 等各自携带）：
+   * 否则攻击期间偶然发出的一条移动包，会把旁观者正在播的那一挥**重置**回站姿条目。
+   */
+  function reportableAnimIndex(): number {
+    const st = animState?.getCurrentState();
+    if (st === undefined) return 0;
+    const S = animState!.STATE;
+    if (st === S.ATTACK || st === S.SKILL || st === S.DAMAGE || st === S.TAUNT || st === S.YAHOO) return 0;
+    return animState!.getCurrentMotion()?.index ?? 0;
+  }
+
+  /** 立即上报一次（跳过节流）：带上当前动画条目 —— 状态刚切换的路径用它 */
+  function reportMoveNow(mode: 0 | 1 | 2, anim = 0): void {
+    opts?.onMoveInt?.(selfAngle, mode, selfPos.x, selfPos.y, selfPos.z, anim,
+      reportableAnimIndex(), selfAnimClip);
+  }
+
   function reportMove(mode: 0 | 1 | 2, anim = 0): void {
     const now = performance.now();
+    // 每次上报都带"我正在播哪一条动画"：服务端透传后，旁观者直接播同一条，
+    // 不必各自再跑一遍匹配器（那正是"同一角色在不同客户端动作不一致"的根源）。
+    const animIndex = reportableAnimIndex();
     if (mode === 0) {
-      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, anim);
+      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, anim, animIndex, selfAnimClip);
       lastMoveReportAt = now;
       return;
     }
     if (now - lastMoveReportAt < MOVE_REPORT_MS) return;
     lastMoveReportAt = now;
-    opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z, anim);
+    opts?.onMoveInt?.(selfAngle, running ? 2 : 1, selfPos.x, selfPos.y, selfPos.z, anim, animIndex, selfAnimClip);
   }
 
   // 可调客户端帧率（0=跟随显示器刷新率；>0=上限 fps）。localStorage 'pt.fps' 持久化；window.__ptSetFps(n) 调整。
@@ -3007,13 +3848,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           const compFrame = step.raw - selfAttackMotion.startFrame * 160;
           while (selfAttackHitFired < selfAttackEventFrames.length
                  && compFrame >= selfAttackEventFrames[selfAttackHitFired]) {
-            opts?.onAttackHit?.(selfAttackTargetId, selfAttackHitFired);
+            const seg = selfAttackHitFired;
+            // 上报该段（服务端逐段结算）+ **在该段的事件帧播这一声**（原版 WeaponPlaySound 即在此处）
+            opts?.onAttackHit?.(selfAttackTargetId, seg);
+            const planned = selfAttackPlan?.get(seg);
+            if (planned) {
+              // **B 方案命中**：结果已在起手时送达 → 这一帧直接播**正确**的音，不需要之后再替换。
+              // 记下"这一声是按哪套判定播的"，结果包到达时据此判断要不要修正（见 playSelfAttackResult）。
+              selfPlanSounded.set(seg, { missed: planned.missed, critical: planned.critical && !planned.missed });
+              if (planned.missed) {
+                sfx.playWeaponMiss(selfHandType(), { priority: true });
+              } else {
+                selfAttackVoices.set(seg, sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true }));
+                if (planned.critical) sfx.playCritical({ priority: true });
+              }
+            } else {
+              // 计划未到（高延迟/丢包/起手被拒）→ 乐观按命中播，等 AttackResult 到达再替换/追加
+              selfAttackVoices.set(seg, sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true }));
+            }
             selfAttackHitFired++;
           }
         }
         if (step.ended) {
-          const next = animState.onAnimationEnd();
-          if (next) animFrame = next.startFrame * 160;
+          // 死亡：停在末帧前一帧（原版 `frame = (EndFrame-1)*160`），尸体不起身 —— 等复活消息
+          if (animState.getCurrentState() === animState.STATE.DEAD) {
+            animFrame = Math.max(motion.startFrame, motion.endFrame - 1) * 160;
+          } else {
+            const next = animState.onAnimationEnd();
+            if (next) animFrame = next.startFrame * 160;
+          }
         }
         const skelFrames = evalSkeleton(animSmb, animFrame, false);
         applyToBones(bones, skelFrames, tmp, posV, quatQ, sclV);
@@ -3112,12 +3975,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const fnow = performance.now();
       if (fnow - lastMoveReportAt >= MOVE_REPORT_MS) {
         lastMoveReportAt = fnow;
-        opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, ANIM_FALLDOWN);
+        reportMoveNow(0, ANIM_FALLDOWN);
       }
     } else if (wasFallingNow && !wasMoving) {
       // 刚落地：上报一次落地动画（FALLSTAND / 高差大 FALLDAMAGE），随后归 IDLE
       const landAnim = fallHeight > 200 * 256 ? ANIM_FALLDAMAGE : ANIM_FALLSTAND;
-      opts?.onMoveInt?.(selfAngle, 0, selfPos.x, selfPos.y, selfPos.z, landAnim);
+      reportMoveNow(0, landAnim);
       if (animState) animState.triggerIdle();
     } else if (moved) {
       if (!wasMoving) {
@@ -3145,9 +4008,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       charGroup.rotation.y = selfAngle; // 面向目标（停步时 updateMovement 不接管旋转）
       const st = animState?.getCurrentState();
       const busy = st === animState?.STATE.ATTACK || st === animState?.STATE.SKILL || st === animState?.STATE.DAMAGE;
-      if (!busy && animState) {
-        // 非攻击/技能/受击中 → 发起下一次挥拳（普攻动画）
+      if (!busy && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
+        // 非攻击/技能/受击中，且已过起手闸门（镜像服务端冷却）→ 发起下一次挥拳（普攻动画）
         if (animState.triggerAttack(true)) {
+          lastSelfAttackStartMs = rafMs;
           const m = animState.getCurrentMotion();
           const targetId = moveTarget.id;
           if (m) {
@@ -3157,15 +4021,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             selfAttackTargetId = targetId;
             selfAttackEventFrames = Array.from(m.eventFrame).filter((f) => f > 0);
             selfAttackHitFired = 0;
-            // 无命中帧数据 → 兜底：起手后立即结算 1 段
+            selfAttackVoices.clear();
+            selfAttackPlan = null;            // 新一次攻击：上一份计划作废
+            selfPlanSounded.clear();
+            selfAttackSeq++;
+            // 无命中帧数据 → 兜底：起手后立即结算 1 段（该段的挥击音也在此刻播）
             if (selfAttackEventFrames.length === 0) {
               opts?.onAttackHit?.(targetId, 0);
+              selfAttackVoices.set(0, sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true }));
             }
           }
-          // 起手广播（旁观者立刻挥拳）；伤害在命中帧由 onAttackHit 结算
-          opts?.onAttackStart?.(targetId);
-          // 挥击音（原版 WeaponPlaySound）：随起手播放，自机高优先级
-          sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true });
+          // 起手广播（旁观者立刻挥拳）——同时把**序号 + 段数**报给服务端，它据此预排各段结果
+          // 并回 S2C_AttackPlan（B 方案）。段数 = 非零事件帧个数（无事件帧则 1 段）。
+          opts?.onAttackStart?.(targetId, selfAttackSeq, selfAttackEventFrames.length || 1,
+            selfAttackMotion?.index ?? 0, selfAnimClip);
+          // ⚠ 挥击音**不在这里播**：原版在**命中帧**（事件帧）才调 WeaponPlaySound，
+          //   且是**每段一次**（多段攻击每段都响）。见下方逐帧的事件帧派发。
         }
       }
     }
@@ -3182,7 +4053,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (mouseSeen) probeCursorAt(mouseX, mouseY);
 
     // 相机跟随角色
-    updateCamera();
+    updateCamera(dt);
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
@@ -3194,6 +4065,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     mapAudio.updateAt(selfPos);
     // 音效听者位置（战斗/技能音效按此做距离衰减）
     sfx.update(selfPos);
+    // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
+    if (effects && camera) effects.update(dt, camera);
 
     // 小地图
     drawMinimap();
@@ -3371,6 +4244,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         canvasEl.addEventListener('mouseup', onMouseUp);
         canvasEl.addEventListener('mousemove', onMouseMove);
         canvasEl.addEventListener('mouseleave', onMouseLeave);
+        // 滚轮调俯仰（原版手动视角；固定模式在 onWheel 内部忽略）
+        canvasEl.addEventListener('wheel', onWheel, { passive: false });
         window.addEventListener('mouseup', onMouseUp);
 
         // 自机外观：职业 → 渲染
@@ -3392,6 +4267,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     setGameTime,
     toggleMinimap,
+    isMinimapOn,
+    toggleCameraMode,
+    cameraMode: () => camMode,
     toggleGroundItemLabels,
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
@@ -3406,10 +4284,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyUnitHp,
     applyMonsterHit,
     playSelfAttackResult,
+    applyAttackPlan,
+    spawnEffectOnUnit,
     signalAttackStart,
     onTakeDamage,
     showFloater,
-    applyPlayerMove: (playerId, x, y, z, angle, animState) => {
+    applyRespawn,
+    applyPlayerDeath,
+    respawnNeedsMapLoad: (mapId: number) => !!scene && mapId !== currentMapId,
+    applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '') => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {
         // 方向二：自机位置自己权威，忽略回推（服务端不修正正常移动；换图/重生等由 enterGame 处理）
@@ -3423,7 +4306,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (lastSnap && performance.now() - lastSnap.t > REMOTE_RESYNC_MS) {
             actor.snaps.length = 0;
           }
-          actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState });
+          actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState, animIndex, animClip });
           if (actor.snaps.length > 32) actor.snaps.shift();
         }
       }
@@ -3492,6 +4375,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         renderer.domElement.removeEventListener('mousedown', onMouseDown);
         renderer.domElement.removeEventListener('mouseup', onMouseUp);
         renderer.domElement.removeEventListener('mousemove', onMouseMove);
+        renderer.domElement.removeEventListener('wheel', onWheel);
         renderer.domElement.remove();
       }
       npOverlay?.remove();

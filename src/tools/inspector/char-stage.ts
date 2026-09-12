@@ -14,7 +14,11 @@ import {
 } from '../../render/char-loader.js';
 import { loadMonsterModel, buildMotionList } from '../../render/monster-loader.js';
 import { loadCharTextures } from '../../render/char-texture-loader.js';
-import { loadWeaponModel, findBone, WEAPON_BONES } from '../../render/weapon-loader.js';
+import { loadWeaponModel, findBone, WEAPON_BONES, WeaponMount, offMountBoneOf } from '../../render/weapon-loader.js';
+import type { MountResult } from '../../render/weapon-loader.js';
+import { createEffectManager } from '../../render/effects/effect-manager.js';
+import type { LoadedPart } from '../../render/effects/part-assets.js';
+import type { EffectDiag } from '../../render/effects/effect-assets.js';
 import { evalSkeleton, applyToBones, advanceAnimFrame } from '../../char/animation.js';
 import { motionStateName } from '../../char/char-format.js';
 import type { MotionInfo } from '../../char/char-format.js';
@@ -66,7 +70,11 @@ export interface StageLoadResult {
 export type CameraPreset = 'full' | 'upper' | 'weapon';
 
 export interface CharStage {
-  loadPlayer(app: InspectorAppearance): Promise<StageLoadResult>;
+  /** 加载角色。`stance` = 武器初始姿态（持械/收械）；不传按持械（调用方随后可用
+   *  `setWeaponStance` 纠正，那才是姿态的唯一入口）。 */
+  loadPlayer(app: InspectorAppearance, stance?: 'combat' | 'sheathed'): Promise<StageLoadResult>;
+  /** 局部换头：只增删头部网格组，**不动骨架与 mixer**（换脸不中断动画、不撕裂） */
+  swapHead(app: InspectorAppearance): Promise<{ loaded: number; failed: string[]; note: string }>;
   /** 直接按 .inx 路径加载（怪物/NPC/宠物，也可喂玩家 body inx） */
   loadModel(inxPath: string, label?: string): Promise<StageLoadResult>;
   /** 直放指定动作（不走状态机随机选择） */
@@ -82,6 +90,11 @@ export interface CharStage {
   speed: number;
   looping: boolean;
   setPaused(v: boolean): void;
+  /**
+   * 切换武器姿态（持械 ↔ 收械）。**骨判定与镜像份全在 `WeaponMount` 里**
+   * （自机 / 远端 / 检查器同一实现）——调用方只给姿态，不再自己算骨骼名。
+   */
+  setWeaponStance(stance: 'combat' | 'sheathed'): MountResult;
   /** 暂停态下逐帧步进（n 可为负） */
   stepFrames(n: number): void;
   /** 停止：回到当前动作首帧并暂停（对齐 pviewer 的"停止"） */
@@ -97,9 +110,21 @@ export interface CharStage {
   actorPos(): { x: number; y: number; z: number } | null;
   /** 直接设置演员世界位置（暂时无地图，用于手动摆位） */
   setActorPos(x: number, y: number, z: number): void;
+  /** 播放一个 INI 广告牌特效（相对演员的偏移；缺省在身前胸口高度） */
+  spawnEffect(name: string, offset?: { x: number; y: number; z: number }): Promise<boolean>;
+  /** 最近一次特效的解析结果（诊断面板用） */
+  effectDiag(): EffectDiag | null;
+  /** 最近一次 `.part` 粒子的解析结果（那 401 个脚本） */
+  partDiag(): LoadedPart['diag'] | null;
   /** 动作播到末尾且未循环 */
   finished(): boolean;
   onFrame?: (frame: number, motion: MotionInfo | null) => void;
+  /**
+   * 当前动作的**事件帧**回调（机制同 WorldView 的攻击命中帧）：
+   * 帧位置跨过 `motion.eventFrame[i]`（相对 startFrame ×160）时触发一次，每次 playMotion 重置。
+   * 技能的"落地/命中"时刻就用它 —— 特效与打击音效应在这一刻放，而不是起手。
+   */
+  onMotionEvent?: (index: number) => void;
   dispose(): void;
 }
 
@@ -114,6 +139,11 @@ interface StageActor {
   animSmb: SmbData;
   motions: MotionInfo[];
   meshes: THREE.Mesh[];
+  /** 身体/头部网格组：局部替换（换脸/换甲）时只增删这一个组，
+   *  **不动骨架与 mixer**，从而不中断当前动画、不产生撕裂。 */
+  bodyGroup?: THREE.Object3D;
+  headGroup?: THREE.Object3D;
+  bodyMeshes?: THREE.Mesh[];
 }
 
 export function createCharStage(container: HTMLElement): CharStage {
@@ -161,12 +191,15 @@ export function createCharStage(container: HTMLElement): CharStage {
   /* ─────────── 演员状态 ─────────── */
 
   let actor: StageActor | null = null;
-  let mainWeapon: THREE.Group | null = null;
+  /** 主手武器挂载器（含双手武器镜像份）—— 与自机/远端同一实现，本层不再自己判骨骼/镜像 */
+  const mainMount = new WeaponMount();
   let offWeapon: THREE.Group | null = null;
 
   let animFrame = 0;
   let curMotion: MotionInfo | null = null;
   let wasFinished = false;
+  /** 本次播放已触发过的事件帧个数（playMotion 时重置） */
+  let eventsFired = 0;
 
   const tmpMat4 = new THREE.Matrix4();
   const posV = new THREE.Vector3();
@@ -174,6 +207,18 @@ export function createCharStage(container: HTMLElement): CharStage {
   const sclV = new THREE.Vector3();
 
   /* ─────────── 装配 ─────────── */
+
+  /**
+   * **装配代际号**：每次 `loadPlayer`/`loadModel` 自增；**过期的加载不得再动场景**。
+   *
+   * 为什么必须下沉到这一层：`getSkeleton`/`getBody`/`getHead` 都是**记忆化**的，
+   * 骨骼对象跨加载**复用**。若上一轮加载在 `adopt()` 之后才走到 `attachWeapon`（其中有两处
+   * await），它会把武器挂到**新角色正在使用的同一套骨骼**上 —— 于是旧武器残留可见。
+   * 用户实测症状：萨满拿弓时"一把在手里、一把在背上"（`applyStance` 只管当前那把，
+   * 遗留的那把停在被挂时的骨骼上不动）。
+   * 调用方（asset-inspector）的 `reloadSeq` 只能丢弃**返回结果**，挡不住这里的场景改动。
+   */
+  let stageLoadSeq = 0;
 
   /** 把加载结果接管进来（清旧、入场、建 helper、播 STAND） */
   function adopt(next: StageActor, diag: DiagEntry[]): StageLoadResult {
@@ -204,8 +249,10 @@ export function createCharStage(container: HTMLElement): CharStage {
   }
 
   /** 玩家角色 */
-  async function loadPlayer(app: InspectorAppearance): Promise<StageLoadResult> {
+  async function loadPlayer(app: InspectorAppearance, stance: 'combat' | 'sheathed' = 'combat'): Promise<StageLoadResult> {
     const diag: DiagEntry[] = [];
+    const mySeq = ++stageLoadSeq;          // 本轮的代际号（过期即不得动场景）
+    const superseded = () => mySeq !== stageLoadSeq;
     const job = JOB_DATA[app.jobId];
     if (!job) {
       return fail(diag, '角色', `职业 ${app.jobId}`, 'JOB_DATA 条目',
@@ -246,6 +293,8 @@ export function createCharStage(container: HTMLElement): CharStage {
     }
 
     if (!skelData || !bodyPart) return fail(diag, '角色', '组合', '骨骼+身体', '骨骼或身体加载失败，无法装配');
+    // 过期检查①：已有更新的加载在进行 → **不 adopt、不动场景**（否则清掉新角色的装配）
+    if (superseded()) return fail(diag, '角色', '装配', '(更新的加载)', '本次加载已被取代，未改动场景');
 
     const root = new THREE.Group();
     // 骨骼先入 root（蒙皮位置由骨骼决定；WorldView 同款结构）
@@ -262,6 +311,9 @@ export function createCharStage(container: HTMLElement): CharStage {
       // 直接用 bipInxInfo.motions 会让所有动作的帧范围错误
       motions: buildMotionList(skelData.animSmb, skelData.bipInxInfo),
       meshes: [...bodyPart.result.meshes, ...(headPart ? headPart.result.meshes : [])] as unknown as THREE.Mesh[],
+      bodyGroup: bodyPart.result.group,
+      headGroup: headPart ? headPart.result.group : undefined,
+      bodyMeshes: bodyPart.result.meshes as unknown as THREE.Mesh[],
     };
 
     const texTargets = [
@@ -280,12 +332,13 @@ export function createCharStage(container: HTMLElement): CharStage {
       note: texRes.failed.slice(0, 6).join(', ') || undefined,
     });
 
-    // 武器（玩家专有）
-    await attachWeapon(app.weaponDorp, app.weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND,
-      '主手', diag);
+    // 武器（玩家专有）。⚠ 挂武器前**再查一次代际**：`attachWeapon` 内部有 await，
+    // 若期间又触发了一次加载，本轮的武器会被挂到**新角色复用的同一套骨骼**上而残留可见。
+    if (superseded()) return res;
+    await attachMainWeapon(app.weaponDorp, app, stance, diag, superseded);
+    if (superseded()) return res;
     if (app.offHandDorp && app.offHandKind) {
-      await attachWeapon(app.offHandDorp, app.offHandKind === 1 ? WEAPON_BONES.SHIELD : WEAPON_BONES.LEFT_HAND,
-        `副手(${app.offHandKind === 1 ? '盾' : '匕首'})`, diag);
+      await attachOffWeapon(app.offHandDorp, app, stance, diag, superseded);
     }
 
     applyDebugFlags();
@@ -296,6 +349,7 @@ export function createCharStage(container: HTMLElement): CharStage {
   /** 怪物 / NPC / 宠物：按 .inx 路径加载 */
   async function loadModel(inxPath: string, label?: string): Promise<StageLoadResult> {
     const diag: DiagEntry[] = [];
+    const mySeq = ++stageLoadSeq;          // 同 loadPlayer：过期的加载不得动场景
     const name = label || inxPath;
     try {
       const r = await loadMonsterModel(inxPath);
@@ -311,7 +365,8 @@ export function createCharStage(container: HTMLElement): CharStage {
         meshes: r.meshes as unknown as THREE.Mesh[],
       };
       const texRes = await loadCharTextures(r.texturesToLoad, renderer.capabilities.getMaxAnisotropy());
-
+      // 过期检查：已有更新的加载 → 不 adopt（否则会把新角色清掉）
+      if (mySeq !== stageLoadSeq) return fail(diag, '模型', name, inxPath, '本次加载已被取代，未改动场景');
       diag.push({ group: '模型', label: name, expected: inxPath, ok: true });
       diag.push({ group: '模型', label: '网格 .smd', expected: r.modelBase, ok: true });
       diag.push({
@@ -337,14 +392,62 @@ export function createCharStage(container: HTMLElement): CharStage {
     }
   }
 
-  async function attachWeapon(dorp: string, boneName: string, slot: string, diag: DiagEntry[]): Promise<void> {
+  /**
+   * 挂主手武器（含双手武器的镜像份）。**只负责加载与代际校验** ——
+   * 挂到哪根骨、要不要镜像、姿态怎么搬，全在 `WeaponMount`（自机/远端/检查器同一实现）。
+   * 这里不再自己算骨骼名：检查器曾因此成为唯一实现了镜像的地方，游戏内反而没有。
+   */
+  async function attachMainWeapon(
+    dorp: string, app: InspectorAppearance, stance: 'combat' | 'sheathed',
+    diag: DiagEntry[], superseded?: () => boolean,
+  ): Promise<void> {
+    if (!actor) return;
+    if (!dorp) {
+      mainMount.mount(actor!.root, null, 0, 0, stance);
+      diag.push({ group: '装备', label: '主手', expected: '(未装备)', ok: true });
+      return;
+    }
+    const expected = `image/sinimage/items/dropitem/it${dorp.toLowerCase()}.smd`;
+    try {
+      const wres = await loadWeaponModel(dorp);
+      const tx = await loadCharTextures(wres.texturesToLoad, renderer.capabilities.getMaxAnisotropy());
+      // ⚠ 两处 await 之后**必须复查代际**：过期就丢弃这个组，绝不挂到（被复用的）骨骼上
+      if (superseded?.()) {
+        diag.push({ group: '装备', label: `主手 ${dorp}`, expected, ok: true, note: '加载期间已被新的加载取代，未挂载' });
+        return;
+      }
+      const res = mainMount.mount(actor!.root, wres.group, app.weaponIdcode, app.weaponPos, stance);
+      diag.push({
+        group: '装备', label: `主手 ${dorp}`, expected,
+        ok: !res.missingBone,
+        note: `纹理 ${tx.loaded} 成功 / ${tx.failed.length} 失败`
+          + (res.mainBone ? `｜挂 ${res.mainBone}` : '')
+          + (res.mirrorBone ? `｜镜像 ${res.mirrorBone}` : '')
+          + (res.missingBone ? `｜缺骨 ${res.missingBone}` : ''),
+      });
+    } catch (e) {
+      diag.push({ group: '装备', label: `主手 ${dorp}`, expected, ok: false, note: msg(e) });
+    }
+  }
+
+  /** 挂副手件（盾/匕首）：骨名走 `offMountBoneOf`（与自机/远端同一判定） */
+  async function attachOffWeapon(
+    dorp: string, app: InspectorAppearance, stance: 'combat' | 'sheathed',
+    diag: DiagEntry[], superseded?: () => boolean,
+  ): Promise<void> {
+    if (!actor) return;
+    const slot = `副手(${app.offHandKind === 1 ? '盾' : '匕首'})`;
     if (!dorp) { diag.push({ group: '装备', label: slot, expected: '(未装备)', ok: true }); return; }
     const expected = `image/sinimage/items/dropitem/it${dorp.toLowerCase()}.smd`;
     try {
       const wres = await loadWeaponModel(dorp);
       const tx = await loadCharTextures(wres.texturesToLoad, renderer.capabilities.getMaxAnisotropy());
-      if (slot === '主手') mainWeapon = wres.group; else offWeapon = wres.group;
-      attach(wres.group, boneName);
+      if (superseded?.()) {
+        diag.push({ group: '装备', label: `${slot} ${dorp}`, expected, ok: true, note: '加载期间已被新的加载取代，未挂载' });
+        return;
+      }
+      offWeapon = wres.group;
+      attach(wres.group, offMountBoneOf(app.weaponIdcode, app.offHandKind, stance));
       diag.push({ group: '装备', label: `${slot} ${dorp}`, expected, ok: true, note: `纹理 ${tx.loaded} 成功 / ${tx.failed.length} 失败` });
     } catch (e) {
       diag.push({ group: '装备', label: `${slot} ${dorp}`, expected, ok: false, note: msg(e) });
@@ -366,6 +469,41 @@ export function createCharStage(container: HTMLElement): CharStage {
     return { ok: false, diag, motions: [], textures: { loaded: 0, failed: [] }, isPlayer: false, soundKey: '', boneNames: [] };
   }
 
+  /**
+   * 局部换头。与原 loadPlayer 的区别：**不新建 root、不 scene.remove、不重建 mixer**，
+   * 只把头部网格组换掉 —— 骨架与当前动作完全不动。
+   * （loadPlayer 每次都会新建 root 并重建动画，故换脸/换甲会把动画重置；
+   *   且摘装之间蒙皮与新挂载骨架存在一帧不同步 → 视觉撕裂。用户实测踩到过。）
+   */
+  async function swapHead(app: InspectorAppearance): Promise<{ loaded: number; failed: string[]; note: string }> {
+    const a = actor;
+    if (!a || !a.bodyGroup) return { loaded: 0, failed: ['尚未加载玩家角色'], note: '' };
+    let headPart;
+    try {
+      headPart = await getHead(app.jobId, app.faceNum, app.tier);
+    } catch (e) {
+      return { loaded: 0, failed: [msg(e)], note: '' };
+    }
+    a.headGroup?.removeFromParent();
+    a.headGroup = headPart.result.group;
+    a.root.add(a.headGroup);
+    a.meshes = [
+      ...(a.bodyMeshes ?? []),
+      ...(headPart.result.meshes as unknown as THREE.Mesh[]),
+    ];
+    const texRes = await loadCharTextures(headPart.result.texturesToLoad, renderer.capabilities.getMaxAnisotropy());
+    // 档位变体不是每个 (家族,脸) 都有（新职业只有脸 01~03）→ 回退到基础档时明确告知，
+    // 免得"选了 tier4 却是 tier1 的样子"被当成 bug。
+    const fellBack = /[a-d]\.inx$/.test(headPart.headInxUsed) === false && app.tier > 0;
+    const notes: string[] = [];
+    if (fellBack) notes.push(`该档位无此脸，已用基础档（${headPart.headInxUsed.split('/').pop()}）`);
+    // 未知骨名 = 顶点会被兜底绑到根骨 → 表现为"变形"。把名字报出来，别让它只以变形示人。
+    const ub = headPart.diag.unknownBones;
+    if (ub.length) notes.push(`未知骨名 ${ub.length} 个（会绑到根骨致变形）：${ub.map((u) => `${u.name}×${u.count}`).join(', ')}`);
+    if (headPart.diag.meshFilterMissed) notes.push(`网格名一个未中，已用全部 ${headPart.diag.meshCount} 个网格`);
+    return { loaded: texRes.loaded, failed: texRes.failed, note: notes.join('；') };
+  }
+
   function msg(e: unknown): string { return e instanceof Error ? e.message : String(e); }
 
   function basename(p: string): string {
@@ -383,11 +521,11 @@ export function createCharStage(container: HTMLElement): CharStage {
   }
 
   function clearActor(): void {
-    if (mainWeapon) mainWeapon.parent?.remove(mainWeapon);
+    mainMount.detach();          // 主手 + 镜像份一起摘（WeaponMount 管）
     if (offWeapon) offWeapon.parent?.remove(offWeapon);
     if (actor) scene.remove(actor.root);
     if (boneHelper) { scene.remove(boneHelper); boneHelper = null; }
-    mainWeapon = offWeapon = null;
+    offWeapon = null;
     actor = null;
     curMotion = null;
     animFrame = 0;
@@ -399,6 +537,7 @@ export function createCharStage(container: HTMLElement): CharStage {
     curMotion = m;
     animFrame = m ? m.startFrame * 160 : 0;
     wasFinished = false;
+    eventsFired = 0;   // 每次重播都重置事件帧计数
   }
 
   function frameRange(): { start: number; end: number } | null {
@@ -443,11 +582,32 @@ export function createCharStage(container: HTMLElement): CharStage {
     actor.root.position.set(x, y, z);
   }
 
+  /* ─────────── 特效（INI 广告牌） ─────────── */
+
+  const effects = createEffectManager(scene);
+  let lastEffectDiag: EffectDiag | null = null;
+  let lastPartDiag: LoadedPart['diag'] | null = null;
+
+  /** 在演员附近播放一个 INI 特效（缺省：身前、胸口高度） */
+  async function spawnEffect(
+    name: string,
+    offset: { x: number; y: number; z: number } = { x: 0, y: 25, z: 30 },
+  ): Promise<boolean> {
+    const base = actor ? actor.root.position : new THREE.Vector3();
+    const ok = await effects.spawn(name, {
+      pos: { x: base.x + offset.x, y: base.y + offset.y, z: base.z + offset.z },
+    });
+    lastEffectDiag = effects.lastDiag();
+    lastPartDiag = effects.lastPart();
+    return ok;
+  }
+
   /* ─────────── 每帧 ─────────── */
 
   const clock = new THREE.Clock();
   const stage: CharStage = {
     loadPlayer,
+    swapHead,
     loadModel,
     playMotion,
     currentMotion: () => curMotion,
@@ -461,6 +621,11 @@ export function createCharStage(container: HTMLElement): CharStage {
     setPaused(v) { stage.paused = v; },
     stepFrames,
     stop() { const r = frameRange(); if (r) setFrame(r.start); stage.paused = true; },
+    setWeaponStance(stance) {
+      if (!actor) return { mainBone: null, mirrorBone: null, missingBone: null };
+      // 主手（含刺客匕首镜像份）交给共用实现；调用方不再自己算骨骼名
+      return mainMount.setStance(actor.root, stance);
+    },
     setSpeed(v) { stage.speed = Math.max(0.05, v); },
     setLooping(v) { stage.looping = v; },
     setCamera(preset) {
@@ -478,6 +643,9 @@ export function createCharStage(container: HTMLElement): CharStage {
     setShowAxes(v) { showAxes = v; applyDebugFlags(); },
     setActorPos,
     actorPos,
+    spawnEffect,
+    effectDiag: () => lastEffectDiag,
+    partDiag: () => lastPartDiag,
     finished: () => wasFinished,
     dispose() {
       clearActor();
@@ -490,12 +658,40 @@ export function createCharStage(container: HTMLElement): CharStage {
     const dt = clock.getDelta();
     controls.update();
 
+    // 调试句柄：控制台/自动化里可查场景、绘制统计与特效实例（开发工具，不参与游戏）
+    (globalThis as unknown as { __inspector?: unknown }).__inspector = {
+      scene, camera, renderer, actor,
+      effects,
+      sprites: () => {
+        const out: Array<Record<string, unknown>> = [];
+        scene.traverse((o) => {
+          const sp = o as THREE.Sprite;
+          if ((sp as unknown as { isSprite?: boolean }).isSprite) {
+            const m = sp.material as THREE.SpriteMaterial;
+            out.push({
+              pos: [+sp.position.x.toFixed(1), +sp.position.y.toFixed(1), +sp.position.z.toFixed(1)],
+              scale: [+sp.scale.x.toFixed(1), +sp.scale.y.toFixed(1)],
+              visible: sp.visible, opacity: +m.opacity.toFixed(3),
+              hasMap: !!m.map, blending: m.blending,
+            });
+          }
+        });
+        return out;
+      },
+    };
+
+    // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
+    effects.update(dt, camera);
+
     if (actor && curMotion) {
       if (!stage.paused) {
         // 帧推进走共享实现（与 WorldView 同一函数）；检查器的"循环"开关覆盖动作自身的 repeat
         const step = advanceAnimFrame(
           animFrame, { ...curMotion, repeat: stage.looping ? 1 : 0 }, dt, stage.speed,
         );
+        // 循环回绕（帧号跳回起点）→ 重置事件帧计数，使循环预览每轮都能再次触发事件
+        //（否则第二圈起事件不再触发，攻击音只在第一圈响一次）
+        if (step.frame < animFrame) eventsFired = 0;
         animFrame = step.frame;
         if (step.ended) wasFinished = true;
       }
@@ -505,6 +701,15 @@ export function createCharStage(container: HTMLElement): CharStage {
       const frames = evalSkeleton(curMotion.animSmb ?? actor.animSmb, animFrame, false);
       applyToBones(actor.bones, frames, tmpMat4, posV, quatQ, sclV);
       actor.skeleton.update();
+
+      // 事件帧派发（相对 startFrame；跨过即触发一次）
+      const evs = Array.from(curMotion.eventFrame ?? []).filter((x) => x > 0).sort((a, b) => a - b);
+      const comp = animFrame - curMotion.startFrame * 160;
+      while (eventsFired < evs.length && comp >= evs[eventsFired]!) {
+        stage.onMotionEvent?.(eventsFired);
+        eventsFired++;
+      }
+
       stage.onFrame?.(animFrame, curMotion);
     }
 

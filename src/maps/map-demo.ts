@@ -41,6 +41,7 @@ const clock = new THREE.Clock();
 
 async function boot(): Promise<void> {
   const fore = await loadFore1(scene);
+  if (!fore) throw new Error('fore-1 加载失败');
   const { mapRenderer, animatedMeshes } = fore;
   // 缩放视口到地图范围
   const midX = (mapRenderer.worldMin[0] + mapRenderer.worldMax[0]) / 2;

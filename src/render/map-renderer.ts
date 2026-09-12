@@ -75,8 +75,74 @@ export class MapRenderer {
   }
 
   build(smdData: SMDData, texMap: Map<string, THREE.Texture>, getMatConfig: (matIdx: number, mat: import('../core/smd-parser').SMDMaterial) => MatConfig | null): void {
-    const S = WORLD_SCALE;
     const t0 = performance.now();
+    const matFaces = this.beginBuild(smdData);
+    for (const [matIdx, faceList] of matFaces) {
+      const mat = smdData.materials[matIdx];
+      const config = getMatConfig(+matIdx, mat);
+      if (!config) continue;
+      const mrd = this.buildMaterialGeometry(+matIdx, faceList, smdData, config, texMap);
+      if (mrd) {
+        this.materials.push(mrd);
+        this.scene.add(mrd.mesh);
+      }
+    }
+    this.endBuild(t0);
+  }
+
+  /**
+   * **分帧构建**：与 `build()` 等价，但每构建若干材质就**让出一帧**，
+   * 把一次 ~300ms 的阻塞摊到多帧（每帧只吃几毫秒）。
+   *
+   * 为什么不丢给 Worker：本函数产出的是 `THREE.BufferGeometry`/`Material`/`Mesh` ——
+   * **three 对象只能在主线程创建**。实测（desert/de-3.smd，5.6MB、57k 面、101 个材质）：
+   *   `parseSMD` 14.5ms / `CollisionMesh.build` 27.9ms / **`build` 297.4ms**
+   * —— 卡顿的绝对大头在这里，所以解法是"让它可让出"，而不是"换个线程解析"。
+   *
+   * @param yieldMs 连续构建超过该毫秒数就让出一帧。
+   *   **让出的是整整一帧**（`await rAF`），所以预算取小（默认 6ms）——取 16ms 会让总时长翻倍。
+   *   代价：总时长比一次性构建多约 30%（实测 288ms → 327ms），换来"每帧只占几毫秒"。
+   * @param shouldCancel 返回 true → 立即停止并返回 false（调用方丢弃；已建几何由 `dispose()` 清理）
+   * @returns true=已完整入场景；false=被取消（**不是出错**）
+   *
+   * ⚠ 剩余瓶颈：让出点在**材质之间**，所以单次最长占用 ≈ `yieldMs` + 最重那个材质的构建时间
+   *   （实测最长块 36.5ms，>1 帧但远小于 288ms）。要再平滑就得在单个材质内部按面分块。
+   */
+  async buildAsync(
+    smdData: SMDData,
+    texMap: Map<string, THREE.Texture>,
+    getMatConfig: (matIdx: number, mat: import('../core/smd-parser').SMDMaterial) => MatConfig | null,
+    opts?: { yieldMs?: number; shouldCancel?: () => boolean },
+  ): Promise<boolean> {
+    const t0 = performance.now();
+    const matFaces = this.beginBuild(smdData);
+    const yieldMs = opts?.yieldMs ?? 6;
+    let sliceStart = performance.now();
+    for (const [matIdx, faceList] of matFaces) {
+      if (opts?.shouldCancel?.()) return false;
+      const mat = smdData.materials[matIdx];
+      const config = getMatConfig(+matIdx, mat);
+      if (!config) continue;
+      const mrd = this.buildMaterialGeometry(+matIdx, faceList, smdData, config, texMap);
+      if (mrd) {
+        this.materials.push(mrd);
+        this.scene.add(mrd.mesh);
+      }
+      if (performance.now() - sliceStart >= yieldMs) {
+        // 让出一帧：浏览器得以渲染/处理输入，玩家感受不到这 300ms 是连续的
+        await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+        sliceStart = performance.now();
+      }
+    }
+    if (opts?.shouldCancel?.()) return false;
+    this.endBuild(t0);
+    return true;
+  }
+
+  /** 构建前准备：世界包围盒 / 光源 / 按材质分组的面表（同步版与分帧版**共用**，避免两套漂移） */
+  private beginBuild(smdData: SMDData): Map<number, number[]> {
+    const S = WORLD_SCALE;
+    this.materials = [];
 
     const b = smdData.bounds;
     // raw→GL：+A(东)→+X，北(+C)→−Z（对齐 pt-game-server RenderMapPng 世界语义）
@@ -108,17 +174,11 @@ export class MapRenderer {
       else matFaces.set(m, [i]);
     }
 
-    for (const [matIdx, faceList] of matFaces) {
-      const mat = smdData.materials[matIdx];
-      const config = getMatConfig(+matIdx, mat);
-      if (!config) continue;
-      const mrd = this.buildMaterialGeometry(+matIdx, faceList, smdData, config, texMap);
-      if (mrd) {
-        this.materials.push(mrd);
-        this.scene.add(mrd.mesh);
-      }
-    }
+    return matFaces;
+  }
 
+  /** 构建收尾：透明排序 + 统计（同步版与分帧版共用） */
+  private endBuild(t0: number): void {
     this.materials.sort((a, b) => {
       if (a.isTransparent !== b.isTransparent) return a.isTransparent ? 1 : -1;
       return a.matIdx - b.matIdx;
@@ -552,7 +612,10 @@ export class MapRenderer {
           '#include <color_fragment>\n' +
           (needLM ? '  diffuseColor.rgb *= texture2D(uLightMap, vMyLightMapUv).rgb;\n' : '') +
           (need2Tex ? '  diffuseColor.rgb *= texture2D(uSecondTex, vMyLightMapUv).rgb;\n' : '') +
-          '  { float _z = vPtFogZ; if (_z > 1152.0) { float _dlev = (_z - 1152.0) * 0.5; if (_dlev > 255.0) _dlev = 255.0; diffuseColor.rgb *= 1.0 - _dlev / 256.0; } }',
+          // 距离雾（远处压暗）：原版权值是 1152 起衰减、约 1664 全黑 —— 太近，地图大半看不见。
+          // 用户 2026-09-12 指定：**2400 开始渐变、3000 完全看不见**（线性；1.0 处等于全黑，
+          // 所以两端都是准确值，不像原版 255/256 那样留 0.4% 残影）。相机 far=4000，仍在其内。
+          '  { float _z = vPtFogZ; if (_z > 2400.0) { float _dlev = (_z - 2400.0) / 600.0; if (_dlev > 1.0) _dlev = 1.0; diffuseColor.rgb *= 1.0 - _dlev; } }',
         );
         if (needLM) shader.uniforms.uLightMap = { value: config.lightmapTex };
         if (need2Tex) shader.uniforms.uSecondTex = { value: config.secondTex };

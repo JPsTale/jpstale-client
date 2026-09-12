@@ -13,7 +13,8 @@
  */
 
 import type { MotionInfo } from './char-format.js';
-import { findMotions, findMotionsByType, pickMotion } from './anim-match.js';
+import { findMotions, findMotionsByType, pickMotion, pickSemanticMotion, type SemanticEntry } from './anim-match.js';
+import { reportFallback } from './fallback-log.js';
 
 export const STATE: Record<string, number> = {
   STAND: 0x0040,
@@ -39,9 +40,22 @@ export interface AnimStateMachineOpts {
   getWeaponIdCode?: () => number | null;
   /** 当前武器类型（'AXE'|'BOW'|...），精确匹配无结果时回退类型匹配 */
   getWeaponType?: () => string | null;
+  /** 当前武器单双手（语义匹配必需；缺省则按未知处理） */
+  getHandType?: () => '1H' | '2H' | null;
+  /** 该模型的**语义描述条目**（sidecar）。提供时优先走语义匹配（唯一实现）；
+   *  未提供（如怪物/NPC 尚未迁移）则退回旧的 idcode/类型匹配路径。 */
+  getSemanticEntries?: () => SemanticEntry[];
   /** 动画区域位（对齐原版 StageVillage）：1=村庄 2=野外 3=任意（默认3，全部放行）。
    *  村庄态禁止战斗姿态：武器代码一律清零 → 只匹配空手动画；type 回退屏蔽；姿态强制 sheathed。 */
   getFieldState?: () => number;
+  /**
+   * 变体选择种子（**实体级**，状态由本机混入）。
+   *
+   * 用途：**没有上报者的实体**（怪物/NPC —— 它们的动画是各客户端自己选的，没人能"上报自己播了哪条"），
+   * 必须由"所有客户端都相同的输入"决定变体，否则同一只怪在每人屏幕上动作都不一样。
+   * 玩家角色**不要**用它：玩家的动画条目由其客户端上报、服务端透传（见 WorldView.setRemoteAnim）。
+   */
+  getAnimSeed?: () => number;
   /** 武器姿态变化：'combat'=武器有匹配动画（手持）；'sheathed'=回退空手动画（应收起） */
   onStanceChange?: (stance: 'combat' | 'sheathed') => void;
   onMotionChange: (motion: MotionInfo) => void;
@@ -56,6 +70,10 @@ export interface AnimStateMachine {
   triggerRun: () => boolean;
   triggerIdle: (excludeCurrent?: boolean) => boolean;
   triggerDamage: () => boolean;
+  /** 死亡：播 DEAD 动画并**停在末帧**（原版 `frame = (EndFrame-1)*160`），直到 resurrect() */
+  triggerDead: () => boolean;
+  /** 复活：解除死亡态回到站立（DEAD 是唯一需要"强制解除"的状态） */
+  resurrect: () => boolean;
   triggerFallDown: () => boolean;
   triggerFallStand: () => boolean;
   triggerFallDamage: () => boolean;
@@ -70,7 +88,7 @@ export interface AnimStateMachine {
 }
 
 export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMachine {
-  const { getMotions, getClassId, getWeaponIdCode, getWeaponType, getFieldState, onStanceChange, onMotionChange, log: logFn } = opts;
+  const { getMotions, getClassId, getWeaponIdCode, getWeaponType, getHandType, getSemanticEntries, getFieldState, getAnimSeed, onStanceChange, onMotionChange, log: logFn } = opts;
   const log2 = logFn || ((_msg: string) => { /* 调试期日志默认关闭 */ });
 
   let currentState = STATE.STAND;
@@ -79,6 +97,12 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function fieldState(): number {
     return getFieldState ? getFieldState() : 3;
+  }
+
+  /** 本次选择的变体种子（未提供 getAnimSeed → undefined = 随机，检查器/自机路径） */
+  function variantSeed(state: number): number | undefined {
+    if (!getAnimSeed) return undefined;
+    return (getAnimSeed() ^ state) >>> 0;
   }
 
   function setStance(stance: 'combat' | 'sheathed') {
@@ -94,19 +118,51 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     const fs = fieldState();
     const village = fs === 1;
     const weaponId = village ? null : (getWeaponIdCode ? getWeaponIdCode() : null);
+    // ① 语义匹配优先（唯一实现在 anim-match.pickSemanticMotion）——
+    //    玩家侧已有 sidecar；怪物/NPC 尚未迁移，entries 为空时走下面的旧链。
+    const semEntries = getSemanticEntries ? getSemanticEntries() : [];
+    const seed = variantSeed(state);
+    if (semEntries.length) {
+      const pick = pickSemanticMotion(motions, semEntries, {
+        state,
+        // 村庄 = 收械态：原版 `village → weaponId=null`，且 .in 里村庄条目 0 条列过武器。
+        // 于是"收械"就是空手查询，不是"持械换姿势"——匹配器内部也会按 loc 再强制一次。
+        weaponType: village ? null : (getWeaponType ? getWeaponType() : null),
+        hand: village ? null : (getHandType ? getHandType() : null),
+        classId,
+        location: village ? 'village' : 'field',
+        random: true,          // 在同等候选间取一条变体（原版行为）
+        seed,                  // 有种子 → 确定性（无上报者的实体必须给，见 getAnimSeed）
+      });
+      if (pick.motion) {
+        if (village) setStance('sheathed');
+        else if (weaponId != null && weaponId !== 0) setStance('combat');
+        log2(`[anim] 语义 state=0x${state.toString(16)} ${pick.why}`);
+        let c = [pick.motion];
+        if (excludeCurrent && currentMotion && c.length > 1) c = c.filter((m) => m !== currentMotion);
+        return c[0] ?? null;
+      }
+      log2(`[anim] 语义未命中（${pick.why}）→ 回退旧链`);
+      reportFallback('anim', `state=0x${state.toString(16)} 语义未命中（${pick.why}）→ 回退旧 idcode 匹配链`);
+    }
     let candidates = findMotions(motions, state, weaponId, classId, fs);
     let weaponMatched = candidates.length > 0;
+    const tag = `state=0x${state.toString(16)} weapon=${weaponId} type=${village ? 'null' : (getWeaponType ? getWeaponType() : '?')}`;
     // 精确匹配无结果时，回退到类型匹配（对齐 pviewer：新武器无精确索引）。村庄态屏蔽类型回退（禁战斗）。
     if (!candidates.length && !village && getWeaponType) {
       const weaponType = getWeaponType();
       if (weaponType) {
         candidates = findMotionsByType(motions, state, weaponType, classId, fs);
-        if (candidates.length > 0) weaponMatched = true;
+        if (candidates.length > 0) {
+          weaponMatched = true;
+          reportFallback('anim', `${tag} 无该 idcode 的精确条目 → 按类型 ${weaponType} 匹配`);
+        }
       }
     }
     // 武器类型仍无匹配（如职业拿非本职业武器）时回退空手动画，保证角色有动作
     if (!candidates.length && weaponId != null && weaponId !== 0) {
       candidates = findMotions(motions, state, null, classId, fs);
+      reportFallback('anim', `${tag} 该武器类型也无条目 → 回退空手动画`);
     }
     // 有武器且未命中武器动画 → 空手姿态，武器应收起；否则战斗姿态。村庄态一律收武器姿态。
     if (village) {
@@ -118,7 +174,7 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     if (excludeCurrent && currentMotion && candidates.length > 1) {
       candidates = candidates.filter(m => m !== currentMotion);
     }
-    return pickMotion(candidates);
+    return pickMotion(candidates, seed);
   }
 
   function applyMotion(motion: MotionInfo | null): boolean {
@@ -128,11 +184,15 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
-  /** 一次性动画状态：播完自动回 STAND，期间不接受 STAND（防同步包/自然停步掐断播放） */
+  /**
+   * 不可被"站姿同步"打断的状态：一次性动画 + **死亡**。
+   * DEAD 比一次性更强 —— 它不是"播完回站"，而是**停住等复活消息**（见 onAnimationEnd）。
+   */
   function isOneShotState(state: number): boolean {
     return state === STATE.ATTACK || state === STATE.SKILL ||
       state === STATE.DAMAGE || state === STATE.TAUNT || state === STATE.YAHOO ||
-      state === STATE.FALLSTAND || state === STATE.FALLDAMAGE;
+      state === STATE.FALLSTAND || state === STATE.FALLDAMAGE ||
+      state === STATE.DEAD;
   }
 
   function triggerAttack(retry: boolean = false): boolean {
@@ -148,25 +208,30 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   /**
    * 触发技能动画。
-   * @param skillIndex saSkillData 索引（0 起）；匹配 .inx SKILL 条目 skillCodeList。
-   *   null/undefined：退化为任意 SKILL 动画（历史行为）。
-   *   指定但无专属动画：返回 false，调用方（WorldView）回退普攻动画。
+   * @param skillIndex saSkillData 索引（0 起）；匹配 `.inx` SKILL 条目的 skillCodeList。
+   * @returns true = 已播该技能的**专属**动画；false = 没有专属动画（调用方按原版行为播普攻）。
+   *
+   * ⚠ 这里**不再**"随便挑一条 SKILL 动画"充数：那会把"无专属动画"伪装成"正常播放"，
+   *   让人无法判断看到的是不是真的（用户实测的误解来源）。两种情况分开处理：
+   *     · `skillIndex == null`（调用方没给索引）→ 取该状态任一条，并**上报降级**；
+   *     · 给了索引但查不到专属动画 → **返回 false**，由调用方播普攻（原版行为，且会上报）。
    */
   function triggerSkill(skillIndex?: number | null): boolean {
-    let candidates: MotionInfo[] = [];
-    if (skillIndex != null) {
-      candidates = motionsForSkill(skillIndex);
-    }
-    if (!candidates.length) {
-      const m = findMotionForState(STATE.SKILL, true);
-      if (!m) { log2('No matching skill animation'); return false; }
+    if (skillIndex == null) {
+      const m = findMotionForState(STATE.SKILL, false);
+      if (!m) { reportFallback('skill', '未给技能索引且该状态下无任何 SKILL 动画'); return false; }
       currentState = STATE.SKILL;
       applyMotion(m);
-      log2('Skill(any): 0x' + m.state.toString(16) + ' [' + m.startFrame + ',' + m.endFrame + ']');
+      reportFallback('skill', `未给技能索引 → 任取一条 SKILL 动画（${m.startFrame}-${m.endFrame}）`);
       return true;
     }
-    const m = pickMotion(candidates);
-    if (!m) return false;
+    const candidates = motionsForSkill(skillIndex);
+    if (!candidates.length) {
+      reportFallback('skill', `技能 #${skillIndex} 无专属动画 → 交给调用方播普攻（原版行为）`);
+      return false;
+    }
+    // 取候选里 index 最小的一条（**确定性**，便于复现；变体随机是服务端职责，见 plans）
+    const m = candidates.reduce((a, b) => (b.index < a.index ? b : a));
     currentState = STATE.SKILL;
     applyMotion(m);
     log2('Skill #' + skillIndex + ': 0x' + m.state.toString(16) + ' [' + m.startFrame + ',' + m.endFrame + ']' + ' items=' + m.itemCodeCount);
@@ -282,7 +347,31 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
+  /**
+   * 死亡：播 DEAD 动画并**停在末帧**（原版 `playsub.cpp` 死亡分支
+   * `frame = (MotionInfo->EndFrame - 1) * 160`）—— 尸体不起身，等复活消息。
+   * 找不到 DEAD 条目时**不静默播别的动作**（纠错 #12），返回 false 由调用方决定。
+   */
+  function triggerDead(): boolean {
+    const motion = findMotionForState(STATE.DEAD, false);
+    if (!motion) {
+      reportFallback('anim', '该模型没有 DEAD 动画条目 → 死亡无躺下动作（仅停止操作）');
+      return false;
+    }
+    currentState = STATE.DEAD;
+    applyMotion(motion);
+    return true;
+  }
+
+  /** 复活：强制回到站立（DEAD 不走 triggerIdle 的守卫，必须显式解除） */
+  function resurrect(): boolean {
+    if (currentState !== STATE.DEAD) return true;
+    return toStand();
+  }
+
   function onAnimationEnd(): MotionInfo | null {
+    // 死亡：停在末帧（原版把 frame 钉在 EndFrame-1），不自动回 STAND
+    if (currentState === STATE.DEAD) return null;
     if (isOneShotState(currentState)) { // 含 DAMAGE（受击播完回 STAND）
       return toStand() ? currentMotion : null;
     }
@@ -332,6 +421,8 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     triggerRun,
     triggerIdle,
     triggerDamage,
+    triggerDead,
+    resurrect,
     triggerFallDown,
     triggerFallStand,
     triggerFallDamage,

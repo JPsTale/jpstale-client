@@ -24,24 +24,28 @@ const CHANNEL_COLORS: Record<number, string> = {
   [Ch.PRIVATE]: '#ff8c94',
   [Ch.SYSTEM]: '#ff5c47',
   [Ch.WORLD]: '#ffd98a',
+  [Ch.BATTLE]: '#ffb27a',
 };
 
-/** tab 定义：key=channel 值；私聊与系统为只读（无发送语义） */
+/** tab 定义：key=channel 值；私聊与系统/战斗为只读（无发送语义） */
 const TABS: { channel: number; label: string; readonly?: boolean }[] = [
   { channel: Ch.MAP, label: 'chat.normal' },
   { channel: Ch.PARTY, label: 'chat.party' },
   { channel: Ch.GUILD, label: 'chat.guild' },
   { channel: Ch.TRADE, label: 'chat.trade' },
+  { channel: Ch.BATTLE, label: 'chat.battle', readonly: true },
   { channel: Ch.SYSTEM, label: 'chat.system', readonly: true },
 ];
 
 // 频道归位：KEY=tab → 该 tab 展示的频道集合
 // "普通"= 全部（所有玩家频道都收，各频道配色保留）；PRIVATE/WORLD 并入普通。
+// BATTLE 单独成 tab：战斗日志量大，混进系统频会把系统消息冲掉（用户 2026-09-12）。
 const SHOW_BY_TAB: Record<number, number[]> = {
   [Ch.MAP]: [Ch.MAP, Ch.PARTY, Ch.GUILD, Ch.TRADE, Ch.PRIVATE, Ch.WORLD],
   [Ch.PARTY]: [Ch.PARTY],
   [Ch.GUILD]: [Ch.GUILD],
   [Ch.TRADE]: [Ch.TRADE, Ch.WORLD],
+  [Ch.BATTLE]: [Ch.BATTLE],
   [Ch.SYSTEM]: [Ch.SYSTEM],
 };
 
@@ -172,6 +176,18 @@ export default function ChatWindow() {
     drag.current = { mode, startX: e.clientX, startY: e.clientY, baseX: geo.x, baseY: geo.y, baseW: geo.w, baseH: geo.h };
   }
 
+  /**
+   * tab 条按下：**按在按钮上时不启动拖动**。
+   * `setPointerCapture` 会把随后的 click 重定向到被捕获的元素（本容器），
+   * 于是按钮自己的 onClick 永远收不到 —— 表现就是"点 tab 没反应"（实测：pointerdown 在
+   * BUTTON.jp-chat-tab，click 却落在 DIV.jp-chat-tabs）。拖动只能从 tab 条的空白处发起。
+   */
+  function onTabBarPointerDown(e: RPointerEvent<HTMLDivElement>) {
+    if (e.button !== 0) return;
+    if ((e.target as HTMLElement).closest('button')) return;
+    startDrag('move', e);
+  }
+
   function onDragMove(e: RPointerEvent<HTMLElement>) {
     const d = drag.current;
     if (!d) return;
@@ -213,7 +229,7 @@ export default function ChatWindow() {
     <div className="jp-chat" style={{ left: geo.x, top: geo.y, width: geo.w, height: geo.h }}>
       <div
         className="jp-chat-tabs"
-        onPointerDown={(e) => startDrag('move', e)}
+        onPointerDown={onTabBarPointerDown}
         onPointerMove={onDragMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}

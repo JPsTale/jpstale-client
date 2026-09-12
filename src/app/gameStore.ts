@@ -26,6 +26,8 @@ export interface GameCharacter {
   level: number;
   exp: number;
   nextExp: number;
+  /** 本级起点的**累计**经验（服务端 expForLevel(level)）：本级进度 = exp - levelExp */
+  levelExp: number;
   gold: number;
   strength: number;
   spirit: number;

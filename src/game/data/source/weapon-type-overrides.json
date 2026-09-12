@@ -1,0 +1,20 @@
+{
+ "note": "武器**类型**的人工覆盖表（优先级最高）。键=武器码。\n【WS118 覆盖已撤回，2026-09-12】曾写 `WS118=CROSSBOW`，依据是用户当时\"外形近似低级手弩\"的印象——该覆盖**把数据压掉了**。库里原始四列 `category=Bows / weaponclass=2 / classitem=6 / modelposition=2`，四条独立证据都指向**弓**：① category=Bows；② modelposition=2（本项目映射：2=弓/背挂，4=弩）；③ 名字 Thunder **Bow**；④ 收械源码把 `sinWS1|sin18` 放进 `_Cross` 表 → `Bip in-bow`（弓背槽）。用户同日更正：\"这把武器是弓，被错误归类到弩\"。\n**教训**：以印象推翻数据要谨慎；确需覆盖时在 why 里写清\"数据原本是什么、依据是什么\"，便于日后撤回（本次正是靠库里原始列才核对得出）。",
+ "codes": {
+  "WA128": "AXE",
+  "WA129": "AXE",
+  "WA153": "AXE",
+  "WH129": "HAMMER",
+  "WH130": "HAMMER",
+  "WH151": "HAMMER",
+  "WM129": "STAFF",
+  "WM130": "STAFF",
+  "WM131": "STAFF",
+  "WP128": "SCYTHE",
+  "WP129": "SCYTHE",
+  "WS129": "BOW",
+  "WS130": "BOW",
+  "WS231": "SWORD",
+  "WS232": "SWORD"
+ }
+}

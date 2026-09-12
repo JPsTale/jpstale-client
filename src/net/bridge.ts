@@ -34,6 +34,7 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     level: e.level || 1,
     exp: Number(e.exp) || 0,
     nextExp: Number(e.nextExp) || 0,
+    levelExp: Number(e.levelExp) || 0,
     gold: Number(e.gold) || 0,
     strength: e.strength || 0,
     spirit: e.spirit || 0,

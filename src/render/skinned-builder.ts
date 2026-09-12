@@ -8,6 +8,7 @@
  * 支持多网格对象：每个有顶点的 GeomObject 独立构建一个 SkinnedMesh。
  */
 
+import { reportFallback } from '../char/fallback-log.js';
 import * as THREE from 'three';
 import type { SmbData, MaterialInfo } from '../char/char-format.js';
 import { evalSkeleton, matMulRow } from '../char/animation.js';
@@ -19,6 +20,16 @@ export interface SkinnedMeshResult {
   bones: THREE.Bone[];
   texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[];
   skeletonGroup: THREE.Group;
+  /** 构建诊断。**把静默兜底变可见**：未知骨名会让顶点绑到根骨/首个绑定矩阵而表现为"变形"，
+   *  只报数字很难查，故直接列出骨名与顶点数。 */
+  diag: {
+    /** 顶点引用了骨架里不存在的骨名 → 被兜底到根骨（值 = 顶点数）。非空即模型/骨架不匹配 */
+    unknownBones: Array<{ name: string; count: number }>;
+    /** 请求的网格名一个都没匹配到 → 回退成"用该模型全部网格"（通常是命名不一致） */
+    meshFilterMissed: boolean;
+    /** 实际使用的网格数 */
+    meshCount: number;
+  };
 }
 
 export interface SkeletonResult {
@@ -123,12 +134,14 @@ export function buildSkinnedMesh(
   smb.objects.forEach(obj => objByName.set(obj.nodeName, obj));
 
   let meshObjs = smd.objects.filter(o => o.nVertex > 0);
+  let meshFilterMissed = false;
   if (meshNames && meshNames.length > 0) {
     const filtered = meshObjs.filter(o => {
       const lower = o.nodeName.toLowerCase();
       return meshNames.some(n => n.toLowerCase() === lower);
     });
     if (filtered.length > 0) meshObjs = filtered;
+    else meshFilterMissed = true;   // 请求的名字一个都没中 → 回退用全部网格（下面会报出来）
   }
   if (meshObjs.length === 0) throw new Error('网格对象无顶点');
 
@@ -137,6 +150,8 @@ export function buildSkinnedMesh(
 
   const group = new THREE.Group();
   const meshes: THREE.SkinnedMesh[] = [];
+  /** 顶点引用了骨架里不存在的骨名（→ 被兜底到根骨/首个绑定矩阵，表现为变形） */
+  const unknownBones = new Map<string, number>();
   const texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] = [];
 
   const transformVertex = (rx: number, ry: number, rz: number) => rawMode ? [rx, ry, rz] : [rx, rz, -ry];
@@ -176,6 +191,9 @@ export function buildSkinnedMesh(
           const vidx = f.v[k];
           const v = meshObj.vertices[vidx];
           const name = meshObj.boneNames && meshObj.boneNames[vidx] ? meshObj.boneNames[vidx] : '';
+          // ⚠ 两处兜底都会造成"变形"：未知骨名 → 用**首个**绑定矩阵 + 绑到**根骨**。
+          // 只统计、不改变行为（改了会静默丢几何），但把名字报进 diag 便于一眼定位。
+          if (name && !bindWorldByName.has(name)) unknownBones.set(name, (unknownBones.get(name) ?? 0) + 1);
           const m = bindWorldByName.has(name) ? bindWorldByName.get(name)! : bindWorldByName.values().next().value!;
 
           const lx = v.x, ly = v.y, lz = v.z;
@@ -239,10 +257,37 @@ export function buildSkinnedMesh(
     }
   }
 
+  // ⚠ **必须显式传 bindMatrix**：three 的 `bind(skeleton)` 在矩阵缺省时会调用
+  // `skeleton.calculateInverses()` —— 即**按骨骼"当前"矩阵重算逆绑定矩阵**。
+  // 本骨架被身体与头（以及每次换头）**共享**：初次加载时骨骼仍在绑定姿势，重算无害；
+  // 但 `swapHead` 发生在动画已摆过姿势之后，重算就把"当前姿势"当成了绑定姿势，
+  // 于是**所有共享该骨架的网格一起变形**（手/四肢扭成麻花），且每次换头累积一次
+  //（用户实测：换头饰 tier 后手部变形 → 切战斗姿态后全身扭曲）。
+  // 顶点几何本就在骨架绑定空间里（见上方 bindWorldByName 变换），故用单位矩阵；
+  // 骨架的 `boneInverses` 只由 `buildSkeleton` 在绑定姿势下算一次。
+  const BIND_IDENTITY = new THREE.Matrix4();
   for (const m of meshes) {
-    m.bind(skeleton);
+    m.bind(skeleton, BIND_IDENTITY);
   }
   group.userData.smd = smd;
   group.userData.smb = smb;
-  return { group, meshes, skeleton, bones, texturesToLoad, skeletonGroup };
+  // 未知骨名 = 顶点被兜底绑到根骨/首个绑定矩阵 → 表现为"变形"。**必须上报**，
+  // 否则只能从画面异常反推（用户明确反对静默兜底）。
+  if (unknownBones.size) {
+    const names = [...unknownBones].sort((a, b) => b[1] - a[1]);
+    reportFallback('skin', `骨架中不存在这些骨名（顶点已绑到根骨）：`
+      + names.slice(0, 5).map(([n, c]) => `${n}×${c}`).join(', ')
+      + (names.length > 5 ? ` …共 ${names.length} 个` : ''));
+  }
+  if (meshFilterMissed) {
+    reportFallback('skin', `请求的网格名一个未匹配 → 回退用该模型全部 ${meshObjs.length} 个网格`);
+  }
+  return {
+    group, meshes, skeleton, bones, texturesToLoad, skeletonGroup,
+    diag: {
+      unknownBones: [...unknownBones].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([name, count]) => ({ name, count })),
+      meshFilterMissed,
+      meshCount: meshObjs.length,
+    },
+  };
 }

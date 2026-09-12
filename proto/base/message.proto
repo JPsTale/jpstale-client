@@ -36,6 +36,7 @@ message ClientMessage {
     C2S_UseSkill use_skill = 301;
     C2S_AttackStart attack_start = 302;  // 起手（挥拳开始）
     C2S_AttackHit attack_hit = 303;      // 命中帧（每段一次）
+    C2S_RespawnChoice respawn_choice = 304;  // 死亡后的复活选择（见该消息注释）
     
     // 社交 (400-499)
     C2S_Chat chat = 400;
@@ -91,6 +92,7 @@ message ServerMessage {
     S2C_BuffApply buff_apply = 405;
     S2C_BuffRemove buff_remove = 406;
     S2C_AttackStart attack_start = 407;  // 起手广播（旁观者立刻挥拳）
+    S2C_AttackPlan attack_plan = 408;     // 攻击计划：起手即裁定各段结果（B 方案）
     
     // 物品 (500-599)
     S2C_InventorySnapshot inventory_snapshot = 500;
@@ -187,6 +189,11 @@ message C2S_PlayerMove {
   int64 timestamp = 4;    // 客户端本地时间(ms)
   int32 anim_state = 5;   // 动画状态覆盖（0=按 mode 推导 STAND/WALK/RUN；掉落时上报
                           // FALLDOWN=0x70/FALLSTAND=0x71/FALLDAMAGE=0x72，服务端原样广播）
+  // 「动画状态」只说明**播哪一类**（站/走/跑…），同一类下还有多个变体。变体原先由各客户端各自
+  // 随机选 → 同一个角色在别人屏幕上播的是另一条。故**上报自己正播的那一条**，服务端原样透传，
+  // 旁观者直接播同一条（不再各自匹配）。0/空 = 未提供 → 旁观者回退本地匹配并上报降级。
+  int32 anim_index = 6;   // 动画条目索引（.inx 条目号）—— 跨端播放的依据
+  string anim_clip = 7;   // 同一条的语义 ID（如 stand_unarmed.m4.10）—— 校验两端数据是否同代
 }
 
 message C2S_PlayerAction {
@@ -283,6 +290,8 @@ message S2C_PlayerMove {
   float angle = 3;         // 朝向弧度（0=+Z 北）
   int32 anim_state = 4;    // 动画状态值（客户端 STATE 枚举值: 0x0040 STAND / 0x0050 WALK / 0x0060 RUN）
   int64 timestamp = 5;
+  int32 anim_index = 6;    // 该玩家客户端上报的**动画条目索引**（原样透传）→ 旁观者直接播同一条
+  string anim_clip = 7;    // 同一条的语义 ID（校验两端动画数据是否同代）
 }
 
 // 进入游戏：选角色成功后服务端主动下发（对齐原版 RECORDDATA 进图语义）。
@@ -315,11 +324,21 @@ message S2C_PlayerState {
   int32 move_speed = 15; // 移动速度点数(1-9)
   int32 walk_speed = 16; // 走路速度(游戏单位/秒)
   int32 run_speed = 17;  // 跑步速度(游戏单位/秒)
+  // 当前等级起点的**累计**经验（= expForLevel(level)）。经验是累计值，
+  // 所以「本级已获得 / 本级升级所需」= (exp - level_exp) / (next_exp - level_exp)。
+  int64 level_exp = 18;
 }
 
+// 玩家死亡：客户端据此播 DEAD 动画（躺下停在末帧）+ 弹复活选项 + 倒计时。
+// 死亡**不再立刻复活** —— 玩家在三个选项里选（原版 `sinInterFace.h`：
+// RESTART_FEILD=1 附近重生点 / RESTART_TOWN=2 村庄 / RESTART_EXIT=3 继续躺）。
 message S2C_PlayerDeath {
   int64 player_id = 1;
-  int64 exp_loss = 2;
+  int64 exp_loss = 2;            // 已废弃（代价随选项不同，改由下面几个字段给出）；字段号保留不动
+  int32 force_respawn_ms = 3;    // 强制复活倒计时（1 分钟）—— 客户端 UI 显示
+  int64 exp_loss_field = 4;      // 选项1 代价：本级跨度经验
+  int64 gold_loss_field = 5;     // 选项1 代价：金币
+  int64 exp_loss_town = 6;       // 选项2/3 代价：本级跨度经验
 }
 
 message S2C_PlayerRespawn {
@@ -327,6 +346,14 @@ message S2C_PlayerRespawn {
   Position position = 2;
   int32 hp = 3;
   int32 mp = 4;
+  int32 map_id = 5;    // 复活所在图（与当前图不同时客户端要换图 + 走加载遮罩）
+  int32 max_hp = 6;
+  int32 reason = 7;    // 1=附近重生点 2=村庄 3=强制（倒计时到）
+}
+
+// 死亡后的复活选择（对应上面三个 RESTART_* 常量）
+message C2S_RespawnChoice {
+  int32 choice = 1;    // 1=附近重生点（10% 本级经验 + 10% 金币）/ 2=村庄（1% 本级经验）/ 3=继续躺
 }
 
 // 角色信息面板完整数据（C 键角色面板 + HUD 联动）。
@@ -375,6 +402,9 @@ message S2C_CharacterStatus {
   float mp_regen = 41;      // 每秒魔法恢复
   float stm_regen = 42;     // 每秒体力恢复（含天生 3.8 + Level/7）
   int32 current_weight = 43; // 当前负重（背包+装备+备用武器；药水按瓶数），与 max_weight 同口径
+  // 当前等级起点的累计经验（同 S2C_PlayerState.level_exp）：角色面板显示
+  // 「本级已获得 / 本级升级所需」用，避免只显示一个「剩余所需」看不出进度。
+  int64 level_exp = 44;
 }
 
 // 外观更新：穿/脱装备、W 武器切换后服务端推送，客户端据此更新 3D 角色模型。
@@ -443,6 +473,16 @@ message C2S_Attack {
 // 起手（挥拳开始）：只广播"开始攻击"，伤害在命中帧 C2S_AttackHit 才结算
 message C2S_AttackStart {
   int64 target_id = 1;
+  // 本次攻击的客户端序号：用于关联 S2C_AttackPlan（防止计划与攻击错配）
+  int32 client_seq = 2;
+  // 本次动作的段数（= 非零 eventFrame 个数，1..4）。服务端据此预排结果，并以此作为
+  // 「合法段数上限」——C2S_AttackHit 的 hit_index 超出即忽略（部分补齐 §8 的段数校验）。
+  // ⚠ 该值目前由客户端声明（服务端只做 1..4 截断），完整校验需服务端持有动画表（后续）。
+  int32 segments = 3;
+  // 本次挥击的动画条目（同 C2S_PlayerMove.anim_index/anim_clip）：
+  // 攻击动作的**变体与长度**因武器的单双手/类型而异，旁观者必须播同一条才不会"一刀两种动作"。
+  int32 anim_index = 4;
+  string anim_clip = 5;
 }
 
 // 命中帧（每段一次）：hit_index = 段序号（0..3，对应 motion.eventFrame 第几个非零帧）
@@ -466,11 +506,32 @@ message S2C_AttackResult {
   int32 hit_index = 6;  // 段序号（多段攻击的第几段）
 }
 
+// 攻击计划（B 方案）：服务端在**收到起手意图时**即裁定各段结果，随本包下发。
+// 客户端据此在事件帧**直接播正确的结果音**（miss / 暴击），不必等 AttackResult —— 消灭音效延迟。
+// 若本包未到（高延迟/丢包/起手被拒），客户端退回「乐观按命中」并等 AttackResult 纠正（已知最差情形）。
+// ⚠ `segments` 的**长度**同时是合法段数上限：AttackHit 的 index 超出即忽略。
+message S2C_AttackPlan {
+  int32 client_seq = 1;     // 对应 C2S_AttackStart.client_seq
+  int64 attacker_id = 2;
+  int64 target_id = 3;
+  repeated AttackSegment segments = 4;
+}
+
+// 单段裁定结果（字段风格对齐 S2C_AttackResult）
+message AttackSegment {
+  int32 index = 1;          // 段序号 = hit_index
+  bool missed = 2;
+  bool is_critical = 3;
+  int32 damage = 4;
+}
+
 // 起手广播：旁观者据此立刻播放攻击者挥拳并设定挥拳时长（attack_speed）
 message S2C_AttackStart {
   int64 attacker_id = 1;
   int64 target_id = 2;
   sint32 attack_speed = 3;
+  int32 anim_index = 4;     // 攻击者上报的挥击动画条目（原样透传）→ 旁观者直接播同一条
+  string anim_clip = 5;     // 同一条的语义 ID（校验两端动画数据是否同代）
 }
 
 message S2C_SkillAttack {
@@ -491,6 +552,9 @@ message S2C_Damage {
   int64 target_id = 1;
   int32 damage = 2;
   int32 current_hp = 3;
+  // 怪打玩家的命中判定未通过（原版 sinGetMonsterAccuracy）：damage=0、血量不变，
+  // 客户端在受害者头顶飘 MISS（与自机挥空同款），不播受击硬直/受击音。
+  bool missed = 4;
 }
 
 message S2C_Heal {
@@ -657,6 +721,9 @@ message S2C_SystemMessage {
   // key 不在语言表时客户端 fallback 显示 key 本身
   string key = 3;
   map<string, string> params = 4;
+  // 投递到哪个聊天 tab。**未设置（默认 0）一律按系统消息处理**（客户端只认 CHAT_BATTLE），
+  // 所以老的发送方不用改；战斗日志（BattleLogService）显式设 CHAT_BATTLE 走"战斗"tab。
+  ChatChannel channel = 5;
 }
 
 message S2C_Disconnect {

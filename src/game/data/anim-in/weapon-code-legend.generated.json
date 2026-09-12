@@ -1,0 +1,77 @@
+{
+ "note": "武器代码前缀 → (类型,单双手)。前缀含义取自 11 职业包根目录 `装备代码.txt`：WA斧 WC爪 WD匕 WH锤 WM法杖 WN图腾 WP枪 WS1xx弓 WS2xx剑 WT标枪 WV拳套。单双手按百位段 1xx=单手 / 2xx=双手。生成物，勿手改。",
+ "legend": {
+  "WA101": {
+   "type": "AXE",
+   "hand": "1H"
+  },
+  "WA201": {
+   "type": "UNKNOWN",
+   "hand": "?"
+  },
+  "WC101": {
+   "type": "CLAW",
+   "hand": "1H"
+  },
+  "WD101": {
+   "type": "DAGGER",
+   "hand": "2H"
+  },
+  "WD201": {
+   "type": "UNKNOWN",
+   "hand": "?"
+  },
+  "WH101": {
+   "type": "HAMMER",
+   "hand": "1H"
+  },
+  "WM101": {
+   "type": "STAFF",
+   "hand": "1H"
+  },
+  "WN101": {
+   "type": "PHANTOM",
+   "hand": "1H"
+  },
+  "WP101": {
+   "type": "SCYTHE",
+   "hand": "1H"
+  },
+  "WS101": {
+   "type": "BOW",
+   "hand": "2H"
+  },
+  "WS102": {
+   "type": "CROSSBOW",
+   "hand": "1H"
+  },
+  "WS103": {
+   "type": "CROSSBOW",
+   "hand": "1H"
+  },
+  "WS104": {
+   "type": "CROSSBOW",
+   "hand": "2H"
+  },
+  "WS201": {
+   "type": "SWORD",
+   "hand": "1H"
+  },
+  "WS205": {
+   "type": "SWORD",
+   "hand": "2H"
+  },
+  "WT101": {
+   "type": "JAVELIN",
+   "hand": "1H"
+  },
+  "WV101": {
+   "type": "KNUCKLE",
+   "hand": "2H"
+  },
+  "WV201": {
+   "type": "UNKNOWN",
+   "hand": "?"
+  }
+ }
+}

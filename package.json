@@ -12,7 +12,21 @@
     "preview": "vite preview",
     "proto": "npx tsx scripts/gen-proto.ts",
     "sfx": "npx tsx scripts/extract-sfx.ts",
-    "models": "npx tsx scripts/extract-models.ts"
+    "models": "npx tsx scripts/extract-models.ts",
+    "skillfx": "npx tsx scripts/extract-skill-fx.ts",
+    "skillmap": "npx tsx scripts/extract-skill-map.ts",
+    "items": "npx tsx scripts/extract-item-semantics.ts",
+    "audit-assets": "npx tsx scripts/audit-asset-provenance.ts",
+    "anim-in": "npx tsx scripts/extract-anim-from-in.ts",
+    "assets-diff": "npx tsx scripts/diff-tmabcd.ts",
+    "skill-index": "npx tsx scripts/extract-skill-index-from-in.ts",
+    "items-11job": "npx tsx scripts/extract-items-from-11job.ts",
+    "verify-picks": "npx tsx scripts/verify-picks.ts",
+    "verify-mount": "npx tsx scripts/verify-mount.ts",
+    "verify-axis": "npx tsx scripts/verify-axis.ts",
+    "verify-heads": "npx tsx scripts/verify-heads.ts",
+    "phantom-codes": "npx tsx scripts/report-phantom-codes.ts",
+    "verify-prefs": "npx tsx scripts/verify-prefs.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

@@ -55,3 +55,30 @@ for (const e of out) byCat.set(e.cat, (byCat.get(e.cat) ?? 0) + 1);
 console.log(`[extract-models] ${out.length} 个模型：` +
   [...byCat.entries()].map(([k, v]) => `${k}=${v}`).join(' '));
 console.log(`[extract-models] 写出 ${OUT_DIR}/model-list.json`);
+
+/* ─────────── 特效清单：INI 广告牌 + `.part` 粒子脚本 ─────────── */
+
+/** f='ini' 走 effect/animationdata，f='part' 走 effect/particle/script 或 game/scripts/particles */
+interface EffectEntry { n: string; f: 'ini' | 'part' }
+
+const iniNames = readdirSync(join(ASSET_ROOT, 'effect/animationdata'))
+  .filter((f) => f.toLowerCase().endsWith('.ini'))
+  .map((f) => f.replace(/\.ini$/i, '').toLowerCase());
+
+// `.part` 分散在两个目录，名字集合不同（经典 401 / 较新 106），合并去重
+const partNames = [...new Set([
+  ...readdirSync(join(ASSET_ROOT, 'effect/particle/script'))
+    .filter((f) => f.toLowerCase().endsWith('.part'))
+    .map((f) => f.replace(/\.part$/i, '').toLowerCase()),
+  ...readdirSync(join(ASSET_ROOT, 'game/scripts/particles'))
+    .filter((f) => f.toLowerCase().endsWith('.part'))
+    .map((f) => f.replace(/\.part$/i, '').toLowerCase()),
+])].sort();
+
+const effects: EffectEntry[] = [
+  ...iniNames.map((n) => ({ n, f: 'ini' as const })).sort((a, b) => a.n.localeCompare(b.n)),
+  ...partNames.map((n) => ({ n, f: 'part' as const })).sort((a, b) => a.n.localeCompare(b.n)),
+];
+
+writeFileSync(join(OUT_DIR, 'effect-list.json'), JSON.stringify(effects, null, 1) + '\n');
+console.log(`[extract-models] 特效 ${effects.length} 个（ini=${iniNames.length} part=${partNames.length}）→ ${OUT_DIR}/effect-list.json`);

@@ -16,24 +16,6 @@ const ALLOC_STEPS = [1, 10, 100];
 // 正式角色面板（Phase 2）：现代左侧详情栏（可拖动）。
 // 数据只来自 gameStore（S2C_CharacterStatus 经 bridge 写入）；加点/撤回走 bridge 发 C2S，
 // 服务端回推完整状态后本面板自动刷新 —— 权威闭环。
-// 大数缩写（经验/金币等累计值）：不是文件大小式的千位进位，
-// 而是"档位滞后"的 K/M/G —— ≥1e6 显示为 ×1000 的 K、≥1e9 显示为 ×1e6 的 M、≥1e12 封顶 G。
-// 例：1,000,000→1,000K；1,000,000,000→1000M；1.7e12→1,706G。头部整除、无小数、千分位。
-function fmtBig(n: number): string {
-  const abs = Math.abs(n);
-  let head: number;
-  let unit: string;
-  if (abs >= 1e12) {
-    head = abs / 1e9; unit = 'G';
-  } else if (abs >= 1e9) {
-    head = abs / 1e6; unit = 'M';
-  } else if (abs >= 1e6) {
-    head = abs / 1e3; unit = 'K';
-  } else {
-    return Math.floor(abs).toLocaleString('en-US');
-  }
-  return Math.floor(head).toLocaleString('en-US') + unit;
-}
 
 export default function CharStatusPanel() {
   const { character } = useSyncExternalStore(subscribeGame, getGameSnapshot);
@@ -41,6 +23,13 @@ export default function CharStatusPanel() {
 
   if (!character) return <div className="jp-nodata">{t('panel.noData')}</div>;
   const c = character;
+  // 本级经验进度：本级已获得 = exp - levelExp，本级升级所需 = nextExp - levelExp（经验是累计值，必须减起点）。
+  // 数据异常（exp 低于本级起点，常见于直接设等级的测试角色）时钳到 0，不显示负数。
+  const levelSpan = Math.max(0, c.nextExp - c.levelExp);
+  const expInLevel = Math.max(0, c.exp - c.levelExp);
+  const levelExpPct = levelSpan > 0
+    ? Math.max(0, Math.min(100, (expInLevel / levelSpan) * 100))
+    : 0;
 
   const statRows: Array<{ stat: string; label: string; value: number }> = [
     { stat: 'strength', label: t('panel.strength'), value: c.strength },
@@ -92,7 +81,14 @@ export default function CharStatusPanel() {
       </div>
       <div className="jp-char-sub">
         <span>{t('panel.lv', { level: c.level })}</span>
-        <span>{t('stats.expLeft')} {fmtBig(c.nextExp - c.exp)}</span>
+        {/* 本级经验 = 两个数字 + 一个百分比（用户 2026-09-12 明确要求）：
+            前一个 = 当前等级已获得经验，后一个 = 本级升级所需总经验，比例即两者之比。
+            经验是累计值，所以两个数都要减掉本级起点 expForLevel(level)（= levelExp）。 */}
+        <span>{t('stats.expProgress', {
+          cur: expInLevel.toLocaleString('en-US'),
+          need: levelSpan.toLocaleString('en-US'),
+          pct: levelExpPct.toFixed(2),
+        })}</span>
       </div>
 
       <div className="jp-grid2">

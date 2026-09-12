@@ -1,0 +1,1888 @@
+{
+ "note": "由 scripts/extract-skill-map.ts 从 NewSourcePT-2023 character.cpp 的技能调度提取（case SKILL_PLAY_* 分支）。音效在技能执行时播放并常随机二选一；伤害按 MotionEvent 计数分段发送；特效由具名 per-skill 函数派发。",
+ "rows": [
+  {
+   "code": "SKILL_PLAY_FORCE_OF_NATURE",
+   "skill": "Force of Nature",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FORCE_OF_NATURE",
+     "file": "wav/effects/skill/tempskron/forceofnature 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillSagittarionForceOfNature2",
+    "SkillSagittarionForceOfNature1"
+   ],
+   "effects": [
+    "lua:skillsagittarionforceofnature2",
+    "lua:skillsagittarionforceofnature"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_HALL_OF_VALHALLA",
+   "skill": "Hall of Valhalla",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HALL_OF_VALHALLA",
+     "file": "wav/effects/skill/morion/hallofvalhalla 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillValhallaHallOfValhallaHandEffect",
+    "SkillValhallaHallOfValhalla1"
+   ],
+   "effects": [
+    "lua:skillvalhallahallofvahalla"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_STINGGER",
+   "skill": "Stinger",
+   "classDir": "assassin",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_STINGGER",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_R_HIT",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_R_HIT",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_WISP",
+   "skill": "Wisp",
+   "classDir": "assassin",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_WISP",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_V_THRONE",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_V_THRONE",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_S_SHOCK",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_S_SHOCK",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ALAS",
+   "skill": "Alas",
+   "classDir": "assassin",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_ALAS",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_S_SWORD",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_S_SWORD",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_B_UP",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_B_UP",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_INPES",
+   "skill": "Inpes",
+   "classDir": "assassin",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_INPES",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_BLIND",
+   "skill": "Deception",
+   "classDir": "assassin",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_BLIND",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_F_WIND",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_F_WIND",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_POLLUTED",
+   "skill": "Pollute",
+   "classDir": "assassin",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_POLLUTED",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_P_SHADOW",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_P_SHADOW",
+     "file": null
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_EXTREME_SHIELD",
+   "skill": "Extreme Shield",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_EXTREME_SHIELD",
+     "file": "wav/effects/skill/tempskron/extreme_shield 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_PHYSICAL_ABSORB",
+   "skill": "Physical Absorption",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_PHYSICAL_ABSORB1",
+     "file": "wav/effects/skill/tempskron/physical_absorption 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_JUMPING_CRASH",
+   "skill": "Jumping Crash",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_JUMPING_CRASH1",
+     "file": "wav/effects/skill/tempskron/jumping_crash 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_JUMPING_CRASH2",
+     "file": "wav/effects/skill/tempskron/jumping_crash 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SCOUT_HAWK",
+   "skill": "Scout Hawk",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SCOUT_HAWK1",
+     "file": "wav/effects/skill/tempskron/scout_hawk 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SCOUT_HAWK2",
+     "file": "wav/effects/skill/tempskron/scout_hawk 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_MAXIMIZE",
+   "skill": "Maximize",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_MAXIMIZE1",
+     "file": "wav/effects/skill/tempskron/maximize 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_AUTOMATION",
+   "skill": "Automation",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_AUTOMATION1",
+     "file": "wav/effects/skill/tempskron/automation 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SPARK",
+   "skill": "Spark",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK1",
+     "file": "wav/effects/skill/tempskron/spark 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK2",
+     "file": "wav/effects/skill/tempskron/spark 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_METAL_ARMOR",
+   "skill": "Metal Armor",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_METAL_ARMOR",
+     "file": "wav/effects/skill/tempskron/metalarmor 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SPARK_SHIELD",
+   "skill": "Spark Shield",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK1",
+     "file": "wav/effects/skill/tempskron/spark 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK3",
+     "file": "wav/effects/skill/tempskron/spark 03.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_EXPANSION",
+   "skill": "Expansion",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXPANSION1",
+     "file": "wav/effects/skill/tempskron/expansion 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXPANSION2",
+     "file": "wav/effects/skill/tempskron/expansion 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_VENOM_SPEAR",
+   "skill": "Venom Spear",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_JUMPING_CRASH1",
+     "file": "wav/effects/skill/tempskron/jumping_crash 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENOM_SPEAR1",
+     "file": "wav/effects/skill/tempskron/venomspear 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENOM_SPEAR2",
+     "file": "wav/effects/skill/tempskron/venomspear 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillPlay_VenomSpear_Effect"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_VANISH",
+   "skill": "Vanish",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VANISH1",
+     "file": "wav/effects/skill/tempskron/vanish 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VANISH2",
+     "file": "wav/effects/skill/tempskron/vanish 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FALCON",
+   "skill": "Falcon",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FALCON",
+     "file": "wav/effects/skill/tempskron/falcon 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GOLDEN_FALCON",
+   "skill": "Golden Falcon",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_GOLDEN_FALCON",
+     "file": "wav/effects/skill/tempskron/goldfalcon 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_RAGEOF_ZECRAM",
+   "skill": "Rage of Zecram",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_RAGE_OF_ZECRAM3",
+     "file": "wav/effects/skill/tempskron/roz 04.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_RAGE_OF_ZECRAM1",
+     "file": "wav/effects/skill/tempskron/roz 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ROAR",
+   "skill": "Roar",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_ROAR1",
+     "file": "wav/effects/skill/tempskron/roar 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_ROAR2",
+     "file": "wav/effects/skill/tempskron/roar 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_CONCENTRATION",
+   "skill": "Concentration",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CONCENTRATION1",
+     "file": "wav/effects/skill/tempskron/concentration 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SWIFT_AXE",
+   "skill": "Swiftness",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWIFT_AXE1",
+     "file": "wav/effects/skill/tempskron/swiftaxe 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SWORD_BLAST",
+   "skill": "Sword Blast",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWORDBLAST1",
+     "file": "wav/effects/skill/morion/swordblast 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWORDBLAST2",
+     "file": "wav/effects/skill/morion/swordblast 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_BRANDISH",
+   "skill": "Brandish",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BLANDISH1",
+     "file": "wav/effects/skill/morion/brandish 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_BLANDISH2",
+     "file": "wav/effects/skill/morion/brandish 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HOLY_BODY",
+   "skill": "Holy Body",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLYBODY",
+     "file": "wav/effects/skill/morion/holybody 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HOLY_VALOR",
+   "skill": "Holy Valor",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLY_VALOR1",
+     "file": "wav/effects/skill/morion/holyvalor 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_PIERCING",
+   "skill": "Piercing",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_PIERCING",
+     "file": "wav/effects/skill/morion/piercing 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FLAME_BRANDISH",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BLANDISH1",
+     "file": "wav/effects/skill/morion/brandish 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FLAME_BRANDISH",
+     "file": "wav/effects/skill/morion/flamebrandish 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DRASTIC_SPIRIT",
+   "skill": "Drastic Spirit",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DRASTICSPIRIT1",
+     "file": "wav/effects/skill/morion/drasticspirit 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DIVINE_INHALATION",
+   "skill": "Divine Shield",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIVINE_INHALATION",
+     "file": "wav/effects/skill/morion/divineinhalation 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_WINDY",
+   "skill": "Windy",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_WINDY1",
+     "file": "wav/effects/skill/morion/windy 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SPLIT_JAVELIN",
+   "skill": "Split Javelin",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPLIT_JAVELIN1",
+     "file": "wav/effects/skill/morion/splitjavelin 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPLIT_JAVELIN2",
+     "file": "wav/effects/skill/morion/splitjavelin 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_TRIUMPH_OF_VALHALLA",
+   "skill": "Triumph of Valhalla",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_TRIUMPH_OF_VALHALLA1",
+     "file": "wav/effects/skill/morion/triumphofvalhalla 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HEALING",
+   "skill": "Healing",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HEALING",
+     "file": "wav/effects/skill/morion/healing 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HOLY_MIND",
+   "skill": "Holy Mind",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLYMIND",
+     "file": "wav/effects/skill/morion/holymind 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HOLY_BOLT",
+   "skill": "Holy Bolt",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLYBOLT",
+     "file": "wav/effects/skill/morion/holybolt 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_MULTI_SPARK",
+   "skill": "Multi Spark",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_MULTISPARK",
+     "file": "wav/effects/skill/morion/multispark 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DIVINE_LIGHTNING",
+   "skill": "Divine Lightning",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING1",
+     "file": "wav/effects/skill/morion/divinelightning 1.wav"
+    }
+   ],
+   "presenters": [
+    "SkillPlay_DivineLightning_Effect"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HOLY_REFLECTION",
+   "skill": "Holy Reflection",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLYREFLECTION1",
+     "file": "wav/effects/skill/morion/holyreflection 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GREAT_HEALING",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_GRANDHEALING",
+     "file": "wav/effects/skill/morion/grandhealing 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_VIGOR_BALL",
+   "skill": "Vigor Ball",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIGOR_BALL1",
+     "file": "wav/effects/skill/morion/vigorball 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_RESURRECTION",
+   "skill": "Resurrection",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_EXTINCTION",
+   "skill": "Extinction",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_VIRTUAL_LIFE",
+   "skill": "Virtual Life",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIRTUAL_LIFE",
+     "file": "wav/effects/skill/morion/virtuallife 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_AGONY",
+   "skill": "Agony",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_AGONY",
+     "file": "wav/effects/skill/morion/agony 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ZENITH",
+   "skill": "Zenith",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_ZENITH",
+     "file": "wav/effects/skill/morion/zenith 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FIRE_BALL",
+   "skill": "Fire Ball",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBALL1",
+     "file": "wav/effects/skill/morion/fireball 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBALL2",
+     "file": "wav/effects/skill/morion/fireball 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FIRE_BOLT",
+   "skill": "Fire Bolt",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBOLT1",
+     "file": "wav/effects/skill/morion/firebolt 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBOLT2",
+     "file": "wav/effects/skill/morion/firebolt 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_COLUMN_OF_WATER",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_WATORNADO1",
+     "file": "wav/effects/skill/morion/watornado 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ENCHANT_WEAPON",
+   "skill": "Enchant Weapon",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DEAD_RAY",
+   "skill": "Death Ray",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_DEATHRAY",
+     "file": "wav/effects/skill/morion/deathray 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ENERGY_SHIELD",
+   "skill": "Energy Shield",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_ENERGY_SHIELD",
+     "file": "wav/effects/skill/morion/energyshield 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DIASTROPHISM",
+   "skill": "Diastrophism",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIASTROPHISM",
+     "file": "wav/effects/skill/morion/diastrophism 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SPIRIT_ELEMENTAL",
+   "skill": "Spirit Elemental",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPIRIT_ELEMENTAL",
+     "file": "wav/effects/skill/morion/spiritelemental 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DANCING_SWORD",
+   "skill": "Dancing Sword",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_COMPULSION",
+   "skill": "Compulsion",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_COMPULSION1",
+     "file": "wav/effects/skill/tempskron/compulsion 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillMetalionCompulsion"
+   ],
+   "effects": [
+    "lua:skillmetalioncompulsion1"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_IMPULSION",
+   "skill": "Impulsion",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_IMPULSION",
+     "file": "wav/effects/skill/tempskron/impulsion 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE2",
+     "file": "wav/effects/skill/tempskron/chainlance 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillImpulsionLight",
+    "SkillImpulsionLightHit",
+    "SkillMetalionImpulsionHit"
+   ],
+   "effects": [
+    "part:skill4impulsionhit1",
+    "part:skill4impulsionlight"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_MAGNETIC_SPHERE",
+   "skill": "Magnetic Sphere",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK1",
+     "file": "wav/effects/skill/tempskron/spark 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK3",
+     "file": "wav/effects/skill/tempskron/spark 03.wav"
+    }
+   ],
+   "presenters": [
+    "SkillMetalionSphere"
+   ],
+   "effects": [
+    "part:skill3mechaniciansparkshield"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_METAL_GOLEM",
+   "skill": "Metal Golem",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_METAL_GOLEM",
+     "file": "wav/effects/skill/tempskron/metalgolem 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillMetalionGolem"
+   ],
+   "effects": [
+    "lua:skillmetalionmetalgolem"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_DESTROYER",
+   "skill": "Destroyer",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVANGING_CRASH",
+     "file": "wav/effects/skill/tempskron/avengingcrash 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXPANSION2",
+     "file": "wav/effects/skill/tempskron/expansion 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillWarriorDestroyerBlade",
+    "SkillWarriorDestroyerHit"
+   ],
+   "effects": [
+    "lua:skillwarriordestroyerhit"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_BERSERKER",
+   "skill": "Berserker",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BERSERKER",
+     "file": "wav/effects/skill/tempskron/berserker 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillWarriorBetserker"
+   ],
+   "effects": [
+    "lua:skillwarriorbetserker",
+    "part:skill4betserker"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_CYCLONE_STRIKE",
+   "skill": "Cyclone Strike",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CYCLONE_STRIKE",
+     "file": "wav/effects/skill/tempskron/cyclonestrike 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillWarriorCycloneStrikeBlade",
+    "StartEffect"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ASSASSIN_EYE",
+   "skill": "Assassin's Eye",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_ASSASSIN_EYE",
+     "file": "wav/effects/skill/tempskron/assassineye 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillLancelotAssassinEye"
+   ],
+   "effects": [
+    "lua:skilllancelotassassineye"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_VAGUE",
+   "skill": "Vague",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VAGUE",
+     "file": "wav/effects/skill/tempskron/vague 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GODS_BLESS",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_GODS_BLESS",
+     "file": "wav/effects/skill/tempskron/godsbless 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillSaintGodBless"
+   ],
+   "effects": [
+    "lua:skillsaintnightgodsbless",
+    "part:godlyshield"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_GODLY_SHIELD",
+   "skill": "Godly Shield",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_GODLY_SHIELD",
+     "file": "wav/effects/skill/tempskron/godlyshield 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillSaintGodlyShield"
+   ],
+   "effects": [
+    "part:skill3knightdivineinhalation1"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_SWORD_OF_JUSTICE",
+   "skill": "Sword of Justice",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWORD_OF_JUSTICE",
+     "file": "wav/effects/skill/morion/swordofjustice 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillSwordOfUstice"
+   ],
+   "effects": [
+    "lua:skillsaintnightswordofustice"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_FROST_JAVELIN",
+   "skill": "Frost Javelin",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FROST_JAVELIN",
+     "file": "wav/effects/skill/morion/frostjavelin 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillParticle_FrostJavelin"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GLACIAL_SPIKE",
+   "skill": "Glacial Spike",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_GLACIAL_SPIKE1",
+     "file": "wav/effects/skill/morion/glacialspike 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_GLACIAL_SPIKE2",
+     "file": "wav/effects/skill/morion/glacialspike 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillCelestialGlacialSpike"
+   ],
+   "effects": [
+    "lua:skillcelestialglacialspike"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_REGENERATION_FIELD",
+   "skill": "Regeneration Field",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_REGEN_FIELD2",
+     "file": "wav/effects/skill/morion/regenfield 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillCelestialRegnerationField"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_CHAIN_LIGHTNING",
+   "skill": "Chain Lightning",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_PRIEST",
+     "file": "wav/effects/skill/morion/casting_p.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LIGHTNING1",
+     "file": "wav/effects/skill/morion/chainlightning 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LIGHTNING2",
+     "file": "wav/effects/skill/morion/chainlightning 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillCelestialChainLighting"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SUMMON_MUSPELL",
+   "skill": "Summon Muspell",
+   "classDir": "priestess",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_MUSPELL1",
+     "file": "wav/effects/skill/morion/muspell 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_MUSPELL2",
+     "file": "wav/effects/skill/morion/muspell 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillCelestialMusPel"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FIRE_ELEMENTAL",
+   "skill": "Fire Elemental",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIRE_ELEMENTAL",
+     "file": "wav/effects/skill/morion/fireelemental 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FLAME_WAVE",
+   "skill": "Flame Wave",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE3",
+     "file": "wav/effects/skill/morion/flamewavea 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE1",
+     "file": "wav/effects/skill/morion/flamewave 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE2",
+     "file": "wav/effects/skill/morion/flamewave 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillArchMageFlameWave"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DISTORTION",
+   "skill": "Distortion",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DISTORTION",
+     "file": "wav/effects/skill/morion/distortion 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_METEO",
+   "skill": "Meteorite",
+   "classDir": "magician",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CASTING_MAGICIAN",
+     "file": "wav/effects/skill/morion/casting_m.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_METEO1",
+     "file": "wav/effects/skill/morion/meteo 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillArchMageMeteo"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_MECHANIC_BOMB",
+   "skill": "Mechanic Bomb",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_MECHANIC_BOMB1",
+     "file": "wav/effects/skill/tempskron/mechanic_bomb 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_PIKEWIND",
+   "skill": "Pike Wind",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_PIKE_WIND",
+     "file": "wav/effects/skill/tempskron/pike_wind 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_WIND_ARROW",
+   "skill": "Wind Arrow",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_WIND_ARROW",
+     "file": "wav/effects/skill/tempskron/wind_arrow 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_PERFECT_AIM",
+   "skill": "Perfect Aim",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_PERFECT_AIM",
+     "file": "wav/effects/skill/tempskron/perfect aim 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GREAT_SMASH",
+   "skill": "Great Smash",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING1",
+     "file": "wav/effects/skill/skill_swing 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GRAND_SMASH",
+   "skill": "Grand Smash",
+   "classDir": "mecha",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING2",
+     "file": "wav/effects/skill/skill_swing 02.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GROUND_PIKE",
+   "skill": "Ground Pike",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_GROUND_PIKE",
+     "file": "wav/effects/skill/tempskron/ground pike 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_TORNADO",
+   "skill": "Tornado",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_TORNADO1",
+     "file": "wav/effects/skill/tempskron/tornado 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_CHAIN_LANCE",
+   "skill": "Chain Lancer",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE1",
+     "file": "wav/effects/skill/tempskron/chainlance 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_ARROWOF_RAGE",
+   "skill": "Arrow of Rage",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_WIND_ARROW",
+     "file": "wav/effects/skill/tempskron/wind_arrow 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_AVALANCHE",
+   "skill": "Avalanche",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVALANCHE1",
+     "file": "wav/effects/skill/tempskron/avalanche 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_BOMB_SHOT",
+   "skill": "Bomb Shot",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BOMB_SHOT1",
+     "file": "wav/effects/skill/tempskron/bombshot 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_PERFORATION",
+   "skill": "Perforation",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_PERFORATION",
+     "file": "wav/effects/skill/tempskron/perforation 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_BRUTAL_SWING",
+   "skill": "Brutal Swing",
+   "classDir": "fighter",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING1",
+     "file": "wav/effects/skill/skill_swing 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_AVANGING_CRASH",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVANGING_CRASH",
+     "file": "wav/effects/skill/tempskron/avengingcrash 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_BONE_SMASH",
+   "skill": null,
+   "classDir": null,
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BONE_CRASH1",
+     "file": "wav/effects/skill/tempskron/bonecrash 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DOUBLE_CRASH",
+   "skill": "Double Crash",
+   "classDir": "knight",
+   "sounds": [],
+   "presenters": [
+    "StartEffect"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_HOLY_INCANTATION",
+   "skill": "Holy Incantation",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLY_INCANTATION",
+     "file": "wav/effects/skill/morion/holy incantation 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_GRAND_CROSS",
+   "skill": "Grand Cross",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING2",
+     "file": "wav/effects/skill/skill_swing 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_GRAND_CROSS",
+     "file": "wav/effects/skill/morion/grandcross 2.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SHIELD_STRIKE",
+   "skill": "Shield Strike",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHIELDSTRIKE",
+     "file": "wav/effects/skill/morion/shieldspake 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_VIGOR_SPEAR",
+   "skill": "Vigor Spear",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIGORSPEAR",
+     "file": "wav/effects/skill/morion/vigorspear 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FARINA",
+   "skill": "Farina",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FARINA",
+     "file": "wav/effects/skill/morion/farina 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_TWIST_JAVELIN",
+   "skill": "Twist Javelin",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_TWISTJAVELIN",
+     "file": "wav/effects/skill/morion/twistjavelin.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_SOUL_SUCKER",
+   "skill": "Soul Sucker",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SOULSUCKER2",
+     "file": "wav/effects/skill/morion/soulsucker 2.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHIELDSTRIKE",
+     "file": "wav/effects/skill/morion/shieldspake 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_FIRE_JAVELIN",
+   "skill": "Fire Javelin",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREJAVELIN",
+     "file": "wav/effects/skill/morion/firejavelin 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_LIGHTNING_JAVELIN",
+   "skill": "Lightning Javelin",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_LIGHTNING_JAVELIN1",
+     "file": "wav/effects/skill/morion/lightningjavelin 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_STORM_JAVELIN",
+   "skill": "Storm Javelin",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_STORM_JAVELIN1",
+     "file": "wav/effects/skill/morion/stormjavelin 1.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_CHARGING_STRIKE",
+   "skill": "Charging Strike",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE2",
+     "file": "wav/effects/skill/tempskron/chainlance 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillLancelotChargingStrike"
+   ],
+   "effects": [
+    "lua:skilllancelotchargingstrike1"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_SHADOW_MASTER",
+   "skill": "Shadow Master",
+   "classDir": "pikeman",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE1",
+     "file": "wav/effects/skill/tempskron/shadowstrike 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_RECALL_WOLVERIN",
+   "skill": "Wolverine",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_RECALL_WOLVERIN",
+     "file": "wav/effects/skill/tempskron/recallwolverin 01.wav"
+    }
+   ],
+   "presenters": [],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_PHOENIX_SHOT",
+   "skill": "Phoenix Shot",
+   "classDir": "archer",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_PHOENIX_SHOT",
+     "file": "wav/effects/skill/tempskron/phoenixshot 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillSagittarionPhoneixShot",
+    "SkillStopSound"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_DIVINE_PIERCING",
+   "skill": "Divine Piercing",
+   "classDir": "knight",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DVINE_PIERCING",
+     "file": "wav/effects/skill/morion/divinepiercing 07.wav"
+    }
+   ],
+   "presenters": [
+    "SkillSaintDivinePiercing"
+   ],
+   "effects": [
+    "part:skill3hit3"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_X_RAGE",
+   "skill": "Extreme Rage",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE1",
+     "file": "wav/effects/skill/morion/extremerage 01.wav"
+    }
+   ],
+   "presenters": [
+    "SkillValhallaXRage"
+   ],
+   "effects": [
+    "lua:skillvalhallaxrage",
+    "lua:skillvalhallahit1"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_VENGEANCE",
+   "skill": "Vengeance",
+   "classDir": "atalanta",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENGEANCE1",
+     "file": "wav/effects/skill/morion/vengeance 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENGEANCE2",
+     "file": "wav/effects/skill/morion/vengeance 02.wav"
+    }
+   ],
+   "presenters": [
+    "SkillVengeance"
+   ],
+   "effects": [
+    "lua:skillvalhallaxrage",
+    "lua:skillvalhallahit1"
+   ]
+  },
+  {
+   "code": "SKILL_PLAY_A_MIGAL",
+   "skill": null,
+   "classDir": null,
+   "sounds": [],
+   "presenters": [
+    "SkillCelestialMusPel"
+   ],
+   "effects": []
+  },
+  {
+   "code": "SKILL_PLAY_A_MIDRANDA",
+   "skill": null,
+   "classDir": null,
+   "sounds": [],
+   "presenters": [
+    "SkillCelestialMusPel"
+   ],
+   "effects": []
+  }
+ ]
+}

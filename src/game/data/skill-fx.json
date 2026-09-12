@@ -1,0 +1,5552 @@
+{
+ "note": "由 scripts/extract-skill-fx.ts 依据命名约定生成；confidence=none 的条目需人工补。原版把绑定硬编码在调用点，该调用点在反编译中丢失。",
+ "rows": [
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf10 m_mastery.bmp",
+   "name": "Melee Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 21
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf12 f_attribute.bmp",
+   "name": "Fire Attribute",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf14 raving.bmp",
+   "name": "Raving",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 23
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf17 impact.bmp",
+   "name": "Impact",
+   "fx": [
+    "ini:skillspiritimpact1",
+    "ini:skillspiritimpact2",
+    "part:r5sesmicimpact"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:skillspiritimpact1",
+     "ini:skillspiritimpact2",
+     "part:r5sesmicimpact"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 24
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf20 t_impact.bmp",
+   "name": "Triple Impact",
+   "fx": [
+    "ini:skilltripleimpacthit",
+    "ini:skilltripleimpactparticle"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:skilltripleimpacthit",
+     "ini:skilltripleimpactparticle"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 25
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf23 b_swing.bmp",
+   "name": "Brutal Swing",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/skill_swing 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/skill_swing 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_BRUTAL_SWING",
+   "presenters": [],
+   "animIndex": 26
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf26 roar.bmp",
+   "name": "Roar",
+   "alt": "War Cry",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/roar 01.wav",
+    "wav/effects/skill/tempskron/roar 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/roar 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/roar 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_ROAR",
+   "presenters": [],
+   "animIndex": 27
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf30 r_zecram.bmp",
+   "name": "Rage of Zecram",
+   "fx": [
+    "ini:skillrageofzecram1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/roz 04.wav",
+    "wav/effects/skill/tempskron/roz 01.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/roz 04.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "ini:skillrageofzecram1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/roz 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_RAGEOF_ZECRAM",
+   "presenters": [],
+   "animIndex": 28
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf40 concentration.bmp",
+   "name": "Concentration",
+   "fx": [
+    "part:skill3fighterconcentration1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/concentration 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3fighterconcentration1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/concentration 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_CONCENTRATION",
+   "presenters": [],
+   "animIndex": 29
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf43 a_crash.bmp",
+   "name": "Avenging Crash",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/avengingcrash 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/avengingcrash 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 30
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf46 s_axe.bmp",
+   "name": "Swiftness",
+   "alt": "Swift Axe",
+   "fx": [
+    "part:skill3fighterswiftaxe1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/swiftaxe 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3fighterswiftaxe1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/swiftaxe 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SWIFT_AXE",
+   "presenters": [],
+   "animIndex": 31
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf50 b_crash.bmp",
+   "name": "Bone Crash",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/bonecrash 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/bonecrash 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 32
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf60 destoryer.bmp",
+   "name": "Destroyer",
+   "fx": [
+    "lua:skillwarriordestroyerhit"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/avengingcrash 01.wav",
+    "wav/effects/skill/tempskron/expansion 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/avengingcrash 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "lua:skillwarriordestroyerhit"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/expansion 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DESTROYER",
+   "presenters": [
+    "SkillWarriorDestroyerBlade",
+    "SkillWarriorDestroyerHit"
+   ],
+   "animIndex": 33
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf63 berserker.bmp",
+   "name": "Berserker",
+   "fx": [
+    "lua:skillwarriorbetserker",
+    "part:skill4betserker"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/berserker 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillwarriorbetserker",
+     "part:skill4betserker"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/berserker 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_BERSERKER",
+   "presenters": [
+    "SkillWarriorBetserker"
+   ],
+   "animIndex": 34
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf66 c_strike.bmp",
+   "name": "Cyclone Strike",
+   "fx": [
+    "lua:skillwarriorcyclonestrike"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/cyclonestrike 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillwarriorcyclonestrike"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/cyclonestrike 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_CYCLONE_STRIKE",
+   "presenters": [
+    "SkillWarriorCycloneStrikeBlade",
+    "StartEffect"
+   ],
+   "animIndex": 35
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf70 b_health.bmp",
+   "name": "Boost Health",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 36
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf100 survival_instinct.bmp",
+   "name": "Charge",
+   "alt": "Survival Instinct",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 37
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf103 sesmic_impact.bmp",
+   "name": "Inner Soul",
+   "alt": "Seismic Impact",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf106 ruthless_zecram.bmp",
+   "name": "Hellion",
+   "alt": "Ruthless Zecram",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf110 whirlwind.bmp",
+   "name": "Flame Vortex",
+   "alt": "Whirlwind",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm10 ex_shield.bmp",
+   "name": "Extreme Shield",
+   "fx": [
+    "ini:skillextremeshieldbig",
+    "ini:skillextremeshieldparticle",
+    "ini:skillextremeshieldsmall"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/extreme_shield 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:skillextremeshieldbig",
+     "ini:skillextremeshieldparticle",
+     "ini:skillextremeshieldsmall"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/extreme_shield 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_EXTREME_SHIELD",
+   "presenters": [],
+   "animIndex": 1
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm12 m_bomb.bmp",
+   "name": "Mechanic Bomb",
+   "fx": [
+    "ini:mechanicbomb1",
+    "ini:mechanicbomb2",
+    "ini:skillmechanicbombdust1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/mechanic_bomb 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:mechanicbomb1",
+     "ini:mechanicbomb2",
+     "ini:skillmechanicbombdust1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/mechanic_bomb 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_MECHANIC_BOMB",
+   "presenters": [],
+   "animIndex": 2
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm14 p_attribute.bmp",
+   "name": "Reverse Engineering",
+   "alt": "Poison Attribute",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 4
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm17 ph_absorb.bmp",
+   "name": "Physical Absorption",
+   "alt": "Physical Absorb",
+   "fx": [
+    "ini:physicalabsorbparticle1",
+    "ini:physicalabsorbparticle2",
+    "ini:skillphysicalabsorb1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/physical_absorption 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:physicalabsorbparticle1",
+     "ini:physicalabsorbparticle2",
+     "ini:skillphysicalabsorb1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/physical_absorption 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_PHYSICAL_ABSORB",
+   "presenters": [],
+   "animIndex": 3
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm20 g_smash.bmp",
+   "name": "Great Smash",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/skill_swing 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/skill_swing 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GREAT_SMASH",
+   "presenters": [],
+   "animIndex": 5
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm23 maximize.bmp",
+   "name": "Maximize",
+   "fx": [
+    "ini:maximizeleft",
+    "ini:maximizeright"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/maximize 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:maximizeleft",
+     "ini:maximizeright"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/maximize 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_MAXIMIZE",
+   "presenters": [],
+   "animIndex": 6
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm26 automation.bmp",
+   "name": "Automation",
+   "fx": [
+    "ini:automationleft",
+    "ini:automationright"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/automation 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:automationleft",
+     "ini:automationright"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/automation 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_AUTOMATION",
+   "presenters": [],
+   "animIndex": 7
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm30 spark.bmp",
+   "name": "Spark",
+   "fx": [
+    "ini:skillspark1",
+    "ini:skillspark2",
+    "ini:skillspark3"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/spark 01.wav",
+    "wav/effects/skill/tempskron/spark 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/spark 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "ini:skillspark1",
+     "ini:skillspark2",
+     "ini:skillspark3"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/spark 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SPARK",
+   "presenters": [],
+   "animIndex": 8
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm40 m_armor.bmp",
+   "name": "Metal Armor",
+   "fx": [
+    "part:skill3mechanicianmetalarmor"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/metalarmor 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3mechanicianmetalarmor"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/metalarmor 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_METAL_ARMOR",
+   "presenters": [],
+   "animIndex": 9
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm43 grand_smash.bmp",
+   "name": "Grand Smash",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/skill_swing 02.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/skill_swing 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GRAND_SMASH",
+   "presenters": [],
+   "animIndex": 10
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm44 m_weapon.bmp",
+   "name": "Mechanic Weapon Mastery",
+   "alt": "Mechanic Weapon",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 11
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm50 s_shield.bmp",
+   "name": "Spark Shield",
+   "fx": [
+    "part:skill3mechaniciansparkshield",
+    "part:skill3mechaniciansparkshield1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/spark 01.wav",
+    "wav/effects/skill/tempskron/spark 03.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/spark 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3mechaniciansparkshield",
+     "part:skill3mechaniciansparkshield1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/spark 03.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SPARK_SHIELD",
+   "presenters": [],
+   "animIndex": 12
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm60 impulsion.bmp",
+   "name": "Impulsion",
+   "fx": [
+    "part:skill4impulsionhit1",
+    "part:skill4impulsionlight"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/impulsion 02.wav",
+    "wav/effects/skill/tempskron/chainlance 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/impulsion 02.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill4impulsionhit1",
+     "part:skill4impulsionlight"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/chainlance 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_IMPULSION",
+   "presenters": [
+    "SkillImpulsionLight",
+    "SkillImpulsionLightHit",
+    "SkillMetalionImpulsionHit"
+   ],
+   "animIndex": 13
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm63 compulsion.bmp",
+   "name": "Compulsion",
+   "fx": [
+    "lua:skillmetalioncompulsion1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/compulsion 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillmetalioncompulsion1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/compulsion 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_COMPULSION",
+   "presenters": [
+    "SkillMetalionCompulsion"
+   ],
+   "animIndex": 14
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm66 m_sphere.bmp",
+   "name": "Magnetic Sphere",
+   "fx": [
+    "part:skill3mechaniciansparkshield"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/spark 01.wav",
+    "wav/effects/skill/tempskron/spark 03.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/spark 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3mechaniciansparkshield"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/spark 03.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_MAGNETIC_SPHERE",
+   "presenters": [
+    "SkillMetalionSphere"
+   ],
+   "animIndex": 15
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm70 m_golem.bmp",
+   "name": "Metal Golem",
+   "fx": [
+    "lua:skillmetalionmetalgolem"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/metalgolem 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillmetalionmetalgolem"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/metalgolem 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_METAL_GOLEM",
+   "presenters": [
+    "SkillMetalionGolem"
+   ],
+   "animIndex": 16
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm100 rupture.bmp",
+   "name": "Precision",
+   "alt": "Rupture",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm103 parasit_shot.bmp",
+   "name": "Trine Shield",
+   "alt": "Parasit Shot",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm106 hardening_shield.bmp",
+   "name": "Gravitation",
+   "alt": "Hardening Shield",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm110 magnetic_discharge.bmp",
+   "name": "Obliterate",
+   "alt": "Magnetic Discharge",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta10 s_hawk.bmp",
+   "name": "Scout Hawk",
+   "fx": [
+    "ini:scouthawkgate",
+    "ini:scouthawklight"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/scout_hawk 01.wav",
+    "wav/effects/skill/tempskron/scout_hawk 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/scout_hawk 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "ini:scouthawkgate",
+     "ini:scouthawklight"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/scout_hawk 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SCOUT_HAWK",
+   "presenters": [],
+   "animIndex": 61
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta12 s_mastery.bmp",
+   "name": "Shooting Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 62
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta14 w_arrow.bmp",
+   "name": "Wind Arrow",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/wind_arrow 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/wind_arrow 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_WIND_ARROW",
+   "presenters": [],
+   "animIndex": 63
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta17 p_aim.bmp",
+   "name": "Perfect Aim",
+   "fx": [
+    "ini:skillperfectaim1",
+    "ini:skillperfectaim2"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/perfect aim 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:skillperfectaim1",
+     "ini:skillperfectaim2"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/perfect aim 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_PERFECT_AIM",
+   "presenters": [],
+   "animIndex": 64
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta20 d_eye.bmp",
+   "name": "Dion's Eye",
+   "alt": "Dions Eye",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 65
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta23 falcon.bmp",
+   "name": "Falcon",
+   "fx": [
+    "part:skill3archergoldenfalcon1",
+    "part:skill3archergoldenfalcon2"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/falcon 02.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3archergoldenfalcon1",
+     "part:skill3archergoldenfalcon2"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/falcon 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FALCON",
+   "presenters": [],
+   "animIndex": 66
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta26 a_rage.bmp",
+   "name": "Arrow of Rage",
+   "fx": [
+    "ini:skillarrowofrage1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/wind_arrow 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:skillarrowofrage1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/wind_arrow 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_ARROWOF_RAGE",
+   "presenters": [],
+   "animIndex": 67
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta30 avalanchie.bmp",
+   "name": "Avalanche",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/avalanche 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/avalanche 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_AVALANCHE",
+   "presenters": [],
+   "animIndex": 68
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta40 e_shot.bmp",
+   "name": "Elemental Shot",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/elementalshot 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/elementalshot 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 69
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta43 g_falcon.bmp",
+   "name": "Golden Falcon",
+   "fx": [
+    "part:skill3archergoldenfalcon1",
+    "part:skill3archergoldenfalcon2"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/goldfalcon 02.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3archergoldenfalcon1",
+     "part:skill3archergoldenfalcon2"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/goldfalcon 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GOLDEN_FALCON",
+   "presenters": [],
+   "animIndex": 70
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta46 b_shot.bmp",
+   "name": "Bomb Shot",
+   "fx": [
+    "part:skill3archerbombshot1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/bombshot 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3archerbombshot1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/bombshot 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_BOMB_SHOT",
+   "presenters": [],
+   "animIndex": 71
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta50 perforation.bmp",
+   "name": "Perforation",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/perforation 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/perforation 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_PERFORATION",
+   "presenters": [],
+   "animIndex": 72
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta60 r_wolverin.bmp",
+   "name": "Wolverine",
+   "alt": "Recall Wolverin",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/recallwolverin 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/recallwolverin 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_RECALL_WOLVERIN",
+   "presenters": [],
+   "animIndex": 73
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta63 e_mastery.bmp",
+   "name": "Evasion Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 74
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta66 p_shot.bmp",
+   "name": "Phoenix Shot",
+   "fx": [
+    "part:skill4phoenixshot"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/phoenixshot 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill4phoenixshot"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/phoenixshot 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_PHOENIX_SHOT",
+   "presenters": [
+    "SkillSagittarionPhoneixShot",
+    "SkillStopSound"
+   ],
+   "animIndex": 75
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta70 f_o_nature.bmp",
+   "name": "Force of Nature",
+   "fx": [
+    "lua:skillsagittarionforceofnature2",
+    "lua:skillsagittarionforceofnature"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/forceofnature 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillsagittarionforceofnature2",
+     "lua:skillsagittarionforceofnature"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/forceofnature 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FORCE_OF_NATURE",
+   "presenters": [
+    "SkillSagittarionForceOfNature2",
+    "SkillSagittarionForceOfNature1"
+   ],
+   "animIndex": 76
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta100 lethal_sight.bmp",
+   "name": "Stun Arrow",
+   "alt": "Lethal Sight",
+   "fx": [
+    "part:ac5lethalsight"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:ac5lethalsight"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta103 fierce_wind.bmp",
+   "name": "Phoenix Speed",
+   "alt": "Fierce Wind",
+   "fx": [
+    "part:ac5fiercewind"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:ac5fiercewind"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta106 entailing_roots.bmp",
+   "name": "Leap Shot",
+   "alt": "Entailing Roots",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta110 bombardment.bmp",
+   "name": "Solar Arrow",
+   "alt": "Bombardment",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp10 p_wind.bmp",
+   "name": "Pike Wind",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/pike_wind 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/pike_wind 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_PIKEWIND",
+   "presenters": [],
+   "animIndex": 41
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp12 i_attribute.bmp",
+   "name": "Ice Attribute",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 42
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp14 cri_hit.bmp",
+   "name": "Critical Hit",
+   "fx": [
+    "ini:criticalhit1",
+    "ini:criticalhit21",
+    "ini:criticalhit22"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:criticalhit1",
+     "ini:criticalhit21",
+     "ini:criticalhit22"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 43
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp17 j_crash.bmp",
+   "name": "Jumping Crash",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/jumping_crash 01.wav",
+    "wav/effects/skill/tempskron/jumping_crash 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/jumping_crash 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/jumping_crash 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_JUMPING_CRASH",
+   "presenters": [],
+   "animIndex": 44
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp20 g_pike.bmp",
+   "name": "Ground Pike",
+   "fx": [
+    "ini:groundpike"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/ground pike 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:groundpike"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/ground pike 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GROUND_PIKE",
+   "presenters": [],
+   "animIndex": 45
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp23 tornado.bmp",
+   "name": "Tornado",
+   "fx": [
+    "ini:skilltornado",
+    "ini:skilltornado2"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/tornado 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "ini:skilltornado",
+     "ini:skilltornado2"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/tornado 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_TORNADO",
+   "presenters": [],
+   "animIndex": 46
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp26 w_d_mastery.bmp",
+   "name": "Weapon Defense Mastery",
+   "alt": "Weapon Defence Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 47
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp30 expasion.bmp",
+   "name": "Expansion",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/expansion 01.wav",
+    "wav/effects/skill/tempskron/expansion 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/expansion 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/expansion 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_EXPANSION",
+   "presenters": [],
+   "animIndex": 48
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp40 v_spear.bmp",
+   "name": "Venom Spear",
+   "fx": [
+    "part:skill3pikemanvenomspear",
+    "part:skill3pikemanvenomspear1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/jumping_crash 01.wav",
+    "wav/effects/skill/tempskron/venomspear 01.wav",
+    "wav/effects/skill/tempskron/venomspear 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/jumping_crash 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3pikemanvenomspear",
+     "part:skill3pikemanvenomspear1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/venomspear 01.wav",
+     "wav/effects/skill/tempskron/venomspear 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VENOM_SPEAR",
+   "presenters": [
+    "SkillPlay_VenomSpear_Effect"
+   ],
+   "animIndex": 49
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp43 vanish.bmp",
+   "name": "Vanish",
+   "fx": [
+    "part:skill3pikevanish1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/vanish 01.wav",
+    "wav/effects/skill/tempskron/vanish 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/tempskron/vanish 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3pikevanish1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/vanish 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VANISH",
+   "presenters": [],
+   "animIndex": 50
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp46 c_mastery.bmp",
+   "name": "Critical Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 51
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp50 c_lance.bmp",
+   "name": "Chain Lancer",
+   "alt": "Chain Lance",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/chainlance 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/chainlance 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_CHAIN_LANCE",
+   "presenters": [],
+   "animIndex": 52
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp60 a_eye.bmp",
+   "name": "Assassin's Eye",
+   "alt": "Assassin Eye",
+   "fx": [
+    "lua:skilllancelotassassineye"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/assassineye 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skilllancelotassassineye"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/assassineye 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_ASSASSIN_EYE",
+   "presenters": [
+    "SkillLancelotAssassinEye"
+   ],
+   "animIndex": 53
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp63 c_strike.bmp",
+   "name": "Charging Strike",
+   "fx": [
+    "lua:skilllancelotchargingstrike1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/chainlance 02.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skilllancelotchargingstrike1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/chainlance 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_CHARGING_STRIKE",
+   "presenters": [
+    "SkillLancelotChargingStrike"
+   ],
+   "animIndex": 54
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp66 vague.bmp",
+   "name": "Vague",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/vague 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/vague 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VAGUE",
+   "presenters": [],
+   "animIndex": 55
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp70 s_master.bmp",
+   "name": "Shadow Master",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/shadowstrike 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/shadowstrike 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SHADOW_MASTER",
+   "presenters": [],
+   "animIndex": 56
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp100 ring_spears.bmp",
+   "name": "Attack Rating Mastery",
+   "alt": "Ring Spears",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp103 focus.bmp",
+   "name": "Lethal Strike",
+   "alt": "Focus",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp106 death_master.bmp",
+   "name": "Dodge",
+   "alt": "Death Master",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp110 twister.bmp",
+   "name": "Vorpal Dive",
+   "alt": "Twister",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma10 s_strike.bmp",
+   "name": "Shield Strike",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/shieldspake 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/shieldspake 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SHIELD_STRIKE",
+   "presenters": [],
+   "animIndex": 103
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma12 farina.bmp",
+   "name": "Farina",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/farina 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/farina 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FARINA",
+   "presenters": [],
+   "animIndex": 104
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma14 t_mastery.bmp",
+   "name": "Throwing Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 105
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma17 v_spear.bmp",
+   "name": "Vigor Spear",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/vigorspear 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/vigorspear 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VIGOR_SPEAR",
+   "presenters": [],
+   "animIndex": 106
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma20 windy.bmp",
+   "name": "Windy",
+   "fx": [
+    "part:windy1",
+    "part:windy2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/windy 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:windy1",
+     "part:windy2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/windy 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_WINDY",
+   "presenters": [],
+   "animIndex": 107
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma23 t_javelin.bmp",
+   "name": "Twist Javelin",
+   "fx": [
+    "part:twistjavelin1",
+    "part:twistjavelin2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/twistjavelin.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:twistjavelin1",
+     "part:twistjavelin2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/twistjavelin.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_TWIST_JAVELIN",
+   "presenters": [],
+   "animIndex": 108
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma26 s_sucker.bmp",
+   "name": "Soul Sucker",
+   "fx": [
+    "part:soulsuckerhit1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/soulsucker 2.wav",
+    "wav/effects/skill/morion/shieldspake 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/soulsucker 2.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:soulsuckerhit1"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/shieldspake 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SOUL_SUCKER",
+   "presenters": [],
+   "animIndex": 109
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma30 f_javelin.bmp",
+   "name": "Fire Javelin",
+   "fx": [
+    "part:firejavelinfire"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/firejavelin 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:firejavelinfire"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/firejavelin 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FIRE_JAVELIN",
+   "presenters": [],
+   "animIndex": 110
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma40 split_javelin.bmp",
+   "name": "Split Javelin",
+   "fx": [
+    "part:skill3atalantasplitjavelin1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/splitjavelin 1.wav",
+    "wav/effects/skill/morion/splitjavelin 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/splitjavelin 1.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3atalantasplitjavelin1"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/splitjavelin 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SPLIT_JAVELIN",
+   "presenters": [],
+   "animIndex": 111
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma43 t_of_valhalla.bmp",
+   "name": "Triumph of Valhalla",
+   "fx": [
+    "part:skill3atalantatriumphofvalhalla"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/triumphofvalhalla 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3atalantatriumphofvalhalla"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/triumphofvalhalla 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_TRIUMPH_OF_VALHALLA",
+   "presenters": [],
+   "animIndex": 112
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma46 l_javelin.bmp",
+   "name": "Lightning Javelin",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/lightningjavelin 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/lightningjavelin 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_LIGHTNING_JAVELIN",
+   "presenters": [],
+   "animIndex": 113
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma50 storm_javelin.bmp",
+   "name": "Storm Javelin",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/stormjavelin 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/stormjavelin 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_STORM_JAVELIN",
+   "presenters": [],
+   "animIndex": 114
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma60 h_o_valhalla.bmp",
+   "name": "Hall of Valhalla",
+   "fx": [
+    "lua:skillvalhallahallofvahalla"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/hallofvalhalla 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillvalhallahallofvahalla"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/hallofvalhalla 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HALL_OF_VALHALLA",
+   "presenters": [
+    "SkillValhallaHallOfValhallaHandEffect",
+    "SkillValhallaHallOfValhalla1"
+   ],
+   "animIndex": 115
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma63 x_rage.bmp",
+   "name": "Extreme Rage",
+   "alt": "X Rage",
+   "fx": [
+    "lua:skillvalhallaxrage",
+    "lua:skillvalhallahit1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/extremerage 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillvalhallaxrage",
+     "lua:skillvalhallahit1"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/extremerage 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_X_RAGE",
+   "presenters": [
+    "SkillValhallaXRage"
+   ],
+   "animIndex": 116
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma66 f_javelin.bmp",
+   "name": "Frost Javelin",
+   "fx": [
+    "part:skill4frostjavelin",
+    "lua:skillfrostjavelin"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/frostjavelin 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill4frostjavelin",
+     "lua:skillfrostjavelin"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/frostjavelin 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FROST_JAVELIN",
+   "presenters": [
+    "SkillParticle_FrostJavelin"
+   ],
+   "animIndex": 117
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma70 vengeance.bmp",
+   "name": "Vengeance",
+   "fx": [
+    "lua:skillvalhallaxrage",
+    "lua:skillvalhallahit1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/vengeance 01.wav",
+    "wav/effects/skill/morion/vengeance 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/vengeance 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "lua:skillvalhallaxrage",
+     "lua:skillvalhallahit1"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/vengeance 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VENGEANCE",
+   "presenters": [
+    "SkillVengeance"
+   ],
+   "animIndex": 118
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma100 s_tiger.bmp",
+   "name": "Chimera of Light",
+   "alt": "S Tiger",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma103 golden_apple.bmp",
+   "name": "Poison Javelin",
+   "alt": "Golden Apple",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma106 plague_javelin.bmp",
+   "name": "Amazon Rage",
+   "alt": "Plague Javelin",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma110 combo_javelin.bmp",
+   "name": "Javelin Mastery",
+   "alt": "Combo Javelin",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn10 s_blast.bmp",
+   "name": "Sword Blast",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/swordblast 1.wav",
+    "wav/effects/skill/morion/swordblast 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/swordblast 1.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/swordblast 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SWORD_BLAST",
+   "presenters": [],
+   "animIndex": 81
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn12 h_body.bmp",
+   "name": "Holy Body",
+   "fx": [
+    "part:holybody"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/holybody 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:holybody"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/holybody 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HOLY_BODY",
+   "presenters": [],
+   "animIndex": 82
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn14 p_traning.bmp",
+   "name": "Physical Training",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 83
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn17 d_crash.bmp",
+   "name": "Double Crash",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": "SKILL_PLAY_DOUBLE_CRASH",
+   "presenters": [
+    "StartEffect"
+   ],
+   "animIndex": 84
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn20 h_valor.bmp",
+   "name": "Holy Valor",
+   "fx": [
+    "part:holyvalor",
+    "part:holyvalortt"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/holyvalor 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:holyvalor",
+     "part:holyvalortt"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/holyvalor 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HOLY_VALOR",
+   "presenters": [],
+   "animIndex": 85
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn23 brandish.bmp",
+   "name": "Brandish",
+   "fx": [
+    "part:skill3knightflamebrandish",
+    "part:skill3knightflamebrandish1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/brandish 1.wav",
+    "wav/effects/skill/morion/brandish 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "brandish 1.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3knightflamebrandish",
+     "part:skill3knightflamebrandish1"
+    ],
+    "sfx": [
+     "brandish 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_BRANDISH",
+   "presenters": [],
+   "animIndex": 86
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn26 piercing.bmp",
+   "name": "Piercing",
+   "fx": [
+    "part:piercing1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/piercing 2.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:piercing1"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/piercing 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_PIERCING",
+   "presenters": [],
+   "animIndex": 87
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn30 d_spirit.bmp",
+   "name": "Drastic Spirit",
+   "fx": [
+    "part:drasticspirit"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/drasticspirit 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:drasticspirit"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/drasticspirit 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DRASTIC_SPIRIT",
+   "presenters": [],
+   "animIndex": 88
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn40 s_mastery.bmp",
+   "name": "Sword Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 89
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn43 d_inhalation.bmp",
+   "name": "Divine Shield",
+   "alt": "Divine Inhalation",
+   "fx": [
+    "part:skill3knightdivineinhalation1",
+    "part:skill3knightdivineinhalation2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/divineinhalation 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3knightdivineinhalation1",
+     "part:skill3knightdivineinhalation2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/divineinhalation 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DIVINE_INHALATION",
+   "presenters": [],
+   "animIndex": 90
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn46 h_incantation.bmp",
+   "name": "Holy Incantation",
+   "fx": [
+    "part:skill3knightholyincantation1",
+    "part:skill3knightholyincantation2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/holy incantation 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3knightholyincantation1",
+     "part:skill3knightholyincantation2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/holy incantation 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HOLY_INCANTATION",
+   "presenters": [],
+   "animIndex": 91
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn50 g_cross.bmp",
+   "name": "Grand Cross",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/skill_swing 02.wav",
+    "wav/effects/skill/morion/grandcross 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/skill_swing 02.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/grandcross 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GRAND_CROSS",
+   "presenters": [],
+   "animIndex": 92
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn60 s_o_justice.bmp",
+   "name": "Sword of Justice",
+   "fx": [
+    "lua:skillsaintnightswordofustice"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/swordofjustice 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillsaintnightswordofustice"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/swordofjustice 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SWORD_OF_JUSTICE",
+   "presenters": [
+    "SkillSwordOfUstice"
+   ],
+   "animIndex": 98
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn63 g_shield.bmp",
+   "name": "Godly Shield",
+   "fx": [
+    "part:skill3knightdivineinhalation1"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/godlyshield 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3knightdivineinhalation1"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/godlyshield 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GODLY_SHIELD",
+   "presenters": [
+    "SkillSaintGodlyShield"
+   ],
+   "animIndex": 96
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn66 g_bless.bmp",
+   "name": "God's Blessing",
+   "alt": "God Bless",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 97
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn70 d_piercing.bmp",
+   "name": "Divine Piercing",
+   "fx": [
+    "part:skill3hit3"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/divinepiercing 07.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3hit3"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/divinepiercing 07.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DIVINE_PIERCING",
+   "presenters": [
+    "SkillSaintDivinePiercing"
+   ],
+   "animIndex": 93
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn100 holy_conviction.bmp",
+   "name": "Lightning Sword",
+   "alt": "Holy Conviction",
+   "fx": [
+    "part:ks5holyconviction"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:ks5holyconviction"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn103 divine_inquisiton.bmp",
+   "name": "Undead Bane",
+   "alt": "Divine Inquisition",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn106 glorious_shield.bmp",
+   "name": "Zealous Reach",
+   "alt": "Glorious Shield",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn110 divine_cross.bmp",
+   "name": "Holy Aura",
+   "alt": "Divine Cross",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm10 agony.bmp",
+   "name": "Agony",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/agony 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/agony 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_AGONY",
+   "presenters": [],
+   "animIndex": 143
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm12 firebolt.bmp",
+   "name": "Fire Bolt",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/firebolt 1.wav",
+    "wav/effects/skill/morion/firebolt 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/firebolt 1.wav",
+     "wav/effects/skill/morion/firebolt 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FIRE_BOLT",
+   "presenters": [],
+   "animIndex": 144
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm14 zenith.bmp",
+   "name": "Zenith",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/zenith 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/zenith 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_ZENITH",
+   "presenters": [],
+   "animIndex": 145
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm17 fireball.bmp",
+   "name": "Fire Ball",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/fireball 1.wav",
+    "wav/effects/skill/morion/fireball 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/fireball 1.wav",
+     "wav/effects/skill/morion/fireball 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FIRE_BALL",
+   "presenters": [],
+   "animIndex": 146
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm20 m_mastery.bmp",
+   "name": "Mental Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 147
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm23 watornado.bmp",
+   "name": "Watornado",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/watornado 1.wav",
+    "wav/effects/skill/morion/watornado 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/watornado 1.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/watornado 2.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 148
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm26 e_weapon.bmp",
+   "name": "Enchant Weapon",
+   "fx": [
+    "part:enchantweaponfire1",
+    "part:enchantweaponfire2",
+    "part:enchantweaponfire3",
+    "part:enchantweaponice",
+    "part:enchantweaponjang",
+    "part:enchantweaponlight",
+    "part:enchantweaponmember"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:enchantweaponfire1",
+     "part:enchantweaponfire2",
+     "part:enchantweaponfire3",
+     "part:enchantweaponice",
+     "part:enchantweaponjang",
+     "part:enchantweaponlight",
+     "part:enchantweaponmember"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_ENCHANT_WEAPON",
+   "presenters": [],
+   "animIndex": 149
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm30 d_ray.bmp",
+   "name": "Death Ray",
+   "alt": "Dead Ray",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/deathray 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/deathray 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DEAD_RAY",
+   "presenters": [],
+   "animIndex": 150
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm40 e_shield.bmp",
+   "name": "Energy Shield",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/energyshield 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/energyshield 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_ENERGY_SHIELD",
+   "presenters": [],
+   "animIndex": 151
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm43 diastrophism.bmp",
+   "name": "Diastrophism",
+   "fx": [
+    "part:skill3magiciandiastrophism1"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/diastrophism 2.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3magiciandiastrophism1"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/diastrophism 2.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DIASTROPHISM",
+   "presenters": [],
+   "animIndex": 152
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm46 s_elemental.bmp",
+   "name": "Spirit Elemental",
+   "fx": [
+    "part:skill3magicianspiritelemental"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/spiritelemental 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3magicianspiritelemental"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/spiritelemental 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SPIRIT_ELEMENTAL",
+   "presenters": [],
+   "animIndex": 153
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm50 d_sword.bmp",
+   "name": "Dancing Sword",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DANCING_SWORD",
+   "presenters": [],
+   "animIndex": 154
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm60 f_elemental.bmp",
+   "name": "Fire Elemental",
+   "fx": [
+    "part:fireelementalhit"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/fireelemental 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:fireelementalhit"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/fireelemental 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FIRE_ELEMENTAL",
+   "presenters": [],
+   "animIndex": 155
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm63 f_wave.bmp",
+   "name": "Flame Wave",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/flamewavea 01.wav",
+    "wav/effects/skill/morion/flamewave 01.wav",
+    "wav/effects/skill/morion/flamewave 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/flamewavea 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/flamewave 01.wav",
+     "wav/effects/skill/morion/flamewave 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_FLAME_WAVE",
+   "presenters": [
+    "SkillArchMageFlameWave"
+   ],
+   "animIndex": 156
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm66 distortion.bmp",
+   "name": "Distortion",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/distortion 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/distortion 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DISTORTION",
+   "presenters": [],
+   "animIndex": 157
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm70 meteo.bmp",
+   "name": "Meteorite",
+   "alt": "Meteo",
+   "fx": [
+    "ini:meteo1",
+    "ini:meteo2",
+    "ini:particlemeteo1",
+    "ini:particlemeteo2",
+    "ini:particlemeteo3",
+    "part:chaoskarameteo",
+    "lua:skillarchmagemeteo1",
+    "lua:skillarchmagemeteo2",
+    "lua:skillarchmagemeteo3",
+    "lua:skillarchmagemeteo4"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_m.wav",
+    "wav/effects/skill/morion/meteo 01.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "ini:meteo1",
+     "ini:meteo2",
+     "ini:particlemeteo1",
+     "ini:particlemeteo2",
+     "ini:particlemeteo3",
+     "part:chaoskarameteo",
+     "lua:skillarchmagemeteo1",
+     "lua:skillarchmagemeteo2",
+     "lua:skillarchmagemeteo3",
+     "lua:skillarchmagemeteo4"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/meteo 01.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_METEO",
+   "presenters": [
+    "SkillArchMageMeteo"
+   ],
+   "animIndex": 158
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm100 wizardtrance.bmp",
+   "name": "Magic Source",
+   "alt": "Wizard Trance",
+   "fx": [
+    "luac:mg5wizardtrance"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "luac:mg5wizardtrance"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm103 stone_skin.bmp",
+   "name": "Amplify",
+   "alt": "Stone Skin",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm106 redray.bmp",
+   "name": "Stone Spike",
+   "alt": "Red Ray",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm110 cataclysm.bmp",
+   "name": "Dance of Calamity",
+   "alt": "Cataclysm",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp10 healing.bmp",
+   "name": "Healing",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/healing 1.wav",
+    "wav/effects/skill/morion/casting_p.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/healing 1.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HEALING",
+   "presenters": [],
+   "animIndex": 123
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp12 holybolt.bmp",
+   "name": "Holy Bolt",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/holybolt 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/holybolt 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HOLY_BOLT",
+   "presenters": [],
+   "animIndex": 124
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp14 m_spark.bmp",
+   "name": "Multi Spark",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/multispark 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/multispark 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_MULTI_SPARK",
+   "presenters": [],
+   "animIndex": 125
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp17 holymind.bmp",
+   "name": "Holy Mind",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/holymind 1.wav",
+    "wav/effects/skill/morion/casting_p.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/holymind 1.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HOLY_MIND",
+   "presenters": [],
+   "animIndex": 126
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp20 meditation.bmp",
+   "name": "Meditation",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 127
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp23 d_lightning.bmp",
+   "name": "Divine Lightning",
+   "fx": [
+    "part:divinelightning",
+    "lua:skillcelestialchainlightaxial",
+    "lua:skillcelestialchainlightpart"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/divinelightning 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:divinelightning",
+     "lua:skillcelestialchainlightaxial",
+     "lua:skillcelestialchainlightpart"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/divinelightning 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_DIVINE_LIGHTNING",
+   "presenters": [
+    "SkillPlay_DivineLightning_Effect"
+   ],
+   "animIndex": 128
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp26 h_reflection.bmp",
+   "name": "Holy Reflection",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/holyreflection 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/holyreflection 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_HOLY_REFLECTION",
+   "presenters": [],
+   "animIndex": 129
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp30 g_healing.bmp",
+   "name": "Grand Healing",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/grandhealing 1.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/grandhealing 1.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 130
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp40 v_ball.bmp",
+   "name": "Vigor Ball",
+   "fx": [
+    "part:skill3priestessvigorball1",
+    "part:skill3priestessvigorball2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/vigorball 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:skill3priestessvigorball1",
+     "part:skill3priestessvigorball2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/vigorball 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VIGOR_BALL",
+   "presenters": [],
+   "animIndex": 131
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp43 resurrection.bmp",
+   "name": "Resurrection",
+   "fx": [
+    "part:skill3priestessresurrection1",
+    "part:skill3priestessresurrection2",
+    "part:skill3priestessresurrection3"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3priestessresurrection1",
+     "part:skill3priestessresurrection2",
+     "part:skill3priestessresurrection3"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_RESURRECTION",
+   "presenters": [],
+   "animIndex": 132
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp46 extinction.bmp",
+   "name": "Extinction",
+   "fx": [
+    "part:skill3priestessextinction1",
+    "part:skill3priestessextinction2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill3priestessextinction1",
+     "part:skill3priestessextinction2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_EXTINCTION",
+   "presenters": [],
+   "animIndex": 133
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp50 v_life.bmp",
+   "name": "Virtual Life",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/virtuallife 1.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/virtuallife 1.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_VIRTUAL_LIFE",
+   "presenters": [],
+   "animIndex": 134
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp60 g_spike.bmp",
+   "name": "Glacial Spike",
+   "fx": [
+    "lua:skillcelestialglacialspike"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/glacialspike 01.wav",
+    "wav/effects/skill/morion/glacialspike 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "lua:skillcelestialglacialspike"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/glacialspike 01.wav",
+     "wav/effects/skill/morion/glacialspike 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_GLACIAL_SPIKE",
+   "presenters": [
+    "SkillCelestialGlacialSpike"
+   ],
+   "animIndex": 135
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp63 r_field.bmp",
+   "name": "Regeneration Field",
+   "fx": [
+    "part:skill4regenerationfield",
+    "lua:skillcelestialregenerationfield"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/regenfield 02.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:skill4regenerationfield",
+     "lua:skillcelestialregenerationfield"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/regenfield 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_REGENERATION_FIELD",
+   "presenters": [
+    "SkillCelestialRegnerationField"
+   ],
+   "animIndex": null
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp66 c_lightning.bmp",
+   "name": "Chain Lightning",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/casting_p.wav",
+    "wav/effects/skill/morion/chainlightning 01.wav",
+    "wav/effects/skill/morion/chainlightning 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/chainlightning 01.wav",
+     "wav/effects/skill/morion/chainlightning 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_CHAIN_LIGHTNING",
+   "presenters": [
+    "SkillCelestialChainLighting"
+   ],
+   "animIndex": 137
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp70 s_muspell.bmp",
+   "name": "Summon Muspell",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/morion/muspell 01.wav",
+    "wav/effects/skill/morion/muspell 02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/muspell 01.wav"
+    ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/morion/muspell 02.wav"
+    ]
+   },
+   "confidence": "code",
+   "code": "SKILL_PLAY_SUMMON_MUSPELL",
+   "presenters": [
+    "SkillCelestialMusPel"
+   ],
+   "animIndex": 138
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp100 ice_elemental.bmp",
+   "name": "Divine Force",
+   "alt": "Ice Elemental",
+   "fx": [
+    "part:iceelementalbody",
+    "part:iceelementalhand"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:iceelementalbody",
+     "part:iceelementalhand"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp103 lightning_surge.bmp",
+   "name": "Ice Meteorite",
+   "alt": "Lightning Surge",
+   "fx": [
+    "lua:skillcelestialglacialspike"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillcelestialglacialspike"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp106 heavenly_light.bmp",
+   "name": "Thunderstorm",
+   "alt": "Heavenly Light",
+   "fx": [
+    "lua:skillcelestialchainlightaxial",
+    "lua:skillcelestialchainlightpart"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "lua:skillcelestialchainlightaxial",
+     "lua:skillcelestialchainlightpart"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp110 consecration.bmp",
+   "name": "Divine Cleansing",
+   "alt": "Consecration",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta10 stingger.bmp",
+   "name": "Stinger",
+   "alt": "Stingger",
+   "fx": [
+    "part:stingger"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/stinger 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:stingger"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/stinger 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": "SKILL_PLAY_STINGGER",
+   "presenters": [],
+   "animIndex": 163
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta12 r_hit.bmp",
+   "name": "Double Blow",
+   "alt": "Running Hit",
+   "fx": [
+    "part:runninghit"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/runninghit 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:runninghit"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/runninghit 01.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": null,
+   "presenters": [],
+   "animIndex": 164
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta14 d_mastery.bmp",
+   "name": "Dual Wield Mastery",
+   "alt": "Dual Sword Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 165
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta17 wisp.bmp",
+   "name": "Wisp",
+   "fx": [],
+   "sfx": [
+    "wav/effects/skill/tempskron/wisp 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": [
+     "wav/effects/skill/tempskron/wisp 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": "SKILL_PLAY_WISP",
+   "presenters": [],
+   "animIndex": 166
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta20 v_throne.bmp",
+   "name": "Venom Thorn",
+   "alt": "Venom Throne",
+   "fx": [
+    "part:venomthrone"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/venomthorn 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:venomthrone"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/venomthorn 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 167
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta23 alas.bmp",
+   "name": "Alas",
+   "fx": [
+    "part:alas"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/alas 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:alas"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/alas 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": "SKILL_PLAY_ALAS",
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta26 s_shock.bmp",
+   "name": "Soul Shock",
+   "fx": [
+    "part:soulshock"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:soulshock"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 169
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta30 a_mastery.bmp",
+   "name": "Blade Mastery",
+   "alt": "Attack Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 170
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta40 s_sword.bmp",
+   "name": "Finishing Blow",
+   "alt": "Sore Sword",
+   "fx": [
+    "part:soresword"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/soresword 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:soresword"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/soresword 01.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": null,
+   "presenters": [],
+   "animIndex": 171
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta43 b_up.bmp",
+   "name": "Gust Slash",
+   "alt": "Beat Up",
+   "fx": [
+    "part:beatup"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/beatup 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:beatup"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/beatup 01.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": null,
+   "presenters": [],
+   "animIndex": 172
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta46 inpes.bmp",
+   "name": "Inpes",
+   "fx": [
+    "part:inpes",
+    "part:inpes_cast",
+    "part:inpes_keep"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:inpes",
+     "part:inpes_cast",
+     "part:inpes_keep"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": "SKILL_PLAY_INPES",
+   "presenters": [],
+   "animIndex": 173
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta50 blind.bmp",
+   "name": "Deception",
+   "alt": "Blind",
+   "fx": [
+    "part:blind"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/blind 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:blind"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/blind 01.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": "SKILL_PLAY_BLIND",
+   "presenters": [],
+   "animIndex": 174
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta60 f_wind.bmp",
+   "name": "Frost Wind",
+   "fx": [
+    "part:frostwindattack",
+    "part:frostwindbegin"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/frostwind 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:frostwindattack",
+     "part:frostwindbegin"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/frostwind 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 175
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta63 f_mastery.bmp",
+   "name": "Fatal Mastery",
+   "alt": "Critical Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 176
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta66 polluted.bmp",
+   "name": "Pollute",
+   "alt": "Polluted",
+   "fx": [
+    "part:pollutedattack",
+    "part:pollutedbegin"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/polluted 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:pollutedattack",
+     "part:pollutedbegin"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/polluted 01.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": "SKILL_PLAY_POLLUTED",
+   "presenters": [],
+   "animIndex": 177
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta70 p_shadow.bmp",
+   "name": "Ninja Shadow",
+   "alt": "Pasting Shadow",
+   "fx": [
+    "part:pastingshadowattack",
+    "part:pastingshadowbegin"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:pastingshadowattack",
+     "part:pastingshadowbegin"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 178
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts80 j_bomb.bmp",
+   "name": "Shadow Bomb",
+   "fx": [
+    "part:shadowbomb"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/shadowbomb 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:shadowbomb"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/shadowbomb 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts83 r_slash.bmp",
+   "name": "Rising Slash",
+   "fx": [
+    "part:risingslash1",
+    "part:risingslash2"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/risingslash 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:risingslash1",
+     "part:risingslash2"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/risingslash 01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts86 v_stab.bmp",
+   "name": "Violent Stab",
+   "alt": "Violence Stab",
+   "fx": [
+    "part:violencestab1",
+    "part:violencestab2",
+    "part:violencestab3"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:violencestab1",
+     "part:violencestab2",
+     "part:violencestab3"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts90 storm.bmp",
+   "name": "Shadow Storm",
+   "alt": "Storm",
+   "fx": [
+    "part:storm"
+   ],
+   "sfx": [
+    "wav/effects/skill/tempskron/storm 01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:storm"
+    ],
+    "sfx": [
+     "wav/effects/skill/tempskron/storm 01.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms10 darkbolt.bmp",
+   "name": "Dark Bolt",
+   "fx": [
+    "part:darkbolt",
+    "part:darkbolthit"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/darkbolt01.wav",
+    "wav/effects/skill/morion/darkbolt02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/darkbolt01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:darkbolt",
+     "part:darkbolthit"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/darkbolt02.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 183
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms12 darkwave.bmp",
+   "name": "Dark Wave",
+   "fx": [
+    "part:darkwave1",
+    "part:darkwave2",
+    "part:darkwavehit"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/darkwave01.wav",
+    "wav/effects/skill/morion/darkwave02.wav",
+    "wav/effects/skill/morion/darkwave03.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/darkwave01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:darkwave1",
+     "part:darkwave2",
+     "part:darkwavehit"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/darkwave02.wav",
+     "wav/effects/skill/morion/darkwave03.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 184
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms14 curselazy.bmp",
+   "name": "Inertia",
+   "alt": "Curse Lazy",
+   "fx": [
+    "part:curselazy1",
+    "part:curselazy2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/curselazy01.wav",
+    "wav/effects/skill/morion/curselazy02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/curselazy01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:curselazy1",
+     "part:curselazy2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/curselazy02.wav"
+    ]
+   },
+   "confidence": "alt",
+   "code": null,
+   "presenters": [],
+   "animIndex": 185
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms17 i_peace.bmp",
+   "name": "Inner Peace",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 186
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms20 s_flare.bmp",
+   "name": "Spiritual Flare",
+   "fx": [
+    "part:spiritualflare"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:spiritualflare"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 187
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms23 s_manacle.bmp",
+   "name": "Spiritual Manacle",
+   "alt": "Soul Manacle",
+   "fx": [
+    "part:soulmanacle"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:soulmanacle"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 188
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms26 c_hunt.bmp",
+   "name": "Chasing Hunt",
+   "fx": [
+    "part:chasinghunt"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:chasinghunt"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 189
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms30 a_migal.bmp",
+   "name": "Advent Migal",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 190
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms40 r_maker.bmp",
+   "name": "Rainmaker",
+   "alt": "Rain Maker",
+   "fx": [
+    "part:rainmaker1",
+    "part:rainmaker2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/rainmaker01.wav",
+    "wav/effects/skill/morion/rainmaker02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/rainmaker01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:rainmaker1",
+     "part:rainmaker2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/rainmaker02.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 191
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms43 l_ghost.bmp",
+   "name": "Phantom Call",
+   "alt": "Land of Ghost",
+   "fx": [
+    "part:landofghost1",
+    "part:landofghost2"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:landofghost1",
+     "part:landofghost2"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 192
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms46 haunt.bmp",
+   "name": "Haunt",
+   "fx": [
+    "part:haunt1",
+    "part:haunt2"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/haunt01.wav",
+    "wav/effects/skill/morion/haunt02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/haunt01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:haunt1",
+     "part:haunt2"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/haunt02.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 193
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms50 scratch.bmp",
+   "name": "Scratch",
+   "fx": [
+    "part:scratch1",
+    "part:scratch2",
+    "part:scratchaura"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/scratch01.wav",
+    "wav/effects/skill/morion/scratch02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/scratch01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:scratch1",
+     "part:scratch2",
+     "part:scratchaura"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/scratch02.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 194
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms60 r_knight.bmp",
+   "name": "Crimson Knight",
+   "alt": "Recall Bloody Knight",
+   "fx": [
+    "part:recallbloodyknight"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:recallbloodyknight"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 195
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms63 judge.bmp",
+   "name": "Judgement",
+   "fx": [
+    "part:judgementhit",
+    "part:judgementstart"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/judgement01.wav",
+    "wav/effects/skill/morion/judgement02.wav"
+   ],
+   "cast": {
+    "sfx": [
+     "wav/effects/skill/morion/judgement01.wav"
+    ]
+   },
+   "event": {
+    "fx": [
+     "part:judgementhit",
+     "part:judgementstart"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/judgement02.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": 196
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms66 a_midranda.bmp",
+   "name": "Advent Midranda",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 197
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms70 m_pray.bmp",
+   "name": "Mourning Pray",
+   "alt": "Mourning of Pray",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": 198
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms80 creed.bmp",
+   "name": "Creed",
+   "fx": [
+    "part:creedkeep",
+    "part:creedstart"
+   ],
+   "sfx": [
+    "wav/effects/skill/morion/creed01.wav"
+   ],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:creedkeep",
+     "part:creedstart"
+    ],
+    "sfx": [
+     "wav/effects/skill/morion/creed01.wav"
+    ]
+   },
+   "confidence": "exact",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms83 p_deity.bmp",
+   "name": "Press Deity",
+   "alt": "Press of Deity",
+   "fx": [
+    "part:pressofdeity1",
+    "part:pressofdeity2"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:pressofdeity1",
+     "part:pressofdeity2"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms86 g_nail.bmp",
+   "name": "Phantom Nail",
+   "alt": "Ghosty Nail",
+   "fx": [
+    "part:ghostynail1",
+    "part:ghostynail2"
+   ],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [
+     "part:ghostynail1",
+     "part:ghostynail2"
+    ],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms90 h_regene.bmp",
+   "name": "Occult Life",
+   "alt": "High Regeneration",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "none",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma10 lowkick.bmp",
+   "name": "Lowkick",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma12 s_mastery.bmp",
+   "name": "Spirit Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma14 dbblow.bmp",
+   "name": "Double Blow",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma17 h_straight.bmp",
+   "name": "Half Straight",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma20 rage up.bmp",
+   "name": "Rage Up",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma23 patriot.bmp",
+   "name": "Patriot",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma26 r_elbow.bmp",
+   "name": "Rolling Elbow",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma30 s_mastery.bmp",
+   "name": "Speed Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma40 i_bulkup.bmp",
+   "name": "Iron Bulkup",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma43 t_cannon.bmp",
+   "name": "Tiger Cannon",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma46 war cry.bmp",
+   "name": "War Cry",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma50 j_heelkick.bmp",
+   "name": "Jump Heelkick",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma60 combination.bmp",
+   "name": "Combination",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma63 steelers.bmp",
+   "name": "Steelers",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma66 b_check.bmp",
+   "name": "Body Check",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma70 typhoon.bmp",
+   "name": "Typhoon",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma80 d_mastery.bmp",
+   "name": "Defence Mastery",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma83 h_hawk.bmp",
+   "name": "Hunting Hawk",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma86 l_breaking.bmp",
+   "name": "Leg Breaking",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma90 h_training.bmp",
+   "name": "Hawk Training",
+   "fx": [],
+   "sfx": [],
+   "cast": {
+    "sfx": []
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
+   },
+   "confidence": "n/a",
+   "code": null,
+   "presenters": [],
+   "animIndex": null
+  }
+ ]
+}

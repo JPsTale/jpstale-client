@@ -60,6 +60,12 @@ export const CLASS_FLAG: Record<string, number> = {
   Priestess: 0x0080,
   Assassin: 0x0100,
   Shaman: 0x0200,
+  // 第 11 职业 = 格斗家（徒手职业）。依据：m8 组 81 条全部标此位，
+  // 且 m8 #51 的 attack_unarmed 是**双结算帧**（ev=960,3200）—— 徒手两段连击正是
+  // 格斗家的招牌动作。其技能块为 203..222（紧接 m7 的 183..202）。
+  // 注意：class 1 的 Fighter 在中文客户端里不是"格斗家"，勿混。
+  // 我方 assets 仍缺该职业的体型/头部 inx，JOB_DATA 亦无 job 11 条目。
+  MartialArtist: 0x0400,
 };
 
 export function decodeClassFlags(flag: number): string[] {

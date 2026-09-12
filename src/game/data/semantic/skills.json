@@ -1,0 +1,2212 @@
+{
+ "format": "jpstale.skills/1",
+ "note": "技能表：11 职业 × 20。code 为 null 表示未定位（被动或无动画）。code 来源：名称匹配（强）后按同职业代码块顺序补齐（中）。生成物，勿手改。",
+ "stats": {
+  "total": 220,
+  "matched": 117,
+  "positional": 74,
+  "unresolved": 29
+ },
+ "skills": [
+  {
+   "code": null,
+   "classId": 1,
+   "slot": 1,
+   "name": "Melee Mastery",
+   "iconFile": "tf10 m_mastery.bmp",
+   "reqLv": 10,
+   "passive": true,
+   "classDir": "fighter"
+  },
+  {
+   "code": null,
+   "classId": 1,
+   "slot": 2,
+   "name": "Fire Attribute",
+   "iconFile": "tf12 f_attribute.bmp",
+   "reqLv": 12,
+   "passive": true,
+   "classDir": "fighter"
+  },
+  {
+   "code": -3,
+   "classId": 1,
+   "slot": 3,
+   "name": "Raving",
+   "iconFile": "tf14 raving.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 24,
+   "classId": 1,
+   "slot": 4,
+   "name": "Impact",
+   "iconFile": "tf17 impact.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 25,
+   "classId": 1,
+   "slot": 5,
+   "name": "Triple Impact",
+   "iconFile": "tf20 t_impact.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 26,
+   "classId": 1,
+   "slot": 6,
+   "name": "Brutal Swing",
+   "iconFile": "tf23 b_swing.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 3,
+   "classId": 1,
+   "slot": 7,
+   "name": "Roar",
+   "iconFile": "tf26 roar.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 28,
+   "classId": 1,
+   "slot": 8,
+   "name": "Rage of Zecram",
+   "iconFile": "tf30 r_zecram.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 3,
+   "classId": 1,
+   "slot": 9,
+   "name": "Concentration",
+   "iconFile": "tf40 concentration.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 4,
+   "classId": 1,
+   "slot": 10,
+   "name": "Avenging Crash",
+   "iconFile": "tf43 a_crash.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 5,
+   "classId": 1,
+   "slot": 11,
+   "name": "Swiftness",
+   "iconFile": "tf46 s_axe.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 6,
+   "classId": 1,
+   "slot": 12,
+   "name": "Bone Crash",
+   "iconFile": "tf50 b_crash.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 33,
+   "classId": 1,
+   "slot": 13,
+   "name": "Destroyer",
+   "iconFile": "tf60 destoryer.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 34,
+   "classId": 1,
+   "slot": 14,
+   "name": "Berserker",
+   "iconFile": "tf63 berserker.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 35,
+   "classId": 1,
+   "slot": 15,
+   "name": "Cyclone Strike",
+   "iconFile": "tf66 c_strike.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": null,
+   "classId": 1,
+   "slot": 16,
+   "name": "Boost Health",
+   "iconFile": "tf70 b_health.bmp",
+   "reqLv": 70,
+   "passive": true,
+   "classDir": "fighter"
+  },
+  {
+   "code": 11,
+   "classId": 1,
+   "slot": 17,
+   "name": "Charge",
+   "iconFile": "tf100 survival_instinct.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 12,
+   "classId": 1,
+   "slot": 18,
+   "name": "Inner Soul",
+   "iconFile": "tf103 sesmic_impact.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 13,
+   "classId": 1,
+   "slot": 19,
+   "name": "Hellion",
+   "iconFile": "tf106 ruthless_zecram.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 14,
+   "classId": 1,
+   "slot": 20,
+   "name": "Flame Vortex",
+   "iconFile": "tf110 whirlwind.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "fighter"
+  },
+  {
+   "code": 1,
+   "classId": 2,
+   "slot": 1,
+   "name": "Extreme Shield",
+   "iconFile": "tm10 ex_shield.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 2,
+   "classId": 2,
+   "slot": 2,
+   "name": "Mechanic Bomb",
+   "iconFile": "tm12 m_bomb.bmp",
+   "reqLv": 12,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": null,
+   "classId": 2,
+   "slot": 3,
+   "name": "Reverse Engineering",
+   "iconFile": "tm14 p_attribute.bmp",
+   "reqLv": 14,
+   "passive": true,
+   "classDir": "mecha"
+  },
+  {
+   "code": 3,
+   "classId": 2,
+   "slot": 4,
+   "name": "Physical Absorption",
+   "iconFile": "tm17 ph_absorb.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": -1,
+   "classId": 2,
+   "slot": 5,
+   "name": "Great Smash",
+   "iconFile": "tm20 g_smash.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 3,
+   "classId": 2,
+   "slot": 6,
+   "name": "Maximize",
+   "iconFile": "tm23 maximize.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 3,
+   "classId": 2,
+   "slot": 7,
+   "name": "Automation",
+   "iconFile": "tm26 automation.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 8,
+   "classId": 2,
+   "slot": 8,
+   "name": "Spark",
+   "iconFile": "tm30 spark.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 3,
+   "classId": 2,
+   "slot": 9,
+   "name": "Metal Armor",
+   "iconFile": "tm40 m_armor.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 10,
+   "classId": 2,
+   "slot": 10,
+   "name": "Grand Smash",
+   "iconFile": "tm43 grand_smash.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": null,
+   "classId": 2,
+   "slot": 11,
+   "name": "Mechanic Weapon Mastery",
+   "iconFile": "tm44 m_weapon.bmp",
+   "reqLv": 46,
+   "passive": true,
+   "classDir": "mecha"
+  },
+  {
+   "code": 12,
+   "classId": 2,
+   "slot": 12,
+   "name": "Spark Shield",
+   "iconFile": "tm50 s_shield.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 13,
+   "classId": 2,
+   "slot": 13,
+   "name": "Impulsion",
+   "iconFile": "tm60 impulsion.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 14,
+   "classId": 2,
+   "slot": 14,
+   "name": "Compulsion",
+   "iconFile": "tm63 compulsion.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 12,
+   "classId": 2,
+   "slot": 15,
+   "name": "Magnetic Sphere",
+   "iconFile": "tm66 m_sphere.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 16,
+   "classId": 2,
+   "slot": 16,
+   "name": "Metal Golem",
+   "iconFile": "tm70 m_golem.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 11,
+   "classId": 2,
+   "slot": 17,
+   "name": "Precision",
+   "iconFile": "tm100 rupture.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 12,
+   "classId": 2,
+   "slot": 18,
+   "name": "Trine Shield",
+   "iconFile": "tm103 parasit_shot.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 13,
+   "classId": 2,
+   "slot": 19,
+   "name": "Gravitation",
+   "iconFile": "tm106 hardening_shield.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 14,
+   "classId": 2,
+   "slot": 20,
+   "name": "Obliterate",
+   "iconFile": "tm110 magnetic_discharge.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "mecha"
+  },
+  {
+   "code": 61,
+   "classId": 3,
+   "slot": 1,
+   "name": "Scout Hawk",
+   "iconFile": "ta10 s_hawk.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": null,
+   "classId": 3,
+   "slot": 2,
+   "name": "Shooting Mastery",
+   "iconFile": "ta12 s_mastery.bmp",
+   "reqLv": 12,
+   "passive": true,
+   "classDir": "archer"
+  },
+  {
+   "code": 54,
+   "classId": 3,
+   "slot": 3,
+   "name": "Wind Arrow",
+   "iconFile": "ta14 w_arrow.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 55,
+   "classId": 3,
+   "slot": 4,
+   "name": "Perfect Aim",
+   "iconFile": "ta17 p_aim.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": null,
+   "classId": 3,
+   "slot": 5,
+   "name": "Dion's Eye",
+   "iconFile": "ta20 d_eye.bmp",
+   "reqLv": 20,
+   "passive": true,
+   "classDir": "archer"
+  },
+  {
+   "code": 61,
+   "classId": 3,
+   "slot": 6,
+   "name": "Falcon",
+   "iconFile": "ta23 falcon.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 67,
+   "classId": 3,
+   "slot": 7,
+   "name": "Arrow of Rage",
+   "iconFile": "ta26 a_rage.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 59,
+   "classId": 3,
+   "slot": 8,
+   "name": "Avalanche",
+   "iconFile": "ta30 avalanchie.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 69,
+   "classId": 3,
+   "slot": 9,
+   "name": "Elemental Shot",
+   "iconFile": "ta40 e_shot.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 61,
+   "classId": 3,
+   "slot": 10,
+   "name": "Golden Falcon",
+   "iconFile": "ta43 g_falcon.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 71,
+   "classId": 3,
+   "slot": 11,
+   "name": "Bomb Shot",
+   "iconFile": "ta46 b_shot.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 69,
+   "classId": 3,
+   "slot": 12,
+   "name": "Perforation",
+   "iconFile": "ta50 perforation.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 64,
+   "classId": 3,
+   "slot": 13,
+   "name": "Wolverine",
+   "iconFile": "ta60 r_wolverin.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": null,
+   "classId": 3,
+   "slot": 14,
+   "name": "Evasion Mastery",
+   "iconFile": "ta63 e_mastery.bmp",
+   "reqLv": 63,
+   "passive": true,
+   "classDir": "archer"
+  },
+  {
+   "code": 75,
+   "classId": 3,
+   "slot": 15,
+   "name": "Phoenix Shot",
+   "iconFile": "ta66 p_shot.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 76,
+   "classId": 3,
+   "slot": 16,
+   "name": "Force of Nature",
+   "iconFile": "ta70 f_o_nature.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 68,
+   "classId": 3,
+   "slot": 17,
+   "name": "Stun Arrow",
+   "iconFile": "ta100 lethal_sight.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 69,
+   "classId": 3,
+   "slot": 18,
+   "name": "Phoenix Speed",
+   "iconFile": "ta103 fierce_wind.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 70,
+   "classId": 3,
+   "slot": 19,
+   "name": "Leap Shot",
+   "iconFile": "ta106 entailing_roots.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 71,
+   "classId": 3,
+   "slot": 20,
+   "name": "Solar Arrow",
+   "iconFile": "ta110 bombardment.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "archer"
+  },
+  {
+   "code": 41,
+   "classId": 4,
+   "slot": 1,
+   "name": "Pike Wind",
+   "iconFile": "tp10 p_wind.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": null,
+   "classId": 4,
+   "slot": 2,
+   "name": "Ice Attribute",
+   "iconFile": "tp12 i_attribute.bmp",
+   "reqLv": 12,
+   "passive": true,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 34,
+   "classId": 4,
+   "slot": 3,
+   "name": "Critical Hit",
+   "iconFile": "tp14 cri_hit.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 44,
+   "classId": 4,
+   "slot": 4,
+   "name": "Jumping Crash",
+   "iconFile": "tp17 j_crash.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 45,
+   "classId": 4,
+   "slot": 5,
+   "name": "Ground Pike",
+   "iconFile": "tp20 g_pike.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 46,
+   "classId": 4,
+   "slot": 6,
+   "name": "Tornado",
+   "iconFile": "tp23 tornado.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": null,
+   "classId": 4,
+   "slot": 7,
+   "name": "Weapon Defense Mastery",
+   "iconFile": "tp26 w_d_mastery.bmp",
+   "reqLv": 26,
+   "passive": true,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 39,
+   "classId": 4,
+   "slot": 8,
+   "name": "Expansion",
+   "iconFile": "tp30 expasion.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 45,
+   "classId": 4,
+   "slot": 9,
+   "name": "Venom Spear",
+   "iconFile": "tp40 v_spear.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 41,
+   "classId": 4,
+   "slot": 10,
+   "name": "Vanish",
+   "iconFile": "tp43 vanish.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": null,
+   "classId": 4,
+   "slot": 11,
+   "name": "Critical Mastery",
+   "iconFile": "tp46 c_mastery.bmp",
+   "reqLv": 46,
+   "passive": true,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 43,
+   "classId": 4,
+   "slot": 12,
+   "name": "Chain Lancer",
+   "iconFile": "tp50 c_lance.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 44,
+   "classId": 4,
+   "slot": 13,
+   "name": "Assassin's Eye",
+   "iconFile": "tp60 a_eye.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 54,
+   "classId": 4,
+   "slot": 14,
+   "name": "Charging Strike",
+   "iconFile": "tp63 c_strike.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 55,
+   "classId": 4,
+   "slot": 15,
+   "name": "Vague",
+   "iconFile": "tp66 vague.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 56,
+   "classId": 4,
+   "slot": 16,
+   "name": "Shadow Master",
+   "iconFile": "tp70 s_master.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": null,
+   "classId": 4,
+   "slot": 17,
+   "name": "Attack Rating Mastery",
+   "iconFile": "tp100 ring_spears.bmp",
+   "reqLv": 80,
+   "passive": true,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 49,
+   "classId": 4,
+   "slot": 18,
+   "name": "Lethal Strike",
+   "iconFile": "tp103 focus.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 50,
+   "classId": 4,
+   "slot": 19,
+   "name": "Dodge",
+   "iconFile": "tp106 death_master.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 51,
+   "classId": 4,
+   "slot": 20,
+   "name": "Vorpal Dive",
+   "iconFile": "tp110 twister.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "pikeman"
+  },
+  {
+   "code": 103,
+   "classId": 5,
+   "slot": 1,
+   "name": "Shield Strike",
+   "iconFile": "ma10 s_strike.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 94,
+   "classId": 5,
+   "slot": 2,
+   "name": "Farina",
+   "iconFile": "ma12 farina.bmp",
+   "reqLv": 12,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": null,
+   "classId": 5,
+   "slot": 3,
+   "name": "Throwing Mastery",
+   "iconFile": "ma14 t_mastery.bmp",
+   "reqLv": 14,
+   "passive": true,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 96,
+   "classId": 5,
+   "slot": 4,
+   "name": "Vigor Spear",
+   "iconFile": "ma17 v_spear.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 107,
+   "classId": 5,
+   "slot": 5,
+   "name": "Windy",
+   "iconFile": "ma20 windy.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 108,
+   "classId": 5,
+   "slot": 6,
+   "name": "Twist Javelin",
+   "iconFile": "ma23 t_javelin.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 103,
+   "classId": 5,
+   "slot": 7,
+   "name": "Soul Sucker",
+   "iconFile": "ma26 s_sucker.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 100,
+   "classId": 5,
+   "slot": 8,
+   "name": "Fire Javelin",
+   "iconFile": "ma30 f_javelin.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 108,
+   "classId": 5,
+   "slot": 9,
+   "name": "Split Javelin",
+   "iconFile": "ma40 split_javelin.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 107,
+   "classId": 5,
+   "slot": 10,
+   "name": "Triumph of Valhalla",
+   "iconFile": "ma43 t_of_valhalla.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 108,
+   "classId": 5,
+   "slot": 11,
+   "name": "Lightning Javelin",
+   "iconFile": "ma46 l_javelin.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 108,
+   "classId": 5,
+   "slot": 12,
+   "name": "Storm Javelin",
+   "iconFile": "ma50 storm_javelin.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 107,
+   "classId": 5,
+   "slot": 13,
+   "name": "Hall of Valhalla",
+   "iconFile": "ma60 h_o_valhalla.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 106,
+   "classId": 5,
+   "slot": 14,
+   "name": "Extreme Rage",
+   "iconFile": "ma63 x_rage.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 107,
+   "classId": 5,
+   "slot": 15,
+   "name": "Frost Javelin",
+   "iconFile": "ma66 f_javelin.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 118,
+   "classId": 5,
+   "slot": 16,
+   "name": "Vengeance",
+   "iconFile": "ma70 vengeance.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 109,
+   "classId": 5,
+   "slot": 17,
+   "name": "Chimera of Light",
+   "iconFile": "ma100 s_tiger.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 110,
+   "classId": 5,
+   "slot": 18,
+   "name": "Poison Javelin",
+   "iconFile": "ma103 golden_apple.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 111,
+   "classId": 5,
+   "slot": 19,
+   "name": "Amazon Rage",
+   "iconFile": "ma106 plague_javelin.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "atalanta"
+  },
+  {
+   "code": null,
+   "classId": 5,
+   "slot": 20,
+   "name": "Javelin Mastery",
+   "iconFile": "ma110 combo_javelin.bmp",
+   "reqLv": 90,
+   "passive": true,
+   "classDir": "atalanta"
+  },
+  {
+   "code": 81,
+   "classId": 6,
+   "slot": 1,
+   "name": "Sword Blast",
+   "iconFile": "mn10 s_blast.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 3,
+   "classId": 6,
+   "slot": 2,
+   "name": "Holy Body",
+   "iconFile": "mn12 h_body.bmp",
+   "reqLv": 12,
+   "passive": true,
+   "classDir": "knight"
+  },
+  {
+   "code": null,
+   "classId": 6,
+   "slot": 3,
+   "name": "Physical Training",
+   "iconFile": "mn14 p_traning.bmp",
+   "reqLv": 14,
+   "passive": true,
+   "classDir": "knight"
+  },
+  {
+   "code": 84,
+   "classId": 6,
+   "slot": 4,
+   "name": "Double Crash",
+   "iconFile": "mn17 d_crash.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": -8,
+   "classId": 6,
+   "slot": 5,
+   "name": "Holy Valor",
+   "iconFile": "mn20 h_valor.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 86,
+   "classId": 6,
+   "slot": 6,
+   "name": "Brandish",
+   "iconFile": "mn23 brandish.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 87,
+   "classId": 6,
+   "slot": 7,
+   "name": "Piercing",
+   "iconFile": "mn26 piercing.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 9,
+   "classId": 6,
+   "slot": 8,
+   "name": "Drastic Spirit",
+   "iconFile": "mn30 d_spirit.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": null,
+   "classId": 6,
+   "slot": 9,
+   "name": "Sword Mastery",
+   "iconFile": "mn40 s_mastery.bmp",
+   "reqLv": 40,
+   "passive": true,
+   "classDir": "knight"
+  },
+  {
+   "code": -3,
+   "classId": 6,
+   "slot": 10,
+   "name": "Divine Shield",
+   "iconFile": "mn43 d_inhalation.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 91,
+   "classId": 6,
+   "slot": 11,
+   "name": "Holy Incantation",
+   "iconFile": "mn46 h_incantation.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 92,
+   "classId": 6,
+   "slot": 12,
+   "name": "Grand Cross",
+   "iconFile": "mn50 g_cross.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 98,
+   "classId": 6,
+   "slot": 13,
+   "name": "Sword of Justice",
+   "iconFile": "mn60 s_o_justice.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 1,
+   "classId": 6,
+   "slot": 14,
+   "name": "Godly Shield",
+   "iconFile": "mn63 g_shield.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 2,
+   "classId": 6,
+   "slot": 15,
+   "name": "God's Blessing",
+   "iconFile": "mn66 g_bless.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 93,
+   "classId": 6,
+   "slot": 16,
+   "name": "Divine Piercing",
+   "iconFile": "mn70 d_piercing.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 4,
+   "classId": 6,
+   "slot": 17,
+   "name": "Lightning Sword",
+   "iconFile": "mn100 holy_conviction.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": null,
+   "classId": 6,
+   "slot": 18,
+   "name": "Undead Bane",
+   "iconFile": "mn103 divine_inquisiton.bmp",
+   "reqLv": 83,
+   "passive": true,
+   "classDir": "knight"
+  },
+  {
+   "code": 6,
+   "classId": 6,
+   "slot": 19,
+   "name": "Zealous Reach",
+   "iconFile": "mn106 glorious_shield.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 7,
+   "classId": 6,
+   "slot": 20,
+   "name": "Holy Aura",
+   "iconFile": "mn110 divine_cross.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "knight"
+  },
+  {
+   "code": 143,
+   "classId": 7,
+   "slot": 1,
+   "name": "Agony",
+   "iconFile": "mm10 agony.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 144,
+   "classId": 7,
+   "slot": 2,
+   "name": "Fire Bolt",
+   "iconFile": "mm12 firebolt.bmp",
+   "reqLv": 12,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 143,
+   "classId": 7,
+   "slot": 3,
+   "name": "Zenith",
+   "iconFile": "mm14 zenith.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 146,
+   "classId": 7,
+   "slot": 4,
+   "name": "Fire Ball",
+   "iconFile": "mm17 fireball.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": null,
+   "classId": 7,
+   "slot": 5,
+   "name": "Mental Mastery",
+   "iconFile": "mm20 m_mastery.bmp",
+   "reqLv": 20,
+   "passive": true,
+   "classDir": "magician"
+  },
+  {
+   "code": 142,
+   "classId": 7,
+   "slot": 6,
+   "name": "Watornado",
+   "iconFile": "mm23 watornado.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 149,
+   "classId": 7,
+   "slot": 7,
+   "name": "Enchant Weapon",
+   "iconFile": "mm26 e_weapon.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 144,
+   "classId": 7,
+   "slot": 8,
+   "name": "Death Ray",
+   "iconFile": "mm30 d_ray.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 149,
+   "classId": 7,
+   "slot": 9,
+   "name": "Energy Shield",
+   "iconFile": "mm40 e_shield.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 152,
+   "classId": 7,
+   "slot": 10,
+   "name": "Diastrophism",
+   "iconFile": "mm43 diastrophism.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 149,
+   "classId": 7,
+   "slot": 11,
+   "name": "Spirit Elemental",
+   "iconFile": "mm46 s_elemental.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 154,
+   "classId": 7,
+   "slot": 12,
+   "name": "Dancing Sword",
+   "iconFile": "mm50 d_sword.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 149,
+   "classId": 7,
+   "slot": 13,
+   "name": "Fire Elemental",
+   "iconFile": "mm60 f_elemental.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 156,
+   "classId": 7,
+   "slot": 14,
+   "name": "Flame Wave",
+   "iconFile": "mm63 f_wave.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 154,
+   "classId": 7,
+   "slot": 15,
+   "name": "Distortion",
+   "iconFile": "mm66 distortion.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 152,
+   "classId": 7,
+   "slot": 16,
+   "name": "Meteorite",
+   "iconFile": "mm70 meteo.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 153,
+   "classId": 7,
+   "slot": 17,
+   "name": "Magic Source",
+   "iconFile": "mm100 wizardtrance.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": null,
+   "classId": 7,
+   "slot": 18,
+   "name": "Amplify",
+   "iconFile": "mm103 stone_skin.bmp",
+   "reqLv": 83,
+   "passive": true,
+   "classDir": "magician"
+  },
+  {
+   "code": 155,
+   "classId": 7,
+   "slot": 19,
+   "name": "Stone Spike",
+   "iconFile": "mm106 redray.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 156,
+   "classId": 7,
+   "slot": 20,
+   "name": "Dance of Calamity",
+   "iconFile": "mm110 cataclysm.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "magician"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 1,
+   "name": "Healing",
+   "iconFile": "mp10 healing.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 124,
+   "classId": 8,
+   "slot": 2,
+   "name": "Holy Bolt",
+   "iconFile": "mp12 holybolt.bmp",
+   "reqLv": 12,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 124,
+   "classId": 8,
+   "slot": 3,
+   "name": "Multi Spark",
+   "iconFile": "mp14 m_spark.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 4,
+   "name": "Holy Mind",
+   "iconFile": "mp17 holymind.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": null,
+   "classId": 8,
+   "slot": 5,
+   "name": "Meditation",
+   "iconFile": "mp20 meditation.bmp",
+   "reqLv": 20,
+   "passive": true,
+   "classDir": "priestess"
+  },
+  {
+   "code": 128,
+   "classId": 8,
+   "slot": 6,
+   "name": "Divine Lightning",
+   "iconFile": "mp23 d_lightning.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 7,
+   "name": "Holy Reflection",
+   "iconFile": "mp26 h_reflection.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 8,
+   "name": "Grand Healing",
+   "iconFile": "mp30 g_healing.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 131,
+   "classId": 8,
+   "slot": 9,
+   "name": "Vigor Ball",
+   "iconFile": "mp40 v_ball.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 10,
+   "name": "Resurrection",
+   "iconFile": "mp43 resurrection.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 11,
+   "name": "Extinction",
+   "iconFile": "mp46 extinction.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 123,
+   "classId": 8,
+   "slot": 12,
+   "name": "Virtual Life",
+   "iconFile": "mp50 v_life.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 135,
+   "classId": 8,
+   "slot": 13,
+   "name": "Glacial Spike",
+   "iconFile": "mp60 g_spike.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 136,
+   "classId": 8,
+   "slot": 14,
+   "name": "Regeneration Field",
+   "iconFile": "mp63 r_field.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 137,
+   "classId": 8,
+   "slot": 15,
+   "name": "Chain Lightning",
+   "iconFile": "mp66 c_lightning.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 138,
+   "classId": 8,
+   "slot": 16,
+   "name": "Summon Muspell",
+   "iconFile": "mp70 s_muspell.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 128,
+   "classId": 8,
+   "slot": 17,
+   "name": "Divine Force",
+   "iconFile": "mp100 ice_elemental.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 129,
+   "classId": 8,
+   "slot": 18,
+   "name": "Ice Meteorite",
+   "iconFile": "mp103 lightning_surge.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 130,
+   "classId": 8,
+   "slot": 19,
+   "name": "Thunderstorm",
+   "iconFile": "mp106 heavenly_light.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 131,
+   "classId": 8,
+   "slot": 20,
+   "name": "Divine Cleansing",
+   "iconFile": "mp110 consecration.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "priestess"
+  },
+  {
+   "code": 158,
+   "classId": 9,
+   "slot": 1,
+   "name": "Stinger",
+   "iconFile": "ta10 stingger.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 159,
+   "classId": 9,
+   "slot": 2,
+   "name": "Double Blow",
+   "iconFile": "ta12 r_hit.bmp",
+   "reqLv": 12,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": null,
+   "classId": 9,
+   "slot": 3,
+   "name": "Dual Wield Mastery",
+   "iconFile": "ta14 d_mastery.bmp",
+   "reqLv": 14,
+   "passive": true,
+   "classDir": "assassin"
+  },
+  {
+   "code": 166,
+   "classId": 9,
+   "slot": 4,
+   "name": "Wisp",
+   "iconFile": "ta17 wisp.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 162,
+   "classId": 9,
+   "slot": 5,
+   "name": "Venom Thorn",
+   "iconFile": "ta20 v_throne.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 168,
+   "classId": 9,
+   "slot": 6,
+   "name": "Alas",
+   "iconFile": "ta23 alas.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 169,
+   "classId": 9,
+   "slot": 7,
+   "name": "Soul Shock",
+   "iconFile": "ta26 s_shock.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": null,
+   "classId": 9,
+   "slot": 8,
+   "name": "Blade Mastery",
+   "iconFile": "ta30 a_mastery.bmp",
+   "reqLv": 30,
+   "passive": true,
+   "classDir": "assassin"
+  },
+  {
+   "code": 166,
+   "classId": 9,
+   "slot": 9,
+   "name": "Finishing Blow",
+   "iconFile": "ta40 s_sword.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 167,
+   "classId": 9,
+   "slot": 10,
+   "name": "Gust Slash",
+   "iconFile": "ta43 b_up.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 168,
+   "classId": 9,
+   "slot": 11,
+   "name": "Inpes",
+   "iconFile": "ta46 inpes.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 169,
+   "classId": 9,
+   "slot": 12,
+   "name": "Deception",
+   "iconFile": "ta50 blind.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 175,
+   "classId": 9,
+   "slot": 13,
+   "name": "Frost Wind",
+   "iconFile": "ta60 f_wind.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": null,
+   "classId": 9,
+   "slot": 14,
+   "name": "Fatal Mastery",
+   "iconFile": "ta63 f_mastery.bmp",
+   "reqLv": 63,
+   "passive": true,
+   "classDir": "assassin"
+  },
+  {
+   "code": 172,
+   "classId": 9,
+   "slot": 15,
+   "name": "Pollute",
+   "iconFile": "ta66 polluted.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 173,
+   "classId": 9,
+   "slot": 16,
+   "name": "Ninja Shadow",
+   "iconFile": "ta70 p_shadow.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 179,
+   "classId": 9,
+   "slot": 17,
+   "name": "Shadow Bomb",
+   "iconFile": "ts80 j_bomb.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 180,
+   "classId": 9,
+   "slot": 18,
+   "name": "Rising Slash",
+   "iconFile": "ts83 r_slash.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 176,
+   "classId": 9,
+   "slot": 19,
+   "name": "Violent Stab",
+   "iconFile": "ts86 v_stab.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 177,
+   "classId": 9,
+   "slot": 20,
+   "name": "Shadow Storm",
+   "iconFile": "ts90 storm.bmp",
+   "reqLv": 90,
+   "passive": false,
+   "classDir": "assassin"
+  },
+  {
+   "code": 183,
+   "classId": 10,
+   "slot": 1,
+   "name": "Dark Bolt",
+   "iconFile": "ms10 darkbolt.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 184,
+   "classId": 10,
+   "slot": 2,
+   "name": "Dark Wave",
+   "iconFile": "ms12 darkwave.bmp",
+   "reqLv": 12,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 185,
+   "classId": 10,
+   "slot": 3,
+   "name": "Inertia",
+   "iconFile": "ms14 curselazy.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": null,
+   "classId": 10,
+   "slot": 4,
+   "name": "Inner Peace",
+   "iconFile": "ms17 i_peace.bmp",
+   "reqLv": 17,
+   "passive": true,
+   "classDir": "shaman"
+  },
+  {
+   "code": 187,
+   "classId": 10,
+   "slot": 5,
+   "name": "Spiritual Flare",
+   "iconFile": "ms20 s_flare.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 188,
+   "classId": 10,
+   "slot": 6,
+   "name": "Spiritual Manacle",
+   "iconFile": "ms23 s_manacle.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 189,
+   "classId": 10,
+   "slot": 7,
+   "name": "Chasing Hunt",
+   "iconFile": "ms26 c_hunt.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 190,
+   "classId": 10,
+   "slot": 8,
+   "name": "Advent Migal",
+   "iconFile": "ms30 a_migal.bmp",
+   "reqLv": 30,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 191,
+   "classId": 10,
+   "slot": 9,
+   "name": "Rainmaker",
+   "iconFile": "ms40 r_maker.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 192,
+   "classId": 10,
+   "slot": 10,
+   "name": "Phantom Call",
+   "iconFile": "ms43 l_ghost.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 193,
+   "classId": 10,
+   "slot": 11,
+   "name": "Haunt",
+   "iconFile": "ms46 haunt.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 194,
+   "classId": 10,
+   "slot": 12,
+   "name": "Scratch",
+   "iconFile": "ms50 scratch.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 195,
+   "classId": 10,
+   "slot": 13,
+   "name": "Crimson Knight",
+   "iconFile": "ms60 r_knight.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 196,
+   "classId": 10,
+   "slot": 14,
+   "name": "Judgement",
+   "iconFile": "ms63 judge.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 197,
+   "classId": 10,
+   "slot": 15,
+   "name": "Advent Midranda",
+   "iconFile": "ms66 a_midranda.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 198,
+   "classId": 10,
+   "slot": 16,
+   "name": "Mourning Pray",
+   "iconFile": "ms70 m_pray.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 199,
+   "classId": 10,
+   "slot": 17,
+   "name": "Creed",
+   "iconFile": "ms80 creed.bmp",
+   "reqLv": 80,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 200,
+   "classId": 10,
+   "slot": 18,
+   "name": "Press Deity",
+   "iconFile": "ms83 p_deity.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": 201,
+   "classId": 10,
+   "slot": 19,
+   "name": "Phantom Nail",
+   "iconFile": "ms86 g_nail.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "shaman"
+  },
+  {
+   "code": null,
+   "classId": 10,
+   "slot": 20,
+   "name": "Occult Life",
+   "iconFile": "ms90 h_regene.bmp",
+   "reqLv": 90,
+   "passive": true,
+   "classDir": "shaman"
+  },
+  {
+   "code": 203,
+   "classId": 11,
+   "slot": 1,
+   "name": "Lowkick",
+   "iconFile": "tma10 lowkick.bmp",
+   "reqLv": 10,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": null,
+   "classId": 11,
+   "slot": 2,
+   "name": "Spirit Mastery",
+   "iconFile": "tma12 s_mastery.bmp",
+   "reqLv": 12,
+   "passive": true,
+   "classDir": "martial"
+  },
+  {
+   "code": 205,
+   "classId": 11,
+   "slot": 3,
+   "name": "Double Blow",
+   "iconFile": "tma14 dbblow.bmp",
+   "reqLv": 14,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 206,
+   "classId": 11,
+   "slot": 4,
+   "name": "Half Straight",
+   "iconFile": "tma17 h_straight.bmp",
+   "reqLv": 17,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 207,
+   "classId": 11,
+   "slot": 5,
+   "name": "Rage Up",
+   "iconFile": "tma20 rage up.bmp",
+   "reqLv": 20,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 208,
+   "classId": 11,
+   "slot": 6,
+   "name": "Patriot",
+   "iconFile": "tma23 patriot.bmp",
+   "reqLv": 23,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 209,
+   "classId": 11,
+   "slot": 7,
+   "name": "Rolling Elbow",
+   "iconFile": "tma26 r_elbow.bmp",
+   "reqLv": 26,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": null,
+   "classId": 11,
+   "slot": 8,
+   "name": "Speed Mastery",
+   "iconFile": "tma30 s_mastery.bmp",
+   "reqLv": 30,
+   "passive": true,
+   "classDir": "martial"
+  },
+  {
+   "code": 211,
+   "classId": 11,
+   "slot": 9,
+   "name": "Iron Bulkup",
+   "iconFile": "tma40 i_bulkup.bmp",
+   "reqLv": 40,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 212,
+   "classId": 11,
+   "slot": 10,
+   "name": "Tiger Cannon",
+   "iconFile": "tma43 t_cannon.bmp",
+   "reqLv": 43,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 213,
+   "classId": 11,
+   "slot": 11,
+   "name": "War Cry",
+   "iconFile": "tma46 war cry.bmp",
+   "reqLv": 46,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 214,
+   "classId": 11,
+   "slot": 12,
+   "name": "Jump Heelkick",
+   "iconFile": "tma50 j_heelkick.bmp",
+   "reqLv": 50,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 215,
+   "classId": 11,
+   "slot": 13,
+   "name": "Combination",
+   "iconFile": "tma60 combination.bmp",
+   "reqLv": 60,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 216,
+   "classId": 11,
+   "slot": 14,
+   "name": "Steelers",
+   "iconFile": "tma63 steelers.bmp",
+   "reqLv": 63,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 217,
+   "classId": 11,
+   "slot": 15,
+   "name": "Body Check",
+   "iconFile": "tma66 b_check.bmp",
+   "reqLv": 66,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 218,
+   "classId": 11,
+   "slot": 16,
+   "name": "Typhoon",
+   "iconFile": "tma70 typhoon.bmp",
+   "reqLv": 70,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": null,
+   "classId": 11,
+   "slot": 17,
+   "name": "Defence Mastery",
+   "iconFile": "tma80 d_mastery.bmp",
+   "reqLv": 80,
+   "passive": true,
+   "classDir": "martial"
+  },
+  {
+   "code": 220,
+   "classId": 11,
+   "slot": 18,
+   "name": "Hunting Hawk",
+   "iconFile": "tma83 h_hawk.bmp",
+   "reqLv": 83,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": 221,
+   "classId": 11,
+   "slot": 19,
+   "name": "Leg Breaking",
+   "iconFile": "tma86 l_breaking.bmp",
+   "reqLv": 86,
+   "passive": false,
+   "classDir": "martial"
+  },
+  {
+   "code": null,
+   "classId": 11,
+   "slot": 20,
+   "name": "Hawk Training",
+   "iconFile": "tma90 h_training.bmp",
+   "reqLv": 90,
+   "passive": true,
+   "classDir": "martial"
+  }
+ ]
+}

@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import { parseSMD } from '../core/smd-parser';
-import { cachedFetch } from '../core/asset-cache';
+import { parseSMDAsync } from './smd-loader.js';
 import { loadGameTexture } from '../render/texture-loader';
 import { MapRenderer, type MatConfig } from '../render/map-renderer';
 
@@ -31,8 +31,7 @@ export async function getMapWorldBounds(smdPath: string): Promise<[number, numbe
   const cached = worldBoundsCache.get(smdPath);
   if (cached) return cached;
   try {
-    const buf = await cachedFetch(smdPath);
-    const data = parseSMD(buf);
+    const data = await parseSMDAsync(smdPath);
     const b = data.bounds;
     const S = 1 / 256;
     const xMin = b.minX * S, xMax = b.maxX * S;
@@ -50,8 +49,7 @@ export async function getMapWorldBounds(smdPath: string): Promise<[number, numbe
  * 进图时 loadMap 命中缓存快速构建，无需等待下载。
  */
 export async function preloadMapData(smdPath: string): Promise<void> {
-  const buf = await cachedFetch(smdPath); // 缓存 SMD
-  const data = parseSMD(buf);
+  const data = await parseSMDAsync(smdPath);   // Worker 解析 + IndexedDB 缓存
   const urls = new Set<string>();
   for (let i = 0; i < data.materials.length; i++) {
     const mat = data.materials[i];
@@ -66,9 +64,8 @@ export async function preloadMapData(smdPath: string): Promise<void> {
 }
 
 /** 加载任意 field SMD 地图（smdPath 如 '/res/field/ricarten/village-2.smd'） */
-export async function loadMap(scene: THREE.Scene, smdPath: string): Promise<Fore1Map> {
-  const buf = await cachedFetch(smdPath);
-  const data = parseSMD(buf);
+export async function loadMap(scene: THREE.Scene, smdPath: string, shouldCancel?: () => boolean): Promise<Fore1Map | null> {
+  const data = await parseSMDAsync(smdPath);
 
   // 收集纹理 URL(跳过不可见材质 useState & 0x0400)
   const texUrls = new Map<number, string>();
@@ -91,7 +88,9 @@ export async function loadMap(scene: THREE.Scene, smdPath: string): Promise<Fore
   }));
 
   const mr = new MapRenderer(scene);
-  mr.build(data, texMap, (matIdx, mat): MatConfig | null => {
+  // **分帧构建**（每构建几毫秒让出一帧）：实测该阶段占一次地图加载的绝大部分
+  // （desert/de-3.smd：build 297ms vs parseSMD 14.5ms），一次性做完就是"跑到边界卡一下"。
+  const built = await mr.buildAsync(data, texMap, (matIdx, mat): MatConfig | null => {
     if (mat && (mat.useState & 0x0400)) return null;
     const hasTex = texUrls.has(matIdx);
     if (!hasTex && !(mat && mat.animTexCounter > 0)) return null;
@@ -122,7 +121,14 @@ export async function loadMap(scene: THREE.Scene, smdPath: string): Promise<Fore
       blendType: mat ? mat.blendType : 0,
       hasAnimation: mat.animTexCounter > 0,
     };
-  });
+  }, { shouldCancel });
+
+  if (!built) {
+    // 构建期间被更新的加载取代（玩家跑远/换了图）→ 丢弃：把已建的几何与材质释放掉，
+    // 不留半张地图在场景里（否则会看到"残图"，且 dispose 掉的 geometry 还在显存里）。
+    mr.dispose();
+    return null;
+  }
 
   // 帧动画 mesh 绑定
   const animatedMeshes: THREE.Mesh[] = [];
@@ -143,7 +149,7 @@ export async function loadMap(scene: THREE.Scene, smdPath: string): Promise<Fore
 }
 
 /** 兼容旧接口：加载 fore-1 */
-export async function loadFore1(scene: THREE.Scene): Promise<Fore1Map> {
+export async function loadFore1(scene: THREE.Scene): Promise<Fore1Map | null> {
   return loadMap(scene, '/res/field/forest/fore-1.smd');
 }
 

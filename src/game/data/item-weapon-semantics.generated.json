@@ -1,0 +1,4640 @@
+{
+ "note": "武器语义表（权威来源：gamedb.itemlist 的 weaponclass/category/classitem/modelposition/primaryspec）。生成物，勿手改；重新生成用 npx tsx scripts/extract-item-semantics.ts。字段：type=武器类型（Bows 内按 modelposition 2=弓/4=弩 细分）、hand=单双手、attackClass=攻击行为类、primaryClass=主用职业、sheath=挂点（modelposition）、handAttached=是否手持。注意：Phantom（萨满图腾）漂在角色背后，不挂手骨，handAttached=false；且 sItem 索引表（sitem-weapon-index.ts）只覆盖 0x0101~0x0108，Phantom(0x0109)/Dagger(0x010A) 无 sItem 索引，故永远不会出现在 .inx 的 itemCodeList 里。",
+ "source": "ssh:root@192.168.31.10",
+ "weaponCount": 316,
+ "categories": [
+  {
+   "category": "Axes/AXE",
+   "type": "AXE",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "Fighter",
+   "count": 27
+  },
+  {
+   "category": "Quest/AXE",
+   "type": "AXE",
+   "weaponClass": "MELEE",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Claws/CLAW",
+   "type": "CLAW",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H"
+   ],
+   "primary": "Mechanician",
+   "count": 26
+  },
+  {
+   "category": "Quest/CLAW",
+   "type": "CLAW",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Hammers/HAMMER",
+   "type": "HAMMER",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "Mechanician",
+   "count": 28
+  },
+  {
+   "category": "Quest/HAMMER",
+   "type": "HAMMER",
+   "weaponClass": "MELEE",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Wands/STAFF",
+   "type": "STAFF",
+   "weaponClass": "MAGIC",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "none",
+   "count": 32
+  },
+  {
+   "category": "Quest/STAFF",
+   "type": "STAFF",
+   "weaponClass": "MAGIC",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Scythes/SCYTHE",
+   "type": "SCYTHE",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "Pikeman",
+   "count": 31
+  },
+  {
+   "category": "Quest/SCYTHE",
+   "type": "SCYTHE",
+   "weaponClass": "MELEE",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Bows/BOW",
+   "type": "BOW",
+   "weaponClass": "RANGED",
+   "hand": [
+    "2H"
+   ],
+   "primary": "Archer",
+   "count": 23
+  },
+  {
+   "category": "Bows/CROSSBOW",
+   "type": "CROSSBOW",
+   "weaponClass": "RANGED",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "Archer",
+   "count": 9
+  },
+  {
+   "category": "Quest/BOW",
+   "type": "BOW",
+   "weaponClass": "RANGED",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Swords/SWORD",
+   "type": "SWORD",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "Knight",
+   "count": 38
+  },
+  {
+   "category": "Quest/SWORD",
+   "type": "SWORD",
+   "weaponClass": "MELEE",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Javelins/JAVELIN",
+   "type": "JAVELIN",
+   "weaponClass": "RANGED",
+   "hand": [
+    "1H"
+   ],
+   "primary": "Atalanta",
+   "count": 31
+  },
+  {
+   "category": "Quest/JAVELIN",
+   "type": "JAVELIN",
+   "weaponClass": "RANGED",
+   "hand": [
+    "1H"
+   ],
+   "primary": "none",
+   "count": 1
+  },
+  {
+   "category": "Phantom/PHANTOM",
+   "type": "PHANTOM",
+   "weaponClass": "MAGIC",
+   "hand": [
+    "1H",
+    "2H"
+   ],
+   "primary": "Shaman",
+   "count": 31
+  },
+  {
+   "category": "Dagger/DAGGER",
+   "type": "DAGGER",
+   "weaponClass": "MELEE",
+   "hand": [
+    "2H"
+   ],
+   "primary": "Assassin",
+   "count": 31
+  },
+  {
+   "category": "Quest/DAGGER",
+   "type": "DAGGER",
+   "weaponClass": "MELEE",
+   "hand": [
+    "2H"
+   ],
+   "primary": "none",
+   "count": 1
+  }
+ ],
+ "byIdcode": {
+  "16843008": {
+   "name": "Stone Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16843264": {
+   "name": "Steel Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16843520": {
+   "name": "Battle Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16843776": {
+   "name": "War Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16844032": {
+   "name": "Double-Sided War Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16844288": {
+   "name": "Bat Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16844544": {
+   "name": "Mechanic Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16844800": {
+   "name": "Demon Hunter",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16845056": {
+   "name": "Great Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16845312": {
+   "name": "Diamond Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16845568": {
+   "name": "Jagged Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16845824": {
+   "name": "Cleaver",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16846080": {
+   "name": "Gigantic Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16846336": {
+   "name": "Tomahawk Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16846592": {
+   "name": "Titan Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16846848": {
+   "name": "Chaos Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16847104": {
+   "name": "Ancient Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16847360": {
+   "name": "Relic Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16847616": {
+   "name": "Extreme Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16847872": {
+   "name": "Minotaur Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16848128": {
+   "name": "Wyvern Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16848384": {
+   "name": "Zecram Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16848640": {
+   "name": "Dragon Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16848896": {
+   "name": "Fury Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16849152": {
+   "name": "Legend Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16853760": {
+   "name": "Mythology Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16854272": {
+   "name": "Abyss Axe",
+   "category": "Axes",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16854528": {
+   "name": "Beginner's Axe",
+   "category": "Quest",
+   "type": "AXE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16908544": {
+   "name": "Eagle Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16908800": {
+   "name": "Tiger Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16909056": {
+   "name": "Griffin Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16909312": {
+   "name": "Snake Tooth",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16909568": {
+   "name": "Lightning Arm",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16909824": {
+   "name": "Fingered Edge",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16910080": {
+   "name": "Hand Blade",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16910336": {
+   "name": "Ancient Revenge",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16910592": {
+   "name": "Brutal Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16910848": {
+   "name": "Hydra Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16911104": {
+   "name": "Leviathan",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16911360": {
+   "name": "Wyvern Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16911616": {
+   "name": "Chaos Claw",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16911872": {
+   "name": "Wing Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16912128": {
+   "name": "Doom Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16912384": {
+   "name": "Titan Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16912640": {
+   "name": "Salamander Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16912896": {
+   "name": "Phoenix Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16913152": {
+   "name": "Chimera Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16913408": {
+   "name": "Extreme Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16913664": {
+   "name": "Viper Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16913920": {
+   "name": "Injustice Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16914176": {
+   "name": "Heretic Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16914432": {
+   "name": "Legend Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16919040": {
+   "name": "Mythology Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16919552": {
+   "name": "Abyss Talon",
+   "category": "Claws",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16919808": {
+   "name": "Beginner's Talon",
+   "category": "Quest",
+   "type": "CLAW",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "16974080": {
+   "name": "Club",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16974336": {
+   "name": "War Mace",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16974592": {
+   "name": "Pole Mace",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16974848": {
+   "name": "Gothic Mace",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16975104": {
+   "name": "War Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16975360": {
+   "name": "Metal Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16975616": {
+   "name": "Cross Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16975872": {
+   "name": "Holy Mace",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16976128": {
+   "name": "Star",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16976384": {
+   "name": "Maximum",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16976640": {
+   "name": "Meditation",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16976896": {
+   "name": "Rune Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16977152": {
+   "name": "Solar",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16977408": {
+   "name": "War Maul",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16977664": {
+   "name": "Titan Maul",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16977920": {
+   "name": "Chaos Maul",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16978176": {
+   "name": "Brutal Mace",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16978432": {
+   "name": "Gladiator Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Fighter",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16978688": {
+   "name": "Archon Mace",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16978944": {
+   "name": "Justice Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16979200": {
+   "name": "Dragon Bone",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16979456": {
+   "name": "Guardian Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16979712": {
+   "name": "Bane Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16979968": {
+   "name": "Dragon Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16980224": {
+   "name": "Phoenix Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16980480": {
+   "name": "Legend Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16985088": {
+   "name": "Mythology Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16985600": {
+   "name": "Abyss Hammer",
+   "category": "Hammers",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "16985856": {
+   "name": "Beginner's Hammer",
+   "category": "Quest",
+   "type": "HAMMER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17039616": {
+   "name": "Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17039872": {
+   "name": "Sphere Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17040128": {
+   "name": "Obi Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17040384": {
+   "name": "Root Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17040640": {
+   "name": "Poly Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17040896": {
+   "name": "Elven Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17041152": {
+   "name": "Dryad Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17041408": {
+   "name": "Meditation Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17041664": {
+   "name": "Skull Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17041920": {
+   "name": "Mage Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17042176": {
+   "name": "Faith Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17042432": {
+   "name": "Lofty Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17042688": {
+   "name": "Arch Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17042944": {
+   "name": "Chaos Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17043200": {
+   "name": "Rune Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17043456": {
+   "name": "Rune Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17043712": {
+   "name": "Apostle Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17043968": {
+   "name": "Relic Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Magician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17044224": {
+   "name": "Dragon Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17044480": {
+   "name": "Wyvern Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17044736": {
+   "name": "Gothic Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17044992": {
+   "name": "Oracle Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17045248": {
+   "name": "Celestial Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17045504": {
+   "name": "Elf Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17045760": {
+   "name": "Freyja Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17050112": {
+   "name": "Freyja Wand",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17050624": {
+   "name": "Mythology Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17051136": {
+   "name": "Abyss Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17051392": {
+   "name": "Beginner's Staff",
+   "category": "Quest",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17080576": {
+   "name": "Star Wars Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17080832": {
+   "name": "Star Wars Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17081088": {
+   "name": "Star Wars Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17081344": {
+   "name": "Star Wars Staff",
+   "category": "Wands",
+   "type": "STAFF",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17105152": {
+   "name": "Pole",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17105408": {
+   "name": "Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17105664": {
+   "name": "Bill",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17105920": {
+   "name": "Halberd",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17106176": {
+   "name": "Horn Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17106432": {
+   "name": "Trident",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17106688": {
+   "name": "Enriched Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17106944": {
+   "name": "Double Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17107200": {
+   "name": "Devil Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17107456": {
+   "name": "Silver Bird",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17107712": {
+   "name": "Chaos Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17107968": {
+   "name": "Titan Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17108224": {
+   "name": "Styx Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17108480": {
+   "name": "Dragon's Wing",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17108736": {
+   "name": "Butterfly",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17108992": {
+   "name": "Mystic Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17109248": {
+   "name": "Hyper Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17109504": {
+   "name": "Oracle Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17109760": {
+   "name": "Immortal Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17110016": {
+   "name": "Extreme Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17110528": {
+   "name": "HellFire Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17110784": {
+   "name": "Dreadnaught Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17111040": {
+   "name": "Reaper Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17111296": {
+   "name": "Dragon Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17111552": {
+   "name": "Phoenix Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17115904": {
+   "name": "Mythology Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17116416": {
+   "name": "Abyss Spear",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17116672": {
+   "name": "Beginner's Scythe",
+   "category": "Quest",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17146112": {
+   "name": "Star Wars Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17146368": {
+   "name": "Star Wars Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17146624": {
+   "name": "Star Wars Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17146880": {
+   "name": "Star Wars Scythe",
+   "category": "Scythes",
+   "type": "SCYTHE",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Pikeman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17170688": {
+   "name": "Short Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17170944": {
+   "name": "Horned Bow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17171200": {
+   "name": "Hand Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17171456": {
+   "name": "Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "crossbow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17171712": {
+   "name": "Battle Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17171968": {
+   "name": "Great Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17172224": {
+   "name": "War Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17172480": {
+   "name": "Great Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "crossbow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17172736": {
+   "name": "Metal Hand Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17172992": {
+   "name": "Mist",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "crossbow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17173248": {
+   "name": "Bone Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17173504": {
+   "name": "Sagittarius",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17173760": {
+   "name": "Ancient Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "crossbow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17174016": {
+   "name": "Titan Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17174272": {
+   "name": "Chaos Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17174528": {
+   "name": "Swift Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17174784": {
+   "name": "Relic Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "crossbow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17175040": {
+   "name": "Thunder Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17175296": {
+   "name": "Wave Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17175552": {
+   "name": "Grand Crossbow",
+   "category": "Bows",
+   "type": "CROSSBOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "crossbow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17175808": {
+   "name": "Mirage Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17176064": {
+   "name": "Revenge Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17176320": {
+   "name": "Wyvern Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17176576": {
+   "name": "Immortal Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17176832": {
+   "name": "Salamander Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17181184": {
+   "name": "Cronus Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17181696": {
+   "name": "Mythology Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "bow",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17182208": {
+   "name": "Abyss Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17182464": {
+   "name": "Beginner's Bow",
+   "category": "Quest",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "none",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17211648": {
+   "name": "Star Wars Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17211904": {
+   "name": "Star Wars Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17212160": {
+   "name": "Star Wars Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17212416": {
+   "name": "Star Wars Bow",
+   "category": "Bows",
+   "type": "BOW",
+   "hand": "2H",
+   "attackClass": "RANGED",
+   "primaryClass": "Archer",
+   "sheath": 2,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17236224": {
+   "name": "Dagger",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17236480": {
+   "name": "Celtic Dagger",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17236736": {
+   "name": "Sword Breaker",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "NewSourcePT-2023/character.cpp"
+   },
+   "handAttached": true
+  },
+  "17236992": {
+   "name": "Short Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17237248": {
+   "name": "Long Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17237504": {
+   "name": "Broad Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17237760": {
+   "name": "Blade",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17238016": {
+   "name": "Templar Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17238272": {
+   "name": "Shield Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17238528": {
+   "name": "Plated Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17238784": {
+   "name": "Claymore",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17239040": {
+   "name": "Slayer",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17239296": {
+   "name": "Gigantic Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17239552": {
+   "name": "Highlander",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17239808": {
+   "name": "Bastard Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17240064": {
+   "name": "Fatal Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17240320": {
+   "name": "Ancient Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17240576": {
+   "name": "Twin Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17240832": {
+   "name": "Salamander Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17241088": {
+   "name": "Avenger Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17241344": {
+   "name": "Titan Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17241600": {
+   "name": "Wyvern Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17241856": {
+   "name": "Immortal Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17242112": {
+   "name": "Justice Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17242368": {
+   "name": "Extreme Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17242624": {
+   "name": "Mirage Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17246976": {
+   "name": "Tirbing Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17247232": {
+   "name": "Legend Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17247488": {
+   "name": "Abyss Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17247744": {
+   "name": "Mythology Sword",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17248512": {
+   "name": "Beginner's Sword",
+   "category": "Quest",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17277184": {
+   "name": "Light Saber",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17277440": {
+   "name": "Light Saber",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17277696": {
+   "name": "Light Saber",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17277952": {
+   "name": "Light Saber",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17279488": {
+   "name": "Light Saber 1H",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17279744": {
+   "name": "Light Saber 1H",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17280000": {
+   "name": "Light Saber 1H",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Knight",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17280256": {
+   "name": "Light Saber 1H",
+   "category": "Swords",
+   "type": "SWORD",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "Mechanician",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17301760": {
+   "name": "Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17302016": {
+   "name": "War Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17302272": {
+   "name": "Edged Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17302528": {
+   "name": "Steel Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17302784": {
+   "name": "Double Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17303040": {
+   "name": "Elven Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17303296": {
+   "name": "Fatal Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17303552": {
+   "name": "Metal Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17303808": {
+   "name": "Cobra",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17304064": {
+   "name": "Winged Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17304320": {
+   "name": "Holy Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17304576": {
+   "name": "Throwing Trident",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17304832": {
+   "name": "Wyvern Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17305088": {
+   "name": "Twisted Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17305344": {
+   "name": "Link Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17305600": {
+   "name": "Mirage Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17305856": {
+   "name": "Mystic Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17306112": {
+   "name": "Extreme Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17306368": {
+   "name": "Dragon Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17306624": {
+   "name": "Spiked Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17306880": {
+   "name": "Legend Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17307136": {
+   "name": "Immortal Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17307392": {
+   "name": "Heretic Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17307904": {
+   "name": "Salamander Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17308160": {
+   "name": "Cronus Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17312512": {
+   "name": "Mythology Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17313024": {
+   "name": "Abyss Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17313280": {
+   "name": "Beginner's Javelin",
+   "category": "Quest",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17342720": {
+   "name": "Star Wars Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17342976": {
+   "name": "Star Wars Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17343232": {
+   "name": "Star Wars Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17343488": {
+   "name": "Star Wars Javelin",
+   "category": "Javelins",
+   "type": "JAVELIN",
+   "hand": "1H",
+   "attackClass": "RANGED",
+   "primaryClass": "Atalanta",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": true
+  },
+  "17367296": {
+   "name": "Shield Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17367552": {
+   "name": "Creak Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17367808": {
+   "name": "Pin Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17368064": {
+   "name": "Terte Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17368320": {
+   "name": "Okute Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17368576": {
+   "name": "Wankala Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17368832": {
+   "name": "Paha Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17369088": {
+   "name": "Piskin Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17369344": {
+   "name": "Tatanka Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17369600": {
+   "name": "Sosho Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17369856": {
+   "name": "Yumni Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17370112": {
+   "name": "Siha Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17370368": {
+   "name": "Wi Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17370624": {
+   "name": "Roan Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17370880": {
+   "name": "Canku Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17371136": {
+   "name": "Owa Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17371392": {
+   "name": "Nkeez Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17371648": {
+   "name": "Pejula Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17371904": {
+   "name": "Luta Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17372160": {
+   "name": "Natanh Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17372416": {
+   "name": "Kahsehtha Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17372672": {
+   "name": "Niyaha Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17372928": {
+   "name": "Acala Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17373184": {
+   "name": "Wakinyan Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17373440": {
+   "name": "Wakan Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17377792": {
+   "name": "Mythology Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17378304": {
+   "name": "Abyss Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "1H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17408256": {
+   "name": "Star Wars Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17408512": {
+   "name": "Star Wars Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17408768": {
+   "name": "Star Wars Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17409024": {
+   "name": "Star Wars Phantom",
+   "category": "Phantom",
+   "type": "PHANTOM",
+   "hand": "2H",
+   "attackClass": "MAGIC",
+   "primaryClass": "Shaman",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "back",
+    "src": "default"
+   },
+   "handAttached": false
+  },
+  "17432832": {
+   "name": "Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17433088": {
+   "name": "Iron Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17433344": {
+   "name": "Hunting Knife ",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17433600": {
+   "name": "Cutlas",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17433856": {
+   "name": "Hanger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17434112": {
+   "name": "Steel Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17434368": {
+   "name": "Slaughter Knife",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17434624": {
+   "name": "Saint Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17434880": {
+   "name": "Platinum Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17435136": {
+   "name": "Vine Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17435392": {
+   "name": "Abyss Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17435648": {
+   "name": "Wing Dual Sword",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17435904": {
+   "name": "Sol Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17436160": {
+   "name": "Flamberge",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17436416": {
+   "name": "Fortress Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17436672": {
+   "name": "Lava Dual Sword",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17436928": {
+   "name": "Arcana Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17437184": {
+   "name": "Moonstone Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17437440": {
+   "name": "Chaotic Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17437696": {
+   "name": "Plunder Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17437952": {
+   "name": "Enigma Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17438208": {
+   "name": "Dragon Dual Sword",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17438464": {
+   "name": "Devilian Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17438720": {
+   "name": "Dark Shining Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17438976": {
+   "name": "Crystal Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17443328": {
+   "name": "Mythology Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17443840": {
+   "name": "Abyss Dagger",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17444096": {
+   "name": "Beginner's Dagger",
+   "category": "Quest",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "none",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17473792": {
+   "name": "Star Wars Daggers",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17474048": {
+   "name": "Star Wars Daggers",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17474304": {
+   "name": "Star Wars Daggers",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17474560": {
+   "name": "Star Wars Daggers",
+   "category": "Dagger",
+   "type": "DAGGER",
+   "hand": "2H",
+   "attackClass": "MELEE",
+   "primaryClass": "Assassin",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "dagger_r",
+    "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  }
+ }
+}

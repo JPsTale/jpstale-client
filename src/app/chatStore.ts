@@ -14,6 +14,8 @@ export const Ch = {
   PRIVATE: 4,
   SYSTEM: 5,
   TRADE: 6,
+  /** 战斗日志（受击/击杀/经验）：与系统频道分开，避免战斗刷屏吃掉系统消息的注意力 */
+  BATTLE: 7,
 } as const;
 
 export interface ChatMessage {
@@ -82,8 +84,14 @@ export function appendChatMessage(entry: Omit<ChatMessage, 'id'>): void {
  * 追加系统消息（S2C_SystemMessage / S2C_Error）。
  * @param forChannel 若指定（玩家发送操作触发的反馈），该消息同时归属该频道 tab
  *                   （红色系统样式），且仍会出现在系统 tab；null=仅系统 tab。
+ * @param battle 战斗日志（受击/击杀）：归"战斗" tab，**不进系统 tab**（用户 2026-09-12：
+ *               战斗刷屏不应占用系统频道的注意力）。不置 system 标记，因此不会混进系统 tab。
  */
-export function appendSystemMessage(text: string, timestamp = Date.now(), forChannel?: ChatChannel): void {
+export function appendSystemMessage(text: string, timestamp = Date.now(), forChannel?: ChatChannel, battle = false): void {
+  if (battle) {
+    appendChatMessage({ channel: Ch.BATTLE, senderId: 0, senderName: '', message: text, timestamp });
+    return;
+  }
   appendChatMessage({ channel: forChannel ?? Ch.SYSTEM, senderId: 0, senderName: '', system: true, message: text, timestamp });
 }
 

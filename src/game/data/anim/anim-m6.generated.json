@@ -1,0 +1,6357 @@
+{
+ "note": "由 scripts/extract-anim-semantics.ts 从当前客户端 .inx/.smb 提取的语义表（生成物，勿手改）。武器要求已从 sItem 索引翻为 (weaponType,handType) 语义；与 glTF 无关，只描述\"这是什么动作\"。",
+ "group": "m6",
+ "smb": "m6.smb",
+ "entryCount": 78,
+ "entries": [
+  {
+   "id": "stand_unarmed",
+   "state": "STAND",
+   "frames": [
+    12,
+    72
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 10,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#2",
+   "state": "STAND",
+   "frames": [
+    87,
+    267
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 11,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "restart",
+   "state": "RESTART",
+   "frames": [
+    282,
+    382
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 12,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fall",
+   "state": "FALLDOWN",
+   "frames": [
+    397,
+    427
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 13,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fallstand",
+   "state": "FALLSTAND",
+   "frames": [
+    442,
+    476
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 14,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "falldamage",
+   "state": "FALLDAMAGE",
+   "frames": [
+    490,
+    534
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 15,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "walk_unarmed",
+   "state": "WALK",
+   "frames": [
+    553,
+    585
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 16,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed",
+   "state": "WALK",
+   "frames": [
+    600,
+    632
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 17,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247,
+     62,
+     63,
+     64
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#2",
+   "state": "WALK",
+   "frames": [
+    600,
+    632
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 18,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 16,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#3",
+   "state": "WALK",
+   "frames": [
+    647,
+    679
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 19,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#4",
+   "state": "WALK",
+   "frames": [
+    647,
+    679
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 20,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#5",
+   "state": "WALK",
+   "frames": [
+    693,
+    725
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 21,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_1h_javelin",
+   "state": "WALK",
+   "frames": [
+    740,
+    772
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 22,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#6",
+   "state": "WALK",
+   "frames": [
+    787,
+    819
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 23,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#7",
+   "state": "WALK",
+   "frames": [
+    834,
+    866
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 24,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk",
+   "state": "WALK",
+   "frames": [
+    600,
+    632
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 25,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 32
+    }
+   }
+  },
+  {
+   "id": "run_unarmed",
+   "state": "RUN",
+   "frames": [
+    881,
+    905
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 26,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed",
+   "state": "RUN",
+   "frames": [
+    920,
+    944
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 27,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247,
+     62,
+     63,
+     64
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#2",
+   "state": "RUN",
+   "frames": [
+    920,
+    944
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 28,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 16,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#3",
+   "state": "RUN",
+   "frames": [
+    959,
+    983
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 29,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#4",
+   "state": "RUN",
+   "frames": [
+    959,
+    983
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 30,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#5",
+   "state": "RUN",
+   "frames": [
+    998,
+    1022
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 31,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 37
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#6",
+   "state": "RUN",
+   "frames": [
+    998,
+    1022
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 32,
+    "itemCodes": [
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 10,
+     "resolved": 8
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_1h_javelin",
+   "state": "RUN",
+   "frames": [
+    1037,
+    1061
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 33,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#7",
+   "state": "RUN",
+   "frames": [
+    1076,
+    1100
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 34,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#8",
+   "state": "RUN",
+   "frames": [
+    1115,
+    1139
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 35,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run",
+   "state": "RUN",
+   "frames": [
+    1154,
+    1174
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    1440
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 36,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 20
+    }
+   }
+  },
+  {
+   "id": "eat",
+   "state": "EAT",
+   "frames": [
+    1192,
+    1212
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3040
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 37,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#3",
+   "state": "STAND",
+   "frames": [
+    1243,
+    1291
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 38,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 34,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed",
+   "state": "STAND",
+   "frames": [
+    1305,
+    1353
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 39,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247,
+     62,
+     63,
+     64
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#2",
+   "state": "STAND",
+   "frames": [
+    1305,
+    1353
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 40,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 16,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#3",
+   "state": "STAND",
+   "frames": [
+    1367,
+    1415
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 41,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#4",
+   "state": "STAND",
+   "frames": [
+    1367,
+    1415
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 42,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#5",
+   "state": "STAND",
+   "frames": [
+    1430,
+    1478
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 43,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_1h_javelin",
+   "state": "STAND",
+   "frames": [
+    1493,
+    1541
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 44,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#6",
+   "state": "STAND",
+   "frames": [
+    1555,
+    1603
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 45,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#7",
+   "state": "STAND",
+   "frames": [
+    1617,
+    1665
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 46,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand",
+   "state": "STAND",
+   "frames": [
+    1809,
+    1849
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 47,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 0,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "damage",
+   "state": "DAMAGE",
+   "frames": [
+    1680,
+    1701
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 48,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "dead",
+   "state": "DEAD",
+   "frames": [
+    1715,
+    1787
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 49,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_unarmed",
+   "state": "ATTACK",
+   "frames": [
+    1862,
+    1904
+   ],
+   "repeat": false,
+   "eventFrames": [
+    960,
+    3200
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 50,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_mixed",
+   "state": "ATTACK",
+   "frames": [
+    1915,
+    1955
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 51,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#2",
+   "state": "ATTACK",
+   "frames": [
+    1915,
+    1955
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 52,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#3",
+   "state": "ATTACK",
+   "frames": [
+    1968,
+    2008
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 53,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#4",
+   "state": "ATTACK",
+   "frames": [
+    1968,
+    2008
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 54,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#5",
+   "state": "ATTACK",
+   "frames": [
+    2021,
+    2071
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 55,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#6",
+   "state": "ATTACK",
+   "frames": [
+    2084,
+    2134
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 56,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#7",
+   "state": "ATTACK",
+   "frames": [
+    2084,
+    2134
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 57,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     139,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     166,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 42,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#8",
+   "state": "ATTACK",
+   "frames": [
+    2084,
+    2134
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 58,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     220,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#9",
+   "state": "ATTACK",
+   "frames": [
+    2147,
+    2197
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 59,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#10",
+   "state": "ATTACK",
+   "frames": [
+    2210,
+    2260
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 60,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     180,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     193,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 48,
+     "resolved": 42
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin",
+   "state": "ATTACK",
+   "frames": [
+    2273,
+    2313
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 61,
+    "itemCodes": [
+     122,
+     227,
+     258
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 1
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin#2",
+   "state": "ATTACK",
+   "frames": [
+    2326,
+    2366
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 62,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     233,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 32,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#11",
+   "state": "ATTACK",
+   "frames": [
+    2379,
+    2419
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 63,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     206,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 24,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#12",
+   "state": "ATTACK",
+   "frames": [
+    2432,
+    2472
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 64,
+    "itemCodes": [
+     15,
+     16,
+     17,
+     18,
+     20,
+     21,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     152,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm"
+    ],
+    "coverage": {
+     "total": 29,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_claw",
+   "state": "ATTACK",
+   "frames": [
+    2485,
+    2525
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 65,
+    "itemCodes": [
+     19,
+     22
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW"
+    ],
+    "iconFamilies": [
+     "wc"
+    ],
+    "coverage": {
+     "total": 2,
+     "resolved": 2
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#13",
+   "state": "ATTACK",
+   "frames": [
+    2538,
+    2578
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 66,
+    "itemCodes": [
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 3
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#14",
+   "state": "ATTACK",
+   "frames": [
+    2591,
+    2631
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 67,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack",
+   "state": "ATTACK",
+   "frames": [
+    2643,
+    2683
+   ],
+   "repeat": false,
+   "eventFrames": [
+    1600,
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 68,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "attack#2",
+   "state": "ATTACK",
+   "frames": [
+    2696,
+    2736
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400,
+    4160
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 69,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "yahoo",
+   "state": "YAHOO",
+   "frames": [
+    2749,
+    2884
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 70,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "skill_stinger",
+   "state": "SKILL",
+   "frames": [
+    2916,
+    2973
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560,
+    4160
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Stinger"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 71,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     163
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 57
+    }
+   }
+  },
+  {
+   "id": "skill_double_blow",
+   "state": "SKILL",
+   "frames": [
+    2986,
+    3048
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880,
+    6400
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Double Blow"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 72,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     164
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 62
+    }
+   }
+  },
+  {
+   "id": "skill_wisp",
+   "state": "SKILL",
+   "frames": [
+    3060,
+    3127
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Wisp"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 73,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     166
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 67
+    }
+   }
+  },
+  {
+   "id": "skill_venom_thorn",
+   "state": "SKILL",
+   "frames": [
+    3146,
+    3200
+   ],
+   "repeat": false,
+   "eventFrames": [
+    1600,
+    3840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Venom Thorn"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 74,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     167
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 54
+    }
+   }
+  },
+  {
+   "id": "skill_inpes",
+   "state": "SKILL",
+   "frames": [
+    3212,
+    3281
+   ],
+   "repeat": false,
+   "eventFrames": [
+    7840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Inpes"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 75,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     168,
+     173
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 69
+    }
+   }
+  },
+  {
+   "id": "skill_soul_shock",
+   "state": "SKILL",
+   "frames": [
+    3293,
+    3353
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Soul Shock"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 76,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     169
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 60
+    }
+   }
+  },
+  {
+   "id": "skill_finishing_blow",
+   "state": "SKILL",
+   "frames": [
+    3386,
+    3448
+   ],
+   "repeat": false,
+   "eventFrames": [
+    1440,
+    3840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Finishing Blow"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 77,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     171
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 62
+    }
+   }
+  },
+  {
+   "id": "skill_gust_slash",
+   "state": "SKILL",
+   "frames": [
+    3460,
+    3522
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2240,
+    5440
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Gust Slash"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 78,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313
+    ],
+    "skillCodes": [
+     172
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 21,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 62
+    }
+   }
+  },
+  {
+   "id": "skill_inpes#2",
+   "state": "SKILL",
+   "frames": [
+    3534,
+    3603
+   ],
+   "repeat": false,
+   "eventFrames": [
+    7840
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Inpes"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 79,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     173
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 69
+    }
+   }
+  },
+  {
+   "id": "skill_deception",
+   "state": "SKILL",
+   "frames": [
+    3615,
+    3661
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Deception"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 80,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     174
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 46
+    }
+   }
+  },
+  {
+   "id": "skill_frost_wind",
+   "state": "SKILL",
+   "frames": [
+    3680,
+    3748
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400,
+    6080
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Frost Wind"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 81,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     175
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 68
+    }
+   }
+  },
+  {
+   "id": "skill_pollute",
+   "state": "SKILL",
+   "frames": [
+    3760,
+    3818
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2240,
+    2560,
+    2880,
+    3200
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Pollute"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 82,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     177
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 4,
+     "spanFrames": 58
+    }
+   }
+  },
+  {
+   "id": "skill_ninja_shadow",
+   "state": "SKILL",
+   "frames": [
+    3830,
+    3882
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3040
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [
+    "Ninja Shadow"
+   ],
+   "location": "any",
+   "raw": {
+    "index": 83,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     178
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 52
+    }
+   }
+  },
+  {
+   "id": "skill",
+   "state": "SKILL",
+   "frames": [
+    3920,
+    3984
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 84,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     179
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 64
+    }
+   }
+  },
+  {
+   "id": "skill#2",
+   "state": "SKILL",
+   "frames": [
+    3996,
+    4050
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 85,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     180
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 54
+    }
+   }
+  },
+  {
+   "id": "skill#3",
+   "state": "SKILL",
+   "frames": [
+    4062,
+    4125
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2240,
+    5920
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 86,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     181
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 63
+    }
+   }
+  },
+  {
+   "id": "skill#4",
+   "state": "SKILL",
+   "frames": [
+    4137,
+    4189
+   ],
+   "repeat": false,
+   "eventFrames": [
+    1120
+   ],
+   "classes": [
+    "Assassin"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 87,
+    "itemCodes": [
+     293,
+     294,
+     295,
+     296,
+     297,
+     298,
+     299,
+     300,
+     301,
+     302,
+     303,
+     304,
+     305,
+     306,
+     307,
+     308,
+     309,
+     310,
+     311,
+     312,
+     313,
+     314,
+     315,
+     316,
+     317,
+     318,
+     319,
+     320,
+     321,
+     322,
+     323,
+     324
+    ],
+    "skillCodes": [
+     182
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 32,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 52
+    }
+   }
+  }
+ ]
+}

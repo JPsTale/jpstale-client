@@ -1,0 +1,1419 @@
+{
+ "note": "idcode → (weaponType, handType) 语义词汇表",
+ "table": [
+  [
+   16908800,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16909056,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16909312,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16909568,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16909824,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16910080,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16910336,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16910592,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16910848,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16911104,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16911360,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16911616,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16911872,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16912128,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16912384,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16914176,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16914432,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16978176,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16977920,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16978432,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16978944,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16978688,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16979200,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16979456,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   17043712,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17043968,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17044224,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17170688,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17170944,
+   {
+    "type": "CROSSBOW",
+    "hand": "1H"
+   }
+  ],
+  [
+   17172480,
+   {
+    "type": "CROSSBOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   16843264,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16843520,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16843776,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16844288,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16844544,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16845568,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16846336,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16847360,
+   {
+    "type": "AXE",
+    "hand": "1H"
+   }
+  ],
+  [
+   16912896,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16974080,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16974336,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16974592,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16974848,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16975104,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16975872,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16976128,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16976896,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   16977152,
+   {
+    "type": "HAMMER",
+    "hand": "1H"
+   }
+  ],
+  [
+   17044480,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17045248,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17110528,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17039616,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17039872,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17040128,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17040896,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17041152,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17042176,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17042688,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17043200,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17175296,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17176064,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17176576,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17241088,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17105152,
+   {
+    "type": "SCYTHE",
+    "hand": "1H"
+   }
+  ],
+  [
+   17105408,
+   {
+    "type": "SCYTHE",
+    "hand": "1H"
+   }
+  ],
+  [
+   17105664,
+   {
+    "type": "SCYTHE",
+    "hand": "1H"
+   }
+  ],
+  [
+   17174784,
+   {
+    "type": "CROSSBOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17236480,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17236736,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17236992,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17237504,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17237760,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17238016,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17238272,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17238784,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17239040,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17239552,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17240320,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   16844032,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16844800,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16845056,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16845312,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16845824,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16846080,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16908544,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16846848,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16847104,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16847616,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16847872,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16848128,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16848384,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16912640,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16913152,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16913408,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16913664,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16913920,
+   {
+    "type": "CLAW",
+    "hand": "1H"
+   }
+  ],
+  [
+   16848640,
+   {
+    "type": "AXE",
+    "hand": "2H"
+   }
+  ],
+  [
+   16975360,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16975616,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16976384,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16976640,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16977408,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16977664,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   17044736,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17044992,
+   {
+    "type": "STAFF",
+    "hand": "1H"
+   }
+  ],
+  [
+   17045504,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17109248,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17109504,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17109760,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17110016,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17110784,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17111040,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17111296,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17175040,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   16979712,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   16979968,
+   {
+    "type": "HAMMER",
+    "hand": "2H"
+   }
+  ],
+  [
+   17237248,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17238528,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17239296,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17239808,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17248512,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17312512,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17313024,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17313280,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17040384,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17040640,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17041408,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17041664,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17041920,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17042432,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17042944,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17043456,
+   {
+    "type": "STAFF",
+    "hand": "2H"
+   }
+  ],
+  [
+   17175552,
+   {
+    "type": "CROSSBOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17175808,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17176320,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17176832,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17240064,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17240576,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17241600,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17240832,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17241344,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17105920,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17106176,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17106432,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17106688,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17106944,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17107200,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17107456,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17107712,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17107968,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17108224,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17108480,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17108736,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17108992,
+   {
+    "type": "SCYTHE",
+    "hand": "2H"
+   }
+  ],
+  [
+   17241856,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17242112,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17305856,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17306112,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17306368,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17306624,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17306880,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17307136,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17307392,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17181184,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17307904,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17308160,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17301760,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17302016,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17302272,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17302528,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17302784,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17303040,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17303296,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17303552,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17303808,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17304064,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17304320,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17304576,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17304832,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17305088,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17305344,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17305600,
+   {
+    "type": "JAVELIN",
+    "hand": "1H"
+   }
+  ],
+  [
+   17236224,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17171456,
+   {
+    "type": "CROSSBOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17171712,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17171968,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17172992,
+   {
+    "type": "CROSSBOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17173248,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17173760,
+   {
+    "type": "CROSSBOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17174016,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17174272,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17182208,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17182464,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17246976,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17247232,
+   {
+    "type": "SWORD",
+    "hand": "1H"
+   }
+  ],
+  [
+   17247488,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17247744,
+   {
+    "type": "SWORD",
+    "hand": "2H"
+   }
+  ],
+  [
+   17171200,
+   {
+    "type": "CROSSBOW",
+    "hand": "1H"
+   }
+  ],
+  [
+   17172224,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17172736,
+   {
+    "type": "CROSSBOW",
+    "hand": "1H"
+   }
+  ],
+  [
+   17173504,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ],
+  [
+   17174528,
+   {
+    "type": "BOW",
+    "hand": "2H"
+   }
+  ]
+ ]
+}

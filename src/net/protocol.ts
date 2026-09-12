@@ -32,10 +32,14 @@ export function logout(): jpt.base.ClientMessage.$Properties {
 }
 
 /** 移动上报（客户端位置上权威）：angle=弧度(0=+Z北)，mode=0 IDLE/1 WALK/2 RUN，x/y/z=世界位置。
- *  anim=动画状态覆盖（0=按 mode 推导；掉落 FALLDOWN=0x70/FALLSTAND=0x71/FALLDAMAGE=0x72）。 */
-export function playerMove(angle: number, mode: number, x: number, y: number, z: number, anim = 0): jpt.base.ClientMessage.$Properties {
+ *  anim=动画状态覆盖（0=按 mode 推导；掉落 FALLDOWN=0x70/FALLSTAND=0x71/FALLDAMAGE=0x72）。
+ *  animIndex/animClip=本机此刻播的那一条动画（.inx 条目索引 + 语义 ID）：服务端原样透传给
+ *  旁观者，旁观者直接播同一条，不再各自匹配/随机。 */
+export function playerMove(angle: number, mode: number, x: number, y: number, z: number, anim = 0,
+                           animIndex = 0, animClip = ''): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        playerMove: { position: { x, y, z }, angle, mode, timestamp: Date.now(), animState: anim },
+        playerMove: { position: { x, y, z }, angle, mode, timestamp: Date.now(), animState: anim,
+                      animIndex, animClip },
     });
 }
 
@@ -100,11 +104,22 @@ export function pickupItem(groundItemId: number): jpt.base.ClientMessage.$Proper
     });
 }
 
-/** 攻击起手（挥拳开始）：只广播开始攻击，伤害在命中帧结算 */
-export function attackStart(targetId: number): jpt.base.ClientMessage.$Properties {
+/**
+ * 攻击起手（挥拳开始）：只广播开始攻击，伤害在命中帧结算。
+ * `clientSeq` 用于关联服务端回下的 `S2C_AttackPlan`（B 方案：起手即裁定各段结果）；
+ * `segments` = 本次动作段数（非零 eventFrame 个数），服务端据此预排并作为合法段数上限。
+ */
+export function attackStart(targetId: number, clientSeq: number, segments: number,
+                            animIndex = 0, animClip = ''): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        attackStart: { targetId },
+        attackStart: { targetId, clientSeq, segments, animIndex, animClip },
     });
+}
+
+/** 死亡后的复活选择（对应原版 sinInterFace.h 的 RESTART_FEILD/TOWN/EXIT）：
+ *  1=本图最近的 startPoint（10% 本级经验 + 10% 金币）/ 2=村庄（1% 本级经验）/ 3=继续躺（等强制） */
+export function respawnChoice(choice: 1 | 2 | 3): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ respawnChoice: { choice } });
 }
 
 /** 命中帧（每段一次）：hitIndex = 段序号（0..3，对应 motion.eventFrame 第几个非零帧） */

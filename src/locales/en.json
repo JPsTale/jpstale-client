@@ -76,7 +76,8 @@
     "statePoint": "Spare Points",
     "undo": "Undo Last Point",
     "exp": "EXP",
-    "expLeft": "EXP left",
+    "expInLevel": "Level EXP {cur} / {need}",
+    "expProgress": "{cur} / {need}　{pct}%",
     "regen": "Regen",
     "bio": "Bio",
     "poison": "Poison",
@@ -91,7 +92,8 @@
   "hud": {
     "life": "HP {cur}/{max}",
     "mana": "MP {cur}/{max}",
-    "stm": "SP {cur}/{max}"
+    "stm": "SP {cur}/{max}",
+    "exp": "EXP: {pct}%"
   },
   "job": {
     "fighter": "Fighter",
@@ -370,6 +372,7 @@
     },
     "guild": "Guild",
     "trade": "Trade",
+    "battle": "Battle",
     "system": "System",
     "fold": "Collapse chat window",
     "readonly": "View only. Use /player: message to whisper.",
@@ -395,7 +398,13 @@
     "log": {
       "monsterKilled": "You defeated {monster}! Gained {exp} EXP and {gold} gold.",
       "playerHurt": "{monster} hit you for {damage} damage!",
-      "levelUp": "Congratulations! You reached level {level} (+{points} stat points)."
+      "playerHit": "You hit {monster} for {damage} damage.",
+      "playerCrit": "Critical! You hit {monster} for {damage} damage.",
+      "playerMiss": "You missed {monster}.",
+      "playerWhiff": "Your attack hit nothing.",
+      "monsterMiss": "{monster} missed you.",
+      "levelUp": "Congratulations! You reached level {level} (+{points} stat points).",
+      "playerRespawn": "You died and have been respawned."
     }
   },
   "game": {
@@ -1130,6 +1139,20 @@
     },
     "battlefield_quest_master": {
       "name": "Battlefield Quest Master"
+    }
+  },
+  "death": {
+    "title": "You died",
+    "timer": "Forced return to town in {sec}s",
+    "pending": "Respawning…",
+    "respawning": "Returning to respawn point…",
+    "option": {
+      "field": "Revive at the nearest start point on this map",
+      "fieldCost": "Costs {exp} EXP of this level and {gold} gold",
+      "town": "Revive in town (Tempskron: Ricarten / Morion: Pillai)",
+      "townCost": "Costs {exp} EXP of this level",
+      "wait": "Keep lying here",
+      "waitCost": "Forced return to town when the timer ends (same cost)"
     }
   }
 }

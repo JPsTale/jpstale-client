@@ -1,0 +1,2178 @@
+[
+ {
+  "n": "automationleft",
+  "f": "ini"
+ },
+ {
+  "n": "automationright",
+  "f": "ini"
+ },
+ {
+  "n": "bandi1",
+  "f": "ini"
+ },
+ {
+  "n": "blackhole",
+  "f": "ini"
+ },
+ {
+  "n": "blood1",
+  "f": "ini"
+ },
+ {
+  "n": "blur1",
+  "f": "ini"
+ },
+ {
+  "n": "circletrap",
+  "f": "ini"
+ },
+ {
+  "n": "continuestun",
+  "f": "ini"
+ },
+ {
+  "n": "criticalhit1",
+  "f": "ini"
+ },
+ {
+  "n": "criticalhit21",
+  "f": "ini"
+ },
+ {
+  "n": "criticalhit22",
+  "f": "ini"
+ },
+ {
+  "n": "damageparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "dust1",
+  "f": "ini"
+ },
+ {
+  "n": "fireparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "fireparticle1_blh",
+  "f": "ini"
+ },
+ {
+  "n": "fireparticle2",
+  "f": "ini"
+ },
+ {
+  "n": "gas1",
+  "f": "ini"
+ },
+ {
+  "n": "groundpike",
+  "f": "ini"
+ },
+ {
+  "n": "levelup",
+  "f": "ini"
+ },
+ {
+  "n": "levelup1left",
+  "f": "ini"
+ },
+ {
+  "n": "levelup1right",
+  "f": "ini"
+ },
+ {
+  "n": "leveluplight1",
+  "f": "ini"
+ },
+ {
+  "n": "levelupparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "light1",
+  "f": "ini"
+ },
+ {
+  "n": "light2",
+  "f": "ini"
+ },
+ {
+  "n": "maximizeleft",
+  "f": "ini"
+ },
+ {
+  "n": "maximizeright",
+  "f": "ini"
+ },
+ {
+  "n": "mechanicbomb1",
+  "f": "ini"
+ },
+ {
+  "n": "mechanicbomb2",
+  "f": "ini"
+ },
+ {
+  "n": "meteo1",
+  "f": "ini"
+ },
+ {
+  "n": "meteo2",
+  "f": "ini"
+ },
+ {
+  "n": "monsteribomberhit_bomb1",
+  "f": "ini"
+ },
+ {
+  "n": "monsteribomberhit_bomb2",
+  "f": "ini"
+ },
+ {
+  "n": "monsteribomberhit_line",
+  "f": "ini"
+ },
+ {
+  "n": "monsteribomberhit_scatter",
+  "f": "ini"
+ },
+ {
+  "n": "monsterimp1",
+  "f": "ini"
+ },
+ {
+  "n": "monstermephit1",
+  "f": "ini"
+ },
+ {
+  "n": "monstermephit2",
+  "f": "ini"
+ },
+ {
+  "n": "monsterweb1",
+  "f": "ini"
+ },
+ {
+  "n": "monsterwebhit1",
+  "f": "ini"
+ },
+ {
+  "n": "monsterwebhit2",
+  "f": "ini"
+ },
+ {
+  "n": "normalhit1",
+  "f": "ini"
+ },
+ {
+  "n": "particlemeteo1",
+  "f": "ini"
+ },
+ {
+  "n": "particlemeteo1_blue",
+  "f": "ini"
+ },
+ {
+  "n": "particlemeteo2",
+  "f": "ini"
+ },
+ {
+  "n": "particlemeteo3",
+  "f": "ini"
+ },
+ {
+  "n": "physicalabsorbparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "physicalabsorbparticle2",
+  "f": "ini"
+ },
+ {
+  "n": "potion1",
+  "f": "ini"
+ },
+ {
+  "n": "potion2",
+  "f": "ini"
+ },
+ {
+  "n": "potion3",
+  "f": "ini"
+ },
+ {
+  "n": "potionlight1",
+  "f": "ini"
+ },
+ {
+  "n": "power1",
+  "f": "ini"
+ },
+ {
+  "n": "power2",
+  "f": "ini"
+ },
+ {
+  "n": "pung1",
+  "f": "ini"
+ },
+ {
+  "n": "pung2",
+  "f": "ini"
+ },
+ {
+  "n": "return1",
+  "f": "ini"
+ },
+ {
+  "n": "returnparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "round1",
+  "f": "ini"
+ },
+ {
+  "n": "round2",
+  "f": "ini"
+ },
+ {
+  "n": "scouthawkgate",
+  "f": "ini"
+ },
+ {
+  "n": "scouthawklight",
+  "f": "ini"
+ },
+ {
+  "n": "shield1",
+  "f": "ini"
+ },
+ {
+  "n": "shield2",
+  "f": "ini"
+ },
+ {
+  "n": "shieldparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "skill_land_mining_effect1",
+  "f": "ini"
+ },
+ {
+  "n": "skill_land_mining_effect2",
+  "f": "ini"
+ },
+ {
+  "n": "skill5pikeman_amplified_shieldparticle",
+  "f": "ini"
+ },
+ {
+  "n": "skillarrowofrage1",
+  "f": "ini"
+ },
+ {
+  "n": "skillextremeshieldbig",
+  "f": "ini"
+ },
+ {
+  "n": "skillextremeshieldparticle",
+  "f": "ini"
+ },
+ {
+  "n": "skillextremeshieldsmall",
+  "f": "ini"
+ },
+ {
+  "n": "skillmechanicbombdust1",
+  "f": "ini"
+ },
+ {
+  "n": "skillmotalblowhit",
+  "f": "ini"
+ },
+ {
+  "n": "skillperfectaim1",
+  "f": "ini"
+ },
+ {
+  "n": "skillperfectaim2",
+  "f": "ini"
+ },
+ {
+  "n": "skillphysicalabsorb1",
+  "f": "ini"
+ },
+ {
+  "n": "skillrageofzecram1",
+  "f": "ini"
+ },
+ {
+  "n": "skillroarlineparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "skillroarparticle1",
+  "f": "ini"
+ },
+ {
+  "n": "skillroundimpacthit",
+  "f": "ini"
+ },
+ {
+  "n": "skillroundimpactparticle",
+  "f": "ini"
+ },
+ {
+  "n": "skillsilraphim1",
+  "f": "ini"
+ },
+ {
+  "n": "skillspark1",
+  "f": "ini"
+ },
+ {
+  "n": "skillspark2",
+  "f": "ini"
+ },
+ {
+  "n": "skillspark3",
+  "f": "ini"
+ },
+ {
+  "n": "skillspiritimpact1",
+  "f": "ini"
+ },
+ {
+  "n": "skillspiritimpact2",
+  "f": "ini"
+ },
+ {
+  "n": "skilltornado",
+  "f": "ini"
+ },
+ {
+  "n": "skilltornado2",
+  "f": "ini"
+ },
+ {
+  "n": "skilltripleimpacthit",
+  "f": "ini"
+ },
+ {
+  "n": "skilltripleimpactparticle",
+  "f": "ini"
+ },
+ {
+  "n": "skillup1",
+  "f": "ini"
+ },
+ {
+  "n": "skillup2",
+  "f": "ini"
+ },
+ {
+  "n": "skillvistenus1",
+  "f": "ini"
+ },
+ {
+  "n": "skillzecram1",
+  "f": "ini"
+ },
+ {
+  "n": "tail1",
+  "f": "ini"
+ },
+ {
+  "n": "tail2",
+  "f": "ini"
+ },
+ {
+  "n": "thunderroop2",
+  "f": "ini"
+ },
+ {
+  "n": "ac5fiercewind",
+  "f": "part"
+ },
+ {
+  "n": "ac5fiercewindkeep",
+  "f": "part"
+ },
+ {
+  "n": "ac5fiercewindprojectile",
+  "f": "part"
+ },
+ {
+  "n": "ac5lethalsight",
+  "f": "part"
+ },
+ {
+  "n": "ac5lethalsightkeep",
+  "f": "part"
+ },
+ {
+  "n": "aging",
+  "f": "part"
+ },
+ {
+  "n": "agingbody",
+  "f": "part"
+ },
+ {
+  "n": "agingbody4",
+  "f": "part"
+ },
+ {
+  "n": "alas",
+  "f": "part"
+ },
+ {
+  "n": "alas_cast",
+  "f": "part"
+ },
+ {
+  "n": "alas_keep",
+  "f": "part"
+ },
+ {
+  "n": "beatup",
+  "f": "part"
+ },
+ {
+  "n": "bigfireshot1",
+  "f": "part"
+ },
+ {
+  "n": "blind",
+  "f": "part"
+ },
+ {
+  "n": "blockinfo",
+  "f": "part"
+ },
+ {
+  "n": "bluemountainhit1",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundhit1",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundhit2",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundhit3",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundhit4",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundskill1",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundskill2",
+  "f": "part"
+ },
+ {
+  "n": "bonehoundskill3",
+  "f": "part"
+ },
+ {
+  "n": "cavemummy",
+  "f": "part"
+ },
+ {
+  "n": "chaoskarameteo",
+  "f": "part"
+ },
+ {
+  "n": "chaoskarameteohit",
+  "f": "part"
+ },
+ {
+  "n": "chaoskaranormal1_1",
+  "f": "part"
+ },
+ {
+  "n": "chaoskaranormal1_2",
+  "f": "part"
+ },
+ {
+  "n": "chaoskaraskill",
+  "f": "part"
+ },
+ {
+  "n": "chaoskaraskilluser",
+  "f": "part"
+ },
+ {
+  "n": "chaoskarastaff",
+  "f": "part"
+ },
+ {
+  "n": "chasinghunt",
+  "f": "part"
+ },
+ {
+  "n": "clanmonster1",
+  "f": "part"
+ },
+ {
+  "n": "clanmonster2",
+  "f": "part"
+ },
+ {
+  "n": "clanmonster3",
+  "f": "part"
+ },
+ {
+  "n": "clanmonster4",
+  "f": "part"
+ },
+ {
+  "n": "classupweapon1",
+  "f": "part"
+ },
+ {
+  "n": "classupweapon2",
+  "f": "part"
+ },
+ {
+  "n": "columnofwater1",
+  "f": "part"
+ },
+ {
+  "n": "columnofwater2",
+  "f": "part"
+ },
+ {
+  "n": "creedkeep",
+  "f": "part"
+ },
+ {
+  "n": "creedstart",
+  "f": "part"
+ },
+ {
+  "n": "curselazy1",
+  "f": "part"
+ },
+ {
+  "n": "curselazy2",
+  "f": "part"
+ },
+ {
+  "n": "darkbolt",
+  "f": "part"
+ },
+ {
+  "n": "darkbolthit",
+  "f": "part"
+ },
+ {
+  "n": "darkwave1",
+  "f": "part"
+ },
+ {
+  "n": "darkwave2",
+  "f": "part"
+ },
+ {
+  "n": "darkwavehit",
+  "f": "part"
+ },
+ {
+  "n": "deadlayhit1",
+  "f": "part"
+ },
+ {
+  "n": "deadlaystart1",
+  "f": "part"
+ },
+ {
+  "n": "defenseinfo",
+  "f": "part"
+ },
+ {
+  "n": "devilbirdnormal",
+  "f": "part"
+ },
+ {
+  "n": "devilbirdskillhit",
+  "f": "part"
+ },
+ {
+  "n": "divinelightning",
+  "f": "part"
+ },
+ {
+  "n": "dmachineparticle1",
+  "f": "part"
+ },
+ {
+  "n": "dmachineparticle2",
+  "f": "part"
+ },
+ {
+  "n": "doomguard",
+  "f": "part"
+ },
+ {
+  "n": "doomguardbig",
+  "f": "part"
+ },
+ {
+  "n": "doomguardbighit",
+  "f": "part"
+ },
+ {
+  "n": "drasticspirit",
+  "f": "part"
+ },
+ {
+  "n": "draxosbody",
+  "f": "part"
+ },
+ {
+  "n": "draxoshit",
+  "f": "part"
+ },
+ {
+  "n": "draxosskill1",
+  "f": "part"
+ },
+ {
+  "n": "draxosskill2",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponfire1",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponfire2",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponfire3",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponice",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponjang",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponlight",
+  "f": "part"
+ },
+ {
+  "n": "enchantweaponmember",
+  "f": "part"
+ },
+ {
+  "n": "epic_drop",
+  "f": "part"
+ },
+ {
+  "n": "evadeinfo",
+  "f": "part"
+ },
+ {
+  "n": "evilmaple",
+  "f": "part"
+ },
+ {
+  "n": "evilplant",
+  "f": "part"
+ },
+ {
+  "n": "explision",
+  "f": "part"
+ },
+ {
+  "n": "fire",
+  "f": "part"
+ },
+ {
+  "n": "firebighit1",
+  "f": "part"
+ },
+ {
+  "n": "firebigshot1",
+  "f": "part"
+ },
+ {
+  "n": "firebigshot1old",
+  "f": "part"
+ },
+ {
+  "n": "firecrackerall",
+  "f": "part"
+ },
+ {
+  "n": "firecrackerbombheart",
+  "f": "part"
+ },
+ {
+  "n": "firecrackerbombmoon",
+  "f": "part"
+ },
+ {
+  "n": "firecrackerbombstar",
+  "f": "part"
+ },
+ {
+  "n": "firecrackerheart",
+  "f": "part"
+ },
+ {
+  "n": "firecrackermoon",
+  "f": "part"
+ },
+ {
+  "n": "firecrackernormal",
+  "f": "part"
+ },
+ {
+  "n": "firecrackerstar",
+  "f": "part"
+ },
+ {
+  "n": "fireelementalhit",
+  "f": "part"
+ },
+ {
+  "n": "firehit1",
+  "f": "part"
+ },
+ {
+  "n": "firehit2",
+  "f": "part"
+ },
+ {
+  "n": "firejavelinfire",
+  "f": "part"
+ },
+ {
+  "n": "firered",
+  "f": "part"
+ },
+ {
+  "n": "fireselect",
+  "f": "part"
+ },
+ {
+  "n": "fireshot1",
+  "f": "part"
+ },
+ {
+  "n": "flamemaidenbody",
+  "f": "part"
+ },
+ {
+  "n": "flamemaidenhit",
+  "f": "part"
+ },
+ {
+  "n": "flamemaidenskill",
+  "f": "part"
+ },
+ {
+  "n": "flamemaidenstart",
+  "f": "part"
+ },
+ {
+  "n": "flamohit1",
+  "f": "part"
+ },
+ {
+  "n": "flamoskill",
+  "f": "part"
+ },
+ {
+  "n": "frostwindattack",
+  "f": "part"
+ },
+ {
+  "n": "frostwindbegin",
+  "f": "part"
+ },
+ {
+  "n": "furyeye",
+  "f": "part"
+ },
+ {
+  "n": "furyfire",
+  "f": "part"
+ },
+ {
+  "n": "furyhit1",
+  "f": "part"
+ },
+ {
+  "n": "furyhit1_b",
+  "f": "part"
+ },
+ {
+  "n": "furyhit1_g",
+  "f": "part"
+ },
+ {
+  "n": "furyhit2",
+  "f": "part"
+ },
+ {
+  "n": "furyhit2_b",
+  "f": "part"
+ },
+ {
+  "n": "furyhit2_g",
+  "f": "part"
+ },
+ {
+  "n": "furyrespawn",
+  "f": "part"
+ },
+ {
+  "n": "furyrespawndown",
+  "f": "part"
+ },
+ {
+  "n": "furyrespawnmouse",
+  "f": "part"
+ },
+ {
+  "n": "ghostynail1",
+  "f": "part"
+ },
+ {
+  "n": "ghostynail2",
+  "f": "part"
+ },
+ {
+  "n": "godlyshield",
+  "f": "part"
+ },
+ {
+  "n": "gurdian",
+  "f": "part"
+ },
+ {
+  "n": "halloweensuit",
+  "f": "part"
+ },
+ {
+  "n": "haunt1",
+  "f": "part"
+ },
+ {
+  "n": "haunt2",
+  "f": "part"
+ },
+ {
+  "n": "headcutterhit1",
+  "f": "part"
+ },
+ {
+  "n": "heavygoblin",
+  "f": "part"
+ },
+ {
+  "n": "heavygoblinhit1",
+  "f": "part"
+ },
+ {
+  "n": "highlevelusermerit_star",
+  "f": "part"
+ },
+ {
+  "n": "holybody",
+  "f": "part"
+ },
+ {
+  "n": "holyvalor",
+  "f": "part"
+ },
+ {
+  "n": "holyvalortt",
+  "f": "part"
+ },
+ {
+  "n": "hulkhit1",
+  "f": "part"
+ },
+ {
+  "n": "hulkhit2",
+  "f": "part"
+ },
+ {
+  "n": "hulkhit3",
+  "f": "part"
+ },
+ {
+  "n": "iceaceintskill2",
+  "f": "part"
+ },
+ {
+  "n": "iceballhit1",
+  "f": "part"
+ },
+ {
+  "n": "icebolthit1",
+  "f": "part"
+ },
+ {
+  "n": "icecoldeyehit1",
+  "f": "part"
+ },
+ {
+  "n": "icecoldeyeskill1",
+  "f": "part"
+ },
+ {
+  "n": "icecoldeyestart1",
+  "f": "part"
+ },
+ {
+  "n": "iceelementalbody",
+  "f": "part"
+ },
+ {
+  "n": "iceelementalhand",
+  "f": "part"
+ },
+ {
+  "n": "icefrozenmistbody",
+  "f": "part"
+ },
+ {
+  "n": "icefrozenmistbody1",
+  "f": "part"
+ },
+ {
+  "n": "icefrozonemist",
+  "f": "part"
+ },
+ {
+  "n": "icefrozonemist1",
+  "f": "part"
+ },
+ {
+  "n": "icegoblin",
+  "f": "part"
+ },
+ {
+  "n": "icegoblinhit1",
+  "f": "part"
+ },
+ {
+  "n": "icegolemhit1",
+  "f": "part"
+ },
+ {
+  "n": "icehit1",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezubossjin1",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezubossmousejin1",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezuhit",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezunormal1",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezunormal2",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezunormal3",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezuskill1",
+  "f": "part"
+ },
+ {
+  "n": "icekelvezuskill2",
+  "f": "part"
+ },
+ {
+  "n": "icemisticspinelskill1",
+  "f": "part"
+ },
+ {
+  "n": "iceshot1",
+  "f": "part"
+ },
+ {
+  "n": "icevalentobody",
+  "f": "part"
+ },
+ {
+  "n": "icevalentobrandish",
+  "f": "part"
+ },
+ {
+  "n": "icevalentoeye",
+  "f": "part"
+ },
+ {
+  "n": "icevalentohit1",
+  "f": "part"
+ },
+ {
+  "n": "icevalentohit2",
+  "f": "part"
+ },
+ {
+  "n": "icevalentojoint",
+  "f": "part"
+ },
+ {
+  "n": "icevalentoleye",
+  "f": "part"
+ },
+ {
+  "n": "icevalentomagicmode",
+  "f": "part"
+ },
+ {
+  "n": "icevalentopiercing",
+  "f": "part"
+ },
+ {
+  "n": "icevalentoreye",
+  "f": "part"
+ },
+ {
+  "n": "iceworm1",
+  "f": "part"
+ },
+ {
+  "n": "iceworm2",
+  "f": "part"
+ },
+ {
+  "n": "icewormhit1",
+  "f": "part"
+ },
+ {
+  "n": "icewormhit2",
+  "f": "part"
+ },
+ {
+  "n": "ielitehit",
+  "f": "part"
+ },
+ {
+  "n": "ieliteskill",
+  "f": "part"
+ },
+ {
+  "n": "igniculusbody",
+  "f": "part"
+ },
+ {
+  "n": "igniculushit",
+  "f": "part"
+ },
+ {
+  "n": "igniculusskill",
+  "f": "part"
+ },
+ {
+  "n": "inpes",
+  "f": "part"
+ },
+ {
+  "n": "inpes_cast",
+  "f": "part"
+ },
+ {
+  "n": "inpes_keep",
+  "f": "part"
+ },
+ {
+  "n": "insecbody",
+  "f": "part"
+ },
+ {
+  "n": "insechit",
+  "f": "part"
+ },
+ {
+  "n": "insecskill",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterbombhit1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterbombhit2",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterbombhit3",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterchaingolem1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterchaingolem2",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterdeadzonedead",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterhyperdead",
+  "f": "part"
+ },
+ {
+  "n": "ironmonstermorgon",
+  "f": "part"
+ },
+ {
+  "n": "ironmonstermountainhit1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsteromuhit1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardian",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianbosshit1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianbossjin1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianbossjin2",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianbossskill1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianbossweapon1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianbossweapon2",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianhand",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianlight1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianlight2",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianlight3",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianshot1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonsterrunicguardianskillhit1",
+  "f": "part"
+ },
+ {
+  "n": "ironmonstersadnessshot",
+  "f": "part"
+ },
+ {
+  "n": "isoldierskill",
+  "f": "part"
+ },
+ {
+  "n": "itechnicianskill",
+  "f": "part"
+ },
+ {
+  "n": "judgementhit",
+  "f": "part"
+ },
+ {
+  "n": "judgementstart",
+  "f": "part"
+ },
+ {
+  "n": "ks5holyconviction",
+  "f": "part"
+ },
+ {
+  "n": "landofghost1",
+  "f": "part"
+ },
+ {
+  "n": "landofghost2",
+  "f": "part"
+ },
+ {
+  "n": "lavaarcherhit",
+  "f": "part"
+ },
+ {
+  "n": "lavaarcherskill",
+  "f": "part"
+ },
+ {
+  "n": "lavaarcherstart",
+  "f": "part"
+ },
+ {
+  "n": "lavaarmorhit",
+  "f": "part"
+ },
+ {
+  "n": "lavaarmorskill",
+  "f": "part"
+ },
+ {
+  "n": "lavagianthit",
+  "f": "part"
+ },
+ {
+  "n": "lavagiantskill",
+  "f": "part"
+ },
+ {
+  "n": "lavagiantstart",
+  "f": "part"
+ },
+ {
+  "n": "lavagolemhit",
+  "f": "part"
+ },
+ {
+  "n": "lavagolemskill",
+  "f": "part"
+ },
+ {
+  "n": "leafdown",
+  "f": "part"
+ },
+ {
+  "n": "legendary_drop",
+  "f": "part"
+ },
+ {
+  "n": "lengineerskill",
+  "f": "part"
+ },
+ {
+  "n": "lguardianskill",
+  "f": "part"
+ },
+ {
+  "n": "lighthit1",
+  "f": "part"
+ },
+ {
+  "n": "lightstart1",
+  "f": "part"
+ },
+ {
+  "n": "lizardbigmamaskill",
+  "f": "part"
+ },
+ {
+  "n": "lizardcommanderhit",
+  "f": "part"
+ },
+ {
+  "n": "lizardcommanderskill",
+  "f": "part"
+ },
+ {
+  "n": "lizarddoctorskill",
+  "f": "part"
+ },
+ {
+  "n": "lizardelderhit",
+  "f": "part"
+ },
+ {
+  "n": "lizardelderskill",
+  "f": "part"
+ },
+ {
+  "n": "lizardpapaskill",
+  "f": "part"
+ },
+ {
+  "n": "lizardsoldierskill",
+  "f": "part"
+ },
+ {
+  "n": "lostmonsterdarkmagedead",
+  "f": "part"
+ },
+ {
+  "n": "lostmonsterdarkmagehit1",
+  "f": "part"
+ },
+ {
+  "n": "lostmonsterhellhoundattack",
+  "f": "part"
+ },
+ {
+  "n": "ltechnicianskill",
+  "f": "part"
+ },
+ {
+  "n": "magneticlight",
+  "f": "part"
+ },
+ {
+  "n": "magneticshot",
+  "f": "part"
+ },
+ {
+  "n": "mc5rupturefinalhit",
+  "f": "part"
+ },
+ {
+  "n": "mc5rupturehit",
+  "f": "part"
+ },
+ {
+  "n": "midrandaend",
+  "f": "part"
+ },
+ {
+  "n": "midrandamember",
+  "f": "part"
+ },
+ {
+  "n": "midrandastart",
+  "f": "part"
+ },
+ {
+  "n": "migalend",
+  "f": "part"
+ },
+ {
+  "n": "migalmember",
+  "f": "part"
+ },
+ {
+  "n": "migalstart",
+  "f": "part"
+ },
+ {
+  "n": "minegolemhit",
+  "f": "part"
+ },
+ {
+  "n": "minegolemskill",
+  "f": "part"
+ },
+ {
+  "n": "monsterhit1",
+  "f": "part"
+ },
+ {
+  "n": "monsterhit2",
+  "f": "part"
+ },
+ {
+  "n": "monsteriron1",
+  "f": "part"
+ },
+ {
+  "n": "monsterpigonfire1",
+  "f": "part"
+ },
+ {
+  "n": "monsterpigonfiretail",
+  "f": "part"
+ },
+ {
+  "n": "morgoniahit1",
+  "f": "part"
+ },
+ {
+  "n": "morgoniaskill1",
+  "f": "part"
+ },
+ {
+  "n": "mourningofpreyhit",
+  "f": "part"
+ },
+ {
+  "n": "mourningofpreystart",
+  "f": "part"
+ },
+ {
+  "n": "muspell",
+  "f": "part"
+ },
+ {
+  "n": "muspellend",
+  "f": "part"
+ },
+ {
+  "n": "muspellhand",
+  "f": "part"
+ },
+ {
+  "n": "muspellhit1",
+  "f": "part"
+ },
+ {
+  "n": "muspellstart",
+  "f": "part"
+ },
+ {
+  "n": "newcharacter",
+  "f": "part"
+ },
+ {
+  "n": "omicronhit1",
+  "f": "part"
+ },
+ {
+  "n": "opening",
+  "f": "part"
+ },
+ {
+  "n": "openingold",
+  "f": "part"
+ },
+ {
+  "n": "openingtest",
+  "f": "part"
+ },
+ {
+  "n": "parkmummy",
+  "f": "part"
+ },
+ {
+  "n": "parkmummyhit",
+  "f": "part"
+ },
+ {
+  "n": "parkposion",
+  "f": "part"
+ },
+ {
+  "n": "parkspidertrooper",
+  "f": "part"
+ },
+ {
+  "n": "parkstingray",
+  "f": "part"
+ },
+ {
+  "n": "pastingshadowattack",
+  "f": "part"
+ },
+ {
+  "n": "pastingshadowbegin",
+  "f": "part"
+ },
+ {
+  "n": "piercing1",
+  "f": "part"
+ },
+ {
+  "n": "playerrank1",
+  "f": "part"
+ },
+ {
+  "n": "playerrank2",
+  "f": "part"
+ },
+ {
+  "n": "playerrank3",
+  "f": "part"
+ },
+ {
+  "n": "playerrankoverall",
+  "f": "part"
+ },
+ {
+  "n": "pollutedattack",
+  "f": "part"
+ },
+ {
+  "n": "pollutedbegin",
+  "f": "part"
+ },
+ {
+  "n": "pressofdeity1",
+  "f": "part"
+ },
+ {
+  "n": "pressofdeity2",
+  "f": "part"
+ },
+ {
+  "n": "ps5ringofspears",
+  "f": "part"
+ },
+ {
+  "n": "r5sesmicimpact",
+  "f": "part"
+ },
+ {
+  "n": "rainlogin",
+  "f": "part"
+ },
+ {
+  "n": "rainmaker1",
+  "f": "part"
+ },
+ {
+  "n": "rainmaker2",
+  "f": "part"
+ },
+ {
+  "n": "rare_drop",
+  "f": "part"
+ },
+ {
+  "n": "ratoo",
+  "f": "part"
+ },
+ {
+  "n": "ratoohit1",
+  "f": "part"
+ },
+ {
+  "n": "recallbloodyknight",
+  "f": "part"
+ },
+ {
+  "n": "redeyehit1",
+  "f": "part"
+ },
+ {
+  "n": "redeyehit2",
+  "f": "part"
+ },
+ {
+  "n": "redeyehit3",
+  "f": "part"
+ },
+ {
+  "n": "redeyehit4",
+  "f": "part"
+ },
+ {
+  "n": "risingslash1",
+  "f": "part"
+ },
+ {
+  "n": "risingslash2",
+  "f": "part"
+ },
+ {
+  "n": "runninghit",
+  "f": "part"
+ },
+ {
+  "n": "s5_pr_blessingkrishna",
+  "f": "part"
+ },
+ {
+  "n": "s5_pr_blessingkrishna_effect",
+  "f": "part"
+ },
+ {
+  "n": "scratch1",
+  "f": "part"
+ },
+ {
+  "n": "scratch2",
+  "f": "part"
+ },
+ {
+  "n": "scratchaura",
+  "f": "part"
+ },
+ {
+  "n": "sealcrasherlskill1",
+  "f": "part"
+ },
+ {
+  "n": "serqbushit1",
+  "f": "part"
+ },
+ {
+  "n": "serqbushit2",
+  "f": "part"
+ },
+ {
+  "n": "serqbushit3",
+  "f": "part"
+ },
+ {
+  "n": "serqbusmagic1",
+  "f": "part"
+ },
+ {
+  "n": "serqbusmagic2",
+  "f": "part"
+ },
+ {
+  "n": "serqbusmagic3",
+  "f": "part"
+ },
+ {
+  "n": "serqbusmagicattack1",
+  "f": "part"
+ },
+ {
+  "n": "serqbusmagicattack2",
+  "f": "part"
+ },
+ {
+  "n": "serqbusmagicattack3",
+  "f": "part"
+ },
+ {
+  "n": "serqbusshot1",
+  "f": "part"
+ },
+ {
+  "n": "serqbusshot2",
+  "f": "part"
+ },
+ {
+  "n": "serqbusshot3",
+  "f": "part"
+ },
+ {
+  "n": "serqbusstate1",
+  "f": "part"
+ },
+ {
+  "n": "serqbusstate2",
+  "f": "part"
+ },
+ {
+  "n": "serqbusstate3",
+  "f": "part"
+ },
+ {
+  "n": "shadowbomb",
+  "f": "part"
+ },
+ {
+  "n": "shadowmagic1",
+  "f": "part"
+ },
+ {
+  "n": "shadowparticle1",
+  "f": "part"
+ },
+ {
+  "n": "shadowparticle2",
+  "f": "part"
+ },
+ {
+  "n": "shelltom",
+  "f": "part"
+ },
+ {
+  "n": "shelltomhit1",
+  "f": "part"
+ },
+ {
+  "n": "shelltomup1",
+  "f": "part"
+ },
+ {
+  "n": "shelltomup2",
+  "f": "part"
+ },
+ {
+  "n": "shelltomweaponhit",
+  "f": "part"
+ },
+ {
+  "n": "skill2fighterroar1",
+  "f": "part"
+ },
+ {
+  "n": "skill3archerbombshot1",
+  "f": "part"
+ },
+ {
+  "n": "skill3archerbombshothit1",
+  "f": "part"
+ },
+ {
+  "n": "skill3archerbombshothit2",
+  "f": "part"
+ },
+ {
+  "n": "skill3archergoldenfalcon1",
+  "f": "part"
+ },
+ {
+  "n": "skill3archergoldenfalcon2",
+  "f": "part"
+ },
+ {
+  "n": "skill3atalantasplitjavelin1",
+  "f": "part"
+ },
+ {
+  "n": "skill3atalantatriumphofvalhalla",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterbonesmash1",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterconcentration1",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterdemonsbane_cast",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterdemonsbane_keep",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterdemonsbane1",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterdemonsbane1_keep",
+  "f": "part"
+ },
+ {
+  "n": "skill3fighterswiftaxe1",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit1",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit2",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit3",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit4",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit5",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit6",
+  "f": "part"
+ },
+ {
+  "n": "skill3hit7",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightdivineinhalation1",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightdivineinhalation2",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightflamebrandish",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightflamebrandish1",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightholyincantation1",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightholyincantation2",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightholyincantationhand1",
+  "f": "part"
+ },
+ {
+  "n": "skill3knightholyincantationhand2",
+  "f": "part"
+ },
+ {
+  "n": "skill3magiciandancingswordfire1",
+  "f": "part"
+ },
+ {
+  "n": "skill3magiciandancingswordice1",
+  "f": "part"
+ },
+ {
+  "n": "skill3magiciandiastrophism1",
+  "f": "part"
+ },
+ {
+  "n": "skill3magicianengrgyshield",
+  "f": "part"
+ },
+ {
+  "n": "skill3magicianengrgyshield1",
+  "f": "part"
+ },
+ {
+  "n": "skill3magicianspiritelemental",
+  "f": "part"
+ },
+ {
+  "n": "skill3magicianspiritelementalext1",
+  "f": "part"
+ },
+ {
+  "n": "skill3mechanicianmetalarmor",
+  "f": "part"
+ },
+ {
+  "n": "skill3mechaniciansparkshield",
+  "f": "part"
+ },
+ {
+  "n": "skill3mechaniciansparkshield1",
+  "f": "part"
+ },
+ {
+  "n": "skill3pikemanbladeofblaze",
+  "f": "part"
+ },
+ {
+  "n": "skill3pikemanbladeofblazehit",
+  "f": "part"
+ },
+ {
+  "n": "skill3pikemanvenomspear",
+  "f": "part"
+ },
+ {
+  "n": "skill3pikemanvenomspear1",
+  "f": "part"
+ },
+ {
+  "n": "skill3pikevanish1",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessextinction1",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessextinction2",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessresurrection1",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessresurrection2",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessresurrection3",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvigorball1",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvigorball2",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvigorballhit1",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtuallifemember",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtuallifemember_active",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtuallifemember_cast",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtuallifemember_keep",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtualmanamember",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtualregenmember",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtualregenmember_active",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtualregenmember_cast",
+  "f": "part"
+ },
+ {
+  "n": "skill3priestessvirtualregenmember_keep",
+  "f": "part"
+ },
+ {
+  "n": "skill4betserker",
+  "f": "part"
+ },
+ {
+  "n": "skill4celestialchainlightinglight",
+  "f": "part"
+ },
+ {
+  "n": "skill4frostjavelin",
+  "f": "part"
+ },
+ {
+  "n": "skill4impulsionhit1",
+  "f": "part"
+ },
+ {
+  "n": "skill4impulsionlight",
+  "f": "part"
+ },
+ {
+  "n": "skill4phoenixshot",
+  "f": "part"
+ },
+ {
+  "n": "skill4regenerationfield",
+  "f": "part"
+ },
+ {
+  "n": "snail",
+  "f": "part"
+ },
+ {
+  "n": "snow",
+  "f": "part"
+ },
+ {
+  "n": "soresword",
+  "f": "part"
+ },
+ {
+  "n": "soulmanacle",
+  "f": "part"
+ },
+ {
+  "n": "soulshock",
+  "f": "part"
+ },
+ {
+  "n": "soulsuckerhit1",
+  "f": "part"
+ },
+ {
+  "n": "spiderpart",
+  "f": "part"
+ },
+ {
+  "n": "spiritualflare",
+  "f": "part"
+ },
+ {
+  "n": "stingger",
+  "f": "part"
+ },
+ {
+  "n": "stonegolemhit1",
+  "f": "part"
+ },
+ {
+  "n": "storm",
+  "f": "part"
+ },
+ {
+  "n": "stygianlordhit1",
+  "f": "part"
+ },
+ {
+  "n": "stygianlordparticle1",
+  "f": "part"
+ },
+ {
+  "n": "stygianlordparticle2",
+  "f": "part"
+ },
+ {
+  "n": "stygianlordparticle3",
+  "f": "part"
+ },
+ {
+  "n": "tarantulikahit",
+  "f": "part"
+ },
+ {
+  "n": "terrainfire",
+  "f": "part"
+ },
+ {
+  "n": "terrainfiresmall",
+  "f": "part"
+ },
+ {
+  "n": "test1",
+  "f": "part"
+ },
+ {
+  "n": "test2",
+  "f": "part"
+ },
+ {
+  "n": "test3",
+  "f": "part"
+ },
+ {
+  "n": "test4",
+  "f": "part"
+ },
+ {
+  "n": "thorncrawler",
+  "f": "part"
+ },
+ {
+  "n": "ttt",
+  "f": "part"
+ },
+ {
+  "n": "turtledragonhit1",
+  "f": "part"
+ },
+ {
+  "n": "turtledragonhit2",
+  "f": "part"
+ },
+ {
+  "n": "turtledragonhit3",
+  "f": "part"
+ },
+ {
+  "n": "turtledragonskill1",
+  "f": "part"
+ },
+ {
+  "n": "twistjavelin1",
+  "f": "part"
+ },
+ {
+  "n": "twistjavelin2",
+  "f": "part"
+ },
+ {
+  "n": "undeadminerhit",
+  "f": "part"
+ },
+ {
+  "n": "venomthrone",
+  "f": "part"
+ },
+ {
+  "n": "violencestab1",
+  "f": "part"
+ },
+ {
+  "n": "violencestab2",
+  "f": "part"
+ },
+ {
+  "n": "violencestab3",
+  "f": "part"
+ },
+ {
+  "n": "water",
+  "f": "part"
+ },
+ {
+  "n": "windy1",
+  "f": "part"
+ },
+ {
+  "n": "windy2",
+  "f": "part"
+ },
+ {
+  "n": "wisp1",
+  "f": "part"
+ },
+ {
+  "n": "wisp2",
+  "f": "part"
+ },
+ {
+  "n": "xmassnow",
+  "f": "part"
+ }
+]

@@ -7,8 +7,10 @@
 import { ITEM_DEFS, type ItemDef } from '../../game/data/itemDefs.js';
 import { CLASS_DIR, SKILLS, type SkillDef } from '../../game/skillData.js';
 import { SKILL_INDEX_BY_ICON } from '../../game/data/skillIndexByIcon.js';
+import skillIndexFromIn from '../../game/data/anim-in/skill-index-map.generated.json';
+import itemsSupplementRaw from '../../game/data/items-supplement.generated.json';
 import { JOB_DATA } from '../../render/char-loader.js';
-import { getWeaponTypeFromIdCode, getHandType } from '../../char/weapon-type.js';
+import { getWeaponTypeFromIdCode, getHandType, getHandTypeFromIdCode } from '../../char/weapon-type.js';
 import { weaponSoundCode, sfxBank } from '../../audio/sfx.js';
 import type { HandType, MotionState } from '../../audio/sfx.js';
 
@@ -52,14 +54,30 @@ export interface WeaponOption {
 
 function buildWeapon(def: ItemDef, isCaster: boolean): WeaponOption {
   const type = getWeaponTypeFromIdCode(def.code) ?? 'UNKNOWN';
-  const hand = getHandType(def.class) as HandType;
-  const soundCode = weaponSoundCode(type, hand, isCaster);
+  // 手别**优先读语义表**（honors 人工覆盖，与匹配器同源）；DB 的 class 只作兜底。
+  // 曾直接用 def.class（DB 原始值）→ 选择器显示 2H 而匹配器按 1H（WS118 实测不一致）。
+  const hand = (getHandTypeFromIdCode(def.code) ?? getHandType(def.class)) as HandType;
+  const soundCode = weaponSoundCode(type, hand, isCaster, def.code);   // idcode：剑族判短剑要用低字
   return { def, type, hand, soundCode, soundFiles: sfxBank.weaponFiles(soundCode) };
 }
 
-/** 全部武器（按类型分组展示用）。isCaster 影响钝器是挥击音还是吟唱音。 */
+/**
+ * 补充物品（我方 ITEM_DEFS 缺失、来自 11 职业服务端 OpenItem 扫描的部分，
+ * 含格斗家的 WV 拳套 36 条）。`class`/`pos` 等为派生值，见生成物里的 derived 标注。
+ */
+const ITEM_SUPPLEMENT = (itemsSupplementRaw as unknown as {
+  items: Array<{ code: number; name: string; icon: string; folder: string; w: number; h: number; class: number; pos: number; sound: number; reqLv: number }>;
+}).items;
+
+/** 补充物品 → ItemDef 形状（id 用负值，避免与我方真实 uid 冲突） */
+const SUPPLEMENT_DEFS: ItemDef[] = ITEM_SUPPLEMENT.map((o, i) => ({
+  id: -(i + 1), code: o.code, name: o.name, icon: o.icon, folder: o.folder,
+  w: o.w, h: o.h, class: o.class, pos: o.pos, sound: o.sound, reqLv: o.reqLv,
+}));
+
+/** 全部武器（按类型分组展示用）。含 .in/OpenItem 补出的新武器族（WV 拳套等）。 */
 export function weaponOptions(isCaster: boolean): WeaponOption[] {
-  return ITEM_DEFS
+  return [...ITEM_DEFS, ...SUPPLEMENT_DEFS]
     .filter((d) => d.folder === 'weapon')
     .map((d) => buildWeapon(d, isCaster));
 }
@@ -88,8 +106,9 @@ export function armorNumbers(): number[] {
 }
 
 export const ARMOR_RANGE = { min: 1, max: 25 };
-export const FACE_RANGE = { min: 0, max: 9 };
-export const TIER_RANGE = { min: 0, max: 3 };
+// 脸/档位范围由 char-loader 依**头部资产**推导（那里是唯一来源）。
+// 曾在此各自写死 0..9 / 0..3 → 缺脸 11~13 与第 5 档（用户实测）。
+export { FACE_RANGE, TIER_RANGE } from '../../render/char-loader.js';
 
 /* ─────────── 技能 ─────────── */
 
@@ -97,15 +116,35 @@ export interface SkillRow {
   def: SkillDef;
   /** saSkillData 动画索引；null = 无专属动画，运行时回退普攻动画 */
   animIndex: number | null;
+  /**
+   * 该 animIndex 的证据来源：
+   *   'runtime'  = 来自 skillIndexByIcon（现有运行时表）
+   *   '/in-name' = 来自 .in 提案，且技能名匹配（强）
+   *   'positional' = 来自 .in 提案，按职业代码块顺序推（中）
+   */
+  animIndexSrc: 'runtime' | '/in-name' | 'positional';
 }
+
+/** `.in` 提案：classDir → iconFile → { code, src } */
+const IN_PROPOSAL = (skillIndexFromIn as unknown as {
+  classes: Record<string, Array<{ iconFile: string; code: number | null; src: string }>>;
+}).classes;
 
 export function skillsForJob(jobId: number): SkillRow[] {
   const classDir = CLASS_DIR[jobId];
   const list = SKILLS[classDir] ?? [];
-  return list.map((def) => ({
-    def,
-    animIndex: SKILL_INDEX_BY_ICON[def.iconFile] ?? null,
-  }));
+  const proposal = new Map((IN_PROPOSAL[classDir] ?? []).map((r) => [r.iconFile, r]));
+  return list.map((def) => {
+    // 现有表优先（运行时行为不变），缺的用 .in 提案补 —— 否则技能面板会把
+    // 「表未覆盖到 198 以后」误报成「无专属动画」。
+    const rt = SKILL_INDEX_BY_ICON[def.iconFile];
+    if (rt != null) return { def, animIndex: rt, animIndexSrc: 'runtime' as const };
+    const p = proposal.get(def.iconFile);
+    if (p && p.code != null) {
+      return { def, animIndex: p.code, animIndexSrc: p.src === '/in-name' ? '/in-name' as const : 'positional' as const };
+    }
+    return { def, animIndex: null, animIndexSrc: 'runtime' as const };
+  });
 }
 
 /** 该职业"无专属动画"的技能占比（技能系统落地前必须知道的数字） */

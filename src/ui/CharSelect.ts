@@ -8,7 +8,7 @@ import { createCameraControls } from './camera-controls.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, findBone, WEAPON_BONES } from '../render/weapon-loader.js';
+import { loadWeaponModel, findBone, WEAPON_BONES, sheatheBone } from '../render/weapon-loader.js';
 import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 
 export interface CharacterAppearance {
@@ -476,7 +476,6 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       // 姝﹀櫒鎸傝浇锛堝鏈夛級
       currentWeaponIdcode = appearance?.weaponIdcode && appearance.weaponIdcode > 0 ? appearance.weaponIdcode : null;
       currentWeaponType = currentWeaponIdcode ? getWeaponTypeFromIdCode(currentWeaponIdcode) : null;
-      currentWeaponPos = appearance?.weaponPos || 4;
       weaponStance = 'combat';
       if (appearance?.weaponDorp) {
         await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos);
@@ -507,11 +506,15 @@ animState = createAnimStateMachine({
   let weaponGroup: THREE.Group | null = null;
   let currentWeaponIdcode: number | null = null;
   let currentWeaponType: string | null = null;
-  let currentWeaponPos = 4;
   let weaponStance = 'combat';
 
   // 鏀惰捣濮挎€侀楠硷紙鏂囨。 搂8.2 / m6 瀹炴祴锛夛細鍓戞枾鍏ヨ儗 in01锛屽紦 in-bow锛屽崄瀛楀紦 in-cro锛屽寱棣?in_DaggerL/R
-  function sheatheBoneForType(weaponType: string | null, weaponPos: number): string {
+  function sheatheBoneForType(): string {
+    // 唯一实现：按 idcode 查源码移植的收械白名单
+    return sheatheBone(currentWeaponIdcode ?? 0);
+  }
+  // @ts-expect-error 旧的按类型分支已由共享判定取代（保留此处以防别处引用）
+  function _legacySheatheBone(weaponType: string | null, weaponPos: number): string {
     switch (weaponType) {
       case 'BOW': return WEAPON_BONES.SHEATHE_BOW;
       case 'CROSSBOW': return WEAPON_BONES.SHEATHE_CROSSBOW;
@@ -522,8 +525,8 @@ animState = createAnimStateMachine({
 
   async function setWeaponStance(stance: 'combat' | 'sheathed') {
     if (!weaponGroup || !skeletonGroup || weaponStance === stance) return;
-    const fromBone = stance === 'combat' ? sheatheBoneForType(currentWeaponType, currentWeaponPos) : currentCombatBone;
-    const toBone = stance === 'combat' ? currentCombatBone : sheatheBoneForType(currentWeaponType, currentWeaponPos);
+    const fromBone = stance === 'combat' ? sheatheBoneForType() : currentCombatBone;
+    const toBone = stance === 'combat' ? currentCombatBone : sheatheBoneForType();
     if (!fromBone || !toBone) return;
     const from = findBone(skeletonGroup, fromBone);
     const to = findBone(skeletonGroup, toBone);

@@ -1,0 +1,55 @@
+{
+ "format": "jpstale.anim-index/1",
+ "fps": 30,
+ "totalAnimations": 698,
+ "models": [
+  {
+   "model": "m1",
+   "animSet": "m1",
+   "animations": 150,
+   "clips": "m1.json"
+  },
+  {
+   "model": "m2",
+   "animSet": "m2",
+   "animations": 98,
+   "clips": "m2.json"
+  },
+  {
+   "model": "m3",
+   "animSet": "m3",
+   "animations": 65,
+   "clips": "m3.json"
+  },
+  {
+   "model": "m4",
+   "animSet": "m4",
+   "animations": 92,
+   "clips": "m4.json"
+  },
+  {
+   "model": "m5",
+   "animSet": "m5",
+   "animations": 65,
+   "clips": "m5.json"
+  },
+  {
+   "model": "m6",
+   "animSet": "m6",
+   "animations": 78,
+   "clips": "m6.json"
+  },
+  {
+   "model": "m7",
+   "animSet": "m7",
+   "animations": 69,
+   "clips": "m7.json"
+  },
+  {
+   "model": "m8",
+   "animSet": "m8",
+   "animations": 81,
+   "clips": "m8.json"
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
-import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackStart, attackHit } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackStart, attackHit, respawnChoice } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -10,6 +10,7 @@ import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
 import { preloadAllModels } from './render/model-cache.js';
 import { createLoadingScreen } from './ui/LoadingScreen.js';
+import { createDeathPanel } from './ui/DeathPanel.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
@@ -21,7 +22,7 @@ import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installBridge, sendPickupItem, sendSwitchWeapon } from './net/bridge.js';
 import { pressQuickBinding, openSystemMenu, closeSystemMenu } from './app/gameStore.js';
-import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn } from './app/chatStore.js';
+import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn, Ch } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -32,21 +33,33 @@ const serverSelectPanel = createServerSelect(app);
 const charSelectPanel = createCharSelect(app);
 const hudPanel = createHud(app);
 const worldView = createWorldView(app, {
-  // 移动上报（客户端位置上权威）：WorldView 已按节奏/模式/停止去重，这里直接转发
-  onMoveInt: (angle, mode, x, y, z, anim) => sendMoveIntent(angle, mode, x, y, z, anim),
+  // 移动上报（客户端位置上权威）：WorldView 已按节奏/模式/停止去重，这里直接转发。
+  // animIndex/animClip = 自机此刻播的那一条动画，服务端原样透传 → 旁观者直接播同一条。
+  onMoveInt: (angle, mode, x, y, z, anim, animIndex, animClip) =>
+    sendMoveIntent(angle, mode, x, y, z, anim, animIndex, animClip),
   // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
   onPickupGroundItem: (groundItemId) => sendPickupItem(groundItemId),
   // 攻击起手（挥拳开始）→ C2S_AttackStart；命中帧（每段）→ C2S_AttackHit。服务端权威裁决+结算。
-  onAttackStart: (monsterId) => send(attackStart(monsterId)),
+  onAttackStart: (monsterId, clientSeq, segments, animIndex, animClip) =>
+    send(attackStart(monsterId, clientSeq, segments, animIndex, animClip)),
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
 });
 
-// 转发客户端权威移动（含位置 + 可选动画覆盖）
-function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim = 0): void {
-  send(playerMove(angle, mode, x, y, z, anim));
+// 转发客户端权威移动（含位置 + 可选动画覆盖 + 当前动画条目）
+function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim = 0,
+                        animIndex = 0, animClip = ''): void {
+  send(playerMove(angle, mode, x, y, z, anim, animIndex, animClip));
 }
 
 const loadingScreen = createLoadingScreen(app);
+
+// 死亡面板：三个复活选项（对应原版 sinInterFace.h 的 RESTART_FEILD / RESTART_TOWN / RESTART_EXIT）。
+// 点击只发意图，**不在这里关闭面板** —— 等服务端 S2C_PlayerRespawn 回来再关，
+// 否则"点了没反应"的那段空窗会让人以为没点上（代价结算也以服务端为准）。
+const deathPanel = createDeathPanel(app, (choice) => {
+  send(respawnChoice(choice));
+  deathPanel.setPending();   // 面板留着但锁住，等服务端复活包到达再关（点了要有反馈）
+});
 
 // ── 连接状态遮罩（i18n）：断开重连 / 退出等待，统一走这里提示 ──
 const connOverlayEl = document.createElement('div');
@@ -213,10 +226,13 @@ keyBinding.onKeyDown((action) => {
       reactPanels.toggle('inventory');
       break;
     case 'minimap':
-      worldView.toggleMinimap();
+      hudPanel.setMapFlag(worldView.toggleMinimap());
       break;
     case 'walkRun':
       hudPanel.setRunFlag(worldView.toggleRun());
+      break;
+    case 'cameraMode':
+      hudPanel.setCamFlag(worldView.toggleCameraMode());
       break;
     case 'closePanel':
       // 输入框打开时 Esc 优先收输入，再收起面板/菜单
@@ -247,6 +263,10 @@ keyBinding.onKeyDown((action) => {
 hudPanel.onAction = (action) => {
   if (action === 'toggleRun') {
     hudPanel.setRunFlag(worldView.toggleRun());
+  } else if (action === 'toggleCamera') {
+    hudPanel.setCamFlag(worldView.toggleCameraMode());
+  } else if (action === 'toggleMinimap') {
+    hudPanel.setMapFlag(worldView.toggleMinimap());
   } else if (action === 'system') {
     openSystemMenu();
   } else if (action === 'status') {
@@ -326,6 +346,11 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
           : t('gui.load.entering', { map: mapName });
         loadingScreen.show(title);
         worldView.show(enterGame, worldLoadHooks);
+        // HUD 小按钮的 tooltip 画的是**当前状态**（走/跑、相机模式、地图开关），进图时对齐一次，
+        // 避免 WorldView 默认值与 HUD 默认值将来各自漂移
+        hudPanel.setRunFlag(worldView.isRunning());
+        hudPanel.setCamFlag(worldView.cameraMode());
+        hudPanel.setMapFlag(worldView.isMinimapOn());
       }
       break;
     }
@@ -470,7 +495,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
         mp: ps.mp || 0, maxMp: ps.maxMp || 0,
         stm: ps.sp || 0, maxStm: ps.maxSp || 0,
         level: Number(ps.level) || 1,
-        exp: Number(ps.exp) || 0, maxExp: Number(ps.nextExp) || 0,
+        // EXP 条用**本级**口径：经验是累计值（L1 起累加），直接拿 exp/nextExp 画永远是"快满"
+        // （用户 2026-09-12 报的就是这个）。本级已获得 = exp - levelExp，本级升级所需 = nextExp - levelExp。
+        exp: Math.max(0, (Number(ps.exp) || 0) - (Number(ps.levelExp) || 0)),
+        maxExp: Math.max(0, (Number(ps.nextExp) || 0) - (Number(ps.levelExp) || 0)),
         playerName: ps.playerName || '',
         gameClock,
       };
@@ -538,6 +566,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         m.position?.z || 0,
         m.angle || 0,
         m.animState || 0,
+        m.animIndex || 0,   // 对方播的那一条动画（服务端透传）→ 旁观者直接播同一条
+        m.animClip || '',
       );
       break;
     }
@@ -648,7 +678,13 @@ onMessage((msg: jpt.base.ServerMessage) => {
     case 'attackStart': {
       // 起手广播：远端玩家立刻挥拳（自机由本地攻击循环驱动，内部忽略）
       const as = msg.attackStart!;
-      worldView.signalAttackStart(Number(as.attackerId ?? 0), Number(as.targetId ?? 0), Number(as.attackSpeed ?? 0));
+      worldView.signalAttackStart(Number(as.attackerId ?? 0), Number(as.targetId ?? 0),
+        Number(as.attackSpeed ?? 0), as.animIndex || 0, as.animClip || '');
+      break;
+    }
+    case 'attackPlan': {
+      // B 方案：服务端在起手时即裁定各段结果，客户端据此在事件帧直接播正确的音（免一次往返）
+      worldView.applyAttackPlan(msg.attackPlan!);
       break;
     }
     case 'attackResult': {
@@ -659,12 +695,18 @@ onMessage((msg: jpt.base.ServerMessage) => {
       if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
       if (ar.missed) {
         worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false);
-        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(true, false);
+        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(true, false, Number(ar.hitIndex ?? 0));
       } else {
         const crit = !!ar.isCritical;
         worldView.showFloater('monster', targetId, String(ar.damage || 0), crit ? '#ff9d4d' : '#ffd166', crit);
         worldView.applyMonsterHit(targetId, ar.damage || 0);
-        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(false, crit);
+        // 命中特效（原版 EFFECT_NORMAL_HIT1）；暴击追加 CriticalHit1 + Light1
+        worldView.spawnEffectOnUnit(targetId, 'NormalHit1');
+        if (crit) {
+          worldView.spawnEffectOnUnit(targetId, 'CriticalHit1');
+          worldView.spawnEffectOnUnit(targetId, 'Light1');
+        }
+        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(false, crit, Number(ar.hitIndex ?? 0));
       }
       break;
     }
@@ -672,10 +714,53 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // 怪→玩家伤害（S2C_Damage：targetId=受害者，damage+权威 currentHp）→ 受害者头顶飘红字
       const d = msg.damage!;
       const tid = Number(d.targetId ?? 0);
+      if (d.missed) {
+        // 怪这一刀没打中（原版 sinGetMonsterAccuracy）：只飘 MISS，不扣血、不播受击硬直/受击音
+        worldView.showFloater(null, tid, 'MISS', '#d8dce3', false);
+        break;
+      }
       worldView.showFloater(null, tid, '-' + (d.damage || 0), '#ff6b6b', false);
       worldView.applyUnitHp(tid, d.currentHp || 0, true);
       // 受击硬直：自机/远端玩家站立被打播 DAMAGE（攻击/技能中不打断）
       worldView.onTakeDamage(tid, d.damage || 0);
+      break;
+    }
+    case 'playerDeath': {
+      // 死亡：躺下停在 DEAD 动画末帧（不再立刻复活）。自己还要弹三个复活选项 + 倒计时。
+      const pd = msg.playerDeath!;
+      const pid = Number(pd.playerId ?? 0);
+      worldView.applyPlayerDeath(pid);
+      if (worldView.isSelf(pid)) {
+        deathPanel.show({
+          forceRespawnMs: Number(pd.forceRespawnMs ?? 60000),
+          expLossField: Number(pd.expLossField ?? 0),
+          goldLossField: Number(pd.goldLossField ?? 0),
+          expLossTown: Number(pd.expLossTown ?? 0),
+        });
+      }
+      break;
+    }
+    case 'playerRespawn': {
+      // 服务端权威复活：位置/地图/半血。自机位置权威在客户端 → 必须由客户端把自己搬过去。
+      const pr = msg.playerRespawn!;
+      const pid = Number(pr.playerId ?? 0);
+      if (!worldView.isSelf(pid)) break;
+      deathPanel.hide();
+      const info = {
+        mapId: Number(pr.mapId ?? 0),
+        x: Number(pr.position?.x ?? 0),
+        y: Number(pr.position?.y ?? 0),
+        z: Number(pr.position?.z ?? 0),
+        hp: Number(pr.hp ?? 0),
+        maxHp: Number(pr.maxHp ?? 0),
+      };
+      // 换图复活要重新加载地图 —— 原版做法是加载界面盖住，好了再进画面（用户 2026-09-13）；
+      // 不盖的话玩家会看到世界在脚下一块块长出来。
+      const needLoad = worldView.respawnNeedsMapLoad(info.mapId);
+      if (needLoad) loadingScreen.show(t('death.respawning'));
+      void worldView.applyRespawn(info).finally(() => {
+        if (needLoad) loadingScreen.hide();
+      });
       break;
     }
     case 'heal': {
@@ -748,7 +833,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // minecraft 式翻译：有 key 用 i18n 渲染（缺失 fallback 到 key），否则用纯文本
       const text = sm.key ? t(sm.key, sm.params || {}) : (sm.message || '');
       const forCh = takePendingSentOn() ?? undefined;
-      appendSystemMessage(text, Number(sm.timestamp) || Date.now(), forCh);
+      // 服务端显式标了 CHAT_BATTLE 的走"战斗" tab；未标（默认 0）一律还是系统消息 —— 老发送方不用改
+      const battle = Number(sm.channel ?? 0) === Ch.BATTLE;
+      appendSystemMessage(text, Number(sm.timestamp) || Date.now(), forCh, battle);
       break;
     }
   }

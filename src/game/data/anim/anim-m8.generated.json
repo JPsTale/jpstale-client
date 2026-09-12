@@ -1,0 +1,6519 @@
+{
+ "note": "由 scripts/extract-anim-semantics.ts 从当前客户端 .inx/.smb 提取的语义表（生成物，勿手改）。武器要求已从 sItem 索引翻为 (weaponType,handType) 语义；与 glTF 无关，只描述\"这是什么动作\"。",
+ "group": "m8",
+ "smb": "m8.smb",
+ "entryCount": 81,
+ "entries": [
+  {
+   "id": "stand_unarmed",
+   "state": "STAND",
+   "frames": [
+    12,
+    72
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "village",
+   "raw": {
+    "index": 10,
+    "itemCodes": [
+     65535,
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "restart",
+   "state": "RESTART",
+   "frames": [
+    282,
+    382
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 11,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fall",
+   "state": "FALLDOWN",
+   "frames": [
+    397,
+    427
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 12,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "fallstand",
+   "state": "FALLSTAND",
+   "frames": [
+    442,
+    476
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 13,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "falldamage",
+   "state": "FALLDAMAGE",
+   "frames": [
+    490,
+    534
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 14,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 2
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "walk_unarmed",
+   "state": "WALK",
+   "frames": [
+    546,
+    578
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 15,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 33,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed",
+   "state": "WALK",
+   "frames": [
+    593,
+    625
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 16,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247,
+     62,
+     63,
+     64
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#2",
+   "state": "WALK",
+   "frames": [
+    593,
+    625
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 17,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 16,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#3",
+   "state": "WALK",
+   "frames": [
+    640,
+    672
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 18,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 31
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#4",
+   "state": "WALK",
+   "frames": [
+    640,
+    672
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 19,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#5",
+   "state": "WALK",
+   "frames": [
+    686,
+    718
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 20,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     181,
+     182,
+     183,
+     248
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#6",
+   "state": "WALK",
+   "frames": [
+    686,
+    718
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 21,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 28,
+     "resolved": 24
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_1h_javelin",
+   "state": "WALK",
+   "frames": [
+    733,
+    765
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 22,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#7",
+   "state": "WALK",
+   "frames": [
+    780,
+    812
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 23,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 23,
+     "resolved": 14
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk_mixed#8",
+   "state": "WALK",
+   "frames": [
+    827,
+    859
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 24,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "walk",
+   "state": "WALK",
+   "frames": [
+    593,
+    625
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 25,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 32
+    }
+   }
+  },
+  {
+   "id": "run_unarmed",
+   "state": "RUN",
+   "frames": [
+    874,
+    898
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 26,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 33,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed",
+   "state": "RUN",
+   "frames": [
+    913,
+    937
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 27,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247,
+     62,
+     63,
+     64
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#2",
+   "state": "RUN",
+   "frames": [
+    913,
+    937
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 28,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 16,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#3",
+   "state": "RUN",
+   "frames": [
+    952,
+    976
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 29,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 31
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#4",
+   "state": "RUN",
+   "frames": [
+    952,
+    976
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 30,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#5",
+   "state": "RUN",
+   "frames": [
+    991,
+    1015
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 31,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     181,
+     182,
+     183,
+     248,
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD",
+     "SCYTHE",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws",
+     "wp",
+     "wt"
+    ],
+    "coverage": {
+     "total": 41,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#6",
+   "state": "RUN",
+   "frames": [
+    991,
+    1015
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 32,
+    "itemCodes": [
+     161,
+     162,
+     163,
+     164,
+     167,
+     168,
+     169,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 9,
+     "resolved": 7
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_1h_javelin",
+   "state": "RUN",
+   "frames": [
+    1030,
+    1054
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 33,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#7",
+   "state": "RUN",
+   "frames": [
+    1069,
+    1093
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 34,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 23,
+     "resolved": 14
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run_mixed#8",
+   "state": "RUN",
+   "frames": [
+    1108,
+    1132
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 35,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "run",
+   "state": "RUN",
+   "frames": [
+    913,
+    937
+   ],
+   "repeat": true,
+   "eventFrames": [
+    480,
+    2080
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 36,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [],
+    "motionFrame": 3
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 24
+    }
+   }
+  },
+  {
+   "id": "eat",
+   "state": "EAT",
+   "frames": [
+    1204,
+    1224
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3040
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 37,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "stand_unarmed#2",
+   "state": "STAND",
+   "frames": [
+    1255,
+    1303
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 38,
+    "itemCodes": [
+     65535,
+     15,
+     16,
+     17,
+     18,
+     19,
+     20,
+     21,
+     22,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242,
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 33,
+     "resolved": 30
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed",
+   "state": "STAND",
+   "frames": [
+    1317,
+    1365
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 39,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247,
+     62,
+     63,
+     64
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 39,
+     "resolved": 36
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#2",
+   "state": "STAND",
+   "frames": [
+    1317,
+    1365
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 40,
+    "itemCodes": [
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 16,
+     "resolved": 12
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#3",
+   "state": "STAND",
+   "frames": [
+    1379,
+    1427
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 41,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 31
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#4",
+   "state": "STAND",
+   "frames": [
+    1379,
+    1427
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 42,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#5",
+   "state": "STAND",
+   "frames": [
+    1442,
+    1490
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 43,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     181,
+     182,
+     183,
+     248
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#6",
+   "state": "STAND",
+   "frames": [
+    1442,
+    1490
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 44,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 28,
+     "resolved": 24
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_1h_javelin",
+   "state": "STAND",
+   "frames": [
+    1505,
+    1553
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 45,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#7",
+   "state": "STAND",
+   "frames": [
+    1567,
+    1615
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 46,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 23,
+     "resolved": 14
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand_mixed#8",
+   "state": "STAND",
+   "frames": [
+    1629,
+    1677
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 47,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "stand",
+   "state": "STAND",
+   "frames": [
+    1317,
+    1365
+   ],
+   "repeat": true,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 48,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 0,
+     "spanFrames": 48
+    }
+   }
+  },
+  {
+   "id": "damage",
+   "state": "DAMAGE",
+   "frames": [
+    1692,
+    1713
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 49,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "dead",
+   "state": "DEAD",
+   "frames": [
+    1727,
+    1799
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 50,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 4
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_unarmed",
+   "state": "ATTACK",
+   "frames": [
+    1860,
+    1902
+   ],
+   "repeat": false,
+   "eventFrames": [
+    960,
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": true,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 51,
+    "itemCodes": [
+     65535
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "attack_mixed",
+   "state": "ATTACK",
+   "frames": [
+    1913,
+    1953
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 52,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#2",
+   "state": "ATTACK",
+   "frames": [
+    1913,
+    1953
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 53,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#3",
+   "state": "ATTACK",
+   "frames": [
+    1966,
+    2006
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "1H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 54,
+    "itemCodes": [
+     0,
+     1,
+     2,
+     3,
+     5,
+     6,
+     10,
+     13,
+     131,
+     138,
+     30,
+     31,
+     32,
+     33,
+     34,
+     37,
+     38,
+     41,
+     42,
+     156,
+     159,
+     165,
+     243,
+     46,
+     47,
+     48,
+     51,
+     52,
+     56,
+     58,
+     60,
+     170,
+     173,
+     175,
+     179,
+     246,
+     247
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 36,
+     "resolved": 33
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#4",
+   "state": "ATTACK",
+   "frames": [
+    1966,
+    2006
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 55,
+    "itemCodes": [
+     62,
+     63,
+     64,
+     95,
+     96,
+     97,
+     98,
+     100,
+     101,
+     102,
+     103,
+     105,
+     106,
+     108,
+     111,
+     211,
+     213,
+     219,
+     255
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "CROSSBOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws"
+    ],
+    "coverage": {
+     "total": 19,
+     "resolved": 15
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#5",
+   "state": "ATTACK",
+   "frames": [
+    2019,
+    2069
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 56,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 31
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#6",
+   "state": "ATTACK",
+   "frames": [
+    2082,
+    2132
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 57,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#7",
+   "state": "ATTACK",
+   "frames": [
+    2082,
+    2132
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "AXE",
+      "hand": "2H"
+     },
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 58,
+    "itemCodes": [
+     4,
+     7,
+     8,
+     9,
+     11,
+     12,
+     14,
+     129,
+     130,
+     132,
+     133,
+     134,
+     135,
+     136,
+     137,
+     140,
+     141,
+     142,
+     237,
+     238,
+     239,
+     35,
+     36,
+     39,
+     40,
+     43,
+     44,
+     45,
+     157,
+     158,
+     160,
+     161,
+     162,
+     163,
+     164,
+     244,
+     245
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "AXE",
+     "CLAW",
+     "HAMMER",
+     "STAFF",
+     "SCYTHE"
+    ],
+    "iconFamilies": [
+     "wa",
+     "wc",
+     "wh",
+     "wm",
+     "wp"
+    ],
+    "coverage": {
+     "total": 37,
+     "resolved": 31
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#8",
+   "state": "ATTACK",
+   "frames": [
+    2082,
+    2132
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 59,
+    "itemCodes": [
+     99,
+     104,
+     107,
+     109,
+     110,
+     112,
+     210,
+     212,
+     214,
+     215,
+     216,
+     217,
+     218,
+     221,
+     222,
+     223,
+     256,
+     257
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "HAMMER",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wh",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 10
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#9",
+   "state": "ATTACK",
+   "frames": [
+    2145,
+    2195
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 60,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     181,
+     182,
+     183,
+     248
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#10",
+   "state": "ATTACK",
+   "frames": [
+    2145,
+    2195
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 61,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 28,
+     "resolved": 24
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#11",
+   "state": "ATTACK",
+   "frames": [
+    2208,
+    2258
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 62,
+    "itemCodes": [
+     49,
+     50,
+     53,
+     54,
+     55,
+     57,
+     59,
+     61,
+     171,
+     172,
+     174,
+     176,
+     177,
+     178,
+     181,
+     182,
+     183,
+     248
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "STAFF",
+     "CROSSBOW",
+     "BOW",
+     "SWORD"
+    ],
+    "iconFamilies": [
+     "wm",
+     "ws"
+    ],
+    "coverage": {
+     "total": 18,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#12",
+   "state": "ATTACK",
+   "frames": [
+    2208,
+    2258
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SCYTHE",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     },
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 63,
+    "itemCodes": [
+     65,
+     66,
+     67,
+     68,
+     69,
+     70,
+     71,
+     72,
+     73,
+     74,
+     75,
+     76,
+     77,
+     184,
+     185,
+     186,
+     187,
+     188,
+     189,
+     190,
+     191,
+     192,
+     194,
+     195,
+     196,
+     249,
+     250,
+     251
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SCYTHE",
+     "SWORD",
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wp",
+     "ws",
+     "wt"
+    ],
+    "coverage": {
+     "total": 28,
+     "resolved": 24
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin",
+   "state": "ATTACK",
+   "frames": [
+    2271,
+    2311
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 64,
+    "itemCodes": [
+     122,
+     227,
+     258
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 1
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_javelin#2",
+   "state": "ATTACK",
+   "frames": [
+    2324,
+    2364
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "JAVELIN",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 65,
+    "itemCodes": [
+     113,
+     114,
+     115,
+     116,
+     117,
+     118,
+     119,
+     120,
+     121,
+     122,
+     123,
+     124,
+     125,
+     126,
+     127,
+     128,
+     224,
+     225,
+     226,
+     227,
+     228,
+     229,
+     230,
+     231,
+     232,
+     234,
+     235,
+     236,
+     258,
+     259,
+     260
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "JAVELIN"
+    ],
+    "iconFamilies": [
+     "wt"
+    ],
+    "coverage": {
+     "total": 31,
+     "resolved": 16
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#13",
+   "state": "ATTACK",
+   "frames": [
+    2377,
+    2417
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "SWORD",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "SWORD",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 66,
+    "itemCodes": [
+     78,
+     82,
+     83,
+     84,
+     88,
+     89,
+     91,
+     92,
+     93,
+     197,
+     198,
+     200,
+     201,
+     202,
+     203,
+     204,
+     205,
+     207,
+     208,
+     209,
+     252,
+     253,
+     254
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "SWORD",
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 23,
+     "resolved": 14
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_mixed#14",
+   "state": "ATTACK",
+   "frames": [
+    2430,
+    2470
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "1H"
+     },
+     {
+      "type": "HAMMER",
+      "hand": "2H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "1H"
+     },
+     {
+      "type": "STAFF",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 67,
+    "itemCodes": [
+     15,
+     16,
+     17,
+     18,
+     20,
+     21,
+     23,
+     24,
+     25,
+     26,
+     27,
+     28,
+     29,
+     143,
+     144,
+     145,
+     146,
+     147,
+     148,
+     149,
+     150,
+     151,
+     153,
+     154,
+     155,
+     240,
+     241,
+     242
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW",
+     "HAMMER",
+     "STAFF"
+    ],
+    "iconFamilies": [
+     "wc",
+     "wh",
+     "wm"
+    ],
+    "coverage": {
+     "total": 28,
+     "resolved": 25
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack_1h_claw",
+   "state": "ATTACK",
+   "frames": [
+    2483,
+    2523
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CLAW",
+      "hand": "1H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 68,
+    "itemCodes": [
+     19,
+     22
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CLAW"
+    ],
+    "iconFamilies": [
+     "wc"
+    ],
+    "coverage": {
+     "total": 2,
+     "resolved": 2
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#15",
+   "state": "ATTACK",
+   "frames": [
+    2536,
+    2576
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "BOW",
+      "hand": "2H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "CROSSBOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 69,
+    "itemCodes": [
+     79,
+     80,
+     86
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "BOW",
+     "CROSSBOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 3,
+     "resolved": 3
+    },
+    "coverageLevel": "full"
+   }
+  },
+  {
+   "id": "attack_mixed#16",
+   "state": "ATTACK",
+   "frames": [
+    2589,
+    2629
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": [
+     {
+      "type": "CROSSBOW",
+      "hand": "1H"
+     },
+     {
+      "type": "BOW",
+      "hand": "2H"
+     }
+    ]
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 70,
+    "itemCodes": [
+     81,
+     85,
+     87,
+     90,
+     94,
+     199
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [
+     "CROSSBOW",
+     "BOW"
+    ],
+    "iconFamilies": [
+     "ws"
+    ],
+    "coverage": {
+     "total": 6,
+     "resolved": 5
+    },
+    "coverageLevel": "partial"
+   }
+  },
+  {
+   "id": "attack",
+   "state": "ATTACK",
+   "frames": [
+    1913,
+    1953
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 71,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "attack#2",
+   "state": "ATTACK",
+   "frames": [
+    1966,
+    2006
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "field",
+   "raw": {
+    "index": 72,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "yahoo",
+   "state": "YAHOO",
+   "frames": [
+    2747,
+    2882
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": true,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 73,
+    "itemCodes": [],
+    "skillCodes": [],
+    "motionFrame": 5
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 0,
+     "resolved": 0
+    },
+    "coverageLevel": "empty"
+   }
+  },
+  {
+   "id": "skill",
+   "state": "SKILL",
+   "frames": [
+    2883,
+    2925
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 74,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     203
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 42
+    }
+   }
+  },
+  {
+   "id": "skill#2",
+   "state": "SKILL",
+   "frames": [
+    2935,
+    2970
+   ],
+   "repeat": false,
+   "eventFrames": [
+    1120,
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 75,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     205
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 35
+    }
+   }
+  },
+  {
+   "id": "skill#3",
+   "state": "SKILL",
+   "frames": [
+    2980,
+    3016
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 76,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     206
+    ],
+    "motionFrame": 6
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 36
+    }
+   }
+  },
+  {
+   "id": "skill#4",
+   "state": "SKILL",
+   "frames": [
+    3016,
+    3056
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2400
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 77,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     207
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "skill#5",
+   "state": "SKILL",
+   "frames": [
+    3066,
+    3116
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3200
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 78,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     208
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 50
+    }
+   }
+  },
+  {
+   "id": "skill#6",
+   "state": "SKILL",
+   "frames": [
+    3126,
+    3160
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2560
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 79,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     209
+    ],
+    "motionFrame": 7
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 34
+    }
+   }
+  },
+  {
+   "id": "skill#7",
+   "state": "SKILL",
+   "frames": [
+    3160,
+    3206
+   ],
+   "repeat": false,
+   "eventFrames": [
+    5760
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 80,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     211
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 46
+    }
+   }
+  },
+  {
+   "id": "skill#8",
+   "state": "SKILL",
+   "frames": [
+    3216,
+    3256
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3520
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 81,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     212
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 40
+    }
+   }
+  },
+  {
+   "id": "skill#9",
+   "state": "SKILL",
+   "frames": [
+    3266,
+    3316
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3840
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 82,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     213
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 50
+    }
+   }
+  },
+  {
+   "id": "skill#10",
+   "state": "SKILL",
+   "frames": [
+    3326,
+    3372
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3360
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 83,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     214
+    ],
+    "motionFrame": 8
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 46
+    }
+   }
+  },
+  {
+   "id": "skill#11",
+   "state": "SKILL",
+   "frames": [
+    3372,
+    3426
+   ],
+   "repeat": false,
+   "eventFrames": [
+    960,
+    1920,
+    4640,
+    6880
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 84,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     215
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 4,
+     "spanFrames": 54
+    }
+   }
+  },
+  {
+   "id": "skill#12",
+   "state": "SKILL",
+   "frames": [
+    3436,
+    3481
+   ],
+   "repeat": false,
+   "eventFrames": [],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 85,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     216
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 0,
+     "spanFrames": 45
+    }
+   }
+  },
+  {
+   "id": "skill#13",
+   "state": "SKILL",
+   "frames": [
+    3491,
+    3545
+   ],
+   "repeat": false,
+   "eventFrames": [
+    3680,
+    6240
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 86,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     217
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 54
+    }
+   }
+  },
+  {
+   "id": "skill#14",
+   "state": "SKILL",
+   "frames": [
+    3555,
+    3607
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2080,
+    4320,
+    5280
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 87,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     218
+    ],
+    "motionFrame": 9
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 3,
+     "spanFrames": 52
+    }
+   }
+  },
+  {
+   "id": "skill#15",
+   "state": "SKILL",
+   "frames": [
+    3607,
+    3657
+   ],
+   "repeat": false,
+   "eventFrames": [
+    2880,
+    3840,
+    4800
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 88,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     220
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 3,
+     "spanFrames": 50
+    }
+   }
+  },
+  {
+   "id": "skill#16",
+   "state": "SKILL",
+   "frames": [
+    3667,
+    3731
+   ],
+   "repeat": false,
+   "eventFrames": [
+    4160,
+    6880
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 89,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     221
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 2,
+     "spanFrames": 64
+    }
+   }
+  },
+  {
+   "id": "skill#17",
+   "state": "SKILL",
+   "frames": [
+    3741,
+    3793
+   ],
+   "repeat": false,
+   "eventFrames": [
+    6880
+   ],
+   "classes": [
+    "MartialArtist"
+   ],
+   "weapon": {
+    "any": false,
+    "unarmed": false,
+    "list": []
+   },
+   "skills": [],
+   "location": "any",
+   "raw": {
+    "index": 90,
+    "itemCodes": [
+     325,
+     326,
+     327,
+     328,
+     329,
+     330,
+     331,
+     332,
+     333,
+     334,
+     335,
+     336,
+     337,
+     338,
+     339,
+     340,
+     341,
+     342,
+     343,
+     344,
+     345,
+     346,
+     347,
+     348,
+     349,
+     350,
+     351,
+     352,
+     353,
+     354,
+     355,
+     356,
+     357,
+     358,
+     359,
+     360,
+     361
+    ],
+    "skillCodes": [
+     222
+    ],
+    "motionFrame": 10
+   },
+   "unresolvedItems": [],
+   "xref": {
+    "idcodeTypes": [],
+    "iconFamilies": [],
+    "coverage": {
+     "total": 37,
+     "resolved": 0
+    },
+    "coverageLevel": "none",
+    "frameSignature": {
+     "hitSettlements": 1,
+     "spanFrames": 52
+    }
+   }
+  }
+ ]
+}

@@ -1,0 +1,117 @@
+{
+ "note": "图标文件名前缀 ↔ idcode 武器类型 的全局共现次数。用于判定某前缀能否作为类型判据（单一类型=可以；跨类型=不可以，如 ws 涵盖 剑/匕首/弓/弩）。生成物，勿手改。",
+ "scannedHits": 11574,
+ "prefixes": [
+  {
+   "prefix": "wa",
+   "total": 1225,
+   "majority": "AXE",
+   "ambiguous": false,
+   "usableAsTypeOracle": true,
+   "types": [
+    {
+     "type": "AXE",
+     "count": 1225,
+     "pct": 100
+    }
+   ]
+  },
+  {
+   "prefix": "wc",
+   "total": 1192,
+   "majority": "CLAW",
+   "ambiguous": false,
+   "usableAsTypeOracle": true,
+   "types": [
+    {
+     "type": "CLAW",
+     "count": 1192,
+     "pct": 100
+    }
+   ]
+  },
+  {
+   "prefix": "wh",
+   "total": 1224,
+   "majority": "HAMMER",
+   "ambiguous": false,
+   "usableAsTypeOracle": true,
+   "types": [
+    {
+     "type": "HAMMER",
+     "count": 1224,
+     "pct": 100
+    }
+   ]
+  },
+  {
+   "prefix": "wm",
+   "total": 1418,
+   "majority": "STAFF",
+   "ambiguous": false,
+   "usableAsTypeOracle": true,
+   "types": [
+    {
+     "type": "STAFF",
+     "count": 1418,
+     "pct": 100
+    }
+   ]
+  },
+  {
+   "prefix": "wp",
+   "total": 1503,
+   "majority": "SCYTHE",
+   "ambiguous": false,
+   "usableAsTypeOracle": true,
+   "types": [
+    {
+     "type": "SCYTHE",
+     "count": 1503,
+     "pct": 100
+    }
+   ]
+  },
+  {
+   "prefix": "ws",
+   "total": 3439,
+   "majority": "SWORD",
+   "ambiguous": true,
+   "usableAsTypeOracle": false,
+   "types": [
+    {
+     "type": "SWORD",
+     "count": 2077,
+     "pct": 60
+    },
+    {
+     "type": "BOW",
+     "count": 923,
+     "pct": 27
+    },
+    {
+     "type": "CROSSBOW",
+     "count": 439,
+     "pct": 13
+    }
+   ]
+  },
+  {
+   "prefix": "wt",
+   "total": 1573,
+   "majority": "JAVELIN",
+   "ambiguous": false,
+   "usableAsTypeOracle": true,
+   "types": [
+    {
+     "type": "JAVELIN",
+     "count": 1573,
+     "pct": 100
+    }
+   ]
+  }
+ ],
+ "ambiguousPrefixes": [
+  "ws: SWORD×2077(60%) vs BOW×923(27%) vs CROSSBOW×439(13%)"
+ ]
+}

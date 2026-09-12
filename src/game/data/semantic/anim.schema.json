@@ -1,0 +1,110 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "title": "jpstale.anim/1",
+ "type": "object",
+ "required": [
+  "format",
+  "model",
+  "animations"
+ ],
+ "properties": {
+  "format": {
+   "const": "jpstale.anim/1"
+  },
+  "model": {
+   "type": "object",
+   "required": [
+    "id",
+    "animSet",
+    "fps"
+   ],
+   "properties": {
+    "id": {
+     "type": "string"
+    },
+    "animSet": {
+     "type": "string"
+    },
+    "fps": {
+     "type": "number",
+     "minimum": 1
+    }
+   }
+  },
+  "animations": {
+   "type": "array",
+   "items": {
+    "type": "object",
+    "required": [
+     "id",
+     "clip",
+     "state",
+     "frames",
+     "fps",
+     "events"
+    ],
+    "properties": {
+     "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+:[0-9]+$"
+     },
+     "clip": {
+      "type": "string",
+      "minLength": 1
+     },
+     "state": {
+      "type": "string"
+     },
+     "frames": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      },
+      "minItems": 2,
+      "maxItems": 2
+     },
+     "fps": {
+      "type": "number"
+     },
+     "repeat": {
+      "type": "boolean"
+     },
+     "events": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "required": [
+        "ord",
+        "frame"
+       ],
+       "properties": {
+        "ord": {
+         "type": "integer"
+        },
+        "frame": {
+         "type": "integer"
+        }
+       }
+      }
+     },
+     "location": {
+      "enum": [
+       "village",
+       "field",
+       "any"
+      ]
+     },
+     "classes": {
+      "type": "array",
+      "items": {
+       "type": "integer"
+      }
+     },
+     "skill": {
+      "type": "string"
+     }
+    }
+   }
+  }
+ }
+}

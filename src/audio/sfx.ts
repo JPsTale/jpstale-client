@@ -97,10 +97,44 @@ let bus: GainNode | null = null;
 let unlocked = false;
 let hidden = false;
 
-const decoded = new Map<string, AudioBuffer>();
-const decoding = new Map<string, Promise<AudioBuffer | null>>();
+const decoded = new Map<string, DecodedSound>();
+const decoding = new Map<string, Promise<DecodedSound | null>>();
 const lastPlayed = new Map<string, number>();
 const live: Array<{ src: AudioBufferSourceNode; gain: GainNode; priority: boolean }> = [];
+
+/** 解码结果 + **文件自身的原始采样率**。
+ *  必须单独保存：`decodeAudioData` 会把音频重采样到 AudioContext 的采样率，
+ *  所以 `AudioBuffer.sampleRate` 是设备采样率（常见 48000），**不是文件的**。
+ *  原版 `SetFrequency(feq*10)` 是按 22050 名义播放的，用设备采样率当分母会让声音被拉慢一倍多。 */
+interface DecodedSound {
+  buf: AudioBuffer;
+  /** 文件原始采样率（解析不到时按名义 22050） */
+  srcRate: number;
+}
+
+/** 从 WAV 头解析原始采样率（RIFF/fmt 块，偏移 24）。非 RIFF 返回 null。 */
+function wavSampleRate(ab: ArrayBuffer): number | null {
+  try {
+    const b = new Uint8Array(ab);
+    if (b.length < 28) return null;
+    const ascii = (o: number) => String.fromCharCode(b[o]!, b[o + 1]!, b[o + 2]!, b[o + 3]!);
+    if (ascii(0) !== 'RIFF' || ascii(8) !== 'WAVE') return null;
+    const dv = new DataView(ab);
+    let off = 12;
+    while (off + 8 <= b.length) {
+      const id = ascii(off);
+      const size = dv.getUint32(off + 4, true);
+      if (id === 'fmt ') {
+        const rate = dv.getUint32(off + 12, true);
+        return rate > 0 ? rate : null;
+      }
+      off += 8 + size + (size % 2);
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
 export interface ListenerPos { x: number; y: number; z: number }
 let listener: ListenerPos = { x: 0, y: 0, z: 0 };
@@ -160,20 +194,25 @@ document.addEventListener('visibilitychange', () => {
 
 /* ─────────── 解码 ─────────── */
 
-async function loadBuffer(path: string): Promise<AudioBuffer | null> {
+async function loadBuffer(path: string): Promise<DecodedSound | null> {
   const hit = decoded.get(path);
   if (hit) return hit;
   const inflight = decoding.get(path);
   if (inflight) return inflight;
-  const job = (async (): Promise<AudioBuffer | null> => {
+  const job = (async (): Promise<DecodedSound | null> => {
     try {
       const c = ensureCtx();
       if (!c) return null;
       const resp = await fetch(encodeAssetPath(RES_BASE + path));
       if (!resp.ok) return null;
-      const buf = await c.decodeAudioData(await resp.arrayBuffer());
-      decoded.set(path, buf);
-      return buf;
+      const ab = await resp.arrayBuffer();
+      // 必须在 decodeAudioData 之前读采样率：解码会重采样到设备采样率，
+      // 且部分浏览器会把原 ArrayBuffer detach 掉。
+      const srcRate = wavSampleRate(ab) ?? FREQ_BASE * FREQ_UNIT;
+      const buf = await c.decodeAudioData(ab);
+      const rec: DecodedSound = { buf, srcRate };
+      decoded.set(path, rec);
+      return rec;
     } catch {
       return null;
     } finally {
@@ -195,35 +234,76 @@ interface PlayOpts {
   priority?: boolean;
 }
 
-function start(path: string, opts: PlayOpts = {}): void {
-  if (!audioPrefs.sfxOn || !unlocked || hidden || !ctx || !bus) return;
+/**
+ * 音频句柄：可停止/淡出**这一声**。
+ *
+ * 用途是"**结果覆盖**"：起手时按"命中"乐观播出的武器音，在服务端结果回来说是 miss 时
+ * 需要被换掉（原版那一帧只响挥空音，不是"命中音 + 挥空音"两声）。
+ * ⚠ 这是为我们"结果后到"的架构做的补偿，**不是原版行为** —— 原版在命中帧就知道结果，无需替换。
+ * `stop()` 也可在**音频尚未加载完成时**调用：此时它只做标记，让那一声干脆不出声
+ *（voice 是异步创建的，故句柄必须能覆盖这个时间窗）。
+ */
+export interface VoiceHandle { stop(fadeMs?: number): void }
+
+function makeVoiceHandle(): { handle: VoiceHandle; attach(v: { src: AudioBufferSourceNode; gain: GainNode }): void; cancelled(): boolean } {
+  let voice: { src: AudioBufferSourceNode; gain: GainNode } | null = null;
+  let isCancelled = false;
+  return {
+    handle: {
+      stop(fadeMs = 40) {
+        isCancelled = true;
+        if (!voice || !ctx) return;
+        const t = ctx.currentTime;
+        const end = t + fadeMs / 1000;
+        try {
+          // 淡出而不是硬停：硬停会在波形中间产生爆音
+          voice.gain.gain.cancelScheduledValues(t);
+          voice.gain.gain.setValueAtTime(voice.gain.gain.value, t);
+          voice.gain.gain.linearRampToValueAtTime(0, end);
+          voice.src.stop(end + 0.01);
+        } catch { /* 已停止/已断开 */ }
+      },
+    },
+    attach(v) { voice = v; },
+    cancelled: () => isCancelled,
+  };
+}
+
+function start(path: string, opts: PlayOpts = {}): VoiceHandle | null {
+  if (!audioPrefs.sfxOn || !unlocked || hidden || !ctx || !bus) return null;
 
   const now = performance.now();
   const last = lastPlayed.get(path);
-  if (last !== undefined && now - last < SAME_FILE_COOLDOWN_MS) return;
+  if (last !== undefined && now - last < SAME_FILE_COOLDOWN_MS) return null;
 
   let vol = 400;
   if (opts.pos) {
     vol = distVol(opts.pos);
-    if (vol < 0) return;
+    if (vol < 0) return null;
   }
   const gain = gainFromVol(vol) * channelGain();
-  if (gain <= 0) return;
+  if (gain <= 0) return null;
 
-  if (!opts.priority && live.length >= MAX_VOICES) return;
+  if (!opts.priority && live.length >= MAX_VOICES) return null;
 
   lastPlayed.set(path, now);
+  const h = makeVoiceHandle();
   void (async () => {
-    const buf = await loadBuffer(path);
-    if (!buf || !ctx || !bus) return;
+    const snd = await loadBuffer(path);
+    if (!snd || !ctx || !bus) return;
+    if (h.cancelled()) return;                 // 加载期间已被 stop() → 不出声
     const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.playbackRate.value = ((opts.pitch ?? 1) * FREQ_BASE * FREQ_UNIT) / buf.sampleRate;
+    src.buffer = snd.buf;
+    // 复刻原版 SetFrequency(feq * 10)：按**文件原始采样率**换算播放速率。
+    // 我方 wav 均为 22050Hz，故 pitch=1 时 rate=1（正常速度）；
+    // 用 AudioBuffer.sampleRate（设备采样率）当分母会把声音拉慢一倍多。
+    src.playbackRate.value = ((opts.pitch ?? 1) * FREQ_BASE * FREQ_UNIT) / snd.srcRate;
     const g = ctx.createGain();
     g.gain.value = gain;
     src.connect(g);
     g.connect(bus);
     const voice = { src, gain: g, priority: !!opts.priority };
+    h.attach(voice);
     live.push(voice);
     src.onended = () => {
       const i = live.indexOf(voice);
@@ -232,6 +312,7 @@ function start(path: string, opts: PlayOpts = {}): void {
     };
     src.start();
   })();
+  return h.handle;
 }
 
 /** 从候选里随机取一个（原版 rand() % CodeBuffCnt） */
@@ -255,10 +336,16 @@ function resolveDir(key: string): string | null {
   return dirByBase.get(base) ?? null;
 }
 
-/** 职业 id → 音效目录名（与原版 snFindEffects 的职业项一致；job 11 无音效目录） */
+/**
+ * 职业 id → 音效目录名（与原版 snFindEffects 的职业项一致）。
+ * 第 11 职业 = 格斗家 → `Player/Martial`（资产 2026-09-12 从 11 职业客户端补齐：
+ * damage 1~3、dead 1~2 共 5 个 wav）。此前注释写"job 11 无音效目录"是错的 ——
+ * 只是当时没把该目录拷进我方 client。
+ */
 const JOB_SOUND_DIR: Record<number, string> = {
   1: 'fighter', 2: 'mechanician', 3: 'archer', 4: 'pikeman', 5: 'atalanta',
   6: 'knight', 7: 'magician', 8: 'priestess', 9: 'assassin', 10: 'shaman',
+  11: 'martial',
 };
 
 /** 在指定音效目录下按动作态取一个文件播放 */
@@ -274,34 +361,57 @@ function playDir(dir: string | null, motion: MotionState, pos: ListenerPos): voi
 export type HandType = '1H' | '2H' | 'UNDEFINED';
 
 /**
- * 武器类型 + 单双手 → 原版武器音效码（1-18）。
- * 依据 ex-machina WeaponPlaySound 的 switch(sinITEM_MASK2)：
- *   sinWA1→1/2、sinWS2→3/4（低位 ≤ sin03 为短剑→15）、sinWP1→5/6、
- *   sinWC1→7、sinWS1→8、sinWM1→9/10（法师/祭司 职业 7/8 → 17/18）、
- *   sinWH1→9/10、sinWT1→11、空手兜底 14。
- * 我方武器语义类型（char/weapon-type.ts）到上述分支的对应：
- *   AXE→斧 / SWORD→剑 / JAVELIN→矛 / CLAW→爪 / BOW|CROSSBOW→弓 /
- *   HAMMER|SCYTHE→钝器 / DAGGER→短剑 / STAFF→法杖（归 casting）
+ * 武器 → 原版**攻击**音效码（1–18）。**逐分支照抄** ex-machina `effectsnd.cpp`
+ * `WeaponPlaySound()` 的 `switch (dwActionItemCode & sinITEM_MASK2)`（约 L1292–1370）：
+ *
+ * ```
+ *   未命中(AttackCritcal<0): 1H→12  2H→13            ← 见 weaponMissCode
+ *   否则 dwCode 初值 = 14（punch hit）
+ *     sinWA1 斧      : 1H→1   2H→2
+ *     sinWS2 剑      : (idcode & 0xFFFF) <= sin03(0x300) → 15（短剑，即 WS201-203）
+ *                      否则 1H→3  2H→4
+ *     sinWP1 镰/枪   : 1H→5   2H→6
+ *     sinWC1 爪      : 7
+ *     sinWS1 弓/弩   : 8
+ *     sinWM1 法杖    : 法师/祭司(JOB 7,8) → 1H→17 2H→18（casting）
+ *                      其他职业 → 1H→9 2H→10（blunt）
+ *     sinWH1 锤      : 1H→9   2H→10
+ *     sinWT1 标枪    : 11（throwing）
+ * ```
+ * ⚠ **源码未覆盖的三族（11 职业才有的）由我们显式定值** —— ex-machina 是 8 职业时代源码，
+ * 那时没有刺客/萨满/格斗家，所以 `sinWD1`/`sinWN1`/`sinWV1` 不在 switch 里是"**尚未存在**"，
+ * 不等于"设计上走 punch hit"（此前照抄默认值 14，用户指出不对）：
+ *   - `WD` 匕首    → **15（one hand small swing）**：短刃挥击；与"WS201-203 短剑"同族音，语义一致
+ *   - `WN` 图腾    → **1H 17 / 2H 18（casting）**：萨满图腾是**法术武器**，与法杖同处理
+ *   - `WV` 拳套    → **14（punch hit）**：拳击音，语义吻合（此项保留默认值）
+ *
+ * ⚠ 别按"手感"归类：`WT`(标枪) 走 **throwing(11)** 而非矛；`WP`(镰/枪) 才是 5/6。
+ * 用户实测纠正：标枪曾被映射成 5（spear swing）。
  */
 export function weaponSoundCode(
   weaponType: string | null,
   hand: HandType,
   isCaster = false,
+  /** 武器 idcode —— **剑族要用低 16 位**判短剑（源码 `& sinITEM_MASK3` 即 0xFFFF） */
+  idcode = 0,
 ): number {
-  const two = hand !== '1H';
+  const one = hand === '1H';
+  const lowIdx = (idcode & 0xffff) / 0x100;    // = 码里的序号（WS201 → 1）
   switch (weaponType) {
-    case 'AXE': return two ? 2 : 1;
-    case 'SWORD': return two ? 4 : 3;
-    case 'JAVELIN': return two ? 6 : 5;
+    case 'AXE': return one ? 1 : 2;
+    case 'SWORD': return lowIdx <= 3 ? 15 : (one ? 3 : 4);
+    case 'SCYTHE': return one ? 5 : 6;         // sinWP1（镰/枪/长柄）
     case 'CLAW': return 7;
     case 'BOW':
     case 'CROSSBOW': return 8;
-    case 'DAGGER': return 15;
-    case 'HAMMER':
-    case 'SCYTHE':
-      return isCaster ? (two ? 18 : 17) : (two ? 10 : 9);
-    case 'STAFF': return two ? 18 : 17;
-    default: return 14; // 空手 punch hit
+    case 'STAFF': return isCaster ? (one ? 17 : 18) : (one ? 9 : 10);
+    case 'HAMMER': return one ? 9 : 10;
+    case 'JAVELIN': return 11;                 // sinWT1 → throwing
+    // ↓ 源码无此三族（8 职业时代尚无）→ OUR DECISION，理由见上方注释
+    case 'DAGGER': return 15;                  // 短刃挥击
+    case 'PHANTOM': return one ? 17 : 18;      // 法术武器 → 同法杖 casting
+    case 'KNUCKLE': return 14;                 // 拳套 → punch hit
+    default: return 14;                        // 空手 punch hit
   }
 }
 
@@ -423,10 +533,10 @@ export const sfx = {
     playDir(resolveDir(JOB_SOUND_DIR[job] ?? ''), motion, pos);
   },
 
-  /** 武器挥击音（普攻起手） */
-  playWeaponAttack(code: number, opts?: PlayOpts): void {
+  /** 武器挥击音（普攻起手）。返回句柄：结果为 miss 时需用它把这一声换掉（见 VoiceHandle） */
+  playWeaponAttack(code: number, opts?: PlayOpts): VoiceHandle | null {
     const file = pick(weaponByCode.get(code));
-    if (file) start(file, opts);
+    return file ? start(file, opts) : null;
   },
 
   /** 武器未命中音 */

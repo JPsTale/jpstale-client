@@ -1,0 +1,32 @@
+{
+ "note": "人工校对结果（type / hand）。未看的项保持 null。",
+ "codes": {
+  "WA128": { "type": "2H", "hand": "AXE" },
+  "WA129": { "type": "2H", "hand": "AXE" },
+  "WA153": { "type": "2H", "hand": "AXE" },
+  "WH129": { "type": "2H", "hand": "HAMMER" },
+  "WH130": { "type": "2H", "hand": "HAMMER" },
+  "WH151": { "type": "2H", "hand": "HAMMER" },
+  "WH152": { "type": null, "hand": null },
+  "WH153": { "type": null, "hand": null },
+  "WM129": { "type": "2H", "hand": "STAFF" },
+  "WM130": { "type": "2H", "hand": "STAFF" },
+  "WM131": { "type": "2H", "hand": "STAFF" },
+  "WM151": { "type": null, "hand": null },
+  "WM152": { "type": null, "hand": null },
+  "WM153": { "type": null, "hand": null },
+  "WP128": { "type": "2H", "hand": "SCYTHE" },
+  "WP129": { "type": "2H", "hand": "SCYTHE" },
+  "WP152": { "type": null, "hand": null },
+  "WP153": { "type": null, "hand": null },
+  "WS129": { "type": "2H", "hand": "BOW" },
+  "WS130": { "type": "2H", "hand": "BOW" },
+  "WS151": { "type": null, "hand": null },
+  "WS152": { "type": null, "hand": null },
+  "WS153": { "type": null, "hand": null },
+  "WS231": { "type": "2H", "hand": "SWORD" },
+  "WS232": { "type": "2H", "hand": "SWORD" },
+  "WS252": { "type": null, "hand": null },
+  "WS253": { "type": null, "hand": null }
+ }
+}

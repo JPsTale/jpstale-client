@@ -1,0 +1,1429 @@
+{
+ "note": "客户端资产来源审计结果（生成物）。两源=11职业客户端 / EU 客户端。",
+ "ours": 33605,
+ "src11": 28079,
+ "srcEU": 35884,
+ "buckets": {
+  "两源一致": 12868,
+  "我方独有": 2586,
+  "同 EU": 15137,
+  "与两源都不同（源不同）": 630,
+  "与两源都不同（源一致）": 35,
+  "同 11职业": 2349
+ },
+ "byTopDir": {
+  "char/flag": {
+   "两源一致": 2,
+   "我方独有": 1,
+   "同 EU": 2
+  },
+  "char/monster": {
+   "两源一致": 1786,
+   "同 EU": 1380,
+   "我方独有": 251,
+   "与两源都不同": 50,
+   "同 11职业": 14
+  },
+  "char/npc": {
+   "同 11职业": 3,
+   "同 EU": 369,
+   "两源一致": 534,
+   "我方独有": 18,
+   "与两源都不同": 1
+  },
+  "char/tmabcd": {
+   "两源一致": 4357,
+   "同 EU": 1457,
+   "与两源都不同": 32,
+   "我方独有": 20,
+   "同 11职业": 25
+  },
+  "directx/redist": {
+   "与两源都不同": 5,
+   "同 EU": 14
+  },
+  "effect/animationdata": {
+   "同 11职业": 98,
+   "与两源都不同": 1
+  },
+  "effect/assaeffect": {
+   "两源一致": 177,
+   "同 11职业": 3,
+   "同 EU": 7,
+   "我方独有": 1
+  },
+  "effect/etc": {
+   "同 11职业": 1,
+   "两源一致": 10
+  },
+  "effect/imagedata": {
+   "同 11职业": 82,
+   "同 EU": 191,
+   "两源一致": 35,
+   "我方独有": 5
+  },
+  "effect/lowlevelpet": {
+   "同 11职业": 4,
+   "两源一致": 4,
+   "与两源都不同": 1
+  },
+  "effect/monstereffect": {
+   "同 EU": 9
+  },
+  "effect/neweffect": {
+   "同 EU": 22,
+   "两源一致": 100,
+   "与两源都不同": 1
+  },
+  "effect/objanimationdata": {
+   "两源一致": 87
+  },
+  "effect/particle": {
+   "同 EU": 199,
+   "两源一致": 434,
+   "我方独有": 10,
+   "与两源都不同": 5,
+   "同 11职业": 4
+  },
+  "effect/party": {
+   "两源一致": 14,
+   "同 EU": 9,
+   "我方独有": 1
+  },
+  "effect/pcbangpet": {
+   "两源一致": 4,
+   "同 EU": 3
+  },
+  "effect/sky": {
+   "两源一致": 260,
+   "我方独有": 4,
+   "同 EU": 40
+  },
+  "field/ancientw": {
+   "我方独有": 9,
+   "与两源都不同": 8,
+   "同 EU": 119
+  },
+  "field/ancientw_bak": {
+   "我方独有": 147
+  },
+  "field/ani": {
+   "两源一致": 1,
+   "我方独有": 1
+  },
+  "field/arena": {
+   "同 EU": 34,
+   "与两源都不同": 1
+  },
+  "field/boss": {
+   "两源一致": 62,
+   "与两源都不同": 1,
+   "同 EU": 8
+  },
+  "field/castle": {
+   "两源一致": 213,
+   "同 EU": 371,
+   "与两源都不同": 6,
+   "我方独有": 1
+  },
+  "field/cave": {
+   "两源一致": 274,
+   "同 EU": 2,
+   "同 11职业": 3
+  },
+  "field/custom": {
+   "同 EU": 1483,
+   "与两源都不同": 13,
+   "我方独有": 2
+  },
+  "field/desert": {
+   "同 EU": 121,
+   "两源一致": 90,
+   "同 11职业": 10,
+   "我方独有": 2,
+   "与两源都不同": 1
+  },
+  "field/dungeon": {
+   "两源一致": 464,
+   "同 EU": 30,
+   "同 11职业": 5,
+   "我方独有": 2,
+   "与两源都不同": 1
+  },
+  "field/endless": {
+   "同 EU": 10,
+   "两源一致": 123,
+   "与两源都不同": 1,
+   "同 11职业": 2
+  },
+  "field/fall_game": {
+   "两源一致": 209,
+   "同 EU": 100,
+   "同 11职业": 1
+  },
+  "field/forest": {
+   "同 EU": 471,
+   "两源一致": 895,
+   "我方独有": 2,
+   "同 11职业": 4,
+   "与两源都不同": 1
+  },
+  "field/forever-fall": {
+   "同 EU": 394,
+   "两源一致": 266,
+   "我方独有": 11,
+   "与两源都不同": 21,
+   "同 11职业": 4
+  },
+  "field/greedy": {
+   "两源一致": 274,
+   "同 11职业": 1,
+   "同 EU": 9
+  },
+  "field/heartoffire": {
+   "同 EU": 178,
+   "与两源都不同": 1,
+   "我方独有": 2
+  },
+  "field/heartoffire.zip": {
+   "我方独有": 1
+  },
+  "field/ice": {
+   "同 11职业": 543,
+   "与两源都不同": 2,
+   "两源一致": 11
+  },
+  "field/iron": {
+   "同 11职业": 170,
+   "与两源都不同": 38,
+   "两源一致": 46,
+   "我方独有": 2,
+   "同 EU": 19
+  },
+  "field/lost": {
+   "两源一致": 233,
+   "同 11职业": 1
+  },
+  "field/losttemple": {
+   "两源一致": 143,
+   "同 11职业": 2,
+   "同 EU": 34
+  },
+  "field/map": {
+   "与两源都不同": 57,
+   "同 EU": 8,
+   "我方独有": 5
+  },
+  "field/maps": {
+   "同 EU": 2
+  },
+  "field/mine": {
+   "两源一致": 91,
+   "与两源都不同": 1
+  },
+  "field/quest": {
+   "两源一致": 63,
+   "同 EU": 1,
+   "同 11职业": 1
+  },
+  "field/ricarten": {
+   "两源一致": 109,
+   "同 EU": 444,
+   "我方独有": 3,
+   "与两源都不同": 2
+  },
+  "field/room": {
+   "同 EU": 43,
+   "两源一致": 2,
+   "与两源都不同": 1
+  },
+  "field/ruin": {
+   "两源一致": 408,
+   "同 EU": 614,
+   "我方独有": 14,
+   "与两源都不同": 4
+  },
+  "field/seaa": {
+   "同 EU": 93,
+   "与两源都不同": 6,
+   "我方独有": 3
+  },
+  "field/seaaf": {
+   "我方独有": 84
+  },
+  "field/seab": {
+   "同 EU": 83
+  },
+  "field/slab": {
+   "与两源都不同": 157,
+   "我方独有": 2
+  },
+  "field/slab2": {
+   "我方独有": 146,
+   "与两源都不同": 1
+  },
+  "field/sod": {
+   "同 EU": 136,
+   "两源一致": 111,
+   "同 11职业": 1,
+   "与两源都不同": 1
+  },
+  "field/title": {
+   "同 EU": 61,
+   "与两源都不同": 1
+  },
+  "field/windforest": {
+   "我方独有": 842,
+   "与两源都不同": 2
+  },
+  "game/fonts": {
+   "同 EU": 10,
+   "我方独有": 10
+  },
+  "game/guides": {
+   "同 EU": 1
+  },
+  "game/images": {
+   "同 EU": 331,
+   "我方独有": 745,
+   "与两源都不同": 7
+  },
+  "game/inf": {
+   "同 EU": 1
+  },
+  "game/items": {
+   "与两源都不同": 1
+  },
+  "game/maps": {
+   "同 EU": 567,
+   "我方独有": 2,
+   "与两源都不同": 2
+  },
+  "game/meshes": {
+   "同 EU": 2
+  },
+  "game/npcs": {
+   "与两源都不同": 1,
+   "同 EU": 8
+  },
+  "game/objects": {
+   "同 EU": 26
+  },
+  "game/quests": {
+   "同 EU": 2
+  },
+  "game/scripts": {
+   "同 EU": 111,
+   "我方独有": 25,
+   "与两源都不同": 1
+  },
+  "game/sounds": {
+   "同 EU": 136,
+   "我方独有": 8
+  },
+  "game/textures": {
+   "我方独有": 2,
+   "同 EU": 26
+  },
+  "game/update": {
+   "我方独有": 1
+  },
+  "game.dll": {
+   "与两源都不同": 1
+  },
+  "game.exe": {
+   "与两源都不同": 1
+  },
+  "game.ini": {
+   "我方独有": 1
+  },
+  "image/arrow.tga": {
+   "同 EU": 1
+  },
+  "image/bellatra": {
+   "两源一致": 2,
+   "同 EU": 36,
+   "与两源都不同": 1
+  },
+  "image/bshadow.bmp": {
+   "同 EU": 1
+  },
+  "image/clanimage": {
+   "同 EU": 80,
+   "我方独有": 2,
+   "同 11职业": 1,
+   "与两源都不同": 3
+  },
+  "image/curse.cht": {
+   "两源一致": 1
+  },
+  "image/cw-1.tga": {
+   "同 EU": 1
+  },
+  "image/cw-trade0.tga": {
+   "同 EU": 1
+  },
+  "image/cw-trade1.tga": {
+   "同 EU": 1
+  },
+  "image/cw.tga": {
+   "同 EU": 1
+  },
+  "image/energy_blue.tga": {
+   "同 EU": 1
+  },
+  "image/energy_red.tga": {
+   "同 EU": 1
+  },
+  "image/flame1.bmp": {
+   "同 EU": 1
+  },
+  "image/flame2.bmp": {
+   "同 EU": 1
+  },
+  "image/flame3.bmp": {
+   "同 EU": 1
+  },
+  "image/flame4.bmp": {
+   "同 EU": 1
+  },
+  "image/flame5.bmp": {
+   "同 EU": 1
+  },
+  "image/flame6.bmp": {
+   "同 EU": 1
+  },
+  "image/flame7.bmp": {
+   "同 EU": 1
+  },
+  "image/flame8.bmp": {
+   "同 EU": 1
+  },
+  "image/glow.bmp": {
+   "同 EU": 1
+  },
+  "image/glow01.bmp": {
+   "同 EU": 1
+  },
+  "image/glow02.bmp": {
+   "同 EU": 1
+  },
+  "image/guidemap": {
+   "同 EU": 67,
+   "两源一致": 1,
+   "与两源都不同": 1
+  },
+  "image/mapbox.tga": {
+   "同 EU": 1
+  },
+  "image/mk-l.tga": {
+   "同 EU": 1
+  },
+  "image/mk-r.tga": {
+   "同 EU": 1
+  },
+  "image/motionmask.bmp": {
+   "同 EU": 1
+  },
+  "image/motionmask.tga": {
+   "同 EU": 1
+  },
+  "image/m_d.tga": {
+   "同 EU": 1
+  },
+  "image/m_mc.tga": {
+   "同 EU": 1
+  },
+  "image/m_mt.tga": {
+   "同 EU": 1
+  },
+  "image/m_nm.tga": {
+   "同 EU": 1
+  },
+  "image/m_un.tga": {
+   "同 EU": 1
+  },
+  "image/npc.tga": {
+   "同 EU": 1
+  },
+  "image/party": {
+   "同 EU": 178,
+   "与两源都不同": 1
+  },
+  "image/party.tga": {
+   "同 EU": 1
+  },
+  "image/pt": {
+   "同 EU": 74,
+   "我方独有": 1
+  },
+  "image/shadow.tga": {
+   "同 EU": 1
+  },
+  "image/shine0.bmp": {
+   "同 EU": 1
+  },
+  "image/shine1.bmp": {
+   "同 EU": 1
+  },
+  "image/shine2.bmp": {
+   "同 EU": 1
+  },
+  "image/shine3.bmp": {
+   "同 EU": 1
+  },
+  "image/shine4.bmp": {
+   "同 EU": 1
+  },
+  "image/shine5.bmp": {
+   "同 EU": 1
+  },
+  "image/shine6.bmp": {
+   "同 EU": 1
+  },
+  "image/shine7.bmp": {
+   "同 EU": 1
+  },
+  "image/shine8.bmp": {
+   "同 EU": 1
+  },
+  "image/shine9.bmp": {
+   "同 EU": 1
+  },
+  "image/sinimage": {
+   "同 EU": 3977,
+   "两源一致": 851,
+   "与两源都不同": 105,
+   "我方独有": 77,
+   "同 11职业": 3
+  },
+  "image/sky1.tga": {
+   "同 EU": 1
+  },
+  "image/thumbs.db": {
+   "与两源都不同": 1
+  },
+  "log.txt": {
+   "我方独有": 1
+  },
+  "save/clandata": {
+   "我方独有": 36
+  },
+  "save/crash": {
+   "我方独有": 1
+  },
+  "save/data": {
+   "我方独有": 49
+  },
+  "save/logs": {
+   "我方独有": 1
+  },
+  "startimage/login": {
+   "同 EU": 124,
+   "与两源都不同": 10,
+   "我方独有": 1
+  },
+  "startimage/messagebox": {
+   "同 EU": 44,
+   "我方独有": 2
+  },
+  "wav/ambient": {
+   "同 EU": 44
+  },
+  "wav/button.wav": {
+   "同 EU": 1
+  },
+  "wav/buttonback.wav": {
+   "同 EU": 1
+  },
+  "wav/characterdelete.wav": {
+   "同 EU": 1
+  },
+  "wav/characterselect.wav": {
+   "同 EU": 1
+  },
+  "wav/effects": {
+   "同 EU": 635,
+   "我方独有": 29,
+   "两源一致": 108,
+   "同 11职业": 1363,
+   "与两源都不同": 105
+  },
+  "wav/fire.wav": {
+   "同 EU": 1
+  },
+  "wav/gamestart.wav": {
+   "同 EU": 1
+  },
+  "wav/login.wav": {
+   "同 EU": 1
+  },
+  "wav/new.wav": {
+   "同 EU": 1
+  },
+  "wav/newchar.wav": {
+   "同 EU": 1
+  },
+  "wav/rain01.wav": {
+   "同 EU": 1
+  },
+  "wav/sod": {
+   "同 EU": 30
+  },
+  "wav/thunder.wav": {
+   "同 EU": 1
+  },
+  "wav/thunder1.wav": {
+   "同 EU": 1
+  },
+  "weapons/arrow.smd": {
+   "两源一致": 1
+  },
+  "weapons/arrow.tga": {
+   "两源一致": 1
+  },
+  "weapons/bang2.bmp": {
+   "两源一致": 1
+  },
+  "weapons/crown.smd": {
+   "两源一致": 1
+  },
+  "weapons/crown.tga": {
+   "同 EU": 1
+  },
+  "weapons/crown2.smd": {
+   "两源一致": 1
+  },
+  "weapons/crown2.tga": {
+   "同 EU": 1
+  },
+  "weapons/ds103-2x2.tga": {
+   "两源一致": 1
+  },
+  "weapons/godlysheild.bmp": {
+   "两源一致": 1
+  },
+  "weapons/godly_shield.smd": {
+   "两源一致": 1
+  },
+  "weapons/mc3_sparkshield.bmp": {
+   "两源一致": 1
+  },
+  "weapons/mc3_sparkshield.smd": {
+   "两源一致": 1
+  },
+  "weapons/nt3_divinei.bmp": {
+   "两源一致": 1
+  },
+  "weapons/nt3_divinei.smd": {
+   "两源一致": 1
+  },
+  "weapons/test8.smd": {
+   "两源一致": 1
+  }
+ },
+ "diverged": [
+  "char\\monster\\buma\\mobumab.tga",
+  "char\\monster\\buma\\mobumah.bmp",
+  "char\\monster\\crios\\crios.inx",
+  "char\\monster\\crios\\crios.smb",
+  "char\\monster\\crios\\crios.smd",
+  "char\\monster\\crios\\crios.tga",
+  "char\\monster\\crios\\crios_2.tga",
+  "char\\monster\\d_atal\\thumbs.db",
+  "char\\monster\\evilspirit\\firegolem-b.tga",
+  "char\\monster\\faugn\\faugn.tga",
+  "char\\monster\\faugn\\faugn1.tga",
+  "char\\monster\\flamemaiden\\flame.tga",
+  "char\\monster\\flamemaiden\\flamemaiden.inx",
+  "char\\monster\\flamemaiden\\flamemaiden.smb",
+  "char\\monster\\flamemaiden\\flamemaiden.smd",
+  "char\\monster\\flamemaiden\\flame_1.tga",
+  "char\\monster\\fptargos\\fpt-argos.smb",
+  "char\\monster\\fptargos\\fpt-argos.smd",
+  "char\\monster\\fpthell\\axe1.bmp",
+  "char\\monster\\fpthell\\fpthb1.tga",
+  "char\\monster\\fpthell\\fpthellb1.tga",
+  "char\\monster\\fpthell\\shieldfpt.bmp",
+  "char\\monster\\hopy\\mopy.smb",
+  "char\\monster\\hopy\\mopy.smd",
+  "char\\monster\\iceworm\\iceworm01.tga",
+  "char\\monster\\iceworm\\iceworm02.tga",
+  "char\\monster\\kelvezu\\body.tga",
+  "char\\monster\\lizard_commander\\lizard_command-g.tga",
+  "char\\monster\\lizard_commander\\lizard_commander-b.inx",
+  "char\\monster\\lizard_commander\\lizard_commander-l.tga",
+  "char\\monster\\monrebi\\mon-re-n.bmp",
+  "char\\monster\\monzombi\\monzom01b.bmp",
+  "char\\monster\\monzombi\\monzom02b.bmp",
+  "char\\monster\\m_lord\\m_load.smb",
+  "char\\monster\\m_lord\\m_load.smd",
+  "char\\monster\\m_lord\\m_load_die.inx",
+  "char\\monster\\m_lord\\m_load_die.smb",
+  "char\\monster\\m_lord\\m_load_die.smd",
+  "char\\monster\\najan\\najan.inx",
+  "char\\monster\\nihil\\nihil.smb",
+  "char\\monster\\nihil\\nihil.smd",
+  "char\\monster\\omicronos\\monomicron_b.ase",
+  "char\\monster\\royalmummy\\mummy-h_1.smb",
+  "char\\monster\\royalmummy\\mummy-h_1.smd",
+  "char\\monster\\royalmummy\\mummy-h_death.smb",
+  "char\\monster\\royalmummy\\mummy-h_death.smd",
+  "char\\monster\\scorpion\\scorpion-skin2.smb",
+  "char\\monster\\scorpion\\scorpion-skin2.smd",
+  "char\\monster\\wlord\\wlord_2.tga",
+  "char\\monster\\wlord\\wlord_3.tga",
+  "char\\npc\\bt07\\bt07-001.bmp",
+  "char\\tmabcd\\b032.inx",
+  "char\\tmabcd\\c032.inx",
+  "char\\tmabcd\\ctmbb29.smd",
+  "char\\tmabcd\\e032.inx",
+  "char\\tmabcd\\ma032.inx",
+  "char\\tmabcd\\mahe28.tga",
+  "char\\tmabcd\\mb032.inx",
+  "char\\tmabcd\\mbhe28.tga",
+  "char\\tmabcd\\mc032.inx",
+  "char\\tmabcd\\md032.inx",
+  "char\\tmabcd\\me031.inx",
+  "char\\tmabcd\\me032.inx",
+  "char\\tmabcd\\mfbb29.tga",
+  "char\\tmabcd\\mfbc23.tga",
+  "char\\tmabcd\\mlhe28.tga",
+  "char\\tmabcd\\mmba29.tga",
+  "char\\tmabcd\\mmbd22.tga",
+  "char\\tmabcd\\mmbe27.smd",
+  "char\\tmabcd\\mmbe32.smd",
+  "char\\tmabcd\\mmbe32.tga",
+  "char\\tmabcd\\mshe28.tga",
+  "char\\tmabcd\\tfbd26.tga",
+  "char\\tmabcd\\tfbe32.smd",
+  "char\\tmabcd\\tfbe32.tga",
+  "char\\tmabcd\\thumbs.db",
+  "char\\tmabcd\\tmba25.tga",
+  "char\\tmabcd\\tmbb25.tga",
+  "char\\tmabcd\\tmbc25.tga",
+  "char\\tmabcd\\tmh-c03c_face.bmp",
+  "char\\tmabcd\\tmha03.bmp",
+  "char\\tmabcd\\tmha19.smd",
+  "char\\tmabcd\\tmhc03.bmp",
+  "directx\\redist\\dsetup.dll",
+  "directx\\redist\\dsetup32.dll",
+  "directx\\redist\\dxdllreg_x86.cab",
+  "directx\\redist\\dxsetup.exe",
+  "directx\\redist\\dxupdate.cab",
+  "effect\\animationdata\\meteo2.ini",
+  "effect\\lowlevelpet\\pet_mute.smd",
+  "effect\\neweffect\\skillcelestialglacialspike.lua",
+  "effect\\particle\\script\\beatup.part",
+  "effect\\particle\\script\\divinelightning.part",
+  "effect\\particle\\script\\spiritualflare.part",
+  "effect\\particle\\thumbs.db",
+  "effect\\particle\\virtuallife-jin.bmp",
+  "field\\ancientw\\ancientw.smd",
+  "field\\ancientw\\rotobj02.smd",
+  "field\\ancientw\\rotobj03.smd",
+  "field\\ancientw\\rotobj04.smd",
+  "field\\ancientw\\rotobj05.smd",
+  "field\\ancientw\\rotobj06.smd",
+  "field\\ancientw\\rotobj07.smd",
+  "field\\ancientw\\rotobj08.smd",
+  "field\\arena\\arena.smd",
+  "field\\boss\\boss.smd",
+  "field\\castle\\box_j_1.bmp",
+  "field\\castle\\box_j_1_3.bmp",
+  "field\\castle\\box_j_2_1.bmp",
+  "field\\castle\\box_j_2_2.bmp",
+  "field\\castle\\castle.smd",
+  "field\\castle\\thumbs.db",
+  "field\\custom\\ad1.smd",
+  "field\\custom\\ad2.smd",
+  "field\\custom\\ad3.smd",
+  "field\\custom\\ba1.smd",
+  "field\\custom\\ba2.smd",
+  "field\\custom\\ba3.smd",
+  "field\\custom\\ba4.smd",
+  "field\\custom\\fo1.smd",
+  "field\\custom\\fo2.smd",
+  "field\\custom\\fo3.smd",
+  "field\\custom\\sanc1.smd",
+  "field\\custom\\sanc2.smd",
+  "field\\custom\\town1.smd",
+  "field\\desert\\stone-33.bmp",
+  "field\\dungeon\\dun-5.smd",
+  "field\\endless\\dun-7.smd",
+  "field\\forest\\thumbs.db",
+  "field\\forever-fall\\forever-fall-01.smd",
+  "field\\forever-fall\\forever-fall-02.smd",
+  "field\\forever-fall\\forever-fall-03.smd",
+  "field\\forever-fall\\forever-fall-04.smd",
+  "field\\forever-fall\\metalplank1.bmp",
+  "field\\forever-fall\\me_handle2.bmp",
+  "field\\forever-fall\\mo_g_004.bmp",
+  "field\\forever-fall\\mo_g_009.bmp",
+  "field\\forever-fall\\mo_g_015.bmp",
+  "field\\forever-fall\\mo_g_016.tga",
+  "field\\forever-fall\\mo_g_021.bmp",
+  "field\\forever-fall\\mo_g_046.bmp",
+  "field\\forever-fall\\mo_g_047.bmp",
+  "field\\forever-fall\\mo_g_049.tga",
+  "field\\forever-fall\\pilai-christmas-new.smd",
+  "field\\forever-fall\\pilai.smd",
+  "field\\forever-fall\\tee.bmp",
+  "field\\forever-fall\\thumbs.db",
+  "field\\forever-fall\\win_leaf.tga",
+  "field\\forever-fall\\woodplan.bmp",
+  "field\\forever-fall\\woodplan_e.bmp",
+  "field\\heartoffire\\heartoffire.smd",
+  "field\\ice\\i02-25(1).bmp",
+  "field\\ice\\ice_irk067.bmp",
+  "field\\iron\\i02-16.bmp",
+  "field\\iron\\i03-03.bmp",
+  "field\\iron\\i03-04.bmp",
+  "field\\iron\\i03-08-02.bmp",
+  "field\\iron\\i06.bmp",
+  "field\\iron\\iob03-03.bmp",
+  "field\\iron\\ira_1_04.bmp",
+  "field\\iron\\irb_1_0.bmp",
+  "field\\iron\\irg01.bmp",
+  "field\\iron\\irg02.bmp",
+  "field\\iron\\irg03.bmp",
+  "field\\iron\\irg04.bmp",
+  "field\\iron\\irg05.bmp",
+  "field\\iron\\irg06.bmp",
+  "field\\iron\\irg07.bmp",
+  "field\\iron\\irg08.bmp",
+  "field\\iron\\irk016_1.bmp",
+  "field\\iron\\irk055.bmp",
+  "field\\iron\\iron-1.smd",
+  "field\\iron\\iron-2gr-f.bmp",
+  "field\\iron\\iron-2gr-g.bmp",
+  "field\\iron\\ir_p.bmp",
+  "field\\iron\\ir_side_u.bmp",
+  "field\\iron\\op_2op.bmp",
+  "field\\iron\\op_op.bmp",
+  "field\\iron\\oumt-a.bmp",
+  "field\\iron\\oumt-b.bmp",
+  "field\\iron\\oumt-c.bmp",
+  "field\\iron\\oumt-d.bmp",
+  "field\\iron\\oumt.bmp",
+  "field\\iron\\oumwaste-a.bmp",
+  "field\\iron\\riy-f024.bmp",
+  "field\\iron\\t-002.bmp",
+  "field\\iron\\wf001.bmp",
+  "field\\iron\\wf002.bmp",
+  "field\\iron\\wf003.bmp",
+  "field\\iron\\wf006.bmp",
+  "field\\iron\\wf007.bmp",
+  "field\\map\\ad1.tga",
+  "field\\map\\ad2.tga",
+  "field\\map\\ad3.tga",
+  "field\\map\\ba2.tga",
+  "field\\map\\ba3.tga",
+  "field\\map\\boss.tga",
+  "field\\map\\castle.tga",
+  "field\\map\\dcave.tga",
+  "field\\map\\de-1.tga",
+  "field\\map\\de-2.tga",
+  "field\\map\\de-3.tga",
+  "field\\map\\de-4.tga",
+  "field\\map\\dun-1.tga",
+  "field\\map\\dun-2.tga",
+  "field\\map\\dun-3.tga",
+  "field\\map\\dun-4.tga",
+  "field\\map\\dun-5.tga",
+  "field\\map\\dun-6.tga",
+  "field\\map\\dun-7.tga",
+  "field\\map\\dun-8.tga",
+  "field\\map\\dun-9.tga",
+  "field\\map\\fo2.tga",
+  "field\\map\\fo3.tga",
+  "field\\map\\fore-1.tga",
+  "field\\map\\fore-2.tga",
+  "field\\map\\fore-3.tga",
+  "field\\map\\forever-fall-01.tga",
+  "field\\map\\forever-fall-02.tga",
+  "field\\map\\forever-fall-03.tga",
+  "field\\map\\forever-fall-04.tga",
+  "field\\map\\greedy.tga",
+  "field\\map\\heartoffire.tga",
+  "field\\map\\ice1.tga",
+  "field\\map\\ice2.tga",
+  "field\\map\\ice_ura.tga",
+  "field\\map\\iron-1.tga",
+  "field\\map\\iron-2.tga",
+  "field\\map\\iron2.tga",
+  "field\\map\\lost.tga",
+  "field\\map\\losttemple.tga",
+  "field\\map\\mcave.tga",
+  "field\\map\\mine-1.tga",
+  "field\\map\\pilai.tga",
+  "field\\map\\ruin-1.tga",
+  "field\\map\\ruin-2.tga",
+  "field\\map\\ruin-3.tga",
+  "field\\map\\ruin-4.tga",
+  "field\\map\\sanc1.tga",
+  "field\\map\\sanc2.tga",
+  "field\\map\\seaa.tga",
+  "field\\map\\slab.tga",
+  "field\\map\\sod-1.tga",
+  "field\\map\\sod-2.tga",
+  "field\\map\\tcave.tga",
+  "field\\map\\village-1.tga",
+  "field\\map\\village-2-xmas.tga",
+  "field\\map\\village-2.tga",
+  "field\\mine\\mine-1.smd",
+  "field\\ricarten\\village-2-christmas-boat.smd",
+  "field\\ricarten\\village-2.smd",
+  "field\\room\\thumbs.db",
+  "field\\ruin\\ruin-1.smd",
+  "field\\ruin\\ruin-2.smd",
+  "field\\ruin\\ruin-3.smd",
+  "field\\ruin\\ruin-4.smd",
+  "field\\seaa\\ocen_bottomlightingmap.bmp",
+  "field\\seaa\\seaa.smd",
+  "field\\seaa\\stemple.smd",
+  "field\\seaa\\ston_009lightingmap.bmp",
+  "field\\seaa\\ston_010lightingmap.bmp",
+  "field\\seaa\\ston_031lightingmap.bmp",
+  "field\\slab\\a1_01lightingmap.bmp",
+  "field\\slab\\a1_bookcase01.bmp",
+  "field\\slab\\a1_bookcase02.bmp",
+  "field\\slab\\a1_bottom.bmp",
+  "field\\slab\\a1_bottom01.bmp",
+  "field\\slab\\a1_pillar.bmp",
+  "field\\slab\\a1_pillar02.bmp",
+  "field\\slab\\a1_rock.bmp",
+  "field\\slab\\a1_ston01.bmp",
+  "field\\slab\\a1_ston02.bmp",
+  "field\\slab\\a1_ston03.bmp",
+  "field\\slab\\a1_ston05.bmp",
+  "field\\slab\\a1_ston08.bmp",
+  "field\\slab\\a1_wall02_02.bmp",
+  "field\\slab\\a2_01lightingmap.bmp",
+  "field\\slab\\a2_03lightingmap.bmp",
+  "field\\slab\\a2_03lightingmap_01.bmp",
+  "field\\slab\\a2_04lightingmap.bmp",
+  "field\\slab\\a2_box_01.bmp",
+  "field\\slab\\a2_box_02.bmp",
+  "field\\slab\\a2_cabinet.bmp",
+  "field\\slab\\a2_grass_01.bmp",
+  "field\\slab\\a2_grass_02.bmp",
+  "field\\slab\\a2_grass_03.bmp",
+  "field\\slab\\a2_ob01.bmp",
+  "field\\slab\\a2_ob02.bmp",
+  "field\\slab\\a2_ob03.bmp",
+  "field\\slab\\a2_ob04.bmp",
+  "field\\slab\\a2_ob05.bmp",
+  "field\\slab\\a2_obj_01.bmp",
+  "field\\slab\\a2_obj_02.bmp",
+  "field\\slab\\a2_obj_04.bmp",
+  "field\\slab\\a2_poster_01.tga",
+  "field\\slab\\a2_poster_02.tga",
+  "field\\slab\\a2_poster_03.tga",
+  "field\\slab\\a3lightingmap.bmp",
+  "field\\slab\\a3_obj01.bmp",
+  "field\\slab\\a3_obj02.bmp",
+  "field\\slab\\a3_obj03.bmp",
+  "field\\slab\\a3_obj04.bmp",
+  "field\\slab\\a3_pipe01.bmp",
+  "field\\slab\\a3_pipe02.bmp",
+  "field\\slab\\a3_volcano.bmp",
+  "field\\slab\\a4_bed.bmp",
+  "field\\slab\\a4_bottom.bmp",
+  "field\\slab\\a4_chair.bmp",
+  "field\\slab\\a4_objects_01.bmp",
+  "field\\slab\\a4_objects_02.bmp",
+  "field\\slab\\a4_objects_03.bmp",
+  "field\\slab\\a4_roundtable.bmp",
+  "field\\slab\\a5lightingmap.bmp",
+  "field\\slab\\a6_01lightingmap.bmp",
+  "field\\slab\\a6_02lightingmap.bmp",
+  "field\\slab\\a6_03lightingmap.bmp",
+  "field\\slab\\a6_04lightingmap.bmp",
+  "field\\slab\\a6_05lightingmap.bmp",
+  "field\\slab\\a6_06lightingmap.bmp",
+  "field\\slab\\a6_07lightingmap.bmp",
+  "field\\slab\\a6_08lightingmap.bmp",
+  "field\\slab\\a_gra01.bmp",
+  "field\\slab\\a_gra07.bmp",
+  "field\\slab\\a_gra08.bmp",
+  "field\\slab\\a_j_mineral-3.bmp",
+  "field\\slab\\a_lava.bmp",
+  "field\\slab\\a_lava01.bmp",
+  "field\\slab\\a_metal01.tga",
+  "field\\slab\\a_oblightingmap.bmp",
+  "field\\slab\\a_wall01.bmp",
+  "field\\slab\\b_bottom01.bmp",
+  "field\\slab\\b_bottom02.bmp",
+  "field\\slab\\b_bottom_01.bmp",
+  "field\\slab\\b_mine_p_a wooden pail01.bmp",
+  "field\\slab\\b_mine_p_awoodenbox02.bmp",
+  "field\\slab\\b_mine_p_awoodenlumber01.bmp",
+  "field\\slab\\b_mine_p_hammer01.bmp",
+  "field\\slab\\b_mine_p_pack01.bmp",
+  "field\\slab\\b_mine_p_pickax01.bmp",
+  "field\\slab\\b_mine_p_shovel01.bmp",
+  "field\\slab\\b_mine_p_wagon01.bmp",
+  "field\\slab\\b_ob01.bmp",
+  "field\\slab\\b_ston_01.bmp",
+  "field\\slab\\b_ston_02.bmp",
+  "field\\slab\\b_wall_01.bmp",
+  "field\\slab\\b_wall_03.bmp",
+  "field\\slab\\b_wall_03_02.bmp",
+  "field\\slab\\entry_bottom01.bmp",
+  "field\\slab\\entry_carpet02.tga",
+  "field\\slab\\entry_wall01.bmp",
+  "field\\slab\\entry_wall02.bmp",
+  "field\\slab\\entry_wall03.bmp",
+  "field\\slab\\entry_wall08.bmp",
+  "field\\slab\\entry_wall09.bmp",
+  "field\\slab\\entry_wall10.bmp",
+  "field\\slab\\ep001.bmp",
+  "field\\slab\\ex002.bmp",
+  "field\\slab\\e_bottom_01.bmp",
+  "field\\slab\\flame_0.tga",
+  "field\\slab\\flame_1.tga",
+  "field\\slab\\flame_2.tga",
+  "field\\slab\\flame_3.tga",
+  "field\\slab\\flame_4.tga",
+  "field\\slab\\flame_5.tga",
+  "field\\slab\\flame_6.tga",
+  "field\\slab\\flame_7.tga",
+  "field\\slab\\i02-13.bmp",
+  "field\\slab\\i02-17.bmp",
+  "field\\slab\\i02-18.bmp",
+  "field\\slab\\irk003.bmp",
+  "field\\slab\\irk012.bmp",
+  "field\\slab\\irk028.bmp",
+  "field\\slab\\irk056.bmp",
+  "field\\slab\\irk063.bmp",
+  "field\\slab\\irk064.bmp",
+  "field\\slab\\ir_m_eff_1.bmp",
+  "field\\slab\\ir_m_eff_2.bmp",
+  "field\\slab\\machine_bottom_01.bmp",
+  "field\\slab\\ma_wall.bmp",
+  "field\\slab\\ma_wall_02.bmp",
+  "field\\slab\\ma_wall_03.bmp",
+  "field\\slab\\ma_wall_04.bmp",
+  "field\\slab\\mine_n_r_icecolmun02.tga",
+  "field\\slab\\r01lightingmap.bmp",
+  "field\\slab\\rat_beast_05lightingmap.bmp",
+  "field\\slab\\riy-f010.tga",
+  "field\\slab\\rssl.tga",
+  "field\\slab\\slab.smd",
+  "field\\slab\\slab_bottom01.bmp",
+  "field\\slab\\slab_bottom03.bmp",
+  "field\\slab\\slab_bottom04.bmp",
+  "field\\slab\\slab_bottom07.bmp",
+  "field\\slab\\slab_colosseum_s_inside07.bmp",
+  "field\\slab\\slab_colosseum_s_inside08.bmp",
+  "field\\slab\\slab_dor01.bmp",
+  "field\\slab\\slab_dor02.bmp",
+  "field\\slab\\slab_dor03.bmp",
+  "field\\slab\\slab_dor04.bmp",
+  "field\\slab\\slab_dor05.bmp",
+  "field\\slab\\slab_etc_02.bmp"
+ ],
+ "oursOnlySample": [
+  "char\\flag\\thumbs.db",
+  "char\\monster\\bs_midranda\\bs_midranda.inx",
+  "char\\monster\\bs_midranda\\bs_midranda.smb",
+  "char\\monster\\bs_midranda\\bs_midranda.smd",
+  "char\\monster\\bs_midranda\\bs_midranda.tga",
+  "char\\monster\\bumb\\buma-skin.ase",
+  "char\\monster\\bumb\\buma.ini",
+  "char\\monster\\chaoscaraqueen\\chaoscara.ase",
+  "char\\monster\\chaoscaraqueen\\chaoscara.ini",
+  "char\\monster\\chaoscaraqueen\\chaoscara.inx",
+  "char\\monster\\chaoscaraqueen\\chaoscara.smb",
+  "char\\monster\\chaoscaraqueen\\chaoscara.smd",
+  "char\\monster\\chaoscaraqueen\\chaoscara01.tga",
+  "char\\monster\\chaoscaraqueen\\chaoscara02.tga",
+  "char\\monster\\chaoscaraqueen\\chaoscara03.tga",
+  "char\\monster\\chaoscaraqueen\\chaoscara04.tga",
+  "char\\monster\\chaoscaraqueen\\chaoscara_ob.bmp",
+  "char\\monster\\darkwitch_fpt\\darkwitchfpt.ase",
+  "char\\monster\\devilshy\\devilshy.ase",
+  "char\\monster\\evilmaple\\razorgodtool.exe",
+  "char\\monster\\figon\\razorgodtool.exe",
+  "char\\monster\\firegremlin\\razorgodtool.exe",
+  "char\\monster\\flame\\flame.ase",
+  "char\\monster\\flame\\flame.dds",
+  "char\\monster\\flame\\flame.inx",
+  "char\\monster\\flame\\flame.png",
+  "char\\monster\\flame\\flame.smb",
+  "char\\monster\\flame\\flame.smd",
+  "char\\monster\\flame\\smdreader0.980_best_reader.exe",
+  "char\\monster\\flame.zip",
+  "char\\monster\\flamemaiden\\flamemaiden6767.ase",
+  "char\\monster\\flamemaiden\\flamemaiden6767.ini",
+  "char\\monster\\flamemaiden\\razorgodtool.exe",
+  "char\\monster\\flamo\\razorgodtool.exe",
+  "char\\monster\\fptargos\\fpt-argos.ase",
+  "char\\monster\\fptargos\\razorgodtool.exe",
+  "char\\monster\\fptcrystal\\crystaltower.ase",
+  "char\\monster\\fptcrystal\\crystaltower.ini",
+  "char\\monster\\fpthell\\fpthellbeast.ase.bak",
+  "char\\monster\\fpthell\\fpthellbeast_old.ase",
+  "char\\monster\\fpthell\\fpthellbeast_old.smd",
+  "char\\monster\\fptomicron\\monomicron.ase",
+  "char\\monster\\fptomicron\\monomicron.ini",
+  "char\\monster\\fptratu\\monaratoo.ini",
+  "char\\monster\\fptratu\\monratoo.ase",
+  "char\\monster\\fptshurikar\\monnazz.ase",
+  "char\\monster\\fptshurikar\\monnazz.ini",
+  "char\\monster\\fptslicer\\monsliver-01.ase",
+  "char\\monster\\fptslicer\\monsliver-01.ini",
+  "char\\monster\\fptslicer\\monsliver.ase",
+  "char\\monster\\fptslicer\\monsliver.ini",
+  "char\\monster\\ghostship\\ghostship-d.ase",
+  "char\\monster\\ghostship\\ghostship.ase",
+  "char\\monster\\goldenhopy\\goldenhopy.inx",
+  "char\\monster\\goldenhopy\\goldenhopy.smb",
+  "char\\monster\\goldenhopy\\goldenhopy.smd",
+  "char\\monster\\goldenhopy\\monhobi.bmp",
+  "char\\monster\\gorgon\\gorgonboss.ini",
+  "char\\monster\\gorgonboss\\gorgon.ase",
+  "char\\monster\\gorgonboss\\gorgon.ini",
+  "char\\monster\\gorgonboss\\gorgon.smb",
+  "char\\monster\\gorgonboss\\gorgon.smd",
+  "char\\monster\\gorgonboss\\gorgonboss.ase",
+  "char\\monster\\gorgonboss\\gorgonboss.ini",
+  "char\\monster\\gorgon_boss\\gorgon.ini",
+  "char\\monster\\hellplantboss\\monhauntmaple-a.bmp",
+  "char\\monster\\hellplantboss\\monhauntmaple-b.tga",
+  "char\\monster\\hellplantboss\\monhauntmaple.ase",
+  "char\\monster\\hellplantboss\\monhauntmaple.ini",
+  "char\\monster\\hellplantboss\\monhauntmaple.inx",
+  "char\\monster\\hellplantboss\\monhauntmaple.smb",
+  "char\\monster\\hellplantboss\\monhauntmaple.smd",
+  "char\\monster\\hellplantboss\\monhauntmaple_b _1.tga",
+  "char\\monster\\hellplantboss\\monhauntmaple_b.tga",
+  "char\\monster\\hellplantboss\\monhauntplant-a.bmp",
+  "char\\monster\\hellplantboss\\monhauntplant-b.tga",
+  "char\\monster\\hellplantboss\\monhauntplant.ase",
+  "char\\monster\\hellplantboss\\monhauntplant.ini",
+  "char\\monster\\hellplantboss\\monhauntplant_b.tga",
+  "char\\monster\\hest\\daooli bå¸àô_opa.jpg",
+  "char\\monster\\hopy\\mechahopy.ase",
+  "char\\monster\\hopy\\mechahopy.ini",
+  "char\\monster\\hopy\\mopy.ase",
+  "char\\monster\\hopy\\mopy.ini",
+  "char\\monster\\iceelemental\\iceelemental.ase",
+  "char\\monster\\iceelemental\\iceelemental.ini",
+  "char\\monster\\ironfitt\\thumbs.db",
+  "char\\monster\\kakoa\\thumbs.db",
+  "char\\monster\\mn-001\\m-npc11-b.bmp",
+  "char\\monster\\mn-001\\m-npc11-h.bmp",
+  "char\\monster\\mn-001\\m-npc11-r.bmp",
+  "char\\monster\\mn-001\\m-npc12-s.bmp",
+  "char\\monster\\mn-001\\mn-001.ase",
+  "char\\monster\\mn-001\\mn-001f.ase",
+  "char\\monster\\mn-001\\npc-tt.bmp",
+  "char\\monster\\monbagon\\razorgodtool.exe",
+  "char\\monster\\mondmachint\\thumbs.db",
+  "char\\monster\\monfury\\fptsphinx.ase",
+  "char\\monster\\monfury\\razorgodtool.exe",
+  "char\\monster\\monlordgordon\\monmightygoblin.ase",
+  "char\\monster\\monlordgordon\\monmightygoblin.ini",
+  "char\\monster\\monlordgordon\\monmightygoblin.inx",
+  "char\\monster\\monlordgordon\\monmightygoblin.smb",
+  "char\\monster\\monlordgordon\\monmightygoblin.smd",
+  "char\\monster\\monlordgordon\\new_gob03-b.tga",
+  "char\\monster\\monlordgordon\\new_gob03-h.bmp",
+  "char\\monster\\monlordgordon\\new_gob03-w.bmp",
+  "char\\monster\\monmetrot\\thumbs.db",
+  "char\\monster\\monnazz\\monnazz.ase",
+  "char\\monster\\monskeleton\\fptskel-die.ase",
+  "char\\monster\\monskeleton\\fptskeleton-a.ase",
+  "char\\monster\\monskeleton\\fptskeleton-b.ase",
+  "char\\monster\\monskeleton2\\monskeleton-a.ase",
+  "char\\monster\\monskeleton2\\monskeleton-a.ini",
+  "char\\monster\\monskeleton2\\monskeleton-die-a.ase",
+  "char\\monster\\monskeleton2\\monskeleton-die-a.ini",
+  "char\\monster\\monskeleton2\\skeleton-die.ase",
+  "char\\monster\\monswarrior\\fptswarrior-die.ase",
+  "char\\monster\\monswarrior\\fptswarrior.ase",
+  "char\\monster\\monswarrior\\monswarrior-die.ase",
+  "char\\monster\\monswarrior\\monswarrior.ase",
+  "char\\monster\\morgot\\thumbs.db",
+  "char\\monster\\mountait\\thumbs.db",
+  "char\\monster\\m_lord\\m_load.ase",
+  "char\\monster\\m_lord\\m_load.ini",
+  "char\\monster\\m_lord\\m_load_die.ase",
+  "char\\monster\\m_lord\\m_load_die.ini",
+  "char\\monster\\m_priest\\inx_reader.exe",
+  "char\\monster\\m_priest\\m_load.ini",
+  "char\\monster\\m_priest\\m_load_die.ini",
+  "char\\monster\\m_priest\\m_load_die__.ase",
+  "char\\monster\\m_priest\\m_load__.ase",
+  "char\\monster\\nihil\\nihil.ase",
+  "char\\monster\\nihil\\nihil1.ini",
+  "char\\monster\\nihil_pet\\nihil-bak.ini",
+  "char\\monster\\nihil_pet\\nihil-orig.ase",
+  "char\\monster\\nihil_pet\\nihil.ase",
+  "char\\monster\\nihil_pet\\nihil.ini",
+  "char\\monster\\phmgod\\phmgod.ase",
+  "char\\monster\\pteuavellriskstf\\avelriskq-a.bmp",
+  "char\\monster\\pteuavellriskstf\\avelriskq-b.bmp",
+  "char\\monster\\pteuavellriskstf\\avelriskq-h.bmp",
+  "char\\monster\\pteuavellriskstf\\avelriskq-stick.tga",
+  "char\\monster\\pteuavellriskstf\\monavelriskstf.ase",
+  "char\\monster\\pteuavellriskstf\\monavelriskstf.ini",
+  "char\\monster\\pteuavellriskstf\\monavelriskstf.inx",
+  "char\\monster\\pteuavellriskstf\\monavelriskstf.smb",
+  "char\\monster\\pteuavellriskstf\\monavelriskstf.smd",
+  "char\\monster\\pteubloodyknight\\bknight.ase",
+  "char\\monster\\pteubloodyknight\\bknight.ini",
+  "char\\monster\\pteuchaoscara\\chaoscara.ase",
+  "char\\monster\\pteuchaoscara\\chaoscara.ini",
+  "char\\monster\\pteufury\\rpthellbeast.ase",
+  "char\\monster\\pteufury\\rpthellbeast.ini",
+  "char\\monster\\pteugreat_greven\\great_greven.ase",
+  "char\\monster\\pteugreat_greven\\great_greven.ini",
+  "char\\monster\\pteuhellplant\\hellplant.ini",
+  "char\\monster\\pteuhellplant\\monhauntplant_b.ase",
+  "char\\monster\\pteuhongky\\monbabyhulk.ase",
+  "char\\monster\\pteuhongky\\monbabyhulk.ini",
+  "char\\monster\\pteumimic\\52104501.tga",
+  "char\\monster\\pteumimic\\mimic.ase",
+  "char\\monster\\pteumimic\\mimic.ini",
+  "char\\monster\\pteumimic\\thumbs.db",
+  "char\\monster\\pteumoncyclops\\cyclops-a.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-attack.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-attack1.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-b.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-c.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-d.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-damage.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-die.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-potion.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-run.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-stop.ase",
+  "char\\monster\\pteumoncyclops\\cyclops-walk.ase",
+  "char\\monster\\pteumoncyclops\\moncy03 - kopie.bmp",
+  "char\\monster\\pteumoncyclops\\moncy03.bmp",
+  "char\\monster\\pteumoncyclops\\moncyclops-a.ini",
+  "char\\monster\\pteumoncyclops\\moncyclops-b.ini",
+  "char\\monster\\pteumoncyclops\\moncyclops-c.ini",
+  "char\\monster\\pteumoncyclops\\moncyclops-d.ini",
+  "char\\monster\\pteumonegan\\monegan.ase",
+  "char\\monster\\pteumonegan\\monegan.ini",
+  "char\\monster\\pteumonfury\\monfury.ase",
+  "char\\monster\\pteumonfury\\monfury.ini",
+  "char\\monster\\pteumonfury\\monfury.inx",
+  "char\\monster\\pteumonfury\\monfury.smb",
+  "char\\monster\\pteumonfury\\monfury.smd",
+  "char\\monster\\pteumonfury\\thumbs.db",
+  "char\\monster\\pteumonmightygoblin\\monmightygoblin.ase",
+  "char\\monster\\pteumonmightygoblin\\monmightygoblin.ini",
+  "char\\monster\\pteumonmudy\\mmonmmudy.smb",
+  "char\\monster\\pteumonmudy\\monmudy.ase",
+  "char\\monster\\pteumonmudy\\monmudy.ini",
+  "char\\monster\\pteumonmudy\\monmudy.inx",
+  "char\\monster\\pteumonmudy\\monmudy.smb",
+  "char\\monster\\pteumonmudy\\monmudy.smd",
+  "char\\monster\\pteumonmudy\\monmudyjel.ase",
+  "char\\monster\\pteumonmudy\\monmudyjel.ini",
+  "char\\monster\\pteumonmudy\\mudygolem01.bmp",
+  "char\\monster\\pteumonmudy\\mudygolem02.bmp",
+  "char\\monster\\pteumonomicron-1\\monomicron-1.ase",
+  "char\\monster\\pteumonomicron-1\\monomicron-1.ini",
+  "char\\monster\\pteumonomicron-1\\monomicron-1_bak.ase",
+  "char\\monster\\pteumonomicron-1\\monomicron-1_bak.ini",
+  "char\\monster\\pteumonomicron-1\\thumbs.db",
+  "char\\monster\\pteumonrebion\\monrebion-1.ase",
+  "char\\monster\\pteumonrebion\\monrebion-1.ini",
+  "char\\monster\\pteumonrebion\\monrebion.ase",
+  "char\\monster\\pteumonrebion\\monrebion.ini",
+  "char\\monster\\pteumontempleguard\\templeguard.ase",
+  "char\\monster\\pteumontempleguard\\templeguard.ini",
+  "char\\monster\\pteumonzombi\\monzombi-a.ini",
+  "char\\monster\\pteumonzombi\\monzombi-b.ini",
+  "char\\monster\\pteumonzombi\\monzombi-c.ini",
+  "char\\monster\\pteumonzombi\\zombi-a.ase",
+  "char\\monster\\pteumonzombi\\zombi-attack.ase",
+  "char\\monster\\pteumonzombi\\zombi-b.ase",
+  "char\\monster\\pteumonzombi\\zombi-c.ase",
+  "char\\monster\\pteumonzombi\\zombi-demage.ase",
+  "char\\monster\\pteumonzombi\\zombi-die.ase",
+  "char\\monster\\pteumonzombi\\zombi-stop.ase",
+  "char\\monster\\pteumonzombi\\zombi-up.ase",
+  "char\\monster\\pteumonzombi\\zombi-walk.ase",
+  "char\\monster\\pteuspider\\spider.ase",
+  "char\\monster\\pteuspider\\spider.ini",
+  "char\\monster\\reptilking\\reptilking.ase",
+  "char\\monster\\rpthulkzh\\rpthulk-zh.ase",
+  "char\\monster\\rpt_pagan\\rpt_pagan.inx",
+  "char\\monster\\rpt_pagan\\rpt_pagan.png",
+  "char\\monster\\rpt_pagan\\rpt_pagan.smb",
+  "char\\monster\\rpt_pagan\\rpt_pagan.smd",
+  "char\\monster\\ruca\\thumbs.db",
+  "char\\monster\\runicguardiat\\thumbs.db",
+  "char\\monster\\scorpion\\scorpion-skin2.ase",
+  "char\\monster\\scorpion\\scorpion2.ini",
+  "char\\monster\\s_ar\\sar.ase",
+  "char\\monster\\s_atal\\satal.ase",
+  "char\\monster\\s_bloodyknight\\s_bknight.ase",
+  "char\\monster\\s_fi\\sfi.ase",
+  "char\\monster\\s_kn\\skn.ase",
+  "char\\monster\\s_magi\\smegi.ase",
+  "char\\monster\\s_meca\\smeca.ase",
+  "char\\monster\\s_pa\\spike.ase",
+  "char\\monster\\s_pr\\spr.ase",
+  "char\\monster\\undeadmaple\\thumbs.db",
+  "char\\monster\\undeadstalker\\mundeadstalker-b.smb",
+  "char\\monster\\undeadstalker\\undeadstalker-b.inx",
+  "char\\monster\\undeadstalker\\undeadstalker-b.smd",
+  "char\\monster\\undeadstalker\\_________b.bmp",
+  "char\\monster\\xetan\\thumbs.db",
+  "char\\npc\\arkanda\\arkanda.ase",
+  "char\\npc\\arkanda\\arkanda.ini",
+  "char\\npc\\arkanda\\idle1.ase",
+  "char\\npc\\arkanda\\idle2.ase",
+  "char\\npc\\arkanda\\idle3.ase",
+  "char\\npc\\atl007\\thumbs.db",
+  "char\\npc\\atl008\\thumbs.db",
+  "char\\npc\\bcn02\\thumbs.db",
+  "char\\npc\\bcn04\\thumbs.db",
+  "char\\npc\\broomman.zip",
+  "char\\npc\\bt01\\thumbs.db",
+  "char\\npc\\bt06\\battlequest.ini",
+  "char\\npc\\bt07\\mysteryportal.ini",
+  "char\\npc\\nadia\\thumbs.db",
+  "char\\npc\\pteu-006\\thumbs.db",
+  "char\\npc\\pteu-006\\tn-006.ase",
+  "char\\npc\\pteu-006\\tn-006.ini",
+  "char\\npc\\pteu-006\\tn-006f.ase",
+  "char\\tmabcd\\ca102.ini",
+  "char\\tmabcd\\ca103.ini",
+  "char\\tmabcd\\cb102.ini",
+  "char\\tmabcd\\cb103.ini",
+  "char\\tmabcd\\cc102.ini",
+  "char\\tmabcd\\cc103.ini",
+  "char\\tmabcd\\cd102.ini",
+  "char\\tmabcd\\cd103.ini",
+  "char\\tmabcd\\ce102.ini",
+  "char\\tmabcd\\ce103.ini",
+  "char\\tmabcd\\cma102.ini",
+  "char\\tmabcd\\cma103.ini",
+  "char\\tmabcd\\cmb102.ini",
+  "char\\tmabcd\\cmb103.ini",
+  "char\\tmabcd\\cmc102.ini",
+  "char\\tmabcd\\cmc103.ini",
+  "char\\tmabcd\\cmd102.ini",
+  "char\\tmabcd\\cmd103.ini",
+  "char\\tmabcd\\cme102.ini",
+  "char\\tmabcd\\cme103.ini",
+  "effect\\assaeffect\\skill3mesh\\virtualmana.bmp",
+  "effect\\imagedata\\dust1\\thumbs.db",
+  "effect\\imagedata\\return1\\thumbs.db",
+  "effect\\imagedata\\round2\\thumbs.db",
+  "effect\\imagedata\\skillmechanicbomb\\thumbs.db",
+  "effect\\imagedata\\skillvistenus\\thumbs.db",
+  "effect\\particle\\razorgodtool.exe",
+  "effect\\particle\\script\\flamemaidenbody.part",
+  "effect\\particle\\script\\flamemaidenhit.part",
+  "effect\\particle\\script\\flamemaidenskill.part",
+  "effect\\particle\\script\\flamemaidenstart.part",
+  "effect\\particle\\script\\skill3fighterdemonsbane1.part",
+  "effect\\particle\\script\\skill3fighterdemonsbane1_keep.part",
+  "effect\\particle\\script\\skill3priestessvirtuallifemember_active.part",
+  "effect\\particle\\script\\skill3priestessvirtualmanamember.part.bak",
+  "effect\\particle\\script\\skill3priestessvirtualregenmember_active.part",
+  "effect\\party\\thumbs.db",
+  "effect\\sky\\env.hdr",
+  "effect\\sky\\sky08\\day\\thumbs.db",
+  "effect\\sky\\sky08\\evening\\thumbs.db",
+  "effect\\sky\\sky08\\night\\thumbs.db",
+  "field\\ancientw\\ancientw.ase",
+  "field\\ancientw\\rotobj01.ase",
+  "field\\ancientw\\rotobj02.ase",
+  "field\\ancientw\\rotobj03.ase",
+  "field\\ancientw\\rotobj04.ase",
+  "field\\ancientw\\rotobj05.ase",
+  "field\\ancientw\\rotobj06.ase",
+  "field\\ancientw\\rotobj07.ase",
+  "field\\ancientw\\rotobj08.ase",
+  "field\\ancientw_bak\\ancientw.ase",
+  "field\\ancientw_bak\\ancientw.smd",
+  "field\\ancientw_bak\\ancientw_bakcup.ase",
+  "field\\ancientw_bak\\ancientw_old.tga",
+  "field\\ancientw_bak\\ancien_center_pillar01 - copy.bak",
+  "field\\ancientw_bak\\ancien_center_pillar01 - copy.bmp",
+  "field\\ancientw_bak\\ancien_center_pillar01.bmp",
+  "field\\ancientw_bak\\ancien_center_pillar02.bmp",
+  "field\\ancientw_bak\\anci_center.bmp",
+  "field\\ancientw_bak\\anci_top01lightingmap.bmp",
+  "field\\ancientw_bak\\anci_top02lightingmap.bmp",
+  "field\\ancientw_bak\\anc_hlightingmap.bmp",
+  "field\\ancientw_bak\\anc_le01lightingmap.bmp",
+  "field\\ancientw_bak\\anc_re01lightingmap.bmp",
+  "field\\ancientw_bak\\aw_aanpassing_07.max",
+  "field\\ancientw_bak\\b_bottom01.bmp",
+  "field\\ancientw_bak\\b_bottom02.bmp",
+  "field\\ancientw_bak\\b_bottom03.bmp",
+  "field\\ancientw_bak\\b_ob01.bmp",
+  "field\\ancientw_bak\\b_ob02.bmp",
+  "field\\ancientw_bak\\b_ob03.bmp",
+  "field\\ancientw_bak\\b_ob04.bmp",
+  "field\\ancientw_bak\\b_wall.bmp",
+  "field\\ancientw_bak\\b_wall_02.bmp",
+  "field\\ancientw_bak\\c1lightingmap.bmp",
+  "field\\ancientw_bak\\c2lightingmap.bmp",
+  "field\\ancientw_bak\\cen01lightingmap.bmp",
+  "field\\ancientw_bak\\clightingmap.bmp",
+  "field\\ancientw_bak\\control station_bottom01.bmp",
+  "field\\ancientw_bak\\control station_bottom02.bmp",
+  "field\\ancientw_bak\\control station_bottom03.bmp",
+  "field\\ancientw_bak\\control station_bottom04.bmp",
+  "field\\ancientw_bak\\control station_bottom05.bmp",
+  "field\\ancientw_bak\\control station_bottom06.bmp",
+  "field\\ancientw_bak\\control station_ob01.bmp",
+  "field\\ancientw_bak\\control station_ob02.bmp",
+  "field\\ancientw_bak\\control station_ob03.bmp",
+  "field\\ancientw_bak\\d-ball.bmp",
+  "field\\ancientw_bak\\electric p_01.bmp",
+  "field\\ancientw_bak\\electric p_01_qa.bmp",
+  "field\\ancientw_bak\\electric p_02.bmp",
+  "field\\ancientw_bak\\electric p_03.bmp",
+  "field\\ancientw_bak\\electric p_04.bmp",
+  "field\\ancientw_bak\\electric p_05.bmp",
+  "field\\ancientw_bak\\electric p_06.bmp",
+  "field\\ancientw_bak\\electric p_07.bmp",
+  "field\\ancientw_bak\\electric p_07_a.bmp",
+  "field\\ancientw_bak\\electric p_08.bmp",
+  "field\\ancientw_bak\\electric p_09.bmp",
+  "field\\ancientw_bak\\electric p_10.bmp",
+  "field\\ancientw_bak\\electric_bottom01.bmp",
+  "field\\ancientw_bak\\electric_bottom02.bmp",
+  "field\\ancientw_bak\\electric_bottom03.bmp",
+  "field\\ancientw_bak\\electric_bottom04.bmp",
+  "field\\ancientw_bak\\electric_bottom05.bmp",
+  "field\\ancientw_bak\\electric_bottom06.bmp",
+  "field\\ancientw_bak\\electric_bottom06_02.bmp",
+  "field\\ancientw_bak\\electric_bottom07.bmp",
+  "field\\ancientw_bak\\electric_bottom08.bmp",
+  "field\\ancientw_bak\\electric_etc.bmp",
+  "field\\ancientw_bak\\electric_ston.bmp",
+  "field\\ancientw_bak\\el_bos_bo01.bmp",
+  "field\\ancientw_bak\\el_bos_bottom01.bmp",
+  "field\\ancientw_bak\\el_bos_well01.bmp",
+  "field\\ancientw_bak\\el_bos_well02.bmp",
+  "field\\ancientw_bak\\el_bos_well03.bmp",
+  "field\\ancientw_bak\\el_bos_well04.bmp",
+  "field\\ancientw_bak\\el_bos_well05.bmp",
+  "field\\ancientw_bak\\el_bos_well06.bmp",
+  "field\\ancientw_bak\\el_bos_well07.bmp",
+  "field\\ancientw_bak\\e_pass_bo01.bmp",
+  "field\\ancientw_bak\\e_pass_bo02.bmp",
+  "field\\ancientw_bak\\e_pass_bo03.bmp",
+  "field\\ancientw_bak\\e_pass_bo04.bmp",
+  "field\\ancientw_bak\\e_pass_ec.bmp",
+  "field\\ancientw_bak\\e_pass_w01.bmp",
+  "field\\ancientw_bak\\e_pass_w02.bmp",
+  "field\\ancientw_bak\\e_well_01.bmp",
+  "field\\ancientw_bak\\e_well_02.bmp",
+  "field\\ancientw_bak\\e_well_03.bmp"
+ ]
+}
