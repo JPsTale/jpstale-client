@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getGameSnapshot, heldItemOf, subscribeGame, type OpenPanel } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
+import { isInputBlocked, subscribeInputGate } from '../../app/inputGate.js';
 import PanelShell from './PanelShell.js';
 import CharStatusPanel from './CharStatusPanel.js';
 import SkillPanel from './SkillPanel.js';
@@ -20,7 +21,9 @@ import ChatWindow from './ChatWindow.js';
  */
 function HeldCursor() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
-  const held = heldItemOf(snap);
+  // 加载页期间不画持物（遮罩 z-index 已高过它，这里再显式挡一道：别把"盖住"当正确性）
+  const blocked = useSyncExternalStore(subscribeInputGate, isInputBlocked);
+  const held = blocked ? null : heldItemOf(snap);
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const heldUid = held?.uid ?? null;
   // 持有期间全窗口跟踪鼠标（拿起瞬间即用指针位置，无残留/无需先滑动）

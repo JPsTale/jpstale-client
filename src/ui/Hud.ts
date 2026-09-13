@@ -2,6 +2,7 @@ import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
 import { getGameSnapshot, registerUiHitTest, subscribeGame, type FistBinding } from '../app/gameStore.js';
+import { isInputBlocked } from '../app/inputGate.js';
 import { sfx } from '../audio/sfx.js';
 
 /** 药水快捷槽（ITEMSLOT 11/12/13）一格的显示数据；空槽 url='' */
@@ -366,6 +367,8 @@ export function createHud(container: HTMLElement): Hud {
   let ptrRightDown = false;
   let prevPtrRightDown = false;
   function checkButtonClick(): void {
+    // 加载页/遮罩期间不派发 HUD 动作（这些监听挂在 window 上，不看 DOM 命中 —— 见 inputGate）
+    if (isInputBlocked()) { prevPtrDown = ptrDown; prevPtrRightDown = ptrRightDown; return; }
     const justPressed = ptrDown && !prevPtrDown;
     prevPtrDown = ptrDown;
     const justRight = ptrRightDown && !prevPtrRightDown;

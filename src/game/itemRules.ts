@@ -95,6 +95,53 @@ export function canUse(job: number | undefined | null, idCode: number | undefine
   return true;
 }
 
+// ================= "这件装备现在能不能用"（原版 `NotUseFlag`）=================
+//
+// 出处：`sinInvenTory.cpp:6971 CheckRequireItem`（等级 + 5 属性）+ `CharOnlySetItem`（职业/性别）。
+// 三项用途（**同一份判据，别在别处再写一遍**）：
+//  ① 穿装前的预校验（不满足就不发请求，免得"先穿上再回滚"）；
+//  ② **背包格 / 装备槽的红底提示**（`sinInvenTory.cpp:944`：`NotUseFlag` 的物品把占格涂红，
+//     若它还装备着，那个装备槽也涂红 —— 玩家一眼看出"这件我穿不了"）；
+//  ③ 服务端对应 `ItemRules.meetsRequirements`（属性侧）与 `canUse`（职业侧）——
+//     服务端还会据此**让它的属性不生效**（原版 `SetItemToChar` 的 `continue`，`:7355`）。
+
+/** 物品侧需要的字段（`GameItem` 的实例需求值） */
+export interface EquipReqItem {
+  itemCode?: number;
+  reqLevel: number;
+  reqStrength: number;
+  reqSpirit: number;
+  reqTalent: number;
+  reqAgility: number;
+  reqHealth: number;
+}
+
+/** 角色侧需要的字段 */
+export interface EquipReqChar {
+  level?: number;
+  strength?: number;
+  spirit?: number;
+  talent?: number;
+  agility?: number;
+  health?: number;
+  job?: number;
+}
+
+/**
+ * 该件装备对当前角色是否**可用**（属性/等级门槛 + 职业门）。
+ * 角色信息未知（未进图）时返回 true —— 不拦，交给服务端。
+ */
+export function canEquipNow(it: EquipReqItem | null | undefined, ch: EquipReqChar | null | undefined): boolean {
+  if (!it) return true;
+  if (!ch) return true;
+  const lv = ch.level ?? 0, st = ch.strength ?? 0, sp = ch.spirit ?? 0;
+  const ta = ch.talent ?? 0, ag = ch.agility ?? 0, hp = ch.health ?? 0;
+  const statsOk = lv >= it.reqLevel && st >= it.reqStrength && sp >= it.reqSpirit
+    && ta >= it.reqTalent && ag >= it.reqAgility && hp >= it.reqHealth;
+  if (!statsOk) return false;
+  return canUse(ch.job, it.itemCode);
+}
+
 // ================= 负重（原版 `CheckSetOk` 的重量分支）=================
 //
 // 出处：`sinInvenTory.cpp:6021` —— `Weight[0] + 该件重量 > Weight[1]` 即拒，

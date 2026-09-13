@@ -28,6 +28,7 @@
     "phantom-codes": "npx tsx scripts/report-phantom-codes.ts",
     "verify-prefs": "npx tsx scripts/verify-prefs.ts",
     "verify-canuse": "npx tsx scripts/verify-canuse.ts",
+    "verify-cursor": "npx tsx scripts/verify-cursor.ts",
     "diag-climb": "tsx scripts/diag-climb.ts",
     "potions": "tsx scripts/extract-potion-effects.ts"
   },

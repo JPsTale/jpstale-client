@@ -9,6 +9,7 @@
  * 资产：/res/game/images/loadingscreens/*.png、/res/game/images/misc/loadingbar*.bmp
  */
 import { t, getLocale } from '../i18n/index.js';
+import { setInputBlocked } from '../app/inputGate.js';
 
 const SCREENS = '/res/game/images/loadingscreens/';
 const MISC = '/res/game/images/misc/';
@@ -49,7 +50,11 @@ export interface LoadingScreen {
 export function createLoadingScreen(container: HTMLElement): LoadingScreen {
   const root = document.createElement('div');
   root.id = 'loading-screen';
-  root.style.cssText = 'display:none;position:fixed;inset:0;background:#0a0a1a;overflow:hidden;z-index:200;';
+  // z-index 1400 **高于持物图标**（`.jp-hand-ic` = 1300）：加载页期间那件东西不该露出来。
+  // cursor:none —— 加载页不显示鼠标（原版引擎里 `ShowCursor(FALSE)` 虽被注释掉，但用户要求明确，
+  // 且我们确实在加载动画上挂着道具图标：由本页盖住 + 闸门同时挡掉）。
+  root.style.cssText = 'display:none;position:fixed;inset:0;background:#0a0a1a;overflow:hidden;'
+    + 'z-index:1400;cursor:none;';
 
   // 图层按 EU DrawLoadingImage 的渲染顺序叠放；单张图缺失时隐藏该层不阻塞其余
   const mkImg = (css: string): HTMLImageElement => {
@@ -114,12 +119,14 @@ export function createLoadingScreen(container: HTMLElement): LoadingScreen {
       tip.textContent = tips.length ? tips[Math.floor(Math.random() * tips.length)] : '';
       fillWrap.style.width = '0%';
       root.style.display = 'block';
+      // 加载期间挡住世界/HUD/背包的鼠标操作（挂在 window/document 上的监听不看 DOM 命中，见 inputGate）
+      setInputBlocked(true);
     },
     setProgress(current, max, label) {
       const pct = max > 0 ? Math.min(100, Math.round(current / max * 100)) : 0;
       fillWrap.style.width = pct + '%';
       if (label !== undefined) tip.textContent = label;
     },
-    hide() { root.style.display = 'none'; },
+    hide() { root.style.display = 'none'; setInputBlocked(false); },
   };
 }

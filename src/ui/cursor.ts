@@ -18,9 +18,13 @@ import { decodeTextureAsync } from '../core/texture.js';
 export type CursorMode = 'default' | 'pickup' | 'attack' | 'talk';
 
 const CURSOR_ROOT = '/res/image/sinimage/cursor/';
-/** 文件名 → dataURL 的缓存；值为 '' 表示"正在加载"（防并发重复请求） */
-const urlCache = new Map<string, string>();
-let lastUrl: string | null = null;
+
+/** 一张光标图 + 它自己的热点（= 图内**第一个不透明像素**）。 */
+interface CursorBitmap { url: string; hx: number; hy: number }
+
+/** 文件名 → 光标位图 的缓存；值为 '' 表示"正在加载"（防并发重复请求） */
+const urlCache = new Map<string, CursorBitmap | ''>();
+let lastKey: string | null = null;
 let modeNow: CursorMode = 'default';
 let mouseDownNow = false;
 let installed = false;
@@ -34,7 +38,28 @@ function fileOf(mode: CursorMode, mouseDown: boolean): string {
   }
 }
 
-async function toDataUrl(file: string): Promise<string | null> {
+/**
+ * **热点 = 图内第一个不透明像素**（自上而下、自左而右扫描）—— 每张图自己量，不写死一张表。
+ *
+ * 为什么必须逐图量：原版把 32×32 的光标图**左上角**对齐鼠标点（`dsDrawTexImage(..., x, y, 32, 32, ...)`），
+ * 但那只是"图被贴在哪"，玩家瞄的是**图里那个可见的尖**。实测各图的尖并不都在 (0,0)：
+ *   `defaultcursor`/`attack_cursor`/`talk_cursor` = (0,0)；`getitem_cursor1` = **(7,1)**；
+ *   `getitem_cursor2` = **(15,5)**；`buycursor`/`sellcursor`/`repaircursor` = (1,0)/(3,0)/(3,0)。
+ * 我们过去给**所有**图硬编码热点 `3 3` ⇒ 拿拾取图去点地上的物品时，真实判定点比看到的指尖
+ * 偏左/偏上最多 12px，"应该点中了却没点中"（用户 2026-09-14 实测报的正是这个）。
+ * 回归：`npm run verify-cursor`（逐图断言实测热点）。
+ */
+function firstOpaquePixel(dec: { width: number; height: number; pixels: Uint8Array }): { hx: number; hy: number } {
+  const alphaThreshold = 8;
+  for (let y = 0; y < dec.height; y++) {
+    for (let x = 0; x < dec.width; x++) {
+      if (dec.pixels[(y * dec.width + x) * 4 + 3] > alphaThreshold) return { hx: x, hy: y };
+    }
+  }
+  return { hx: 0, hy: 0 };   // 全透明（异常图）：退回左上角
+}
+
+async function loadCursor(file: string): Promise<CursorBitmap | null> {
   try {
     const buf = await cachedFetch(CURSOR_ROOT + file);
     const dec = await decodeTextureAsync(buf);
@@ -42,6 +67,7 @@ async function toDataUrl(file: string): Promise<string | null> {
       console.warn('[cursor] 解码失败 ' + file);
       return null;
     }
+    const { hx, hy } = firstOpaquePixel(dec);
     const c = document.createElement('canvas');
     c.width = dec.width;
     c.height = dec.height;
@@ -49,19 +75,20 @@ async function toDataUrl(file: string): Promise<string | null> {
     const img = ctx.createImageData(dec.width, dec.height);
     img.data.set(dec.pixels);
     ctx.putImageData(img, 0, 0);
-    return c.toDataURL('image/png');
+    return { url: c.toDataURL('image/png'), hx, hy };
   } catch (e) {
     console.warn('[cursor] 加载失败 ' + file, e);
     return null;
   }
 }
 
-/** 把 dataURL 写到根元素（UI 与 canvas 都继承它）。相同 URL 不重复写，避免每帧触发布局。 */
-function apply(url: string): void {
-  if (!url || url === lastUrl) return;
-  lastUrl = url;
-  // 热点 (3,3)：与原先 canvas 上的设置保持一致（原版光标的小箭头尖在左上）
-  document.documentElement.style.cursor = `url("${url}") 3 3, auto`;
+/** 把"图 + 它自己的热点"写到根元素（UI 与 canvas 都继承它）。完全相同才跳过，避免每帧触发布局。 */
+function apply(bm: CursorBitmap): void {
+  if (!bm.url) return;
+  const key = `${bm.url}|${bm.hx}|${bm.hy}`;
+  if (key === lastKey) return;
+  lastKey = key;
+  document.documentElement.style.cursor = `url("${bm.url}") ${bm.hx} ${bm.hy}, auto`;
 }
 
 /** 切换光标（世界内按 hover 目标调用；UI 上由 onMouseLeave 恢复 'default'）。 */
@@ -75,11 +102,10 @@ export function setCursorMode(mode: CursorMode, mouseDown = false): void {
     return;
   }
   urlCache.set(file, '');   // 占位防并发重复请求
-  void toDataUrl(file).then((u) => {
-    const url = u || '';
-    urlCache.set(file, url);
+  void loadCursor(file).then((bm) => {
+    urlCache.set(file, bm ?? '');
     // 加载完成时若模式已变，丢弃这次结果（否则会把过期的图标盖上去）
-    if (url && modeNow === mode && mouseDownNow === mouseDown) apply(url);
+    if (bm && modeNow === mode && mouseDownNow === mouseDown) apply(bm);
   });
 }
 

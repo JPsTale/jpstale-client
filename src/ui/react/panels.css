@@ -692,6 +692,7 @@
   outline: 2px solid #ffd98a;
 }
 .jp-items-equip {
+  position: relative;   /* 红底/虚影等 ::after 覆盖层以本槽为参照 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1296,11 +1297,24 @@
 
 /* 背包拖放视觉（原版：悬停占格高亮 / 拿起持物 / 落点 绿=可放 黄=合并 红=冲突） */
 .jp-bag-item:hover { outline: 2px solid rgba(255, 200, 0, 0.9); outline-offset: -1px; }
+/* 落点预览：颜色语义照抄原版 `sinInvenColor[]`（`sinInvenTory1.cpp:325`）——
+   可放 = 青绿 (160,235,256,128)；撞一件（可换手/合并）= 白 (255,255,255,128)；不可 = 红 (255,0,0,128)。
+   原版只画"框"，我们另加一个半透明道具虚影（所见=所落），虚影透明度见下面的 img。 */
 .jp-bag-preview { position: absolute; box-sizing: border-box; pointer-events: none; }
-.jp-bag-preview--free { border: 1px solid rgba(90, 220, 120, 0.95); background: rgba(90, 220, 120, 0.18); }
-.jp-bag-preview--swap { border: 1px solid rgba(120, 210, 255, 0.95); background: rgba(120, 210, 255, 0.16); }
-.jp-bag-preview--merge { border: 1px solid rgba(255, 210, 77, 0.95); background: rgba(255, 210, 77, 0.18); }
-.jp-bag-preview--bad { border: 1px solid rgba(255, 70, 70, 0.95); background: rgba(255, 70, 70, 0.22); }
+.jp-bag-preview img { opacity: 0.5; }
+.jp-bag-preview--free { border: 1px solid rgba(160, 235, 255, 0.95); background: rgba(160, 235, 255, 0.20); }
+.jp-bag-preview--swap { border: 1px solid rgba(255, 255, 255, 0.95); background: rgba(255, 255, 255, 0.18); }
+.jp-bag-preview--merge { border: 1px solid rgba(255, 255, 255, 0.95); background: rgba(255, 255, 255, 0.18); }
+.jp-bag-preview--bad { border: 1px solid rgba(255, 0, 0, 0.95); background: rgba(255, 0, 0, 0.22); }
+/* 穿不上的物品（属性/职业不满足）：占格涂红 —— 原版 `sinInvenTory.cpp:944` 用
+   `sinInvenColor[2]` = RGBA(255,0,0,128) 盖在物品矩形上（装备着的那件连槽位一起涂）。
+   用 overlay 而不是改 background：原版就是**盖在图标之上**，看起来像整格泛红。 */
+.jp-bag-item--cannot::after { content: ''; position: absolute; inset: 0; background: rgba(255, 0, 0, 0.5); pointer-events: none; }
+.jp-items-equip.jp-items-equip--cannot::after { content: ''; position: absolute; inset: 0; background: rgba(255, 0, 0, 0.5); pointer-events: none; }
+/* 被撞到的那件（换手/合并目标）：原版把白框画在**它自己**的矩形上，而不是落点上 */
+.jp-bag-item.jp-bag-item--hit { outline: 1px solid rgba(255, 255, 255, 0.95); outline-offset: -1px; }
+/* 装备槽的落点虚影：原版 SetInvenItemAreaCheck 命中槽时把物品**在槽内居中**显示（SetX/SetY 居中） */
+.jp-items-equip-ghost { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0.5; pointer-events: none; }
 .jp-items-equip.jp-items-equip--ok { box-shadow: inset 0 0 0 2px rgba(90, 220, 120, 0.95); }
 .jp-items-equip.jp-items-equip--bad { box-shadow: inset 0 0 0 2px rgba(255, 80, 80, 0.95); }
 .jp-hand-ic { position: fixed; z-index: 1300; width: 44px; height: 44px; pointer-events: none; display: flex; align-items: center; justify-content: center; }

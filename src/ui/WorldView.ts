@@ -20,6 +20,7 @@ import { CollisionDebug } from '../maps/collision-debug.js';
 import { installNaNGeometryWatch, scanNaNGeometry, reportNaNGeometry } from '../render/nan-scan.js';
 import type { NaNGeometryHit } from '../render/nan-scan.js';
 import { canEnterMap, mapLevelRequirement } from '../game/safeZones.js';
+import { isInputBlocked } from '../app/inputGate.js';
 import { appendSystemMessage } from '../app/chatStore.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
@@ -1005,6 +1006,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   /** 滚轮调俯仰（原版 WM_MOUSEWHEEL：`whAnx = anx + zDelta`，然后 anx 每帧 ±8 引擎角趋近）。
    *  模式 ≠ 固定时可用；**任何手动相机操作都关掉自动回正**（原版 `AutoCameraFlag = FALSE`）。 */
   function onWheel(e: WheelEvent): void {
+    if (isInputBlocked()) return;   // 加载页/遮罩期间不接收滚轮（见 inputGate）
     if (camMode === 2) return;
     e.preventDefault();
     cam.anx = Math.max(CAM_ANX_MIN, Math.min(CAM_ANX_MAX, cam.anx - e.deltaY * 0.0006));
@@ -1767,6 +1769,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function onMouseDown(e: MouseEvent): void {
+    if (isInputBlocked()) return;   // 加载页/遮罩期间不接收世界点击（不把正确性押在 DOM 叠放上）
     // [调试] Alt/Shift+点击 → 原地播放左/右拳装备的技能动画（不移动、不选目标）
     if (SKILL_DEBUG && (e.altKey || e.shiftKey) && e.button === 0) {
       const slot = e.altKey ? 'left' : 'right';
@@ -2014,6 +2017,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function onMouseMove(e: MouseEvent): void {
+    if (isInputBlocked()) return;   // 同上：加载中移动鼠标不改朝向/不换光标
     mouseX = e.clientX; mouseY = e.clientY;
     mouseSeen = true;
     probeCursorAt(e.clientX, e.clientY);
