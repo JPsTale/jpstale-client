@@ -1,6 +1,8 @@
+import { playItemSound } from './audio/index.js';
+import { requestPlayEat } from './ui/WorldView.js';
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
-import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackStart, attackHit, respawnChoice } from './net/protocol.js';
+import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackStart, attackHit, respawnChoice, unstuck } from './net/protocol.js';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -20,8 +22,13 @@ import { createGameClock } from './ui/GameClock.js';
 import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
-import { installBridge, sendPickupItem, sendSwitchWeapon } from './net/bridge.js';
-import { pressQuickBinding, openSystemMenu, closeSystemMenu } from './app/gameStore.js';
+import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand } from './net/bridge.js';
+import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
+import { itemDefById, itemIconUrl } from './game/data/itemDefs.js';
+import { overweightBlocks } from './game/itemRules.js';
+import type { PotionSlotView } from './ui/Hud.js';
+import { initCursor } from './ui/cursor.js';
+import { installDevLogPanel } from './ui/DevLogPanel.js';
 import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn, Ch } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
@@ -38,7 +45,10 @@ const worldView = createWorldView(app, {
   onMoveInt: (angle, mode, x, y, z, anim, animIndex, animClip) =>
     sendMoveIntent(angle, mode, x, y, z, anim, animIndex, animClip),
   // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
-  onPickupGroundItem: (groundItemId) => sendPickupItem(groundItemId),
+  // 拾取：背包面板开着 → 直接拿到手上（原版 `cInvenTory.OpenFlag` 分支：窗口开着时拾取物进 MouseItem，
+  // 不需要背包空格）；关着 → 自动进背包空格。手上已有东西时服务端仍进背包（不覆盖手上那件）。
+  onPickupGroundItem: (groundItemId) =>
+    sendPickupItem(groundItemId, getGameSnapshot().openPanels.includes('inventory')),
   // 攻击起手（挥拳开始）→ C2S_AttackStart；命中帧（每段）→ C2S_AttackHit。服务端权威裁决+结算。
   onAttackStart: (monsterId, clientSeq, segments, animIndex, animClip) =>
     send(attackStart(monsterId, clientSeq, segments, animIndex, animClip)),
@@ -171,6 +181,35 @@ const worldLoadHooks: WorldLoadHooks = {
   onReady: () => loadingScreen.hide(),
 };
 const gameClock = createGameClock();
+// 启动即用原版光标（登录/选角界面也要，不然那里还是系统箭头）
+initCursor();
+// 游戏内日志面板（Ctrl+Shift+L）：屏蔽右键菜单后，需要一个不依赖 devtools 的日志入口
+installDevLogPanel();
+
+// ===== 屏蔽浏览器右键菜单 =====
+// 原版没有浏览器菜单，而右键要用来"使用道具"（已实现）与"使用技能"（待做）。
+// 不屏蔽的话：UI 上右键弹出系统菜单、canvas 上右键弹出"图片另存为/检查"（用户 2026-09-13 实测）。
+// 输入框放行：否则失去右键粘贴，而输入框里右键"使用"没有意义。
+// 用 capture 阶段：先于 React 的合成事件处理，但**不阻断传播**（背包的 onContextMenu 照常工作）。
+document.addEventListener('contextmenu', (e) => {
+  const t = e.target as HTMLElement | null;
+  const tag = t?.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || t?.isContentEditable) return;
+  e.preventDefault();
+}, true);
+
+/** 三个药水槽（ITEMSLOT 11/12/13）的显示数据：图标 url + 数量（空槽 url=''） */
+function potionsForHud(): PotionSlotView[] {
+  const items = getGameSnapshot().inventory?.items ?? [];
+  const out: PotionSlotView[] = [];
+  for (const slot of [11, 12, 13]) {
+    const it = items.find((x) => x.location === 0 && x.slot === slot);
+    const def = it ? itemDefById(it.itemlistId) : undefined;
+    out.push(it && def ? { url: itemIconUrl(def), count: it.count } : { url: '', count: 0 });
+  }
+  return out;
+}
+
 const keyBinding = createKeyBinding();
 
 // React 面板层（Phase 1 基建）：只渲染 store.openPanel；桥接把 proto 消息写进 store。
@@ -257,6 +296,18 @@ keyBinding.onKeyDown((action) => {
       pressQuickBinding(idx);
       break;
     }
+    // 数字键 1/2/3：使用对应药水快捷槽（ITEMSLOT 11/12/13）里的药水。
+    // 只上送 uid，效果与校验全在服务端（含"槽是空的"这种失败）。
+    case 'potion1': case 'potion2': case 'potion3': {
+      const idx = Number(action.slice(6)) - 1;
+      const uid = potionUidInSlot(idx);
+      if (uid == null) {
+        console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
+        break;
+      }
+      sendUseItem(uid);
+      break;
+    }
   }
 });
 
@@ -267,6 +318,58 @@ hudPanel.onAction = (action) => {
     hudPanel.setCamFlag(worldView.toggleCameraMode());
   } else if (action === 'toggleMinimap') {
     hudPanel.setMapFlag(worldView.toggleMinimap());
+  } else if (action === 'potion1' || action === 'potion2' || action === 'potion3') {
+    // 点药水槽：**手里有道具 → 放进这一格**（原版左键拿起→点槽放下；同种/容量由服务端校验）；
+    // 空手 → 等同于对应数字键（使用该槽里的药水）。
+    const idx = Number(action.slice(6)) - 1;
+    // 手持判据同原版：**物品还在背包才算拿着**（`getHeldUid` 已收紧）。
+    // 因此"放入一部分"时手上继续留着剩下的（原版 sinInvenTory.cpp:4616-4624 是逐瓶转移、搬不完留在原处），
+    // 而"全部放入"后那件离开背包，手持自动失效（= 放手），**不需要手动清**。
+    const heldNow = getHeldUid();
+    if (heldNow != null) {
+      // 乐观更新前记快照：药水槽放入是**拆堆**（可能只放一部分），服务端拒绝时要能还原数量
+      const heldItem = getGameSnapshot().inventory?.items.find((x) => x.uid === heldNow);
+      // 负重预检（原版 CheckSetOk 的重量分支，见 itemRules.overweightBlocks）：
+      // 已超重时原版直接拒绝搬运；本地先拦，免得"先放入、再被服务端拒绝回滚"的闪烁。
+      const ch = getGameSnapshot().character;
+      if (overweightBlocks(ch?.currentWeight, ch?.maxWeight, itemDefById(heldItem?.itemlistId ?? -1)?.code)) {
+        appendSystemMessage(t('item.op.overWeight'), Date.now());
+        return;
+      }
+      if (heldItem) beginOptimistic([heldItem]);
+      // 放入音：原版是**逐瓶**调 `sinPlaySound(pItem->SoundIndex)`（sinInvenTory.cpp:4623），
+      // 但每次都落在**同一个声音编号**上 → 引擎重启那一个 buffer，**连塞 10 瓶也只响一声**
+      // （用户 2026-09-13 实测指出）。所以这里播一次即与原版听感一致，无需为"搬了几瓶"同步槽容量。
+      if (heldItem) playItemSound(itemDefById(heldItem.itemlistId)?.sound);
+      sendEquipItem(heldNow, 11 + idx);
+    } else {
+      const uid = potionUidInSlot(idx);
+      const it = uid == null ? undefined
+        : getGameSnapshot().inventory?.items.find((x) => x.uid === uid);
+      if (uid == null || !it) {
+        console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
+      } else {
+        // **左键 = 拿起**（原版 LButtonDown 语义）：把它拿进手上，之后点别处就是放下/丢弃。
+        // 喝药是**右键**（原版 UsePotion 由 RButtonDown 触发，见 potionUse* 分支）。
+        // 现在"拿起"是服务端的一次真实位置变更（→ 鼠标位 = 装备栏 slot=-1）：
+        // 从**任何**容器拿起都走同一条路，不用再"先脱到背包"（那条在背包满时会失败）。
+        beginOptimistic([it]);
+        localToHeld(uid);
+        playItemSound(17);   // 药水的 SoundIndex = 17（拿起/放下都播物品自带的音）
+        sendTakeToHand(uid);
+      }
+    }
+  } else if (action === 'potionUse1' || action === 'potionUse2' || action === 'potionUse3') {
+    // **右键**点药水槽 = 喝（原版 UsePotion：ItemPosition 11/12/13 && Class == ITEM_CLASS_POTION）。
+    // 手上有东西时右键无效（原版 MouseItem.Flag 守卫）。
+    const idx = Number(action.slice(9)) - 1;
+    const uid = potionUidInSlot(idx);
+    if (uid == null) {
+      console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
+    } else if (getHeldUid() == null) {
+      requestPlayEat();      // EAT 动画 + 喝药音效（唯一入口）
+      sendUseItem(uid);
+    }
   } else if (action === 'system') {
     openSystemMenu();
   } else if (action === 'status') {
@@ -335,6 +438,9 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       const state = args[0] as HudState | undefined;
       console.log('[app] WORLD screen, hudState=', state);
       if (state) hudPanel.show(state);
+      hudPanel.setPotions(potionsForHud());
+      // 物品变化（拾取/放入药水槽/吃药）→ 刷新 HUD 药水槽（HUD 内部只更新这一项）
+      subscribeGame(() => hudPanel.setPotions(potionsForHud()));
       setChatVisible(true);
       const enterGame = args[1] as EnterGameInfo | undefined;
       if (enterGame) {
@@ -384,10 +490,20 @@ function performSystemLogout() {
   // 等待 auth.logout → clearToken + disconnect → LOGIN
 }
 
+// 脱困：零代价传送到本图最近的 StartPoint。服务端权威（它才知道地图边界与地形），
+// 客户端只发意图：C2S_Unstuck（不带宽窄参数）→ 服务端算落点 → S2C_PlayerTeleport 广播回来。
+// 与死亡复活同构（C2S_RespawnChoice / S2C_PlayerRespawn），但走独立消息、不含死亡语义。
+function performUnstuck() {
+  if (getScreen() !== AppScreen.WORLD) return;
+  closeSystemMenu();
+  send(unstuck());
+}
+
 reactPanels.setSystemMenuSettings({
   keyBinding,
   onBackToCharSelect: performBackToCharSelect,
   onLogout: performSystemLogout,
+  onUnstuck: performUnstuck,
   getFps: () => worldView.getTargetFps(),
   setFps: (fps) => worldView.setTargetFps(fps),
 });
@@ -490,6 +606,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
       if (typeof ps.walkSpeed === 'number' && typeof ps.runSpeed === 'number') {
         worldView.setSpeed(ps.walkSpeed, ps.runSpeed);
       }
+      worldView.setSelfLevel(Number(ps.level) || 1);   // 跨图边界的等级门槛判定用
       const hudState: HudState = {
         hp: ps.hp || 0, maxHp: ps.maxHp || 0,
         mp: ps.mp || 0, maxMp: ps.maxMp || 0,
@@ -514,7 +631,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'enterGame': {
       const eg = msg.enterGame!;
-      setSafeMaps(eg.maps?.map(m => ({ mapId: m.mapId ?? undefined, isSafe: m.isSafe ?? false })));
+      setSafeMaps(eg.maps?.map(m => ({ mapId: m.mapId ?? undefined, isSafe: m.isSafe ?? false, levelReq: m.levelReq ?? 0 })));
       // 时间锚定不在此处做：连接即已发 ping，onTimeSync 首次回调已用服务器权威时钟初始化 GameClock
       const hudState: HudState = {
         hp: 100, maxHp: 100, mp: 50, maxMp: 50, stm: 0, maxStm: 0,
@@ -733,10 +850,30 @@ onMessage((msg: jpt.base.ServerMessage) => {
       if (worldView.isSelf(pid)) {
         deathPanel.show({
           forceRespawnMs: Number(pd.forceRespawnMs ?? 60000),
-          expLossField: Number(pd.expLossField ?? 0),
-          goldLossField: Number(pd.goldLossField ?? 0),
-          expLossTown: Number(pd.expLossTown ?? 0),
         });
+      }
+      break;
+    }
+    case 'playerTeleport': {
+      // 不连续位移（脱困/传送）：服务端广播的一条消息两个受众 —— 本人搬自己、旁观者挪 actor。
+      const tp = msg.playerTeleport!;
+      const pid = Number(tp.playerId ?? 0);
+      const mapId = Number(tp.mapId ?? 0);
+      const info = {
+        mapId,
+        x: Number(tp.position?.x ?? 0),
+        y: Number(tp.position?.y ?? 0),
+        z: Number(tp.position?.z ?? 0),
+        angle: Number(tp.angle ?? 0),
+      };
+      if (worldView.isSelf(pid)) {
+        const needLoad = worldView.respawnNeedsMapLoad(mapId);
+        if (needLoad) loadingScreen.show(t('death.respawning'));
+        void worldView.applyTeleport(info).finally(() => {
+          if (needLoad) loadingScreen.hide();
+        });
+      } else {
+        worldView.teleportRemote(pid, info);
       }
       break;
     }
@@ -809,8 +946,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // minecraft 式翻译：key 优先，否则纯文本
       const text = e.key ? t(e.key, e.params || {}) : (e.errorMessage || String(e.errorCode || ''));
       console.warn('[app] server error', e.errorCode, text);
-      // 穿装备失败 → 通知面板还原"交换拿起"的乐观状态
-      if (e.errorMessage && String(e.errorMessage).includes('equip failed')) {
+      // 物品操作失败（key 前缀 `item.op.`，服务端按**原因**回 key，见 ItemNetworkHandler.opKeySuffix）
+      // → 通知面板把乐观更新整体还原（原版 BackUpPosi 语义）。
+      // 判据是**协议字段**，不再靠 errorMessage 里的字符串匹配 —— 后者改一句文案就会静默失效。
+      if (e.key && e.key.startsWith('item.op.')) {
         window.dispatchEvent(new Event('pt:equipFail'));
       }
       const forCh = takePendingSentOn() ?? undefined;

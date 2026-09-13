@@ -57,17 +57,17 @@ export function inventoryMove(uid: number, toLocation: number, toSlot: number): 
     });
 }
 
-/** 穿装备：背包物品 uid → 装备槽(1~13) */
-export function equipItem(uid: number, equipSlot: number): jpt.base.ClientMessage.$Properties {
+/** 穿装备：uid 所在的容器（背包格 / 鼠标位）→ 装备槽(1~13) */
+/** 拿起：任意容器 → 鼠标位（装备栏 slot = -1）。放下不需要配套消息（走 EquipItem/BagLayout/DropItem）。 */
+export function takeToHand(uid: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        equipItem: { uid, equipSlot },
+        takeToHand: { uid },
     });
 }
 
-/** 脱装备：装备槽(1~13) → 背包 */
-export function unequipItem(equipSlot: number): jpt.base.ClientMessage.$Properties {
+export function equipItem(uid: number, equipSlot: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        unequipItem: { equipSlot },
+        equipItem: { uid, equipSlot },
     });
 }
 
@@ -97,10 +97,11 @@ export function stackMerge(srcUid: number, dstUid: number): jpt.base.ClientMessa
     return jpt.base.ClientMessage.create({ stackMerge: { srcUid, dstUid } });
 }
 
-/** 拾取地面物品（服务端按距离裁决 + 入背包 + 广播消失） */
-export function pickupItem(groundItemId: number): jpt.base.ClientMessage.$Properties {
+/** 拾取地面物品。toHand=true → 服务端直接放到**手上**（鼠标位；原版背包窗口开着时就是这么做的，
+ *  且**不需要背包空格**）；false → 自动进背包空格。 */
+export function pickupItem(groundItemId: number, toHand: boolean): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        pickupItem: { groundItemId },
+        pickupItem: { groundItemId, toHand },
     });
 }
 
@@ -120,6 +121,16 @@ export function attackStart(targetId: number, clientSeq: number, segments: numbe
  *  1=本图最近的 startPoint（10% 本级经验 + 10% 金币）/ 2=村庄（1% 本级经验）/ 3=继续躺（等强制） */
 export function respawnChoice(choice: 1 | 2 | 3): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ respawnChoice: { choice } });
+}
+
+/** 使用背包里的消耗品（右键/药水槽）：只报 uid(+数量)，效果与校验全在服务端 */
+export function useItem(uid: number, quantity = 1): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ useItem: { uid, quantity } });
+}
+
+/** 脱困请求（系统菜单"脱离卡死"按钮）：不带参数，落点由服务端算（本图最近 StartPoint） */
+export function unstuck(): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ unstuck: {} });
 }
 
 /** 命中帧（每段一次）：hitIndex = 段序号（0..3，对应 motion.eventFrame 第几个非零帧） */

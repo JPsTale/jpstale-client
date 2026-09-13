@@ -224,6 +224,7 @@ async function loadSkeleton(jobId: number): Promise<SkeletonData> {
   return { jobId, animSmb: smb, bipInxInfo, skel };
 }
 
+
 /** 加载职业身体网格（默认铠甲），只加载一次 */
 export async function loadBody(jobId: number, armorNum = 1, bodyInxOverride: string | null = null): Promise<BodyPart> {
   const job = JOB_DATA[jobId];

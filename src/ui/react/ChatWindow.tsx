@@ -161,7 +161,7 @@ export default function ChatWindow() {
         pushHistory(text);
       }
     } else {
-      // 命令：原样上送（如 /@gm、//party、/giveitem 等），服务端 treatCommand 权威解析
+      // 命令：原样上送（如 /@get、//party 等），服务端 treatCommand 权威解析
       const ch = activeChannel === Ch.SYSTEM ? Ch.MAP : activeChannel;
       send(chat(ch, parsed.message));
       noteSentOn(ch);

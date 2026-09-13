@@ -1,16 +1,18 @@
+import { canUse, isDroppable, overweightBlocks } from '../../game/itemRules.js';
+import { playItemSound, playItemDropSound } from '../../audio/index.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { subscribeGame, getGameSnapshot, localBagMove, localStackMerge, localUnequipToBag, localEquipItem, localToHeld, removeInventoryItem, type GameItem } from '../../app/gameStore.js';
+import { beginOptimistic, getGameSnapshot, getHeldUid, heldItemOf, isOverUi, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, removeInventoryItem, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
-import {
-  itemDefById,
-  itemIconUrl,
-} from '../../game/data/itemDefs.js';
+import { appendSystemMessage } from '../../app/chatStore.js';
+import { ITEM_CLASS, isStackable, isPotionClass, isTwoHandWeaponClass } from '../../game/itemClass.js';
+import { requestPlayEat } from '../WorldView.js';
+import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
-import { sendEquipItem, sendUnequipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge } from '../../net/bridge.js';
+import { sendEquipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand } from '../../net/bridge.js';
 import { useItemHover, ItemInfo } from './ItemInfo.js';
-import { LOC } from '../../game/itemLocations.js';
+import { LOC, isHeldItem } from '../../game/itemLocations.js';
 
 // 画布常量（对齐服务端 ItemLocations）
 const BAG_W = LOC.BAG_W;
@@ -77,7 +79,10 @@ function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: Ba
   if (it.location === LOC.EQUIP || it.location === LOC.BACKUP_EQUIP) return { mode: 'bad' };
   if (hits.length === 1) {
     const c = hits[0];
-    const sameStack = c.itemlistId === it.itemlistId && it.count + c.count <= 1000;
+    // 可堆叠（药水/材料）且同种才合并；装备撞装备是"换手"，不是叠加。
+    // isStackable 与服务端 ItemInstance.stackable() 同一判据（药水 8192 可堆叠）。
+    const sameStack = isStackable(def?.class) && isStackable(defOf(c)?.class)
+      && c.itemlistId === it.itemlistId && it.count + c.count <= 1000;
     // 可堆叠且同种 → 合并；否则换手（被撞件拿起）
     return sameStack ? { mode: 'merge', conflict: c } : { mode: 'swap', conflict: c };
   }
@@ -87,12 +92,13 @@ function bagTargetFor(it: GameItem, slot: number, items: GameItem[]): { mode: Ba
 // ==================== 背包画布（原版拖放视觉） ====================
 // 拿起后物品不在原格绘制（光标持物）；拖动中落点按模式给 footprint 高亮：
 // free 可放(蓝绿) / merge 合并(亮) / swap 换手(黄?) / bad 红（≥2 件冲突/越界）。
-function BagCanvas({ items, held, onPick, onPutSlot, onZone, onHover, onHoverEnd }: {
+function BagCanvas({ items, held, onPick, onUse, onPutSlot, onHover, onHoverEnd }: {
   items: GameItem[];
   held: GameItem | null;
   onPick: (it: GameItem) => void;
+  /** 右键使用（原版 cINVENTORY::RButtonDown）：服务端权威，客户端只报 uid */
+  onUse: (it: GameItem) => void;
   onPutSlot: (slot: number) => void;
-  onZone: (overBag: boolean) => void;
   onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
   onHoverEnd: () => void;
 }) {
@@ -141,6 +147,10 @@ function BagCanvas({ items, held, onPick, onPutSlot, onZone, onHover, onHoverEnd
   }
 
   function onBagPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    // 只处理**左键**：右键的语义是"使用"（见容器 onContextMenu，原版 RButtonDown 语义）。
+    // 不加这一句，右键按下会先被这里当成"拿起"，随后 onContextMenu 里的 `if (held) return`
+    // 直接返回 → 右键表现为"拿起道具"、使用永远不触发（用户实测）。
+    if (e.button !== 0) return;
     if (held) {
       const gw = defOf(held)?.w ?? 1;
       const gh = defOf(held)?.h ?? 1;
@@ -166,9 +176,20 @@ function BagCanvas({ items, held, onPick, onPutSlot, onZone, onHover, onHoverEnd
       className="jp-items-bag"
       ref={bagRef}
       style={{ width: BAG_W * CELL, height: BAG_H * CELL }}
-      onPointerMove={(e) => { onZone(true); updatePreview(e.clientX, e.clientY); }}
+      onPointerMove={(e) => { updatePreview(e.clientX, e.clientY); }}
       onPointerDown={onBagPointerDown}
-      onPointerLeave={() => { onZone(false); setAnchor(null); setMode(null); }}
+      // 右键 = 使用（原版语义）。守卫与原版一致：手里拿着东西时右键不生效
+      // （`MouseItem.Flag` 时不处理）；面板冲突由本组件只渲染一层来决定。
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (held) return;
+        const slot = cellFromEvent(e);
+        if (slot === null) return;
+        const p = placed.find((pp) => slotXY(slot).x >= pp.x && slotXY(slot).x < pp.x + pp.w
+          && slotXY(slot).y >= pp.y && slotXY(slot).y < pp.y + pp.h);
+        if (p) onUse(p.it);
+      }}
+      onPointerLeave={() => { setAnchor(null); setMode(null); }}
     >
       {/* 物品图标（拿起中的物品不绘制 → 原格空出）；按下事件交给容器统一分发 */}
       {placed.map((p) => (
@@ -220,8 +241,15 @@ function ItemImg({ it, w, h }: { it: GameItem; w: number; h: number }) {
   );
 }
 
-/** 拿起中的物品跟随鼠标（原版 MouseItem 持物光标，按物品原占格尺寸显示） */
-function HeldIcon({ held, pos }: { held: GameItem; pos: { x: number; y: number } | null }) {
+/**
+ * 拿起中的物品跟随鼠标（原版 MouseItem 持物光标，按物品原占格尺寸显示）。
+ *
+ * ⚠ 它由 `PanelsRoot` 的 `HeldCursor` **全局**渲染，**不**挂在背包面板里：
+ * 原版药水槽在底部 HUD 上，而本面板会盖住那块区域 —— 要"从背包拿起药水 → 关面板 → 点 HUD 药水槽"，
+ * 手持图标在面板关闭时必须还在（`heldUid` 本来就跨开关存活，图标却原来只在面板里画）。
+ * 导出给 `PanelsRoot` 用；**只有这一份实现**。
+ */
+export function HeldIcon({ held, pos }: { held: GameItem; pos: { x: number; y: number } | null }) {
   if (!pos) return null;
   const def = defOf(held);
   const w = (def?.w ?? 1) * CELL;
@@ -255,6 +283,12 @@ const EQUIP_BOT: SlotDef[] = [
   { slot: 8, kind: 'mid', label: 'Armlet' },
   { slot: 10, kind: 'mid', label: 'Boots' },
 ];
+// 药水快捷槽（ITEMSLOT 11/12/13）**不在装备栏里显示**（用户 2026-09-14）。
+// 它们本来就画在底部 HUD 上（`Hud.ts` 的 POTION_RECTS，坐标取自原版 `sinInvenTory.cpp:167-169`），
+// 原版也只有那一处 —— 装备栏再列一排是重复的。
+// ⚠ 也因此**没有** `slotAllows` 的 POTION 分支：从面板放药水入槽这条路不存在，
+//   唯一入口是 HUD 药水槽（`main.ts` 的 `hudPanel.onAction`：手持 → 放入，空手 → 拿起）。
+
 
 function sizeOf(kind: SlotDef['kind']): { w: number; h: number } {
   return kind === 'large' ? { w: 66, h: 88 } : kind === 'mid' ? { w: 44, h: 44 } : { w: 22, h: 22 };
@@ -284,7 +318,21 @@ function EquipColumn({ items, held, onPickEquip, onPutEquip, allowed, onHover, o
   onHoverEnd: () => void;
 }) {
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
-  const eq = (slot: number) => items.find((x) => x.location === LOC.EQUIP && x.slot === slot && x.uid !== held?.uid);
+  /**
+   * 槽内物品。**双手武器占两只手**：另一只手上是双手武器时，本格显示**同一件**（占位）。
+   * 原版语义见 `OverlapTwoHandItem`（sinInvenTory1.cpp:5241）：双手武器在槽 1 时，
+   * `sInven[1].ItemIndex` 也指向那一件 —— 即副手格"被占位"。
+   * 我们一件物品只有一个 slot，所以在渲染与点击时补这一份镜像。
+   */
+  const eq = (slot: number) => {
+    const own = items.find((x) => x.location === LOC.EQUIP && x.slot === slot && x.uid !== held?.uid);
+    if (own) return own;
+    if (slot === 1 || slot === 2) {
+      const other = items.find((x) => x.location === LOC.EQUIP && x.slot === (slot === 1 ? 2 : 1));
+      if (other && isTwoHandWeaponClass(defOf(other)?.class)) return other;
+    }
+    return undefined;
+  };
 
   const renderRow = (list: SlotDef[]) => (
     <div className="jp-items-equiprow">
@@ -339,43 +387,49 @@ function EquipColumn({ items, held, onPickEquip, onPutEquip, allowed, onHover, o
 export default function ItemPanel() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
   const { inventory } = snap;
-  const [heldUid, setHeldUid] = useState<number | null>(null);
+  // 手持道具由 store 持有（HUD 药水槽也要能接收从背包拿起的药水）；
+  // 下面所有 heldUid / setHeldUid 的用法保持不变，只是换了来源。
+  const heldUid = snap.heldUid;
+  const setHeldUid = setHeldUidStore;
   const { hover, show: hoverShow, hide: hoverHide } = useItemHover();
-  const [cursorPos, setCursorPos] = useState<{ x: number; y: number } | null>(null);
-  const [overBag, setOverBag] = useState(false);
   // 穿装备交换：等待服务端 ack 的挂起状态（成功=旧件保持手持；失败=还原）
-  const pendingSwap = useRef<{ newUid: number; newBagSlot: number; oldUid: number | null; oldEquipSlot: number | null } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   // 拿起/放下时信息框消失（原版：拖起时不再显示 hover 信息）
   useEffect(() => {
     if (heldUid != null) hoverHide();
   }, [heldUid]);
-  // 持有期间全窗口跟踪鼠标（拿起瞬间即用指针位置，无残留/无需先滑动）
-  useEffect(() => {
-    if (heldUid == null) { setCursorPos(null); return; }
-    const mv = (e: PointerEvent) => setCursorPos({ x: e.clientX, y: e.clientY });
-    window.addEventListener('pointermove', mv);
-    return () => window.removeEventListener('pointermove', mv);
-  }, [heldUid]);
-  // 穿装备 ack：新件 location 变为 0（已穿上）→ 挂起结束
-  useEffect(() => {
-    const p = pendingSwap.current;
-    if (!p) return;
-    const n = getGameSnapshot().inventory?.items.find((x) => x.uid === p.newUid);
-    if (n && n.location === LOC.EQUIP) {
-      pendingSwap.current = null;
-    }
-  }, [snap.inventory]);
   // 拿起中：点击背包面板外区域 → 丢到地面（原版 ThrowItem；不是摧毁）
   useEffect(() => {
-    if (heldUid == null) return;
+    if (snap.heldUid == null) return;
     const onDown = (e: PointerEvent) => {
       const el = panelRef.current;
       const t = e.target as Node | null;
       if (el && t && el.contains(t)) return; // 面板内交互照常
-      const it = getGameSnapshot().inventory?.items.find((x) => x.uid === heldUid);
-      if (!it) { setHeldUid(null); return; }
+      // 只有点在**游戏画面（canvas）**上才算"丢到地面" —— 原版 ThrowItem 的语义是"扔到地上"。
+      // 旧判定是"不在背包面板内就丢"，而 ItemInfo / HUD / 其它面板都在 .jp-items **之外**，
+      // 于是拿起道具后点到那些地方就被误丢（用户 2026-09-13 实测：点药水槽区域丢了药水）。
+      // 只有在**游戏画面**上点才算"丢到地面"，且**不能落在任何 UI 交互区里** ——
+      // HUD（药水槽/按钮）是 pointer-events:none 的覆盖层，点它会穿透到 3D 画布上，
+      // 只判 canvas 会把"点药水槽放入"误判成丢弃（用户 2026-09-13 实测：药水总被丢掉）。
+      const isWorld = t instanceof Element && !!t.closest('canvas');
+      if (!isWorld || isOverUi(e.clientX, e.clientY)) return;
+      // ⚠ 必须取"仍在背包的持有物"（`getHeldUid` 就是这个判据），不能用 `snap.heldUid`：
+      // 放进药水槽后那件已离开背包，而 heldUid 还留着旧值 → 拿它去找会找到**槽里那瓶**并丢出去
+      // （用户 2026-09-13 实测：点地面准备走路，药水槽的药被丢到地上）。
+      const uidNow = getHeldUid();
+      const it = uidNow == null ? undefined
+        : getGameSnapshot().inventory?.items.find((x) => x.uid === uidNow);
+      if (!it) return;
+      // 禁丢清单预校验（原版 NotDrow_Item_*）：拦住就不发请求 —— 否则本地已移除、服务端却拒绝，
+      // 两端会不一致（物品在服务端还在、客户端没了）。最终仍以服务端为准。
+      if (!isDroppable(defOf(it)?.code)) {
+        console.warn('[bag] 该物品无法丢弃（禁丢清单）：uid=', it.uid, 'idCode=', defOf(it)?.code);
+        setHeldUidStore(heldUid);   // 保持手持不变（等于这次点击没发生）
+        return;
+      }
       console.log('[bag] 丢到地面 uid=', it.uid, 'count=', it.count);
+      playItemDropSound();   // 原版 ThrowInvenItemToField 专用音
+      beginOptimistic([it]);            // 乐观更新前记快照：服务端拒绝时把整件（含数量）恢复
       removeInventoryItem(it.uid);      // 本地即时移除
       sendDropItem(it.uid, it.count || 1);
       setHeldUid(null);
@@ -384,18 +438,12 @@ export default function ItemPanel() {
     };
     document.addEventListener('pointerdown', onDown, true);
     return () => document.removeEventListener('pointerdown', onDown, true);
-  }, [heldUid]);
-  // 穿装备失败（服务端 error）：本地即时改动还原——新件回背包原格，旧件回装备槽
+  }, [snap.heldUid]);   // 物品变化（含"放入槽后离开背包"）都会重绑
+  // 服务端拒绝（equip/drop/药水槽 都用同一条 sendError → pt:equipFail）：
+  // 按乐观快照把界面恢复成点击前的样子（原版 BackUpPosi 语义）。三处操作共用这一份。
   useEffect(() => {
     const onFail = () => {
-      const p = pendingSwap.current;
-      if (!p) return;
-      localUnequipToBag(p.newUid, p.newBagSlot);
-      if (p.oldUid != null && p.oldEquipSlot != null) {
-        localEquipItem(p.oldUid, p.oldEquipSlot);
-      }
-      pendingSwap.current = null;
-      setHeldUid(null);
+      if (rollbackOptimistic()) setHeldUid(null);
     };
     window.addEventListener('pt:equipFail', onFail);
     return () => window.removeEventListener('pt:equipFail', onFail);
@@ -404,31 +452,65 @@ export default function ItemPanel() {
   if (!inventory) return <div className="jp-nodata">{t('item.noData')}</div>;
 
   const items = inventory.items;
-  const held = heldUid != null ? items.find((x) => x.uid === heldUid) ?? null : null;
+  // 手持 = `heldItemOf`（**唯一判据**）：背包里那一件（拿起后源格空出）或本地抽离的那件
+  // （从装备槽拿起 / 换装时被换下的旧件）。别在这里再写一遍条件，见 gameStore.heldItemOf。
+  const held = heldItemOf(snap);
   const overload = !!snap.character && (snap.character.currentWeight ?? 0) > (snap.character.maxWeight ?? 0);
   const heldDef = held ? defOf(held) : undefined;
 
   /** 目标装备槽是否允许当前 held 物品 */
   function slotAllows(slot: number): boolean {
     if (!heldDef) return false;
+    // 位值定义见 `game/itemClass.ts`（与服务端 ItemClass 同一份、逐位对应）
     switch (heldDef.class) {
-      case 2: return slot === 2;
-      case 4: return slot === 1;
-      case 6: return slot === 1;
-      case 8: return slot === 3;
-      case 16: return slot === 10;
-      case 32: return slot === 9;
-      case 192: return slot === 5 || slot === 6;
-      case 256: return slot === 7;
-      case 512: return slot === 4;
-      case 2048: return slot === 8;
+      case ITEM_CLASS.OFF_HAND: return slot === 2;
+      case ITEM_CLASS.ONE_HAND_WEAPON: return slot === 1;
+      case ITEM_CLASS.TWO_HAND_WEAPON: return slot === 1;
+      case ITEM_CLASS.ARMOR: return slot === 3;
+      case ITEM_CLASS.BOOTS: return slot === 10;
+      case ITEM_CLASS.GLOVES: return slot === 9;
+      case ITEM_CLASS.RING: return slot === 5 || slot === 6;
+      case ITEM_CLASS.GEM: return slot === 7;
+      case ITEM_CLASS.AMULET: return slot === 4;
+      case ITEM_CLASS.ARMLET: return slot === 8;
+      // 药水（ITEM_CLASS.POTION）**没有分支**：药水槽 11/12/13 不在本面板显示，也不从这里放
+      // —— 唯一入口是底部 HUD 的药水槽（见上方注释）。
       default: return false;
     }
   }
 
+  /** 找一个能放下该物品的背包空格号（本地预演用；服务端有自己的落位逻辑，这里只求"能放"） */
+  function firstFreeBagSlot(it: GameItem): number | null {
+    const def = defOf(it);
+    const w = def?.w ?? 1, h = def?.h ?? 1;
+    const occ = new Set<number>();
+    for (const o of items) {
+      if (o.location !== LOC.BAG || o.uid === it.uid) continue;
+      const od = defOf(o);
+      const ow = od?.w ?? 1, oh = od?.h ?? 1;
+      const oo = slotXY(o.slot);
+      for (let dy = 0; dy < oh; dy++) for (let dx = 0; dx < ow; dx++) occ.add((oo.y + dy) * BAG_W + (oo.x + dx));
+    }
+    for (let y = 0; y + h <= BAG_H; y++) {
+      for (let x = 0; x + w <= BAG_W; x++) {
+        let ok = true;
+        for (let dy = 0; dy < h && ok; dy++) {
+          for (let dx = 0; dx < w; dx++) if (occ.has((y + dy) * BAG_W + (x + dx))) { ok = false; break; }
+        }
+        if (ok) return y * BAG_W + x;
+      }
+    }
+    return null;
+  }
+
   function onPickBag(it: GameItem) {
-    // 拿起背包物品（源格由 BagCanvas 按 held 隐藏空出）
-    setHeldUid(it.uid);
+    // 拿起 = 服务端把物品移到**鼠标位**（装备栏 slot=-1），原格腾空（`TakeToHand`）。
+    // 本地先按同样语义乐观改（`localToHeld` 顺带把 heldUid 同步成"鼠标位那件"），
+    // 服务端拒绝（手上已有东西/位置不可拿）时按快照还原。
+    beginOptimistic([it]);
+    localToHeld(it.uid);
+    playItemSound(defOf(it)?.sound);   // 原版：拿起/放下都播该物品自带的 SoundIndex
+    sendTakeToHand(it.uid);
     console.log('[bag:pick] 拿起背包物品 uid=', it.uid, 'loc=', it.location, 'slot=', it.slot,
       'listId=', it.itemlistId, 'size=', defOf(it)?.w, 'x', defOf(it)?.h);
   }
@@ -440,39 +522,51 @@ export default function ItemPanel() {
     const cur = getGameSnapshot().inventory;
     if (!cur) return;
     const entries = cur.items
-      .filter((x) => x.location !== LOC.HELD && !(x.location === LOC.EQUIP || x.location === LOC.BACKUP_EQUIP))
+      .filter((x) => !isHeldItem(x) && !(x.location === LOC.EQUIP || x.location === LOC.BACKUP_EQUIP))
       .map((x) => ({ uid: x.uid, location: x.location, slot: x.slot }));
     sendBagLayout(entries);
   }
 
   function onPutToBagSlot(targetSlot: number) {
     if (!held) return;
+    // 负重门（原版 CheckSetOk 的**重量分支**，`sinInvenTory.cpp:6021`）。
+    // 原版在拿起时会 `InvenItem[i].Flag = 0` 后立刻 `CheckWeight()`（同文件 :3772-3776），
+    // 所以 `Weight[0]` **不含**手上那件；`Weight[0] + 该件` 恰好就是搬运后的总重，
+    // 而搬运本身不改变总重 ⇒ 该判定等价于"**当前已超重就拒绝搬运**"（搬运、换格都拒）。
+    // 例外：原版对任务武器豁免（我们无 `ItemKindCode` 列 → 用任务家族近似，见 itemRules）。
+    if (overweightBlocks(snap.character?.currentWeight, snap.character?.maxWeight, defOf(held)?.code)) {
+      console.warn('[bag:move] 已超重，拒绝搬运 uid=', held.uid,
+        'w=', snap.character?.currentWeight, '/', snap.character?.maxWeight);
+      appendSystemMessage(t('item.op.overWeight'), Date.now());
+      return;
+    }
     if (held.location === LOC.EQUIP || held.location === LOC.BACKUP_EQUIP) {
       // 装备/副装备 → 指定背包格（本地即时落格 + 全量上报布局；服务端落库并刷新属性/外观）
-      const t = bagTargetFor(held, targetSlot, items);
+      const tgt = bagTargetFor(held, targetSlot, items);
       console.log('[bag:unequip] 卸装到指定格 heldUid=', held.uid, 'heldLoc=', held.location, 'heldSlot=', held.slot,
         '→targetSlot=', targetSlot, 'xy=', JSON.stringify(slotXY(targetSlot)),
-        'size=', defOf(held)?.w, 'x', defOf(held)?.h, 'mode=', t.mode,
-        '冲突=', t.conflict ? { uid: t.conflict.uid, slot: t.conflict.slot, listId: t.conflict.itemlistId } : null);
-      if (t.mode === 'bad') return;
+        'size=', defOf(held)?.w, 'x', defOf(held)?.h, 'mode=', tgt.mode,
+        '冲突=', tgt.conflict ? { uid: tgt.conflict.uid, slot: tgt.conflict.slot, listId: tgt.conflict.itemlistId } : null);
+      if (tgt.mode === 'bad') return;
       localUnequipToBag(held.uid, targetSlot);
       reportLayout();
       console.log('[bag:unequip] 已上报全量布局（含 uid=', held.uid, '→slot=', targetSlot, '）');
       setHeldUid(null);
       return;
     }
-    if (held.location !== LOC.BAG) return;
-    if (targetSlot === held.slot) { console.log('[bag:move] 同格丢弃视为取消拿起'); setHeldUid(null); return; }
+    // 从鼠标位（拿起的那件）落到背包格：走"本地落格 + 全量上报布局"，与背包内移动**同一条路**。
+    // 服务端 `applyBagLayout` 已接受"来源 = 鼠标位"（它不在任何画布上，目标格必须是空的）。
+    if (!isHeldItem(held)) return;
     // 客户端网格权威：本地即时落子并渲染，随后全量上报布局；药水合并走 StackMerge
-    const t = bagTargetFor(held, targetSlot, items);
+    const tgt = bagTargetFor(held, targetSlot, items);
     console.log('[bag:move] 背包内移动 heldUid=', held.uid, 'fromSlot=', held.slot, '→targetSlot=', targetSlot,
       'xy=', JSON.stringify(slotXY(targetSlot)), 'size=', defOf(held)?.w, 'x', defOf(held)?.h,
-      'mode=', t.mode, 'conflict=', t.conflict ? { uid: t.conflict.uid, slot: t.conflict.slot } : null);
-    if (t.mode === 'bad') return;
-    if (t.mode === 'merge' && t.conflict) {
-      localStackMerge(held.uid, t.conflict.uid);
-      sendStackMerge(held.uid, t.conflict.uid);
-      console.log('[bag:move] 合并且上报 StackMerge src=', held.uid, 'dst=', t.conflict.uid);
+      'mode=', tgt.mode, 'conflict=', tgt.conflict ? { uid: tgt.conflict.uid, slot: tgt.conflict.slot } : null);
+    if (tgt.mode === 'bad') return;
+    if (tgt.mode === 'merge' && tgt.conflict) {
+      localStackMerge(held.uid, tgt.conflict.uid);
+      sendStackMerge(held.uid, tgt.conflict.uid);
+      console.log('[bag:move] 合并且上报 StackMerge src=', held.uid, 'dst=', tgt.conflict.uid);
       setHeldUid(null);
       return;
     }
@@ -480,19 +574,32 @@ export default function ItemPanel() {
     localBagMove(held.uid, targetSlot, LOC.BAG);
     reportLayout();
     console.log('[bag:move] 已上报全量布局（含 uid=', held.uid, 'srcLoc=', srcLoc, 'srcSlot=', srcSlot, '→slot=', targetSlot, '）');
-    if (t.mode === 'swap' && t.conflict) {
+    if (tgt.mode === 'swap' && tgt.conflict) {
       // 换手：被撞件"拿起"（客户端本地语义；其服务端槽位保持到下次放置才上报）
-      setHeldUid(t.conflict.uid);
+      setHeldUid(tgt.conflict.uid);
     } else {
       setHeldUid(null);
     }
   }
 
   function onPickEquip(slot: number) {
-    const it = items.find((x) => x.location === LOC.EQUIP && x.slot === slot);
+    // 双手武器占两只手：点"占位显示"的那一格（副手/主手的镜像）也拿起同一件
+    let it = items.find((x) => x.location === LOC.EQUIP && x.slot === slot);
+    if (!it && (slot === 1 || slot === 2)) {
+      const other = items.find((x) => x.location === LOC.EQUIP && x.slot === (slot === 1 ? 2 : 1));
+      if (other && isTwoHandWeaponClass(defOf(other)?.class)) it = other;
+    }
     if (it) {
-      setHeldUid(it.uid);
-      console.log('[bag:pick-eq] 拿起装备槽 uid=', it.uid, 'slot=', slot,
+      // 原版拿起装备就是**立刻卸下**：槽位清空 + 物品上鼠标 + 属性/外观当场变化
+      // （`sinInvenTory.cpp:3767-3776`：`InvenItem[i].Flag = 0` + `sinSetCharItem(..., FALSE)` + `CheckWeight()`）。
+      // 现在这**一次** `TakeToHand` 就完整表达了它：服务端把物品从装备槽移到鼠标位（装备栏 slot=-1），
+      // 顺手重算属性/外观。不再需要"先脱到背包"那条绕道（那条在背包满时会让玩家**拿不起来**，
+      // 而且"拿到一半掉线"会变成东西自己进了背包）。
+      beginOptimistic([it]);            // 服务端拒绝时按快照还原回装备槽
+      localToHeld(it.uid);
+      playItemSound(defOf(it)?.sound);
+      sendTakeToHand(it.uid);
+      console.log('[bag:pick-eq] 拿起装备槽 uid=', it.uid, 'slot=', it.slot, '(点的是', slot, ')',
         'loc=', it.location, 'size=', defOf(it)?.w, 'x', defOf(it)?.h);
     } else {
       console.log('[bag:pick-eq] 拿起装备槽 slot=', slot, '但未找到物品');
@@ -500,33 +607,74 @@ export default function ItemPanel() {
   }
 
   function onPutEquip(slot: number) {
-    if (!held) return;
-    if (!slotAllows(slot)) return;
-    if (held.location === LOC.BAG) {
+    // 三个提前返回都带日志：静默 return 会让"点了没反应"无从诊断（用户 2026-09-12 定的规矩）。
+    if (!held) {
+      console.warn('[bag:put] 没有手持物品，忽略 slot=', slot);
+      return;
+    }
+    if (!slotAllows(slot)) {
+      console.warn('[bag:put] 目标槽不允许：uid=', held.uid, 'slot=', slot,
+        'class=', heldDef?.class, 'def=', heldDef);
+      return;
+    }
+    // 职业门（原版 NotUseFlag，见 itemRules.canUse）：不满足就不发送，
+    // 免得"先本地装上、再被服务端拒绝回滚"造成闪烁。最终仍以服务端为准。
+    if (!canUse(snap.character?.job, defOf(held)?.code)) {
+      console.warn('[bag:put] 该职业无法使用这件装备：job=', snap.character?.job,
+        'idCode=', defOf(held)?.code);
+      return;
+    }
+    // 负重门（原版 CheckSetOk 的重量分支，见 itemRules.overweightBlocks）：搬运不改变总重，
+    // 等价于"当前已超重就拒绝搬运"。本地先拦，免得"先装上再回滚"的闪烁。
+    if (overweightBlocks(snap.character?.currentWeight, snap.character?.maxWeight, heldDef?.code)) {
+      console.warn('[bag:put] 已超重，拒绝搬运 uid=', held.uid,
+        'w=', snap.character?.currentWeight, '/', snap.character?.maxWeight);
+      appendSystemMessage(t('item.op.overWeight'), Date.now());
+      return;
+    }
+    // 手持 = 鼠标位那件（`heldItemOf` 的唯一来源）；服务端 `equipFromBag` 接受"来源 = 鼠标位"。
+    if (isHeldItem(held)) {
       // 客户端预校验（与服务器一致）：不满足则保持手持、不发送
       if (!meetsEquipReq(held, snap.character)) {
-        console.warn('[bag] 装备需求不足，穿入取消 uid=', held.uid);
+        console.warn('[bag:put] 需求不足，穿入取消 uid=', held.uid, 'ch=', snap.character);
         return;
       }
       const old = items.find((x) => x.location === LOC.EQUIP && x.slot === slot) ?? null;
       console.log('[bag:equip] 穿装 heldUid=', held.uid, 'fromBagSlot=', held.slot, '→equipSlot=', slot,
         '旧件=', old ? { uid: old.uid, slot: old.slot } : null,
         'size=', defOf(held)?.w, 'x', defOf(held)?.h);
-      pendingSwap.current = old
-        ? { newUid: held.uid, newBagSlot: held.slot, oldUid: old.uid, oldEquipSlot: old.slot }
-        : { newUid: held.uid, newBagSlot: held.slot, oldUid: null, oldEquipSlot: null };
+      // 乐观更新前记快照（新件 + 被换下的旧件）——失败时按它恢复，替代原先只覆盖"穿装备"的 pendingSwap
+      beginOptimistic(old ? [held, old] : [held]);
       // 本地即时：新件立刻进装备槽（背包即刻消失，不存在"回闪"）；旧件若在则抽离为手持
       setHeldUid(old ? old.uid : null);
+      playItemSound(defOf(held)?.sound);
       localEquipItem(held.uid, slot);
       if (old) localToHeld(old.uid);
+      // 双手武器占**两只手**（原版 OverlapTwoHandItem，sinInvenTory1.cpp:5241）：
+      // 进哪个槽就清另一个槽，被清的那件回背包。这里**本地立刻预演**，
+      // 否则界面上会留着副手那件，直到服务端推送才消失（看得见的迟滞）。
+      if (isTwoHandWeaponClass(defOf(held)?.class) && (slot === 1 || slot === 2)) {
+        const otherSlot = slot === 1 ? 2 : 1;
+        const other = items.find((x) => x.location === LOC.EQUIP && x.slot === otherSlot && x.uid !== held.uid);
+        if (other) {
+          const free = firstFreeBagSlot(other);
+          if (free != null) localUnequipToBag(other.uid, free);
+          else console.warn('[bag] 双手武器：背包无空位，另一只手的物品暂不回退（等服务端推送）');
+        }
+      }
       sendEquipItem(held.uid, slot);
       console.log('[bag:equip] 已上报 EquipItem uid=', held.uid, '→equipSlot=', slot);
-    } else if ((held.location === LOC.EQUIP || held.location === LOC.BACKUP_EQUIP) && held.slot !== slot) {
-      console.log('[bag:equip] 装备→装备槽换槽 heldUid=', held.uid, 'fromSlot=', held.slot, '→slot=', slot);
-      // 装备 → 另一装备槽（服务端无直换）：先脱回背包（旧槽清空），held 仍指向实例，
-      // 待 store 收到 ItemUpdate 后其 location 变 0，用户再点目标空槽完成穿入。
-      sendUnequipItem(held.slot);
     }
+    // 没有"装备→另一个装备槽"的分支：从装备槽拿起时**已经**脱下来了（`onPickEquip` 发 `UnequipItem`），
+    // 所以那一刻起它在服务端侧就是背包物品，换槽与"从背包穿装"是同一条路（上面那个分支）。
+  }
+
+  /** 右键使用：只上送 uid，效果与校验全在服务端（原版 RButtonDown 也是只表达"用这一件"） */
+  function onUseBag(it: GameItem) {
+    if (held) return;                 // 手里拿着东西时右键无效（对齐原版 MouseItem.Flag 守卫）
+    // 药水：本地立刻播 EAT（原版 sinActionPotion 在点击瞬间切动作，不等服务端往返）
+    if (isPotionClass(defOf(it)?.class)) requestPlayEat();
+    sendUseItem(it.uid);
   }
 
   return (
@@ -537,8 +685,8 @@ export default function ItemPanel() {
             items={items}
             held={held}
             onPick={onPickBag}
+            onUse={onUseBag}
             onPutSlot={onPutToBagSlot}
-            onZone={setOverBag}
             onHover={hoverShow}
             onHoverEnd={hoverHide}
           />
@@ -562,7 +710,7 @@ export default function ItemPanel() {
         />
       </div>
       <ItemInfo hover={hover} />
-      {held && !overBag ? <HeldIcon held={held} pos={cursorPos} /> : null}
+      {/* 手持图标不在这里画：由 `PanelsRoot` 的 `HeldCursor` 全局渲染（面板关掉也要跟着鼠标走） */}
     </>
   );
 }

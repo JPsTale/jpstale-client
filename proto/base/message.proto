@@ -30,6 +30,8 @@ message ClientMessage {
     C2S_SwitchWeapon switch_weapon = 209;
     C2S_BagLayout bag_layout = 210;
     C2S_StackMerge stack_merge = 211;
+    C2S_Unstuck unstuck = 212;           // 脱困请求：服务端算落点（本图最近 StartPoint）并广播传送
+    C2S_TakeToHand take_to_hand = 213;   // 拿起：把物品移到"鼠标位"（装备栏 slot=-1），原容器腾空
     
     // 战斗 (300-399)
     C2S_Attack attack = 300;
@@ -71,6 +73,7 @@ message ServerMessage {
     S2C_EnterGame enter_game = 206;
     S2C_CharacterStatus character_status = 207;
     S2C_AppearanceUpdate appearance_update = 208;
+    S2C_PlayerTeleport player_teleport = 209;  // 不连续位移（脱困/传送）：本人据此搬自己，旁观者据此挪 actor
     
     // 怪物 (300-399)
     S2C_MonsterAppear monster_appear = 300;
@@ -158,6 +161,9 @@ message MapInfo {
   int32 map_id = 1;
   // true=安全区（村庄，禁战斗姿态/自动收武器动画）；false=战斗区域
   bool is_safe = 2;
+  // 进入该图所需等级（gamedb.maplist.levelreq 原样下发；0=无门槛，>=150=未开放）。
+  // 客户端用它**本地拦截跨图边界**（服务端另有同一判定的权威校验 MapManager.canEnter）。
+  int32 level_req = 3;
 }
 
 message S2C_CharacterList {
@@ -209,12 +215,23 @@ message C2S_UseItem {
 
 message C2S_PickupItem {
   int64 ground_item_id = 1;
+  // 拾取后是否**直接拿到手上**（鼠标位）。对应原版：背包窗口**开着**时拾取物 `memcpy` 进 `MouseItem`
+  // （不需要背包空格）；关着时走 `AutoSetInvenItem` 自动进背包空格。手位被占则仍进背包（不覆盖手上那件）。
+  bool to_hand = 2;
 }
 
 // 丢弃物品（软删；count=丢弃堆叠数，装备恒 1）
 message C2S_DropItem {
   int64 uid = 1;
   int32 count = 2;
+}
+
+// 拿起（任意容器 → 手持位）。**没有配套的"放下"消息**：放下就是把它放到某个去处，
+// 复用已有的 EquipItem（装备槽/药水槽）、BagLayout（背包页/仓库格）、DropItem（地面）。
+// 拿起要单独一条消息，是因为"在手上"是一个真实位置（location = ItemLocations.HELD = -1）：
+// 服务端据此把物品移出原容器、立刻重算属性/外观，并在断线重连后原样恢复"手上还拿着它"。
+message C2S_TakeToHand {
+  int64 uid = 1;
 }
 
 // 背包内移动/换格（含背包↔仓库）：toLocation/toSlot 为画布目标（location+slot）
@@ -336,9 +353,10 @@ message S2C_PlayerDeath {
   int64 player_id = 1;
   int64 exp_loss = 2;            // 已废弃（代价随选项不同，改由下面几个字段给出）；字段号保留不动
   int32 force_respawn_ms = 3;    // 强制复活倒计时（1 分钟）—— 客户端 UI 显示
-  int64 exp_loss_field = 4;      // 选项1 代价：本级跨度经验
-  int64 gold_loss_field = 5;     // 选项1 代价：金币
-  int64 exp_loss_town = 6;       // 选项2/3 代价：本级跨度经验
+  // 4/5/6 原为"死亡代价的具体点数"（exp_loss_field / gold_loss_field / exp_loss_town）。
+  // 用户 2026-09-13：UI 只显示**比例**（"代价：10% 经验与金币"），具体点数既没价值又是重复信息，
+  // 故删除；字段号保留，避免以后被复用到语义不同的地方。
+  reserved 4, 5, 6;
 }
 
 message S2C_PlayerRespawn {
@@ -349,6 +367,24 @@ message S2C_PlayerRespawn {
   int32 map_id = 5;    // 复活所在图（与当前图不同时客户端要换图 + 走加载遮罩）
   int32 max_hp = 6;
   int32 reason = 7;    // 1=附近重生点 2=村庄 3=强制（倒计时到）
+}
+
+// 传送（不连续位移）。**一次广播同时服务两个受众**：
+//   本人（player_id == 自己）→ 把自己搬过去、必要时换图走加载遮罩；
+//   旁观者 → 把该 actor 挪到新位置（目标图不是当前图则摘掉显示）。
+// 与 S2C_PlayerRespawn 的区别：不含 hp/max_hp/死亡语义，纯粹是"位置跳变"，
+// 因此可复用给脱困、传送道具、GM 传送、未来的传送门。
+message S2C_PlayerTeleport {
+  int64 player_id = 1;
+  int32 map_id = 2;
+  Position position = 3;
+  float angle = 4;
+  int32 reason = 5;    // 0=未知 1=脱困 2=GM 3=传送道具（客户端只做展示，不参与判定）
+}
+
+// 脱困请求（系统菜单"脱离卡死"按钮 / 聊天框 /unstuck 都走它）。
+// 服务端权威计算落点：本图离玩家最近的 StartPoint（无数据则回村庄出生点），零代价。
+message C2S_Unstuck {
 }
 
 // 死亡后的复活选择（对应上面三个 RESTART_* 常量）

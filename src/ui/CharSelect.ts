@@ -473,14 +473,17 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       if (gen !== loadGeneration) return;
       result.bodyGroup.visible = true;
       result.headGroup.visible = true; // stale after texture load
-      // 姝﹀櫒鎸傝浇锛堝鏈夛級
+      // 武器挂载（如有）
+      if (appearance?.weaponDorp) {
+        await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos, gen);
+      }
+      if (gen !== loadGeneration) return;
+      // ⚠ 这三个是**共享变量**（动画状态机与预览都读它们），只能在"确认这次加载仍然有效"之后写：
+      // 过期加载若在 await 之后写，会把新预览的武器码/姿态覆盖成旧角色的
+      // （`getWeaponIdCode` 会拿它选动画，`weaponStance` 会让下一次 onStanceChange 变成空操作）。
       currentWeaponIdcode = appearance?.weaponIdcode && appearance.weaponIdcode > 0 ? appearance.weaponIdcode : null;
       currentWeaponType = currentWeaponIdcode ? getWeaponTypeFromIdCode(currentWeaponIdcode) : null;
       weaponStance = 'combat';
-      if (appearance?.weaponDorp) {
-        await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos);
-      }
-      if (gen !== loadGeneration) return;
 animState = createAnimStateMachine({
         getMotions: () => motionList,
         getClassId: () => jobId,
@@ -504,6 +507,11 @@ animState = createAnimStateMachine({
   }
 
   let weaponGroup: THREE.Group | null = null;
+  /**
+   * **挂过的**武器组全量名单。清理时按这份名单逐个摘，而不是只按当前 `weaponGroup` 引用 ——
+   * 并发/过期加载可能留下孤儿组，只认一个引用就会漏（见上面 `attachWeaponPreview` 的说明）。
+   */
+  const attachedWeaponGroups: THREE.Group[] = [];
   let currentWeaponIdcode: number | null = null;
   let currentWeaponType: string | null = null;
   let weaponStance = 'combat';
@@ -538,10 +546,17 @@ animState = createAnimStateMachine({
 
   let currentCombatBone = WEAPON_BONES.RIGHT_HAND;
 
-  async function attachWeaponPreview(dorpItem: string, weaponPos: number) {
+  async function attachWeaponPreview(dorpItem: string, weaponPos: number, gen: number) {
     if (!weaponGroup) {
       try {
         const result = await loadWeaponModel(dorpItem);
+        // ⚠ 代际守卫必须在**这里**（=改场景的那一层），不能只靠调用方在 await 返回后再 check：
+        // 本函数自己就会写模块级 `weaponGroup` 并 `bone.add(...)`。两次预览重叠时，
+        // 过期的那一次会把 `weaponGroup` 抢成自己的组并留在骨骼上，而新的一次随后清理时
+        // 只按当前引用清 → 清不掉它。用户实测（2026-09-14）：角色选择页"手里和背后各有一把武器"
+        // （旧组卡在战斗挂点、新组被姿态切换搬到背上）。
+        // 同一条教训见 AGENTS #11 第三条：守卫要下沉到真正改状态的那一层。
+        if (gen !== loadGeneration) return;
         weaponGroup = result.group;
         // modelPosition: 2=LeftHand, 4=RightHand (default) 鈥斺€?瀵归綈 pviewer
         const boneName = weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
@@ -553,6 +568,7 @@ animState = createAnimStateMachine({
           return;
         }
         bone.add(weaponGroup);
+        attachedWeaponGroups.push(weaponGroup);   // 记全量：清理时按这份名单逐个摘
         weaponStance = 'combat';
         await loadCharTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
       } catch (err) {
@@ -568,13 +584,12 @@ animState = createAnimStateMachine({
       skeletonGroup.remove(charResult.bodyGroup);
       skeletonGroup.remove(charResult.headGroup);
     }
-    if (weaponGroup && skeletonGroup) {
-      skeletonGroup.traverse((o) => {
-        if (o !== skeletonGroup && weaponGroup && o.children.includes(weaponGroup)) {
-          o.remove(weaponGroup);
-        }
-      });
+    // 按**全量名单**摘掉每一把挂过的武器（`weaponGroup` 只是"当前那把"的引用，
+    // 并发/过期加载留下的孤儿组不在它上面 → 只按它清会漏掉一把留在骨骼上）。
+    for (const g of attachedWeaponGroups) {
+      g.parent?.remove(g);
     }
+    attachedWeaponGroups.length = 0;
     weaponGroup = null;
     currentWeaponIdcode = null;
     currentWeaponType = null;

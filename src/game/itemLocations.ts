@@ -11,10 +11,23 @@ export const LOC = {
   WAREHOUSE: 30,     // 仓库页1：9×9，slot 0~80（y*9+x）
   WH_W: 9,
   WH_H: 9,
-  HELD: -1,          // 手持中（本地抽离，不上报；随放下/装备上报其最终格子）
 } as const;
 
 export type LocTuple = typeof LOC;
+
+/**
+ * **鼠标位（手持位）**：`装备栏(location = LOC.EQUIP) 的 slot = -1`。
+ *
+ * 与服务端 `ItemLocations.HELD_SLOT` 同一个值、同一套语义（改一边要改另一边）：
+ * "鼠标拿起来还没放下"的那一件就存在这里 —— 它**不是**一个槽位（真实装备槽是 1~13），
+ * 也不占背包格。服务端因此能在拿起瞬间就撤掉装备效果，并且断线重连后原样恢复"手上还拿着它"。
+ */
+export const HELD_SLOT = -1;
+
+/** 这件物品是否正被鼠标拿着（= 装备栏的 -1 号槽）。**唯一判据**，别在别处再写一遍。 */
+export function isHeldItem(it: { location: number; slot: number } | null | undefined): boolean {
+  return !!it && it.location === LOC.EQUIP && it.slot === HELD_SLOT;
+}
 
 export function isBag(location: number): boolean {
   return location >= 10 && location < 20;

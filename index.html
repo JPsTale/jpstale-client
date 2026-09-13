@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>JPsTale</title>
   <style>
+    /* UI 元素继承根元素上的**原版光标**（cursor.ts 写在 documentElement 上）。
+       canvas 除外 —— 世界内由 JS 按 hover 目标切换（攻击/拾取/对话）；
+       input/textarea 除外 —— 保留文本光标，否则没法定位插入点。 */
+    body *:not(canvas):not(input):not(textarea) { cursor: inherit !important; }
     html, body { margin: 0; padding: 0; overflow: hidden; background: #000; font-family: sans-serif; }
     #app { width: 100vw; height: 100vh; position: relative; }
     canvas { display: block; }

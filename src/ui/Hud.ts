@@ -1,8 +1,11 @@
 import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
-import { getGameSnapshot, subscribeGame, type FistBinding } from '../app/gameStore.js';
+import { getGameSnapshot, registerUiHitTest, subscribeGame, type FistBinding } from '../app/gameStore.js';
 import { sfx } from '../audio/sfx.js';
+
+/** 药水快捷槽（ITEMSLOT 11/12/13）一格的显示数据；空槽 url='' */
+export interface PotionSlotView { url: string; count: number }
 
 export interface HudState {
   hp: number; maxHp: number
@@ -12,6 +15,8 @@ export interface HudState {
   level: number
   playerName: string
   gameClock?: GameClock
+  /** 三个药水槽的显示数据（图标 url + 数量）；由 main.ts 在物品变化时用 setPotions 推来 */
+  potions?: PotionSlotView[]
 }
 
 export interface Hud {
@@ -24,8 +29,10 @@ export interface Hud {
   setCamFlag(mode: number): void
   /** 同步小地图开关到按钮图标 */
   setMapFlag(on: boolean): void
+  /** 更新三个药水槽的显示（图标+数量）；HUD 内部保留其余状态，无需重传整份 HudState */
+  setPotions(p: PotionSlotView[]): void
   /** 用户动作回调（走跑/相机/地图按钮 / 系统按钮 / 角色状态按钮 / 技能面板按钮等） */
-  onAction?: (action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap'
+  onAction?: (action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
     | 'system' | 'status' | 'skills' | 'inventory') => void
 }
 
@@ -99,6 +106,9 @@ async function loadTex(rel: string, key: string): Promise<Tex | null> {
   } catch { return null; }
 }
 
+/** 药水图标缓存（同一 url 只加载一次、跨帧复用） */
+const potionIconCache = new Map<string, HTMLImageElement>();
+
 export function createHud(container: HTMLElement): Hud {
   const canvas = document.createElement('canvas');
   canvas.width = W;
@@ -126,7 +136,14 @@ export function createHud(container: HTMLElement): Hud {
   const inRect = (mx: number, my: number, r: { x: number; y: number; w: number; h: number }) =>
     mx >= r.x && mx < r.x + r.w && my >= r.y && my < r.y + r.h;
 
+  // 药水槽三格（原版 sinInvenTory.cpp:167-169：(495,565) 起、每格 26px）
+  const POTION_RECTS = [
+    { x: 495, y: 565, w: 26, h: 26 },
+    { x: 495 + 26, y: 565, w: 26, h: 26 },
+    { x: 495 + 26 + 26, y: 565, w: 26, h: 26 },
+  ];
   const INTERACT_RECTS = [
+    ...POTION_RECTS,
     SMALL_BTN.run, SMALL_BTN.cam, SMALL_BTN.map,
     { x: 648, y: 560, w: 25, h: 27 }, // b0 角色状态
     { x: 673, y: 560, w: 25, h: 27 }, // b1 背包
@@ -188,9 +205,32 @@ export function createHud(container: HTMLElement): Hud {
   let ptrX = -1, ptrY = -1, ptrDown = false;
   // 功能/交互小状态（暂为 tooltip 用；后续动作接线后由行为更新）
   const uiState = { runFlag: true, camFlag: 1, mapOnFlag: true };
+  /** 屏幕坐标 → HUD 内容坐标（与 checkButtonClick 同一算法，只写这一处） */
+  function toContent(clientX: number, clientY: number): { mx: number; my: number } | null {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0) return null;
+    const s = rect.width / W;
+    return { mx: (clientX - rect.left) / s - 240, my: (clientY - rect.top) / s - 120 };
+  }
+
+  // 把 HUD 的交互区登记给全局：背包"点面板外=丢弃"之前会先问这里
+  // （HUD 是 pointer-events:none 的覆盖层，不登记的话点药水槽会被当成点在游戏画面上 → 误丢）。
+  registerUiHitTest((x, y) => {
+    if (canvas.style.display === 'none') return false;
+    const c = toContent(x, y);
+    if (!c) return false;
+    return INTERACT_RECTS.some((r) => inRect(c.mx, c.my, r));
+  });
+
   window.addEventListener('pointermove', (e) => { ptrX = e.clientX; ptrY = e.clientY; });
-  window.addEventListener('pointerdown', (e) => { if (e.button === 0) ptrDown = true; });
-  window.addEventListener('pointerup', (e) => { if (e.button === 0) ptrDown = false; });
+  window.addEventListener('pointerdown', (e) => {
+    if (e.button === 0) ptrDown = true;
+    else if (e.button === 2) ptrRightDown = true;      // 右键：药水槽的"喝"（原版 RButtonDown → UsePotion）
+  });
+  window.addEventListener('pointerup', (e) => {
+    if (e.button === 0) ptrDown = false;
+    else if (e.button === 2) ptrRightDown = false;
+  });
 
   function fitCanvas() {
     // 等比缩放，锚定窗口底边：HUD 始终贴底，只允许顶部留空，
@@ -318,20 +358,34 @@ export function createHud(container: HTMLElement): Hud {
     uiState.mapOnFlag = on;
   }
 
-  let onAction: ((action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap'
+  let onAction: ((action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
     | 'system' | 'status' | 'skills' | 'inventory') => void) | undefined;
 
   // 走跑/相机/地图按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
   let prevPtrDown = false;
+  let ptrRightDown = false;
+  let prevPtrRightDown = false;
   function checkButtonClick(): void {
     const justPressed = ptrDown && !prevPtrDown;
     prevPtrDown = ptrDown;
-    if (!currentState || !justPressed) return;
+    const justRight = ptrRightDown && !prevPtrRightDown;
+    prevPtrRightDown = ptrRightDown;
+    if (!currentState || (!justPressed && !justRight)) return;
     const rect = canvas.getBoundingClientRect();
     if (rect.width <= 0 || ptrX < rect.left || ptrX > rect.right || ptrY < rect.top || ptrY > rect.bottom) return;
-    const s = rect.width / W;
-    const mx = (ptrX - rect.left) / s - 240;
-    const my = (ptrY - rect.top) / s - 120;
+    const c = toContent(ptrX, ptrY);
+    if (!c) return;
+    const mx = c.mx, my = c.my;
+    // 药水槽 3 格（POTION_RECTS，唯一来源）：**左键=拿起 / 右键=喝**（原版 LButtonDown vs UsePotion）
+    for (let i = 0; i < 3; i++) {
+      if (inRect(mx, my, POTION_RECTS[i]!)) {
+        sfx.playUi('click');
+        onAction?.(justRight
+          ? (('potionUse' + (i + 1)) as 'potionUse1')
+          : (('potion' + (i + 1)) as 'potion1'));
+        return;
+      }
+    }
     if (inRect(mx, my, SMALL_BTN.run)) { sfx.playUi('click'); onAction?.('toggleRun'); return; }
     if (inRect(mx, my, SMALL_BTN.cam)) { sfx.playUi('click'); onAction?.('toggleCamera'); return; }
     if (inRect(mx, my, SMALL_BTN.map)) { sfx.playUi('click'); onAction?.('toggleMinimap'); return; }
@@ -402,6 +456,30 @@ export function createHud(container: HTMLElement): Hud {
     // 药水槽背景 (原版 (495,565) 77x25)
     drawTex('potionBack', 495, 565, 77, 25);
 
+    // 药水槽内容：3 格（原版 sinInvenTory.cpp 的 INVENTORY_POS_POTION 三格 = (495,565) 起、每格 26px）
+    const potions = currentState?.potions;
+    if (potions) {
+      for (let i = 0; i < 3; i++) {
+        const pv = potions[i];
+        if (!pv || !pv.url) continue;
+        let img = potionIconCache.get(pv.url);
+        if (!img) {
+          img = new Image();
+          img.src = pv.url;
+          potionIconCache.set(pv.url, img);
+        }
+        if (img.complete && img.naturalWidth > 0) {
+          ctx.drawImage(img, 495 + i * 26 + 2, 566, 22, 22);
+        }
+        if (pv.count > 1) {
+          ctx.font = '9px sans-serif';
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#ffffff';
+          ctx.fillText(String(pv.count), 495 + i * 26 + 25, 588);
+        }
+      }
+    }
+
     // 功能按钮
     drawTex('walk', 575, 565, 24, 25);
     drawTex('cam1', 599, 565, 24, 25);
@@ -433,8 +511,13 @@ export function createHud(container: HTMLElement): Hud {
   loadAllTextures().then(loop);
 
   return {
+    setPotions(p: PotionSlotView[]) {
+      if (currentState) currentState.potions = p;   // 下一帧 draw 自动生效
+    },
     show(state: HudState) {
-      currentState = state;
+      // ⚠ potions 由 setPotions 维护（物品变化时推）。调用方（刷新血蓝/经验）通常不带它，
+      // 不能因此把药水槽清空 —— 否则药水槽永远是空的（用户 2026-09-13 实测）。
+      currentState = { ...state, potions: state.potions ?? currentState?.potions ?? [] };
       canvas.style.display = 'block';
       barriers.forEach((b) => { b.style.display = 'block'; });
     },

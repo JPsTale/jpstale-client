@@ -8,8 +8,7 @@ export type GameAction =
   | 'showGroundItems'
   | 'skill1' | 'skill2' | 'skill3' | 'skill4' | 'skill5' | 'skill6'
   | 'skill7' | 'skill8' | 'skill9' | 'skill10' | 'skill11' | 'skill12'
-  | 'potion1' | 'potion2' | 'potion3' | 'potion4' | 'potion5' | 'potion6'
-  | 'potion7' | 'potion8' | 'potion9' | 'potion10' | 'potion11' | 'potion12'
+  | 'potion1' | 'potion2' | 'potion3'
   | 'chat' | 'closePanel'
   | 'switchWeapon'
 
@@ -46,10 +45,10 @@ const DEFAULT_BINDINGS: Record<GameAction, string | null> = {
   skill1: 'F1', skill2: 'F2', skill3: 'F3', skill4: 'F4',
   skill5: 'F5', skill6: 'F6', skill7: 'F7', skill8: 'F8',
   skill9: 'F9', skill10: 'F10', skill11: 'F11', skill12: 'F12',
+  // 原版只有 **3 个**药水快捷槽（ITEMSLOT 11/12/13，PotionOne/Two/Three），
+  // 对应数字键 1/2/3（docs/pt-core-gameplay.md 19 节：护腕=臂环提供药水槽容量）。
+  // 曾经这里排到 potion12（1-9/0/-/=），那是没有依据的扩展，已收敛。
   potion1: 'Digit1', potion2: 'Digit2', potion3: 'Digit3',
-  potion4: 'Digit4', potion5: 'Digit5', potion6: 'Digit6',
-  potion7: 'Digit7', potion8: 'Digit8', potion9: 'Digit9',
-  potion10: 'Digit0', potion11: 'Minus', potion12: 'Equal',
   chat: 'Enter',
   closePanel: 'Escape',
   switchWeapon: 'KeyW',
@@ -102,7 +101,17 @@ export function createKeyBinding(): KeyBinding {
     if (saved) {
       try {
         const parsed = JSON.parse(saved)
-        bindings = { ...DEFAULT_BINDINGS, ...parsed }
+        // 只认**当前定义**的 action：旧版本存过的 potion4..12 等废弃键直接丢弃，
+        // 否则它们会作为"幽灵绑定"留在对象里、被 handleKeyDown 遍历到。
+        const merged = { ...DEFAULT_BINDINGS }
+        if (parsed && typeof parsed === 'object') {
+          for (const k of Object.keys(DEFAULT_BINDINGS) as GameAction[]) {
+            if (typeof (parsed as Record<string, unknown>)[k] === 'string') {
+              merged[k] = (parsed as Record<string, string>)[k]!
+            }
+          }
+        }
+        bindings = merged
       } catch (e) {
         console.warn('Failed to load key bindings:', e)
       }

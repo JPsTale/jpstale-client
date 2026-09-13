@@ -108,6 +108,8 @@
     "shaman": "Shaman"
   },
   "map": {
+    "levelTooLow": "Level too low to enter that area (requires level {level})",
+    "notOpen": "That area is not open yet",
     "0": "Acacia Forest",
     "1": "Bamboo Forest",
     "2": "Garden of Freedom",
@@ -287,9 +289,24 @@
     "durability": "Durability",
     "damage": "Damage",
     "defence": "Defence",
-    "count": "Count"
+    "count": "Count",
+    "op": {
+      "notInBag": "That item is not in your bag",
+      "jobNotAllowed": "Your class cannot use this equipment",
+      "slotMismatch": "That item does not fit this slot",
+      "reqNotMet": "Level or attribute requirement not met",
+      "overWeight": "Overweight - cannot move items",
+      "twoHandSlot": "Two-handed weapons go in the main or off hand",
+      "notPotion": "That is not a potion",
+      "slotFull": "Potion slot is full",
+      "differentPotion": "That slot already holds another potion",
+      "bagFull": "Bag is full",
+      "notDroppable": "That item cannot be dropped",
+      "failed": "Operation failed"
+    }
   },
   "menu": {
+    "unstuck": "Unstuck",
     "title": "System Menu",
     "backToChar": "Back to Character",
     "logout": "Logout",
@@ -380,8 +397,18 @@
     "placeholder": "Enter message…",
     "guildNotOpen": "Guild channel is not available yet",
     "cmd": {
+      "teleportNotOpen": "That area is not open yet",
+      "teleportLevelLow": "Level too low to enter that area (requires level {level})",
+      "teleportNoLanding": "Teleport failed: no usable landing spot in the target area",
+      "useItemNotInBag": "That item is not in your bag",
+      "useItemFailed": "Use failed",
+      "useItemPotionPending": "Potion effects are not implemented yet (effect data missing); nothing consumed",
+      "useItemUnsupported": "That item cannot be used yet",
+      "unstuckDone": "Unstuck: moved to start point of map {map} ({x},{z})",
+      "unstuckCooldown": "Unstuck on cooldown, retry in {sec}s",
+      "unstuckFailed": "Unstuck failed: no usable start point",
       "partyUsage": "Usage: //party <player>",
-      "getUsage": "Usage: /@get <name|idCode|itemlistId>",
+      "getUsage": "Usage: /@get <item code> - e.g. ec101 / EC101 / bi108 (item code only; no DB ids, no names)",
       "itemNotFound": "Item not found: {token}",
       "dropOverLimit": "Ground is full, drop discarded",
       "unknownGm": "Unknown GM command: /{name} (GM system in development)",
@@ -429,6 +456,9 @@
     "logoutReason": "Connection lost, please log in again"
   },
   "itemtip": {
+    "recHp": "Life Recovery",
+    "recMp": "Mana Recovery",
+    "recStm": "Stamina Recovery",
     "atk": "Attack",
     "hit": "Hit",
     "def": "Defense",
@@ -1148,11 +1178,11 @@
     "respawning": "Returning to respawn point…",
     "option": {
       "field": "Revive at the nearest start point on this map",
-      "fieldCost": "Costs {exp} EXP of this level and {gold} gold",
-      "town": "Revive in town (Tempskron: Ricarten / Morion: Pillai)",
-      "townCost": "Costs {exp} EXP of this level",
+      "fieldCost": "Costs 10% of this level's EXP and gold",
+      "town": "Revive in town",
+      "townCost": "Costs 1% of this level's EXP",
       "wait": "Keep lying here",
-      "waitCost": "Forced return to town when the timer ends (same cost)"
+      "waitCost": "Costs 1% of this level's EXP"
     }
   }
 }

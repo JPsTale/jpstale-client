@@ -108,6 +108,8 @@
     "shaman": "萨满"
   },
   "map": {
+    "levelTooLow": "等级不足，无法进入该区域（需要 {level} 级）",
+    "notOpen": "该区域尚未开放",
     "0": "阿卡西亚森林",
     "1": "竹林",
     "2": "自由之地",
@@ -199,7 +201,7 @@
     "curEffect": "当前效果",
     "nextEffect": "下一级效果",
     "mastery": "熟练度",
-    "demo": "演示数据（待接入服务端技能表）",
+    "demo": "演示数据",
     "equipHint": "左键绑定左拳 · 右键绑定右拳 · 按住鼠标时按 F1~F8 绑定快捷键",
     "normalAttack": "普通攻击",
     "normalAttackTip": "普通攻击：左键绑左拳 / 右键绑右拳（点击恢复普攻）",
@@ -287,9 +289,24 @@
     "durability": "耐久",
     "damage": "攻击",
     "defence": "防御",
-    "count": "数量"
+    "count": "数量",
+    "op": {
+      "notInBag": "该物品不在背包里",
+      "jobNotAllowed": "你的职业无法使用这件装备",
+      "slotMismatch": "这件装备放不进这个槽位",
+      "reqNotMet": "等级或属性不满足",
+      "overWeight": "负重超限，无法搬运",
+      "twoHandSlot": "双手武器只能放在主手或副手",
+      "notPotion": "这不是药水",
+      "slotFull": "药水槽已满",
+      "differentPotion": "这一格已经放了别的药水",
+      "bagFull": "背包已满",
+      "notDroppable": "该物品无法丢弃",
+      "failed": "操作失败"
+    }
   },
   "menu": {
+    "unstuck": "脱离卡死",
     "title": "系统菜单",
     "backToChar": "回到角色选择",
     "logout": "退出登录",
@@ -380,8 +397,18 @@
     "placeholder": "输入消息…",
     "guildNotOpen": "公会频道暂未开放",
     "cmd": {
+      "teleportNotOpen": "该区域尚未开放",
+      "teleportLevelLow": "等级不足，无法进入该区域（需要 {level} 级）",
+      "teleportNoLanding": "传送失败：目标区域没有可用的落点",
+      "useItemNotInBag": "该物品不在背包里",
+      "useItemFailed": "使用失败",
+      "useItemPotionPending": "药水效果尚未实装（数值列待补），未消耗",
+      "useItemUnsupported": "该物品暂不能使用",
+      "unstuckDone": "已脱离卡死：送到本图出生点 map {map} ({x},{z})",
+      "unstuckCooldown": "脱离卡死冷却中，请 {sec} 秒后再试",
+      "unstuckFailed": "脱离卡死失败：找不到可用的出生点",
       "partyUsage": "用法: //party 玩家名",
-      "getUsage": "用法: /@get <物品名|idCode|itemlistId>",
+      "getUsage": "用法: /@get <物品码> —— 如 ec101 / EC101 / bi108（只认物品码，不接受数字主键或物品名）",
       "itemNotFound": "找不到物品: {token}",
       "dropOverLimit": "地面物品已满，掉落被丢弃",
       "unknownGm": "未知GM命令: /{name}（GM 系统开发中）",
@@ -429,6 +456,9 @@
     "logoutReason": "连接已断开，请重新登录"
   },
   "itemtip": {
+    "recHp": "恢复生命",
+    "recMp": "恢复魔法",
+    "recStm": "恢复体力",
     "atk": "攻击力",
     "hit": "命中",
     "def": "防御",
@@ -1148,11 +1178,11 @@
     "respawning": "正在返回复活点…",
     "option": {
       "field": "在此处附近的复活点复活",
-      "fieldCost": "代价：本级经验 {exp} 点、金币 {gold} 枚",
-      "town": "回到村庄复活（坦普族：理查登 / 魔灵族：菲尔拉）",
-      "townCost": "代价：本级经验 {exp} 点",
+      "fieldCost": "代价：10% 经验与金币",
+      "town": "回到村庄复活",
+      "townCost": "代价：1% 经验",
       "wait": "继续躺着，什么都不做",
-      "waitCost": "倒计时结束后强制回村庄复活（代价同上）"
+      "waitCost": "代价：1% 经验"
     }
   }
 }

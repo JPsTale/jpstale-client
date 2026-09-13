@@ -1,0 +1,142 @@
+{
+ "note": "由 scripts/extract-potion-effects.ts 从 gamedb.itemlist 的 recovery* 列生成；判据=至少一对列有值。 idcode 族的 Life/Mana 在 items-11job.json 里相反，故本表只按列取值、不按族推断。",
+ "source": "ssh:root@192.168.31.10",
+ "count": 15,
+ "items": [
+  {
+   "id": 423,
+   "code": 67174656,
+   "name": "Mini Mana Potion",
+   "mp": [
+    60,
+    100
+   ]
+  },
+  {
+   "id": 424,
+   "code": 67174912,
+   "name": "Medium Mana Potion",
+   "mp": [
+    100,
+    200
+   ]
+  },
+  {
+   "id": 425,
+   "code": 67175168,
+   "name": "Great Mana Potion",
+   "mp": [
+    200,
+    400
+   ]
+  },
+  {
+   "id": 426,
+   "code": 67175424,
+   "name": "Mystic Mana Potion",
+   "mp": [
+    400,
+    800
+   ]
+  },
+  {
+   "id": 427,
+   "code": 67240192,
+   "name": "Mini Life Potion",
+   "hp": [
+    60,
+    100
+   ]
+  },
+  {
+   "id": 428,
+   "code": 67240448,
+   "name": "Medium Life Potion",
+   "hp": [
+    100,
+    200
+   ]
+  },
+  {
+   "id": 429,
+   "code": 67240704,
+   "name": "Great Life Potion",
+   "hp": [
+    200,
+    400
+   ]
+  },
+  {
+   "id": 430,
+   "code": 67240960,
+   "name": "Mystic Life Potion",
+   "hp": [
+    400,
+    800
+   ]
+  },
+  {
+   "id": 431,
+   "code": 67305728,
+   "name": "Mini Stamina Potion",
+   "stm": [
+    100,
+    200
+   ]
+  },
+  {
+   "id": 432,
+   "code": 67305984,
+   "name": "Medium Stamina Potion",
+   "stm": [
+    200,
+    400
+   ]
+  },
+  {
+   "id": 433,
+   "code": 67306240,
+   "name": "Great Stamina Potion",
+   "stm": [
+    400,
+    700
+   ]
+  },
+  {
+   "id": 434,
+   "code": 67306496,
+   "name": "Mystic Stamina Potion",
+   "stm": [
+    700,
+    1100
+   ]
+  },
+  {
+   "id": 1123,
+   "code": 67241216,
+   "name": "Grand Life Potion",
+   "hp": [
+    800,
+    1400
+   ]
+  },
+  {
+   "id": 1124,
+   "code": 67306752,
+   "name": "Grand Stamina Potion",
+   "stm": [
+    1100,
+    1600
+   ]
+  },
+  {
+   "id": 1125,
+   "code": 67175680,
+   "name": "Grand Mana Potion",
+   "mp": [
+    800,
+    1400
+   ]
+  }
+ ]
+}

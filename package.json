@@ -26,7 +26,10 @@
     "verify-axis": "npx tsx scripts/verify-axis.ts",
     "verify-heads": "npx tsx scripts/verify-heads.ts",
     "phantom-codes": "npx tsx scripts/report-phantom-codes.ts",
-    "verify-prefs": "npx tsx scripts/verify-prefs.ts"
+    "verify-prefs": "npx tsx scripts/verify-prefs.ts",
+    "verify-canuse": "npx tsx scripts/verify-canuse.ts",
+    "diag-climb": "tsx scripts/diag-climb.ts",
+    "potions": "tsx scripts/extract-potion-effects.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

@@ -15,7 +15,12 @@ import { minimapBase } from '../maps/map-data.js';
 import { mapDecorList } from '../maps/map-decor.js';
 import { loadMapDecor, unloadDecor } from '../maps/decor-loader.js';
 import { neighborMaps } from '../maps/map-gates.js';
-import { CollisionMesh } from '../maps/collision.js';
+import { CollisionMesh, OBJ_WIDTH_RAW, OBJ_HEIGHT_RAW, NEARBY_RADIUS_UNITS } from '../maps/collision.js';
+import { CollisionDebug } from '../maps/collision-debug.js';
+import { installNaNGeometryWatch, scanNaNGeometry, reportNaNGeometry } from '../render/nan-scan.js';
+import type { NaNGeometryHit } from '../render/nan-scan.js';
+import { canEnterMap, mapLevelRequirement } from '../game/safeZones.js';
+import { appendSystemMessage } from '../app/chatStore.js';
 import { mapLightProfile } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
 import { t } from '../i18n/index.js';
@@ -38,7 +43,7 @@ import { CHRMOTION_EXT } from '../char/char-format.js';
 import { evalSkeleton, applyToBones, advanceAnimFrame, ANIM_UNITS_PER_SEC } from '../char/animation.js';
 import { decodeTextureAsync } from '../core/texture.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
-import { cachedFetch } from '../core/asset-cache.js';
+import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
 import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
 import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import type { CharacterAppearance } from './CharSelect.js';
@@ -160,6 +165,14 @@ export interface WorldView {
    */
   applyRespawn(info: { mapId: number; x: number; z: number; y: number; hp: number; maxHp: number }): Promise<void>;
   /**
+   * 不连续位移（`S2C_PlayerTeleport`，本人）：断本地移动/追击/下落 → 落位 → 必要时换图 →
+   * 按新图重选姿态。复活（`applyRespawn`）与脱困共用这一条 —— 复活的额外步骤只有
+   * "解除死亡态 + 半血"，不另写一份搬人的实现。
+   */
+  applyTeleport(info: { mapId: number; x: number; y: number; z: number; angle?: number }): Promise<void>;
+  /** 不连续位移（旁观者）：目标图不是当前图 → 摘掉显示；否则把 actor 直接搬过去（并清插值快照，避免"滑过去"） */
+  teleportRemote(playerId: number, info: { mapId: number; x: number; y: number; z: number; angle?: number }): void;
+  /**
    * 玩家死亡（`S2C_PlayerDeath`）：躺下停在 DEAD 动画末帧，直到 applyRespawn。
    * 自机期间定身（不能移动/攻击）；旁观者的尸体同样可见。
    */
@@ -168,6 +181,15 @@ export interface WorldView {
   respawnNeedsMapLoad(mapId: number): boolean;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
   setSelfName(name: string): void;
+  /** 自机等级（跨图边界的等级门槛判定用） */
+  setSelfLevel(level: number): void;
+  /** 碰撞调试可视化的开关（F9 / `?coll=1` / 控制台都走它） */
+  /** 使用药水：播 EAT 动画 + 喝药音效（与 requestPlayEat 同一实现） */
+  playEat(): boolean;
+  setCollisionDebug(on: boolean): void;
+  isCollisionDebug(): boolean;
+  /** 扫描场景，列出几何里含非有限值的对象（定位 three 的"包围球 NaN"告警） */
+  scanNaNGeometry(): NaNGeometryHit[];
   /** 自机发起攻击 → 进入 3 秒战斗窗口（玩家血条显示） */
   markSelfCombat(): void;
   /**
@@ -328,6 +350,20 @@ const NPC_TAG_RANGE = 768;  // NPC 名牌 12 格（对齐 exm：NPC RendPoint.z 
 // "进入战斗"窗口：最近 N 毫秒自机受击/发起攻击 → 玩家血条显示
 const COMBAT_WINDOW_MS = 3000;
 
+/**
+ * 「使用药水」的表现入口（动画 + 音效）——**唯一实现**，右键/数字键/点药水槽三处都调它。
+ * 原版：`sinActionPotion()`（playsub.cpp:1661）切 `CHRMOTION_STATE_EAT`；
+ * 音效 `SIN_SOUND_EAT_POTION`(=20, sinItem.h:281) → `wav/effects/items/potion.wav`。
+ * `.in` 里每职业的 EAT 条目是 `물약먹기동작1/2`（weapon=all，野外/村庄都能用）。
+ * ⚠ **原版喝药水没有粒子特效**：`StartEffect` 只出现在以太核心 `ActionEtherCore` 里。
+ */
+let playEatRequest: (() => void) | null = null;
+
+/** 请求播放"喝药"表现（动画+音效）；未进图时静默忽略 */
+export function requestPlayEat(): void {
+  playEatRequest?.();
+}
+
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
   const root = document.createElement('div');
   root.id = 'world-root';
@@ -339,7 +375,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let camera: THREE.PerspectiveCamera | null = null; // 游戏相机（/pt/maps/ 的 debugCamera）
   let currentMapId = 0; // 当前所在地图
   let lastMapSwitch = 0; // 上次换图时间（防抖）
-  /** 上次"按坐标检查区域是否已加载"的时间（节流；见移动分支里的 mapsAtPoint 检查） */
+  /** 上次"按坐标范围检查区域是否已加载"的时间（节流；见移动分支里的 mapsInRange 检查） */
   let lastRegionCheck = 0;
   /** 最近一次区域同步"想要的图"集合：进行中的分帧构建据此判断自己是否已被抛弃 */
   let wantedMaps = new Set<number>();
@@ -381,6 +417,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 所以显式取 NonNullable（否则每个遍历点都要判空，取消语义反而被稀释）。
   const mapHandles = new Map<number, NonNullable<Awaited<ReturnType<typeof loadMap>>>>();
   const collisionMeshes = new Map<number, CollisionMesh>();
+  /**
+   * **碰撞判定的唯一入口**：玩家坐标 AABB 命中的那些图（+ 兜底）的三角形合并成一份候选，
+   * 一次判定。碰撞只看"世界空间里附近有哪些面"，**不看"当前是哪张地图"** ——
+   * 地图是人为切分的（一条路/一个门可能一部分在这张图、一部分在另一张图），
+   * 只用一张图判定等于用残缺几何判定：该挡的没挡（用户实测穿空气墙），该走的走不了。
+   * `currentMapId` / `findCurrentMap` 只负责**地图身份**（换图、区域加载、音频、姿态、等级门槛）。
+   */
+  const moveCollision = new CollisionMesh();      // 含墙体判定：来源 = 坐标命中的图
+  const groundCollision = new CollisionMesh();    // 只取地面高度：来源 = 全部已加载图（取最高，范围大无副作用）
+  moveCollision.setSourceMap(collisionMeshes);
+  groundCollision.setSourceMap(collisionMeshes);
+  /** moveCollision 当前参与判定的图集合（按坐标重建，避免每子步分配新 Set） */
+  const moveSources = new Set<number>();
   const decorGroups = new Map<number, THREE.Group[]>(); // mapId → 装饰 group 列表
   // 全部 44 图 world AABB（预取，用于 findCurrentMap 判归属，不依赖是否已加载）
   const allBounds = new Map<number, [number, number, number, number]>();
@@ -444,6 +493,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 自机名牌/血条数据（playerState 喂 hp；damage/heal targetId=self 喂战斗窗口与 hp）
   let selfName = '';
   let selfHp = 100, selfMaxHp = 100;
+  /** 自机等级：跨图边界门槛判定用（来源 S2C_PlayerState.level，见 main.ts） */
+  let selfLevel = 1;
   let selfCombatUntil = 0; // performance.now() 截止：在此刻前视为"战斗中"
   let selfTopY = 1.7; // 自机模型顶高（loadPlayer 后由 modelTopY 计算）
   let mouseDown = false;
@@ -456,13 +507,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const ndc = new THREE.Vector2();
 
   // ---- 原版鼠标光标 overlay：指向可拾取→GetItem(手)、怪物→Attack(红)、NPC→Talk、默认箭头 ----
-  // 图标资产：image/sinimage/cursor/*.tga（PT 加密 TGA → 现有 decodeTextureAsync 解码为 PNG dataURL，
-  // 以 CSS cursor url() 应用在渲染画布上）。
-  const CURSOR_ROOT = '/res/image/sinimage/cursor/';
-  const cursorUrlCache = new Map<string, string>();
-  let lastCursorUrl: string | null = null;
   let cursorProbeAt = 0;
-  let cursorModeNow: 'default' | 'pickup' | 'attack' | 'talk' = 'default';
   let mouseSeen = false;
 
   // ---- hover 发光外轮廓（design-hover-outline.md）----
@@ -534,55 +579,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  async function cursorDataUrl(file: string): Promise<string | null> {
-    try {
-      const buf = await cachedFetch(CURSOR_ROOT + file);
-      const dec = await decodeTextureAsync(buf);
-      if (!dec) return null;
-      const c = document.createElement('canvas');
-      c.width = dec.width;
-      c.height = dec.height;
-      const ctx = c.getContext('2d')!;
-      const img = ctx.createImageData(dec.width, dec.height);
-      img.data.set(dec.pixels);
-      ctx.putImageData(img, 0, 0);
-      return c.toDataURL('image/png');
-    } catch (e) {
-      console.warn('[cursor] 加载失败 ' + file, e);
-      return null;
-    }
-  }
-
-  function cursorFileOf(mode: string): string {
-    switch (mode) {
-      case 'pickup': return mouseDown ? 'getitem_cursor2.tga' : 'getitem_cursor1.tga';
-      case 'attack': return 'attack_cursor.tga';
-      case 'talk': return 'talk_cursor.tga';
-      default: return 'defaultcursor.tga';
-    }
-  }
-
-  function applyCursorStyle(mode: 'default' | 'pickup' | 'attack' | 'talk'): void {
-    cursorModeNow = mode;
-    const file = cursorFileOf(mode);
-    const cached = cursorUrlCache.get(file);
-    if (cached !== undefined) {
-      if (cached && cached !== lastCursorUrl) {
-        lastCursorUrl = cached;
-        if (renderer) renderer.domElement.style.cursor = `url("${cached}") 3 3, auto`;
-      }
-      return;
-    }
-    cursorUrlCache.set(file, ''); // 占位防并发重复请求
-    void cursorDataUrl(file).then(u => {
-      const url = u || '';
-      cursorUrlCache.set(file, url);
-      if (url && url !== lastCursorUrl && cursorModeNow === mode) {
-        lastCursorUrl = url;
-        if (renderer) renderer.domElement.style.cursor = `url("${url}") 3 3, auto`;
-      }
-    });
-  }
 
   /** 命中的 object 向上找到所属的 root（多为 group 树，命中点在深层 mesh） */
   function rootOfGroup(hitObj: THREE.Object3D, roots: THREE.Object3D[]): THREE.Object3D {
@@ -609,6 +605,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ray.setFromCamera(ndc, camera);
     ray.far = PICK_RAY_FAR;
 
+    // **名牌也是拾取目标**（用户 2026-09-13：地上的道具太难捡）：
+    // 鼠标落在某块名牌的矩形内 → 直接把它对应的目标当作 hover 目标（与射线命中同一出口）。
+    const tagHit = nameplateHits.find((b) =>
+      cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h);
+    if (tagHit) {
+      hoverTarget = { root: tagHit.root, color: tagHit.color };
+      setCursorMode(tagHit.cursor, mouseDown);
+      return;
+    }
+
     const pf = buildPickFrustum();
     const roots: THREE.Object3D[] = [];
     for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) roots.push(g.root);
@@ -619,7 +625,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const hit = ray.intersectObjects(roots, true);
     if (hit.length === 0) {
       hoverTarget = null;
-      applyCursorStyle('default');
+      setCursorMode('default', mouseDown);
       return;
     }
     const root = rootOfGroup(hit[0].object, roots);
@@ -627,23 +633,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     switch (kind) {
       case 'item':
         hoverTarget = { root, color: HOVER_COLOR_ITEM };
-        applyCursorStyle('pickup');
+        setCursorMode('pickup', mouseDown);
         break;
       case 'monster':
         hoverTarget = { root, color: HOVER_COLOR_MONSTER };
-        applyCursorStyle('attack');
+        setCursorMode('attack', mouseDown);
         break;
       case 'npc':
         hoverTarget = { root, color: HOVER_COLOR_NPC };
-        applyCursorStyle('talk');
+        setCursorMode('talk', mouseDown);
         break;
       case 'player':
         hoverTarget = { root, color: HOVER_COLOR_PLAYER };
-        applyCursorStyle('default');
+        setCursorMode('default', mouseDown);
         break;
       default:
         hoverTarget = { root, color: HOVER_COLOR_ITEM };
-        applyCursorStyle('default');
+        setCursorMode('default', mouseDown);
         break;
     }
   }
@@ -695,6 +701,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const MOVE_REPORT_MS = 40;    // 移动中上报节奏 ≈25Hz（服务端 20Hz tick 消费）
   /** "按坐标检查区域是否已加载"的节流（跑图时最多每 500ms 查一次 AABB，开销可忽略） */
   const REGION_CHECK_MS = 500;
+  /**
+   * 单次碰撞探测的位移上限（raw）。一帧的位移按它切成几次 `checkNextMove`。
+   * 取 449 = 原版本地玩家**跑步基准**每 tick 的位移（`(MoveSpeed*460)>>8`，MoveSpeed=250，
+   * 70Hz 每 tick 一次；原版全程 449~592 raw）。我们的速度上限比原版高，若一次走完整帧位移，
+   * 碰撞采样点密度就比原版稀（高速时掠过薄墙/窄缝、跨过小台阶；掉帧 dt 夹到 0.1s 时单次可达 8000+ raw）。
+   * 这是**碰撞粒度**（CCD 采样密度），不是速度上限 —— 速度仍由服务端下发的 walk/run 决定。
+   */
+  const MAX_SUBSTEP_RAW = 449;
+  /**
+   * 参与碰撞的图，按"以玩家为中心的这个半径"与图的 AABB **相交**来选（世界单位）。
+   *
+   * ⚠ 不能用"玩家坐标点落在哪个 AABB 内"：地图边界处常有**平行于边界**的墙，
+   * 玩家坐标一越界，整张相邻图就会被排除 → 那堵墙直接失效（用户 2026-09-13 指出）。
+   *
+   * ⚠ 该半径**必须等于取附近三角形的半径**（`NEARBY_RADIUS_UNITS`，= 原版 MakeAreaFaceList 的 ±64u）：
+   * 两个距离若不同，就会出现"面取得到、但那张图没被选进来"的漏洞（用户 2026-09-13 定）。
+   * 于是"任何可能被取到的面，其所属图必在集合里"成为结构性保证，而不是靠估算。
+   * 半径大只会**多挡不少挡**（判定是"任一面命中即挡"）。
+   */
+  const COLLIDE_MAP_RADIUS = NEARBY_RADIUS_UNITS;
+
+  /**
+   * 碰撞调试可视化（用户 2026-09-13 指定三项：碰撞网格 / 当前参与碰撞的面 / 角色碰撞器）。
+   * 开关：URL `?coll=1`、按 **F9**、或控制台 `worldView.setCollisionDebug(true)`。
+   * 关闭时 `collisionProbe.sink = null` → 判定路径零开销。
+   */
+  const collisionDebug = new CollisionDebug();
+  /** 边界门槛提示的节流（别每帧都刷屏） */
+  let lastGateMsgAt = 0;
   // 掉落状态（对齐原版：下落有 FALLDOWN 动画，下落中不能水平移动/转向）
   let falling = false;          // 是否正在下落
   let fallHeight = 0;           // 下落起始高度差（触发 FALLDAMAGE 判定）
@@ -1003,6 +1038,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (npCtx) npCtx.setTransform(dpr, 0, 0, dpr, 0, 0); // 绘制用 CSS px
     root.appendChild(npOverlay);
     scene = new THREE.Scene();
+    collisionDebug.attach(scene);
+    try {
+      const q = new URLSearchParams(location.search);
+      // 调试开关（URL 显式意图才生效，正常游戏不带）：
+      //   ?coll=1 碰撞可视化；?nan=1 只在 three 报"包围球 NaN"时自动定位是哪个对象
+      if (q.get('coll') === '1') collisionDebug.setEnabled(true);
+      if (q.get('coll') === '1' || q.get('nan') === '1') {
+        installNaNGeometryWatch(scene);
+        console.log('[nan-scan] 已挂上包围球 NaN 定位钩子（three 报错时自动打印对象链）；也可随时 worldView.scanNaNGeometry()');
+      }
+    } catch { /* 非浏览器环境忽略 */ }
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
     // 官方后处理管线：RenderPass(主场景) → OutlinePass(hover 发光描边) → OutputPass(色彩空间输出)
@@ -1731,7 +1777,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (e.button === 0) {
       // 指向可交互目标（掉落物/怪物/玩家）：整次按压都视为"点击目标"，禁用按住跑，
       // 抬起时做拾取/选目标（原版点目标 vs 按住空地跑 的分界）
-      const overTarget = pickGroundItemIdByRay(e.clientX, e.clientY) !== undefined
+      // 名牌也算"点在目标上"（否则按在名牌上会被当成"按住空地朝光标跑"）
+      const overTarget = nameplateTargetAt(e.clientX, e.clientY) !== null
+        || pickGroundItemIdByRay(e.clientX, e.clientY) !== undefined
         || pickMonsterIdByRay(e.clientX, e.clientY) !== undefined
         || pickPlayerIdByRay(e.clientX, e.clientY) !== undefined
         || pickNpcIdByRay(e.clientX, e.clientY) !== undefined;
@@ -1749,7 +1797,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         mouseDown = true;
       }
       // 拾取光标按下态（GetItem2）即时刷新
-      if (cursorModeNow === 'pickup') applyCursorStyle('pickup');
+      if (getCursorMode() === 'pickup') setCursorMode('pickup', mouseDown);
     }
   }
   function onMouseUp(e: MouseEvent): void {
@@ -1769,9 +1817,30 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
       // 拾取光标抬起态刷新（GetItem2 → GetItem1）
-      if (cursorModeNow === 'pickup') applyCursorStyle('pickup');
+      if (getCursorMode() === 'pickup') setCursorMode('pickup', mouseDown);
       // 停止上报由 renderLoop 检测 wasMoving→false 时带当前位置发送，保证位置是真正停点
     }
+  }
+
+  /**
+   * 鼠标落在哪块名牌上 —— 返回它对应的目标（id + 类型）。
+   * 与悬停检测共用 `nameplateHits`（同一份矩形表），所以"看得到高亮的"就"点得中"：
+   * 用户 2026-09-13 实测指出，名牌只接了悬停、点击仍走射线 → 点名牌选不中目标。
+   * 类型靠记录时带的 `cursor` 反推（pickup=掉落物 / attack=怪物 / talk=NPC / 其余=远端玩家），id 由 root 反查。
+   */
+  function nameplateTargetAt(cx: number, cy: number): { kind: 'item' | 'monster' | 'player' | 'npc'; id: number } | null {
+    const hit = nameplateHits.find((b) => cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h);
+    if (!hit) return null;
+    if (hit.cursor === 'pickup') {
+      for (const [id, g] of groundItems) if (g.root === hit.root) return { kind: 'item', id };
+    } else if (hit.cursor === 'attack') {
+      for (const [id, m] of monsters) if (m.root === hit.root) return { kind: 'monster', id };
+    } else if (hit.cursor === 'talk') {
+      for (const [id, n] of npcs) if (n.root === hit.root) return { kind: 'npc', id };
+    } else {
+      for (const [id, r] of remotes) if (r.root === hit.root) return { kind: 'player', id };
+    }
+    return null;
   }
 
   /** 点击交互（对齐原版目标式操作，无"点地板行走"）：
@@ -1784,8 +1853,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     //   点目标/物品（选目标、开打）→ `AutoCameraFlag = FALSE`（不打镜头）
     //   点空地（走路）→ `AutoCameraFlag = TRUE`（跑起来镜头回正）
     // 这里在每条"选中目标"的分支里置 false，落到最后的空地分支再置 true。
+    // 名牌命中 → 视同射线打中了那个目标；否则再走射线。
+    // （这样后面的"够近就拾取 / 否则 Chase"逻辑完全复用，不另写一份）
+    const tag = nameplateTargetAt(cx, cy);
     // 1) 掉落物
-    const itemId = pickGroundItemIdByRay(cx, cy);
+    const itemId = tag?.kind === 'item' ? tag.id : pickGroundItemIdByRay(cx, cy);
     if (itemId !== undefined) {
       setAutoRecenter(false);
       const g = groundItems.get(itemId);
@@ -1818,7 +1890,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
     // 2) 怪物
-    const mobId = pickMonsterIdByRay(cx, cy);
+    const mobId = tag?.kind === 'monster' ? tag.id : pickMonsterIdByRay(cx, cy);
     if (mobId !== undefined) {
       setAutoRecenter(false);
       moveTarget = { kind: 'monster', id: mobId };
@@ -1826,7 +1898,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     // 3) 其他玩家（跟随目标，实时取位）
-    const pid2 = pickPlayerIdByRay(cx, cy);
+    const pid2 = tag?.kind === 'player' ? tag.id : pickPlayerIdByRay(cx, cy);
     if (pid2 !== undefined) {
       setAutoRecenter(false);
       moveTarget = { kind: 'player', id: pid2 };
@@ -1834,7 +1906,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     // 3b) NPC → Chase 走近（到位后触发对话，对话逻辑后续接入）
-    const npcId = pickNpcIdByRay(cx, cy);
+    const npcId = tag?.kind === 'npc' ? tag.id : pickNpcIdByRay(cx, cy);
     if (npcId !== undefined) {
       setAutoRecenter(false);
       moveTarget = { kind: 'npc', id: npcId };
@@ -1950,8 +2022,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function onMouseLeave(): void {
     mouseSeen = false;
     hoverTarget = null;
-    lastCursorUrl = null;
-    if (renderer) renderer.domElement.style.cursor = 'auto';
+    // 离开 canvas（通常就是滑到了 UI 面板上）：UI 也用原版光标，所以恢复 default 而不是系统 auto
+    initCursor();
   }
 
   // 判断角色所属地图（对齐服务端 MapRegionService.findMapPrecise）：
@@ -2550,7 +2622,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selected: boolean;
   }
   /** 在锚点 (x,y) 上方画一块名牌：名牌块(名字+公会)尺寸恒定；血条出现时仅让整块上移，自身不变高 */
-  function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): void {
+  /**
+   * 画一块名牌，并**返回它的屏幕矩形**（覆盖名牌块与血条）。
+   * 返回矩形是给鼠标拾取用的：用户 2026-09-13 要"指向名牌 = 指向该目标"——
+   * 由绘制方给出矩形，命中判定与绘制共用同一份几何，不会各写一套后漂移。
+   */
+  function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): { x: number; y: number; w: number; h: number } {
     const NAME_FONT = '13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
     const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
     ctx.font = NAME_FONT;
@@ -2576,6 +2653,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       rrect(ctx, x - pillW / 2, blockTop, pillW, blockH, 4);
       ctx.stroke();
     }
+    // 命中矩形：从名牌块顶边到锚点 y（含血条），宽度取"名牌块 / 血条"的较宽者
+    const hitW = Math.max(pillW, s.showHp ? HP_BAR_W + 16 : pillW);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -2594,6 +2673,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (s.showHp) {
       drawHpBar(ctx, x, blockBottom + GAP, HP_BAR_W + 4, HP_BAR_H, s.ratio);
     }
+
+    // 命中矩形：从名牌块顶边到锚点 y（含下方血条），宽度取较宽者 —— 供"指向名牌 = 指向目标"
+    const hitTop = blockTop;
+    const hitBottom = s.showHp ? blockBottom + GAP + HP_BAR_H : blockBottom;
+    return { x: x - hitW / 2, y: hitTop, w: hitW, h: Math.max(1, hitBottom - hitTop) };
   }
 
   /** 血条（圆形玻璃质感）: 深色外轮廓 → 深色槽 → 渐变填充 + 顶部高光 */
@@ -2646,7 +2730,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 0) 解除死亡态：尸体起身（DEAD 是唯一需要显式解除的状态，stance 同步包推不动它）
     selfDead = false;
     animState?.resurrect();
-    // 1) 先打断本地移动/追击/下落 —— 否则复活后仍会朝旧目标跑，或被"下落中"状态接管
+    await applyTeleport(info);
+    // 血量（半血）：HUD 数字由随后的 S2C_PlayerState 刷新，这里同步血条与名牌
+    if (info.maxHp > 0) setSelfHp(info.hp, info.maxHp);
+    else selfHp = info.hp;
+    console.log('[WorldView] 复活: map=' + info.mapId + ' hp=' + info.hp + '/' + info.maxHp);
+  }
+
+  /** 不连续位移的公共实现（复活 / 脱困 / 未来传送门都用它 —— 只写一份"怎么搬人"） */
+  async function applyTeleport(info: { mapId: number; x: number; y: number; z: number; angle?: number }): Promise<void> {
+    if (!scene || !charGroup) return; // 未进图：忽略（下次 enterGame 会用服务端给的出生点）
+    // 1) 先打断本地移动/追击/下落 —— 否则传送后仍会朝旧目标跑，或被"下落中"状态接管
     moveTarget = null;
     moveStuckStart = 0;
     mouseDown = false;
@@ -2654,36 +2748,65 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     falling = false;
     fallHeight = 0;
 
-    // 2) y：服务端已按**目标地图**地形算过；为 0（该点无可站立地面）时用本地地形补，
-    //    否则复活瞬间就会自由落体（那个坏 y 还会被写回存档，见服务端 respawnPlayer 注释）。
-    let wy = info.y;
-    if (!(wy > 0)) {
-      const cm = collisionMeshes.get(info.mapId);
-      const h = cm?.getFloorHeight(info.x * 256, info.z * 256, 0);
-      if (h?.found) wy = h.height / 256;
-      else reportFallback('respawn', `复活点无地形数据 map=${info.mapId} (${info.x},${info.z}) → 用服务端 y=${info.y}`);
-    }
-    selfPos.set(info.x, wy, info.z);
-    charGroup.position.copy(selfPos);
-    charGroup.userData.teleportedAt = performance.now(); // 供调试/后续做复活特效锚点
-
-    // 3) 换图：目标图可能还没加载（复活点与当前图不同）→ **等加载完再继续**，
-    //    调用方（main.ts）据此在期间显示加载遮罩（原版做法：加载界面盖住，好了再进画面）
+    // 2) **先把目标图加载好，再切图并设置位置** —— 顺序不能反：
+    //    旧顺序是"先设位置、再 await 加载"，而 await 期间渲染循环照跑，updateFalling 会拿
+    //    "新坐标 + 新图还没进 collisionMeshes"去查地面 → 查不到 → 从虚空逐帧下落
+    //    （用户 2026-09-13 实测：卷轴传送到内维斯克、死亡回村庄都"掉到地图外面"）。
+    //    先加载的好处：期间角色仍在旧图旧位置（旧图有碰撞面）→ 不会掉；调用方用加载遮罩盖住。
     if (info.mapId !== currentMapId) {
       await loadMapById(info.mapId);
-      currentMapId = info.mapId;
+      // ⚠ 加载**失败**时 (图不存在/被取消) 绝不能改坐标：那会变成"新坐标 + 没有碰撞网格"，
+      // updateFalling 查不到地面 → 从虚空下坠掉出地图（这正是跨图传送/复活的坑）。
+      // 保持原位并留痕，等服务端下一次同步或重登。
+      if (!collisionMeshes.has(info.mapId)) {
+        reportFallback('teleport:mapNotLoaded',
+          `目标图 map ${info.mapId} 未加载成功 → 保持原位不动（避免掉出地图）`);
+        return;
+      }
+      currentMapId = info.mapId;      // 与下面的设位置在同一帧内完成，不产生"新图 + 旧位置"
       mapAudio.enterMap(currentMapId);
-      await syncMapRegions(currentMapId);
     }
+
+    // 3) y：服务端已按**目标地图**地形算过；为 0（该点无可站立地面）时用本地地形补，
+    //    否则传送瞬间就会自由落体（那个坏 y 还会被写回存档，见服务端 applyRelocation 注释）。
+    let wy = info.y;
+    if (!(wy > 0)) {
+      // 用**合并视图**取该点最高可站立面（与 updateFalling 同一实现）：只查目标图会在
+      // 边界/AABB 缝隙处取不到面，白白退化成服务端的 y=0。
+      groundCollision.setSourceIds(null);
+      const h = groundCollision.getFloorHeight(info.x * 256, info.z * 256, 0);
+      if (h.found) wy = h.height / 256;
+      else reportFallback('respawn', `传送点无地形数据 map=${info.mapId} (${info.x},${info.z}) → 用服务端 y=${info.y}`);
+    }
+    selfPos.set(info.x, wy, info.z);
+    if (info.angle !== undefined) { selfAngle = info.angle; charGroup.rotation.y = selfAngle; }
+    charGroup.position.copy(selfPos);
+    charGroup.userData.teleportedAt = performance.now(); // 供调试/后续做传送特效锚点
+
+    // 4) 区域同步（当前图 + 邻图预加载）。位置与 currentMapId 此时已一致，mapsInRange 用的是新坐标。
+    await syncMapRegions(currentMapId);
     animState?.reselectForCurrentState(); // 村庄↔野外姿态随图变
 
-    // 4) 血量（半血）：HUD 数字由随后的 S2C_PlayerState 刷新，这里同步血条与名牌
-    if (info.maxHp > 0) setSelfHp(info.hp, info.maxHp);
-    else selfHp = info.hp;
+    console.log('[WorldView] 传送: map=' + info.mapId
+      + ' world=(' + info.x.toFixed(1) + ',' + wy.toFixed(1) + ',' + info.z.toFixed(1) + ')');
+  }
 
-    console.log('[WorldView] 复活: map=' + info.mapId
-      + ' world=(' + info.x.toFixed(1) + ',' + wy.toFixed(1) + ',' + info.z.toFixed(1) + ')'
-      + ' hp=' + info.hp + '/' + info.maxHp);
+  /** 旁观者侧的传送：换图了就摘掉（不在本图视野内），否则直接搬 actor 并清插值快照 */
+  function teleportRemote(playerId: number, info: { mapId: number; x: number; y: number; z: number; angle?: number }): void {
+    const actor = remotes.get(playerId);
+    if (!actor) return;
+    if (info.mapId !== currentMapId) { despawnRemote(playerId); return; }
+    actor.root.position.set(info.x, info.y, info.z);
+    if (info.angle !== undefined) actor.root.rotation.y = info.angle;
+    // 清快照 + 塞一条"当前时刻"的点：否则插值会从旧位置平滑滑过去（看起来像瞬移失败/穿墙）
+    actor.snaps.length = 0;
+    actor.snaps.push({
+      t: performance.now(), x: info.x, y: info.y, z: info.z,
+      angle: info.angle ?? actor.root.rotation.y,
+      // anim 用**原版状态码**（snaps 的约定见 updateMonsters/playerMove：存的是服务端下发的码，
+      // 由 setRemoteAnim 翻译成状态机状态），不是 state machine 的 STATE 枚举
+      anim: actor.lastAnimState,
+    });
   }
 
   /**
@@ -2717,6 +2840,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setSelfName(name: string): void {
     selfName = name;
   }
+  function setSelfLevel(level: number): void {
+    if (Number.isFinite(level) && level > 0) selfLevel = level;
+  }
+
   /** 自机发起攻击 → 进入战斗窗口 */
   function markSelfCombat(): void {
     selfCombatUntil = performance.now() + COMBAT_WINDOW_MS;
@@ -2926,6 +3053,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
+  /** 本帧所有名牌的屏幕矩形（供鼠标拾取：指向名牌 = 指向目标）；每帧重建 */
+  const nameplateHits: { x: number; y: number; w: number; h: number; root: THREE.Object3D; color: number; cursor: 'default' | 'pickup' | 'attack' | 'talk' }[] = [];
+
+  /** 记录一块名牌的命中区（与绘制出的矩形同源） */
+  function recordPill(box: { x: number; y: number; w: number; h: number } | null, root: THREE.Object3D, color: number, cursor: 'default' | 'pickup' | 'attack' | 'talk'): void {
+    if (!box) return;
+    nameplateHits.push({ ...box, root, color, cursor });
+  }
+
   function drawNameplateOverlay(): void {
     const ctx = npCtx;
     if (!ctx) return;
@@ -2933,6 +3069,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const W = ov.clientWidth, H = ov.clientHeight;
     if (W <= 0 || H <= 0) return;
     ctx.clearRect(0, 0, W, H);
+    nameplateHits.length = 0;               // 每帧重建（与绘制同步）
     const now = performance.now();
 
     // 掉落物：hover 命中 或 A 键开启且在附近范围内 → 白字名牌
@@ -2946,9 +3083,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const pt = anchorToScreen(g.root, g.topY);
       if (!pt) continue;
-      drawPill(ctx, pt.x, pt.y, g.name || '', {
+      recordPill(drawPill(ctx, pt.x, pt.y, g.name || '', {
         nameColor: '#ffffff', showHp: false, ratio: 1, selected: hovered,
-      });
+      }), g.root, HOVER_COLOR_ITEM, 'pickup');
     }
 
     // NPC：名牌 12 格(768)内常显（浅蓝），选中/悬停不受距离限制；对齐 exm NPC RendPoint.z < 12*64*fONE
@@ -2961,10 +3098,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { continue; }
-      drawPill(ctx, pt.x, pt.y, t(`npc.${a.nameKey}.name`), {
+      recordPill(drawPill(ctx, pt.x, pt.y, t(`npc.${a.nameKey}.name`), {
         nameColor: sel ? '#ffffff' : '#a8d8ff',
         showHp: false, ratio: 0, selected: sel,
-      });
+      }), a.root, HOVER_COLOR_NPC, 'talk');
     }
 
     // 怪物：范围内常显；远处仅"悬停/点击选中"才显示（对齐 exm：普通怪名的默认行为是选中才显示）
@@ -2977,12 +3114,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { continue; }
       const showHp = sel || a.stateBar || (a.maxHp > 0 && a.hp < a.maxHp);
-      drawPill(ctx, pt.x, pt.y, a.name || '', {
+      recordPill(drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: '#ff8080',
         showHp,
         ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
         selected: sel,
-      });
+      }), a.root, HOVER_COLOR_MONSTER, 'attack');
     }
 
     // 远端玩家：名牌常显（淡黄），选中变白；血条 = 血不满；有公会显示公会名
@@ -2991,13 +3128,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { continue; }
       const sel = isSelected(a.root);
-      drawPill(ctx, pt.x, pt.y, a.name || '', {
+      recordPill(drawPill(ctx, pt.x, pt.y, a.name || '', {
         nameColor: sel ? '#ffffff' : '#ffe9a8',
         clan: a.clanName || undefined,
         showHp: a.maxHp > 0 && a.hp < a.maxHp,
         ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
         selected: sel,
-      });
+      }), a.root, HOVER_COLOR_PLAYER, 'default');
     }
 
     // 自机：名牌常显；血条 = 战斗中（3s 窗口）或血不满
@@ -3582,10 +3719,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * （为处理桥口：图 AABB 外但网格有面），跨图边界时旧图的地面还兜着脚 → 它会一直判回旧图。
    * 而"该不该预加载某张图"要看**坐标属于谁**，不是"脚下此刻踩的是谁"。
    */
-  function mapsAtPoint(wx: number, wz: number): number[] {
+  function mapsInRange(wx: number, wz: number, r: number): number[] {
     const out: number[] = [];
     for (const [mapId, [xMin, xMax, zMin, zMax]] of allBounds) {
-      if (wx >= xMin && wx <= xMax && wz >= zMin && wz <= zMax) out.push(mapId);
+      // ⚠ **相交**判定，不是点包含：边界处平行于边界的墙要靠它才不会被漏掉。
+      if (wx + r < xMin || wx - r > xMax || wz + r < zMin || wz - r > zMax) continue;
+      out.push(mapId);
     }
     return out;
   }
@@ -3598,7 +3737,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // currentMapId 不变 → syncMapRegions 不被调用 → 新图永远不加载，也就永远走不进去。
     // 用户实测：从内维斯克(navisko,9) 往东跑，古代战场(desert3,11) 一直刷不出来，重进游戏才出现
     // （重进走的是服务端给的 mapId，直接 syncMapRegions(9)，所以正常）。
-    for (const id of mapsAtPoint(selfPos.x, selfPos.z)) {
+    for (const id of mapsInRange(selfPos.x, selfPos.z, COLLIDE_MAP_RADIUS)) {
       wanted.add(id);
       for (const n of neighborMaps(id)) wanted.add(n);   // 即将进入的图，它的邻居也要跟上
     }
@@ -3635,6 +3774,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     mh.mapRenderer.dispose?.();
     mapHandles.delete(mapId);
     collisionMeshes.delete(mapId);
+    collisionDebug.forgetMap(mapId);
     const dg = decorGroups.get(mapId);
     if (dg && scene) { unloadDecor(dg, scene); decorGroups.delete(mapId); }
     console.log('[WorldView] 卸载地图' + mapId);
@@ -3678,32 +3818,63 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const sz = selfPos.z * 256;
     const rawAngle = selfAngle;
 
-    // 跨图碰撞：遍历所有已加载图的碰撞网格，取第一个能走的（对齐原版双 stage）；
-    // 解决桥等跨图边界：桥前半在 A 图、后半在 B 图，单图碰撞会让角色在交界处掉落。
+    // 一帧的位移**切成若干次 ≤MAX_SUBSTEP_RAW 的调用**。
+    // 原版每 tick 只走一小步（70Hz：跑 449~592 raw，走路 175~232），碰撞粒度就是这个量级；
+    // 而我们的速度上限比原版高（档位 51 → 1365 raw/帧 @60fps ≈ 原版上限 592 的 2.3 倍），
+    // 一次调用走完整帧位移等于把探测点直接扔到远端 —— 高速时掠过薄墙/窄缝、跨过小台阶，
+    // 掉帧时（dt 被夹到 0.1s）单次位移甚至可达 8000+ raw。故按原版粒度分子步，
+    // **不改速度**，只改碰撞的采样密度。
+    let remainingRaw = dist * 256;
     let moved = false;
-    for (const cm of collisionMeshes.values()) {
-      const result = cm.checkNextMove(sx, sy, sz, rawAngle, dist * 256);
-      if (!result.collision) {
-        selfPos.x = result.x / 256;
-        // 诊断：单步大幅下沉（下坡/穿透放行）打印决策
-        if (result.y < sy - 8 * 256) {
-          let alts = '';
-          for (const [mid, c2] of collisionMeshes) {
-            const j = c2.getFloorHeight(result.x, result.z, sy);
-            alts += ` m${mid}:${j.found ? (j.height / 256).toFixed(1) : '无'}`;
-          }
-          console.log(`[pen] step=${step} 前y=${(sy / 256).toFixed(1)} 新地面=${(result.y / 256).toFixed(1)} 新x=${(result.x / 256).toFixed(1)} 新z=${(result.z / 256).toFixed(1)}${alts}`);
-        }
-        // 下坡/贴地：非大幅下坠才采纳结果 y（大幅下坠交给 updateFalling 逐帧下落）
-        if (result.y >= sy - 8 * 256) {
-          selfPos.y = result.y / 256;
-        }
-        selfPos.z = result.z / 256;
-        moved = true;
+    let curX = sx, curY = sy, curZ = sz;   // raw 坐标，逐子步推进
+    while (remainingRaw > 0) {
+      const stepRaw = Math.min(remainingRaw, MAX_SUBSTEP_RAW);
+      // 参与判定的图 = **玩家坐标 AABB 命中**的已加载图（+ 当前图兜底，应对 AABB 缝隙/桥口）。
+      // 这取代了旧的"当前图优先、被挡再试别的图"：那种做法会让另一张图给出的"能走"
+      // 顶掉当前图的墙（用户实测的穿空气墙），而且每张图各跑一遍完整判定（更慢）。
+      // 现在只有一份判定，任何一张图的墙都算墙 —— 与地图怎么切分无关。
+      moveSources.clear();
+      for (const id of mapsInRange(curX / 256, curZ / 256, COLLIDE_MAP_RADIUS)) {
+        if (collisionMeshes.has(id)) moveSources.add(id);
+      }
+      // 当前图无条件加入：它的存在只会**多挡**（判定是"任一面命中即挡"），不会少挡；
+      // 而万一坐标落在所有 AABB 之外（桥口/AABB 缝隙）或 currentMapId 判偏，它保证还有几何可用。
+      if (collisionMeshes.has(currentMapId)) moveSources.add(currentMapId);
+      moveCollision.setSourceIds(moveSources);
+      const r = moveCollision.checkNextMove(curX, curY, curZ, rawAngle, stepRaw);
+      if (r.collision) {
+        // 这一小步走不动就停（保留本帧已走过的部分，不再强推剩余位移）
         break;
       }
+      // 跨图边界的**等级门槛**（原版：等级不够最多只能跑到地图边缘）。
+      // 判"这一步会走到哪张图"是**地图身份**的事，故仍用 findCurrentMap —— 与碰撞无关。
+      // 与主服务端 `MapManager.canEnter` 同一份数据（`maplist.levelreq` 经 S2C_EnterGame.maps 下发）。
+      // 未知图（表里没有）→ 不拦：宁可不挡，也不要凭空挡住玩家。
+      {
+        const destMap = findCurrentMap(r.x / 256, r.z / 256);
+        if (destMap !== currentMapId) {
+          const verdict = canEnterMap(destMap, selfLevel);
+          if (verdict === 'level' || verdict === 'locked') {
+            if (rafMs - lastGateMsgAt > 1500) {
+              lastGateMsgAt = rafMs;
+              appendSystemMessage(t(verdict === 'locked' ? 'map.notOpen' : 'map.levelTooLow',
+                { level: mapLevelRequirement(destMap) ?? 0 }), Date.now());
+            }
+            break;   // 停在这一步（保留本帧已走的距离）
+          }
+        }
+      }
+      curX = r.x;
+      // 下坡/贴地：非大幅下坠才采纳结果 y（大幅下坠交给 updateFalling 逐帧下落）
+      if (r.y >= curY - 8 * 256) curY = r.y;
+      curZ = r.z;
+      moved = true;
+      remainingRaw -= stepRaw;
     }
     if (moved) {
+      selfPos.x = curX / 256;
+      selfPos.y = curY / 256;
+      selfPos.z = curZ / 256;
       // 换图：移动后用 AABB+高度精确判定所属地图，跨图时同步地图区域（2 跳内保留）
       const foundMap = findCurrentMap(selfPos.x, selfPos.z);
       if (foundMap !== currentMapId && rafMs - lastMapSwitch > 200) {
@@ -3719,7 +3890,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 于是玩家会看到东边一片空白且再也刷不出来（用户实测的古代战场）。
       if (rafMs - lastRegionCheck > REGION_CHECK_MS) {
         lastRegionCheck = rafMs;
-        if (mapsAtPoint(selfPos.x, selfPos.z).some(id => !mapHandles.has(id) && !regionLoading.has(id))) {
+        if (mapsInRange(selfPos.x, selfPos.z, COLLIDE_MAP_RADIUS).some(id => !mapHandles.has(id) && !regionLoading.has(id))) {
           void syncMapRegions(currentMapId);
         }
         // 延迟卸载也在这里到期检查（与加载检查同一节奏，无需另设定时器）
@@ -3737,14 +3908,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 下落中 mouseFacing 返回 null → 不能水平移动/转向。
   function updateFalling(): boolean {
     if (!animState) return false;
+    // 当前图还没进碰撞集合（换图/传送的加载瞬时）→ 不能把"查不到地面"当成虚空往下掉，
+    // 那会把角色一路丢出地图（用户实测）。等图就绪后再按正常逻辑落地。
+    if (!collisionMeshes.has(currentMapId)) return false;
     const rawX = selfPos.x * 256;
     const rawZ = selfPos.z * 256;
     const pY = selfPos.y * 256;
     let groundY = -80 * 256; // 悬空 → 虚空
-    for (const cm of collisionMeshes.values()) {
-      const h = cm.getFloorHeight(rawX, rawZ, pY);
-      if (h.found && h.height > groundY) groundY = h.height;
-    }
+    groundCollision.setSourceIds(null);   // 地面：全部已加载图（取最高，范围大无副作用）
+    const gh = groundCollision.getFloorHeight(rawX, rawZ, pY);
+    if (gh.found) groundY = gh.height;
     const diff = pY - groundY;
 
     if (diff > 8 * 256) {
@@ -3939,6 +4112,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
     const moved = updateMovement(dt, targetFace); // falling 中 mouseFacing=null → 不移动
+    // 碰撞调试可视化：每帧刷 T 形线/碰撞盒，候选面与各图地面按 100ms 节流重建
+    if (collisionDebug.isEnabled()) {
+      const stepNow = (running ? selfRunWps : selfWalkWps) * Math.min(dt, 0.1);
+      collisionDebug.update({
+        meshes: collisionMeshes,
+        x: selfPos.x, y: selfPos.y, z: selfPos.z,
+        angle: selfAngle,
+        step: stepNow,
+        bodyWidth: OBJ_WIDTH_RAW / 256,
+        bodyHeight: OBJ_HEIGHT_RAW / 256,
+        substep: Math.min(stepNow, MAX_SUBSTEP_RAW / 256),
+      });
+    }
     // 卡住检测：连续 ~0.9s 无法接近目标（撞墙/不可达）→ 放弃寻路
     if (moveTarget && !targetReached && !isRooted() && !monsterEngaged) {
       if (moved) {
@@ -4175,6 +4361,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     });
   }
 
+  playEatRequest = () => {
+    void (animState?.triggerEat() ?? false);   // 失败已在状态机里 reportFallback
+    sfx.play('/res/wav/effects/items/potion.wav');
+  };
+
   return {
     async show(enterGame, hooks) {
       loadHooks = hooks ?? null;
@@ -4280,6 +4471,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 名牌/血条数据（main.ts 消息派发喂入；design-nameplate-hpbar.md）
     setSelfHp,
     setSelfName,
+    setSelfLevel,
+    playEat: () => {
+      const ok = animState?.triggerEat() ?? false;
+      sfx.play('/res/wav/effects/items/potion.wav');
+      return ok;
+    },
+    setCollisionDebug: (on: boolean) => collisionDebug.setEnabled(on),
+    isCollisionDebug: () => collisionDebug.isEnabled(),
+    scanNaNGeometry: () => {
+      if (!scene) return [];
+      const hits = scanNaNGeometry(scene);
+      reportNaNGeometry(hits, '(worldView.scanNaNGeometry 手动扫描)');
+      return hits;
+    },
     markSelfCombat,
     applyUnitHp,
     applyMonsterHit,
@@ -4290,6 +4495,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     onTakeDamage,
     showFloater,
     applyRespawn,
+    applyTeleport,
+    teleportRemote,
     applyPlayerDeath,
     respawnNeedsMapLoad: (mapId: number) => !!scene && mapId !== currentMapId,
     applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '') => {

@@ -5,13 +5,14 @@ import {
   allocateStat,
   useSkill,
   inventoryMove,
+  takeToHand,
   equipItem,
-  unequipItem,
   dropItem,
   switchWeapon,
   pickupItem,
   bagLayout,
   stackMerge,
+  useItem,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -208,20 +209,28 @@ export function sendInventoryMove(uid: number, toLocation: number, toSlot: numbe
   send(inventoryMove(uid, toLocation, toSlot));
 }
 
+/** 拿起 → 鼠标位（装备栏 slot=-1）。服务端权威：移动位置 + 撤装备效果 + 断线可恢复。 */
+export function sendTakeToHand(uid: number): void {
+  send(takeToHand(uid));
+}
+
 export function sendEquipItem(uid: number, equipSlot: number): void {
   send(equipItem(uid, equipSlot));
 }
 
-export function sendUnequipItem(equipSlot: number): void {
-  send(unequipItem(equipSlot));
+/** 使用背包里的消耗品（右键）：服务端权威，客户端不做本地预扣 */
+export function sendUseItem(uid: number, quantity = 1): void {
+  send(useItem(uid, quantity));
 }
 
 export function sendDropItem(uid: number, count = 1): void {
   send(dropItem(uid, count));
 }
 
-export function sendPickupItem(groundItemId: number): void {
-  send(pickupItem(groundItemId));
+/** 拾取地面物品。toHand 由调用方按"背包面板是否打开"给出（= 原版 `cInvenTory.OpenFlag` 的那个分支）：
+ *  开着 → 拾取物直接上手（不等背包空格）；关着 → 自动进背包空格。 */
+export function sendPickupItem(groundItemId: number, toHand: boolean): void {
+  send(pickupItem(groundItemId, toHand));
 }
 
 /** 物品布局上报序号（客户端全局单调递增；服务端丢弃 seq<=lastSeq 的乱序/重放包） */

@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { subscribeGame, getGameSnapshot, type GameItem } from '../../app/gameStore.js';
 import { itemDefById } from '../../game/data/itemDefs.js';
+import { potionEffect } from '../../game/data/potionEffects.js';
 import { getWeaponTypeFromIdCode } from '../../char/weapon-type.js';
 import { t } from '../../i18n/index.js';
 
@@ -95,6 +96,15 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
     if (it.blockRating > 0) out.push({ label: t('itemtip.block'), value: `${Math.round(it.blockRating / 10)}%` });
     if (it.range > 0) out.push({ label: t('itemtip.range'), value: String(it.range) });
     if (it.attackSpeed > 0) out.push({ label: t('itemtip.attackSpeed'), value: String(it.attackSpeed) });
+  }
+  // —— 回复类（药水）：模板字段，不在实例里 → 查 `potion-effects.generated.json` ——
+  // （判据与服务端 rollRecovery 一致：三对列至少一个有值；显示区间与使用时掷点范围相同）
+  const rec = potionEffect(it.itemlistId);
+  if (rec) {
+    out.push({ section: true, value: '' });
+    if (rec.hp) out.push({ label: t('itemtip.recHp'), value: `${rec.hp[0]}-${rec.hp[1]}` });
+    if (rec.mp) out.push({ label: t('itemtip.recMp'), value: `${rec.mp[0]}-${rec.mp[1]}` });
+    if (rec.stm) out.push({ label: t('itemtip.recStm'), value: `${rec.stm[0]}-${rec.stm[1]}` });
   }
   // 8 系抗性（逐条非 0）
   const resVals: [string, number][] = [

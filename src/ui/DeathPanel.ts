@@ -11,9 +11,6 @@ import { t } from '../i18n/index.js';
 export interface DeathInfo {
   /** 强制复活倒计时（毫秒） */
   forceRespawnMs: number;
-  expLossField: number;
-  goldLossField: number;
-  expLossTown: number;
 }
 
 export interface DeathPanel {
@@ -61,8 +58,11 @@ export function createDeathPanel(container: HTMLElement, onChoose: (choice: 1 | 
   };
 
   const rows: Array<{ row: Row; label: string; cost: (i: DeathInfo) => string }> = [
-    { row: mkRow(1), label: 'death.option.field', cost: (i) => t('death.option.fieldCost', { exp: String(i.expLossField), gold: String(i.goldLossField) }) },
-    { row: mkRow(2), label: 'death.option.town', cost: (i) => t('death.option.townCost', { exp: String(i.expLossTown) }) },
+    // 代价只写**比例**（用户 2026-09-13：具体点数没有任何价值）。
+    // ⚠ 这三个百分比与 `CombatService` 的 FIELD_EXP_PERCENT / FIELD_GOLD_PERCENT / TOWN_EXP_PERCENT 对应，
+    //    改那边要同步这里的文案。
+    { row: mkRow(1), label: 'death.option.field', cost: () => t('death.option.fieldCost') },
+    { row: mkRow(2), label: 'death.option.town', cost: () => t('death.option.townCost') },
     { row: mkRow(3), label: 'death.option.wait', cost: () => t('death.option.waitCost') },
   ];
   box.append(title, timer, ...rows.map((r) => r.row.btn));

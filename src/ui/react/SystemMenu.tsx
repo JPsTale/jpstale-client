@@ -12,6 +12,8 @@ export interface SystemMenuSettings {
   keyBinding: KeyBinding;
   onBackToCharSelect?: () => void;
   onLogout?: () => void;
+  /** 脱离卡死：零代价传送到本图最近的 StartPoint（服务端权威，走 /unstuck 指令） */
+  onUnstuck?: () => void;
   /** 客户端帧率上限（0=不限制/跟随显示器）；画面设置里可调 */
   getFps?: () => number;
   setFps?: (fps: number) => void;
@@ -136,9 +138,6 @@ const ACTION_LABELS: Record<string, string> = {
   skill5: 'menu.bind.skill5', skill6: 'menu.bind.skill6', skill7: 'menu.bind.skill7', skill8: 'menu.bind.skill8',
   skill9: 'menu.bind.skill9', skill10: 'menu.bind.skill10', skill11: 'menu.bind.skill11', skill12: 'menu.bind.skill12',
   potion1: 'menu.bind.potion1', potion2: 'menu.bind.potion2', potion3: 'menu.bind.potion3',
-  potion4: 'menu.bind.potion4', potion5: 'menu.bind.potion5', potion6: 'menu.bind.potion6',
-  potion7: 'menu.bind.potion7', potion8: 'menu.bind.potion8', potion9: 'menu.bind.potion9',
-  potion10: 'menu.bind.potion10', potion11: 'menu.bind.potion11', potion12: 'menu.bind.potion12',
   chat: 'menu.bind.chat', closePanel: 'menu.bind.closePanel',
   switchWeapon: 'menu.bind.switchWeapon',
 };
@@ -174,6 +173,7 @@ export default function SystemMenu({ settings }: { settings: SystemMenuSettings 
             <div className="jp-men-main">
               <MenBtn label={t('menu.backToChar')} onClick={() => settings.onBackToCharSelect?.()} />
               <MenBtn label={t('menu.logout')} onClick={() => settings.onLogout?.()} />
+              <MenBtn label={t('menu.unstuck')} onClick={() => settings.onUnstuck?.()} />
               <div className="jp-men-sep" />
               <MenBtn label={t('menu.audio')} onClick={() => setPage('audio')} />
               <MenBtn label={t('menu.video')} onClick={() => setPage('video')} />

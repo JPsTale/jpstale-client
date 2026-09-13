@@ -105,7 +105,8 @@
         "model": "forest/af-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 1,
@@ -157,7 +158,8 @@
         "model": "forest/2ani-04.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 2,
@@ -195,7 +197,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 3,
@@ -297,7 +300,8 @@
         "model": "ricarten/thearena.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 4,
@@ -326,7 +330,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 5,
@@ -351,7 +356,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 6,
@@ -417,7 +423,8 @@
         "model": "ruin/ruin_ani01.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 7,
@@ -469,7 +476,8 @@
         "model": "ruin/cl-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 8,
@@ -503,7 +511,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 9,
@@ -516,8 +525,8 @@
     ],
     "startPoints": [
       [
-        21928,
-        2335
+        22214,
+        1182
       ]
     ],
     "fieldGates": [
@@ -556,7 +565,8 @@
         "model": "forest/v2-ani01.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 10,
@@ -584,7 +594,8 @@
         "model": "desert/oasis-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 11,
@@ -653,7 +664,8 @@
         "model": "desert/ct1-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 12,
@@ -705,7 +717,8 @@
         "model": "desert/d4-ani01.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 13,
@@ -716,7 +729,12 @@
       -15384,
       24310
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -15384,
+        24310
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -759,7 +777,8 @@
         "model": "dungeon/dun-1-wheel.smd",
         "bip": true
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 14,
@@ -770,7 +789,12 @@
       -6108,
       26880
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -6108,
+        26880
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -825,7 +849,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 15,
@@ -836,7 +861,12 @@
       1827,
       28586
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        1827,
+        28586
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -864,7 +894,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 16,
@@ -875,10 +906,16 @@
       -200000,
       -200000
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -200000,
+        -200000
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 17,
@@ -952,7 +989,8 @@
         "model": "forever-fall/4ani-11.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 18,
@@ -1045,7 +1083,8 @@
         "model": "forever-fall/3ani-07.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 19,
@@ -1057,10 +1096,6 @@
       -52599
     ],
     "startPoints": [
-      [
-        -1024,
-        -45437
-      ],
       [
         -1543,
         -52333
@@ -1099,7 +1134,8 @@
         "model": "forever-fall/2ani-05.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 20,
@@ -1249,7 +1285,8 @@
         "model": "forever-fall/1ani-27.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 21,
@@ -1480,7 +1517,8 @@
         "model": "forever-fall/piani-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 22,
@@ -1491,7 +1529,12 @@
       -11108,
       41681
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -11108,
+        41681
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -1650,7 +1693,8 @@
         "model": "dungeon/dun-4-ani-37.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 23,
@@ -1661,7 +1705,12 @@
       -3675,
       36597
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -3675,
+        36597
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -1805,7 +1854,8 @@
         "model": "dungeon/dun-5-ani-22.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 24,
@@ -1928,7 +1978,8 @@
         "model": "cave/tcave_ani16.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 25,
@@ -2055,7 +2106,8 @@
         "model": "cave/mcave_ani17.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 26,
@@ -2066,7 +2118,12 @@
       158814,
       -20070
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        158814,
+        -20070
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -2161,7 +2218,8 @@
         "model": "cave/dcave_ani14.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 27,
@@ -2255,7 +2313,8 @@
         "model": "iron/iron1-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "existing"
   },
   {
     "id": 28,
@@ -2333,7 +2392,8 @@
         "model": "iron/i2-bip12_ani.smd",
         "bip": true
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 29,
@@ -2344,7 +2404,12 @@
       31090,
       -23781
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        31090,
+        -23781
+      ]
+    ],
     "fieldGates": [
       {
         "to": 31,
@@ -2376,7 +2441,8 @@
         "model": "ice/ice_ani_01.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 30,
@@ -2387,7 +2453,12 @@
       22018,
       -6569
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        22018,
+        -6569
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [],
     "stageObjects": [
@@ -2463,7 +2534,8 @@
         "model": "sod/s-1ani18_bip.smd",
         "bip": true
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 31,
@@ -2474,7 +2546,12 @@
       32313,
       -28529
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        32313,
+        -28529
+      ]
+    ],
     "fieldGates": [
       {
         "to": 35,
@@ -2546,7 +2623,8 @@
         "model": "ice/ice_bip_leaf07.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 32,
@@ -2557,10 +2635,16 @@
       22497,
       -9605
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        22497,
+        -9605
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 33,
@@ -2634,7 +2718,8 @@
         "model": "castle/crystal_ani06.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 34,
@@ -2645,7 +2730,12 @@
       13930,
       -23206
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        13930,
+        -23206
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [],
     "stageObjects": [
@@ -2769,7 +2859,8 @@
         "model": "greedy/door.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 35,
@@ -2780,7 +2871,12 @@
       36264,
       -40182
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        36264,
+        -40182
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -2806,7 +2902,8 @@
         "model": "ice/ice2-boat.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 36,
@@ -2817,7 +2914,12 @@
       33000,
       -50036
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        33000,
+        -50036
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -2855,7 +2957,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 37,
@@ -2866,7 +2969,12 @@
       -12555,
       1113
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -12555,
+        1113
+      ]
+    ],
     "fieldGates": [
       {
         "to": 38,
@@ -2931,7 +3039,8 @@
         "model": "lost/ani_ship04.smd",
         "bip": false
       }
-    ]
+    ],
+    "startPointsSource": "center-search"
   },
   {
     "id": 38,
@@ -2942,7 +3051,12 @@
       -11718,
       -10794
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -11718,
+        -10794
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -2963,7 +3077,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 39,
@@ -2974,10 +3089,16 @@
       5800,
       -36747
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        5800,
+        -36747
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 40,
@@ -2988,7 +3109,12 @@
       14255,
       39099
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        14255,
+        39099
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -3026,7 +3152,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 41,
@@ -3037,7 +3164,12 @@
       5255,
       37897
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        5255,
+        37897
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -3058,7 +3190,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 42,
@@ -3069,7 +3202,12 @@
       -3660,
       45200
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -3660,
+        45200
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -3107,7 +3245,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 43,
@@ -3165,7 +3304,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 44,
@@ -3202,7 +3342,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 45,
@@ -3225,7 +3366,8 @@
     ],
     "fieldGates": [],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 46,
@@ -3263,7 +3405,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 47,
@@ -3310,7 +3453,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 48,
@@ -3339,7 +3483,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 49,
@@ -3364,7 +3509,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 50,
@@ -3393,7 +3539,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 51,
@@ -3422,7 +3569,8 @@
       }
     ],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 52,
@@ -3520,7 +3668,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 53,
@@ -3531,7 +3680,12 @@
       33825,
       36598
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        33825,
+        36598
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -3603,7 +3757,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 54,
@@ -3614,7 +3769,12 @@
       26338,
       41668
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        26338,
+        41668
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -3652,7 +3812,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 55,
@@ -3706,7 +3867,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 56,
@@ -3777,7 +3939,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 57,
@@ -3821,7 +3984,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 58,
@@ -3834,20 +3998,8 @@
     ],
     "startPoints": [
       [
-        12795,
-        74139
-      ],
-      [
-        16378,
-        72591
-      ],
-      [
-        9209,
-        72593
-      ],
-      [
-        12797,
-        67805
+        12725,
+        73112
       ]
     ],
     "fieldGates": [],
@@ -3938,7 +4090,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "field.cpp"
   },
   {
     "id": 59,
@@ -3975,7 +4128,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   },
   {
     "id": 60,
@@ -3986,10 +4140,16 @@
       488537,
       0
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        488537,
+        0
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 61,
@@ -4000,7 +4160,12 @@
       -11976,
       62455
     ],
-    "startPoints": [],
+    "startPoints": [
+      [
+        -11976,
+        62455
+      ]
+    ],
     "fieldGates": [],
     "warpGates": [
       {
@@ -4038,7 +4203,8 @@
         ]
       }
     ],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "center-search"
   },
   {
     "id": 62,
@@ -4057,6 +4223,7 @@
     ],
     "fieldGates": [],
     "warpGates": [],
-    "stageObjects": []
+    "stageObjects": [],
+    "startPointsSource": "existing"
   }
 ]

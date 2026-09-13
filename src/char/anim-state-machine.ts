@@ -77,6 +77,8 @@ export interface AnimStateMachine {
   triggerFallDown: () => boolean;
   triggerFallStand: () => boolean;
   triggerFallDamage: () => boolean;
+  /** 使用药水：播 EAT（`.in` 的 `물약먹기동작*`，语义 state=EAT）。原版 sinActionPotion → CHRMOTION_STATE_EAT。 */
+  triggerEat: () => boolean;
   triggerTaunt: () => boolean;
   triggerYahoo: () => boolean;
   onAnimationEnd: () => MotionInfo | null;
@@ -192,6 +194,8 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return state === STATE.ATTACK || state === STATE.SKILL ||
       state === STATE.DAMAGE || state === STATE.TAUNT || state === STATE.YAHOO ||
       state === STATE.FALLSTAND || state === STATE.FALLDAMAGE ||
+      // EAT（喝药）：也是一次性动作 —— 漏了它会导致播完不回 STAND、角色卡在末帧（用户 2026-09-13 实测）
+      state === STATE.EAT ||
       state === STATE.DEAD;
   }
 
@@ -315,6 +319,21 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return true;
   }
 
+  /**
+   * 使用药水：切到 EAT 播放一次（原版 `playsub.cpp:1661 sinActionPotion()` 就是 `SetMotionFromCode(CHRMOTION_STATE_EAT)`；
+   * 攻击/技能中则排队到下一动作 —— 这里由调用方（requestPlayEat）在"当前不是一次性状态"时才调）。
+   */
+  function triggerEat(): boolean {
+    const motion = findMotionForState(STATE.EAT, false);
+    if (!motion) {
+      reportFallback('anim:eat', '没有 EAT 条目（물약먹기동작*）→ 无法播喝药动作');
+      return false;
+    }
+    currentState = STATE.EAT;
+    applyMotion(motion);
+    return true;
+  }
+
   function triggerFallStand(): boolean {
     const motion = findMotionForState(STATE.FALLSTAND, false);
     if (!motion) return false;
@@ -426,6 +445,7 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     triggerFallDown,
     triggerFallStand,
     triggerFallDamage,
+    triggerEat,
     triggerTaunt,
     triggerYahoo,
     onAnimationEnd,
