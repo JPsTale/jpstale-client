@@ -30,6 +30,7 @@
     "verify-canuse": "npx tsx scripts/verify-canuse.ts",
     "verify-cursor": "npx tsx scripts/verify-cursor.ts",
     "verify-itemhover": "npx tsx scripts/verify-itemhover.ts",
+    "verify-uisound": "npx tsx scripts/verify-uisound.ts",
     "diag-climb": "tsx scripts/diag-climb.ts",
     "potions": "tsx scripts/extract-potion-effects.ts"
   },

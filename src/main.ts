@@ -1,4 +1,5 @@
 import { playItemSound } from './audio/index.js';
+import { sfx } from './audio/index.js';
 import { requestPlayEat } from './ui/WorldView.js';
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
@@ -355,7 +356,7 @@ hudPanel.onAction = (action) => {
         // 从**任何**容器拿起都走同一条路，不用再"先脱到背包"（那条在背包满时会失败）。
         beginOptimistic([it]);
         localToHeld(uid);
-        playItemSound(17);   // 药水的 SoundIndex = 17（拿起/放下都播物品自带的音）
+        playItemSound(itemDefById(it.itemlistId)?.sound);   // 拿起播**该物品自己的** SoundIndex
         sendTakeToHand(uid);
       }
     }
@@ -884,6 +885,12 @@ onMessage((msg: jpt.base.ServerMessage) => {
       }
       break;
     }
+    case 'mapSwitched': {
+      // 服务端权威换图校准（protobuf）：对齐 currentMapId 并同步区域/音频/姿态
+      const ms = msg.mapSwitched!;
+      worldView.applyMapSwitched(Number(ms.mapId ?? 0));
+      break;
+    }
     case 'playerRespawn': {
       // 服务端权威复活：位置/地图/半血。自机位置权威在客户端 → 必须由客户端把自己搬过去。
       const pr = msg.playerRespawn!;
@@ -957,6 +964,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // → 通知面板把乐观更新整体还原（原版 BackUpPosi 语义）。
       // 判据是**协议字段**，不再靠 errorMessage 里的字符串匹配 —— 后者改一句文案就会静默失效。
       if (e.key && e.key.startsWith('item.op.')) {
+        // 失败音（用户 2026-09-14：拿起/放下/交换/拾取**失败**才播这个提示音）。
+        // 这里是唯一入口：服务端拒绝的任何物品操作都经 `S2C_Error` 回来 → 一处覆盖全部失败。
+        sfx.playUi('denied');
         window.dispatchEvent(new Event('pt:equipFail'));
       }
       const forCh = takePendingSentOn() ?? undefined;
@@ -989,12 +999,6 @@ onMessage((msg: jpt.base.ServerMessage) => {
 
 onJsonMessage((type, data) => {
   switch (type) {
-    case 'game.mapSwitched': {
-      // 服务端权威换图校准：对齐 currentMapId 并同步区域/音频/姿态
-      const ms = data as { mapId?: number };
-      worldView.applyMapSwitched(Number(ms.mapId) || 0);
-      break;
-    }
     case 'auth.characterList': {
       const chars: CharacterInfo[] = ((data as any).characters ?? []).map((c: any) => ({
         characterId: c.characterId ?? c.id,

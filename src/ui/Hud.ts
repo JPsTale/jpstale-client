@@ -1,7 +1,7 @@
 import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
-import { clearHoverItem, getGameSnapshot, potionUidInSlot, registerUiHitTest, setHoverSpot, subscribeGame, type FistBinding } from '../app/gameStore.js';
+import { clearHoverItem, getGameSnapshot, registerUiHitTest, setHoverSpot, subscribeGame, type FistBinding } from '../app/gameStore.js';
 import { isInputBlocked } from '../app/inputGate.js';
 import { sfx } from '../audio/sfx.js';
 
@@ -164,17 +164,26 @@ export function createHud(container: HTMLElement): Hud {
   });
 
   // 药水槽悬停 → 物品信息框。前 3 个交互区就是 POTION_RECTS。
-  // 信息框的状态在 store 里（`setHoverItem`），由 `PanelsRoot` 的 `ItemInfoLayer` 全局渲染 ——
+  // 信息框的状态在 store 里（`hoverSpot`），由 `PanelsRoot` 的 `ItemInfoLayer` 全局渲染 ——
   // 所以**面板关着也能显示**（这正是 HUD 这一侧过去完全没有信息框的原因：状态原本活在 ItemPanel 内部）。
-  // uid 现查 `potionUidInSlot(i)`（权威来源），不在 PotionSlotView 里再抄一份。
+  // uid 不在这里查：信息框按**位置**（`{kind:'potion', idx}`）现查 `gameStore.hoveredItemOf`。
   POTION_RECTS.forEach((_, i) => {
     const el = barriers[i];
     if (!el) return;
-    el.addEventListener('mouseenter', () => {
-      if (potionUidInSlot(i) == null) return;   // 空槽不显示
+    // 悬停源是**位置**（`{kind:'potion', idx}`），所以 enter 与 move 共用一个**幂等**设置：
+    // 事件只在"指针越过元素边界"时发一次，而 HUD 会因为开关背包面板被重建 —— 指针若仍停在药水槽上，
+    // 新元素**不会**再发 mouseenter ⇒ 信息框再也回不来（用户 2026-09-14 报"药水槽也不会更新"）。
+    // mousemove 每次比对当前源，只有真的变了才写 store（不会逐像素提交）。
+    const sync = () => {
+      const cur = getGameSnapshot().hoverSpot;
+      if (cur && cur.src.kind === 'potion' && cur.src.idx === i) return;
       const r = el.getBoundingClientRect();
       setHoverSpot({ kind: 'potion', idx: i }, r.right + 8, r.top);
-    });
+    };
+    // 空槽也照旧登记来源（`hoveredItemOf` 对空槽返回 null → 不显示信息框），
+    // 但**放下/喝进**之后那一格有东西时，不必移动鼠标就会显示出来。
+    el.addEventListener('mouseenter', sync);
+    el.addEventListener('mousemove', sync);
     el.addEventListener('mouseleave', () => clearHoverItem());
   });
 
@@ -397,7 +406,9 @@ export function createHud(container: HTMLElement): Hud {
     // 药水槽 3 格（POTION_RECTS，唯一来源）：**左键=拿起 / 右键=喝**（原版 LButtonDown vs UsePotion）
     for (let i = 0; i < 3; i++) {
       if (inRect(mx, my, POTION_RECTS[i]!)) {
-        sfx.playUi('click');
+        // 这里**不播界面音**：药水槽是道具，声音是**道具自带音**（原版 `sinPlaySound(InvenItem[].SoundIndex)`，
+        // 见 sinInvenTory.cpp 的药水槽分支），由 main.ts 的动作处理器在动作真的发生（拿起/放入/喝）时播；
+        // 失败则播失败音。原来这里统一播界面音 → 成功与失败同声，且与道具音叠在一起（用户 2026-09-14 报）。
         onAction?.(justRight
           ? (('potionUse' + (i + 1)) as 'potionUse1')
           : (('potion' + (i + 1)) as 'potion1'));

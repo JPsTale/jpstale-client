@@ -1,6 +1,7 @@
 import { canEquipNow, isDroppable, overweightBlocks } from '../../game/itemRules.js';
 import type { EquipReqChar } from '../../game/itemRules.js';
 import { playItemSound, playItemDropSound } from '../../audio/index.js';
+import { sfx } from '../../audio/index.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
@@ -166,6 +167,29 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
     return gy * BAG_W + gx;
   }
 
+  /**
+   * 悬停**跟着指针所在格**走，由容器统一维护（唯一实现）。
+   *
+   * 过去的接线是"每个物品按钮自己的 `onPointerEnter`/`onPointerLeave`"，有**两处**必然失效：
+   *   ① 交换会把那个按钮**移除**（物品 uid 变了）→ `onPointerLeave` 清掉悬停，而新按钮出现在
+   *      **静止的指针**下面，浏览器不会再补发 `enter` → 信息框一直空到鼠标动一下；
+   *   ② `onBagPointerDown` 里那句 `onHoverEnd()`（拿起时清悬停的遗留）——装备槽那次改动漏了这里。
+   * 用户 2026-09-14 报的"物品栏中的物品不会在交换后更新物品信息"就是这两条。
+   *
+   * 容器驱动后：悬停源只依赖"指针在哪一格"，格子里换了什么由 `hoveredItemOf` **现查** →
+   * 交换后**不必移动鼠标**也会跟着换。只在源真的变了时才写 store（否则每次 pointermove 都提交，
+   * 整包会跟着重渲染）。
+   */
+  function syncHover(cell: number | null, e: { clientX: number; clientY: number }) {
+    const cur = getGameSnapshot().hoverSpot;
+    if (cell === null) {
+      if (cur) onHoverEnd();
+      return;
+    }
+    if (cur && cur.src.kind === 'bag' && cur.src.cell === cell) return;
+    onHover({ kind: 'bag', cell }, e);
+  }
+
   function onBagPointerDown(e: React.PointerEvent<HTMLDivElement>) {
     // 只处理**左键**：右键的语义是"使用"（见容器 onContextMenu，原版 RButtonDown 语义）。
     // 不加这一句，右键按下会先被这里当成"拿起"，随后 onContextMenu 里的 `if (held) return`
@@ -178,8 +202,9 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
       if (!a) return;
       // 拿起中：落点放置（空位/合并/换手统一），bad 忽略
       const t = bagTargetFor(held, a.y * BAG_W + a.x, items);
-      if (t.mode === 'bad') return;
-      onHoverEnd();
+      if (t.mode === 'bad') { sfx.playUi('denied'); return; }   // 放不下 → 失败音
+      // 这里**不**清悬停：拿起/放下都不该让信息框消失（用户 2026-09-14 明确要求持有道具时照常显示）。
+      // 悬停源是"指针在哪一格"，放下后那一格换了内容，信息框由 hoveredItemOf 现查 → 自动跟着换。
       onPutSlot(a.y * BAG_W + a.x);
     } else {
       const slot = cellFromEvent(e);
@@ -187,7 +212,7 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
       // 未拿起：命中哪件就拿起哪件（按覆盖格命中，含多格物品任意格）
       const p = placed.find((pp) => slotXY(slot).x >= pp.x && slotXY(slot).x < pp.x + pp.w
         && slotXY(slot).y >= pp.y && slotXY(slot).y < pp.y + pp.h);
-      if (p) { onHoverEnd(); onPick(p.it); }
+      if (p) onPick(p.it);
     }
   }
 
@@ -196,7 +221,8 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
       className="jp-items-bag"
       ref={bagRef}
       style={{ width: BAG_W * CELL, height: BAG_H * CELL }}
-      onPointerMove={(e) => { updatePreview(e.clientX, e.clientY); }}
+      onPointerEnter={(e) => { syncHover(cellFromEvent(e), e); }}
+      onPointerMove={(e) => { updatePreview(e.clientX, e.clientY); syncHover(cellFromEvent(e), e); }}
       onPointerDown={onBagPointerDown}
       // 右键 = 使用（原版语义）。守卫与原版一致：手里拿着东西时右键不生效
       // （`MouseItem.Flag` 时不处理）；面板冲突由本组件只渲染一层来决定。
@@ -209,7 +235,7 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
           && slotXY(slot).y >= pp.y && slotXY(slot).y < pp.y + pp.h);
         if (p) onUse(p.it);
       }}
-      onPointerLeave={() => { setAnchor(null); setMode(null); setHitUid(null); }}
+      onPointerLeave={() => { setAnchor(null); setMode(null); setHitUid(null); onHoverEnd(); }}
     >
       {/* 物品图标（拿起中的物品不绘制 → 原格空出）；按下事件交给容器统一分发 */}
       {placed.map((p) => (
@@ -219,8 +245,6 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
           className={`jp-bag-item${p.it.uid === hitUid ? ' jp-bag-item--hit' : ''}`
             + `${canEquipNow(p.it, character) ? '' : ' jp-bag-item--cannot'}`}
           style={{ left: p.x * CELL, top: p.y * CELL, width: p.w * CELL, height: p.h * CELL }}
-          onPointerEnter={(e) => { e.stopPropagation(); onHover({ kind: 'bag', cell: p.it.slot }, e); }}
-          onPointerLeave={onHoverEnd}
         >
           <ItemImg it={p.it} w={p.w * CELL} h={p.h * CELL} />
           {p.it.count > 1 ? <span className="jp-bag-count">{p.it.count}</span> : null}
@@ -377,8 +401,9 @@ function EquipColumn({ items, held, character, onPickEquip, onPutEquip, allowed,
             onPointerDown={(e) => {
               e.stopPropagation();
               if (held) {
-                // 拿起中：该槽是落点（绿/红已在悬停提示），合法才放
+                // 拿起中：该槽是落点（绿/红已在悬停提示），合法才放；不合法 → 失败音
                 if (allowed(s.slot)) onPutEquip(s.slot);
+                else sfx.playUi('denied');
                 return;
               }
               if (it) onPickEquip(s.slot);
@@ -462,6 +487,7 @@ export default function ItemPanel() {
       // 两端会不一致（物品在服务端还在、客户端没了）。最终仍以服务端为准。
       if (!isDroppable(defOf(it)?.code)) {
         console.warn('[bag] 该物品无法丢弃（禁丢清单）：uid=', it.uid, 'idCode=', defOf(it)?.code);
+        sfx.playUi('denied');       // 放下失败 → 失败音
         setHeldUidStore(heldUid);   // 保持手持不变（等于这次点击没发生）
         return;
       }
@@ -579,6 +605,7 @@ export default function ItemPanel() {
     if (overweightBlocks(snap.character?.currentWeight, snap.character?.maxWeight, defOf(held)?.code)) {
       console.warn('[bag:move] 已超重，拒绝搬运 uid=', held.uid,
         'w=', snap.character?.currentWeight, '/', snap.character?.maxWeight);
+      sfx.playUi('denied');       // 放下失败 → 失败音
       appendSystemMessage(t('item.op.overWeight'), Date.now());
       return;
     }
@@ -589,7 +616,7 @@ export default function ItemPanel() {
         '→targetSlot=', targetSlot, 'xy=', JSON.stringify(slotXY(targetSlot)),
         'size=', defOf(held)?.w, 'x', defOf(held)?.h, 'mode=', tgt.mode,
         '冲突=', tgt.conflict ? { uid: tgt.conflict.uid, slot: tgt.conflict.slot, listId: tgt.conflict.itemlistId } : null);
-      if (tgt.mode === 'bad') return;
+      if (tgt.mode === 'bad') { sfx.playUi('denied'); return; }
       localUnequipToBag(held.uid, targetSlot);
       reportLayout();
       console.log('[bag:unequip] 已上报全量布局（含 uid=', held.uid, '→slot=', targetSlot, '）');
@@ -604,7 +631,7 @@ export default function ItemPanel() {
     console.log('[bag:move] 背包内移动 heldUid=', held.uid, 'fromSlot=', held.slot, '→targetSlot=', targetSlot,
       'xy=', JSON.stringify(slotXY(targetSlot)), 'size=', defOf(held)?.w, 'x', defOf(held)?.h,
       'mode=', tgt.mode, 'conflict=', tgt.conflict ? { uid: tgt.conflict.uid, slot: tgt.conflict.slot } : null);
-    if (tgt.mode === 'bad') return;
+    if (tgt.mode === 'bad') { sfx.playUi('denied'); return; }   // 放下失败 → 失败音
     if (tgt.mode === 'merge' && tgt.conflict) {
       localStackMerge(held.uid, tgt.conflict.uid);
       sendStackMerge(held.uid, tgt.conflict.uid);
@@ -666,6 +693,7 @@ export default function ItemPanel() {
     if (!slotAllows(slot)) {
       console.warn('[bag:put] 目标槽不允许：uid=', held.uid, 'slot=', slot,
         'class=', heldDef?.class, 'def=', heldDef);
+      sfx.playUi('denied');       // 放不进这个槽 → 失败音
       return;
     }
     // 负重门（原版 CheckSetOk 的重量分支，见 itemRules.overweightBlocks）：搬运不改变总重，
@@ -673,6 +701,7 @@ export default function ItemPanel() {
     if (overweightBlocks(snap.character?.currentWeight, snap.character?.maxWeight, heldDef?.code)) {
       console.warn('[bag:put] 已超重，拒绝搬运 uid=', held.uid,
         'w=', snap.character?.currentWeight, '/', snap.character?.maxWeight);
+      sfx.playUi('denied');       // 失败音
       appendSystemMessage(t('item.op.overWeight'), Date.now());
       return;
     }
@@ -681,6 +710,7 @@ export default function ItemPanel() {
       // 客户端预校验（与服务器一致）：不满足则保持手持、不发送
       if (!canEquipNow(held, snap.character)) {
         console.warn('[bag:put] 需求不足，穿入取消 uid=', held.uid, 'ch=', snap.character);
+        sfx.playUi('denied');     // 穿不上 → 失败音
         return;
       }
       const old = items.find((x) => x.location === LOC.EQUIP && x.slot === slot) ?? null;

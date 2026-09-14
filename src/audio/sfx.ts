@@ -203,8 +203,15 @@ async function loadBuffer(path: string): Promise<DecodedSound | null> {
     try {
       const c = ensureCtx();
       if (!c) return null;
-      const resp = await fetch(encodeAssetPath(RES_BASE + path));
-      if (!resp.ok) return null;
+      const url = encodeAssetPath(RES_BASE + path);
+      const resp = await fetch(url);
+      // 取不到音频**必须喊出来**：过去这里是 `if (!resp.ok) return null;`（静默）——
+      // 于是"路径拼错成 /res//res/...（404）"表现为"点了没声音"，查起来毫无线索
+      //（用户 2026-09-14 报"点击背包道具没声音"，根因就是这个 + 上游多写了一次 /res/）。
+      if (!resp.ok) {
+        console.warn('[sfx] 取音频失败 HTTP ' + resp.status + '：' + url);
+        return null;
+      }
       const ab = await resp.arrayBuffer();
       // 必须在 decodeAudioData 之前读采样率：解码会重采样到设备采样率，
       // 且部分浏览器会把原 ArrayBuffer detach 掉。
@@ -213,7 +220,8 @@ async function loadBuffer(path: string): Promise<DecodedSound | null> {
       const rec: DecodedSound = { buf, srcRate };
       decoded.set(path, rec);
       return rec;
-    } catch {
+    } catch (err) {
+      console.warn('[sfx] 解码音频失败：' + path, err);
       return null;
     } finally {
       decoding.delete(path);
@@ -269,28 +277,49 @@ function makeVoiceHandle(): { handle: VoiceHandle; attach(v: { src: AudioBufferS
   };
 }
 
+/**
+ * 诊断：**为什么没出声**。`start()` 的每个提前 return 都要能解释，否则"没声音"无法定位
+ * （用户 2026-09-14 报"点击背包道具没声音"，就是因为这些 return 全是静默的）。
+ * 每个原因**只喊一次**（key 去重）—— 同一原因在一次会话里刷屏没有信息量，
+ * 而"这是正常状态（静音/冷却/太远）"与"这是异常（没有音频上下文）"在这里一并说清。
+ */
+const blockedReported = new Set<string>();
+function reportBlocked(key: string, msg: string): void {
+  if (blockedReported.has(key)) return;
+  blockedReported.add(key);
+  console.warn('[sfx] 未播放（' + msg + '），后续同因不再重复');
+}
+
 function start(path: string, opts: PlayOpts = {}): VoiceHandle | null {
-  if (!audioPrefs.sfxOn || !unlocked || hidden || !ctx || !bus) return null;
+  if (!audioPrefs.sfxOn) return null;                  // 用户静音：正常，不报
+  if (!unlocked) { reportBlocked('locked', '音频尚未解锁（需要一次用户手势，见 unlock）'); return null; }
+  if (hidden) return null;                             // 页面不可见：正常，不报
+  if (!ctx || !bus) { reportBlocked('noctx', '音频上下文未建立'); return null; }
 
   const now = performance.now();
   const last = lastPlayed.get(path);
-  if (last !== undefined && now - last < SAME_FILE_COOLDOWN_MS) return null;
+  if (last !== undefined && now - last < SAME_FILE_COOLDOWN_MS) {
+    reportBlocked('cool:' + path, '同一文件冷却中（' + SAME_FILE_COOLDOWN_MS + 'ms 内重复请求，原版也是重启同一 buffer）'
+      + '：' + path);
+    return null;
+  }
 
   let vol = 400;
   if (opts.pos) {
     vol = distVol(opts.pos);
-    if (vol < 0) return null;
+    if (vol < 0) return null;                          // 太远：正常，不报
   }
   const gain = gainFromVol(vol) * channelGain();
-  if (gain <= 0) return null;
+  if (gain <= 0) { reportBlocked('gain', '音量折算为 0（音效音量/声道增益为 0？）'); return null; }
 
-  if (!opts.priority && live.length >= MAX_VOICES) return null;
+  if (!opts.priority && live.length >= MAX_VOICES) return null;   // 声道打满：正常（限流），不报
 
   lastPlayed.set(path, now);
   const h = makeVoiceHandle();
   void (async () => {
     const snd = await loadBuffer(path);
-    if (!snd || !ctx || !bus) return;
+    if (!snd) return;                                  // 失败原因已由 loadBuffer 报出（HTTP/解码）
+    if (!ctx || !bus) return;
     if (h.cancelled()) return;                 // 加载期间已被 stop() → 不出声
     const src = ctx.createBufferSource();
     src.buffer = snd.buf;
@@ -426,16 +455,25 @@ export const CRITICAL_SOUND_CODE = 16;
 /* ─────────── 界面音效 ─────────── */
 
 /**
- * 界面音效。经典版所有按钮音为根目录 wav/Button.wav（HoLogin 直引）；
- * 游戏内菜单套件是 wav/effects/menu/*（原版客户端存在该目录，但调度代码在
- * 已遗失的反编译部分，故按文件名语义选曲，见下）。
+ * 界面音效。**原版只有这一张表**：`NewSourcePT-2023/SrcGame/src/sinbaram/sinSubMain.cpp` 的
+ * `sinSoundWav[]` —— `[0] = interface-on.wav`、`[21] = interface.wav`（`SIN_SOUND_SHOW_INTER`，
+ * 面板开/切）、`[1..20,22..25]` = 各类道具自带音（= `audio/item-sounds.ts` 那张表）。
+ * `wav/effects/menu/*` 整套在原版源码里**一处引用都没有**（全文件 grep `.wav` 字面量可证），
+ * 我此前是"按文件名的语义"猜的 —— 于是把 `menu/button01.wav` 当成了通用点击音，
+ * 而它在听感上就是个失败提示音（用户 2026-09-14 指出："当前的音效实际上是一个失败提示音"）。
+ *
+ * 现在的分工（用户 2026-09-14 的要求）：
+ *   · 道具操作（拾取/点击/拿起/放下/交换）→ **道具自带的 SoundIndex**（见 item-sounds.ts）；
+ *   · 失败（拾取/拿起/放下/交换失败）      → `denied`（那个提示音）；
+ *   · 界面按钮                            → `click`（原版 `sinSoundWav[0]`）。
  */
-export type UiSound = 'click' | 'cancel' | 'open' | 'levelup';
+export type UiSound = 'click' | 'denied' | 'cancel' | 'open' | 'levelup';
 
 const UI_SOUNDS: Record<UiSound, string> = {
-  click: 'wav/effects/menu/button01.wav',
+  click: 'wav/effects/items/interface-on.wav',   // 原版 sinSoundWav[0]：面板/按钮的界面音
+  denied: 'wav/effects/menu/button01.wav',       // **只给失败用**（用户 2026-09-14：它本来就是提示音）
   cancel: 'wav/effects/menu/cancel01.wav',
-  open: 'wav/effects/menu/turning01.wav',   // 语义推断：翻页/展开
+  open: 'wav/effects/menu/turning01.wav',        // 语义推断：翻页/展开
   levelup: 'wav/effects/menu/level up.wav',
 };
 
@@ -444,9 +482,14 @@ const UI_SOUNDS: Record<UiSound, string> = {
 // 游戏内 React 面板（.jp-overlay 内的按钮）统一按键音。
 // 登录/选服/选人屏由 core/sound.ts 自行处理（其 uiSfxOn 门控），两者选择器不重叠。
 // 画布 HUD 按钮非 DOM，需在 Hud.ts 显式调用 playUi。
+// ⚠ **道具不是界面按钮**：背包物品/装备槽是可点元素，但它们的声音是**道具自带音**
+//   （原版 `sinPlaySound(pItem->SoundIndex)`，见 item-sounds.ts 的用法说明），
+//   由各自的交互处理器在**动作真的发生**时播。这里要排除它们，否则每次点道具都会叠一声界面音，
+//   且失败与成功听上去一模一样（用户 2026-09-14 报的就是这个）。
 document.addEventListener('click', (e) => {
   const t = e.target;
   if (!(t instanceof Element)) return;
+  if (t.closest('.jp-bag-item, .jp-items-equip')) return;   // 道具交互自己播音
   if (t.closest('.jp-overlay button, .jp-overlay [role="button"]')) {
     start(UI_SOUNDS.click, { priority: true });
   }
@@ -497,8 +540,18 @@ export const sfx = {
     listener = pos;
   },
 
-  /** 直接按资产相对路径播放（path 形如 wav/effects/menu/button01.wav） */
+  /**
+   * 直接按资产相对路径播放，**不带 `/res/` 前缀**（形如 `wav/effects/menu/button01.wav`）。
+   *
+   * ⚠ 传进来的路径若带 `/res/` 会拼成 `/res//res/...` ⇒ 404 ⇒ 无声。这个错误在仓库里犯过**两次**
+   *（`item-sounds.ts` 的 DIR、`WorldView.ts` 的喝药音），而且过去完全静默。
+   * 这里只做**诊断**（不替调用方改路径 —— 那会掩盖错误，AGENTS #12/#35 的纪律）。
+   */
   play(path: string, opts?: PlayOpts): void {
+    if (path.startsWith('/res/') || path.startsWith('res/')) {
+      console.warn('[sfx] play() 的路径不应带 /res/ 前缀（内部会自己拼），实际请求会是 "/res/' + path
+        + '"：' + path);
+    }
     start(path, opts);
   },
 

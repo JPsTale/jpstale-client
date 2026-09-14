@@ -37,6 +37,7 @@ import { semanticEntriesForJob } from '../char/semantic-anim.js';
 import { isSafeMap } from '../game/safeZones.js';
 import { getWeaponTypeFromIdCode, getHandType, getHandTypeFromIdCode } from '../char/weapon-type.js';
 import { sfx, weaponSoundCode, type HandType, type VoiceHandle } from '../audio/sfx.js';
+import { playItemSound } from '../audio/item-sounds.js';
 import { createEffectManager } from '../render/effects/effect-manager.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
@@ -3057,6 +3058,52 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 入一只飘字；kind=null 时按 targetId 自动解析归属；不在视野的实体直接丢弃（原版服务端 64 格 AOI 过滤的等价物） */
+  // ── 进入地图大字提示（中上部，淡入→停→淡出）──
+  // 门控：冷却期内（含边缘 A↔B 往返）不重刷；同图不重复提示。
+  const MAP_BANNER_FADE_IN_MS = 350;
+  const MAP_BANNER_HOLD_MS = 2600;
+  const MAP_BANNER_FADE_OUT_MS = 900;
+  const MAP_BANNER_COOLDOWN_MS = 20000;
+  let mapBanner: { mapId: number; name: string; born: number } | null = null;
+  let mapBannerLastShownAt = 0;
+  let mapBannerLastMapId = -1;
+
+  function showMapBanner(mapId: number): void {
+    const now = performance.now();
+    if (now - mapBannerLastShownAt < MAP_BANNER_COOLDOWN_MS) return;   // 冷却：边缘往返防刷
+    if (mapId === mapBannerLastMapId) return;                          // 同图不重复
+    const key = `map.${mapId}`;
+    const localized = t(key);
+    const name = localized === key ? `Map ${mapId}` : localized;        // 缺翻译回退 Map N
+    mapBanner = { mapId, name, born: now };
+    mapBannerLastShownAt = now;
+    mapBannerLastMapId = mapId;
+  }
+
+  function drawMapBanner(ctx: CanvasRenderingContext2D, now: number, w: number, h: number): void {
+    if (!mapBanner) return;
+    const el = now - mapBanner.born;
+    const total = MAP_BANNER_FADE_IN_MS + MAP_BANNER_HOLD_MS + MAP_BANNER_FADE_OUT_MS;
+    if (el >= total) { mapBanner = null; return; }
+    let alpha: number;
+    if (el < MAP_BANNER_FADE_IN_MS) alpha = el / MAP_BANNER_FADE_IN_MS;
+    else if (el < MAP_BANNER_FADE_IN_MS + MAP_BANNER_HOLD_MS) alpha = 1;
+    else alpha = Math.max(0, 1 - (el - MAP_BANNER_FADE_IN_MS - MAP_BANNER_HOLD_MS) / MAP_BANNER_FADE_OUT_MS);
+    const px = Math.max(30, Math.round(w * 0.028));   // 大字：随视口宽缩放
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.font = `bold ${px}px system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const x = w / 2, y = Math.round(h * 0.16);
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.lineWidth = Math.max(5, Math.round(px * 0.18));
+    ctx.strokeText(mapBanner.name, x, y);
+    ctx.fillStyle = '#f3e9c8';
+    ctx.fillText(mapBanner.name, x, y);
+    ctx.restore();
+  }
+
   function showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void {
     let k = kind;
     if (!k) {
@@ -3202,7 +3249,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
 
     // 进入地图大字提示：画面中上部，淡入→停→淡出；带冷却门控（边缘往返不重刷）
-    drawMapBanner(ctx, now, w, h);
+    drawMapBanner(ctx, now, W, H);
   }
 
   function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void {
@@ -4387,10 +4434,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     });
   }
 
-  playEatRequest = () => {
-    void (animState?.triggerEat() ?? false);   // 失败已在状态机里 reportFallback
-    sfx.play('/res/wav/effects/items/potion.wav');
-  };
+  /**
+   * 喝药：动作 + 音（**唯一实现**，两个入口 `playEatRequest` / `playEat` 都走它）。
+   * 音走道具音表：原版 `character.cpp` 在角色做"吃东西"动作时 `sinPlaySound(SIN_SOUND_EAT_POTION)`
+   * = 20 = drink1.wav。**不再写死 `'/res/wav/...'`** —— `sfx.play()` 内部已拼 `RES_BASE='/res/'`，
+   * 再带一次就成了 `/res//res/...` ⇒ 404 ⇒ 过去还是静默返回（本来就一直没响）。
+   */
+  function playEatInternal(): boolean {
+    const ok = animState?.triggerEat() ?? false;   // 失败已在状态机里 reportFallback
+    playItemSound(20);
+    return ok;
+  }
+
+  playEatRequest = () => { void playEatInternal(); };
 
   return {
     async show(enterGame, hooks) {
@@ -4500,11 +4556,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     setSelfHp,
     setSelfName,
     setSelfLevel,
-    playEat: () => {
-      const ok = animState?.triggerEat() ?? false;
-      sfx.play('/res/wav/effects/items/potion.wav');
-      return ok;
-    },
+    playEat: () => playEatInternal(),
     setCollisionDebug: (on: boolean) => collisionDebug.setEnabled(on),
     isCollisionDebug: () => collisionDebug.isEnabled(),
     scanNaNGeometry: () => {
