@@ -332,6 +332,20 @@
   gap: 4px 10px;
 }
 
+/* 两栏分组（战斗属性专用）：左列一整列、右列一整列。
+   行优先的 `.jp-grid2` 做不到 —— 那会左右左右交替，而这里要求"左列全是攻击侧、右列全是挨打侧"。
+   用法：`<div class="jp-cols2"><div>左列卡片…</div><div>右列卡片…</div></div>` */
+.jp-cols2 {
+  display: flex;
+  gap: 10px;
+}
+.jp-cols2 > div {
+  flex: 1;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
 /* 技能面板（SkillPanel，原版布局）：
    单列 T1-T5 共 5 排；每排一组：上方职业名分栏标题 + 下方 4 个技能横排。 */
 /* 技能图标源 BMP 49px 宽，透明化后可见六边形约 40px。
@@ -1370,3 +1384,111 @@
 .jp-shop-count input { width: 42px; text-align: center; font-size: 12px; }
 .jp-shop-count button { font-size: 12px; padding: 0 5px; }
 .jp-shop-hint { font-size: 11px; color: #9fd8ef; }
+
+/* ============ 拆分堆叠弹框（Shift+左键点堆叠物）============
+   与 .jp-menu-overlay 同一套模态约定（居中 + 半透明遮罩）。
+   z-index 取 1150：高于面板/名牌常驻层，低于加载遮罩(1400) —— 加载时不该弹这个。 */
+.jp-split-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1150;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.jp-split {
+  min-width: 180px;
+  padding: 12px 14px;
+  background: #14161a;
+  border: 1px solid #3a4048;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.jp-split-name {
+  color: #e8e0c8;
+  font-weight: 600;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jp-split-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.jp-split-input {
+  width: 72px;
+  padding: 3px 6px;
+  background: #0c0e11;
+  color: #fff;
+  border: 1px solid #3a4048;
+  border-radius: 4px;
+  font-size: 13px;
+  text-align: right;
+  /* 去掉原生数字框的上下微调箭头（用户 2026-09-14：那对箭头"喧宾夺主"）。
+     这是个一次性小弹框，交互是"打个数 → 回车"，不需要连续微调控件；
+     箭头还会把视觉重量从框里唯一重要的信息（物品名 + 数字）上抢走。
+     代价：滚轮/上下键不能再调值 —— 刻意的取舍，见 SplitDialog 顶部说明。 */
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+/* WebKit/Blink（Chrome/Edge/Safari）的 spinner 是伪元素画的，必须单独关 */
+.jp-split-input::-webkit-outer-spin-button,
+.jp-split-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+/* 聚焦只给一条细描边，替代浏览器默认那圈光圈（原生的视觉重量同样偏大） */
+.jp-split-input:focus {
+  outline: none;
+  border-color: #5a6472;
+}
+
+.jp-split-total {
+  color: #8b93a0;
+}
+
+.jp-split-btns {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.jp-split-btns button {
+  min-width: 64px;
+  padding: 4px 10px;
+  background: #23272e;
+  color: #d8dde5;
+  border: 1px solid #3a4048;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.jp-split-btns button:hover {
+  background: #2d3239;
+}
+
+.jp-split-btns .jp-split-ok {
+  background: #2f4a35;
+  border-color: #476b50;
+  color: #d8f0dd;
+}
+
+.jp-split-btns .jp-split-ok:hover {
+  background: #3a5a42;
+}

@@ -9556,6 +9556,7 @@ export const jpt = $root.jpt = (() => {
              * Properties of a C2S_TakeToHand.
              * @typedef {Object} jpt.base.C2S_TakeToHand.$Properties
              * @property {number|Long|null} [uid] C2S_TakeToHand uid
+             * @property {number|null} [count] C2S_TakeToHand count
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -9596,6 +9597,14 @@ export const jpt = $root.jpt = (() => {
             C2S_TakeToHand.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
+             * C2S_TakeToHand count.
+             * @member {number} count
+             * @memberof jpt.base.C2S_TakeToHand
+             * @instance
+             */
+            C2S_TakeToHand.prototype.count = 0;
+
+            /**
              * Creates a new C2S_TakeToHand instance using the specified properties.
              * @function create
              * @memberof jpt.base.C2S_TakeToHand
@@ -9629,6 +9638,8 @@ export const jpt = $root.jpt = (() => {
                     throw $Error("max depth exceeded");
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid") && (typeof message.uid === "object" ? message.uid.low || message.uid.high : message.uid !== 0))
                     writer.uint32(/* id 1, wireType 0 =*/8).int64(message.uid);
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count") && message.count !== 0)
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.count);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -9695,6 +9706,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.uid;
                             continue;
                         }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.count = value;
+                            else
+                                delete message.count;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -9746,6 +9766,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
                     if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
                         return "uid: integer|Long expected";
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
+                    if (!$util.isInteger(message.count))
+                        return "count: integer expected";
                 return null;
             };
 
@@ -9777,6 +9800,9 @@ export const jpt = $root.jpt = (() => {
                             message.uid = object.uid;
                         else if (typeof object.uid === "object")
                             message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+                if (object.count != null)
+                    if ($Number(object.count) !== 0)
+                        message.count = object.count | 0;
                 return message;
             };
 
@@ -9797,12 +9823,14 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let object = {};
-                if (options.defaults)
+                if (options.defaults) {
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
                         object.uid = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
                         object.uid = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.count = 0;
+                }
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
                         object.uid = typeof message.uid === "number" ? $BigInt(message.uid) : $util.Long.fromBits(message.uid.low >>> 0, message.uid.high >>> 0, false).toBigInt();
@@ -9810,6 +9838,8 @@ export const jpt = $root.jpt = (() => {
                         object.uid = options.longs === $String ? $String(message.uid) : message.uid;
                     else
                         object.uid = options.longs === $String ? $util.Long.prototype.toString.call(message.uid) : options.longs === $Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
+                    object.count = message.count;
                 return object;
             };
 

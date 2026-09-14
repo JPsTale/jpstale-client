@@ -51,18 +51,36 @@ export default function CharStatusPanel() {
     { key: `${v.key}-r`, label: t('stats.regen'), value: `+${v.regen.toFixed(1)}/s` },
   ]);
 
-  const combat: Array<[string, string | number]> = [
-    [t('panel.attack'), `${c.attackMin}~${c.attackMax}`],
-    [t('stats.hit'), c.attackRating],
-    [t('panel.defense'), c.defense],
-    [t('panel.absorption'), c.absorption],
-    [t('panel.crit'), c.critical],
-    [t('panel.block'), c.block],
-    [t('panel.avoid'), c.avoid],
-    [t('stats.attackSpeed'), c.attackSpeed],
-    [t('stats.range'), c.shootingRange],
-    [t('panel.move'), c.moveSpeed],
+  // 战斗属性按**两栏语义**分组（用户 2026-09-14 定）：
+  //   左列 = 影响"我打出去"的 —— 攻击力 / 攻击速度 / 攻击范围 / 必杀率 / 移动速度
+  //          （移速决定能不能接近目标、追不追得上，属进攻节奏）
+  //   右列 = 影响"我挨打时"的 —— 命中 / 躲闪 / 防御 / 格挡率 / 回避
+  //          （命中是"能不能打中**别人**"的对拼值，与回避是一组对抗关系，故同列）
+  // ⚠ 顺序即显示顺序：**前 COMBAT_COLUMN 项进左列，其余进右列**（靠 CSS `.jp-cols2`
+  //   的两列容器实现）。两栏各 5 项，改数量时同步改下面的 COMBAT_COLUMN。
+  //
+  // `percent` 标记的项是**百分数**（值本身即 0~100 的百分数，追加 `%` 即可）：
+  //   - 必杀 `c.critical`：服务端 `calculateCriticalRate` 返回 int（5 = 5%，上限 70）；
+  //   - 格挡 `c.block`：服务端 `calculateBlockRate` 上限 50，`nextInt(100) < blockRate` 直接比大小。
+  // ⚠ **躲闪/防御不是百分数**（用户 2026-09-14 纠正）：
+  //   - 躲闪（`c.defense`）= 明文减伤值；
+  //   - 防御（`c.absorption`）= 明文减伤（怪攻 3 − 吸收 1 = 2）；**怪物**的吸收才是百分比减伤。
+  const combat: Array<{ label: string; value: number | string; percent?: boolean }> = [
+    // ── 左列：攻击侧 ──
+    { label: t('panel.attack'), value: `${c.attackMin}~${c.attackMax}` },
+    { label: t('stats.attackSpeed'), value: c.attackSpeed },
+    { label: t('stats.range'), value: c.shootingRange },
+    { label: t('panel.crit'), value: c.critical, percent: true },
+    { label: t('panel.move'), value: c.moveSpeed },
+    // ── 右列：挨打侧 ──
+    { label: t('stats.hit'), value: c.attackRating },
+    { label: t('panel.defense'), value: c.defense },
+    { label: t('panel.absorption'), value: c.absorption },
+    { label: t('panel.block'), value: c.block, percent: true },
+    { label: t('panel.avoid'), value: c.avoid },
   ];
+  /** 左列卡片数（= 攻击侧项数）；右列 = 其余。与 `panels.css` 的 `.jp-cols2` 两列容器配套 */
+  const COMBAT_COLUMN = 5;
 
   const resist: Array<[string, number]> = [
     [t('stats.bio'), c.resBionic],
@@ -150,11 +168,15 @@ export default function CharStatusPanel() {
       </div>
 
       <div className="jp-sec">{t('panel.group.combat')}</div>
-      <div className="jp-grid2">
-        {combat.map(([label, value]) => (
-          <div key={label} className="jp-field">
-            <span>{label}</span>
-            <b>{value}</b>
+      <div className="jp-cols2">
+        {[combat.slice(0, COMBAT_COLUMN), combat.slice(COMBAT_COLUMN)].map((col, ci) => (
+          <div key={ci}>
+            {col.map((row) => (
+              <div key={row.label} className="jp-field">
+                <span>{row.label}</span>
+                <b>{row.value}{row.percent ? '%' : ''}</b>
+              </div>
+            ))}
           </div>
         ))}
       </div>

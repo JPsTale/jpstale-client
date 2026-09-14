@@ -67,10 +67,11 @@ export function bagSwap(handUid: number, targetUid: number, toLocation: number, 
     });
 }
 
-/** 拿起：任意容器 → 鼠标位（装备栏 slot = -1）。放下不需要配套消息（走 EquipItem/BagLayout/DropItem）。 */
-export function takeToHand(uid: number): jpt.base.ClientMessage.$Properties {
+/** 拿起：任意容器 → 鼠标位（装备栏 slot = -1）。放下不需要配套消息（走 EquipItem/BagLayout/DropItem）。
+ *  `count > 0` 且小于现有量时为**拆分**：只拿 count 个，余数留在原格（用户 2026-09-14）。 */
+export function takeToHand(uid: number, count = 0): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        takeToHand: { uid },
+        takeToHand: { uid, count },
     });
 }
 

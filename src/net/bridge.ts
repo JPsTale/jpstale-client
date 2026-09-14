@@ -245,8 +245,9 @@ export function sendShopSell(npcId: number, uid: number, count = 1): void {
     send(shopSell(npcId, uid, count));
 }
 
-export function sendTakeToHand(uid: number): void {
-  send(takeToHand(uid));
+/** 拿起。`count > 0` 且小于现有量 = **拆分**（只拿 count 个，余数留在原格，用户 2026-09-14）。 */
+export function sendTakeToHand(uid: number, count = 0): void {
+  send(takeToHand(uid, count));
 }
 
 export function sendEquipItem(uid: number, equipSlot: number): void {

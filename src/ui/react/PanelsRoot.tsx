@@ -10,6 +10,8 @@ import ShopPanel from './ShopPanel.js';
 import { ItemInfoLayer } from './ItemInfo.js';
 import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
 import ChatWindow from './ChatWindow.js';
+import SplitDialog from './SplitDialog.js';
+import { tryDropHeldToGround } from './heldDrop.js';
 
 /**
  * 拿起中的物品跟随光标 —— **全局**渲染，不随背包面板开关。
@@ -73,6 +75,17 @@ function renderPanel(panel: OpenPanel) {
 // 面板根：渲染所有打开中的面板 + 系统菜单（模态，独占打开）。
 export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSettings }) {
   const { openPanels, systemMenuOpen } = useSyncExternalStore(subscribeGame, getGameSnapshot);
+
+  // 「手持道具时点游戏画面 → 丢到地面」注册在**全局**（不随面板开关，`PanelsRoot` 常驻 World）。
+  // 从 HUD 药水槽拿起药水时背包是关着的 —— 挂在面板里就收不到点击（用户 2026-09-14 实测）。
+  useEffect(() => {
+    const onDown = (e: PointerEvent) => {
+      if (tryDropHeldToGround(e)) { e.stopPropagation(); e.preventDefault(); }
+    };
+    document.addEventListener('pointerdown', onDown, true);
+    return () => document.removeEventListener('pointerdown', onDown, true);
+  }, []);
+
   return (
     <>
       {/* 游戏内聊天窗（常驻 World，折叠态缺省展开由 store 控制） */}
@@ -82,6 +95,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
       <HeldCursor />
       {/* 物品信息框（常驻：面板关着 / 悬停 HUD 药水槽时也要显示） */}
       <ItemInfoLayer />
+      {/* 拆分堆叠弹框（常驻：药水槽在 HUD 上，背包关着也可能触发） */}
+      <SplitDialog />
       {systemMenuOpen && props.systemMenuSettings && (
         <SystemMenu settings={props.systemMenuSettings} />
       )}

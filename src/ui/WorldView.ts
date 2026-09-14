@@ -150,6 +150,8 @@ export interface WorldView {
   cameraMode(): number;
   /** 切换"显示附近所有掉落物名牌"（A 键） */
   toggleGroundItemLabels(): void;
+  /** 取消当前 Chase/攻击目标（ESC）—— 与"点空地取消"同一出口，但不产生移动意图 */
+  cancelTarget(): void;
   /** 应用显示偏好（系统设置里改完立即生效，见 ui/display-prefs.ts）：下一帧重算可见集 */
   setDisplayPrefs(p: DisplayPrefs): void;
   /** 当前显示预算的实况（可见/隐藏只数、档位）—— 系统设置面板与 profiler 都用它显示"发生了什么" */
@@ -261,8 +263,14 @@ export interface WorldView {
   npcAppear(npcId: number, nameKey: string, modelFile: string, x: number, y: number, z: number, angle: number): void;
   /** NPC 消失（S2C_NpcDisappear）→ 移除 */
   npcDisappear(npcId: number): void;
-  /** 地面物品出现（S2C_GroundItemAppear）：加载 DropItem 模型渲染（dorpItem 可空→旗帜兜底） */
-  groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void;
+  /**
+   * 地面物品出现（S2C_GroundItemAppear）：加载 DropItem 模型渲染（dorpItem 可空→旗帜兜底）。
+   *
+   * `itemId` = 原版 32 位 idcode（服务端 `GroundItemProto.item_id`），**只用来判物品大类**：
+   * 原版 `scITEM::Draw` 里只有 `ITEMBASE_Weapon`（首字节 0x01）才躺平。
+   * `quantity` / `money` 只用于名牌显示数量（金币用 `money`，其余可堆叠物用 `quantity`）。
+   */
+  groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string, itemId: number, quantity: number, money: number): void;
   /** 地面物品消失（S2C_GroundItemDisappear，拾取/过期/被清） → 移除 */
   groundItemDisappear(groundItemId: number): void;
   /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
@@ -310,8 +318,6 @@ const ANIM_FALLDAMAGE = 0x0072;
 const ANIM_DEAD = 0x0120;
 
 // ===== 玩家普通攻击（design-player-combat.md）=====
-// 近战攻击距离：与服务端 CombatService.ATTACK_RANGE 同值（≤ 此距离停步攻击，超出追击）
-const ATTACK_RANGE = 48;
 // 挥拳动画时长 = 服务端攻击间隔 + 此冗余，保证客户端节奏不慢于服务端冷却（结构性防丢刀）
 const SWING_SLACK_MS = 40;
 // 起手闸门余量：动画播完到触发下次起手之间的帧级抖动（2 动画帧 ≈ 67ms，见 selfAttackGateMs）
@@ -352,12 +358,37 @@ function selfAttackGateMs(): number {
 }
 
 /**
- * 自机攻击距离：远程武器（射程>0，如弓）用其射程，否则近战固定距离。
- * 与服务端 CombatService.attackRange 同公式（防客户端停步距离与服务端裁决不一致）。
+ * 追击停步环半径（世界单位，用户 2026-09-14 定）：追目标时**不要踏进这个环**。
+ *
+ * 作用不是"缩减攻击距离"，而是给判定留余量 —— 若满步长一路走进判定边界以内，
+ * 角色会停在"边界内侧一步"的位置，而进入/离开判定每帧重算，位置一抖就越线来回翻
+ * （表现为贴着怪高频蹭）。停在 32 这个环上距边界就有 8 的余量。
+ *
+ * 三类目标共用它，但**交互类目标另有更近的停步环**（见 `INTERACT_RANGE`）：
+ * 停太远会够不到拾取/对话判定。
+ */
+const NEAR_RANGE = 32;
+
+/**
+ * 交互类目标（掉落物 / NPC / 其他玩家）的停步环半径。
+ *
+ * 这几类要**停在判定范围之内**才能触发交互，所以不能沿用 32：
+ *   - 掉落物：客户端即时拾取判定 `PICK_ACT_RANGE`；停在 32 正好压线，一抖就拾不到；
+ *   - NPC 对话：服务端 `NPC_INTERACT_RANGE = 96`（宽），但贴太近在视觉上像"撞上去"，取 24 自然；
+ *   - 其他玩家：无服务端距离校验，跟 NPC 取齐。
+ */
+const INTERACT_RANGE = 24;
+
+/**
+ * 自机攻击距离 = 服务端下发的 `shootingRange`，**不做本地二次加工**。
+ *
+ * 那个字段就是"攻击距离"本身（服务端 `PlayerStatCalculator.shootingRangeOf` 已分档：
+ * 远程=装备射程 / 近战双手 80 / 近战单手与徒手 40），服务端 `CombatService.attackRange`
+ * 读的是同一个值 ⇒ 面板显示、客户端停步距离、服务端距离裁决三者一致。
+ * ⚠ 曾经这里写 `max(shootingRange, 48)`，那个 48 会把"单手 40"顶成 48 —— 已删。
  */
 function selfAttackRange(): number {
-  const sr = getGameSnapshot().character?.shootingRange ?? 0;
-  return sr > ATTACK_RANGE ? sr : ATTACK_RANGE;
+  return getGameSnapshot().character?.shootingRange ?? 0;
 }
 
 // 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1000；见 design-nameplate-hpbar.md）
@@ -519,8 +550,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let tapDownX = 0, tapDownY = 0, tapDownT = 0;
   // 本次按压是否按在可交互目标上（掉落物/怪/玩家）：目标按压抬起时直接执行点击目标逻辑
   let targetPressActive = false;
-  const ray = new THREE.Raycaster();
-  const ndc = new THREE.Vector2();
 
   // ---- 原版鼠标光标 overlay：指向可拾取→GetItem(手)、怪物→Attack(红)、NPC→Talk、默认箭头 ----
   let cursorProbeAt = 0;
@@ -538,34 +567,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let lastHoverScanAt = 0;
   /** 剖析器的场景遍历统计节拍（遍历本身有成本，不能每帧做） */
   let lastSceneScanAt = 0;
-
-  // 可视拾取候选过滤：只让"在相机视锥内 且 ≤ 该距离"的目标参与射线，避免全场景对象无差别遍历/被隔墙或远处误选
-  const PICK_RAY_FAR = 2400;
-  const _pickProj = new THREE.Matrix4();
-  const _pickFrustum = new THREE.Frustum();
-  const _pickWp = new THREE.Vector3();
-  function buildPickFrustum(): THREE.Frustum {
-    _pickProj.multiplyMatrices(camera!.projectionMatrix, camera!.matrixWorldInverse);
-    _pickFrustum.setFromProjectionMatrix(_pickProj);
-    return _pickFrustum;
-  }
-  const _pickSphere = new THREE.Sphere();
-  function isPickVisible(f: THREE.Frustum, root: THREE.Object3D): boolean {
-    if (!root || !root.visible) return false;
-    if (root.getWorldPosition(_pickWp).distanceTo(camera!.position) > PICK_RAY_FAR) return false;
-    // 逐个遍历目标子树的 Mesh，取 geometry.boundingSphere（缺失则计算）做视锥球测试。
-    // 不用 Frustum.intersectsObject：它对"有 geometry 但 boundingSphere 未算"的对象会抛异常。
-    let hit = false;
-    root.traverse((o) => {
-      if (hit) return;
-      const g = (o as THREE.Mesh).geometry;
-      if (!g) return;
-      if (!g.boundingSphere) g.computeBoundingSphere();
-      _pickSphere.copy(g.boundingSphere!).applyMatrix4(o.matrixWorld);
-      if (f.intersectsSphere(_pickSphere)) hit = true;
-    });
-    return hit;
-  }
 
   /** 诊断（临时）：步长采样主 framebuffer，统计三类目标色像素，判定光圈是否落在屏幕上。 */
   function hoverOutlineScanDiag(): void {
@@ -598,33 +599,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
 
-  /** 命中的 object 向上找到所属的 root（多为 group 树，命中点在深层 mesh） */
-  function rootOfGroup(hitObj: THREE.Object3D, roots: THREE.Object3D[]): THREE.Object3D {
-    const set = new Set<THREE.Object3D>(roots);
-    let o: THREE.Object3D | null = hitObj;
-    while (o) {
-      if (set.has(o)) return o;
-      o = o.parent;
-    }
-    return roots[0] ?? hitObj;
-  }
-
   /** 按屏幕坐标探测指向目标 → 光标模式 + hover 外轮廓目标（节流）。
-   *  掉落物/怪物/NPC/玩家四类统一放一个目标数组做一次射线检测，最近命中者优先
-   *  （先命中谁就是谁，不硬编码 if 顺序）；命中后靠 root.userData.kind 分类决定光标与轮廓色。 */
+   *
+   *  **与点击共用同一个判定**（`pickTargetAt` = 原版屏幕矩形 + 深度最近）：
+   *  原版也是同一个 `lpSelChar`/`lpSelItem` 同时驱动光标与点击，
+   *  两边各判一套会出现"光标显示可拾取、点下去却选了怪"。
+   *  名牌矩形（overlay 是 DOM 最上层）优先于 3D 判定。 */
   function probeCursorAt(cx: number, cy: number): void {
     const now = performance.now();
     if (now - cursorProbeAt < 66) return; // ~15Hz 足够（配合世界滚动静态光标）
     cursorProbeAt = now;
     if (!renderer || !camera || !scene) return;
-    const rect = renderer.domElement.getBoundingClientRect();
-    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
-    ray.setFromCamera(ndc, camera);
-    ray.far = PICK_RAY_FAR;
 
     // **名牌也是拾取目标**（用户 2026-09-13：地上的道具太难捡）：
-    // 鼠标落在某块名牌的矩形内 → 直接把它对应的目标当作 hover 目标（与射线命中同一出口）。
+    // 鼠标落在某块名牌的矩形内 → 直接把它对应的目标当作 hover 目标。
     const tagHit = nameplateHits.find((b) =>
       cx >= b.x && cx <= b.x + b.w && cy >= b.y && cy <= b.y + b.h);
     if (tagHit) {
@@ -633,40 +621,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
 
-    const pf = buildPickFrustum();
-    const roots: THREE.Object3D[] = [];
-    for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) roots.push(g.root);
-    for (const m of monsters.values()) if (!m.culled && isPickVisible(pf, m.root)) roots.push(m.root);
-    for (const n of npcs.values()) if (isPickVisible(pf, n.root)) roots.push(n.root);
-    for (const r of remotes.values()) if (isPickVisible(pf, r.root)) roots.push(r.root);
-
-    const hit = ray.intersectObjects(roots, true);
-    if (hit.length === 0) {
+    const tag = pickTargetAt(cx, cy);
+    if (!tag) {
       hoverTarget = null;
       setCursorMode('default', mouseDown);
       return;
     }
-    const root = rootOfGroup(hit[0].object, roots);
-    const kind = (root.userData.kind as string) || '';
-    switch (kind) {
+    switch (tag.kind) {
       case 'item':
-        hoverTarget = { root, color: HOVER_COLOR_ITEM };
+        hoverTarget = { root: tag.root, color: HOVER_COLOR_ITEM };
         setCursorMode('pickup', mouseDown);
         break;
       case 'monster':
-        hoverTarget = { root, color: HOVER_COLOR_MONSTER };
+        hoverTarget = { root: tag.root, color: HOVER_COLOR_MONSTER };
         setCursorMode('attack', mouseDown);
         break;
       case 'npc':
-        hoverTarget = { root, color: HOVER_COLOR_NPC };
+        hoverTarget = { root: tag.root, color: HOVER_COLOR_NPC };
         setCursorMode('talk', mouseDown);
         break;
-      case 'player':
-        hoverTarget = { root, color: HOVER_COLOR_PLAYER };
-        setCursorMode('default', mouseDown);
-        break;
       default:
-        hoverTarget = { root, color: HOVER_COLOR_ITEM };
+        hoverTarget = { root: tag.root, color: HOVER_COLOR_PLAYER };
         setCursorMode('default', mouseDown);
         break;
     }
@@ -709,8 +684,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   /** 点击掉落物即时拾取半径（世界单位，对齐原版 ≈32）：该范围内点击即发 C2S；更远走 Chase */
   const PICK_ACT_RANGE = 32;
-  /** 近身点击兜底拾取半径（世界单位，对齐 agFindItem）：不必点中低矮命中面 */
-  const CLICK_NEAR_PICK = 2.0;
+  /**
+   * 屏幕矩形判定的尺寸（**世界单位**），等价原版 `GetRect2D(..., 32 * fONE, 32 * fONE, ...)`
+   * —— 原版传的是世界尺寸而非像素，故矩形随距离自动缩放（近大远小），这里同理。
+   */
+  const ITEM_PICK_ANCHOR_UP = 16;   // 原版锚点：物品位置抬高 16 单位（`pY + 16 * fONE`）
+  const WORLD_PICK_SIZE = {
+    item: 32,      // 原版掉落物矩形 32×32
+    monster: 64,   // 角色：原版按模型尺寸传，这里统一给一个够用的世界尺寸
+    player: 64,
+    npc: 64,
+  } as const;
 
   // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
@@ -1805,14 +1789,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     if (e.button === 0) {
-      // 指向可交互目标（掉落物/怪物/玩家）：整次按压都视为"点击目标"，禁用按住跑，
+      // 指向可交互目标（掉落物/怪物/玩家/NPC）：整次按压都视为"点击目标"，禁用按住跑，
       // 抬起时做拾取/选目标（原版点目标 vs 按住空地跑 的分界）
-      // 名牌也算"点在目标上"（否则按在名牌上会被当成"按住空地朝光标跑"）
+      // 名牌也算"点在目标上"（否则按在名牌上会被当成"按住空地朝光标跑"）。
+      // 判定用与原版同一套屏幕矩形（pickTargetAt），名牌矩形优先。
       const overTarget = nameplateTargetAt(e.clientX, e.clientY) !== null
-        || pickGroundItemIdByRay(e.clientX, e.clientY) !== undefined
-        || pickMonsterIdByRay(e.clientX, e.clientY) !== undefined
-        || pickPlayerIdByRay(e.clientX, e.clientY) !== undefined
-        || pickNpcIdByRay(e.clientX, e.clientY) !== undefined;
+        || pickTargetAt(e.clientX, e.clientY) !== null;
       mouseX = e.clientX; mouseY = e.clientY;
       tapDownX = e.clientX; tapDownY = e.clientY; tapDownT = performance.now();
       // 玩家按下（移动/点击）→ 取消进行中的自动追踪目标
@@ -1874,76 +1856,54 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 点击交互（对齐原版目标式操作，无"点地板行走"）：
+   *  点怪物 / 点玩家 / 点 NPC → Chase(引用) 实时跟随目标当前位置（目标跑我也实时转向）；
    *  点掉落物 → 够近即时拾取，否则 Chase(引用) 追过去到位自动拾取该目标；
-   *  点怪物 / 点玩家 → Chase(引用) 实时跟随目标当前位置（目标跑我也实时转向）；
-   *  点空地 → 取消当前 Chase 目标（不移动）。 */
+   *  点空地 → 取消当前 Chase 目标（不移动）。
+   *
+   *  目标从哪来：**名牌矩形优先，其次 `pickTargetAt`（原版屏幕矩形判定）**。
+   *  ⚠ 这里曾有一条"近身拾取兜底"（脚下 2m 内有掉落物就算点击意图），它抢在实体之前吞掉点击
+   *  （用户 2026-09-14 实测：点怪连报 `近身拾取(兜底) gid=28`，服务端回"金钱超过最大允许数量"）。
+   *  已**删除**（本项目不要任何 fallback，见 AGENTS #12/#35）—— 判定一律走原版那套屏幕矩形。 */
   function onGroundTap(cx: number, cy: number): void {
     if (!renderer || !camera || !scene) return;
     // 左键语义对自动回正的影响（原版 Main.cpp:1988-2005）：
     //   点目标/物品（选目标、开打）→ `AutoCameraFlag = FALSE`（不打镜头）
     //   点空地（走路）→ `AutoCameraFlag = TRUE`（跑起来镜头回正）
     // 这里在每条"选中目标"的分支里置 false，落到最后的空地分支再置 true。
-    // 名牌命中 → 视同射线打中了那个目标；否则再走射线。
-    // （这样后面的"够近就拾取 / 否则 Chase"逻辑完全复用，不另写一份）
-    const tag = nameplateTargetAt(cx, cy);
-    // 1) 掉落物
-    const itemId = tag?.kind === 'item' ? tag.id : pickGroundItemIdByRay(cx, cy);
-    if (itemId !== undefined) {
+    // 名牌命中（overlay 是 DOM 最上层，鼠标能看见就能点中）优先于 3D 判定。
+    const tag = nameplateTargetAt(cx, cy) ?? pickTargetAt(cx, cy);
+    if (tag) {
       setAutoRecenter(false);
-      const g = groundItems.get(itemId);
-      if (g) {
-        const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
-        if (d <= PICK_ACT_RANGE) {
-          console.log('[WorldView] 点击拾取 gid=' + itemId + ' dist=' + d.toFixed(2) + 'm');
-          opts?.onPickupGroundItem?.(itemId);
-        } else {
-          moveTarget = { kind: 'item', id: itemId };
-          console.log('[WorldView] 选中掉落物 gid=' + itemId + ' dist=' + d.toFixed(1) + 'm → Chase');
+      switch (tag.kind) {
+        case 'monster':
+          moveTarget = { kind: 'monster', id: tag.id };
+          console.log('[WorldView] 选中怪物 mid=' + tag.id + ' → Chase(实时跟随)');
+          return;
+        case 'player':
+          moveTarget = { kind: 'player', id: tag.id };
+          console.log('[WorldView] 选中玩家 playerId=' + tag.id + ' → Chase(实时跟随)');
+          return;
+        case 'npc':
+          moveTarget = { kind: 'npc', id: tag.id };
+          console.log('[WorldView] 选中 NPC npcId=' + tag.id + ' → Chase');
+          return;
+        case 'item': {
+          const g = groundItems.get(tag.id);
+          if (g) {
+            const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
+            if (d <= PICK_ACT_RANGE) {
+              console.log('[WorldView] 点击拾取 gid=' + tag.id + ' dist=' + d.toFixed(2) + 'm');
+              opts?.onPickupGroundItem?.(tag.id);
+            } else {
+              moveTarget = { kind: 'item', id: tag.id };
+              console.log('[WorldView] 选中掉落物 gid=' + tag.id + ' dist=' + d.toFixed(1) + 'm → Chase');
+            }
+          }
+          return;
         }
       }
-      return;
     }
-    // 1b) 近身兜底（对齐原版 agFindItem）：贴近掉落物时点它不必精确打中低矮命中面，
-    //     拾取范围内的最近物品即视为点击意图（点一下才触发，非路过自动）。
-    if (groundItems.size > 0) {
-      let nearId: number | undefined;
-      let nearD = CLICK_NEAR_PICK;
-      for (const g of groundItems.values()) {
-        const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
-        if (d <= nearD) { nearD = d; nearId = g.groundItemId; }
-      }
-      if (nearId !== undefined) {
-        setAutoRecenter(false);
-        console.log('[WorldView] 近身拾取(兜底) gid=' + nearId + ' dist=' + nearD.toFixed(2) + 'm');
-        opts?.onPickupGroundItem?.(nearId);
-        return;
-      }
-    }
-    // 2) 怪物
-    const mobId = tag?.kind === 'monster' ? tag.id : pickMonsterIdByRay(cx, cy);
-    if (mobId !== undefined) {
-      setAutoRecenter(false);
-      moveTarget = { kind: 'monster', id: mobId };
-      console.log('[WorldView] 选中怪物 mid=' + mobId + ' → Chase(实时跟随)');
-      return;
-    }
-    // 3) 其他玩家（跟随目标，实时取位）
-    const pid2 = tag?.kind === 'player' ? tag.id : pickPlayerIdByRay(cx, cy);
-    if (pid2 !== undefined) {
-      setAutoRecenter(false);
-      moveTarget = { kind: 'player', id: pid2 };
-      console.log('[WorldView] 选中玩家 playerId=' + pid2 + ' → Chase(实时跟随)');
-      return;
-    }
-    // 3b) NPC → Chase 走近（到位后触发对话，对话逻辑后续接入）
-    const npcId = tag?.kind === 'npc' ? tag.id : pickNpcIdByRay(cx, cy);
-    if (npcId !== undefined) {
-      setAutoRecenter(false);
-      moveTarget = { kind: 'npc', id: npcId };
-      console.log('[WorldView] 选中 NPC npcId=' + npcId + ' → Chase');
-      return;
-    }
-    // 4) 空地 → 仅取消当前 Chase 目标（原版点地不产生走点移动，只有按住跑）
+    // 空地 → 仅取消当前 Chase 目标（原版点地不产生走点移动，只有按住跑）
     setAutoRecenter(true);   // 原版：点空地 = 走路意图 → 自动回正打开
     if (moveTarget) {
       console.log('[WorldView] 取消 Chase 目标');
@@ -1952,95 +1912,129 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  /** 鼠标射线命中的玩家（远端演员，非自机）id */
-  function pickPlayerIdByRay(cx: number, cy: number): number | undefined {
-    if (!renderer || !camera || !scene || remotes.size === 0) return undefined;
-    const rect = renderer.domElement.getBoundingClientRect();
-    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
-    ray.setFromCamera(ndc, camera);
-    ray.far = PICK_RAY_FAR;
-    const pf = buildPickFrustum();
-    const targets: THREE.Object3D[] = [];
-    for (const r of remotes.values()) if (isPickVisible(pf, r.root)) targets.push(r.root);
-    for (const hit of ray.intersectObjects(targets, true)) {
-      let o: THREE.Object3D | null = hit.object;
-      while (o) {
-        const v = o.userData.playerId as number | undefined;
-        if (v !== undefined) {
-          if (v === selfPlayerId) break; // 自机不可被点选（也不应出现在 remotes）
-          return v;
-        }
-        o = o.parent;
-      }
-    }
-    return undefined;
+  /**
+   * 取消当前目标（ESC，用户 2026-09-14）—— 与"点空地取消"同一出口，但**不产生移动意图**。
+   *
+   * 为什么需要它：点了怪就进入攻击/追击循环，除了点别处（会带出移动意图）没法脱身。
+   * 攻击循环的驱动条件就是 `moveTarget?.kind === 'monster'`（见主循环 `monsterEngaged`），
+   * 所以清掉 `moveTarget` 即可停下追击与后续挥拳；**正在播的那一击让它打完**（原版也没有打断技）。
+   *
+   * ⚠ 不要在这里清 `selfAttackTargetId` —— 那个值在**命中帧**才被用来上报 `onAttackHit(targetId)`，
+   * 提前清掉会让"已经挥出去的那一拳"打空（事件帧上报时目标已变成 0）。
+   */
+  function cancelTarget(): void {
+    if (!moveTarget) return;
+    console.log('[WorldView] ESC 取消目标 kind=' + moveTarget.kind
+      + (moveTarget.kind === 'ground' ? '' : ' id=' + moveTarget.id));
+    moveTarget = null;
+    moveStuckStart = 0;
   }
 
-  /** 鼠标射线命中的掉落物 id（近优先） */
-  function pickGroundItemIdByRay(cx: number, cy: number): number | undefined {
-    if (!renderer || !camera || !scene || groundItems.size === 0) return undefined;
-    const rect = renderer.domElement.getBoundingClientRect();
-    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
-    ray.setFromCamera(ndc, camera);
-    ray.far = PICK_RAY_FAR; // 服务端 AOI 距离(1000) 语义：可视内任意掉落可选中
-    const pf = buildPickFrustum();
-    const targets: THREE.Object3D[] = [];
-    for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) targets.push(g.root);
-    for (const hit of ray.intersectObjects(targets, true)) {
-      let o: THREE.Object3D | null = hit.object;
-      while (o) {
-        const v = o.userData.pickupItemId as number | undefined;
-        if (v !== undefined) return v;
-        o = o.parent;
-      }
-    }
-    return undefined;
+  /**
+   * 把目标的"世界空间中点 + 世界空间尺寸"投成**屏幕矩形**，返回 {x,y} 与相机空间深度。
+   *
+   * 等价原版 `smRENDER3D::GetRect2D`（`smRend3d.cpp:270`）：
+   *   `p[i].x = MidX + (p[i].x * viewdistZ) / kz`（kz = 相机空间深度，kz <= 0 即相机背后 → 返回 NULL）。
+   * 原版的 `width/height` 是**世界单位**（调用点写 `32 * fONE`），所以矩形随距离自动缩放
+   * —— 近处大、远处小。这里用"投影中点 + 投影世界尺寸半量"得到同一效果，
+   * 并把返回的 `z` 当原版的 `sez`（选中取最近 = 最小）。
+   */
+  const _pickCenter = new THREE.Vector3();
+  const _pickView = new THREE.Vector3();
+  function screenRectOf(
+    wx: number, wy: number, wz: number, worldSize: number,
+  ): { x: number; y: number; z: number; half: number } | null {
+    if (!camera) return null;
+    const W = npOverlay?.clientWidth ?? 0;
+    const H = npOverlay?.clientHeight ?? 0;
+    if (W <= 0 || H <= 0) return null;
+    _pickView.set(wx, wy, wz).applyMatrix4(camera.matrixWorldInverse);
+    const kz = -_pickView.z;                     // 相机空间深度（原版 GetRect2D 的 cz）
+    if (kz <= 0) return null;                    // 相机背后 → 原版返回 NULL
+    _pickCenter.set(wx, wy, wz).project(camera);
+    const x = (_pickCenter.x * 0.5 + 0.5) * W;
+    const y = (1 - (_pickCenter.y * 0.5 + 0.5)) * H;
+    // 世界尺寸 → 屏幕像素：焦长 f = H / (2·tan(fovY/2))（three 的投影矩阵元素 [5] = 1/tan(fovY/2)）
+    const half = (worldSize * 0.5) * (H * 0.5 * camera.projectionMatrix.elements[5]) / kz;
+    return { x, y, z: kz, half };
   }
 
-  /** 鼠标射线命中的怪物 id（近优先） */
-  function pickMonsterIdByRay(cx: number, cy: number): number | undefined {
-    if (!renderer || !camera || !scene || monsters.size === 0) return undefined;
-    const rect = renderer.domElement.getBoundingClientRect();
-    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
-    ray.setFromCamera(ndc, camera);
-    ray.far = PICK_RAY_FAR;
-    const pf = buildPickFrustum();
-    const targets: THREE.Object3D[] = [];
-    for (const m of monsters.values()) if (isPickVisible(pf, m.root)) targets.push(m.root);
-    for (const hit of ray.intersectObjects(targets, true)) {
-      let o: THREE.Object3D | null = hit.object;
-      while (o) {
-        const v = o.userData.monsterId as number | undefined;
-        if (v !== undefined) return v;
-        o = o.parent;
-      }
-    }
-    return undefined;
+  /** 屏幕矩形是否含该点（原版：`Rect.left < pCursorPos.x < Rect.right` 且 top/bottom 同理） */
+  function inPickRect(cx: number, cy: number, r: { x: number; y: number; half: number }): boolean {
+    return cx >= r.x - r.half && cx <= r.x + r.half && cy >= r.y - r.half && cy <= r.y + r.half;
   }
 
-  /** 鼠标射线命中的 NPC id（近优先） */
-  function pickNpcIdByRay(cx: number, cy: number): number | undefined {
-    if (!renderer || !camera || !scene || npcs.size === 0) return undefined;
-    const rect = renderer.domElement.getBoundingClientRect();
-    ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
-    ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
-    ray.setFromCamera(ndc, camera);
-    ray.far = PICK_RAY_FAR;
-    const pf = buildPickFrustum();
-    const targets: THREE.Object3D[] = [];
-    for (const n of npcs.values()) if (isPickVisible(pf, n.root)) targets.push(n.root);
-    for (const hit of ray.intersectObjects(targets, true)) {
-      let o: THREE.Object3D | null = hit.object;
-      while (o) {
-        const v = o.userData.npcId as number | undefined;
-        if (v !== undefined) return v;
-        o = o.parent;
+  /** 点击/悬停的判定目标（对齐原版"一帧内遍历全部目标取鼠标下最近者"） */
+  type PickTag = { kind: 'item' | 'monster' | 'player' | 'npc'; id: number; root: THREE.Object3D };
+
+  /**
+   * 当前指标位置下的交互目标 —— **按原版做屏幕矩形判定**。
+   *
+   * 权威依据：原版 `playmain.cpp:2900-2990` 每帧遍历全部角色/掉落物，用 `GetRect2D` 取
+   * 屏幕矩形 + `sez`（相机空间深度），凡"矩形包含鼠标点"者取 **sez 最小（最近）** 的一个当目标；
+   * 命中后再由 `ActionGame.cpp:164` 的 `agFindAttack()` / `agFindItem()` 决定打怪还是拾取。
+   * **同一个结果同时驱动悬停光标/轮廓与点击**（原版也是同一个 `lpSelChar`/`lpSelItem`）——
+   * 两边各判一套会让"光标说能拾取、点下去却选了怪"。
+   *  - 不做遮挡剔除（原版也没有）：只要在屏幕上、矩形含鼠标点，就能选中；
+   *  - 类别优先级沿用游戏规则：**实体优先，掉落物最后**（原版 agFindAttack 失败才 agFindItem），
+   *    同类别内取最近。
+   */
+  function pickTargetAt(cx: number, cy: number): PickTag | null {
+    if (!camera || !scene) return null;
+    const S = WORLD_PICK_SIZE;
+
+    /** 该类别里"鼠标下最近"的一个（命中判定与选优都在这里，无则 null） */
+    const nearestIn = (
+      list: [PickTag, number, number, number][], size: number,
+    ): PickTag | null => {
+      let hit: PickTag | null = null;
+      let hitZ = 0;
+      for (const [tag, wx, wy, wz] of list) {
+        const r = screenRectOf(wx, wy, wz, size);
+        if (!r || !inPickRect(cx, cy, r)) continue;
+        if (hit === null || r.z < hitZ) { hit = tag; hitZ = r.z; }
       }
+      return hit;
+    };
+
+    // ① 怪物（对齐原版遍历角色取最近）
+    const monsterList: [PickTag, number, number, number][] = [];
+    for (const [id, m] of monsters) {
+      if (m.culled || !m.root.visible) continue;
+      const p = m.root.position;
+      monsterList.push([{ kind: 'monster', id, root: m.root }, p.x, p.y + S.monster * 0.5, p.z]);
     }
-    return undefined;
+    const mob = nearestIn(monsterList, S.monster);
+    if (mob) return mob;
+
+    // ② 远端玩家
+    const playerList: [PickTag, number, number, number][] = [];
+    for (const [id, r] of remotes) {
+      if (!r.root.visible) continue;
+      const p = r.root.position;
+      playerList.push([{ kind: 'player', id, root: r.root }, p.x, p.y + S.player * 0.5, p.z]);
+    }
+    const other = nearestIn(playerList, S.player);
+    if (other) return other;
+
+    // ③ NPC
+    const npcList: [PickTag, number, number, number][] = [];
+    for (const [id, n] of npcs) {
+      if (!n.root.visible) continue;
+      const p = n.root.position;
+      npcList.push([{ kind: 'npc', id, root: n.root }, p.x, p.y + S.npc * 0.5, p.z]);
+    }
+    const npc = nearestIn(npcList, S.npc);
+    if (npc) return npc;
+
+    // ④ 掉落物放最末：原版锚点是"物品位置抬高 16 单位"，矩形 32×32
+    const itemList: [PickTag, number, number, number][] = [];
+    for (const [id, g] of groundItems) {
+      if (!g.root.visible) continue;
+      const p = g.root.position;
+      itemList.push([{ kind: 'item', id, root: g.root }, p.x, p.y + ITEM_PICK_ANCHOR_UP, p.z]);
+    }
+    return nearestIn(itemList, S.item);
   }
 
   function onMouseMove(e: MouseEvent): void {
@@ -2391,7 +2385,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.set(actorInfo.x, actorInfo.y, actorInfo.z);
         root.rotation.y = actorInfo.angle || 0;
         root.userData.monsterId = mid; // 光标 Attack/点选 Chase 命中用
-        root.userData.kind = 'monster'; // hover 统一射线命中 → 分类（外轮廓色/光标）
+        root.userData.kind = 'monster'; // 场景对象分类标签（调试/诊断用；悬停与点击的判定走 pickTargetAt 的屏幕矩形）
         scene!.add(root);
 
         let actorObj!: MonsterActor;
@@ -2484,7 +2478,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.set(info.x, info.y, info.z);
         root.rotation.y = info.angle || 0;
         root.userData.npcId = nid; // 光标 Talk/点选 Chase 命中用
-        root.userData.kind = 'npc'; // hover 统一射线命中 → 分类（外轮廓色/光标）
+        root.userData.kind = 'npc'; // 场景对象分类标签（调试/诊断用；悬停与点击的判定走 pickTargetAt 的屏幕矩形）
         scene!.add(root);
 
         let actorObj!: NpcActor;
@@ -2563,13 +2557,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // ==================== 地面物品（S2C_GroundItem* / C2S_PickupItem） ====================
-  // 渲染对齐 C++ 客户端 scITEM::Draw（character.cpp）：
+  // 渲染对齐原版 `scITEM::Draw`（character.cpp，实现见 EU 重写的 RenderDropItemOverride
+  // `PristonTale-EU-main/game/game/EXE.cpp:56`；exm 反编译里该函数被遮蔽，只剩声明）：
   //  - 加载 DropItem\it{DorpItem}.smd 物品模型；无模型 → 旗帜兜底（char\flag\wow）
-  //  - 贴地微浮（服务端下发 y ≈ 地形高），模型本身平躺于地
-  //  - 固定朝向由位置决定（Angle.y = ((pX+pZ)>>2) & ANGCLIP），不做旋转动画
+  //  - 位置 = 服务端下发的 x/z + 原版固定微抬 `pY + 6` 单位（6/256 世界单位）
+  //  - 朝向 = 位置决定值 `Angle.y = ((pX+pZ) >> 2) & ANGCLIP`，**不是随机**（同坐标恒同朝向）
+  //  - **只有武器**（`ITEMBASE_Weapon`，idcode 首字节 0x01）额外 `Angle.x = 90°` 躺平；
+  //    防具/盾/药水/宝石/金币等一律保持模型原始竖立姿态
   interface GroundItemActor {
     groundItemId: number;
     name: string;
+    /** 名牌文本（名称 + 数量/金额后缀，按原版规则拼好；金币用金额、其余用堆叠数） */
+    label: string;
     root: THREE.Group;
     topY: number;
     model: THREE.Group;
@@ -2580,11 +2579,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const groundItems = new Map<number, GroundItemActor>();
   let groundItemLabelsOn = false;
   function toggleGroundItemLabels(): void { groundItemLabelsOn = !groundItemLabelsOn; }
-  const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string }[] = [];
-  /** 掉落物离地高度（模型躺在 XZ 地面上、略浮起避免嵌地，≈scITEM 的 pY+6 微升） */
-  const GROUND_LIFT = 0.35;
+  const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string; itemId: number; quantity: number; money: number }[] = [];
+  /** 掉落物离地微抬：原版 `ps->sSelfPosition.iY = ps->sPosition.iY + 6 * 256`（定点 fONE=256）→ 6/256 世界单位 */
+  const GROUND_LIFT = 6 / 256;
   /** 掉落物高亮闪烁周期（ms 半个周期）：对齐原版 Color+100 周期脉冲 */
   const GROUND_BLINK_MS = 650;
+
+  /**
+   * 物品大类 = idcode 最高字节（原版 `ItemID::ToItemBase()`，掩码 `0xFF000000`）。
+   * 判据与原版 `ITEMBASE_Weapon = 0x01000000` 逐位一致，用于"是否躺平"。
+   */
+  function itemBaseOf(itemId: number): number {
+    return itemId === 0 ? 0 : (itemId & 0xFF000000) >>> 0;
+  }
+  const ITEMBASE_WEAPON = 0x01000000;
 
   /** 模型组在自身空间里的最高点（用于把名字牌抬到模型顶上，不含模型所处世界平移） */
   function modelTopY(model: THREE.Object3D): number {
@@ -2634,6 +2642,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!npOverlay || !camera) return null;
     _npProj.setFromMatrixPosition(root.matrixWorld);
     _npProj.y += topY;
+    _npProj.project(camera);
+    if (_npProj.z > 1) return null; // 相机背后
+    const W = npOverlay.clientWidth, H = npOverlay.clientHeight;
+    if (W <= 0 || H <= 0) return null;
+    const x = (_npProj.x * 0.5 + 0.5) * W;
+    const y = (1 - (_npProj.y * 0.5 + 0.5)) * H;
+    if (x < -80 || x > W + 80 || y < -80 || y > H + 80) return null;
+    return { x, y };
+  }
+
+  /** 世界坐标 → overlay 屏幕坐标（与 `anchorToScreen` 同一投影基准；用于锚点实体已消失的飘字） */
+  function worldToScreen(wx: number, wy: number, wz: number): { x: number; y: number } | null {
+    if (!npOverlay || !camera) return null;
+    _npProj.set(wx, wy, wz);
     _npProj.project(camera);
     if (_npProj.z > 1) return null; // 相机背后
     const W = npOverlay.clientWidth, H = npOverlay.clientHeight;
@@ -3075,18 +3097,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     px: number;            // 字号（px）：描边宽度按它等比算
     born: number;
     life: number;
+    /** 生成时记下的世界坐标 —— 实体消失（怪被击杀）后飘字改用它的锚点，飘完再消失 */
+    wx: number;
+    wy: number;
+    wz: number;
   }
   const floaters: DmgFloater[] = [];
+  const _floaterWp = new THREE.Vector3();
 
-  /** 飘字锚点 = 实体当前头顶锚（每帧重解析，始终贴角色） */
-  function floaterAnchor(f: DmgFloater): { root: THREE.Object3D; topY: number } | null {
-    if (f.kind === 'self') return charGroup && charGroup.visible ? { root: charGroup, topY: selfTopY } : null;
+  /** 飘字锚点 = 实体当前头顶锚（每帧重解析，始终贴角色）；实体已消失 → 用生成时记下的固定坐标 */
+  function floaterAnchor(f: DmgFloater): { root: THREE.Object3D; topY: number } | { fx: number; fy: number; fz: number } | null {
+    if (f.kind === 'self') {
+      return charGroup && charGroup.visible ? { root: charGroup, topY: selfTopY } : { fx: f.wx, fy: f.wy, fz: f.wz };
+    }
     if (f.kind === 'monster') {
       const m = monsters.get(f.id);
-      return m && m.root.visible ? { root: m.root, topY: m.topY } : null;
+      return m && m.root.visible ? { root: m.root, topY: m.topY } : { fx: f.wx, fy: f.wy, fz: f.wz };
     }
     const r = remotes.get(f.id);
-    return r && r.root.visible ? { root: r.root, topY: r.topY } : null;
+    return r && r.root.visible ? { root: r.root, topY: r.topY } : { fx: f.wx, fy: f.wy, fz: f.wz };
   }
 
   /** 入一只飘字；kind=null 时按 targetId 自动解析归属；不在视野的实体直接丢弃（原版服务端 64 格 AOI 过滤的等价物） */
@@ -3150,8 +3179,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         ? FLOATER_PX_MONSTER
         : FLOATER_PX_SELF;
     const font = `700 ${px}px Verdana, "Microsoft YaHei", sans-serif`;
+    // 记下生成瞬间的世界坐标：实体随后消失（怪被击杀）时飘字仍有锚点可用，能飘完再消失。
+    let wx = 0, wy = 0, wz = 0;
+    if (k === 'self' && charGroup) {
+      charGroup.getWorldPosition(_floaterWp);
+      wx = _floaterWp.x; wy = _floaterWp.y + selfTopY; wz = _floaterWp.z;
+    } else if (k === 'monster') {
+      const m = monsters.get(id);
+      if (m) { wx = m.root.position.x; wy = m.root.position.y + m.topY; wz = m.root.position.z; }
+    } else {
+      const r = remotes.get(id);
+      if (r) { wx = r.root.position.x; wy = r.root.position.y + r.topY; wz = r.root.position.z; }
+    }
     while (floaters.length >= 64) floaters.shift(); // 防爆上限
-    floaters.push({ kind: k, id, text, color, font, px, born: performance.now(), life: 1000 });
+    floaters.push({ kind: k, id, text, color, font, px, born: performance.now(), life: 1000, wx, wy, wz });
   }
 
   /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
@@ -3185,7 +3226,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const pt = anchorToScreen(g.root, g.topY);
       if (!pt) continue;
-      recordPill(drawPill(ctx, pt.x, pt.y, g.name || '', {
+      recordPill(drawPill(ctx, pt.x, pt.y, g.label || g.name || '', {
         nameColor: '#ffffff', showHp: false, ratio: 1, selected: hovered,
       }), g.root, HOVER_COLOR_ITEM, 'pickup');
     }
@@ -3253,6 +3294,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
 
     // 伤害/躲闪飘字：头顶起点上飘 48px 并在 1s 内线性淡出（对齐原版 SHOW_DMG 动画）
+    // 目标是活体 → 每帧跟它的头顶；实体已消失（怪被击杀）→ 用生成时记下的固定世界坐标，
+    // 让这一条**飘完再消失**（用户 2026-09-14：击杀瞬间伤害数字/miss 字样不该闪掉）。
     if (floaters.length) {
       const keep: DmgFloater[] = [];
       for (const f of floaters) {
@@ -3260,7 +3303,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (el >= f.life) continue;
         const a = floaterAnchor(f);
         if (!a) continue;
-        const pt = anchorToScreen(a.root, a.topY);
+        const pt = 'root' in a ? anchorToScreen(a.root, a.topY) : worldToScreen(a.fx, a.fy, a.fz);
         if (!pt) continue;
         const t = el / f.life;
         const fy = pt.y - 10 - t * 48;
@@ -3284,12 +3327,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     drawMapBanner(ctx, now, W, H);
   }
 
-  function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void {
+  function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string, itemId: number, quantity: number, money: number): void {
     if (!scene) {
-      pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem });
+      pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem, itemId, quantity, money });
       return;
     }
     if (groundItems.has(groundItemId)) return;
+    // 名牌文本：**金币**显示金额（`Gold 1000`）、**可堆叠物**显示堆叠数（`红药水 x50`）、单件不加后缀。
+    // 数值格式直写，不进 locale —— 与背包格（纯数字）、`CharStatusPanel`（`×{n}`）同一惯例：
+    // locale 管文案，不管数字格式。
+    const label = money > 0 ? `${name} ${money}` : (quantity > 1 ? `${name} x${quantity}` : name);
     void (async () => {
       try {
         const res = await loadDropItemModel(dorpItem || null);
@@ -3297,38 +3344,30 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (groundItems.has(groundItemId)) return; // 加载期间已被 despawn
 
         const root = new THREE.Group();
-        root.position.set(x, y, z);
+        root.position.set(x, y + GROUND_LIFT, z); // 原版 posY + 6 单位固定微抬
         root.userData.pickupItemId = groundItemId;
 
-        // 原版 scITEM::Draw：物品模型默认长度轴朝上，须绕 X 转 90°「躺平」贴地
-        // （武器类 angle.x = ANGLE_90）。pivot 负责由位置决定的水平朝向（绕世界 Y）。
+        // 水平朝向：原版 `Angle.y = ((pX + pZ) >> 2) & ANGCLIP` —— 由**落点**决定，
+        // 同一个坐标恒同朝向（不是随机）。x/z 是世界单位，×256 还原成原版定点数再做整数位移，
+        // 保持与原版逐位一致（Math.floor 对齐 C 的算术右移对负数的向负取整）。
         const pivot = new THREE.Group();
-        pivot.rotation.y = Math.random() * Math.PI * 2; // 随机水平朝向
+        const rawAngle = ((Math.floor(x * 256) + Math.floor(z * 256)) >> 2) & 0xFFF;
+        pivot.rotation.y = rawAngle / 0xFFF * Math.PI * 2;
 
         const model = res.group;
-        model.rotation.x = Math.PI / 2; // 立轴 → 平躺地面
-        // 贴地：PT 掉落模型 origin 不在底面（原版 scITEM::Draw 固定 Posi.y = pY + 6*fONE 抬升）。
-        // 这里按旋转后包围盒把底面抬到地面（等价且对不同模型稳健；origin 已在底面时抬升≈0）。
-        model.updateMatrixWorld(true);
-        const mbox = new THREE.Box3().setFromObject(model);
-        model.position.y = (Number.isFinite(mbox.min.y) ? -mbox.min.y : 0) + GROUND_LIFT; // 底面贴地 + 微浮
+        // **只有武器**绕 X 转 90° 躺平（原版 `angle.iX = ANGLE_90`）。
+        // 其余大类（防具/盾/药水/宝石/金币/卷轴…）保持模型原始竖立姿态 —— 原版从不给它们 angle.x。
+        if (itemBaseOf(itemId) === ITEMBASE_WEAPON) {
+          model.rotation.x = Math.PI / 2; // 立轴 → 平躺地面
+        }
+        model.position.y = 0;
         pivot.add(model);
         root.add(pivot);
-
-        const topY = 0.5; // overlay 名牌锚点：掉落物多平躺于地，固定贴近地面（勿用模型顶高）
-
-        // 躺平模型低矮，加一块隐形拾取垫（贴近地面、透明）扩大点击目标
-        const pad = new THREE.Mesh(
-          new THREE.CircleGeometry(2.0, 24),
-          new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide }),
-        );
-        pad.rotation.x = -Math.PI / 2; // XY → 平贴地面
-        pad.position.y = GROUND_LIFT + 0.02;
-        pad.renderOrder = -1;
-        root.add(pad);
+        // 名牌锚点：按旋转后的实际顶高（武器平躺→贴近地面；竖立件→抬到模型顶上）
+        const topY = modelTopY(model) + 0.5;
 
         scene!.add(root);
-        root.userData.kind = 'item'; // hover 统一射线命中 → 分类（外轮廓色/光标）
+        root.userData.kind = 'item'; // 场景对象分类标签（调试/诊断用；悬停与点击的判定走 pickTargetAt 的屏幕矩形）
 
         // 收集可提亮材质（对齐 scITEM::Draw 的 Color+=100 白闪：周期整体提亮）
         const mats: { mat: THREE.MeshPhongMaterial; base: THREE.Color }[] = [];
@@ -3340,9 +3379,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
         });
 
-        groundItems.set(groundItemId, { groundItemId, name, root, topY, model, blinkOn: false, mats });
+        groundItems.set(groundItemId, { groundItemId, name, label, root, topY, model, blinkOn: false, mats });
         console.log('[WorldView] 地面物品出现: id=' + groundItemId + ' name=' + name
+          + ' label=' + label
           + ' dorp=' + (dorpItem || '(flag)')
+          + ' idcode=0x' + (itemId >>> 0).toString(16).padStart(8, '0')
+          + ' pose=' + (itemBaseOf(itemId) === ITEMBASE_WEAPON ? '躺平' : '竖立')
           + ' @(' + x.toFixed(2) + ',' + y.toFixed(2) + ',' + z.toFixed(2) + ')');
       } catch (e) {
         console.warn('[WorldView] 地面物品加载失败 id=' + groundItemId + ' name=' + name, e);
@@ -3438,8 +3480,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     for (const a of monsters.values()) {
       const vis = visResult.visible === null || visResult.visible.has(a.monsterId);
       a.culled = !vis;
-      // 渲染层也一并关掉（visible=false 的 three 对象不进 draw call）。注意**射线拾取不看 visible**
-      // （three 的 Raycaster 只测 layers），所以 probeCursorAt 里必须另外用 culled 排除。
+      // 渲染层也一并关掉（visible=false 的 three 对象不进 draw call）。
+      // ⚠ `pickTargetAt` 的屏幕矩形判定只认 `root.visible`（它不知道 culled 这个字段），
+      // 而显示预算**会真的把 visible 设成 false** ⇒ 被预算裁掉的怪同时也点不到。
+      // 这是有意的：屏幕上看不见的东西不该点得中。
       a.root.visible = vis;
     }
   }
@@ -3678,7 +3722,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.position.copy(pos);
         root.rotation.y = actorInfo.angle ?? 0;
         root.userData.playerId = pid; // 点选/追踪（Chase）命中用
-        root.userData.kind = 'player'; // hover 统一射线命中 → 分类（外轮廓色/光标）
+        root.userData.kind = 'player'; // 场景对象分类标签（调试/诊断用；悬停与点击的判定走 pickTargetAt 的屏幕矩形）
         scene.add(root);
 
         const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
@@ -4007,7 +4051,24 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfAngle = face;
 
     const mdt = Math.min(dt, 0.1); // 掉帧/切页兜底，避免单帧超大位移
-    const step = (running ? selfRunWps : selfWalkWps) * mdt; // world 步长（与服务端限速同源）
+    let step = (running ? selfRunWps : selfWalkWps) * mdt; // world 步长（与服务端限速同源）
+
+    // **追目标时不过冲**（用户 2026-09-14 实测抖动）：本帧位移若会让人踏进停步环以内，
+    // 就把它缩短到刚好停在那个环上。否则满步长会把人送到"判定边界内侧一步"（如 36.5），
+    // 而进入/离开判定是**每帧重算**的 —— 位置与控制有抖动时会越线来回翻，
+    // 表现为角色贴着目标高频来回蹭。
+    // 停步环按目标类别取：交互类（掉落物/NPC/玩家）= `INTERACT_RANGE`（要够得着判定），
+    // 怪物 = `NEAR_RANGE`（要给攻击距离留余量）。
+    if (forcedFace !== undefined && moveTarget) {
+      const tp = chaseTargetPos();
+      if (tp) {
+        const ring = moveTarget.kind === 'monster' ? NEAR_RANGE : INTERACT_RANGE;
+        const gap = Math.hypot(tp.x - selfPos.x, tp.z - selfPos.z) - ring;
+        if (gap <= 0) return false;                  // 已在环内 → 停住，交给交互/攻击判定
+        if (step > gap) step = gap;                  // 本帧会越线 → 只走到环上
+      }
+    }
+
     const sinVal = Math.sin(selfAngle);
     const cosVal = Math.cos(selfAngle);
     const dx = sinVal * step;
@@ -4289,11 +4350,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             targetFace = Math.atan2(dx, dz);
           }
         } else {
-          // 到达半径：不小于本帧步长。否则 run 步长(≈3.5)大于固定半径(1.0/2.0)，
-          // 角色会围绕目标点反复"过冲→折返"，形成高频来回跑震动。
+          // 交互类目标（掉落物 / NPC / 其他玩家）：和怪物一样停在环上，
+          // **不要跑到对方的精确 xyz**（用户 2026-09-14：接近 NPC/玩家时会一路贴到坐标为止，
+          // 既不自然、又因为"位置每帧重算"而在动态目标身边蹭）。
+          // 环半径见 `INTERACT_RANGE` —— 必须留在各类判定之内（拾取/对话）才够得着。
+          // 单帧最多走 `step`，所以到位判定带一个 `stepNow` 的滞回：走进去就停止追击，
+          // 不会出现"贴着环进进出出"。
           const stepNow = (running ? selfRunWps : selfWalkWps) * Math.min(dt, 0.1);
-          const arrive = Math.max(moveTarget.kind === 'item' ? 1.0 : 2.0, stepNow + 0.5);
-          if (d <= arrive) {
+          if (d <= INTERACT_RANGE + stepNow) {
             targetReached = true;
           } else {
             targetFace = Math.atan2(dx, dz);
@@ -4695,7 +4759,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 地面物品同理（可能早于本机进场到达）
       if (pendingGroundItems.length > 0) {
         const batch = pendingGroundItems.splice(0);
-        for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z, g.dorpItem);
+        for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z, g.dorpItem, g.itemId, g.quantity, g.money);
       }
 
       try {
@@ -4764,6 +4828,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     toggleCameraMode,
     cameraMode: () => camMode,
     toggleGroundItemLabels,
+    cancelTarget,
     setDisplayPrefs,
     displayBudgetStatus: () => ({
       visible: monsters.size - visResult.hidden,
@@ -4848,8 +4913,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       spawnNpc({ npcId: Number(npcId), nameKey: nameKey || '', modelFile: modelFile || '', x: Number(x), y: Number(y), z: Number(z), angle: Number(angle) || 0 });
     },
     npcDisappear: (npcId) => despawnNpc(Number(npcId)),
-    groundItemAppear: (groundItemId, name, x, y, z, dorpItem) => {
-      spawnGroundItem(Number(groundItemId), name || '', Number(x), Number(y), Number(z), dorpItem || '');
+    groundItemAppear: (groundItemId, name, x, y, z, dorpItem, itemId, quantity, money) => {
+      spawnGroundItem(
+        Number(groundItemId), name || '', Number(x), Number(y), Number(z),
+        dorpItem || '', Number(itemId) || 0, Number(quantity) || 0, Number(money) || 0,
+      );
     },
     groundItemDisappear: (groundItemId) => despawnGroundItem(Number(groundItemId)),
     playSkillByIcon: (iconFile) => playSkillByIcon(iconFile),

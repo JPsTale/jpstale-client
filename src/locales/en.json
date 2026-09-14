@@ -39,7 +39,10 @@
       "cacheHit": "Cache hits",
       "world": "Entering world",
       "entering": "Entering {map}"
-    }
+    },
+    "ok": "OK",
+    "cancel": "Cancel",
+    "all": "All"
   },
   "panel": {
     "title": "Character Info",
@@ -68,7 +71,7 @@
       "resist": "Resistance"
     },
     "skills": "Skills",
-    "inventory": "Inventory",
+    "inventory": "Inventory",
     "shop": "Shop"
   },
   "stats": {
@@ -110,8 +113,6 @@
     "shaman": "Shaman"
   },
   "map": {
-    "levelTooLow": "Level too low to enter that area (requires level {level})",
-    "notOpen": "That area is not open yet",
     "0": "Acacia Forest",
     "1": "Bamboo Forest",
     "2": "Garden of Freedom",
@@ -174,7 +175,9 @@
     "59": "Abyss of the Sea",
     "60": "T5 Quest Arena",
     "61": "Secret Laboratory",
-    "62": "Abyss of the Sea 2"
+    "62": "Abyss of the Sea 2",
+    "levelTooLow": "Level too low to enter that area (requires level {level})",
+    "notOpen": "That area is not open yet"
   },
   "error": {
     "0": "Connection failed",
@@ -280,7 +283,9 @@
     }
   },
   "item": {
-    "pickup": { "overMoney": "Your money would exceed the maximum allowed" },
+    "pickup": {
+      "overMoney": "Your money would exceed the maximum allowed"
+    },
     "bag": "Bag",
     "gold": "Gold",
     "weight": "Weight",

@@ -39,7 +39,10 @@
       "cacheHit": "缓存命中",
       "world": "正在进入世界",
       "entering": "正在进入 {map}"
-    }
+    },
+    "ok": "确定",
+    "cancel": "取消",
+    "all": "全部"
   },
   "panel": {
     "title": "角色信息",
@@ -56,8 +59,8 @@
     "agility": "敏捷",
     "health": "体质",
     "attack": "攻击",
-    "defense": "防御",
-    "absorption": "吸收",
+    "defense": "躲闪",
+    "absorption": "防御",
     "crit": "必杀",
     "block": "格挡",
     "avoid": "回避",
@@ -74,7 +77,7 @@
   "stats": {
     "hit": "命中",
     "attackSpeed": "攻速",
-    "range": "射程",
+    "range": "攻击距离",
     "statePoint": "剩余点数",
     "undo": "撤销上次分配",
     "exp": "经验值",
@@ -110,8 +113,6 @@
     "shaman": "萨满"
   },
   "map": {
-    "levelTooLow": "等级不足，无法进入该区域（需要 {level} 级）",
-    "notOpen": "该区域尚未开放",
     "0": "阿卡西亚森林",
     "1": "竹林",
     "2": "自由之地",
@@ -174,7 +175,9 @@
     "59": "海底深渊",
     "60": "T5任务竞技场",
     "61": "秘密实验室",
-    "62": "海底深渊2"
+    "62": "海底深渊2",
+    "levelTooLow": "等级不足，无法进入该区域（需要 {level} 级）",
+    "notOpen": "该区域尚未开放"
   },
   "error": {
     "0": "连接失败",
@@ -280,7 +283,9 @@
     }
   },
   "item": {
-    "pickup": { "overMoney": "拥有的金钱超过最大允许数量" },
+    "pickup": {
+      "overMoney": "拥有的金钱超过最大允许数量"
+    },
     "bag": "背包",
     "gold": "金币",
     "weight": "负重",
@@ -488,8 +493,8 @@
     "recStm": "恢复体力",
     "atk": "攻击力",
     "hit": "命中",
-    "def": "防御",
-    "absorb": "吸收",
+    "def": "躲闪",
+    "absorb": "防御",
     "block": "格挡",
     "speed": "移动速度",
     "attackSpeed": "攻击速度",
@@ -621,7 +626,7 @@
       "MACE": "锤"
     },
     "crit": "必杀",
-    "range": "射程"
+    "range": "攻击距离"
   },
   "npc": {
     "gmOnly": "只有管理员能使用这个 NPC",

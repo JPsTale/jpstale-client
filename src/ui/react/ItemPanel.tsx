@@ -1,19 +1,19 @@
-import { canEquipNow, isDroppable, overweightBlocks } from '../../game/itemRules.js';
+import { canEquipNow, overweightBlocks } from '../../game/itemRules.js';
 import type { EquipReqChar } from '../../game/itemRules.js';
 import { sfx } from '../../audio/index.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { setShopSellMode, beginOptimistic, equippedItemAt, getGameSnapshot, getHeldUid, heldItemOf, isOverUi, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, throwItem, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem, type HoverSource } from '../../app/gameStore.js';
+import { setShopSellMode, beginOptimistic, equippedItemAt, getGameSnapshot, heldItemOf, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem, type HoverSource } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import { appendSystemMessage } from '../../app/chatStore.js';
-import { isInputBlocked } from '../../app/inputGate.js';
 import { clearHoverItem } from '../../app/gameStore.js';
+import { requestSplit } from '../../app/splitStore.js';
 import { ITEM_CLASS, isStackable, isPotionClass, isTwoHandWeaponClass } from '../../game/itemClass.js';
 import { requestPlayEat } from '../WorldView.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
-import { sendEquipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap, sendShopSell } from '../../net/bridge.js';
+import { sendEquipItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap, sendShopSell } from '../../net/bridge.js';
 import { useItemHover } from './ItemInfo.js';
 import { LOC, isHeldItem } from '../../game/itemLocations.js';
 
@@ -211,7 +211,14 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
       // 未拿起：命中哪件就拿起哪件（按覆盖格命中，含多格物品任意格）
       const p = placed.find((pp) => slotXY(slot).x >= pp.x && slotXY(slot).x < pp.x + pp.w
         && slotXY(slot).y >= pp.y && slotXY(slot).y < pp.y + pp.h);
-      if (p) onPick(p.it);
+      if (!p) return;
+      // **Shift + 左键 = 拆分**（用户 2026-09-14）：只对堆叠物有效，数量为 1 时无效。
+      // 弹框输入要拆出去几个，确认后那份进鼠标位 —— 与"拿起"同一去处，只是拿一部分。
+      if (e.shiftKey && isStackable(defOf(p.it)?.class) && p.it.count > 1) {
+        requestSplit(p.it.uid, p.it.count, defOf(p.it)?.name ?? '');
+        return;
+      }
+      onPick(p.it);
     }
   }
 
@@ -445,9 +452,8 @@ function EquipColumn({ items, held, character, onPickEquip, onPutEquip, allowed,
 export default function ItemPanel() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
   const { inventory } = snap;
-  // 手持道具由 store 持有（HUD 药水槽也要能接收从背包拿起的药水）；
-  // 下面所有 heldUid / setHeldUid 的用法保持不变，只是换了来源。
-  const heldUid = snap.heldUid;
+  // 手持道具由 store 持有（HUD 药水槽也要能接收从背包拿起的药水）。
+  // ⚠ 持物判据统一走 `heldItemOf`（见 `PanelsRoot.HeldCursor`）—— 本面板不再自己持有 `heldUid` 副本。
   const setHeldUid = setHeldUidStore;
   const { show: hoverShow, hide: hoverHide } = useItemHover();
   // 穿装备交换：等待服务端 ack 的挂起状态（成功=旧件保持手持；失败=还原）
@@ -458,49 +464,15 @@ export default function ItemPanel() {
   // 那是为了 HUD 药水槽），所以"面板没了"这个事件没人替它收拾 → 关掉背包后信息框会一直挂在屏幕上
   //（用户 2026-09-14 报）。**悬停的来源消失 → 悬停就该消失**。
   useEffect(() => () => clearHoverItem(), []);
-  // 拿起中：点击背包面板外区域 → 丢到地面（原版 ThrowItem；不是摧毁）
-  useEffect(() => {
-    if (snap.heldUid == null) return;
-    const onDown = (e: PointerEvent) => {
-      // 加载页/遮罩期间一律不处理（document 级监听不看 DOM 命中；否则加载时点一下就把手上道具丢了）
-      if (isInputBlocked()) return;
-      const el = panelRef.current;
-      const t = e.target as Node | null;
-      if (el && t && el.contains(t)) return; // 面板内交互照常
-      // 只有点在**游戏画面（canvas）**上才算"丢到地面" —— 原版 ThrowItem 的语义是"扔到地上"。
-      // 旧判定是"不在背包面板内就丢"，而 ItemInfo / HUD / 其它面板都在 .jp-items **之外**，
-      // 于是拿起道具后点到那些地方就被误丢（用户 2026-09-13 实测：点药水槽区域丢了药水）。
-      // 只有在**游戏画面**上点才算"丢到地面"，且**不能落在任何 UI 交互区里** ——
-      // HUD（药水槽/按钮）是 pointer-events:none 的覆盖层，点它会穿透到 3D 画布上，
-      // 只判 canvas 会把"点药水槽放入"误判成丢弃（用户 2026-09-13 实测：药水总被丢掉）。
-      const isWorld = t instanceof Element && !!t.closest('canvas');
-      if (!isWorld || isOverUi(e.clientX, e.clientY)) return;
-      // ⚠ 必须取"仍在背包的持有物"（`getHeldUid` 就是这个判据），不能用 `snap.heldUid`：
-      // 放进药水槽后那件已离开背包，而 heldUid 还留着旧值 → 拿它去找会找到**槽里那瓶**并丢出去
-      // （用户 2026-09-13 实测：点地面准备走路，药水槽的药被丢到地上）。
-      const uidNow = getHeldUid();
-      const it = uidNow == null ? undefined
-        : getGameSnapshot().inventory?.items.find((x) => x.uid === uidNow);
-      if (!it) return;
-      // 禁丢清单预校验（原版 NotDrow_Item_*）：拦住就不发请求 —— 否则本地已移除、服务端却拒绝，
-      // 两端会不一致（物品在服务端还在、客户端没了）。最终仍以服务端为准。
-      if (!isDroppable(defOf(it)?.code)) {
-        console.warn('[bag] 该物品无法丢弃（禁丢清单）：uid=', it.uid, 'idCode=', defOf(it)?.code);
-        sfx.playUi('denied');       // 放下失败 → 失败音
-        setHeldUidStore(heldUid);   // 保持手持不变（等于这次点击没发生）
-        return;
-      }
-      console.log('[bag] 丢到地面 uid=', it.uid, 'count=', it.count);
-      beginOptimistic([it]);            // 乐观更新前记快照：服务端拒绝时把整件（含数量）恢复
-      throwItem(it.uid);   // THROW_ITEM（玩家自己的操作码）：本地移除 + 丢弃音
-      sendDropItem(it.uid, it.count || 1);
-      setHeldUid(null);
-      e.stopPropagation();
-      e.preventDefault();
-    };
-    document.addEventListener('pointerdown', onDown, true);
-    return () => document.removeEventListener('pointerdown', onDown, true);
-  }, [snap.heldUid]);   // 物品变化（含"放入槽后离开背包"）都会重绑
+  // 「手持时点游戏画面 → 丢到地面」现由**全局层**（`PanelsRoot` → `heldDrop.tryDropHeldToGround`）
+  // 「手持时点游戏画面 → 丢到地面」现由**全局层**（`PanelsRoot` → `heldDrop.tryDropHeldToGround`）
+  // 统一处理 —— 因为从 HUD 药水槽拿起药水时本面板是关着的，挂在这里收不到点击
+  //（用户 2026-09-14 实测：背包关着时拿药水丢不掉）。
+  //
+  // ⚠ 这里**不要**再挂任何 pointerdown 监听去 stopPropagation —— 那会把面板内的点击
+  //   一并拦断，导致"点背包格/装备槽放下"失效（用户 2026-09-14 实测：拿起就放不下去了）。
+  //   面板内 ⇒ 全局那支本来就返回 false（它只认 canvas），事件继续传播给面板自己的处理器。
+
   // 服务端拒绝（equip/drop/药水槽 都用同一条 sendError → pt:equipFail）：
   // 按乐观快照把界面恢复成点击前的样子（原版 BackUpPosi 语义）。三处操作共用这一份。
   useEffect(() => {

@@ -96,21 +96,26 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
   const isWeapon = cls === 2 || cls === 4 || cls === 6;   // 盾/单手/双手
   const isGear = cls === 8 || cls === 16 || cls === 32 || cls === 2048
     || cls === 192 || cls === 512 || cls === 256;          // 甲/靴/手/腕/戒/链/宝石
-  // —— 基础能力（顺序按用户样品：攻→命→防→吸→速→必杀→格挡→射程→攻速）——
+  // —— 基础能力：按"攻击侧 / 防御侧"两组排（用户 2026-09-14，与角色面板同一分组思路）——
+  //    攻击侧：攻击力 → 攻击速度 → 攻击距离 → 命中 → 必杀
+  //    防御侧：躲闪 → 防御 → 格挡 → 移速
+  //    （旧顺序把攻速/攻击距离甩到最末尾，中间隔着防御/吸收/格挡，读起来是散的）
   if (isWeapon) {
     if (it.damageMin > 0 || it.damageMax > 0) {
       out.push({ label: t('itemtip.atk'), value: `${it.damageMin}-${it.damageMax}` });
     }
+    if (it.attackSpeed > 0) out.push({ label: t('itemtip.attackSpeed'), value: String(it.attackSpeed) });
+    // ⚠ 这是**装备自身**的射程模板值：近战武器该列为 0（近战距离按手别定 40/80，与装备无关），
+    //   所以近战不显示这一行；远程武器才有值（弓/弩/杖）。
+    if (it.range > 0) out.push({ label: t('itemtip.range'), value: String(it.range) });
     if (it.attackRating > 0) out.push({ label: t('itemtip.hit'), value: String(it.attackRating) });
+    if (it.critical > 0) out.push({ label: t('itemtip.crit'), value: `${it.critical}%` });
   }
   if (isWeapon || isGear) {
     if (it.defence > 0) out.push({ label: t('itemtip.def'), value: String(it.defence) });
     if (it.absorb > 0) out.push({ label: t('itemtip.absorb'), value: (it.absorb / 10).toFixed(1) });
-    if (it.speed > 0) out.push({ label: t('itemtip.speed'), value: (it.speed / 10).toFixed(1) });
-    if (it.critical > 0) out.push({ label: t('itemtip.crit'), value: `${it.critical}%` });
     if (it.blockRating > 0) out.push({ label: t('itemtip.block'), value: `${Math.round(it.blockRating / 10)}%` });
-    if (it.range > 0) out.push({ label: t('itemtip.range'), value: String(it.range) });
-    if (it.attackSpeed > 0) out.push({ label: t('itemtip.attackSpeed'), value: String(it.attackSpeed) });
+    if (it.speed > 0) out.push({ label: t('itemtip.speed'), value: (it.speed / 10).toFixed(1) });
   }
   // —— 回复类（药水）：模板字段，不在实例里 → 查 `potion-effects.generated.json` ——
   // （判据与服务端 rollRecovery 一致：三对列至少一个有值；显示区间与使用时掷点范围相同）

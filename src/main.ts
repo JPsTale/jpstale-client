@@ -33,7 +33,9 @@ import { installDevLogPanel } from './ui/DevLogPanel.js';
 import { installPerfPanel, togglePerfPanel } from './ui/PerfPanel.js';
 import { loadDisplayPrefs, saveDisplayPrefs } from './ui/display-prefs.js';
 import { report as perfReport, formatReport as perfText, frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, buildExport as perfBuildExport } from './app/profiler.js';
-import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn, Ch } from './app/chatStore.js';
+import { isStackable } from './game/itemClass.js';
+import { requestSplit } from './app/splitStore.js';
+import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn, getChatSnapshot, Ch } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
 const apiBase = import.meta.env.VITE_API_BASE || `http://${window.location.hostname}:8080/pt`;
@@ -309,12 +311,20 @@ keyBinding.onKeyDown((action) => {
     case 'cameraMode':
       hudPanel.setCamFlag(worldView.toggleCameraMode());
       break;
-    case 'closePanel':
-      // 输入框打开时 Esc 优先收输入，再收起面板/菜单
+    case 'closePanel': {
+      // Esc 分级（一次只吃一层，用户 2026-09-14）：
+      //   ① 聊天输入框开着 → 收起输入；
+      //   ② 还有面板/菜单开着 → 关掉它们；
+      //   ③ 界面都干净了 → 取消当前目标（停止追击/攻击循环），**不产生任何移动意图**。
+      const hadUi = getChatSnapshot().inputOpen
+        || getGameSnapshot().openPanels.length > 0
+        || getGameSnapshot().systemMenuOpen;
       setChatInputOpen(false);
       closeSystemMenu();
       reactPanels.hide();
+      if (!hadUi) worldView.cancelTarget();
       break;
+    }
     case 'chat':
       setChatInputOpen(true);
       break;
@@ -347,7 +357,7 @@ keyBinding.onKeyDown((action) => {
   }
 });
 
-hudPanel.onAction = (action) => {
+hudPanel.onAction = (action, mods) => {
   if (action === 'toggleRun') {
     hudPanel.setRunFlag(worldView.toggleRun());
   } else if (action === 'toggleCamera') {
@@ -386,8 +396,11 @@ hudPanel.onAction = (action) => {
       } else {
         // **左键 = 拿起**（原版 LButtonDown 语义）：把它拿进手上，之后点别处就是放下/丢弃。
         // 喝药是**右键**（原版 UsePotion 由 RButtonDown 触发，见 potionUse* 分支）。
-        // 现在"拿起"是服务端的一次真实位置变更（→ 鼠标位 = 装备栏 slot=-1）：
-        // 从**任何**容器拿起都走同一条路，不用再"先脱到背包"（那条在背包满时会失败）。
+        // Shift + 左键 = **拆分**（用户 2026-09-14）：堆叠数 > 1 时弹框输入要拆出去几个。
+        if (mods?.shift && it.count > 1 && isStackable(itemDefById(it.itemlistId)?.class)) {
+          requestSplit(it.uid, it.count, itemDefById(it.itemlistId)?.name ?? '');
+          return;
+        }
         beginOptimistic([it]);
         localToHeld(uid);        // 拿起也是一次"落点变化" → 音由 store 统一播（见 notifyPlacedItems）
         sendTakeToHand(uid);
@@ -984,6 +997,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
         it?.position?.y || 0,
         it?.position?.z || 0,
         it?.dorpItem || '',
+        it?.itemId || 0,                          // 原版 idcode：只用于判物品大类（武器才躺平），见 WorldView.groundItemAppear
+        Number(it?.quantity || 0),                // 堆叠数（名牌用）
+        Number(it?.money || 0),                   // 金币金额（int64 → number；金币名牌显示它而非 quantity）
       );
       break;
     }

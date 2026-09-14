@@ -63,6 +63,13 @@ export function createKeyBinding(): KeyBinding {
       return
     }
 
+    // **带修饰键的组合键不触发游戏动作**（用户 2026-09-14）：
+    // 否则 Ctrl+C 会命中单键 C（状态面板），且 preventDefault 把浏览器的复制吞掉。
+    // Shift 不算（Shift+F1 之类仍应生效，且 Shift 打字常用）；Alt/Meta 在浏览器里多为系统键，一并排除。
+    if (e.ctrlKey || e.altKey || e.metaKey) {
+      return
+    }
+
     for (const [action, key] of Object.entries(bindings)) {
       if (key && e.code === key) {
         e.preventDefault()

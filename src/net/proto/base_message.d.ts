@@ -2950,6 +2950,9 @@ export namespace jpt {
             /** C2S_TakeToHand uid. */
             uid: (number|Long);
 
+            /** C2S_TakeToHand count. */
+            count: number;
+
             /**
              * Creates a new C2S_TakeToHand instance using the specified properties.
              * @param [properties] Properties to set
@@ -3036,6 +3039,9 @@ export namespace jpt {
 
                 /** C2S_TakeToHand uid */
                 uid?: (number|Long|null);
+
+                /** C2S_TakeToHand count */
+                count?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

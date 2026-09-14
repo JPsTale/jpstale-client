@@ -493,10 +493,14 @@ function silently<T>(fn: () => T): T {
 function notifyPlacedItems(before: readonly GameItem[], after: readonly GameItem[]): void {
   if (suppressPlacementSound) return;
   const prevByUid = new Map(before.map((x) => [x.uid, x]));
+  // ⚠ 本函数有**两处**播放入口（落点变化 / 数量变多）—— 一次操作若同时命中两处就会响两声
+  //   （用户 2026-09-14 实测过一次）。日志各带前缀，出问题时可据此一行定位是哪一处。
   for (const it of after) {
     const prev = prevByUid.get(it.uid);
     if (prev && prev.location === it.location && prev.slot === it.slot) continue;   // 没换位置（只改数量等）
     if (prev && isHeldItem(prev) && isHeldItem(it)) continue;                       // 鼠标位内换位：不是"放进"
+    console.log('[sfx:item] 落点变化 → uid=' + it.uid + ' listId=' + it.itemlistId
+      + (prev ? ' ' + prev.location + '/' + prev.slot + '→' + it.location + '/' + it.slot : '（新件）'));
     playItemSound(itemDefById(it.itemlistId)?.sound);
   }
   // ② **某堆变多 = 一次"放进"**，与来源无关：手上那件并进去、从地上捡起来并进去、服务端发进来。
@@ -507,6 +511,8 @@ function notifyPlacedItems(before: readonly GameItem[], after: readonly GameItem
   for (const it of after) {
     const prev = prevByUid.get(it.uid);
     if (prev != null && it.count > prev.count) {
+      console.log('[sfx:item] 数量变多 → uid=' + it.uid + ' listId=' + it.itemlistId
+        + ' ' + prev.count + '→' + it.count);
       playItemSound(itemDefById(it.itemlistId)?.sound);
     }
   }
@@ -655,14 +661,47 @@ export function localEquipItem(uid: number, slot: number): void {
   commit({ inventory: { ...cur, items } });
 }
 
-/** 本地把物品从当前落点抽离为"手持"（location=-1 各视图均不渲染，随 BagLayout/EquipItem 上报落点） */
-export function localToHeld(uid: number): void {
+/**
+ * 本地把物品从当前落点抽离为"手持"（location=-1 各视图均不渲染，随 BagLayout/EquipItem 上报落点）。
+ *
+ * `splitCount > 0` 且小于现有量时为**拆分**：原格只减数量、位置不动；
+ * 拆出去的那份**不做本地乐观件**（服务端会新建一行并推送）。
+ *
+ * ⚠ 曾经这里造过一个 **uid 取负的客户端临时件**，那是错的（用户 2026-09-14 实测）：
+ * 服务端的每条操作都按 uid 查物品（`applyBagLayout` / `equipItem` 都是 `byUid(uid)`），
+ * **负 uid 查不到** ⇒ 放进背包格时服务端**静默拒绝**（而客户端已经乐观落格，于是留下一个
+ * 刷新后才消失的幽灵）；放进药水槽时走 `EquipItem` 被回滚，所以"放不进去"。
+ * 两条路表现不同，只是因为一条乐观、一条回滚 —— 根因是同一个：**客户端不该造服务端不认识的 uid**。
+ *
+ * 代价：拆分后有一小段"手上暂时没有东西"的空档（服务端推送到达即恢复，通常几十毫秒）。
+ * 这是刻意的取舍 —— 宁可短暂没有视觉反馈，也不要一个操作不了的幽灵。
+ *
+ * @return true = 已按拆分处理（调用方应发带 count 的 TakeToHand）；false = 走整堆旧路径
+ */
+export function localToHeld(uid: number, splitCount = 0): boolean {
   const cur = snapshot.inventory;
-  if (!cur) return;
+  if (!cur) return false;
+  const src = cur.items.find((x) => x.uid === uid);
+  if (!src) return false;
+
+  if (splitCount > 0 && splitCount < src.count) {
+    const items = cur.items.map((x) => (x.uid === uid ? { ...x, count: x.count - splitCount } : x));
+    commit({ inventory: { ...cur, items } });
+    // 不造临时件 ⇒ 手上此刻为空（原件的 uid 已不代表手上那份）。服务端推送新件后自动接管。
+    clearHeld();
+    return true;
+  }
+
   // 乐观版本的服务端 `TakeToHand`：物品移到"装备栏的 -1 号槽"（鼠标位）
   const items = cur.items.map((x) => (x.uid === uid ? { ...x, location: LOC.EQUIP, slot: HELD_SLOT } : x));
   commit({ inventory: { ...cur, items } });
   syncHeldFromItems(items);
+  return false;
+}
+
+/** 清空"手持"（拆分后手上那份归服务端新建的行；在它推送到达前，客户端不应认为手上有东西） */
+function clearHeld(): void {
+  if (snapshot.heldUid != null) commit({ heldUid: null });
 }
 
 /** 本地即时药水合并：src 并入 dst（随即上报 StackMerge） */

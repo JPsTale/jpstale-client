@@ -35,7 +35,7 @@ export interface Hud {
   setPotions(p: PotionSlotView[]): void
   /** 用户动作回调（走跑/相机/地图按钮 / 系统按钮 / 角色状态按钮 / 技能面板按钮等） */
   onAction?: (action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
-    | 'system' | 'status' | 'skills' | 'inventory') => void
+    | 'system' | 'status' | 'skills' | 'inventory', mods?: { shift?: boolean }) => void
 }
 
 const W = 1280
@@ -253,6 +253,7 @@ export function createHud(container: HTMLElement): Hud {
   window.addEventListener('pointerdown', (e) => {
     if (e.button === 0) ptrDown = true;
     else if (e.button === 2) ptrRightDown = true;      // 右键：药水槽的"喝"（原版 RButtonDown → UsePotion）
+    ptrShift = e.shiftKey;                             // 按压时快照：药水槽"Shift+左键 = 拆分"用
   });
   window.addEventListener('pointerup', (e) => {
     if (e.button === 0) ptrDown = false;
@@ -386,12 +387,15 @@ export function createHud(container: HTMLElement): Hud {
   }
 
   let onAction: ((action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
-    | 'system' | 'status' | 'skills' | 'inventory') => void) | undefined;
+    | 'system' | 'status' | 'skills' | 'inventory', mods?: { shift?: boolean }) => void) | undefined;
 
   // 走跑/相机/地图按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
   let prevPtrDown = false;
   let ptrRightDown = false;
   let prevPtrRightDown = false;
+  /** 本次按压是否带 Shift —— 与 `ptrDown`/`ptrRightDown` 同源（在 pointerdown 时快照，
+   *  因为 `checkButtonClick` 只看状态、拿不到事件对象）。用于药水槽的"Shift+左键 = 拆分"。 */
+  let ptrShift = false;
   function checkButtonClick(): void {
     // 加载页/遮罩期间不派发 HUD 动作（这些监听挂在 window 上，不看 DOM 命中 —— 见 inputGate）
     if (isInputBlocked()) { prevPtrDown = ptrDown; prevPtrRightDown = ptrRightDown; return; }
@@ -413,7 +417,7 @@ export function createHud(container: HTMLElement): Hud {
         // 失败则播失败音。原来这里统一播界面音 → 成功与失败同声，且与道具音叠在一起（用户 2026-09-14 报）。
         onAction?.(justRight
           ? (('potionUse' + (i + 1)) as 'potionUse1')
-          : (('potion' + (i + 1)) as 'potion1'));
+          : (('potion' + (i + 1)) as 'potion1'), { shift: ptrShift });
         return;
       }
     }
