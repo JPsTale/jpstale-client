@@ -58,6 +58,15 @@ export function inventoryMove(uid: number, toLocation: number, toSlot: number): 
 }
 
 /** 穿装备：uid 所在的容器（背包格 / 鼠标位）→ 装备槽(1~13) */
+/** **换手**：手上那件 ↔ 背包里某件，原子互换（服务端一次落地，不需要"先放下再拿起"两步）。 */
+/** **换手**：手上那件 ↔ 背包里某件（原子）。`toLocation/toSlot` = 手上那件的**落点锚格** ——
+ *  必须带上：被撞件的锚格常常不是落点（2×4 与 2×3 只是部分重叠时两者不同，服务端按错的格校验会误判越界）。 */
+export function bagSwap(handUid: number, targetUid: number, toLocation: number, toSlot: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        bagSwap: { handUid, targetUid, toLocation, toSlot },
+    });
+}
+
 /** 拿起：任意容器 → 鼠标位（装备栏 slot = -1）。放下不需要配套消息（走 EquipItem/BagLayout/DropItem）。 */
 export function takeToHand(uid: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({

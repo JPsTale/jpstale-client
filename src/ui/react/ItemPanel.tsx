@@ -4,16 +4,17 @@ import { playItemSound, playItemDropSound } from '../../audio/index.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { beginOptimistic, getGameSnapshot, getHeldUid, heldItemOf, isOverUi, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, removeInventoryItem, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem } from '../../app/gameStore.js';
+import { beginOptimistic, equippedItemAt, getGameSnapshot, getHeldUid, heldItemOf, isOverUi, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, removeInventoryItem, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem, type HoverSource } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import { appendSystemMessage } from '../../app/chatStore.js';
 import { isInputBlocked } from '../../app/inputGate.js';
+import { clearHoverItem } from '../../app/gameStore.js';
 import { ITEM_CLASS, isStackable, isPotionClass, isTwoHandWeaponClass } from '../../game/itemClass.js';
 import { requestPlayEat } from '../WorldView.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
-import { sendEquipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand } from '../../net/bridge.js';
-import { useItemHover, ItemInfo } from './ItemInfo.js';
+import { sendEquipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap } from '../../net/bridge.js';
+import { useItemHover } from './ItemInfo.js';
 import { LOC, isHeldItem } from '../../game/itemLocations.js';
 
 // 画布常量（对齐服务端 ItemLocations）
@@ -101,7 +102,7 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
   /** 右键使用（原版 cINVENTORY::RButtonDown）：服务端权威，客户端只报 uid */
   onUse: (it: GameItem) => void;
   onPutSlot: (slot: number) => void;
-  onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
+  onHover: (src: HoverSource, e: { clientX: number; clientY: number }) => void;
   onHoverEnd: () => void;
 }) {
   const bagRef = useRef<HTMLDivElement>(null);
@@ -218,7 +219,7 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
           className={`jp-bag-item${p.it.uid === hitUid ? ' jp-bag-item--hit' : ''}`
             + `${canEquipNow(p.it, character) ? '' : ' jp-bag-item--cannot'}`}
           style={{ left: p.x * CELL, top: p.y * CELL, width: p.w * CELL, height: p.h * CELL }}
-          onPointerEnter={(e) => { e.stopPropagation(); onHover(p.it, e); }}
+          onPointerEnter={(e) => { e.stopPropagation(); onHover({ kind: 'bag', cell: p.it.slot }, e); }}
           onPointerLeave={onHoverEnd}
         >
           <ItemImg it={p.it} w={p.w * CELL} h={p.h * CELL} />
@@ -336,7 +337,7 @@ function EquipColumn({ items, held, character, onPickEquip, onPutEquip, allowed,
   onPickEquip: (slot: number) => void;
   onPutEquip: (slot: number) => void;
   allowed: (slot: number) => boolean;
-  onHover: (it: GameItem, e: { clientX: number; clientY: number }) => void;
+  onHover: (src: HoverSource, e: { clientX: number; clientY: number }) => void;
   onHoverEnd: () => void;
 }) {
   const [hoverSlot, setHoverSlot] = useState<number | null>(null);
@@ -346,14 +347,11 @@ function EquipColumn({ items, held, character, onPickEquip, onPutEquip, allowed,
    * `sInven[1].ItemIndex` 也指向那一件 —— 即副手格"被占位"。
    * 我们一件物品只有一个 slot，所以在渲染与点击时补这一份镜像。
    */
+  // 槽内那件（含"双手武器占副手格"的镜像）→ **唯一实现**在 gameStore.equippedItemAt
+  //（原来这里内联一份、手持判据里还有一份；见 AGENTS #15）
   const eq = (slot: number) => {
-    const own = items.find((x) => x.location === LOC.EQUIP && x.slot === slot && x.uid !== held?.uid);
-    if (own) return own;
-    if (slot === 1 || slot === 2) {
-      const other = items.find((x) => x.location === LOC.EQUIP && x.slot === (slot === 1 ? 2 : 1));
-      if (other && isTwoHandWeaponClass(defOf(other)?.class)) return other;
-    }
-    return undefined;
+    const it = equippedItemAt(items, slot);
+    return it && it.uid !== held?.uid ? it : undefined;   // 拿起中的那件不显示在槽里
   };
 
   const renderRow = (list: SlotDef[]) => (
@@ -361,7 +359,11 @@ function EquipColumn({ items, held, character, onPickEquip, onPutEquip, allowed,
       {list.map((s) => {
         const it = eq(s.slot);
         const box = sizeOf(s.kind);
-        const tint = held && hoverSlot === s.slot ? (allowed(s.slot) ? ' ok' : ' bad') : '';
+        // 拿着东西悬停本槽：**背景填色**提示（原版是 `dsDrawColorBox` 填整个槽矩形，不是描边）——
+        // 可放=青绿、槽里已有（会换手）=白、放不了（槽位类型/职业属性不符）=红。
+        const tint = !held || hoverSlot !== s.slot ? ''
+          : !allowed(s.slot) ? ' bad'
+            : (it ? ' overlap' : ' ok');
         // 槽里这件穿不上（属性/职业不满足）→ 涂红；原版连"装备着的"那格也一起涂（sinInvenTory.cpp:944）
         const cannot = !!it && !canEquipNow(it, character);
         // 拿着东西悬停本槽且允许放 → 在槽内居中显示半透明虚影（原版 SetX/SetY 槽内居中）
@@ -383,8 +385,10 @@ function EquipColumn({ items, held, character, onPickEquip, onPutEquip, allowed,
             }}
             title={it ? undefined : s.label}
             onPointerEnter={(e) => {
+              // 拿着东西 → 高亮本槽是**放**的落点；同时**照旧**给物品信息
+              // （用户 2026-09-14：持有道具时 hover 装备槽也要显示信息）
               if (held) setHoverSlot(s.slot);
-              else if (it) { e.stopPropagation(); onHover(it, e); }
+              if (it) { e.stopPropagation(); onHover({ kind: 'equip', slot: s.slot }, e); }
             }}
             onPointerLeave={() => { setHoverSlot(null); onHoverEnd(); }}
           >
@@ -421,13 +425,15 @@ export default function ItemPanel() {
   // 下面所有 heldUid / setHeldUid 的用法保持不变，只是换了来源。
   const heldUid = snap.heldUid;
   const setHeldUid = setHeldUidStore;
-  const { hover, show: hoverShow, hide: hoverHide } = useItemHover();
+  const { show: hoverShow, hide: hoverHide } = useItemHover();
   // 穿装备交换：等待服务端 ack 的挂起状态（成功=旧件保持手持；失败=还原）
   const panelRef = useRef<HTMLDivElement>(null);
-  // 拿起/放下时信息框消失（原版：拖起时不再显示 hover 信息）
-  useEffect(() => {
-    if (heldUid != null) hoverHide();
-  }, [heldUid]);
+  // ⚠ 这里**不要**在拿起时清信息框：用户 2026-09-14 明确要求"持有道具时 hover 仍要显示物品信息"
+  //（原版也是悬停到哪件就显示哪件，跟手上有没有东西无关）。信息框的显隐只由 hover 决定。
+  // 面板卸载（关闭背包/切屏）时**必须**清掉悬停：信息框现在是全局渲染的（面板关着也能显示，
+  // 那是为了 HUD 药水槽），所以"面板没了"这个事件没人替它收拾 → 关掉背包后信息框会一直挂在屏幕上
+  //（用户 2026-09-14 报）。**悬停的来源消失 → 悬停就该消失**。
+  useEffect(() => () => clearHoverItem(), []);
   // 拿起中：点击背包面板外区域 → 丢到地面（原版 ThrowItem；不是摧毁）
   useEffect(() => {
     if (snap.heldUid == null) return;
@@ -475,7 +481,11 @@ export default function ItemPanel() {
   // 按乐观快照把界面恢复成点击前的样子（原版 BackUpPosi 语义）。三处操作共用这一份。
   useEffect(() => {
     const onFail = () => {
-      if (rollbackOptimistic()) setHeldUid(null);
+      // ⚠ 不要在这里 `setHeldUid(null)`：手持的**真值来源是物品表**，而 `rollbackOptimistic()`
+      // 内部已经 `syncHeldFromItems()` 同步过了（物品还在鼠标位 → 继续保持；已被移走 → 自动放手）。
+      // 无条件清空会把那次同步**覆盖掉** ⇒ 服务端还拿着、客户端以为空手 ⇒ 后续所有"拿起"都被回
+      // `item.op.handBusy`（用户 2026-09-14 的日志里连环出现，就是这么来的）。
+      rollbackOptimistic();
     };
     window.addEventListener('pt:equipFail', onFail);
     return () => window.removeEventListener('pt:equipFail', onFail);
@@ -602,24 +612,23 @@ export default function ItemPanel() {
       setHeldUid(null);
       return;
     }
+    if (tgt.mode === 'swap' && tgt.conflict) {
+      // **换手**：手上那件 ↔ 被撞那件，**原子互换**（原版 `ChangeInvenItem` 的换手语义）。
+      // ⚠ 不能拆成"先把手上放下、再把被撞件拿起"：鼠标位只有一个 —— A 还在手上时
+      // `TakeToHand(B)` 必被服务端回 `handBusy`，而"先放下 A"又要求 B 让开那一格，两步在任何顺序下都撞死
+      // （用户 2026-09-14 实测：两件叠在同一格、被撞件也没上手）。
+      // ⚠ 快照必须含**两件**：只快照被撞件的话，服务端拒绝时 A 的本地移动留在原地 → 就是那个重叠。
+      const conflict = tgt.conflict;
+      beginOptimistic([held, conflict]);
+      localBagMove(held.uid, targetSlot, LOC.BAG);   // 手上那件落到目标格
+      localToHeld(conflict.uid);                     // 被撞件进鼠标位
+      sendBagSwap(held.uid, conflict.uid, LOC.BAG, targetSlot);   // 带上落点：服务端一次落地两行
+      console.log('[bag:move] 换手（原子）uid=', held.uid, '↔', conflict.uid);
+      return;
+    }
     const srcLoc = held.location, srcSlot = held.slot;
     localBagMove(held.uid, targetSlot, LOC.BAG);
-    if (tgt.mode === 'swap' && tgt.conflict) {
-      // **换手**：被撞件要真的被"拿起" —— 原版是被撞件进鼠标位（`ChangeInvenItem` 的换手语义），
-      // 在我们这里就是同一个动作：`localToHeld` + 服务端 `TakeToHand`。
-      // ⚠ 顺序：`TakeToHand` 必须**先**发（服务端先把那一格腾出来），否则随后的全量布局上报里，
-      // 目标格仍被被撞件占着 → `applyBagLayout` 的 canPlace 校验失败、整包被拒（"换了但没换成"）。
-      // ⚠ 另一层：只 `setHeldUid` 而**不** `localToHeld` 会让物品"名义上拿着、实际还在背包格"，
-      // 而手持判据只有一个（`isHeldItem`）→ 手上一件都算不上 → **图标与落点框双双消失**
-      // （用户 2026-09-14 实测："鼠标和图标不显示，命中格也完全不显示"）。
-      beginOptimistic([tgt.conflict]);
-      localToHeld(tgt.conflict.uid);
-      sendTakeToHand(tgt.conflict.uid);
-      setHeldUid(tgt.conflict.uid);
-      console.log('[bag:move] 换手：被撞件拿起 uid=', tgt.conflict.uid);
-    } else {
-      setHeldUid(null);
-    }
+    setHeldUid(null);
     reportLayout();
     console.log('[bag:move] 已上报全量布局（含 uid=', held.uid, 'srcLoc=', srcLoc, 'srcSlot=', srcSlot, '→slot=', targetSlot, '）');
   }
@@ -688,13 +697,31 @@ export default function ItemPanel() {
       // 双手武器占**两只手**（原版 OverlapTwoHandItem，sinInvenTory1.cpp:5241）：
       // 进哪个槽就清另一个槽，被清的那件回背包。这里**本地立刻预演**，
       // 否则界面上会留着副手那件，直到服务端推送才消失（看得见的迟滞）。
-      if (isTwoHandWeaponClass(defOf(held)?.class) && (slot === 1 || slot === 2)) {
+      // 另一只手的处理有**两种**情形（原版 `sInven[]` 的占位语义：双手武器同时占两只手的槽）：
+      //   ① 新件是双手武器 → 它要占两只手，另一只手那件回背包；
+      //   ② **另一只手拿着双手武器** → 往任一手放东西都与它撞件 → 它被换到**鼠标位**（拿下来）。
+      // ② 是漏掉的那半（用户 2026-09-14 实测："装了双手匕首还能再装副手盾"）。
+      // 两者互斥：新件若不是双手武器，才可能存在"另一只手是双手武器"。
+      if (slot === 1 || slot === 2) {
         const otherSlot = slot === 1 ? 2 : 1;
-        const other = items.find((x) => x.location === LOC.EQUIP && x.slot === otherSlot && x.uid !== held.uid);
-        if (other) {
-          const free = firstFreeBagSlot(other);
-          if (free != null) localUnequipToBag(other.uid, free);
-          else console.warn('[bag] 双手武器：背包无空位，另一只手的物品暂不回退（等服务端推送）');
+        const other = items.find((x) => x.location === LOC.EQUIP
+          && x.slot === otherSlot && x.uid !== held.uid);
+        if (other && (isTwoHandWeaponClass(defOf(other)?.class) || isTwoHandWeaponClass(defOf(held)?.class))) {
+          // 被换下的件**按同一优先级依次"优先进鼠标位、手忙则回背包"**（对应原版
+          // `sinInvenTory.cpp:6545`：谁进鼠标位取决于**谁是撞件**）：
+          //   · 目标槽那件（`old`，上面已 `setHeldUid`/`localToHeld`）先占手位；
+          //   · 另一只手那件再看手位 —— 手位空（主手原本是空的）→ **它到手上**（用户 2026-09-14 实测的正是这支）；
+          //     手位已被 `old` 占（主手原有武器）→ **它回背包**（原版 `AutoSetItemIndex` 那支）。
+          if (old) {
+            const free = firstFreeBagSlot(other);
+            if (free != null) localUnequipToBag(other.uid, free);
+            else console.warn('[bag] 双手武器：背包无空位，另一只手的物品暂不回退（等服务端推送）');
+          } else {
+            localToHeld(other.uid);
+            setHeldUid(other.uid);
+          }
+          console.log('[bag:equip] 另一只手处理 uid=', other.uid, 'old=', old ? old.uid : null,
+            '→', old ? '回背包' : '到手');
         }
       }
       sendEquipItem(held.uid, slot);
@@ -746,7 +773,6 @@ export default function ItemPanel() {
           onHoverEnd={hoverHide}
         />
       </div>
-      <ItemInfo hover={hover} />
       {/* 手持图标不在这里画：由 `PanelsRoot` 的 `HeldCursor` 全局渲染（面板关掉也要跟着鼠标走） */}
     </>
   );

@@ -29,6 +29,7 @@
     "verify-prefs": "npx tsx scripts/verify-prefs.ts",
     "verify-canuse": "npx tsx scripts/verify-canuse.ts",
     "verify-cursor": "npx tsx scripts/verify-cursor.ts",
+    "verify-itemhover": "npx tsx scripts/verify-itemhover.ts",
     "diag-climb": "tsx scripts/diag-climb.ts",
     "potions": "tsx scripts/extract-potion-effects.ts"
   },

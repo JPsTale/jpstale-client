@@ -3,8 +3,9 @@
  * 资产走 vite devAssets /res → E:\JPsTale\client。
  */
 import * as THREE from 'three';
-import { parseSMD } from '../core/smd-parser';
+
 import { parseSMDAsync } from './smd-loader.js';
+import type { SMDData } from '../core/smd-parser.js';
 import { loadGameTexture } from '../render/texture-loader';
 import { MapRenderer, type MatConfig } from '../render/map-renderer';
 
@@ -13,35 +14,11 @@ export interface Fore1Map {
   /** 帧动画材质对应的 mesh(每帧按 RendStatTime 切 map) */
   animatedMeshes: THREE.Mesh[];
   /** 供调试/跳转 */
-  data: ReturnType<typeof parseSMD>;
+  data: SMDData;
 }
 
 function assetUrl(raw: string): string {
   return '/res/' + raw.replace(/\\/g, '/').toLowerCase();
-}
-
-// world AABB 缓存：smdPath → [xMin, xMax, zMin, zMax]（world 坐标）
-const worldBoundsCache = new Map<string, [number, number, number, number]>();
-
-/**
- * 获取地图 world AABB（XZ 平面矩形），用缓存 SMD 解析，不建渲染。
- * 换算对齐 map-renderer：raw A(东)→+X，raw C(北)→−Z。
- */
-export async function getMapWorldBounds(smdPath: string): Promise<[number, number, number, number] | null> {
-  const cached = worldBoundsCache.get(smdPath);
-  if (cached) return cached;
-  try {
-    const data = await parseSMDAsync(smdPath);
-    const b = data.bounds;
-    const S = 1 / 256;
-    const xMin = b.minX * S, xMax = b.maxX * S;
-    const zMin = -b.maxZ * S, zMax = -b.minZ * S;
-    const r: [number, number, number, number] = [xMin, xMax, zMin, zMax];
-    worldBoundsCache.set(smdPath, r);
-    return r;
-  } catch {
-    return null;
-  }
 }
 
 /**

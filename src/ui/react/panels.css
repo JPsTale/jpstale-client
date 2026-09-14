@@ -1225,7 +1225,10 @@
    需求满足 R150,149,144 暗黄、不足红；职业特效标题橙 R235,143,60、属性行绿 R33,205,95。 */
 .jp-item-info {
   position: fixed;
-  z-index: 1200;
+  /* 必须**高于持物图标**（`.jp-hand-ic` = 1300）：否则拿着道具 hover 别的物品时，
+     信息框会被手上那件压住（用户 2026-09-14 报"持有道具时 hover 不显示物品信息"）。
+     加载遮罩 1400 仍在它之上（加载期整体不显示）。 */
+  z-index: 1350;
   width: 236px;
   background: rgba(10, 12, 18, 0.92);
   border: 1px solid rgba(140, 140, 160, 0.4);
@@ -1235,14 +1238,30 @@
   pointer-events: none;
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
   text-align: left;
+  /* 两列网格：**标签列 = 本框内最宽的那个标签**（`auto`），数值列 1fr。
+     用"容器网格 + 行 `display:contents`"而不是每行各写一个 flex —— 后者每行各算各的标签宽度，
+     英文/中文标签长短不一（`Req. Level` vs `命中`）时数值就会参差不齐。 */
+  display: grid;
+  /* 两列都按**内容宽**（数值列用 `minmax(0, auto)`：够宽就贴合内容，太窄时也能缩到不溢出换行）；
+     `justify-content: center` 把整张"标签+数值"表在框内**居中** —— 用户要的是"居中左对齐"：
+     表整体居中，而数值在它自己那一列里左对齐（原版信息框也是这样，两侧留白均匀）。 */
+  grid-template-columns: auto minmax(0, auto);
+  justify-content: center;
+  column-gap: 8px;
 }
+/* 默认整行（名字行、分隔行等）；下面两条把标签/数值放回各自列（源码顺序在后 → 覆盖默认） */
+.jp-item-info > * { grid-column: 1 / -1; }
+.jp-item-info-l { grid-column: 1; }
+.jp-item-info-v { grid-column: 2; }
 .jp-item-info-name {
   position: relative;
   text-align: center;
   font-weight: 700;
   color: #ffffff;
   margin: 2px 0 3px;
-  padding-right: 4px;
+  /* 右侧给武器类型徽标（绝对定位在 right:0）留位，避免窄框时压到名字上 */
+  padding-right: 26px;
+  padding-left: 26px;
 }
 .jp-item-info-wtype {
   position: absolute;
@@ -1258,17 +1277,16 @@
   background: rgba(30, 40, 55, 0.55);
 }
 .jp-item-info-line {
-  display: flex;
-  gap: 6px;
-  justify-content: space-between;
+  display: contents;   /* 行本身不参与布局：两个 span 直接进容器的网格（于是标签列跨所有行对齐） */
 }
 .jp-item-info-l {
-  flex: 0 0 auto;
   color: #ffffff;
 }
 .jp-item-info-v {
   color: #fed7a3;
-  text-align: right;
+  /* 数值**左对齐**（用户 2026-09-14）：所有数值从同一条左边缘开始，不再贴框右边 */
+  text-align: left;
+  justify-self: start;
 }
 .jp-item-info-red .jp-item-info-l,
 .jp-item-info-red .jp-item-info-v {
@@ -1281,13 +1299,19 @@
 }
 /* 区块间隔：原版为空白行，无分割线 */
 .jp-item-info-sec {
+  /* ⚠ 必须覆盖 `.jp-item-info-line` 的 `display:contents`：分隔行没有子元素，
+     生成不了盒子就**占不了位**（区块间距会消失）。同一元素上两条规则同为 (0,1,0)，
+     靠源码顺序决胜 —— 本规则在后。 */
+  display: block;
   height: 6px;
+  grid-column: 1 / -1;
 }
 /* 职业特效（ex-machina 客户端原版）：标题居中黄 R255,220,0；属性行橄榄绿 R164,199,41（标签/数值同色，左标签/右数值） */
-.jp-item-info-specHeader {
-  justify-content: center;
-}
 .jp-item-info-specHeader .jp-item-info-v {
+  /* 职业特效标题：整行居中（行本身是 display:contents，居中要落在它的数值格上） */
+  grid-column: 1 / -1;
+  justify-self: center;
+  text-align: center;
   color: #ffdc00;
 }
 .jp-item-info-spec .jp-item-info-l,
@@ -1309,13 +1333,18 @@
 /* 穿不上的物品（属性/职业不满足）：占格涂红 —— 原版 `sinInvenTory.cpp:944` 用
    `sinInvenColor[2]` = RGBA(255,0,0,128) 盖在物品矩形上（装备着的那件连槽位一起涂）。
    用 overlay 而不是改 background：原版就是**盖在图标之上**，看起来像整格泛红。 */
-.jp-bag-item--cannot::after { content: ''; position: absolute; inset: 0; background: rgba(255, 0, 0, 0.5); pointer-events: none; }
-.jp-items-equip.jp-items-equip--cannot::after { content: ''; position: absolute; inset: 0; background: rgba(255, 0, 0, 0.5); pointer-events: none; }
+/* 穿不上：**格子背景**涂红（用 ::before 画在图标之下 ⇒ 道具本身的颜色不被改）。
+   用户 2026-09-14：原版那块红是盖在图标上的（`dsDrawColorBox` 是填充矩形），但我们按"格子背景红、
+   道具不变色"来做 —— 更易读，且不影响辨识图标。 */
+.jp-bag-item--cannot::before { content: ''; position: absolute; inset: 0; background: rgba(255, 0, 0, 0.45); pointer-events: none; }
+.jp-items-equip.jp-items-equip--cannot::before { content: ''; position: absolute; inset: 0; background: rgba(255, 0, 0, 0.45); pointer-events: none; }
 /* 被撞到的那件（换手/合并目标）：原版把白框画在**它自己**的矩形上，而不是落点上 */
 .jp-bag-item.jp-bag-item--hit { outline: 1px solid rgba(255, 255, 255, 0.95); outline-offset: -1px; }
 /* 装备槽的落点虚影：原版 SetInvenItemAreaCheck 命中槽时把物品**在槽内居中**显示（SetX/SetY 居中） */
 .jp-items-equip-ghost { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); opacity: 0.5; pointer-events: none; }
-.jp-items-equip.jp-items-equip--ok { box-shadow: inset 0 0 0 2px rgba(90, 220, 120, 0.95); }
-.jp-items-equip.jp-items-equip--bad { box-shadow: inset 0 0 0 2px rgba(255, 80, 80, 0.95); }
+/* 落点提示：**填色**（原版 `dsDrawColorBox` 填整个槽矩形），颜色语义同 sinInvenColor[] */
+.jp-items-equip.jp-items-equip--ok { background: rgba(160, 235, 255, 0.28); }
+.jp-items-equip.jp-items-equip--overlap { background: rgba(255, 255, 255, 0.26); }
+.jp-items-equip.jp-items-equip--bad { background: rgba(255, 0, 0, 0.30); }
 .jp-hand-ic { position: fixed; z-index: 1300; width: 44px; height: 44px; pointer-events: none; display: flex; align-items: center; justify-content: center; }
 .jp-hand-count { position: absolute; right: 0; bottom: 0; color: #fff; font-size: 11px; text-shadow: 0 1px 2px #000; }

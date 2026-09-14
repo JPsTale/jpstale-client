@@ -1,7 +1,6 @@
-import { useState } from 'react';
 import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { subscribeGame, getGameSnapshot, type GameItem } from '../../app/gameStore.js';
+import { subscribeGame, getGameSnapshot, hoveredItemOf, setHoverSpot, clearHoverItem, type GameItem, type HoverSource } from '../../app/gameStore.js';
 import { itemDefById } from '../../game/data/itemDefs.js';
 import { potionEffect } from '../../game/data/potionEffects.js';
 import { getWeaponTypeFromIdCode } from '../../char/weapon-type.js';
@@ -14,12 +13,28 @@ import { t } from '../../i18n/index.js';
  */
 export interface ItemHover { it: GameItem; x: number; y: number; }
 
+/**
+ * 悬停信息的状态**活在 store 里**（`gameStore.hoverItem`）—— 过去是本组件的 useState，
+ * 于是只有背包面板内部能用：HUD 药水槽悬停永远不显示信息，面板一关也全没了。
+ * 现在唯一来源是 store，`ItemInfoLayer` 由 `PanelsRoot` 全局渲染。
+ */
 export function useItemHover() {
-  const [hover, setHover] = useState<ItemHover | null>(null);
-  const show = (it: GameItem, e: { clientX: number; clientY: number }) =>
-    setHover({ it, x: e.clientX + 16, y: e.clientY + 10 });
-  const hide = () => setHover(null);
-  return { hover, show, hide };
+  const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
+  const h = snap.hoverSpot;
+  const it = hoveredItemOf(snap);   // 判据的唯一实现（gameStore）：按来源现查，位置上换了什么就显示什么
+  return {
+    hover: it && h ? { it, x: h.x, y: h.y } : null,
+    // 传的是**来源**（位置），不是物品：位置上的东西被换掉时信息框会自动跟着变
+    show: (src: HoverSource, e: { clientX: number; clientY: number }) =>
+      setHoverSpot(src, e.clientX + 16, e.clientY + 10),
+    hide: () => clearHoverItem(),
+  };
+}
+
+/** 全局信息框层（PanelsRoot 渲染一次）：背包关着、鼠标悬在 HUD 药水槽上时也要显示。 */
+export function ItemInfoLayer() {
+  const { hover } = useItemHover();
+  return <ItemInfo hover={hover} />;
 }
 
 interface Line { label?: string; value: string; red?: boolean; dim?: boolean; section?: boolean; spec?: boolean; specHeader?: boolean; }

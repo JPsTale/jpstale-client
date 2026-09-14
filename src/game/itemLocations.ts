@@ -15,6 +15,9 @@ export const LOC = {
 
 export type LocTuple = typeof LOC;
 
+/** 药水快捷槽（ITEMSLOT 11/12/13）的起始槽号。原版 `sinInvenTory.cpp:167-169`。 */
+export const POTION_SLOT_BASE = 11;
+
 /**
  * **鼠标位（手持位）**：`装备栏(location = LOC.EQUIP) 的 slot = -1`。
  *

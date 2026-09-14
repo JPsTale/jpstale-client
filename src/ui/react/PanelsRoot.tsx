@@ -6,6 +6,7 @@ import PanelShell from './PanelShell.js';
 import CharStatusPanel from './CharStatusPanel.js';
 import SkillPanel from './SkillPanel.js';
 import ItemPanel, { HeldIcon } from './ItemPanel.js';
+import { ItemInfoLayer } from './ItemInfo.js';
 import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
 import ChatWindow from './ChatWindow.js';
 
@@ -71,6 +72,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
       {openPanels.map(renderPanel)}
       {/* 手持物品光标（常驻，与面板开关无关） */}
       <HeldCursor />
+      {/* 物品信息框（常驻：面板关着 / 悬停 HUD 药水槽时也要显示） */}
+      <ItemInfoLayer />
       {systemMenuOpen && props.systemMenuSettings && (
         <SystemMenu settings={props.systemMenuSettings} />
       )}

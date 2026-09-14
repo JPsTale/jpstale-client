@@ -1,7 +1,7 @@
 import { decodeTextureAsync } from '../core/texture.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
-import { getGameSnapshot, registerUiHitTest, subscribeGame, type FistBinding } from '../app/gameStore.js';
+import { clearHoverItem, getGameSnapshot, potionUidInSlot, registerUiHitTest, setHoverSpot, subscribeGame, type FistBinding } from '../app/gameStore.js';
 import { isInputBlocked } from '../app/inputGate.js';
 import { sfx } from '../audio/sfx.js';
 
@@ -161,6 +161,21 @@ export function createHud(container: HTMLElement): Hud {
     el.style.pointerEvents = 'auto';
     container.appendChild(el);
     return el;
+  });
+
+  // 药水槽悬停 → 物品信息框。前 3 个交互区就是 POTION_RECTS。
+  // 信息框的状态在 store 里（`setHoverItem`），由 `PanelsRoot` 的 `ItemInfoLayer` 全局渲染 ——
+  // 所以**面板关着也能显示**（这正是 HUD 这一侧过去完全没有信息框的原因：状态原本活在 ItemPanel 内部）。
+  // uid 现查 `potionUidInSlot(i)`（权威来源），不在 PotionSlotView 里再抄一份。
+  POTION_RECTS.forEach((_, i) => {
+    const el = barriers[i];
+    if (!el) return;
+    el.addEventListener('mouseenter', () => {
+      if (potionUidInSlot(i) == null) return;   // 空槽不显示
+      const r = el.getBoundingClientRect();
+      setHoverSpot({ kind: 'potion', idx: i }, r.right + 8, r.top);
+    });
+    el.addEventListener('mouseleave', () => clearHoverItem());
   });
 
   const ctx = canvas.getContext('2d')!;
@@ -528,6 +543,10 @@ export function createHud(container: HTMLElement): Hud {
       canvas.style.display = 'none';
       barriers.forEach((b) => { b.style.display = 'none'; });
       currentState = null;
+      // 药水槽悬停也走全局信息框 → HUD 隐藏时必须清掉，否则"来源没了、信息框还挂着"。
+      // ⚠ 别指望 `display:none` 会替我们触发 `mouseleave`：元素被隐藏/移除时 mouseout 的触发
+      // 各浏览器并不一致（不rely on it）。这里显式清。
+      clearHoverItem();
     },
     dispose() {
       cancelAnimationFrame(rafId);

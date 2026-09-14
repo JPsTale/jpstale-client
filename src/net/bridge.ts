@@ -6,6 +6,7 @@ import {
   useSkill,
   inventoryMove,
   takeToHand,
+  bagSwap,
   equipItem,
   dropItem,
   switchWeapon,
@@ -207,6 +208,12 @@ export function sendUseSkill(skillId: number, targetId = 0): void {
 
 export function sendInventoryMove(uid: number, toLocation: number, toSlot: number): void {
   send(inventoryMove(uid, toLocation, toSlot));
+}
+
+/** **换手**：手上那件 ↔ 背包里某件（原子）。A 还在手上时"先放下再拿起 B"在任何顺序下都会撞死，
+ *  所以换手必须是一条消息。 */
+export function sendBagSwap(handUid: number, targetUid: number, toLocation: number, toSlot: number): void {
+  send(bagSwap(handUid, targetUid, toLocation, toSlot));
 }
 
 /** 拿起 → 鼠标位（装备栏 slot=-1）。服务端权威：移动位置 + 撤装备效果 + 断线可恢复。 */

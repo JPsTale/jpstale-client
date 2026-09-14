@@ -3,7 +3,9 @@
 // 用 useSyncExternalStore 桥接（见 ui/react/*）：getGameSnapshot 返回稳定引用，
 // 只有 commit 时才替换快照对象，避免无谓重渲染。
 
-import { HELD_SLOT, LOC, isHeldItem } from '../game/itemLocations.js';
+import { HELD_SLOT, LOC, POTION_SLOT_BASE, isHeldItem } from '../game/itemLocations.js';
+import { itemDefById } from '../game/data/itemDefs.js';
+import { isTwoHandWeaponClass } from '../game/itemClass.js';
 
 export type OpenPanel = 'charStatus' | 'skills' | 'inventory';
 
@@ -187,6 +189,15 @@ export interface GameSnapshot {
    * 放在这里是为了让 HUD 的药水槽也能接收"从背包拿起的那瓶药水"（原版：左键拿起 → 点药水槽放下）。
    */
   heldUid: number | null;
+  /**
+   * 鼠标悬停的**位置**（来源 + 屏幕坐标）。**全局**：背包/装备栏/HUD 药水槽共用一份，
+   *  `ItemInfo` 由 PanelsRoot 全局渲染 —— 面板关着时也要能显示（HUD 药水槽就是这样）。
+   *
+   * ⚠ 存的是**位置**不是 uid：换装/换格/合并会改变某个位置上放的是哪件，
+   * 若存 uid，信息框就会一直停在**原来那件**上（用户 2026-09-14：换装后 hover 信息没更新）。
+   * 存位置 ⇒ 渲染时按当前物品表现查 ⇒ 位置上换了什么就显示什么。
+   */
+  hoverSpot: { src: HoverSource; x: number; y: number } | null;
 }
 
 const LS_FISTS = 'pt.fistBindings';
@@ -214,6 +225,7 @@ function loadInitial(): GameSnapshot {
     },
     quickBindings: Array.isArray(qb) && qb.length === 8 ? qb : new Array(8).fill(null),
     heldUid: null,
+    hoverSpot: null,
   };
 }
 
@@ -241,6 +253,80 @@ export function potionUidInSlot(idx: number): number | null {
 
 export function getGameSnapshot(): GameSnapshot {
   return snapshot;
+}
+
+/** 悬停的**来源**：指一个位置，而不是一件物品。 */
+export type HoverSource =
+  | { kind: 'bag'; cell: number }      // 背包格（按足迹覆盖判定里面那件）
+  | { kind: 'equip'; slot: number }    // 装备槽 1~13（含"双手武器占副手格"的镜像）
+  | { kind: 'potion'; idx: number };   // HUD 药水槽 0~2（ITEMSLOT 11~13）
+
+/** 悬停物品信息（**全局唯一来源**）：背包格 / 装备槽 / HUD 药水槽都调这里。 */
+export function setHoverSpot(src: HoverSource, x: number, y: number): void {
+  const cur = snapshot.hoverSpot;
+  if (cur && sameHoverSource(cur.src, src) && cur.x === x && cur.y === y) return;   // 同一处原地移动 → 不重复提交
+  commit({ hoverSpot: { src, x, y } });
+}
+
+export function clearHoverItem(): void {
+  if (snapshot.hoverSpot === null) return;
+  commit({ hoverSpot: null });
+}
+
+function sameHoverSource(a: HoverSource, b: HoverSource): boolean {
+  if (a.kind !== b.kind) return false;
+  if (a.kind === 'bag' && b.kind === 'bag') return a.cell === b.cell;
+  if (a.kind === 'equip' && b.kind === 'equip') return a.slot === b.slot;
+  if (a.kind === 'potion' && b.kind === 'potion') return a.idx === b.idx;
+  return false;
+}
+
+/**
+ * 装备栏某槽**当前显示的那件** —— 含"双手武器占两只手"的镜像（原版：双手武器在槽1 时
+ * `sInven[1].ItemIndex` 也指向它 ⇒ 副手格显示同一件）。**唯一实现**：渲染（`EquipColumn.eq`）、
+ * 悬停解析、点击拿起三方共用，别再各写一份（见 AGENTS #15）。
+ */
+export function equippedItemAt(items: readonly GameItem[], slot: number): GameItem | undefined {
+  const own = items.find((x) => x.location === LOC.EQUIP && x.slot === slot);
+  if (own) return own;
+  if (slot === 1 || slot === 2) {
+    const other = items.find((x) => x.location === LOC.EQUIP && x.slot === (slot === 1 ? 2 : 1));
+    if (other) {
+      const cls = itemDefById(other.itemlistId)?.class;
+      if (cls != null && isTwoHandWeaponClass(cls)) return other;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * 当前悬停位置上的**物品对象** —— 悬停判据的唯一实现（`ItemInfoLayer`、回归脚本共用）。
+ *
+ * 按**来源**（背包格 / 装备槽 / 药水槽）现查物品表，而不是记住某件物品：
+ * 位置上的东西被换掉（换装、换格、合并、被消耗）时，这里自动解析到**当前**那一件
+ * （用户 2026-09-14：换装后信息框还停在换下去的那件上）；位置上空了就返回 null，信息框收起。
+ */
+export function hoveredItemOf(snap: GameSnapshot = snapshot): GameItem | null {
+  const h = snap.hoverSpot;
+  if (!h) return null;
+  const items = snap.inventory?.items ?? [];
+  const src = h.src;
+  if (src.kind === 'equip') {
+    return equippedItemAt(items, src.slot) ?? null;
+  }
+  if (src.kind === 'potion') {
+    return items.find((x) => x.location === LOC.EQUIP && x.slot === POTION_SLOT_BASE + src.idx) ?? null;
+  }
+  // 背包格：按**足迹覆盖**判定（与服务端画布同一规则：锚格 + 该件的 w×h）
+  const cx = src.cell % LOC.BAG_W;
+  const cy = Math.floor(src.cell / LOC.BAG_W);
+  return items.find((it) => {
+    if (it.location !== LOC.BAG) return false;
+    const def = itemDefById(it.itemlistId);
+    const ax = it.slot % LOC.BAG_W;
+    const ay = Math.floor(it.slot / LOC.BAG_W);
+    return cx >= ax && cx < ax + (def?.w ?? 1) && cy >= ay && cy < ay + (def?.h ?? 1);
+  }) ?? null;
 }
 
 /** 拿起/放下手持道具（null=空手）。走 commit 同一套通知，ItemPanel 与 HUD 一起刷新。 */

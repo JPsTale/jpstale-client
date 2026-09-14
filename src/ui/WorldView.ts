@@ -9,7 +9,7 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
-import { loadMap, updateFrameAnimations, getMapWorldBounds } from '../maps/fore1.js';
+import { loadMap, updateFrameAnimations } from '../maps/fore1.js';
 import { mapSmdPath, MAP_CATALOG } from '../maps/map-catalog.js';
 import { minimapBase } from '../maps/map-data.js';
 import { mapDecorList } from '../maps/map-decor.js';
@@ -116,6 +116,8 @@ export interface EnterGameInfo {
   position: { x: number; y: number; z: number };
   rotation?: { x: number; y: number; z: number }; // 出生朝向（ay=引擎角度 0-4095）
   appearance?: CharacterAppearance;
+  /** 全量地图包围盒（服务端 EnterGame 下发，SMD 派生；world float 域）——判图/预加载查找表 */
+  maps?: Array<{ mapId: number; bounds?: [number, number, number, number] }>;
 }
 
 /** 进图加载出口：main.ts 喂给 LoadingScreen（阶段进度 + 首帧渲染完成） */
@@ -180,6 +182,8 @@ export interface WorldView {
   applyPlayerDeath(playerId: number): void;
   /** 复活目标图是否与当前图不同（main.ts 据此决定要不要盖加载遮罩） */
   respawnNeedsMapLoad(mapId: number): boolean;
+  /** 服务端权威换图校准（game.mapSwitched）：对齐 currentMapId 并同步区域 */
+  applyMapSwitched(mapId: number): void;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
   setSelfName(name: string): void;
   /** 自机等级（跨图边界的等级门槛判定用） */
@@ -2723,6 +2727,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfMaxHp = Math.max(hp, maxHp);
   }
   /**
+   * 服务端权威换图校准（`game.mapSwitched`）：服务端 findMapPrecise 判定玩家跨图后通知。
+   * 本地判图（findCurrentMap）是高频预判，可能与服务端差一个身位——以本消息对齐
+   * currentMapId 并同步区域/音频/姿态，防止两端归属漂移。
+   */
+  function applyMapSwitched(mapId: number): void {
+    if (!scene || mapId === currentMapId) return;
+    currentMapId = mapId;
+    mapAudio.enterMap(currentMapId);
+    void syncMapRegions(currentMapId);
+    animState?.reselectForCurrentState(); // 村庄↔野外姿态随图变
+    showMapBanner(mapId);
+    console.log('[WorldView] 服务端换图校准: map=' + mapId);
+  }
+
+  /**
    * 服务端权威复活（`game.playerRespawn`）：回到出生地图、半血。
    *
    * **为什么必须由客户端搬自己**：自机位置是客户端权威（方向二），服务端只能改自己的账本，
@@ -3181,6 +3200,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       floaters.length = 0;
       for (const f of keep) floaters.push(f);
     }
+
+    // 进入地图大字提示：画面中上部，淡入→停→淡出；带冷却门控（边缘往返不重刷）
+    drawMapBanner(ctx, now, w, h);
   }
 
   function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string): void {
@@ -4403,13 +4425,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
 
       try {
-        // 预取全部 44 图 world AABB（缓存 SMD 命中，用于 findCurrentMap 判归属）
-        if (allBounds.size === 0) {
-          await Promise.all(Object.keys(MAP_CATALOG).map(async (k) => {
-            const id = Number(k);
-            const b = await getMapWorldBounds('/res/field/' + MAP_CATALOG[id]);
-            if (b) allBounds.set(id, b);
-          }));
+        // 全量地图包围盒：服务端 EnterGame 下发（曾在此下载全部 63 张 SMD 取 bounds = 334MB 隐藏预取）
+        if (allBounds.size === 0 && enterGame.maps?.length) {
+          for (const m of enterGame.maps) {
+            if (m.bounds) allBounds.set(m.mapId, m.bounds);
+          }
+          const missing = Object.keys(MAP_CATALOG).map(Number).filter((id) => !allBounds.has(id));
+          if (missing.length) {
+            reportFallback('map', `服务端未下发 ${missing.length} 张图的 bounds（id=${missing.slice(0, 8).join(',')}…）→ 这些图不参与判图/预加载`);
+          }
         }
 
         const smdPath = mapSmdPath(enterGame.mapId);
@@ -4502,6 +4526,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyTeleport,
     teleportRemote,
     applyPlayerDeath,
+    applyMapSwitched,
     respawnNeedsMapLoad: (mapId: number) => !!scene && mapId !== currentMapId,
     applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '') => {
       const pid = Number(playerId);

@@ -668,6 +668,13 @@ onMessage((msg: jpt.base.ServerMessage) => {
           offHandPos: eg.appearance.offHandPos || 0,
           sizeLevel: eg.appearance.sizeLevel || 0,
         } : undefined,
+        // 全量地图包围盒（服务端权威，SMD 派生）→ 判图/预加载查找表
+        maps: eg.maps?.map((m) => ({
+          mapId: Number(m.mapId) || 0,
+          bounds: (m.minX !== undefined && m.minX !== null)
+            ? [Number(m.minX), Number(m.maxX), Number(m.minZ), Number(m.maxZ)] as [number, number, number, number]
+            : undefined,
+        })),
       };
       go(AppScreen.WORLD, hudState, enterGame);
       worldView.setSelfId(enterGame.playerId);
@@ -982,6 +989,12 @@ onMessage((msg: jpt.base.ServerMessage) => {
 
 onJsonMessage((type, data) => {
   switch (type) {
+    case 'game.mapSwitched': {
+      // 服务端权威换图校准：对齐 currentMapId 并同步区域/音频/姿态
+      const ms = data as { mapId?: number };
+      worldView.applyMapSwitched(Number(ms.mapId) || 0);
+      break;
+    }
     case 'auth.characterList': {
       const chars: CharacterInfo[] = ((data as any).characters ?? []).map((c: any) => ({
         characterId: c.characterId ?? c.id,
