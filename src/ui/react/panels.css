@@ -1348,3 +1348,25 @@
 .jp-items-equip.jp-items-equip--bad { background: rgba(255, 0, 0, 0.30); }
 .jp-hand-ic { position: fixed; z-index: 1300; width: 44px; height: 44px; pointer-events: none; display: flex; align-items: center; justify-content: center; }
 .jp-hand-count { position: absolute; right: 0; bottom: 0; color: #fff; font-size: 11px; text-shadow: 0 1px 2px #000; }
+
+
+/* ─── NPC 商店面板（买/卖） ─── */
+.jp-shop { display: flex; flex-direction: column; gap: 6px; min-width: 320px; max-height: 420px; }
+.jp-shop-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.jp-shop-gold { color: #ffe9a8; font-size: 12px; }
+.jp-shop-sellmode { font-size: 12px; padding: 2px 10px; }
+.jp-shop-sellmode.on { background: #6a3b1e; color: #ffd9a0; border-color: #c98b4b; }
+.jp-shop-tabs { display: flex; gap: 4px; }
+.jp-shop-tab { font-size: 12px; padding: 2px 10px; opacity: 0.75; }
+.jp-shop-tab.on { opacity: 1; background: #2c4a63; color: #dff3ff; }
+.jp-shop-list { overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.jp-shop-row { display: flex; align-items: center; gap: 8px; padding: 3px 6px; font-size: 12px; text-align: left; }
+.jp-shop-row:hover { background: rgba(160, 235, 255, 0.14); }
+.jp-shop-row--poor { color: #c98b8b; }
+.jp-shop-icon { width: 22px; height: 22px; image-rendering: pixelated; }
+.jp-shop-name { flex: 1 1 auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jp-shop-price { color: #ffe9a8; }
+.jp-shop-count { display: inline-flex; align-items: center; gap: 2px; }
+.jp-shop-count input { width: 42px; text-align: center; font-size: 12px; }
+.jp-shop-count button { font-size: 12px; padding: 0 5px; }
+.jp-shop-hint { font-size: 11px; color: #9fd8ef; }

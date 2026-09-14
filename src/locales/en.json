@@ -36,6 +36,7 @@
     },
     "load": {
       "tipsTitle": "Gameplay Tips & Tricks",
+      "cacheHit": "Cache hits",
       "world": "Entering world",
       "entering": "Entering {map}"
     }
@@ -67,7 +68,8 @@
       "resist": "Resistance"
     },
     "skills": "Skills",
-    "inventory": "Inventory"
+    "inventory": "Inventory",
+    "shop": "Shop"
   },
   "stats": {
     "hit": "Hit",
@@ -278,6 +280,7 @@
     }
   },
   "item": {
+    "pickup": { "overMoney": "Your money would exceed the maximum allowed" },
     "bag": "Bag",
     "gold": "Gold",
     "weight": "Weight",
@@ -324,6 +327,12 @@
     "quality.high": "High",
     "fps": "FPS",
     "fpsUnlimited": "Unlimited",
+    "monsterBudget": "Monster Display Budget",
+    "displayRange": "Display Range",
+    "range.near": "Near",
+    "range.mid": "Medium",
+    "range.far": "Far",
+    "range.max": "Maximum",
     "reset": "Reset",
     "save": "Save",
     "none": "Unbound",
@@ -454,6 +463,24 @@
     "autoLogin": "Auto signing in...",
     "disconnecting": "Disconnecting...",
     "logoutReason": "Connection lost, please log in again"
+  },
+  "shop": {
+    "kind": {
+      "weapon": "Weapons",
+      "defense": "Armor",
+      "misc": "Misc"
+    },
+    "buy": "Buy",
+    "sellMode": "Sell mode",
+    "sellHint": "Click an item in your bag to sell it",
+    "notMerchant": "This NPC does not trade",
+    "notHere": "No such NPC nearby",
+    "outOfRange": "Too far away",
+    "noItems": "This shop has no items",
+    "notSold": "This shop does not sell that",
+    "notEnoughMoney": "Not enough gold",
+    "cannotSell": "That item cannot be sold",
+    "failed": "Trade failed"
   },
   "itemtip": {
     "recHp": "Life Recovery",
@@ -597,6 +624,7 @@
     "range": "Range"
   },
   "npc": {
+    "gmOnly": "Only admins may use this NPC",
     "mushroom_cave_keeper": {
       "name": "Mushroom Cave Keeper"
     },

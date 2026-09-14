@@ -1,14 +1,17 @@
 /**
- * Model Cache — 启动时预加载全部职业的 骨架+身体+头部。
+ * Model Cache — 预加载职业的 骨架+身体+头部。
  *
  * 实际的 THREE 对象缓存（promise 防重入）在 char-loader.ts 内：
  *  - getSkeleton(jobId)  ：bip 骨骼+动画（全脸共享）
  *  - getBody(jobId)      ：职业身体（只构建一次）
  *  - getHead(jobId,face) ：头部（切换头型只构建头）
  *
- * 这里只负责触发预加载，供 main.ts 在登录后调用。
- * 角色创建/选择页通过 getSkeleton/getBody/getHead 直接命中缓存，
- * 切换头型不再重载身体。
+ * ⚠ **2026-09-14：启动不再调用它**（用户："不要登录之前就加载一堆东西"）。
+ * `preloadAllModels` 要把 10 个职业的完整骨架全下完（8 组动画包合计 162MB）才让登录页出现；
+ * 现在登录页只等背景图，选角/创建角色预览走 lite 包（`render/lite-loader.ts`，每组 ~300KB），
+ * 进图时才拉自机那**一个**职业的完整包。
+ * `preloadCharacter` 仍可用于"进图前定向预热某个职业"；`preloadAllModels` 目前**无调用者**，
+ * 留作将来"游玩中后台预载"的入口。
  */
 import { getSkeleton, getBody, getHead } from './char-loader.js';
 

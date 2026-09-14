@@ -120,6 +120,30 @@ export function buildSkeleton(smb: SmbData, rawMode: boolean): SkeletonResult {
   return { bones, skeleton, skeletonGroup, boneByObj, bindLocalByName, bindWorldByName, boneIndexByName };
 }
 
+/**
+ * 与骨架无关的产物缓存：**geometry + material**（按网格数据实例存）。
+ *
+ * 为什么能共享：这两样只依赖 `(网格数据, 网格名筛选, rawMode)` 与骨架的**绑定姿势矩阵**，
+ * 不依赖具体哪一副骨架实例 —— 同一个 modelFile 解析出来的 SmbData 是同一份（AssetManager 的
+ * 解析缓存保证），所以数值必然相同。
+ *
+ * 为什么 **SkinnedMesh 实例不能共享**：它要 `bind()` 到各自的 skeleton（每只怪的动画相位、
+ * 位置都不同）。所以这里缓存的是"原料"，每只怪仍新建自己的 SkinnedMesh。
+ *
+ * 实测背景：222 只怪 = 222 套 geometry/material（"几何体 655 / 不同材质 556"就是这么来的），
+ * 而它们只来自少数几种模型；顺带每只怪都会重新解码一遍贴图（下面用 `material.map` 已存在来短路）。
+ */
+interface CachedMeshPart {
+  geometry: THREE.BufferGeometry;
+  material: THREE.MeshPhongMaterial;
+  /** 该材质要加载的贴图（undefined = 无贴图材质） */
+  url?: string;
+  nodeName: string;
+  materialIndex: number;
+}
+/** smd 实例 → (网格名|材质索引) → 原料 */
+const meshPartCache = new WeakMap<SmbData, Map<string, CachedMeshPart>>();
+
 export function buildSkinnedMesh(
   smd: SmbData,
   smb: SmbData,
@@ -153,6 +177,12 @@ export function buildSkinnedMesh(
   /** 顶点引用了骨架里不存在的骨名（→ 被兜底到根骨/首个绑定矩阵，表现为变形） */
   const unknownBones = new Map<string, number>();
   const texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] = [];
+  // 原料缓存（见 CachedMeshPart 的说明）：同一个 smd 反复装配时复用 geometry/material
+  let partCache = meshPartCache.get(smd);
+  if (!partCache) {
+    partCache = new Map();
+    meshPartCache.set(smd, partCache);
+  }
 
   const transformVertex = (rx: number, ry: number, rz: number) => rawMode ? [rx, ry, rz] : [rx, rz, -ry];
   const transformNormal = (fx: number, fy: number, fz: number) => rawMode ? [fx, fy, fz] : [fx, fz, -fy];
@@ -224,34 +254,47 @@ export function buildSkinnedMesh(
 
       if (triCount === 0) continue;
 
-      const geo = new THREE.BufferGeometry();
-      geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-      geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
-      geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
-      geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
-      geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
-      geo.setIndex(indices);
+      // ① 先查"原料缓存"（geometry + material）：同一模型被多只怪复用时只建一次。
+      const partKey = meshObj.nodeName + '|' + matIdx;
+      let part = partCache.get(partKey);
+      if (!part) {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+        geo.setAttribute('normal', new THREE.Float32BufferAttribute(normals, 3));
+        geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
+        geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(skinIndices, 4));
+        geo.setAttribute('skinWeight', new THREE.Float32BufferAttribute(skinWeights, 4));
+        geo.setIndex(indices);
 
-      const matData: MaterialInfo | undefined = matIdx >= 0 ? objMats[matIdx] : undefined;
-      const mat = new THREE.MeshPhongMaterial({ color: 0x8899aa, side: THREE.DoubleSide });
-      if (matData) {
-        if (matData.twoSide === 1) mat.side = THREE.DoubleSide;
-        else mat.side = THREE.FrontSide;
-        if (matData.blendType === 4 || matData.blendType === 5) {
-          mat.transparent = true;
-          mat.blending = THREE.AdditiveBlending;
-        } else if (matData.blendType === 1) {
-          mat.transparent = true;
-          mat.blending = THREE.NormalBlending;
+        const matData: MaterialInfo | undefined = matIdx >= 0 ? objMats[matIdx] : undefined;
+        const mat = new THREE.MeshPhongMaterial({ color: 0x8899aa, side: THREE.DoubleSide });
+        let url: string | undefined;
+        if (matData) {
+          if (matData.twoSide === 1) mat.side = THREE.DoubleSide;
+          else mat.side = THREE.FrontSide;
+          if (matData.blendType === 4 || matData.blendType === 5) {
+            mat.transparent = true;
+            mat.blending = THREE.AdditiveBlending;
+          } else if (matData.blendType === 1) {
+            mat.transparent = true;
+            mat.blending = THREE.NormalBlending;
+          }
+          if (matData.texturePaths && matData.texturePaths.length > 0) url = matData.texturePaths[0];
         }
-        if (matData.texturePaths && matData.texturePaths.length > 0) {
-          texturesToLoad.push({ url: matData.texturePaths[0], mat, nodeName: meshObj.nodeName });
-        }
+        part = { geometry: geo, material: mat, url, nodeName: meshObj.nodeName, materialIndex: matIdx };
+        partCache.set(partKey, part);
       }
 
-      const mesh = new THREE.SkinnedMesh(geo, mat);
-      mesh.userData.nodeName = meshObj.nodeName;
-      mesh.userData.materialIndex = matIdx;
+      // ② 贴图：`material.map` 已存在说明这个共享材质的贴图早加载过了 —— 不再重复交给调用方
+      //    （否则每只怪都会把同一张贴图重新解码一遍；实测"纹理 867 个"有一部分来自这里）。
+      if (part.url && !part.material.map) {
+        texturesToLoad.push({ url: part.url, mat: part.material, nodeName: part.nodeName });
+      }
+
+      // ③ 实例**不能**共享（要 bind 各自的骨架），每次新建
+      const mesh = new THREE.SkinnedMesh(part.geometry, part.material);
+      mesh.userData.nodeName = part.nodeName;
+      mesh.userData.materialIndex = part.materialIndex;
       group.add(mesh);
       meshes.push(mesh);
     }

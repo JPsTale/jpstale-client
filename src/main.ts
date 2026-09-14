@@ -1,4 +1,4 @@
-import { playItemSound } from './audio/index.js';
+
 import { sfx } from './audio/index.js';
 import { requestPlayEat } from './ui/WorldView.js';
 import { AppScreen, transition, getScreen } from './app/State.js';
@@ -11,7 +11,7 @@ import { createServerSelect } from './ui/ServerSelect.js';
 import type { ServerInfo } from './ui/ServerSelect.js';
 import { createCharSelect } from './ui/CharSelect.js';
 import type { CharacterInfo } from './ui/CharSelect.js';
-import { preloadAllModels } from './render/model-cache.js';
+// （原先这里 import preloadAllModels 做启动预载 —— 已移除，见文件末尾的启动段说明）
 import { createLoadingScreen } from './ui/LoadingScreen.js';
 import { createDeathPanel } from './ui/DeathPanel.js';
 import { createHud } from './ui/Hud.js';
@@ -23,13 +23,16 @@ import { createGameClock } from './ui/GameClock.js';
 import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
-import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand } from './net/bridge.js';
+import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract } from './net/bridge.js';
 import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
 import { itemDefById, itemIconUrl } from './game/data/itemDefs.js';
 import { overweightBlocks } from './game/itemRules.js';
 import type { PotionSlotView } from './ui/Hud.js';
 import { initCursor } from './ui/cursor.js';
 import { installDevLogPanel } from './ui/DevLogPanel.js';
+import { installPerfPanel, togglePerfPanel } from './ui/PerfPanel.js';
+import { loadDisplayPrefs, saveDisplayPrefs } from './ui/display-prefs.js';
+import { report as perfReport, formatReport as perfText, frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, buildExport as perfBuildExport } from './app/profiler.js';
 import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn, Ch } from './app/chatStore.js';
 import type { jpt } from './net/proto/base_message.js';
 import { sha256 } from 'js-sha256';const app = document.getElementById('app')!;
@@ -48,6 +51,7 @@ const worldView = createWorldView(app, {
   // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
   // 拾取：背包面板开着 → 直接拿到手上（原版 `cInvenTory.OpenFlag` 分支：窗口开着时拾取物进 MouseItem，
   // 不需要背包空格）；关着 → 自动进背包空格。手上已有东西时服务端仍进背包（不覆盖手上那件）。
+  onNpcInteract: (npcId) => sendNpcInteract(npcId),
   onPickupGroundItem: (groundItemId) =>
     sendPickupItem(groundItemId, getGameSnapshot().openPanels.includes('inventory')),
   // 攻击起手（挥拳开始）→ C2S_AttackStart；命中帧（每段）→ C2S_AttackHit。服务端权威裁决+结算。
@@ -62,7 +66,9 @@ function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z:
   send(playerMove(angle, mode, x, y, z, anim, animIndex, animClip));
 }
 
-const loadingScreen = createLoadingScreen(app);
+// 加载页：进图时进度条**按已加载字节渐进**（4 个阶段的回调粒度太粗，会长时间不动 ——
+// 用户 2026-09-14 实测"它根本不走，只有在加载完之后才动一下"）。refMB 是经验参考量。
+const loadingScreen = createLoadingScreen(app, { progressFromBytes: { refMB: 40 } });
 
 // 死亡面板：三个复活选项（对应原版 sinInterFace.h 的 RESTART_FEILD / RESTART_TOWN / RESTART_EXIT）。
 // 点击只发意图，**不在这里关闭面板** —— 等服务端 S2C_PlayerRespawn 回来再关，
@@ -186,6 +192,8 @@ const gameClock = createGameClock();
 initCursor();
 // 游戏内日志面板（Ctrl+Shift+L）：屏蔽右键菜单后，需要一个不依赖 devtools 的日志入口
 installDevLogPanel();
+// 性能剖析面板（Ctrl+Shift+P）：掉帧时看"这一帧的时间花在哪一段"，不必去用 devtools 的 profiler
+installPerfPanel();
 
 // ===== 屏蔽浏览器右键菜单 =====
 // 原版没有浏览器菜单，而右键要用来"使用道具"（已实现）与"使用技能"（待做）。
@@ -219,12 +227,39 @@ installBridge();
 console.info('[ui] react panels layer ready — dev: window.__pt.ui.show/hide');
 
 // 开发入口：进图后 window.__pt.ui.toggle('charStatus') 打开角色信息面板
+// 性能剖析（Ctrl+Shift+P 开关面板）：window.__pt.perf.report() 取一份分段报告；
+// frameStart/mark/frameEnd/setCounter 是采样原语，供 console 里手动造一段测量用
+// （也是自动化验证的入口 —— 面板读的必须是**同一个** profiler 实例，这几个引用即凭证）。
 declare global {
   interface Window {
-    __pt: { ui: { show: typeof reactPanels.show; hide: typeof reactPanels.hide; toggle: typeof reactPanels.toggle } };
+    __pt: {
+      ui: { show: typeof reactPanels.show; hide: typeof reactPanels.hide; toggle: typeof reactPanels.toggle };
+      perf: {
+        report: typeof perfReport;
+        text: typeof perfText;
+        toggle: typeof togglePerfPanel;
+        frameStart: typeof perfFrameStart;
+        mark: typeof perfMark;
+        frameEnd: typeof perfFrameEnd;
+        setCounter: typeof perfSetCounter;
+        export: typeof perfBuildExport;
+      };
+    };
   }
 }
-window.__pt = { ui: { show: reactPanels.show, hide: reactPanels.hide, toggle: reactPanels.toggle } };
+window.__pt = {
+  ui: { show: reactPanels.show, hide: reactPanels.hide, toggle: reactPanels.toggle },
+  perf: {
+    report: perfReport,
+    text: () => perfText(perfReport()),
+    toggle: togglePerfPanel,
+    frameStart: perfFrameStart,
+    mark: perfMark,
+    frameEnd: perfFrameEnd,
+    setCounter: perfSetCounter,
+    export: perfBuildExport,
+  },
+};
 
 function hideAll() {
   loginPanel.hide();
@@ -338,10 +373,9 @@ hudPanel.onAction = (action) => {
         return;
       }
       if (heldItem) beginOptimistic([heldItem]);
-      // 放入音：原版是**逐瓶**调 `sinPlaySound(pItem->SoundIndex)`（sinInvenTory.cpp:4623），
-      // 但每次都落在**同一个声音编号**上 → 引擎重启那一个 buffer，**连塞 10 瓶也只响一声**
-      // （用户 2026-09-13 实测指出）。所以这里播一次即与原版听感一致，无需为"搬了几瓶"同步槽容量。
-      if (heldItem) playItemSound(itemDefById(heldItem.itemlistId)?.sound);
+      // 放入音**不在这里播**：由 store 的"放进容器"事件统一判定
+      // （`gameStore.commit` → `notifyPlacedItems`；用户 2026-09-14 要求"无论是鼠标操作、
+      // 拾取操作（服务器发来消息），都执行相同的逻辑"）。服务端落地后会推 ItemUpdate → 播该物品的音。
       sendEquipItem(heldNow, 11 + idx);
     } else {
       const uid = potionUidInSlot(idx);
@@ -355,8 +389,7 @@ hudPanel.onAction = (action) => {
         // 现在"拿起"是服务端的一次真实位置变更（→ 鼠标位 = 装备栏 slot=-1）：
         // 从**任何**容器拿起都走同一条路，不用再"先脱到背包"（那条在背包满时会失败）。
         beginOptimistic([it]);
-        localToHeld(uid);
-        playItemSound(itemDefById(it.itemlistId)?.sound);   // 拿起播**该物品自己的** SoundIndex
+        localToHeld(uid);        // 拿起也是一次"落点变化" → 音由 store 统一播（见 notifyPlacedItems）
         sendTakeToHand(uid);
       }
     }
@@ -507,6 +540,9 @@ reactPanels.setSystemMenuSettings({
   onUnstuck: performUnstuck,
   getFps: () => worldView.getTargetFps(),
   setFps: (fps) => worldView.setTargetFps(fps),
+  // 显示预算偏好：存 localStorage（下次进来还在）+ 立刻应用到世界（不用重进游戏）
+  getDisplayPrefs: () => loadDisplayPrefs(),
+  setDisplayPrefs: (p) => { saveDisplayPrefs(p); worldView.setDisplayPrefs(p); },
 });
 
 
@@ -1064,18 +1100,12 @@ onJsonMessage((type, data) => {
   }
 });
 
-// 启动：预加载角色模型（选角需要），地图按需加载（进图时）
+// 启动：**不再预加载角色模型**（用户 2026-09-14 定："不要登录之前就加载一堆东西"）。
+//
+// 原来这里跑 `preloadAllModels`，它要把 10 个职业的完整骨架+身体+头全下完（8 组动画包
+// 合计 162MB）才肯 `go(AppScreen.LOGIN)` —— 打开页面到能输账号密码之间就是这个下载。
+// 现在登录页只等背景图；选角/创建角色预览改走 lite 包按需加载（每组 293~648KB，
+// 见 render/lite-loader.ts），进图时才拉自机那一个职业的完整包。
 loginBackdrop.preload();
-loadingScreen.show();
-const TOTAL_MODELS = 10;
-preloadAllModels((loaded) => {
-  loadingScreen.setProgress(loaded, TOTAL_MODELS, `加载模型 ${loaded}/${TOTAL_MODELS}`);
-  if (loaded >= TOTAL_MODELS) {
-    loadingScreen.hide();
-    // 先合法进入 LOGIN（BOOT→LOGIN），确保状态机就绪；随后续传走 LOGIN→SERVER_SELECT→… 全部合法
-    go(AppScreen.LOGIN);
-    if (!attemptAutoResume()) {
-      // 无续传或续传不可用：正常停在登录页
-    }
-  }
-});
+go(AppScreen.LOGIN);
+attemptAutoResume();

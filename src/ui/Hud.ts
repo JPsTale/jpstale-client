@@ -1,4 +1,5 @@
 import { decodeTextureAsync } from '../core/texture.js';
+import { fetchAsset } from '../core/asset-manager.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
 import { clearHoverItem, getGameSnapshot, registerUiHitTest, setHoverSpot, subscribeGame, type FistBinding } from '../app/gameStore.js';
@@ -82,9 +83,10 @@ const TEXTURES: Record<string, string> = {
 async function loadTex(rel: string, key: string): Promise<Tex | null> {
   const url = '/res/image/sinimage/' + rel;
   try {
-    const resp = await fetch(url);
-    if (!resp.ok) return null;
-    const buf = await resp.arrayBuffer();
+    // 走 AssetManager（缓存 + 按 kind 统计），界面图标单列一类。
+    // ⚠ 这里**只共享字节、不共享解码结果**：下面会对像素做黑色透明化（TRANSPARENT_KEYS），
+    // 把解码结果共享出去会污染别处用同一张贴图的地方。
+    const buf = await fetchAsset(url, 'texture:ui');
     const decoded = await decodeTextureAsync(buf);
     if (!decoded) return null;
     // 仅对按钮/图标类纹理做黑色透明化，TGA/背景类不做

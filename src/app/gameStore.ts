@@ -6,8 +6,9 @@
 import { HELD_SLOT, LOC, POTION_SLOT_BASE, isHeldItem } from '../game/itemLocations.js';
 import { itemDefById } from '../game/data/itemDefs.js';
 import { isTwoHandWeaponClass } from '../game/itemClass.js';
+import { playItemSound, playItemDropSound } from '../audio/item-sounds.js';
 
-export type OpenPanel = 'charStatus' | 'skills' | 'inventory';
+export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop';
 
 // 拳位装备：标识一个技能（用职业目录+图标文件，跨职业唯一稳定）。
 // iconFile === 'skill_normal'（无 .bmp）表示普通攻击。
@@ -198,6 +199,8 @@ export interface GameSnapshot {
    * 存位置 ⇒ 渲染时按当前物品表现查 ⇒ 位置上换了什么就显示什么。
    */
   hoverSpot: { src: HoverSource; x: number; y: number } | null;
+  /** NPC 商店：打开中的商店与卖出模式（null = 没开） */
+  shop: { npcId: number; items: ShopItem[]; sellMode: boolean } | null;
 }
 
 const LS_FISTS = 'pt.fistBindings';
@@ -226,6 +229,7 @@ function loadInitial(): GameSnapshot {
     quickBindings: Array.isArray(qb) && qb.length === 8 ? qb : new Array(8).fill(null),
     heldUid: null,
     hoverSpot: null,
+    shop: null,
   };
 }
 
@@ -437,7 +441,7 @@ export function rollbackOptimistic(): boolean {
   const byUid = new Map(cur.items.map((x) => [x.uid, x]));
   for (const old of p.items) byUid.set(old.uid, old);   // 整件覆盖：location / slot / count 一起还原
   const items = [...byUid.values()];
-  commit({ inventory: { ...cur, items } });
+  silently(() => commit({ inventory: { ...cur, items } }));   // 回滚 = 事情没发生，不该出声（失败音另有入口）
   syncHeldFromItems(items);   // 回滚后"手在哪"由物品表决定（拿起的乐观更新被撤销 → 自动放手）
   return true;
 }
@@ -447,10 +451,117 @@ export function subscribeGame(fn: () => void): () => void {
   return () => { listeners.delete(fn); };
 }
 
+/**
+ * 静默范围：整包替换（进图快照）与回滚**不是"放进容器"**，不该出声 ——
+ * 前者是"把整个背包贴上来"（逐件都会看起来像新出现），后者是把乐观更新撤回（事情没发生）。
+ * 包一层显式的作用域，比在每个入口写条件更难漏。
+ */
+let suppressPlacementSound = false;
+function silently<T>(fn: () => T): T {
+  const prev = suppressPlacementSound;
+  suppressPlacementSound = true;
+  try {
+    return fn();
+  } finally {
+    suppressPlacementSound = prev;
+  }
+}
+
+/**
+ * **物品动作的词汇表**（用户 2026-09-14 定）：`GET_ITEM`（拿起/取出→鼠标位）、
+ * `PUT_ITEM`（放进容器：背包格 / 药水槽 / 装备槽 / **仓库 30** / 未来的邮箱…）、
+ * `THROW_ITEM`（丢出：玩家动作 `throwItem` / 服务端通知 `applyItemRemoved` —— 两个操作码）。
+ * **发声只在三个动作各自的入口里，判定只有一处** ——
+ * 规则只看 `(location, slot)` 的变化，**与是哪个容器无关**，所以新增容器（仓库、邮箱）
+ * 不需要写任何音效代码：只要它的 UI 调既有的 store 变更函数即可。
+ *
+ * **"放进容器"这件事本身有声音** —— 唯一判定（用户 2026-09-14 明确要求）：
+ * "无论是放进背包、放进药水槽、放进装备槽，无论是鼠标操作、拾取操作（服务器发来消息），
+ *  都应该执行相同的逻辑，即播放对应音效。"
+ *
+ * 所以判定放在 `commit` 这一层：凡是物品的 `(location, slot)` 变了、或表里**新出现**一件，
+ * 就播**该物品自己**的 SoundIndex（原版所有落点都是 `sinPlaySound(pItem->SoundIndex)`）。
+ * 只改数量不算（喝药/堆叠计数）—— 那不是"放进"。
+ *
+ * 放在这里而不是各 UI 处理器里，是因为**同一个事件有多条来源**：鼠标操作走本地乐观更新，
+ * 拾取/自动进药水槽/换装回背包走服务端推送。分开写就会出现"鼠标放下有声音、拾取进背包没有"
+ * （用户实测报的正是这个），而且两处判定迟早会漂移。
+ *
+ * 重复播放在所难免（本地乐观 + 服务端确认各一次），这正是原版的听感 ——
+ * `sinPlaySound` 只是重启同一个 buffer（AGENTS #22），我们这一层也有同文件冷却（`sfx.start`）。
+ */
+function notifyPlacedItems(before: readonly GameItem[], after: readonly GameItem[]): void {
+  if (suppressPlacementSound) return;
+  const prevByUid = new Map(before.map((x) => [x.uid, x]));
+  for (const it of after) {
+    const prev = prevByUid.get(it.uid);
+    if (prev && prev.location === it.location && prev.slot === it.slot) continue;   // 没换位置（只改数量等）
+    if (prev && isHeldItem(prev) && isHeldItem(it)) continue;                       // 鼠标位内换位：不是"放进"
+    playItemSound(itemDefById(it.itemlistId)?.sound);
+  }
+  // ② **某堆变多 = 一次"放进"**，与来源无关：手上那件并进去、从地上捡起来并进去、服务端发进来。
+  //    （原版 `AutoSetPotion` / `LastSetInvenItem` 的合并分支都 `sinPlaySound(pItem->SoundIndex)`。）
+  //    这条覆盖了"捡药水合并进药水槽" —— 那里客户端表里**没有"消失的源"**可依据（源是地面物），
+  //    所以从前那版"看有谁消失"的判据根本触发不到（用户 2026-09-14 实测：合并进药水槽没声音）。
+  //    反向不受影响：丢弃是"某件消失但没人变多"（另有 `playItemDropSound`）、喝药是**变少**、清空同理。
+  for (const it of after) {
+    const prev = prevByUid.get(it.uid);
+    if (prev != null && it.count > prev.count) {
+      playItemSound(itemDefById(it.itemlistId)?.sound);
+    }
+  }
+}
+
 function commit(patch: Partial<GameSnapshot>): void {
+  const beforeItems = snapshot.inventory?.items;
+  const beforeGold = snapshot.inventory?.gold;
   snapshot = { ...snapshot, ...patch };
+  if (patch.inventory && beforeItems && patch.inventory.items !== beforeItems) {
+    notifyPlacedItems(beforeItems, patch.inventory.items);
+  }
+  // **钱到手 → 金币音**（原版 `sinPlusMoney` 之后 `sinPlaySound(SIN_SOUND_COIN)`）。
+  // 与"放进容器"的音是两件事：这里是**收钱**那一刻（拾取金币、卖物成交、任务奖励），
+  // 而"金币增加"的路径有多条（`S2C_GoldChange` / `playerState` / `characterStatus` / 进图快照），
+  // 所以判定放在 `commit` 这一层，和物品落点一样**只有一处**；进图快照走 `silently()` 不会响。
+  // **花钱不出声**（买入/死亡扣钱）—— 原版买物的声音是"物品落格"那一下（物品自带音）。
+  if (!suppressPlacementSound && beforeGold !== undefined
+      && patch.inventory?.gold !== undefined && patch.inventory.gold > beforeGold) {
+    playItemSound(18);   // SIN_SOUND_COIN
+  }
   persist();
   for (const l of [...listeners]) l();
+}
+
+// —— NPC 商店 ——
+
+/** 一行商品（服务端下发；名字与码都带着，客户端没有本地定义也能显示）。 */
+export interface ShopItem {
+  itemlistId: number;
+  code: string;
+  name: string;
+  price: number;
+  /** 0=武器 1=防具 2=杂货（对应 npclist 的三列；一个 NPC 可以同时是武器店+防具店） */
+  kind: number;
+}
+
+/**
+ * 当前打开的商店（null = 没开）。`sellMode` 是原版的"点 Sell 按钮后光标变卖出光标"：
+ * 打开它以后，**点自己背包里的物品**就是卖出（`ItemPanel` 据此改行为）。
+ */
+export function setShop(npcId: number, items: ShopItem[]): void {
+  commit({ shop: { npcId, items, sellMode: false } });
+}
+
+export function clearShop(): void {
+  if (snapshot.shop === null) return;
+  commit({ shop: null });
+}
+
+/** 卖出模式开关（原版 SIN_CURSOR_SELL 的等价物）。 */
+export function setShopSellMode(on: boolean): void {
+  const s = snapshot.shop;
+  if (!s || s.sellMode === on) return;
+  commit({ shop: { ...s, sellMode: on } });
 }
 
 export function setGameCharacter(c: GameCharacter): void {
@@ -464,7 +575,7 @@ export function setGamePlayer(p: GamePlayer): void {
 // —— 物品容器 ——
 
 export function setInventory(inv: GameInventory): void {
-  commit({ inventory: inv });
+  silently(() => commit({ inventory: inv }));   // 整包替换：不是"放进容器"，逐件都会像新出现
   syncHeldFromItems(inv.items);   // 进图快照：还原"重登时手上还拿着的那件"
 }
 
@@ -481,11 +592,42 @@ export function upsertInventoryItem(it: GameItem): void {
   syncHeldFromItems(items);   // 服务端推来的位置才是权威：它说在鼠标位就是在手上，说不在就放手
 }
 
-/** 移除单件（丢弃/软删）。 */
-export function removeInventoryItem(uid: number): void {
+/**
+ * 内部：把一件从表里摘掉（两个操作**共用**的实现，不重复写）。
+ * 注意它**不发声** —— 声音属于"哪个操作"，见下面两个公开入口。
+ */
+function removeItemLocal(uid: number): void {
   const cur = snapshot.inventory;
   if (!cur) return;
-  commit({ inventory: { ...cur, items: cur.items.filter((x) => x.uid !== uid) } });
+  const items = cur.items.filter((x) => x.uid !== uid);
+  commit({ inventory: { ...cur, items } });
+  // 物品没了 ⇒ "手上那件"可能正是它（典型：源堆被并进药水槽后服务端 softDelete 并推 ItemRemove）。
+  // `heldItemOf` 是**派生读**（查表）所以界面不会显示幽灵，但 `snapshot.heldUid` 是存下来的字段，
+  // 不同步就会留着一个死 uid —— 后续任何直接读该字段的代码都会按"手上还有东西"处理。
+  syncHeldFromItems(items);
+}
+
+/**
+ * `THROW_ITEM`（**玩家自己的动作**）：把物品丢出容器/丢到地面 → 播**丢弃音**
+ * （原版 `ThrowInvenItemToField`）。这是"玩家主动丢"这一个操作码。
+ *
+ * ⚠ 与下面 `applyItemRemoved` **是两个操作**，不是同一个函数加参数（用户 2026-09-14：
+ * "服务器主动移除应该是没声音的，并且我觉得它应该和玩家自己 removeItem 不是一个操作码，我不喜欢用 reason"）：
+ * 区分它们的依据是**动作本身**（谁发起的），而不是给同一个动作挂一个"原因"字段 ——
+ * 以后商店"卖给 NPC"、仓库"丢出"等也都是各自的操作，各自决定声音。
+ */
+export function throwItem(uid: number): void {
+  removeItemLocal(uid);
+  playItemDropSound();
+}
+
+/**
+ * **服务端通知的移除**（`S2C_ItemRemove` / `S2C_ItemRemovedUids`）：这件在服务端已经没了。
+ * **不出声** —— 服务器主动移除（喝掉最后一瓶、被合并、扫地、GM 删除）不该像玩家丢东西那样响
+ * （用户 2026-09-14 定）。玩家自己丢的那条走 `throwItem`，在客户端**本地**就已经响过。
+ */
+export function applyItemRemoved(uid: number): void {
+  removeItemLocal(uid);
 }
 
 /** 本地即时背包换格（客户端网格权威，随即上报布局；服务端只落库不重建）。

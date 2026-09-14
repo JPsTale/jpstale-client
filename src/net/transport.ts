@@ -126,6 +126,17 @@ function _connect(): void {
     }
     startHeartbeat();
   };
+  /** 单条消息的派发（pong 时间同步 + 全部 proto handler）—— 合批与逐条两条路径共用这一份 */
+  function dispatchProto(msg: jpt.base.ServerMessage): void {
+    debugLog(msg);
+    // 处理pong响应中的服务器时间
+    if (msg.pong) {
+      const serverTimeMs = Number(msg.pong.timestamp);
+      for (const h of timeSyncHandlers) h(serverTimeMs);
+    }
+    for (const h of protoHandlers) h(msg);
+  }
+
   ws.onmessage = (ev) => {
     if (typeof ev.data === 'string') {
       try {
@@ -136,13 +147,19 @@ function _connect(): void {
     } else {
       try {
         const msg = decodeServer(ev.data as ArrayBuffer);
-        debugLog(msg);
-        // 处理pong响应中的服务器时间
-        if (msg.pong) {
-          const serverTimeMs = Number(msg.pong.timestamp);
-          for (const h of timeSyncHandlers) h(serverTimeMs);
+        // 合批信封（服务端每 tick 把发给本玩家的多条消息装成一个包，见 proto S2C_Batch）：
+        // 在这里**展开**，逐条走与单条完全相同的派发路径 —— 所以下游（bridge/WorldView）
+        // 对自己的消息是否被合批一无所知，行为与逐条发送一字不差。
+        // 只展开一层（服务端约定不会嵌套 batch）；真出现嵌套也只解一层，不会无限递归。
+        const batched = msg.batch ? msg.batch.messages : null;
+        if (batched && batched.length) {
+          // protobufjs 生成的 .d.ts 把 repeated message 的元素声明成 `$Properties`（纯对象形状），
+          // 但 `ServerMessage.decode()` 解出来的实际是 **ServerMessage 实例** —— 这里按运行时事实
+          // 取窄。刻意不用 `fromObject()` 转换：那会对每条消息多拷一遍，把合批省下的 CPU 又吃回去。
+          for (const one of batched) dispatchProto(one as unknown as jpt.base.ServerMessage);
+        } else {
+          dispatchProto(msg);
         }
-        for (const h of protoHandlers) h(msg);
       } catch { console.warn('[net] bad binary', ev.data); }
     }
   };

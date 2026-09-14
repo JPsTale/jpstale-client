@@ -19,6 +19,7 @@
  */
 import { audioPrefs, saveAudioPrefs } from './prefs';
 import { encodeAssetPath } from '../core/texture';
+import { fetchAsset } from '../core/asset-manager.js';
 import rawTables from './data/sfx-tables.json';
 import rawFolders from './data/sfx-folders.json';
 
@@ -204,15 +205,21 @@ async function loadBuffer(path: string): Promise<DecodedSound | null> {
       const c = ensureCtx();
       if (!c) return null;
       const url = encodeAssetPath(RES_BASE + path);
-      const resp = await fetch(url);
-      // 取不到音频**必须喊出来**：过去这里是 `if (!resp.ok) return null;`（静默）——
-      // 于是"路径拼错成 /res//res/...（404）"表现为"点了没声音"，查起来毫无线索
-      //（用户 2026-09-14 报"点击背包道具没声音"，根因就是这个 + 上游多写了一次 /res/）。
-      if (!resp.ok) {
-        console.warn('[sfx] 取音频失败 HTTP ' + resp.status + '：' + url);
+      // 走 AssetManager 的统一入口（IndexedDB 缓存 + 按 kind 统计）。
+      // ⚠ **必须拷贝一份**：`decodeAudioData` 会**转移（detach）**传入的 ArrayBuffer，
+      // 而 fetchAsset 返回的是缓存里的**同一份** —— 直接交出去会让缓存变成空壳，
+      // 第二次加载同一音效拿到 detached buffer（症状："第一次有声音、之后没有"，且不报错）。
+      // 音效都是几十 KB，这次拷贝可忽略。
+      let ab: ArrayBuffer;
+      try {
+        ab = (await fetchAsset(RES_BASE + path, 'audio')).slice(0);
+      } catch (e) {
+        // 取不到音频**必须喊出来**：过去这里是 `if (!resp.ok) return null;`（静默）——
+        // 于是"路径拼错成 /res//res/...（404）"表现为"点了没声音"，查起来毫无线索
+        //（用户 2026-09-14 报"点击背包道具没声音"，根因就是这个 + 上游多写了一次 /res/）。
+        console.warn('[sfx] 取音频失败：' + url + ' — ' + String(e));
         return null;
       }
-      const ab = await resp.arrayBuffer();
       // 必须在 decodeAudioData 之前读采样率：解码会重采样到设备采样率，
       // 且部分浏览器会把原 ArrayBuffer detach 掉。
       const srcRate = wavSampleRate(ab) ?? FREQ_BASE * FREQ_UNIT;

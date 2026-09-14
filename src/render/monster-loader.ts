@@ -11,14 +11,26 @@
  */
 
 import { parseInx, parseSmb } from '../core/char-parser.js';
-import { cachedFetch } from '../core/asset-cache.js';
+import { loadParsedAsset } from '../core/asset-manager.js';
 import { buildSkeleton, buildSkinnedMesh } from './skinned-builder.js';
 import type { InxData, MotionInfo, SmbData } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
 import type * as THREE from 'three';
 
-async function fetchAB(url: string): Promise<ArrayBuffer> {
-  return cachedFetch(url);
+/**
+ * 取资产 + 解析，走 AssetManager 的统一入口（见 core/asset-manager.ts）。
+ *
+ * 对怪物来说这一层有实打实的收益：**同一模型被 N 只怪复用时只解析一次**。
+ * 原来每只怪 spawn 都要 `parseSmb` 一遍（222 只怪 = 222 次重复解析 smd/smb，
+ * 每次都重新建一套关键帧数组）。
+ */
+async function parseRes<T>(
+  url: string, kind: 'model' | 'anim', parse: (buf: ArrayBuffer) => T, cacheParsed: boolean,
+): Promise<T> {
+  return loadParsedAsset(url, kind, (buf) => {
+    if (buf.byteLength === 0) throw new Error('空文件: ' + url);   // 与原来 `byteLength > 0` 的候选跳过语义一致
+    return parse(buf);
+  }, cacheParsed);
 }
 
 /** 归一化资源 basename：反斜杠→斜杠、小写、去扩展名 */
@@ -30,12 +42,11 @@ function lowerBase(raw: string): string {
   return dir ? dir + '/' + name : name;
 }
 
-/** 逐一尝试候选 basename + .smd，返回第一个解析成功的网格数据 */
+/** 逐一尝试候选 basename + .smd，返回第一个解析成功的网格数据（**解析结果按 URL 缓存**） */
 async function loadMesh(baseCandidates: string[]): Promise<SmbData | null> {
   for (const base of baseCandidates) {
     try {
-      const buf = await fetchAB('/res/' + base + '.smd');
-      if (buf.byteLength > 0) return parseSmb(buf);
+      return await parseRes('/res/' + base + '.smd', 'model', parseSmb, true);
     } catch {
       // next candidate
     }
@@ -43,12 +54,11 @@ async function loadMesh(baseCandidates: string[]): Promise<SmbData | null> {
   return null;
 }
 
-/** 逐一尝试候选 basename + .smb，返回第一个解析成功的骨骼/动画数据 */
+/** 逐一尝试候选 basename + .smb，返回第一个解析成功的骨骼/动画数据（**只缓存字节，不缓存解析结果**） */
 async function loadAnim(baseCandidates: string[]): Promise<SmbData | null> {
   for (const base of baseCandidates) {
     try {
-      const buf = await fetchAB('/res/' + base + '.smb');
-      if (buf.byteLength > 0) return parseSmb(buf);
+      return await parseRes('/res/' + base + '.smb', 'anim', parseSmb, false);
     } catch {
       // next candidate
     }
@@ -62,8 +72,7 @@ async function loadInxWithFallback(link: string): Promise<InxData | null> {
   const candidates = [lc, lc.replace(/\.ini$/, '.inx'), lc.replace(/\.in$/, '.inx'), lc + '.inx'];
   for (const c of candidates) {
     try {
-      const buf = await fetchAB('/res/' + c);
-      if (buf.byteLength > 0) return parseInx(buf);
+      return await parseRes('/res/' + c, 'model', parseInx, true);
     } catch {
       // next candidate
     }
@@ -115,7 +124,7 @@ export interface MonsterModelResult {
 export async function loadMonsterModel(inxPath: string): Promise<MonsterModelResult> {
   // 兜底归一化:小写 + 反斜杠→斜杠 + .ini→.inx(服务端已规范,双保险)
   const path = inxPath.replace(/\\/g, '/').toLowerCase().replace(/\.ini$/, '.inx');
-  const inxInfo = await parseInx(await fetchAB('/res/' + path));
+  const inxInfo = await parseRes('/res/' + path, 'model', parseInx, true);
   if (!inxInfo.modelFile) throw new Error('monster .inx modelFile 为空: ' + path);
 
   const modelBase = lowerBase(inxInfo.modelFile);

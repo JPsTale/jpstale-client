@@ -14,6 +14,7 @@
  * 用法：npx tsx scripts/verify-itemhover.ts
  */
 import { readFileSync } from 'node:fs';
+import { installDomStub } from './dom-stub.js';
 
 const store = new Map<string, string>();
 (globalThis as unknown as { localStorage: Storage }).localStorage = {
@@ -25,6 +26,8 @@ const store = new Map<string, string>();
   get length() { return store.size; },
 } as Storage;
 
+// gameStore → item-sounds → sfx 在 import 时注册 DOM 监听；Node 里必须先装桩（唯一实现见 dom-stub）
+installDomStub();
 const g = await import('../src/app/gameStore.js');
 
 let fail = 0;

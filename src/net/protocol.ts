@@ -108,6 +108,18 @@ export function stackMerge(srcUid: number, dstUid: number): jpt.base.ClientMessa
 
 /** 拾取地面物品。toHand=true → 服务端直接放到**手上**（鼠标位；原版背包窗口开着时就是这么做的，
  *  且**不需要背包空格**）；false → 自动进背包空格。 */
+export function npcInteract(npcId: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ npcInteract: { npcId } });
+}
+
+export function shopBuy(npcId: number, itemlistId: number, count: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ shopBuy: { npcId, itemlistId, count } });
+}
+
+export function shopSell(npcId: number, uid: number, count: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ shopSell: { npcId, uid, count } });
+}
+
 export function pickupItem(groundItemId: number, toHand: boolean): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
         pickupItem: { groundItemId, toHand },

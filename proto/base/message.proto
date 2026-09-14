@@ -33,6 +33,9 @@ message ClientMessage {
     C2S_Unstuck unstuck = 212;           // 脱困请求：服务端算落点（本图最近 StartPoint）并广播传送
     C2S_TakeToHand take_to_hand = 213;   // 拿起：把物品移到"鼠标位"（装备栏 slot=-1），原容器腾空
     C2S_BagSwap bag_swap = 214;           // **换手**：手上那件 ↔ 背包里某件（原子互换）
+    C2S_NpcInteract npc_interact = 215;   // 点击 NPC（开对话/开商店）；服务端按 npc_id 找**本图最近的那个实例**做距离校验
+    C2S_ShopBuy shop_buy = 216;           // 买入（服务端权威：校验距离/金币/背包，全部通过才扣钱发货）
+    C2S_ShopSell shop_sell = 217;         // 卖出（原版是"点 Sell 后点自己背包里的物品"，不是拖拽）
     
     // 战斗 (300-399)
     C2S_Attack attack = 300;
@@ -87,6 +90,7 @@ message ServerMessage {
     // NPC (350-359)
     S2C_NpcAppear npc_appear = 350;
     S2C_NpcDisappear npc_disappear = 351;
+    S2C_ShopOpen shop_open = 352;         // 打开商店：商品清单（含价格）；买/卖结果复用既有的 ItemUpdate/GoldChange 推送
     
     // 战斗 (400-499)
     S2C_AttackResult attack_result = 400;
@@ -123,7 +127,28 @@ message ServerMessage {
     S2C_Error error = 901;
     S2C_SystemMessage system_message = 902;
     S2C_Disconnect disconnect = 903;
+    // 传输层信封（910，非游戏消息）：同一 tick 内发给该玩家的多条消息装成一个包
+    S2C_Batch batch = 910;
   }
+}
+
+/**
+ * 传输层合批信封（服务端 → 客户端）。
+ *
+ * 存在理由：服务端主循环每 tick(20Hz) 会产生大量"逐条 send"的小消息（怪物移动、玩家移动、
+ * 伤害、聊天广播…）。原来每条消息各自编码、各自写一次 channel（= 一个 WS 帧），玩家一多、
+ * 怪一多就变成"同一份数据被编码 N 次、发送 N 次"。现在同一 tick 内发给**同一个玩家**的消息
+ * 先入队，tick 末尾一次编码、一次 writeAndFlush。
+ *
+ * 约束：
+ *  - **只有服务端构造**，且**只包一层**（batch 里不会再套 batch）。
+ *  - 客户端收到后逐条派发到各自的处理路径 —— 下游（bridge/WorldView）完全不知道合批的存在，
+ *    行为与逐条发送一模一样。
+ *  - 少数"必须立刻发"的消息不走信封（pong 要算 RTT、登录/选角/建角是请求-响应、disconnect 不能等），
+ *    见 `PlayerSession.isImmediate`。
+ */
+message S2C_Batch {
+  repeated ServerMessage messages = 1;
 }
 
 // ==================== 认证消息 (100-199) ====================
@@ -799,4 +824,43 @@ message S2C_SystemMessage {
 
 message S2C_Disconnect {
   string reason = 1;
+}
+
+// ==================== NPC 商店 ====================
+
+// NPC 交互（点击世界里的 NPC）。位置由**服务端**按 npc_id 在本图查最近实例，客户端不上报坐标。
+message C2S_NpcInteract {
+  int64 npc_id = 1;
+}
+
+// 买入：一次一条商品，count 只对可堆叠物（药水）有意义，其余视为 1
+message C2S_ShopBuy {
+  int64 npc_id = 1;
+  int32 itemlist_id = 2;
+  int32 count = 3;
+}
+
+// 卖出：uid 必须是**自己背包里**的那件（服务端按 uid 查，不信客户端报的位置）
+message C2S_ShopSell {
+  int64 npc_id = 1;
+  int64 uid = 2;
+  int32 count = 3;
+}
+
+// 商品行（下发用）：名字与码也发过去，客户端即使没有该物品的本地定义也能显示
+message ShopItemProto {
+  int32 itemlist_id = 1;
+  string code = 2;
+  string name = 3;
+  int64 price = 4;
+  // 0=武器 1=防具 2=杂货（对应 npclist 的 weaponshop/defenseshop/miscshop 三列）：
+  // 一个 NPC 可以同时是武器店+防具店，所以类别挂在**行**上，客户端按它分组/分页。
+  int32 kind = 5;
+}
+
+// 打开商店：kind 0=武器 1=防具 2=杂货（对应 npclist 的三列）
+message S2C_ShopOpen {
+  int64 npc_id = 1;
+  int32 kind = 2;
+  repeated ShopItemProto items = 3;
 }

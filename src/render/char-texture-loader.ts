@@ -7,7 +7,8 @@
  * 各有（或曾各有）一份拷贝，现统一到这里，避免"改了一处漏了另一处"。
  */
 import * as THREE from 'three';
-import { decodeTextureAsync, encodeAssetPath } from '../core/texture';
+import { decodeTextureAsync } from '../core/texture';
+import { loadParsedAsset } from '../core/asset-manager.js';
 
 /** 待绑定纹理：{ url, mat } —— mat 来自 .inx/.smd 解析结果 */
 export interface TextureTarget {
@@ -27,11 +28,13 @@ export async function fetchAndDecodeTexture(
   url: string,
   anisotropy = 1,
 ): Promise<THREE.DataTexture | null> {
-  try {
-    const resp = await fetch(encodeAssetPath(url), { cache: 'no-store' });
-    if (!resp.ok) return null;
-    const decoded = await decodeTextureAsync(await resp.arrayBuffer());
-    if (!decoded) return null;
+  // 取字节 + 解码都交给 AssetManager：① 同一张贴图被多个材质用时只解码一次；
+  // ② **纳入 LRU 的字节预算** —— 贴图像素是内存大头（实测：解析缓存 2.3MB 时 JS 堆已 525MB，
+  // 也就是说大头一直在 AssetManager 管不到的地方）。
+  // ⚠ 共享 DataTexture：调用方只读，**不要 dispose**（别处可能还在用同一份）。
+  return loadParsedAsset(url, 'texture:char', async (buf) => {
+    const decoded = await decodeTextureAsync(buf);
+    if (!decoded) throw new Error('纹理解码失败: ' + url);   // 下面 catch 成 null（保持原签名）
     const tex = new THREE.DataTexture(
       new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat,
     );
@@ -40,9 +43,7 @@ export async function fetchAndDecodeTexture(
     if (anisotropy > 1) tex.anisotropy = anisotropy;
     tex.needsUpdate = true;
     return tex;
-  } catch {
-    return null;
-  }
+  }, true).catch(() => null);
 }
 
 /** 批量绑定到材质。失败的路径会返回，供检查器诊断面板高亮。 */

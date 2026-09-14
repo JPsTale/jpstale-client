@@ -6,6 +6,7 @@ import PanelShell from './PanelShell.js';
 import CharStatusPanel from './CharStatusPanel.js';
 import SkillPanel from './SkillPanel.js';
 import ItemPanel, { HeldIcon } from './ItemPanel.js';
+import ShopPanel from './ShopPanel.js';
 import { ItemInfoLayer } from './ItemInfo.js';
 import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
 import ChatWindow from './ChatWindow.js';
@@ -49,6 +50,13 @@ function renderPanel(panel: OpenPanel) {
     return (
       <PanelShell key="skills" panel="skills" title={t('panel.skills')} align="left" width="auto">
         <SkillPanel />
+      </PanelShell>
+    );
+  }
+  if (panel === 'shop') {
+    return (
+      <PanelShell key="shop" panel="shop" title={t('panel.shop')} align="left" width="auto">
+        <ShopPanel />
       </PanelShell>
     );
   }

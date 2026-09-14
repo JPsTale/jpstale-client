@@ -36,6 +36,7 @@
     },
     "load": {
       "tipsTitle": "游戏提示",
+      "cacheHit": "缓存命中",
       "world": "正在进入世界",
       "entering": "正在进入 {map}"
     }
@@ -67,7 +68,8 @@
       "resist": "抗性"
     },
     "skills": "技能",
-    "inventory": "背包"
+    "inventory": "背包",
+    "shop": "商店"
   },
   "stats": {
     "hit": "命中",
@@ -278,6 +280,7 @@
     }
   },
   "item": {
+    "pickup": { "overMoney": "拥有的金钱超过最大允许数量" },
     "bag": "背包",
     "gold": "金币",
     "weight": "负重",
@@ -324,6 +327,12 @@
     "quality.high": "高",
     "fps": "帧率",
     "fpsUnlimited": "不限制",
+    "monsterBudget": "怪物显示预算",
+    "displayRange": "显示距离",
+    "range.near": "近",
+    "range.mid": "中",
+    "range.far": "远",
+    "range.max": "最大",
     "reset": "重置默认",
     "save": "保存",
     "none": "未绑定",
@@ -454,6 +463,24 @@
     "autoLogin": "自动登录中...",
     "disconnecting": "正在断开连接...",
     "logoutReason": "连接已断开，请重新登录"
+  },
+  "shop": {
+    "kind": {
+      "weapon": "武器",
+      "defense": "防具",
+      "misc": "杂货"
+    },
+    "buy": "买入",
+    "sellMode": "卖出模式",
+    "sellHint": "点背包里的物品即可卖出",
+    "notMerchant": "这个 NPC 不做买卖",
+    "notHere": "附近没有这个 NPC",
+    "outOfRange": "离得太远，走近一点",
+    "noItems": "这个商店没有商品",
+    "notSold": "这家店不卖这件东西",
+    "notEnoughMoney": "钱不够",
+    "cannotSell": "这件物品不能卖",
+    "failed": "交易失败"
   },
   "itemtip": {
     "recHp": "恢复生命",
@@ -597,6 +624,7 @@
     "range": "射程"
   },
   "npc": {
+    "gmOnly": "只有管理员能使用这个 NPC",
     "mushroom_cave_keeper": {
       "name": "Mushroom Cave Keeper"
     },

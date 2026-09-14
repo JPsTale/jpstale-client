@@ -81,6 +81,10 @@ function devAssets(mode: string): Plugin {
           'Content-Type': mime,
           'Accept-Ranges': 'bytes',
           'Cache-Control': cache,
+          // ⚠ **必须给 Content-Length**：只 `pipe` 的话 Node 会走 chunked，浏览器/客户端就不知道
+          // 文件多大 —— 后果是加载页拿不到"总量"（只能显示已下载量），用户 2026-09-14 实测报的就是
+          // "没有显示要下载的总量"。大小本来就算好了（上面 Range 分支就在用 `size`）。
+          'Content-Length': size,
         });
         if (req.method === 'HEAD') return res.end();
         createReadStream(file).pipe(res);

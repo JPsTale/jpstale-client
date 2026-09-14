@@ -1,11 +1,10 @@
 import { canEquipNow, isDroppable, overweightBlocks } from '../../game/itemRules.js';
 import type { EquipReqChar } from '../../game/itemRules.js';
-import { playItemSound, playItemDropSound } from '../../audio/index.js';
 import { sfx } from '../../audio/index.js';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
-import { beginOptimistic, equippedItemAt, getGameSnapshot, getHeldUid, heldItemOf, isOverUi, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, removeInventoryItem, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem, type HoverSource } from '../../app/gameStore.js';
+import { setShopSellMode, beginOptimistic, equippedItemAt, getGameSnapshot, getHeldUid, heldItemOf, isOverUi, localBagMove, localEquipItem, localStackMerge, localToHeld, localUnequipToBag, throwItem, rollbackOptimistic, setHeldUid as setHeldUidStore, subscribeGame, type GameItem, type HoverSource } from '../../app/gameStore.js';
 import { t } from '../../i18n/index.js';
 import { appendSystemMessage } from '../../app/chatStore.js';
 import { isInputBlocked } from '../../app/inputGate.js';
@@ -14,7 +13,7 @@ import { ITEM_CLASS, isStackable, isPotionClass, isTwoHandWeaponClass } from '..
 import { requestPlayEat } from '../WorldView.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
-import { sendEquipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap } from '../../net/bridge.js';
+import { sendEquipItem, sendDropItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap, sendShopSell } from '../../net/bridge.js';
 import { useItemHover } from './ItemInfo.js';
 import { LOC, isHeldItem } from '../../game/itemLocations.js';
 
@@ -492,9 +491,8 @@ export default function ItemPanel() {
         return;
       }
       console.log('[bag] 丢到地面 uid=', it.uid, 'count=', it.count);
-      playItemDropSound();   // 原版 ThrowInvenItemToField 专用音
       beginOptimistic([it]);            // 乐观更新前记快照：服务端拒绝时把整件（含数量）恢复
-      removeInventoryItem(it.uid);      // 本地即时移除
+      throwItem(it.uid);   // THROW_ITEM（玩家自己的操作码）：本地移除 + 丢弃音
       sendDropItem(it.uid, it.count || 1);
       setHeldUid(null);
       e.stopPropagation();
@@ -572,12 +570,20 @@ export default function ItemPanel() {
   }
 
   function onPickBag(it: GameItem) {
+    // **卖出模式**（原版 `SIN_CURSOR_SELL`：点了商店的 Sell 之后，点自己背包里的物品就是卖）
+    // —— 不走"拿起"，直接发卖出请求；钱到手时由 store 的统一判定播金币音。
+    const shop = snap.shop;
+    if (shop?.sellMode) {
+      console.log('[shop:sell] 卖出 uid=', it.uid, 'listId=', it.itemlistId, 'npc=', shop.npcId);
+      sendShopSell(shop.npcId, it.uid, 1);
+      setShopSellMode(false);   // 原版卖一次即回到普通光标
+      return;
+    }
     // 拿起 = 服务端把物品移到**鼠标位**（装备栏 slot=-1），原格腾空（`TakeToHand`）。
     // 本地先按同样语义乐观改（`localToHeld` 顺带把 heldUid 同步成"鼠标位那件"），
     // 服务端拒绝（手上已有东西/位置不可拿）时按快照还原。
     beginOptimistic([it]);
     localToHeld(it.uid);
-    playItemSound(defOf(it)?.sound);   // 原版：拿起/放下都播该物品自带的 SoundIndex
     sendTakeToHand(it.uid);
     console.log('[bag:pick] 拿起背包物品 uid=', it.uid, 'loc=', it.location, 'slot=', it.slot,
       'listId=', it.itemlistId, 'size=', defOf(it)?.w, 'x', defOf(it)?.h);
@@ -675,7 +681,6 @@ export default function ItemPanel() {
       // 而且"拿到一半掉线"会变成东西自己进了背包）。
       beginOptimistic([it]);            // 服务端拒绝时按快照还原回装备槽
       localToHeld(it.uid);
-      playItemSound(defOf(it)?.sound);
       sendTakeToHand(it.uid);
       console.log('[bag:pick-eq] 拿起装备槽 uid=', it.uid, 'slot=', it.slot, '(点的是', slot, ')',
         'loc=', it.location, 'size=', defOf(it)?.w, 'x', defOf(it)?.h);
@@ -721,7 +726,6 @@ export default function ItemPanel() {
       beginOptimistic(old ? [held, old] : [held]);
       // 本地即时：新件立刻进装备槽（背包即刻消失，不存在"回闪"）；旧件若在则抽离为手持
       setHeldUid(old ? old.uid : null);
-      playItemSound(defOf(held)?.sound);
       localEquipItem(held.uid, slot);
       if (old) localToHeld(old.uid);
       // 双手武器占**两只手**（原版 OverlapTwoHandItem，sinInvenTory1.cpp:5241）：

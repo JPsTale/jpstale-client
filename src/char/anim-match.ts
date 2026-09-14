@@ -8,6 +8,7 @@ import type { MotionInfo } from './char-format.js';
 import { CLASS_FLAG, motionStateName } from './char-format.js';
 import { SITEM_CODE_BY_INDEX } from './sitem-weapon-index.js';
 import { getWeaponTypeFromSItemIndex } from './weapon-type.js';
+import { mix32 } from '../core/hash.js';
 
 export function classIdToFlag(classId: number): number {
   const map: Record<number, number> = {
@@ -113,14 +114,12 @@ export function findMotionsByType(
  * 为什么必须有：变体选择原先一律 `Math.random()`，于是**同一个远端角色在不同客户端上
  * 播的是不同变体**（用户实测"其他角色的动画也不同步"）。凡是"别人也能看到的角色"，
  * 变体就必须由**所有客户端共有的输入**决定 —— 服务端下发的 seed（同一份数据 → 同一结果）。
- * 用 mulberry32 的混淆步，纯函数、无依赖。
+ *
+ * 混淆函数在 `core/hash.ts`（怪物显示预算的每秒轮换也用同一份 —— 算法只能有一份）。
  */
 export function seededPick<T>(arr: T[], seed: number): T | null {
   if (!arr.length) return null;
-  let t = ((seed >>> 0) + 0x6D2B79F5) >>> 0;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return arr[((t ^ (t >>> 14)) >>> 0) % arr.length]!;
+  return arr[mix32(seed) % arr.length]!;
 }
 
 /** 取变体：给了 seed 走确定性（跨客户端一致），否则随机（检查器等单机场景） */

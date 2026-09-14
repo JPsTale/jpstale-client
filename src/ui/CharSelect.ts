@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { t } from '../i18n/index.js';
-import { loadCharacterModel, CharLoadResult } from '../render/char-loader.js';
+import { CharLoadResult } from '../render/char-loader.js';
+import { loadCharacterModelLite } from '../render/lite-loader.js';
 import { createAnimStateMachine, AnimStateMachine } from '../char/anim-state-machine.js';
 import { evalSkeleton, applyToBones, advanceAnimFrame } from '../char/animation.js';
 import { loadCharTextures } from '../render/char-texture-loader.js';
@@ -459,7 +460,12 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       } else if (appearance?.bodyModel) {
         bodyInxOverride = resolveCostumeBody(appearance.bodyModel, jobId);
       }
-      const result = await loadCharacterModel(jobId, head, 0, armorNum, bodyInxOverride);
+      // 用 **lite 包**（骨架 + 单条 STAND，每组 ~300KB）而不是完整动画包（14~33MB）：
+      // 选角页只需要"站着的小人"，而它的查询条件（村庄/收械 + 空手）与 lite 包的提取规则
+      // 是同一条 —— 所以只会命中 lite 里保留的那条（见 render/lite-loader.ts 的"契约"）。
+      // 加载未完成期间这里一声不响：调用方 await 它，之后才把模型加进场景
+      //（用户要求"没下载好就不显示角色"），右边"进入游戏"按钮不受影响。
+      const result = await loadCharacterModelLite(jobId, head, armorNum, bodyInxOverride);
       if (gen !== loadGeneration) return; // stale load, discard
       charResult = result;
       // Hide meshes until textures load (prevent grey flash)
@@ -612,7 +618,12 @@ animState = createAnimStateMachine({
     const smb = charResult.animSmb;
     const tmFrame = smb.tmFrame;
     const bip = charResult.bipInxInfo;
+    // lite 骨架包只带**一条**条目的关键帧（见 CharLoadResult.liteInxIndices / lite-loader 头部"契约"）：
+    // 不过滤的话，匹配器可能选中同条件的另一个变体（如 stand_unarmed~2），那个条目没有关键帧 →
+    // 求值回退成绑定姿态，表现是"角色站着不动"且不报错（用户 2026-09-14 实测）。
+    const allow = charResult.liteInxIndices;
     for (let i = CHRMOTION_EXT; i < bip.motionCount; i++) {
+      if (allow && !allow.includes(i)) continue;
       const mi = bip.motions[i];
       if (!mi.state && !mi.startFrame && !mi.endFrame) continue;
       let startFrame = mi.startFrame;

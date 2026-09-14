@@ -14,7 +14,7 @@
 
 import * as THREE from 'three';
 import { parseInx, parseSmb } from '../core/char-parser.js';
-import { cachedFetch } from '../core/asset-cache.js';
+import { loadParsedAsset } from '../core/asset-manager.js';
 import { buildSkinnedMesh, buildSkeleton } from './skinned-builder.js';
 import type { InxData, SmbData } from '../char/char-format.js';
 import { reportFallback } from '../char/fallback-log.js';
@@ -112,12 +112,15 @@ export function getBodyInxPath(jobId: number, armorNum = 1): string | null {
 }
 
 // ===== 加载 =====
+// 取字节一律经 AssetManager（core/asset-manager.ts）：内存 → IndexedDB → 网络 + 按 kind 记账，
+// 解析结果按 kind 缓存。原先这里有个薄封装 `fetchAB = cachedFetch`，现在直接用 loadParsedAsset。
 
-async function fetchAB(url: string): Promise<ArrayBuffer> {
-  return cachedFetch(url);
-}
-
-function resolveModelBase(inxInfo: InxData): string | null {
+/**
+ * .inx 的 modelFile → /res 下的 basename（小写、去扩展名）。
+ * **导出**是给 `lite-loader` 复用 —— 那边曾自己复刻过一份（studio 里），
+ * 同一套路径推导写两遍迟早会漂移（AGENTS #15）。
+ */
+export function resolveModelBase(inxInfo: InxData): string | null {
   if (!inxInfo || !inxInfo.modelFile) return null;
   const mf = inxInfo.modelFile.replace(/\\/g, '/').toLowerCase();
   const slash = mf.lastIndexOf('/');
@@ -137,12 +140,22 @@ function resolveMotionBase(inxInfo: InxData): string | null {
 
 /** 一次拉取并解析一个 .inx */
 async function loadInx(path: string): Promise<InxData> {
-  return parseInx(await fetchAB('/res/' + path));
+  return loadParsedAsset('/res/' + path, 'model', parseInx, true);
 }
 
-/** 一次拉取并解析一个 .smd / .smb */
-async function loadSmbFromRes(path: string): Promise<SmbData> {
-  return parseSmb(await fetchAB('/res/' + path));
+/**
+ * 一次拉取并解析一个 .smd / .smb。
+ *
+ * `kind`/`cacheParsed` 由调用方指定，因为**这两种东西的策略不同**（见 core/asset-manager.ts 的策略表）：
+ * 网格（.smd, `model`）缓存解析结果，骨架动画（.smb, `anim`）**不缓存**（完整动画包解析出来是
+ * 几十 MB 关键帧数组，8 组就是几百 MB 常驻，而它每个职业只加载一次）。
+ * 缓存网格解析结果的价值：让 `buildSkinnedMesh` 的原料缓存（geometry/material）能按
+ * "同一个 smd 实例"命中 —— 角色与选角预览（lite）共用同一份体模时只装配一次几何。
+ */
+async function loadSmbFromRes(
+  path: string, kind: 'anim' | 'model', cacheParsed: boolean,
+): Promise<SmbData> {
+  return loadParsedAsset('/res/' + path, kind, parseSmb, cacheParsed);
 }
 
 // ===== 拆分加载：骨骼 / 身体 / 头部 =====
@@ -218,7 +231,7 @@ async function loadSkeleton(jobId: number): Promise<SkeletonData> {
   const bipInxInfo = await loadInx(job.bipInx);
   const bipMotionBase = resolveMotionBase(bipInxInfo);
   if (!bipMotionBase) throw new Error('bip motionFile 为空');
-  const smb = await loadSmbFromRes(bipMotionBase + '.smb');
+  const smb = await loadSmbFromRes(bipMotionBase + '.smb', 'anim', false);
 
   const skel = buildSkeleton(smb, false);
   return { jobId, animSmb: smb, bipInxInfo, skel };
@@ -236,7 +249,7 @@ export async function loadBody(jobId: number, armorNum = 1, bodyInxOverride: str
   if (!bodyModelBase) throw new Error('body modelFile 为空');
 
   const skelData = await getSkeleton(jobId);
-  const smd = await loadSmbFromRes(bodyModelBase + '.smd');
+  const smd = await loadSmbFromRes(bodyModelBase + '.smd', 'model', true);
   const bodyHighNames = bodyInxInfo.highModel.modelNames.filter(Boolean);
 
   const result = buildSkinnedMesh(smd, skelData.animSmb, bodyHighNames, false, skelData.skel);
@@ -269,7 +282,7 @@ export async function loadHead(jobId: number, faceNum: number, tier = 0): Promis
   if (!headModelBase) throw new Error('head modelFile 为空');
 
   const skelData = await getSkeleton(jobId);
-  const smd = await loadSmbFromRes(headModelBase + '.smd');
+  const smd = await loadSmbFromRes(headModelBase + '.smd', 'model', true);
   const headHighNames = headInxInfo.highModel.modelNames.filter(Boolean);
   const headMeshNames = headHighNames.length > 0 ? headHighNames : null;
 
@@ -295,6 +308,17 @@ export interface CharLoadResult {
   headInxInfo: InxData;
   bodyTextures: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[];
   headTextures: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[];
+  /**
+   * **只有 lite 路径会设**：本次骨架/动画包里真实带有关键帧的 .inx 条目号。
+   * 调用方（CharSelect）必须据此过滤 motionList。
+   *
+   * ⚠ 为什么必须有（2026-09-14 用户实测"选角页角色站着不动"）：lite 包的提取规则
+   * （`state=STAND & unarmed & village` 的**第一条**）选中的是 `stand_unarmed.mX.10`，
+   * 但满足同条件的**变体不止一条**（还有 `stand_unarmed~2.mX.11`，帧 [64,154]，lite 里没数据）。
+   * 运行时匹配器会在这两条之间选变体 ⇒ 一旦选中 `.11`，帧查不到就**回退绑定姿态**（看着像站桩），
+   * 而且不报错。所以"lite 不需要声明自己能播哪些条目"这个判断不成立 —— 必须显式过滤。
+   */
+  liteInxIndices?: number[];
 }
 
 /**

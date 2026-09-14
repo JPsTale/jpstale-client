@@ -1,6 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
+import { setShop, openPanel } from '../app/gameStore.js';
 import {
   allocateStat,
   useSkill,
@@ -14,6 +15,9 @@ import {
   bagLayout,
   stackMerge,
   useItem,
+  npcInteract,
+  shopBuy,
+  shopSell,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -21,7 +25,7 @@ import {
   setGamePlayer,
   setInventory,
   upsertInventoryItem,
-  removeInventoryItem,
+  applyItemRemoved,
   setInventoryGold,
   type GameCharacter,
   type GamePlayer,
@@ -185,12 +189,24 @@ export function installBridge(): void {
       });
     }
     if (msg.itemUpdate && msg.itemUpdate.item) upsertInventoryItem(toGameItem(msg.itemUpdate.item));
-    if (msg.itemRemove) removeInventoryItem(Number(msg.itemRemove.uid) || 0);
+    if (msg.itemRemove) applyItemRemoved(Number(msg.itemRemove.uid) || 0);
     if (msg.itemRemovedUids && msg.itemRemovedUids.uids) {
       const ids = msg.itemRemovedUids.uids.map((u) => Number(u) || 0);
-      for (const id of ids) removeInventoryItem(id);
+      for (const id of ids) applyItemRemoved(id);
     }
     if (msg.goldChange) setInventoryGold(Number(msg.goldChange.newGold) || 0);
+    if (msg.shopOpen) {
+      const o = msg.shopOpen;
+      const items = (o.items || []).map((it) => ({
+        itemlistId: Number(it.itemlistId) || 0,
+        code: it.code || '',
+        name: it.name || '',
+        price: Number(it.price) || 0,
+        kind: Number(it.kind) || 0,
+      }));
+      setShop(Number(o.npcId) || 0, items);
+      openPanel('shop');
+    }
   });
 }
 
@@ -217,6 +233,18 @@ export function sendBagSwap(handUid: number, targetUid: number, toLocation: numb
 }
 
 /** 拿起 → 鼠标位（装备栏 slot=-1）。服务端权威：移动位置 + 撤装备效果 + 断线可恢复。 */
+export function sendNpcInteract(npcId: number): void {
+    send(npcInteract(npcId));
+}
+
+export function sendShopBuy(npcId: number, itemlistId: number, count = 1): void {
+    send(shopBuy(npcId, itemlistId, count));
+}
+
+export function sendShopSell(npcId: number, uid: number, count = 1): void {
+    send(shopSell(npcId, uid, count));
+}
+
 export function sendTakeToHand(uid: number): void {
   send(takeToHand(uid));
 }

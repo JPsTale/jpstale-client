@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>加载页 · 进度条调试</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0a0a1a; overflow: hidden; }
+    #stage { position: fixed; inset: 0; }
+    /* 控制面板要压在加载页之上（加载页自身 z-index 1400） */
+    #panel {
+      position: fixed; left: 10px; top: 10px; z-index: 200000; width: 340px;
+      background: rgba(12, 16, 22, .94); border: 1px solid #39465a; border-radius: 6px;
+      padding: 10px 12px; color: #dce6f2;
+      font: 12px/1.8 ui-monospace, Consolas, monospace;
+    }
+    #panel h3 { margin: 0 0 6px; font-size: 12px; color: #9fb0c4; font-weight: normal; }
+    #panel label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    #panel input[type=range] { flex: 1; }
+    #panel input[type=number] { width: 58px; background: #1b2530; color: #dce6f2; border: 1px solid #39465a; border-radius: 3px; padding: 1px 4px; }
+    #panel input[type=color] { width: 40px; height: 20px; padding: 0; background: none; border: 1px solid #39465a; }
+    #panel .sep { height: 1px; background: #2a3644; margin: 8px 0; }
+    #panel pre { white-space: pre-wrap; word-break: break-all; margin: 6px 0 0; color: #a9e5b4; font-size: 11px; line-height: 1.6; }
+    #panel button { background: #22303f; color: #cfe0f0; border: 1px solid #39465a; border-radius: 3px; padding: 2px 8px; cursor: pointer; }
+    #panel .hint { color: #8fa3b8; font-size: 11px; line-height: 1.5; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <script type="module" src="/src/tools/loading-demo.ts"></script>
+</body>
+</html>

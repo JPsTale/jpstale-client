@@ -42,8 +42,9 @@ import { createEffectManager } from '../render/effects/effect-manager.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_EXT } from '../char/char-format.js';
-import { evalSkeleton, applyToBones, advanceAnimFrame, ANIM_UNITS_PER_SEC } from '../char/animation.js';
+import { evalSkeletonInto, createEvalWorkspace, applyToBones, advanceAnimFrame, ANIM_UNITS_PER_SEC, type EvalWorkspace } from '../char/animation.js';
 import { decodeTextureAsync } from '../core/texture.js';
+import { fetchAsset } from '../core/asset-manager.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
 import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
@@ -56,6 +57,9 @@ import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
+import { frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, report as perfReport } from '../app/profiler.js';
+import { pickVisibleMonsters, VIS_TIERS, type VisibilityCandidate, type VisibilityResult } from '../render/monster-visibility.js';
+import { loadDisplayPrefs, type DisplayPrefs } from './display-prefs.js';
 
 /** idcode → classItem（4=单手 / 6=双手），武器音效选码用（原版 WeaponPlaySound 的 HandType） */
 const ITEM_CLASS_BY_CODE = new Map<number, number>(ITEM_DEFS.map((d) => [d.code, d.class]));
@@ -146,6 +150,10 @@ export interface WorldView {
   cameraMode(): number;
   /** 切换"显示附近所有掉落物名牌"（A 键） */
   toggleGroundItemLabels(): void;
+  /** 应用显示偏好（系统设置里改完立即生效，见 ui/display-prefs.ts）：下一帧重算可见集 */
+  setDisplayPrefs(p: DisplayPrefs): void;
+  /** 当前显示预算的实况（可见/隐藏只数、档位）—— 系统设置面板与 profiler 都用它显示"发生了什么" */
+  displayBudgetStatus(): { visible: number; hidden: number; range: number; cap: number };
   /** 走/跑模式（真源）；返回切换后的值 */
   toggleRun(): boolean;
   /** 当前是否跑 */
@@ -282,6 +290,8 @@ export interface WorldViewOpts {
                animIndex?: number, animClip?: string) => void;
   /** 点击地面物品（拾取意图）→ main.ts 发 C2S_PickupItem。拾取距离由服务端权威裁决。 */
   onPickupGroundItem?: (groundItemId: number) => void;
+  /** 走到 NPC 身边（Chase 到位）→ 交互（开店/对话）。原版是点击即交互，我们沿用 Chase 到位的时机。 */
+  onNpcInteract?: (npcId: number) => void;
   /** 攻击起手（挥拳开始）→ main.ts 发 C2S_AttackStart(targetId, clientSeq, segments)。
    *  animIndex/animClip = 本次挥击动画（旁观者据此播同一条，见 onMoveInt 说明）。 */
   onAttackStart?: (monsterId: number, clientSeq: number, segments: number,
@@ -350,7 +360,7 @@ function selfAttackRange(): number {
   return sr > ATTACK_RANGE ? sr : ATTACK_RANGE;
 }
 
-// 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1086；见 design-nameplate-hpbar.md）
+// 怪物名牌/血条显隐距离阈值（< 服务端露面 VIEW_RANGE=1000；见 design-nameplate-hpbar.md）
 const NAME_TAG_RANGE = 600; // 怪物名牌常显范围（防漏怪）；范围外选中/悬停才显示
 const NPC_TAG_RANGE = 768;  // NPC 名牌 12 格（对齐 exm：NPC RendPoint.z < 12*64*fONE）
 // "进入战斗"窗口：最近 N 毫秒自机受击/发起攻击 → 玩家血条显示
@@ -526,6 +536,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let composer: EffectComposer | null = null;
   let hoverTarget: { root: THREE.Object3D; color: number } | null = null;
   let lastHoverScanAt = 0;
+  /** 剖析器的场景遍历统计节拍（遍历本身有成本，不能每帧做） */
+  let lastSceneScanAt = 0;
 
   // 可视拾取候选过滤：只让"在相机视锥内 且 ≤ 该距离"的目标参与射线，避免全场景对象无差别遍历/被隔墙或远处误选
   const PICK_RAY_FAR = 2400;
@@ -624,7 +636,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const pf = buildPickFrustum();
     const roots: THREE.Object3D[] = [];
     for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) roots.push(g.root);
-    for (const m of monsters.values()) if (isPickVisible(pf, m.root)) roots.push(m.root);
+    for (const m of monsters.values()) if (!m.culled && isPickVisible(pf, m.root)) roots.push(m.root);
     for (const n of npcs.values()) if (isPickVisible(pf, n.root)) roots.push(n.root);
     for (const r of remotes.values()) if (isPickVisible(pf, r.root)) roots.push(r.root);
 
@@ -668,6 +680,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     | { kind: 'ground'; x: number; z: number }
     | null = null;
   let moveStuckStart = 0;
+  /** 最近一次算出的"到追逐目标的距离"（世界单位）；-1 = 还没算过。见到位拾取日志 */
+  let lastChaseDist = -1;
 
   /** Chase/移动目标实时位置：找不到（消失/离视野）返回 null → 取消追踪 */
   function chaseTargetPos(): { x: number; z: number } | null {
@@ -824,9 +838,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (mmImg.has(url) || mmLoading.has(url)) return;
     mmLoading.add(url);
     try {
-      const resp = await fetch(url);
-      if (!resp.ok) return;
-      const buf = await resp.arrayBuffer();
+      // 走 AssetManager（缓存 + 按 kind 统计）
+      let buf: ArrayBuffer;
+      try {
+        buf = await fetchAsset(url, 'texture:ui');
+      } catch {
+        return;   // 取不到就跳过（原来是 `if (!resp.ok) return;`）
+      }
       // dev 服务器对缺失文件回退成 index.html(200)；按魔数排除
       if (buf.byteLength === 0 || new Uint8Array(buf)[0] === 0x3c /* '<' */) return;
       const dec = await decodeTextureAsync(buf);
@@ -1029,6 +1047,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 深度精度经 /maps/ 对照诊断：不再使用 logarithmicDepthBuffer（原先 z-fighting 并非深度精度问题，
     // 而是贴地物共面；而 logdepth 会阻断官方 OutlinePass 的深度纹理）。近远平面 near=20/far=4000 已足够健康。
     renderer = new THREE.WebGLRenderer({ antialias: true });
+    // 剖析器要"整帧累计"的渲染统计：three 默认每次 render() 结束就把 info 清零，
+    // 而 EffectComposer 一帧要 render 多次（每个 pass 一次）→ 自动重置后只剩最后一个
+    // 全屏 quad 的数字。改为手动：帧末读一次再 reset（见 renderLoop 统计段）。
+    renderer.info.autoReset = false;
     setMaxAnisotropy(renderer.capabilities.getMaxAnisotropy());
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(root.clientWidth, root.clientHeight, false);
@@ -1962,7 +1984,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ndc.x = ((cx - rect.left) / rect.width) * 2 - 1;
     ndc.y = -((cy - rect.top) / rect.height) * 2 + 1;
     ray.setFromCamera(ndc, camera);
-    ray.far = PICK_RAY_FAR; // 服务端 CONNECT(1086) 语义：可视内任意掉落可选中
+    ray.far = PICK_RAY_FAR; // 服务端 AOI 距离(1000) 语义：可视内任意掉落可选中
     const pf = buildPickFrustum();
     const targets: THREE.Object3D[] = [];
     for (const g of groundItems.values()) if (isPickVisible(pf, g.root)) targets.push(g.root);
@@ -2305,6 +2327,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animFrame: number;
     snaps: RemoteSnap[];
     lastAnimState: number;
+    /**
+     * 本帧被**显示预算**裁掉了（超出距离档或数量上限）。
+     * 被裁的怪：不渲染、不画名牌、不参与射线拾取，**且跳过骨骼求值**
+     * （那正是这个机制存在的理由 —— 222 只全算 = 16.6ms/帧，实测见 monster-visibility 文件头）。
+     * 但**位置插值与动画相位照常推进**：否则它重新出现时会瞬移、动作从头开始。
+     */
+    culled: boolean;
   }
   const monsters = new Map<number, MonsterActor>();
   const monsterSpawning = new Set<number>();
@@ -2393,6 +2422,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animFrame: 0,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
+          culled: false,
         };
         monsters.set(mid, actorObj);
         animState.triggerIdle();
@@ -2521,11 +2551,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (next) actor.animFrame = next.startFrame * 160;
         }
       }
-      const skelFrames = evalSkeleton(motion.animSmb ?? actor.animSmb, actor.animFrame, false);
+      const npcAnimSmb = motion.animSmb ?? actor.animSmb;
+      const skelFrames = evalSkeletonInto(npcAnimSmb, actor.animFrame, false, evalWsFor(npcAnimSmb));
       applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
-      // 关键：手动更新每个骨骼的 matrixWorld。Skeleton.update() 只读 matrixWorld 算 boneMatrices，
-      // 不会更新 matrixWorld；孤立根骨骼（如武器 waraxe，不在场景图）否则会停在 bind 值 → 武器不显示。
-      actor.bones.forEach(b => b.updateMatrixWorld(true));
+      // 关键：手动更新骨骼的 matrixWorld。Skeleton.update() 只读 matrixWorld 算 boneMatrices，
+      // 不会更新 matrixWorld；脱离场景图的孤立根骨（如武器 waraxe）否则会停在 bind 值 → 武器不显示。
+      // updateBoneWorlds 只对根骨调一次（force=true 会递归整棵子树），不再逐骨各递归一遍（O(n²)）。
+      updateBoneWorlds(actor.bones);
       actor.skeleton.update();
     }
   }
@@ -3355,6 +3387,94 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 每帧：怪物演员按快照插值渲染 + 动画推进（同远端玩家管线） */
+  // ==================== 显示预算（谁参与渲染与骨骼求值）====================
+  /**
+   * 重算节拍：250ms。不必每帧 —— 轮换本来就是"每秒一批"，距离过滤在这点间隔里也不会明显滞后，
+   * 而每帧给 200+ 只排序纯属浪费（这是省 CPU 的机制，不该自己先花掉一截）。
+   */
+  const VIS_RECOMPUTE_MS = 250;
+  let visRecomputeAt = 0;
+  let visResult: VisibilityResult = { visible: null, hidden: 0, tier: null, cap: Infinity, capped: false };
+  let displayPrefs = loadDisplayPrefs();
+
+  /** 偏好变更入口（系统设置里改完立即生效，不用重进游戏） */
+  function setDisplayPrefs(p: DisplayPrefs): void {
+    displayPrefs = p;
+    visRecomputeAt = 0; // 下一次 updateMonsters 立刻重算
+  }
+
+  /**
+   * 强制可见 —— **这一条是必需的，不是可选项**：玩家正在选中/追踪/攻击的怪一旦被裁掉，
+   * 他会完全不知道发生了什么（点空气打、伤害飘字连锚点都找不到）。所以这几类恒不参与裁剪：
+   * 悬停目标、点选/追踪目标（含"正在打的"那只）、自机正在挥拳的目标。
+   */
+  function isForceVisible(a: MonsterActor): boolean {
+    if (hoverTarget?.root === a.root) return true;
+    const t = moveTarget;
+    if (t?.kind === 'monster' && t.id === a.monsterId) return true;
+    if (selfAttackTargetId === a.monsterId) return true;
+    return false;
+  }
+
+  /** 按当前偏好重算"哪些怪参与渲染与骨骼求值"，并把结果写到 actor.culled / root.visible */
+  function updateMonsterVisibility(nowMs: number): void {
+    if (nowMs - visRecomputeAt < VIS_RECOMPUTE_MS) return;
+    visRecomputeAt = nowMs;
+    if (monsters.size === 0) {
+      visResult = { visible: null, hidden: 0, tier: null, cap: Infinity, capped: false };
+      return;
+    }
+    const cands: VisibilityCandidate[] = [];
+    for (const a of monsters.values()) {
+      const dx = a.root.position.x - selfPos.x;
+      const dz = a.root.position.z - selfPos.z;
+      cands.push({ id: a.monsterId, dist: Math.hypot(dx, dz), forced: isForceVisible(a) });
+    }
+    visResult = pickVisibleMonsters(cands, {
+      enabled: displayPrefs.monsterBudget,
+      tier: VIS_TIERS[displayPrefs.range],
+      nowMs,
+    });
+    for (const a of monsters.values()) {
+      const vis = visResult.visible === null || visResult.visible.has(a.monsterId);
+      a.culled = !vis;
+      // 渲染层也一并关掉（visible=false 的 three 对象不进 draw call）。注意**射线拾取不看 visible**
+      // （three 的 Raycaster 只测 layers），所以 probeCursorAt 里必须另外用 culled 排除。
+      a.root.visible = vis;
+    }
+  }
+
+  // ==================== 动画求值热路径（零分配 + 只更新根骨）====================
+  /**
+   * 按 smb 复用的求值工作区。**显式持有**（不是"函数内部隐式缓存"）：谁用谁负责，
+   * 免得共享可变状态在别处被悄悄踩掉（AGENTS #11/#15）。
+   * 不同模型（怪物/自机/NPC/子模型）各有各的 workspace，各用各的互不干扰。
+   */
+  const evalWsBySmb = new Map<object, EvalWorkspace>();
+  function evalWsFor(smb: object): EvalWorkspace {
+    let ws = evalWsBySmb.get(smb);
+    if (!ws) {
+      ws = createEvalWorkspace(smb as Parameters<typeof createEvalWorkspace>[0]);
+      evalWsBySmb.set(smb, ws);
+    }
+    return ws;
+  }
+
+  /**
+   * 更新骨骼的世界矩阵。
+   *
+   * 原写法是 `bones.forEach(b => b.updateMatrixWorld(true))` —— 每根骨都强制递归**整棵子树**，
+   * 于是 25 根骨要算约 25×25/2 次矩阵乘（O(n²)，实测占单只开销 20%）。
+   * 只对**根骨**调一次即可：`force=true` 会把整棵子树都更新掉。
+   * 判据用"父节点不是 Bone"（骨架根被挂在 Group 下，所以根的 parent 不是 Bone）。
+   */
+  function updateBoneWorlds(bones: THREE.Bone[]): void {
+    for (const b of bones) {
+      const p = b.parent;
+      if (!p || !(p as THREE.Bone).isBone) b.updateMatrixWorld(true);
+    }
+  }
+
   function updateMonsters(dt: number): void {
     const now = performance.now();
     const renderT = now - REMOTE_INTERP_DELAY;
@@ -3387,6 +3507,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
       actor.root.position.set(px, py, pz);
       actor.root.rotation.y = pAng;
+      // 被显示预算裁掉的怪：位置/朝向照常插值（否则重新出现时会瞬移），但**到此为止** ——
+      // 下面的 setRemoteMonsterAnim（状态机）与骨架求值全部跳过。省的就是这 0.075ms/只。
+      // animFrame 照常推进，保证它重新出现时动作是连续的、而不是从起手帧重来。
+      if (actor.culled) {
+        actor.animFrame += ANIM_UNITS_PER_SEC * Math.min(dt, 0.1);
+        continue;
+      }
       setRemoteMonsterAnim(actor, s0.anim);
 
       const motion = actor.animState.getCurrentMotion();
@@ -3403,9 +3530,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) actor.animFrame = next.startFrame * 160;
           }
         }
-        const skelFrames = evalSkeleton(motion.animSmb ?? actor.animSmb, actor.animFrame, false);
+        const actorAnimSmb = motion.animSmb ?? actor.animSmb;
+        const skelFrames = evalSkeletonInto(actorAnimSmb, actor.animFrame, false, evalWsFor(actorAnimSmb));
         applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
-        actor.bones.forEach(b => b.updateMatrixWorld(true));
+        updateBoneWorlds(actor.bones);
         actor.skeleton.update();
       }
     }
@@ -3735,9 +3863,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) actor.animFrame = next.startFrame * 160;
           }
         }
-        const skelFrames = evalSkeleton(motion.animSmb ?? actor.animSmb, actor.animFrame, false);
+        const actorAnimSmb = motion.animSmb ?? actor.animSmb;
+        const skelFrames = evalSkeletonInto(actorAnimSmb, actor.animFrame, false, evalWsFor(actorAnimSmb));
         applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
-        actor.bones.forEach(b => b.updateMatrixWorld(true));
+        updateBoneWorlds(actor.bones);
         actor.skeleton.update();
       }
     }
@@ -4068,6 +4197,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       lastFrameMs = tsMs;
     }
     if (!renderer || !scene || !camera) return;
+    // 剖析器：从"这一帧确实要渲染"处开始计时（被限帧跳过的帧不计入，fps 才是真实帧率）
+    perfFrameStart();
     // 自适应视口尺寸
     const w = root.clientWidth, h = root.clientHeight;
     if (w > 0 && h > 0 && (renderer.domElement.width !== Math.floor(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.floor(h * renderer.getPixelRatio()))) {
@@ -4076,6 +4207,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       renderer.setSize(w, h, false);
       composer?.setSize(w, h);
     }
+    perfMark('帧准备');
     const dt = clock.getDelta();
     rafMs += dt * 1000;
 
@@ -4124,9 +4256,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) animFrame = next.startFrame * 160;
           }
         }
-        const skelFrames = evalSkeleton(animSmb, animFrame, false);
+        const skelFrames = evalSkeletonInto(animSmb, animFrame, false, evalWsFor(animSmb));
         applyToBones(bones, skelFrames, tmp, posV, quatQ, sclV);
-        bones.forEach(b => b.updateMatrixWorld(true));
+        updateBoneWorlds(bones);
         skeleton.update();
       }
     }
@@ -4147,6 +4279,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const dx = tp.x - selfPos.x;
         const dz = tp.z - selfPos.z;
         const d = Math.hypot(dx, dz);
+        lastChaseDist = d;   // 记下来：到位时 moveTarget 已被清空，那时再算就取不到了
         if (moveTarget.kind === 'monster') {
           // 怪物目标：攻击距离内 → 停步进入攻击循环（不移动）；超出 → 持续 Chase
           if (d <= selfAttackRange()) {
@@ -4174,12 +4307,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       moveStuckStart = 0;
       if (hit && targetReached && hit.kind === 'item') {
         // 到位 → 对"选中的这一件"发拾取请求（服务端裁决并入包推送）
-        console.log('[WorldView] Chase 到位拾取 gid=' + hit.id);
+        const cd = lastChaseDist;   // 在计算到达时记下的距离（这里 moveTarget 已清空，不能再算）
+        // 打出**客户端此刻自己算的距离**：服务端若回 "too far"，两者一比就能判定是
+        // "客户端到位判定错"还是"跑动位移没上报到服务端"（用户 2026-09-14 实测：服务端报 33.27
+        // 恰等于**点击时**的距离，这行日志用来一刀切开）。
+        console.log('[WorldView] Chase 到位拾取 gid=' + hit.id
+          + ' 客户端距离=' + cd.toFixed(2) + ' selfPos=(' + selfPos.x.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')');
         opts?.onPickupGroundItem?.(hit.id);
       } else if (hit && targetReached && hit.kind === 'player') {
         console.log('[WorldView] Chase 到位(贴身) player=' + hit.id + '（交互动作待接入）');
       } else if (hit && targetReached && hit.kind === 'npc') {
-        console.log('[WorldView] Chase 到位 npc=' + hit.id + '（对话待接入）');
+        console.log('[WorldView] Chase 到位 npc=' + hit.id + ' → 交互');
+        opts?.onNpcInteract?.(hit.id);
       } else if (targetLost) {
         console.log('[WorldView] Chase 目标消失，取消');
       }
@@ -4300,35 +4439,50 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
 
+    // 自机段到此结束（骨骼动画 + 移动/上报 + 普攻循环）——剖析器按段记账，故在此打点
+    perfMark('自机');
     // 远端玩家（Phase 2/3）
     updateRemotes(dt);
+    perfMark('远端玩家');
     // 怪物（服务端权威, S2C_MonsterMove）
+    // 显示预算必须先算：本帧 updateMonsters 要按 actor.culled 决定"算不算这 0.075ms/只"。
+    // 用 rafMs（帧累加时钟）而不是 performance.now()：与 visRecomputeAt 同一时基、单调。
+    updateMonsterVisibility(rafMs);
     updateMonsters(dt);
+    perfMark('怪物');
     // NPC（静态站桩，仅 idle 动画）
     updateNpcs(dt);
+    perfMark('NPC');
     // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
     updateGroundItems(rafMs);
+    perfMark('地面物品');
     // 光标 overlay：世界滚动/物品增减时静态光标下的指向也会变 → 逐帧(节流)重探测
     if (mouseSeen) probeCursorAt(mouseX, mouseY);
+    perfMark('光标探测');
 
     // 相机跟随角色
     updateCamera(dt);
     camera.updateProjectionMatrix();
     camera.updateMatrixWorld();
     camera.matrixWorldInverse.copy(camera.matrixWorld).invert();
+    perfMark('相机');
 
     // 昼夜光照驱动（每帧）：darkLevel/BackColor 渐变 + 火把 + 场景灯 → 各地图 shader uniform
     dnUpdate();
+    perfMark('昼夜光照');
 
     // 地图音效：3D 声源按角色距离更新音量（BGM/环境音已在进入/换图时设置）
     mapAudio.updateAt(selfPos);
     // 音效听者位置（战斗/技能音效按此做距离衰减）
     sfx.update(selfPos);
+    perfMark('音频更新');
     // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
     if (effects && camera) effects.update(dt, camera);
+    perfMark('技能特效');
 
     // 小地图
     drawMinimap();
+    perfMark('小地图');
 
     for (const mh of mapHandles.values()) {
       mh.mapRenderer.render(camera);
@@ -4337,6 +4491,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       mh.mapRenderer.updateWater(rafMs);
       updateFrameAnimations(mh.animatedMeshes, rafMs);
     }
+    perfMark('地图渲染');
     // hover 发光外轮廓（官方 OutlinePass 后处理）：设置目标与分类色后再整帧渲染
     if (composer && outlinePass) {
       if (hoverTarget) {
@@ -4349,8 +4504,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
     if (composer) composer.render();
+    perfMark('3D提交');
     // 名牌/血条 overlay（Canvas，压制被测遮挡）
     drawNameplateOverlay();
+    perfMark('名牌飘字');
     // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
     if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && hoverTarget && rafMs - lastHoverScanAt > 1500) {
       lastHoverScanAt = rafMs;
@@ -4364,6 +4521,62 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       loadHooks?.onReady?.();
     }
 
+    // ── 剖析器：场景侧计数 + 整帧渲染统计 ──
+    // 每帧必采的 O(1) 项：实体数（"怪物暴增"时这些数字是线性增长的，配合各段耗时即可定位）
+    perfSetCounter('怪物', monsters.size);
+    perfSetCounter('怪物(可见)', monsters.size - visResult.hidden);
+    perfSetCounter('怪物(隐藏)', visResult.hidden);
+    perfSetCounter('远端玩家', remotes.size);
+    perfSetCounter('NPC', npcs.size);
+    perfSetCounter('地面物品', groundItems.size);
+    perfSetCounter('名牌', nameplateHits.length);
+    perfSetCounter('飘字', floaters.length);
+    // 场景上下文：脱离它看帧时间没有意义（哪张图、多大分辨率、像素比多少）
+    perfSetCounter('地图', currentMapId);
+    perfSetCounter('视口宽', root.clientWidth);
+    perfSetCounter('视口高', root.clientHeight);
+    perfSetCounter('渲染像素比', renderer ? renderer.getPixelRatio() : 0);
+    {
+      const st = effects?.stats();
+      perfSetCounter('特效(活动)', st ? st.active : 0);
+      perfSetCounter('特效(已载)', st ? st.loaded : 0);
+    }
+    // 整帧渲染统计：info.autoReset 已关（见 ensure3D），此处读完手动重置
+    if (renderer) {
+      const ri = renderer.info;
+      perfSetCounter('Draw(整帧)', ri.render.calls);
+      perfSetCounter('三角形(整帧)', ri.render.triangles);
+      perfSetCounter('GPU程序', ri.programs ? ri.programs.length : 0);
+      perfSetCounter('几何体', ri.memory.geometries);
+      perfSetCounter('纹理', ri.memory.textures);
+      ri.reset();
+    }
+    // 场景遍历统计：遍历本身有成本（怪物多时上千对象），故 500ms 一次，不每帧做
+    if (rafMs - lastSceneScanAt > 500) {
+      lastSceneScanAt = rafMs;
+      let visibleMesh = 0, skinned = 0;
+      const mats = new Set<THREE.Material>(), geos = new Set<THREE.BufferGeometry>();
+      scene.traverseVisible((o) => {
+        // 用 traverseVisible 而不是 traverse + `o.visible`：visible 是**逐节点**的，
+        // 父节点不可见时子节点自身仍为 true —— 那样统计会把"被显示预算整棵关掉的怪"
+        // 算成可见网格（实测误导过一次：隐藏 170 只怪，可见蒙皮网格却几乎没变）。
+        const mesh = o as THREE.Mesh;
+        if (!mesh.isMesh) return;
+        visibleMesh++;
+        if ((mesh as THREE.SkinnedMesh).isSkinnedMesh) skinned++;
+        const m = mesh.material;
+        if (Array.isArray(m)) for (const mm of m) mats.add(mm);
+        else if (m) mats.add(m);
+        if (mesh.geometry) geos.add(mesh.geometry);
+      });
+      perfSetCounter('可见网格', visibleMesh);
+      perfSetCounter('可见蒙皮网格', skinned);
+      perfSetCounter('不同材质', mats.size);
+      perfSetCounter('不同几何体', geos.size);
+    }
+    perfMark('统计面板');
+    perfFrameEnd();
+
     // 统计面板（map-demo 同款）
     fpsAcc += dt;
     frameCount++;
@@ -4376,11 +4589,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         totT += mh.mapRenderer.totalFaceCount;
         verts += mh.mapRenderer.drawnVertexCount;
       }
+      // 摘要行：JS 总耗时 + 最贵的一段（明细按 Ctrl+Shift+P 打开剖析面板）
+      const pr = perfReport();
+      const top = pr.sections.find((s) => s.avgMs >= 0.05);
       statsEl.textContent =
         `FPS   ${fps.toFixed(0)}  地图 ${mapHandles.size}\n` +
         `Draw  ${dc}\n` +
         `Tris  ${Math.round(visT).toLocaleString()} / ${totT.toLocaleString()}\n` +
         `Verts ${verts.toLocaleString()}\n` +
+        `Perf  JS ${pr.jsMs.toFixed(1)}ms  非JS ${pr.otherMs.toFixed(1)}ms` +
+        (top ? `  最贵 ${top.name} ${top.avgMs.toFixed(2)}ms` : '') + '\n' +
         `Pos   ${selfPos.x.toFixed(1)}, ${selfPos.y.toFixed(1)}, ${selfPos.z.toFixed(1)}  m${currentMapId}\n` +
         `Time  ${String(dnDebugHour ?? dayNightHour).padStart(2, '0')}:${String(dayNightMin).padStart(2, '0')}${dnDebugHour !== null ? '*' : ''} Dark ${dayDark}`;
       frameCount = 0; fpsAcc = 0;
@@ -4546,6 +4764,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     toggleCameraMode,
     cameraMode: () => camMode,
     toggleGroundItemLabels,
+    setDisplayPrefs,
+    displayBudgetStatus: () => ({
+      visible: monsters.size - visResult.hidden,
+      hidden: visResult.hidden,
+      range: visResult.tier ? visResult.tier.range : Infinity,
+      cap: visResult.cap,
+    }),
     toggleRun: () => setRunMode(!running),
     isRunning: () => running,
     setTargetFps,

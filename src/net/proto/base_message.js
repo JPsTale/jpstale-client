@@ -3,7 +3,7 @@ import $protobuf from "protobufjs/minimal.js";
 
 // Common aliases
 const $Reader = $protobuf.Reader, $Writer = $protobuf.Writer, $util = $protobuf.util;
-const $Object = $util.global.Object, $undefined = $util.global.undefined, $Error = $util.global.Error, $RangeError = $util.global.RangeError, $TypeError = $util.global.TypeError, $String = $util.global.String, $Number = $util.global.Number, $parseInt = $util.global.parseInt, $BigInt = $util.global.BigInt, $Boolean = $util.global.Boolean, $isFinite = $util.global.isFinite, $Array = $util.global.Array;
+const $Object = $util.global.Object, $undefined = $util.global.undefined, $Error = $util.global.Error, $RangeError = $util.global.RangeError, $TypeError = $util.global.TypeError, $Array = $util.global.Array, $String = $util.global.String, $Number = $util.global.Number, $parseInt = $util.global.parseInt, $BigInt = $util.global.BigInt, $Boolean = $util.global.Boolean, $isFinite = $util.global.isFinite;
 
 // Exported root namespace
 const $root = $protobuf.roots["default"] || ($protobuf.roots["default"] = {});
@@ -51,6 +51,9 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.C2S_Unstuck.$Properties|null} [unstuck] ClientMessage unstuck
              * @property {jpt.base.C2S_TakeToHand.$Properties|null} [takeToHand] ClientMessage takeToHand
              * @property {jpt.base.C2S_BagSwap.$Properties|null} [bagSwap] ClientMessage bagSwap
+             * @property {jpt.base.C2S_NpcInteract.$Properties|null} [npcInteract] ClientMessage npcInteract
+             * @property {jpt.base.C2S_ShopBuy.$Properties|null} [shopBuy] ClientMessage shopBuy
+             * @property {jpt.base.C2S_ShopSell.$Properties|null} [shopSell] ClientMessage shopSell
              * @property {jpt.base.C2S_Attack.$Properties|null} [attack] ClientMessage attack
              * @property {jpt.base.C2S_UseSkill.$Properties|null} [useSkill] ClientMessage useSkill
              * @property {jpt.base.C2S_AttackStart.$Properties|null} [attackStart] ClientMessage attackStart
@@ -65,7 +68,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.C2S_PartyAccept.$Properties|null} [partyAccept] ClientMessage partyAccept
              * @property {jpt.base.C2S_PartyLeave.$Properties|null} [partyLeave] ClientMessage partyLeave
              * @property {jpt.base.C2S_Ping.$Properties|null} [ping] ClientMessage ping
-             * @property {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"bagLayout"|"stackMerge"|"unstuck"|"takeToHand"|"bagSwap"|"attack"|"useSkill"|"attackStart"|"attackHit"|"respawnChoice"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"} [payload] ClientMessage payload
+             * @property {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"bagLayout"|"stackMerge"|"unstuck"|"takeToHand"|"bagSwap"|"npcInteract"|"shopBuy"|"shopSell"|"attack"|"useSkill"|"attackStart"|"attackHit"|"respawnChoice"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"} [payload] ClientMessage payload
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -100,6 +103,9 @@ export const jpt = $root.jpt = (() => {
              *   unstuck?: jpt.base.C2S_Unstuck.$Shape|null;
              *   takeToHand?: jpt.base.C2S_TakeToHand.$Shape|null;
              *   bagSwap?: jpt.base.C2S_BagSwap.$Shape|null;
+             *   npcInteract?: jpt.base.C2S_NpcInteract.$Shape|null;
+             *   shopBuy?: jpt.base.C2S_ShopBuy.$Shape|null;
+             *   shopSell?: jpt.base.C2S_ShopSell.$Shape|null;
              *   attack?: jpt.base.C2S_Attack.$Shape|null;
              *   useSkill?: jpt.base.C2S_UseSkill.$Shape|null;
              *   attackStart?: jpt.base.C2S_AttackStart.$Shape|null;
@@ -116,7 +122,7 @@ export const jpt = $root.jpt = (() => {
              *   ping?: jpt.base.C2S_Ping.$Shape|null;
              *   $unknowns?: Array.<Uint8Array>;
              * } & (
-             *   ({ payload?: undefined; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "loginRequest"; loginRequest: jpt.base.C2S_LoginRequest.$Shape; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "createCharacter"; loginRequest?: null; createCharacter: jpt.base.C2S_CreateCharacter.$Shape; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "selectCharacter"; loginRequest?: null; createCharacter?: null; selectCharacter: jpt.base.C2S_SelectCharacter.$Shape; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "logout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout: jpt.base.C2S_Logout.$Shape; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "backToCharacterSelect"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect: jpt.base.C2S_BackToCharacterSelect.$Shape; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove: jpt.base.C2S_PlayerMove.$Shape; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerAction"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction: jpt.base.C2S_PlayerAction.$Shape; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem: jpt.base.C2S_UseItem.$Shape; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "pickupItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem: jpt.base.C2S_PickupItem.$Shape; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "dropItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem: jpt.base.C2S_DropItem.$Shape; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "allocateStat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat: jpt.base.C2S_AllocateStat.$Shape; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "inventoryMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove: jpt.base.C2S_InventoryMove.$Shape; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "equipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem: jpt.base.C2S_EquipItem.$Shape; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "unequipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem: jpt.base.C2S_UnequipItem.$Shape; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "switchWeapon"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon: jpt.base.C2S_SwitchWeapon.$Shape; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "bagLayout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout: jpt.base.C2S_BagLayout.$Shape; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "stackMerge"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge: jpt.base.C2S_StackMerge.$Shape; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "unstuck"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck: jpt.base.C2S_Unstuck.$Shape; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "takeToHand"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand: jpt.base.C2S_TakeToHand.$Shape; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "bagSwap"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap: jpt.base.C2S_BagSwap.$Shape; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attack"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack: jpt.base.C2S_Attack.$Shape; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useSkill"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill: jpt.base.C2S_UseSkill.$Shape; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attackStart"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart: jpt.base.C2S_AttackStart.$Shape; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attackHit"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit: jpt.base.C2S_AttackHit.$Shape; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "respawnChoice"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice: jpt.base.C2S_RespawnChoice.$Shape; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "chat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat: jpt.base.C2S_Chat.$Shape; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeRequest"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest: jpt.base.C2S_TradeRequest.$Shape; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept: jpt.base.C2S_TradeAccept.$Shape; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAddItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem: jpt.base.C2S_TradeAddItem.$Shape; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeConfirm"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm: jpt.base.C2S_TradeConfirm.$Shape; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyInvite"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite: jpt.base.C2S_PartyInvite.$Shape; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept: jpt.base.C2S_PartyAccept.$Shape; partyLeave?: null; ping?: null }|{ payload?: "partyLeave"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave: jpt.base.C2S_PartyLeave.$Shape; ping?: null }|{ payload?: "ping"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping: jpt.base.C2S_Ping.$Shape })
+             *   ({ payload?: undefined; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "loginRequest"; loginRequest: jpt.base.C2S_LoginRequest.$Shape; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "createCharacter"; loginRequest?: null; createCharacter: jpt.base.C2S_CreateCharacter.$Shape; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "selectCharacter"; loginRequest?: null; createCharacter?: null; selectCharacter: jpt.base.C2S_SelectCharacter.$Shape; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "logout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout: jpt.base.C2S_Logout.$Shape; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "backToCharacterSelect"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect: jpt.base.C2S_BackToCharacterSelect.$Shape; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove: jpt.base.C2S_PlayerMove.$Shape; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "playerAction"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction: jpt.base.C2S_PlayerAction.$Shape; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem: jpt.base.C2S_UseItem.$Shape; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "pickupItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem: jpt.base.C2S_PickupItem.$Shape; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "dropItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem: jpt.base.C2S_DropItem.$Shape; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "allocateStat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat: jpt.base.C2S_AllocateStat.$Shape; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "inventoryMove"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove: jpt.base.C2S_InventoryMove.$Shape; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "equipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem: jpt.base.C2S_EquipItem.$Shape; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "unequipItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem: jpt.base.C2S_UnequipItem.$Shape; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "switchWeapon"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon: jpt.base.C2S_SwitchWeapon.$Shape; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "bagLayout"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout: jpt.base.C2S_BagLayout.$Shape; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "stackMerge"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge: jpt.base.C2S_StackMerge.$Shape; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "unstuck"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck: jpt.base.C2S_Unstuck.$Shape; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "takeToHand"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand: jpt.base.C2S_TakeToHand.$Shape; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "bagSwap"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap: jpt.base.C2S_BagSwap.$Shape; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "npcInteract"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract: jpt.base.C2S_NpcInteract.$Shape; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "shopBuy"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy: jpt.base.C2S_ShopBuy.$Shape; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "shopSell"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell: jpt.base.C2S_ShopSell.$Shape; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attack"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack: jpt.base.C2S_Attack.$Shape; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "useSkill"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill: jpt.base.C2S_UseSkill.$Shape; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attackStart"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart: jpt.base.C2S_AttackStart.$Shape; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "attackHit"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit: jpt.base.C2S_AttackHit.$Shape; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "respawnChoice"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice: jpt.base.C2S_RespawnChoice.$Shape; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "chat"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat: jpt.base.C2S_Chat.$Shape; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeRequest"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest: jpt.base.C2S_TradeRequest.$Shape; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept: jpt.base.C2S_TradeAccept.$Shape; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeAddItem"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem: jpt.base.C2S_TradeAddItem.$Shape; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "tradeConfirm"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm: jpt.base.C2S_TradeConfirm.$Shape; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyInvite"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite: jpt.base.C2S_PartyInvite.$Shape; partyAccept?: null; partyLeave?: null; ping?: null }|{ payload?: "partyAccept"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept: jpt.base.C2S_PartyAccept.$Shape; partyLeave?: null; ping?: null }|{ payload?: "partyLeave"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave: jpt.base.C2S_PartyLeave.$Shape; ping?: null }|{ payload?: "ping"; loginRequest?: null; createCharacter?: null; selectCharacter?: null; logout?: null; backToCharacterSelect?: null; playerMove?: null; playerAction?: null; useItem?: null; pickupItem?: null; dropItem?: null; allocateStat?: null; inventoryMove?: null; equipItem?: null; unequipItem?: null; switchWeapon?: null; bagLayout?: null; stackMerge?: null; unstuck?: null; takeToHand?: null; bagSwap?: null; npcInteract?: null; shopBuy?: null; shopSell?: null; attack?: null; useSkill?: null; attackStart?: null; attackHit?: null; respawnChoice?: null; chat?: null; tradeRequest?: null; tradeAccept?: null; tradeAddItem?: null; tradeConfirm?: null; partyInvite?: null; partyAccept?: null; partyLeave?: null; ping: jpt.base.C2S_Ping.$Shape })
              * )} jpt.base.ClientMessage.$Shape
              */
 
@@ -296,6 +302,30 @@ export const jpt = $root.jpt = (() => {
             ClientMessage.prototype.bagSwap = null;
 
             /**
+             * ClientMessage npcInteract.
+             * @member {jpt.base.C2S_NpcInteract.$Properties|null|undefined} npcInteract
+             * @memberof jpt.base.ClientMessage
+             * @instance
+             */
+            ClientMessage.prototype.npcInteract = null;
+
+            /**
+             * ClientMessage shopBuy.
+             * @member {jpt.base.C2S_ShopBuy.$Properties|null|undefined} shopBuy
+             * @memberof jpt.base.ClientMessage
+             * @instance
+             */
+            ClientMessage.prototype.shopBuy = null;
+
+            /**
+             * ClientMessage shopSell.
+             * @member {jpt.base.C2S_ShopSell.$Properties|null|undefined} shopSell
+             * @memberof jpt.base.ClientMessage
+             * @instance
+             */
+            ClientMessage.prototype.shopSell = null;
+
+            /**
              * ClientMessage attack.
              * @member {jpt.base.C2S_Attack.$Properties|null|undefined} attack
              * @memberof jpt.base.ClientMessage
@@ -412,12 +442,12 @@ export const jpt = $root.jpt = (() => {
 
             /**
              * ClientMessage payload.
-             * @member {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"bagLayout"|"stackMerge"|"unstuck"|"takeToHand"|"bagSwap"|"attack"|"useSkill"|"attackStart"|"attackHit"|"respawnChoice"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"|undefined} payload
+             * @member {"loginRequest"|"createCharacter"|"selectCharacter"|"logout"|"backToCharacterSelect"|"playerMove"|"playerAction"|"useItem"|"pickupItem"|"dropItem"|"allocateStat"|"inventoryMove"|"equipItem"|"unequipItem"|"switchWeapon"|"bagLayout"|"stackMerge"|"unstuck"|"takeToHand"|"bagSwap"|"npcInteract"|"shopBuy"|"shopSell"|"attack"|"useSkill"|"attackStart"|"attackHit"|"respawnChoice"|"chat"|"tradeRequest"|"tradeAccept"|"tradeAddItem"|"tradeConfirm"|"partyInvite"|"partyAccept"|"partyLeave"|"ping"|undefined} payload
              * @memberof jpt.base.ClientMessage
              * @instance
              */
             $Object.defineProperty(ClientMessage.prototype, "payload", {
-                get: $util.oneOfGetter($oneOfFields = ["loginRequest", "createCharacter", "selectCharacter", "logout", "backToCharacterSelect", "playerMove", "playerAction", "useItem", "pickupItem", "dropItem", "allocateStat", "inventoryMove", "equipItem", "unequipItem", "switchWeapon", "bagLayout", "stackMerge", "unstuck", "takeToHand", "bagSwap", "attack", "useSkill", "attackStart", "attackHit", "respawnChoice", "chat", "tradeRequest", "tradeAccept", "tradeAddItem", "tradeConfirm", "partyInvite", "partyAccept", "partyLeave", "ping"]),
+                get: $util.oneOfGetter($oneOfFields = ["loginRequest", "createCharacter", "selectCharacter", "logout", "backToCharacterSelect", "playerMove", "playerAction", "useItem", "pickupItem", "dropItem", "allocateStat", "inventoryMove", "equipItem", "unequipItem", "switchWeapon", "bagLayout", "stackMerge", "unstuck", "takeToHand", "bagSwap", "npcInteract", "shopBuy", "shopSell", "attack", "useSkill", "attackStart", "attackHit", "respawnChoice", "chat", "tradeRequest", "tradeAccept", "tradeAddItem", "tradeConfirm", "partyInvite", "partyAccept", "partyLeave", "ping"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -493,6 +523,12 @@ export const jpt = $root.jpt = (() => {
                     $root.jpt.base.C2S_TakeToHand.encode(message.takeToHand, writer.uint32(/* id 213, wireType 2 =*/1706).fork(), _depth + 1).ldelim();
                 if (message.bagSwap != null && $Object.hasOwnProperty.call(message, "bagSwap"))
                     $root.jpt.base.C2S_BagSwap.encode(message.bagSwap, writer.uint32(/* id 214, wireType 2 =*/1714).fork(), _depth + 1).ldelim();
+                if (message.npcInteract != null && $Object.hasOwnProperty.call(message, "npcInteract"))
+                    $root.jpt.base.C2S_NpcInteract.encode(message.npcInteract, writer.uint32(/* id 215, wireType 2 =*/1722).fork(), _depth + 1).ldelim();
+                if (message.shopBuy != null && $Object.hasOwnProperty.call(message, "shopBuy"))
+                    $root.jpt.base.C2S_ShopBuy.encode(message.shopBuy, writer.uint32(/* id 216, wireType 2 =*/1730).fork(), _depth + 1).ldelim();
+                if (message.shopSell != null && $Object.hasOwnProperty.call(message, "shopSell"))
+                    $root.jpt.base.C2S_ShopSell.encode(message.shopSell, writer.uint32(/* id 217, wireType 2 =*/1738).fork(), _depth + 1).ldelim();
                 if (message.attack != null && $Object.hasOwnProperty.call(message, "attack"))
                     $root.jpt.base.C2S_Attack.encode(message.attack, writer.uint32(/* id 300, wireType 2 =*/2402).fork(), _depth + 1).ldelim();
                 if (message.useSkill != null && $Object.hasOwnProperty.call(message, "useSkill"))
@@ -716,6 +752,27 @@ export const jpt = $root.jpt = (() => {
                                 break;
                             message.bagSwap = $root.jpt.base.C2S_BagSwap.decode(reader, reader.uint32(), $undefined, _depth + 1, message.bagSwap);
                             message.payload = "bagSwap";
+                            continue;
+                        }
+                    case 215: {
+                            if (wireType !== 2)
+                                break;
+                            message.npcInteract = $root.jpt.base.C2S_NpcInteract.decode(reader, reader.uint32(), $undefined, _depth + 1, message.npcInteract);
+                            message.payload = "npcInteract";
+                            continue;
+                        }
+                    case 216: {
+                            if (wireType !== 2)
+                                break;
+                            message.shopBuy = $root.jpt.base.C2S_ShopBuy.decode(reader, reader.uint32(), $undefined, _depth + 1, message.shopBuy);
+                            message.payload = "shopBuy";
+                            continue;
+                        }
+                    case 217: {
+                            if (wireType !== 2)
+                                break;
+                            message.shopSell = $root.jpt.base.C2S_ShopSell.decode(reader, reader.uint32(), $undefined, _depth + 1, message.shopSell);
+                            message.payload = "shopSell";
                             continue;
                         }
                     case 300: {
@@ -1063,6 +1120,36 @@ export const jpt = $root.jpt = (() => {
                             return "bagSwap." + error;
                     }
                 }
+                if (message.npcInteract != null && $Object.hasOwnProperty.call(message, "npcInteract")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.C2S_NpcInteract.verify(message.npcInteract, _depth + 1);
+                        if (error)
+                            return "npcInteract." + error;
+                    }
+                }
+                if (message.shopBuy != null && $Object.hasOwnProperty.call(message, "shopBuy")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.C2S_ShopBuy.verify(message.shopBuy, _depth + 1);
+                        if (error)
+                            return "shopBuy." + error;
+                    }
+                }
+                if (message.shopSell != null && $Object.hasOwnProperty.call(message, "shopSell")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.C2S_ShopSell.verify(message.shopSell, _depth + 1);
+                        if (error)
+                            return "shopSell." + error;
+                    }
+                }
                 if (message.attack != null && $Object.hasOwnProperty.call(message, "attack")) {
                     if (properties.payload === 1)
                         return "payload: multiple values";
@@ -1324,6 +1411,21 @@ export const jpt = $root.jpt = (() => {
                         throw $TypeError(".jpt.base.ClientMessage.bagSwap: object expected");
                     message.bagSwap = $root.jpt.base.C2S_BagSwap.fromObject(object.bagSwap, _depth + 1);
                 }
+                if (object.npcInteract != null) {
+                    if (!$util.isObject(object.npcInteract))
+                        throw $TypeError(".jpt.base.ClientMessage.npcInteract: object expected");
+                    message.npcInteract = $root.jpt.base.C2S_NpcInteract.fromObject(object.npcInteract, _depth + 1);
+                }
+                if (object.shopBuy != null) {
+                    if (!$util.isObject(object.shopBuy))
+                        throw $TypeError(".jpt.base.ClientMessage.shopBuy: object expected");
+                    message.shopBuy = $root.jpt.base.C2S_ShopBuy.fromObject(object.shopBuy, _depth + 1);
+                }
+                if (object.shopSell != null) {
+                    if (!$util.isObject(object.shopSell))
+                        throw $TypeError(".jpt.base.ClientMessage.shopSell: object expected");
+                    message.shopSell = $root.jpt.base.C2S_ShopSell.fromObject(object.shopSell, _depth + 1);
+                }
                 if (object.attack != null) {
                     if (!$util.isObject(object.attack))
                         throw $TypeError(".jpt.base.ClientMessage.attack: object expected");
@@ -1514,6 +1616,21 @@ export const jpt = $root.jpt = (() => {
                     if (options.oneofs)
                         object.payload = "bagSwap";
                 }
+                if (message.npcInteract != null && $Object.hasOwnProperty.call(message, "npcInteract")) {
+                    object.npcInteract = $root.jpt.base.C2S_NpcInteract.toObject(message.npcInteract, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "npcInteract";
+                }
+                if (message.shopBuy != null && $Object.hasOwnProperty.call(message, "shopBuy")) {
+                    object.shopBuy = $root.jpt.base.C2S_ShopBuy.toObject(message.shopBuy, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "shopBuy";
+                }
+                if (message.shopSell != null && $Object.hasOwnProperty.call(message, "shopSell")) {
+                    object.shopSell = $root.jpt.base.C2S_ShopSell.toObject(message.shopSell, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "shopSell";
+                }
                 if (message.attack != null && $Object.hasOwnProperty.call(message, "attack")) {
                     object.attack = $root.jpt.base.C2S_Attack.toObject(message.attack, options, _depth + 1);
                     if (options.oneofs)
@@ -1641,6 +1758,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.S2C_MonsterDeath.$Properties|null} [monsterDeath] ServerMessage monsterDeath
              * @property {jpt.base.S2C_NpcAppear.$Properties|null} [npcAppear] ServerMessage npcAppear
              * @property {jpt.base.S2C_NpcDisappear.$Properties|null} [npcDisappear] ServerMessage npcDisappear
+             * @property {jpt.base.S2C_ShopOpen.$Properties|null} [shopOpen] ServerMessage shopOpen
              * @property {jpt.base.S2C_AttackResult.$Properties|null} [attackResult] ServerMessage attackResult
              * @property {jpt.base.S2C_SkillAttack.$Properties|null} [skillAttack] ServerMessage skillAttack
              * @property {jpt.base.S2C_AoeAttack.$Properties|null} [aoeAttack] ServerMessage aoeAttack
@@ -1669,7 +1787,8 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.S2C_Error.$Properties|null} [error] ServerMessage error
              * @property {jpt.base.S2C_SystemMessage.$Properties|null} [systemMessage] ServerMessage systemMessage
              * @property {jpt.base.S2C_Disconnect.$Properties|null} [disconnect] ServerMessage disconnect
-             * @property {"loginResponse"|"characterList"|"createCharacterResult"|"playerAppear"|"playerDisappear"|"playerMove"|"playerState"|"playerDeath"|"playerRespawn"|"enterGame"|"characterStatus"|"appearanceUpdate"|"mapSwitched"|"playerTeleport"|"monsterAppear"|"monsterDisappear"|"monsterMove"|"monsterState"|"monsterDeath"|"npcAppear"|"npcDisappear"|"attackResult"|"skillAttack"|"aoeAttack"|"damage"|"heal"|"buffApply"|"buffRemove"|"attackStart"|"attackPlan"|"inventorySnapshot"|"itemUpdate"|"itemRemove"|"itemUse"|"goldChange"|"groundItemAppear"|"groundItemDisappear"|"itemRemovedUids"|"chat"|"tradeRequest"|"tradeOpen"|"tradeUpdate"|"tradeComplete"|"partyUpdate"|"partyInvite"|"pong"|"error"|"systemMessage"|"disconnect"} [payload] ServerMessage payload
+             * @property {jpt.base.S2C_Batch.$Properties|null} [batch] ServerMessage batch
+             * @property {"loginResponse"|"characterList"|"createCharacterResult"|"playerAppear"|"playerDisappear"|"playerMove"|"playerState"|"playerDeath"|"playerRespawn"|"enterGame"|"characterStatus"|"appearanceUpdate"|"mapSwitched"|"playerTeleport"|"monsterAppear"|"monsterDisappear"|"monsterMove"|"monsterState"|"monsterDeath"|"npcAppear"|"npcDisappear"|"shopOpen"|"attackResult"|"skillAttack"|"aoeAttack"|"damage"|"heal"|"buffApply"|"buffRemove"|"attackStart"|"attackPlan"|"inventorySnapshot"|"itemUpdate"|"itemRemove"|"itemUse"|"goldChange"|"groundItemAppear"|"groundItemDisappear"|"itemRemovedUids"|"chat"|"tradeRequest"|"tradeOpen"|"tradeUpdate"|"tradeComplete"|"partyUpdate"|"partyInvite"|"pong"|"error"|"systemMessage"|"disconnect"|"batch"} [payload] ServerMessage payload
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -1705,6 +1824,7 @@ export const jpt = $root.jpt = (() => {
              *   monsterDeath?: jpt.base.S2C_MonsterDeath.$Shape|null;
              *   npcAppear?: jpt.base.S2C_NpcAppear.$Shape|null;
              *   npcDisappear?: jpt.base.S2C_NpcDisappear.$Shape|null;
+             *   shopOpen?: jpt.base.S2C_ShopOpen.$Shape|null;
              *   attackResult?: jpt.base.S2C_AttackResult.$Shape|null;
              *   skillAttack?: jpt.base.S2C_SkillAttack.$Shape|null;
              *   aoeAttack?: jpt.base.S2C_AoeAttack.$Shape|null;
@@ -1733,9 +1853,10 @@ export const jpt = $root.jpt = (() => {
              *   error?: jpt.base.S2C_Error.$Shape|null;
              *   systemMessage?: jpt.base.S2C_SystemMessage.$Shape|null;
              *   disconnect?: jpt.base.S2C_Disconnect.$Shape|null;
+             *   batch?: jpt.base.S2C_Batch.$Shape|null;
              *   $unknowns?: Array.<Uint8Array>;
              * } & (
-             *   ({ payload?: undefined; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "loginResponse"; loginResponse: jpt.base.S2C_LoginResponse.$Shape; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "characterList"; loginResponse?: null; characterList: jpt.base.S2C_CharacterList.$Shape; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "createCharacterResult"; loginResponse?: null; characterList?: null; createCharacterResult: jpt.base.S2C_CreateCharacterResult.$Shape; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear: jpt.base.S2C_PlayerAppear.$Shape; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear: jpt.base.S2C_PlayerDisappear.$Shape; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerMove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove: jpt.base.S2C_PlayerMove.$Shape; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerState"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState: jpt.base.S2C_PlayerState.$Shape; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerDeath"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath: jpt.base.S2C_PlayerDeath.$Shape; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerRespawn"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn: jpt.base.S2C_PlayerRespawn.$Shape; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "enterGame"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame: jpt.base.S2C_EnterGame.$Shape; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "characterStatus"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus: jpt.base.S2C_CharacterStatus.$Shape; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "appearanceUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate: jpt.base.S2C_AppearanceUpdate.$Shape; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "mapSwitched"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched: jpt.base.S2C_MapSwitched.$Shape; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "playerTeleport"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport: jpt.base.S2C_PlayerTeleport.$Shape; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "monsterAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear: jpt.base.S2C_MonsterAppear.$Shape; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "monsterDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear: jpt.base.S2C_MonsterDisappear.$Shape; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "monsterMove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove: jpt.base.S2C_MonsterMove.$Shape; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "monsterState"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState: jpt.base.S2C_MonsterState.$Shape; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "monsterDeath"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath: jpt.base.S2C_MonsterDeath.$Shape; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "npcAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear: jpt.base.S2C_NpcAppear.$Shape; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "npcDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear: jpt.base.S2C_NpcDisappear.$Shape; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "attackResult"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult: jpt.base.S2C_AttackResult.$Shape; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "skillAttack"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack: jpt.base.S2C_SkillAttack.$Shape; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "aoeAttack"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack: jpt.base.S2C_AoeAttack.$Shape; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "damage"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage: jpt.base.S2C_Damage.$Shape; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "heal"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal: jpt.base.S2C_Heal.$Shape; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "buffApply"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply: jpt.base.S2C_BuffApply.$Shape; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "buffRemove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove: jpt.base.S2C_BuffRemove.$Shape; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "attackStart"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart: jpt.base.S2C_AttackStart.$Shape; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "attackPlan"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan: jpt.base.S2C_AttackPlan.$Shape; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "inventorySnapshot"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot: jpt.base.S2C_InventorySnapshot.$Shape; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "itemUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate: jpt.base.S2C_ItemUpdate.$Shape; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "itemRemove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove: jpt.base.S2C_ItemRemove.$Shape; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "itemUse"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse: jpt.base.S2C_ItemUse.$Shape; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "goldChange"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange: jpt.base.S2C_GoldChange.$Shape; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "groundItemAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear: jpt.base.S2C_GroundItemAppear.$Shape; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "groundItemDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear: jpt.base.S2C_GroundItemDisappear.$Shape; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "itemRemovedUids"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids: jpt.base.S2C_ItemRemovedUids.$Shape; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "chat"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat: jpt.base.S2C_Chat.$Shape; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "tradeRequest"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest: jpt.base.S2C_TradeRequest.$Shape; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "tradeOpen"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen: jpt.base.S2C_TradeOpen.$Shape; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "tradeUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate: jpt.base.S2C_TradeUpdate.$Shape; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "tradeComplete"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete: jpt.base.S2C_TradeComplete.$Shape; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "partyUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate: jpt.base.S2C_PartyUpdate.$Shape; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "partyInvite"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite: jpt.base.S2C_PartyInvite.$Shape; pong?: null; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "pong"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong: jpt.base.S2C_Pong.$Shape; error?: null; systemMessage?: null; disconnect?: null }|{ payload?: "error"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error: jpt.base.S2C_Error.$Shape; systemMessage?: null; disconnect?: null }|{ payload?: "systemMessage"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage: jpt.base.S2C_SystemMessage.$Shape; disconnect?: null }|{ payload?: "disconnect"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect: jpt.base.S2C_Disconnect.$Shape })
+             *   ({ payload?: undefined; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "loginResponse"; loginResponse: jpt.base.S2C_LoginResponse.$Shape; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "characterList"; loginResponse?: null; characterList: jpt.base.S2C_CharacterList.$Shape; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "createCharacterResult"; loginResponse?: null; characterList?: null; createCharacterResult: jpt.base.S2C_CreateCharacterResult.$Shape; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear: jpt.base.S2C_PlayerAppear.$Shape; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear: jpt.base.S2C_PlayerDisappear.$Shape; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerMove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove: jpt.base.S2C_PlayerMove.$Shape; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerState"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState: jpt.base.S2C_PlayerState.$Shape; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerDeath"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath: jpt.base.S2C_PlayerDeath.$Shape; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerRespawn"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn: jpt.base.S2C_PlayerRespawn.$Shape; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "enterGame"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame: jpt.base.S2C_EnterGame.$Shape; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "characterStatus"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus: jpt.base.S2C_CharacterStatus.$Shape; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "appearanceUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate: jpt.base.S2C_AppearanceUpdate.$Shape; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "mapSwitched"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched: jpt.base.S2C_MapSwitched.$Shape; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "playerTeleport"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport: jpt.base.S2C_PlayerTeleport.$Shape; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "monsterAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear: jpt.base.S2C_MonsterAppear.$Shape; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "monsterDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear: jpt.base.S2C_MonsterDisappear.$Shape; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "monsterMove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove: jpt.base.S2C_MonsterMove.$Shape; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "monsterState"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState: jpt.base.S2C_MonsterState.$Shape; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "monsterDeath"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath: jpt.base.S2C_MonsterDeath.$Shape; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "npcAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear: jpt.base.S2C_NpcAppear.$Shape; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "npcDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear: jpt.base.S2C_NpcDisappear.$Shape; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "shopOpen"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen: jpt.base.S2C_ShopOpen.$Shape; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "attackResult"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult: jpt.base.S2C_AttackResult.$Shape; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "skillAttack"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack: jpt.base.S2C_SkillAttack.$Shape; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "aoeAttack"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack: jpt.base.S2C_AoeAttack.$Shape; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "damage"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage: jpt.base.S2C_Damage.$Shape; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "heal"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal: jpt.base.S2C_Heal.$Shape; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "buffApply"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply: jpt.base.S2C_BuffApply.$Shape; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "buffRemove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove: jpt.base.S2C_BuffRemove.$Shape; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "attackStart"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart: jpt.base.S2C_AttackStart.$Shape; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "attackPlan"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan: jpt.base.S2C_AttackPlan.$Shape; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "inventorySnapshot"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot: jpt.base.S2C_InventorySnapshot.$Shape; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "itemUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate: jpt.base.S2C_ItemUpdate.$Shape; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "itemRemove"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove: jpt.base.S2C_ItemRemove.$Shape; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "itemUse"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse: jpt.base.S2C_ItemUse.$Shape; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "goldChange"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange: jpt.base.S2C_GoldChange.$Shape; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "groundItemAppear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear: jpt.base.S2C_GroundItemAppear.$Shape; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "groundItemDisappear"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear: jpt.base.S2C_GroundItemDisappear.$Shape; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "itemRemovedUids"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids: jpt.base.S2C_ItemRemovedUids.$Shape; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "chat"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat: jpt.base.S2C_Chat.$Shape; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "tradeRequest"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest: jpt.base.S2C_TradeRequest.$Shape; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "tradeOpen"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen: jpt.base.S2C_TradeOpen.$Shape; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "tradeUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate: jpt.base.S2C_TradeUpdate.$Shape; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "tradeComplete"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete: jpt.base.S2C_TradeComplete.$Shape; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "partyUpdate"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate: jpt.base.S2C_PartyUpdate.$Shape; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "partyInvite"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite: jpt.base.S2C_PartyInvite.$Shape; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "pong"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong: jpt.base.S2C_Pong.$Shape; error?: null; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "error"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error: jpt.base.S2C_Error.$Shape; systemMessage?: null; disconnect?: null; batch?: null }|{ payload?: "systemMessage"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage: jpt.base.S2C_SystemMessage.$Shape; disconnect?: null; batch?: null }|{ payload?: "disconnect"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect: jpt.base.S2C_Disconnect.$Shape; batch?: null }|{ payload?: "batch"; loginResponse?: null; characterList?: null; createCharacterResult?: null; playerAppear?: null; playerDisappear?: null; playerMove?: null; playerState?: null; playerDeath?: null; playerRespawn?: null; enterGame?: null; characterStatus?: null; appearanceUpdate?: null; mapSwitched?: null; playerTeleport?: null; monsterAppear?: null; monsterDisappear?: null; monsterMove?: null; monsterState?: null; monsterDeath?: null; npcAppear?: null; npcDisappear?: null; shopOpen?: null; attackResult?: null; skillAttack?: null; aoeAttack?: null; damage?: null; heal?: null; buffApply?: null; buffRemove?: null; attackStart?: null; attackPlan?: null; inventorySnapshot?: null; itemUpdate?: null; itemRemove?: null; itemUse?: null; goldChange?: null; groundItemAppear?: null; groundItemDisappear?: null; itemRemovedUids?: null; chat?: null; tradeRequest?: null; tradeOpen?: null; tradeUpdate?: null; tradeComplete?: null; partyUpdate?: null; partyInvite?: null; pong?: null; error?: null; systemMessage?: null; disconnect?: null; batch: jpt.base.S2C_Batch.$Shape })
              * )} jpt.base.ServerMessage.$Shape
              */
 
@@ -1921,6 +2042,14 @@ export const jpt = $root.jpt = (() => {
              * @instance
              */
             ServerMessage.prototype.npcDisappear = null;
+
+            /**
+             * ServerMessage shopOpen.
+             * @member {jpt.base.S2C_ShopOpen.$Properties|null|undefined} shopOpen
+             * @memberof jpt.base.ServerMessage
+             * @instance
+             */
+            ServerMessage.prototype.shopOpen = null;
 
             /**
              * ServerMessage attackResult.
@@ -2146,17 +2275,25 @@ export const jpt = $root.jpt = (() => {
              */
             ServerMessage.prototype.disconnect = null;
 
+            /**
+             * ServerMessage batch.
+             * @member {jpt.base.S2C_Batch.$Properties|null|undefined} batch
+             * @memberof jpt.base.ServerMessage
+             * @instance
+             */
+            ServerMessage.prototype.batch = null;
+
             // OneOf field names bound to virtual getters and setters
             let $oneOfFields;
 
             /**
              * ServerMessage payload.
-             * @member {"loginResponse"|"characterList"|"createCharacterResult"|"playerAppear"|"playerDisappear"|"playerMove"|"playerState"|"playerDeath"|"playerRespawn"|"enterGame"|"characterStatus"|"appearanceUpdate"|"mapSwitched"|"playerTeleport"|"monsterAppear"|"monsterDisappear"|"monsterMove"|"monsterState"|"monsterDeath"|"npcAppear"|"npcDisappear"|"attackResult"|"skillAttack"|"aoeAttack"|"damage"|"heal"|"buffApply"|"buffRemove"|"attackStart"|"attackPlan"|"inventorySnapshot"|"itemUpdate"|"itemRemove"|"itemUse"|"goldChange"|"groundItemAppear"|"groundItemDisappear"|"itemRemovedUids"|"chat"|"tradeRequest"|"tradeOpen"|"tradeUpdate"|"tradeComplete"|"partyUpdate"|"partyInvite"|"pong"|"error"|"systemMessage"|"disconnect"|undefined} payload
+             * @member {"loginResponse"|"characterList"|"createCharacterResult"|"playerAppear"|"playerDisappear"|"playerMove"|"playerState"|"playerDeath"|"playerRespawn"|"enterGame"|"characterStatus"|"appearanceUpdate"|"mapSwitched"|"playerTeleport"|"monsterAppear"|"monsterDisappear"|"monsterMove"|"monsterState"|"monsterDeath"|"npcAppear"|"npcDisappear"|"shopOpen"|"attackResult"|"skillAttack"|"aoeAttack"|"damage"|"heal"|"buffApply"|"buffRemove"|"attackStart"|"attackPlan"|"inventorySnapshot"|"itemUpdate"|"itemRemove"|"itemUse"|"goldChange"|"groundItemAppear"|"groundItemDisappear"|"itemRemovedUids"|"chat"|"tradeRequest"|"tradeOpen"|"tradeUpdate"|"tradeComplete"|"partyUpdate"|"partyInvite"|"pong"|"error"|"systemMessage"|"disconnect"|"batch"|undefined} payload
              * @memberof jpt.base.ServerMessage
              * @instance
              */
             $Object.defineProperty(ServerMessage.prototype, "payload", {
-                get: $util.oneOfGetter($oneOfFields = ["loginResponse", "characterList", "createCharacterResult", "playerAppear", "playerDisappear", "playerMove", "playerState", "playerDeath", "playerRespawn", "enterGame", "characterStatus", "appearanceUpdate", "mapSwitched", "playerTeleport", "monsterAppear", "monsterDisappear", "monsterMove", "monsterState", "monsterDeath", "npcAppear", "npcDisappear", "attackResult", "skillAttack", "aoeAttack", "damage", "heal", "buffApply", "buffRemove", "attackStart", "attackPlan", "inventorySnapshot", "itemUpdate", "itemRemove", "itemUse", "goldChange", "groundItemAppear", "groundItemDisappear", "itemRemovedUids", "chat", "tradeRequest", "tradeOpen", "tradeUpdate", "tradeComplete", "partyUpdate", "partyInvite", "pong", "error", "systemMessage", "disconnect"]),
+                get: $util.oneOfGetter($oneOfFields = ["loginResponse", "characterList", "createCharacterResult", "playerAppear", "playerDisappear", "playerMove", "playerState", "playerDeath", "playerRespawn", "enterGame", "characterStatus", "appearanceUpdate", "mapSwitched", "playerTeleport", "monsterAppear", "monsterDisappear", "monsterMove", "monsterState", "monsterDeath", "npcAppear", "npcDisappear", "shopOpen", "attackResult", "skillAttack", "aoeAttack", "damage", "heal", "buffApply", "buffRemove", "attackStart", "attackPlan", "inventorySnapshot", "itemUpdate", "itemRemove", "itemUse", "goldChange", "groundItemAppear", "groundItemDisappear", "itemRemovedUids", "chat", "tradeRequest", "tradeOpen", "tradeUpdate", "tradeComplete", "partyUpdate", "partyInvite", "pong", "error", "systemMessage", "disconnect", "batch"]),
                 set: $util.oneOfSetter($oneOfFields)
             });
 
@@ -2234,6 +2371,8 @@ export const jpt = $root.jpt = (() => {
                     $root.jpt.base.S2C_NpcAppear.encode(message.npcAppear, writer.uint32(/* id 350, wireType 2 =*/2802).fork(), _depth + 1).ldelim();
                 if (message.npcDisappear != null && $Object.hasOwnProperty.call(message, "npcDisappear"))
                     $root.jpt.base.S2C_NpcDisappear.encode(message.npcDisappear, writer.uint32(/* id 351, wireType 2 =*/2810).fork(), _depth + 1).ldelim();
+                if (message.shopOpen != null && $Object.hasOwnProperty.call(message, "shopOpen"))
+                    $root.jpt.base.S2C_ShopOpen.encode(message.shopOpen, writer.uint32(/* id 352, wireType 2 =*/2818).fork(), _depth + 1).ldelim();
                 if (message.attackResult != null && $Object.hasOwnProperty.call(message, "attackResult"))
                     $root.jpt.base.S2C_AttackResult.encode(message.attackResult, writer.uint32(/* id 400, wireType 2 =*/3202).fork(), _depth + 1).ldelim();
                 if (message.skillAttack != null && $Object.hasOwnProperty.call(message, "skillAttack"))
@@ -2290,6 +2429,8 @@ export const jpt = $root.jpt = (() => {
                     $root.jpt.base.S2C_SystemMessage.encode(message.systemMessage, writer.uint32(/* id 902, wireType 2 =*/7218).fork(), _depth + 1).ldelim();
                 if (message.disconnect != null && $Object.hasOwnProperty.call(message, "disconnect"))
                     $root.jpt.base.S2C_Disconnect.encode(message.disconnect, writer.uint32(/* id 903, wireType 2 =*/7226).fork(), _depth + 1).ldelim();
+                if (message.batch != null && $Object.hasOwnProperty.call(message, "batch"))
+                    $root.jpt.base.S2C_Batch.encode(message.batch, writer.uint32(/* id 910, wireType 2 =*/7282).fork(), _depth + 1).ldelim();
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -2494,6 +2635,13 @@ export const jpt = $root.jpt = (() => {
                             message.payload = "npcDisappear";
                             continue;
                         }
+                    case 352: {
+                            if (wireType !== 2)
+                                break;
+                            message.shopOpen = $root.jpt.base.S2C_ShopOpen.decode(reader, reader.uint32(), $undefined, _depth + 1, message.shopOpen);
+                            message.payload = "shopOpen";
+                            continue;
+                        }
                     case 400: {
                             if (wireType !== 2)
                                 break;
@@ -2688,6 +2836,13 @@ export const jpt = $root.jpt = (() => {
                                 break;
                             message.disconnect = $root.jpt.base.S2C_Disconnect.decode(reader, reader.uint32(), $undefined, _depth + 1, message.disconnect);
                             message.payload = "disconnect";
+                            continue;
+                        }
+                    case 910: {
+                            if (wireType !== 2)
+                                break;
+                            message.batch = $root.jpt.base.S2C_Batch.decode(reader, reader.uint32(), $undefined, _depth + 1, message.batch);
+                            message.payload = "batch";
                             continue;
                         }
                     }
@@ -2945,6 +3100,16 @@ export const jpt = $root.jpt = (() => {
                         let error = $root.jpt.base.S2C_NpcDisappear.verify(message.npcDisappear, _depth + 1);
                         if (error)
                             return "npcDisappear." + error;
+                    }
+                }
+                if (message.shopOpen != null && $Object.hasOwnProperty.call(message, "shopOpen")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.S2C_ShopOpen.verify(message.shopOpen, _depth + 1);
+                        if (error)
+                            return "shopOpen." + error;
                     }
                 }
                 if (message.attackResult != null && $Object.hasOwnProperty.call(message, "attackResult")) {
@@ -3227,6 +3392,16 @@ export const jpt = $root.jpt = (() => {
                             return "disconnect." + error;
                     }
                 }
+                if (message.batch != null && $Object.hasOwnProperty.call(message, "batch")) {
+                    if (properties.payload === 1)
+                        return "payload: multiple values";
+                    properties.payload = 1;
+                    {
+                        let error = $root.jpt.base.S2C_Batch.verify(message.batch, _depth + 1);
+                        if (error)
+                            return "batch." + error;
+                    }
+                }
                 return null;
             };
 
@@ -3352,6 +3527,11 @@ export const jpt = $root.jpt = (() => {
                     if (!$util.isObject(object.npcDisappear))
                         throw $TypeError(".jpt.base.ServerMessage.npcDisappear: object expected");
                     message.npcDisappear = $root.jpt.base.S2C_NpcDisappear.fromObject(object.npcDisappear, _depth + 1);
+                }
+                if (object.shopOpen != null) {
+                    if (!$util.isObject(object.shopOpen))
+                        throw $TypeError(".jpt.base.ServerMessage.shopOpen: object expected");
+                    message.shopOpen = $root.jpt.base.S2C_ShopOpen.fromObject(object.shopOpen, _depth + 1);
                 }
                 if (object.attackResult != null) {
                     if (!$util.isObject(object.attackResult))
@@ -3493,6 +3673,11 @@ export const jpt = $root.jpt = (() => {
                         throw $TypeError(".jpt.base.ServerMessage.disconnect: object expected");
                     message.disconnect = $root.jpt.base.S2C_Disconnect.fromObject(object.disconnect, _depth + 1);
                 }
+                if (object.batch != null) {
+                    if (!$util.isObject(object.batch))
+                        throw $TypeError(".jpt.base.ServerMessage.batch: object expected");
+                    message.batch = $root.jpt.base.S2C_Batch.fromObject(object.batch, _depth + 1);
+                }
                 return message;
             };
 
@@ -3617,6 +3802,11 @@ export const jpt = $root.jpt = (() => {
                     object.npcDisappear = $root.jpt.base.S2C_NpcDisappear.toObject(message.npcDisappear, options, _depth + 1);
                     if (options.oneofs)
                         object.payload = "npcDisappear";
+                }
+                if (message.shopOpen != null && $Object.hasOwnProperty.call(message, "shopOpen")) {
+                    object.shopOpen = $root.jpt.base.S2C_ShopOpen.toObject(message.shopOpen, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "shopOpen";
                 }
                 if (message.attackResult != null && $Object.hasOwnProperty.call(message, "attackResult")) {
                     object.attackResult = $root.jpt.base.S2C_AttackResult.toObject(message.attackResult, options, _depth + 1);
@@ -3758,6 +3948,11 @@ export const jpt = $root.jpt = (() => {
                     if (options.oneofs)
                         object.payload = "disconnect";
                 }
+                if (message.batch != null && $Object.hasOwnProperty.call(message, "batch")) {
+                    object.batch = $root.jpt.base.S2C_Batch.toObject(message.batch, options, _depth + 1);
+                    if (options.oneofs)
+                        object.payload = "batch";
+                }
                 return object;
             };
 
@@ -3787,6 +3982,313 @@ export const jpt = $root.jpt = (() => {
             };
 
             return ServerMessage;
+        })();
+
+        base.S2C_Batch = (function() {
+
+            /**
+             * Properties of a S2C_Batch.
+             * @typedef {Object} jpt.base.S2C_Batch.$Properties
+             * @property {Array.<jpt.base.ServerMessage.$Properties>|null} [messages] S2C_Batch messages
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a S2C_Batch.
+             * @memberof jpt.base
+             * @interface IS2C_Batch
+             * @augments jpt.base.S2C_Batch.$Properties
+             * @deprecated Use jpt.base.S2C_Batch.$Properties instead.
+             */
+
+            /**
+             * Shape of a S2C_Batch.
+             * @typedef {{
+             *   messages?: Array.<jpt.base.ServerMessage.$Shape>|null;
+             *   $unknowns?: Array.<Uint8Array>;
+             * }} jpt.base.S2C_Batch.$Shape
+             */
+
+            /**
+             * Constructs a new S2C_Batch.
+             * @memberof jpt.base
+             * @classdesc 传输层合批信封（服务端 → 客户端）。
+             * 
+             * 存在理由：服务端主循环每 tick(20Hz) 会产生大量"逐条 send"的小消息（怪物移动、玩家移动、
+             * 伤害、聊天广播…）。原来每条消息各自编码、各自写一次 channel（= 一个 WS 帧），玩家一多、
+             * 怪一多就变成"同一份数据被编码 N 次、发送 N 次"。现在同一 tick 内发给**同一个玩家**的消息
+             * 先入队，tick 末尾一次编码、一次 writeAndFlush。
+             * 
+             * 约束：
+             * - **只有服务端构造**，且**只包一层**（batch 里不会再套 batch）。
+             * - 客户端收到后逐条派发到各自的处理路径 —— 下游（bridge/WorldView）完全不知道合批的存在，
+             * 行为与逐条发送一模一样。
+             * - 少数"必须立刻发"的消息不走信封（pong 要算 RTT、登录/选角/建角是请求-响应、disconnect 不能等），
+             * 见 `PlayerSession.isImmediate`。
+             * @constructor
+             * @param {jpt.base.S2C_Batch.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const S2C_Batch = function (properties) {
+                this.messages = [];
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * S2C_Batch messages.
+             * @member {Array.<jpt.base.ServerMessage.$Properties>} messages
+             * @memberof jpt.base.S2C_Batch
+             * @instance
+             */
+            S2C_Batch.prototype.messages = $util.emptyArray;
+
+            /**
+             * Creates a new S2C_Batch instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {jpt.base.S2C_Batch.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.S2C_Batch} S2C_Batch instance
+             * @type {{
+             *   (properties: jpt.base.S2C_Batch.$Shape): jpt.base.S2C_Batch & jpt.base.S2C_Batch.$Shape;
+             *   (properties?: jpt.base.S2C_Batch.$Properties): jpt.base.S2C_Batch;
+             * }}
+             */
+            S2C_Batch.create = function(properties) {
+                return new S2C_Batch(properties);
+            };
+
+            /**
+             * Encodes the specified S2C_Batch message. Does not implicitly {@link jpt.base.S2C_Batch.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {jpt.base.S2C_Batch.$Properties} message S2C_Batch message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            S2C_Batch.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.messages != null && message.messages.length)
+                    for (let i = 0; i < message.messages.length; ++i)
+                        $root.jpt.base.ServerMessage.encode(message.messages[i], writer.uint32(/* id 1, wireType 2 =*/10).fork(), _depth + 1).ldelim();
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified S2C_Batch message, length delimited. Does not implicitly {@link jpt.base.S2C_Batch.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {jpt.base.S2C_Batch.$Properties} message S2C_Batch message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            S2C_Batch.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a S2C_Batch message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.S2C_Batch & jpt.base.S2C_Batch.$Shape} S2C_Batch
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            S2C_Batch.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.S2C_Batch();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 2)
+                                break;
+                            if (!(message.messages && message.messages.length))
+                                message.messages = [];
+                            message.messages.push($root.jpt.base.ServerMessage.decode(reader, reader.uint32(), $undefined, _depth + 1));
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a S2C_Batch message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.S2C_Batch & jpt.base.S2C_Batch.$Shape} S2C_Batch
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            S2C_Batch.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a S2C_Batch message.
+             * @function verify
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            S2C_Batch.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.messages != null && $Object.hasOwnProperty.call(message, "messages")) {
+                    if (!$Array.isArray(message.messages))
+                        return "messages: array expected";
+                    for (let i = 0; i < message.messages.length; ++i) {
+                        let error = $root.jpt.base.ServerMessage.verify(message.messages[i], _depth + 1);
+                        if (error)
+                            return "messages." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a S2C_Batch message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.S2C_Batch} S2C_Batch
+             */
+            S2C_Batch.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.S2C_Batch)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.S2C_Batch: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.S2C_Batch();
+                if (object.messages) {
+                    if (!$Array.isArray(object.messages))
+                        throw $TypeError(".jpt.base.S2C_Batch.messages: array expected");
+                    message.messages = $Array(object.messages.length);
+                    for (let i = 0; i < object.messages.length; ++i) {
+                        if (!$util.isObject(object.messages[i]))
+                            throw $TypeError(".jpt.base.S2C_Batch.messages: object expected");
+                        message.messages[i] = $root.jpt.base.ServerMessage.fromObject(object.messages[i], _depth + 1);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a S2C_Batch message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {jpt.base.S2C_Batch} message S2C_Batch
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            S2C_Batch.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.messages = [];
+                if (message.messages && message.messages.length) {
+                    object.messages = $Array(message.messages.length);
+                    for (let j = 0; j < message.messages.length; ++j)
+                        object.messages[j] = $root.jpt.base.ServerMessage.toObject(message.messages[j], options, _depth + 1);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this S2C_Batch to JSON.
+             * @function toJSON
+             * @memberof jpt.base.S2C_Batch
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            S2C_Batch.prototype.toJSON = function() {
+                return S2C_Batch.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for S2C_Batch
+             * @function getTypeUrl
+             * @memberof jpt.base.S2C_Batch
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            S2C_Batch.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.S2C_Batch";
+            };
+
+            return S2C_Batch;
         })();
 
         base.C2S_LoginRequest = (function() {
@@ -36086,6 +36588,1789 @@ export const jpt = $root.jpt = (() => {
             return S2C_Disconnect;
         })();
 
+        base.C2S_NpcInteract = (function() {
+
+            /**
+             * Properties of a C2S_NpcInteract.
+             * @typedef {Object} jpt.base.C2S_NpcInteract.$Properties
+             * @property {number|Long|null} [npcId] C2S_NpcInteract npcId
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a C2S_NpcInteract.
+             * @memberof jpt.base
+             * @interface IC2S_NpcInteract
+             * @augments jpt.base.C2S_NpcInteract.$Properties
+             * @deprecated Use jpt.base.C2S_NpcInteract.$Properties instead.
+             */
+
+            /**
+             * Shape of a C2S_NpcInteract.
+             * @typedef {jpt.base.C2S_NpcInteract.$Properties} jpt.base.C2S_NpcInteract.$Shape
+             */
+
+            /**
+             * Constructs a new C2S_NpcInteract.
+             * @memberof jpt.base
+             * @classdesc Represents a C2S_NpcInteract.
+             * @constructor
+             * @param {jpt.base.C2S_NpcInteract.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const C2S_NpcInteract = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * C2S_NpcInteract npcId.
+             * @member {number|Long} npcId
+             * @memberof jpt.base.C2S_NpcInteract
+             * @instance
+             */
+            C2S_NpcInteract.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * Creates a new C2S_NpcInteract instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {jpt.base.C2S_NpcInteract.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.C2S_NpcInteract} C2S_NpcInteract instance
+             * @type {{
+             *   (properties: jpt.base.C2S_NpcInteract.$Shape): jpt.base.C2S_NpcInteract & jpt.base.C2S_NpcInteract.$Shape;
+             *   (properties?: jpt.base.C2S_NpcInteract.$Properties): jpt.base.C2S_NpcInteract;
+             * }}
+             */
+            C2S_NpcInteract.create = function(properties) {
+                return new C2S_NpcInteract(properties);
+            };
+
+            /**
+             * Encodes the specified C2S_NpcInteract message. Does not implicitly {@link jpt.base.C2S_NpcInteract.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {jpt.base.C2S_NpcInteract.$Properties} message C2S_NpcInteract message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_NpcInteract.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified C2S_NpcInteract message, length delimited. Does not implicitly {@link jpt.base.C2S_NpcInteract.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {jpt.base.C2S_NpcInteract.$Properties} message C2S_NpcInteract message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_NpcInteract.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a C2S_NpcInteract message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.C2S_NpcInteract & jpt.base.C2S_NpcInteract.$Shape} C2S_NpcInteract
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_NpcInteract.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.C2S_NpcInteract();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.npcId = value;
+                            else
+                                delete message.npcId;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a C2S_NpcInteract message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.C2S_NpcInteract & jpt.base.C2S_NpcInteract.$Shape} C2S_NpcInteract
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_NpcInteract.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a C2S_NpcInteract message.
+             * @function verify
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            C2S_NpcInteract.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
+                        return "npcId: integer|Long expected";
+                return null;
+            };
+
+            /**
+             * Creates a C2S_NpcInteract message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.C2S_NpcInteract} C2S_NpcInteract
+             */
+            C2S_NpcInteract.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.C2S_NpcInteract)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.C2S_NpcInteract: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.C2S_NpcInteract();
+                if (object.npcId != null)
+                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                        if ($util.Long)
+                            message.npcId = $util.Long.fromValue(object.npcId, false);
+                        else if (typeof object.npcId === "string")
+                            message.npcId = $parseInt(object.npcId, 10);
+                        else if (typeof object.npcId === "number")
+                            message.npcId = object.npcId;
+                        else if (typeof object.npcId === "object")
+                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a C2S_NpcInteract message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {jpt.base.C2S_NpcInteract} message C2S_NpcInteract
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            C2S_NpcInteract.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults)
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
+                    else if (typeof message.npcId === "number")
+                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                    else
+                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                return object;
+            };
+
+            /**
+             * Converts this C2S_NpcInteract to JSON.
+             * @function toJSON
+             * @memberof jpt.base.C2S_NpcInteract
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            C2S_NpcInteract.prototype.toJSON = function() {
+                return C2S_NpcInteract.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for C2S_NpcInteract
+             * @function getTypeUrl
+             * @memberof jpt.base.C2S_NpcInteract
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            C2S_NpcInteract.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.C2S_NpcInteract";
+            };
+
+            return C2S_NpcInteract;
+        })();
+
+        base.C2S_ShopBuy = (function() {
+
+            /**
+             * Properties of a C2S_ShopBuy.
+             * @typedef {Object} jpt.base.C2S_ShopBuy.$Properties
+             * @property {number|Long|null} [npcId] C2S_ShopBuy npcId
+             * @property {number|null} [itemlistId] C2S_ShopBuy itemlistId
+             * @property {number|null} [count] C2S_ShopBuy count
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a C2S_ShopBuy.
+             * @memberof jpt.base
+             * @interface IC2S_ShopBuy
+             * @augments jpt.base.C2S_ShopBuy.$Properties
+             * @deprecated Use jpt.base.C2S_ShopBuy.$Properties instead.
+             */
+
+            /**
+             * Shape of a C2S_ShopBuy.
+             * @typedef {jpt.base.C2S_ShopBuy.$Properties} jpt.base.C2S_ShopBuy.$Shape
+             */
+
+            /**
+             * Constructs a new C2S_ShopBuy.
+             * @memberof jpt.base
+             * @classdesc Represents a C2S_ShopBuy.
+             * @constructor
+             * @param {jpt.base.C2S_ShopBuy.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const C2S_ShopBuy = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * C2S_ShopBuy npcId.
+             * @member {number|Long} npcId
+             * @memberof jpt.base.C2S_ShopBuy
+             * @instance
+             */
+            C2S_ShopBuy.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * C2S_ShopBuy itemlistId.
+             * @member {number} itemlistId
+             * @memberof jpt.base.C2S_ShopBuy
+             * @instance
+             */
+            C2S_ShopBuy.prototype.itemlistId = 0;
+
+            /**
+             * C2S_ShopBuy count.
+             * @member {number} count
+             * @memberof jpt.base.C2S_ShopBuy
+             * @instance
+             */
+            C2S_ShopBuy.prototype.count = 0;
+
+            /**
+             * Creates a new C2S_ShopBuy instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {jpt.base.C2S_ShopBuy.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.C2S_ShopBuy} C2S_ShopBuy instance
+             * @type {{
+             *   (properties: jpt.base.C2S_ShopBuy.$Shape): jpt.base.C2S_ShopBuy & jpt.base.C2S_ShopBuy.$Shape;
+             *   (properties?: jpt.base.C2S_ShopBuy.$Properties): jpt.base.C2S_ShopBuy;
+             * }}
+             */
+            C2S_ShopBuy.create = function(properties) {
+                return new C2S_ShopBuy(properties);
+            };
+
+            /**
+             * Encodes the specified C2S_ShopBuy message. Does not implicitly {@link jpt.base.C2S_ShopBuy.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {jpt.base.C2S_ShopBuy.$Properties} message C2S_ShopBuy message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_ShopBuy.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId") && message.itemlistId !== 0)
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.itemlistId);
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count") && message.count !== 0)
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.count);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified C2S_ShopBuy message, length delimited. Does not implicitly {@link jpt.base.C2S_ShopBuy.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {jpt.base.C2S_ShopBuy.$Properties} message C2S_ShopBuy message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_ShopBuy.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a C2S_ShopBuy message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.C2S_ShopBuy & jpt.base.C2S_ShopBuy.$Shape} C2S_ShopBuy
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_ShopBuy.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.C2S_ShopBuy();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.npcId = value;
+                            else
+                                delete message.npcId;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.itemlistId = value;
+                            else
+                                delete message.itemlistId;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.count = value;
+                            else
+                                delete message.count;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a C2S_ShopBuy message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.C2S_ShopBuy & jpt.base.C2S_ShopBuy.$Shape} C2S_ShopBuy
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_ShopBuy.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a C2S_ShopBuy message.
+             * @function verify
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            C2S_ShopBuy.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
+                        return "npcId: integer|Long expected";
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
+                    if (!$util.isInteger(message.itemlistId))
+                        return "itemlistId: integer expected";
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
+                    if (!$util.isInteger(message.count))
+                        return "count: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a C2S_ShopBuy message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.C2S_ShopBuy} C2S_ShopBuy
+             */
+            C2S_ShopBuy.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.C2S_ShopBuy)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.C2S_ShopBuy: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.C2S_ShopBuy();
+                if (object.npcId != null)
+                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                        if ($util.Long)
+                            message.npcId = $util.Long.fromValue(object.npcId, false);
+                        else if (typeof object.npcId === "string")
+                            message.npcId = $parseInt(object.npcId, 10);
+                        else if (typeof object.npcId === "number")
+                            message.npcId = object.npcId;
+                        else if (typeof object.npcId === "object")
+                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                if (object.itemlistId != null)
+                    if ($Number(object.itemlistId) !== 0)
+                        message.itemlistId = object.itemlistId | 0;
+                if (object.count != null)
+                    if ($Number(object.count) !== 0)
+                        message.count = object.count | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a C2S_ShopBuy message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {jpt.base.C2S_ShopBuy} message C2S_ShopBuy
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            C2S_ShopBuy.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults) {
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.itemlistId = 0;
+                    object.count = 0;
+                }
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
+                    else if (typeof message.npcId === "number")
+                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                    else
+                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
+                    object.itemlistId = message.itemlistId;
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
+                    object.count = message.count;
+                return object;
+            };
+
+            /**
+             * Converts this C2S_ShopBuy to JSON.
+             * @function toJSON
+             * @memberof jpt.base.C2S_ShopBuy
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            C2S_ShopBuy.prototype.toJSON = function() {
+                return C2S_ShopBuy.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for C2S_ShopBuy
+             * @function getTypeUrl
+             * @memberof jpt.base.C2S_ShopBuy
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            C2S_ShopBuy.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.C2S_ShopBuy";
+            };
+
+            return C2S_ShopBuy;
+        })();
+
+        base.C2S_ShopSell = (function() {
+
+            /**
+             * Properties of a C2S_ShopSell.
+             * @typedef {Object} jpt.base.C2S_ShopSell.$Properties
+             * @property {number|Long|null} [npcId] C2S_ShopSell npcId
+             * @property {number|Long|null} [uid] C2S_ShopSell uid
+             * @property {number|null} [count] C2S_ShopSell count
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a C2S_ShopSell.
+             * @memberof jpt.base
+             * @interface IC2S_ShopSell
+             * @augments jpt.base.C2S_ShopSell.$Properties
+             * @deprecated Use jpt.base.C2S_ShopSell.$Properties instead.
+             */
+
+            /**
+             * Shape of a C2S_ShopSell.
+             * @typedef {jpt.base.C2S_ShopSell.$Properties} jpt.base.C2S_ShopSell.$Shape
+             */
+
+            /**
+             * Constructs a new C2S_ShopSell.
+             * @memberof jpt.base
+             * @classdesc Represents a C2S_ShopSell.
+             * @constructor
+             * @param {jpt.base.C2S_ShopSell.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const C2S_ShopSell = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * C2S_ShopSell npcId.
+             * @member {number|Long} npcId
+             * @memberof jpt.base.C2S_ShopSell
+             * @instance
+             */
+            C2S_ShopSell.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * C2S_ShopSell uid.
+             * @member {number|Long} uid
+             * @memberof jpt.base.C2S_ShopSell
+             * @instance
+             */
+            C2S_ShopSell.prototype.uid = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * C2S_ShopSell count.
+             * @member {number} count
+             * @memberof jpt.base.C2S_ShopSell
+             * @instance
+             */
+            C2S_ShopSell.prototype.count = 0;
+
+            /**
+             * Creates a new C2S_ShopSell instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {jpt.base.C2S_ShopSell.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.C2S_ShopSell} C2S_ShopSell instance
+             * @type {{
+             *   (properties: jpt.base.C2S_ShopSell.$Shape): jpt.base.C2S_ShopSell & jpt.base.C2S_ShopSell.$Shape;
+             *   (properties?: jpt.base.C2S_ShopSell.$Properties): jpt.base.C2S_ShopSell;
+             * }}
+             */
+            C2S_ShopSell.create = function(properties) {
+                return new C2S_ShopSell(properties);
+            };
+
+            /**
+             * Encodes the specified C2S_ShopSell message. Does not implicitly {@link jpt.base.C2S_ShopSell.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {jpt.base.C2S_ShopSell.$Properties} message C2S_ShopSell message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_ShopSell.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.uid != null && $Object.hasOwnProperty.call(message, "uid") && (typeof message.uid === "object" ? message.uid.low || message.uid.high : message.uid !== 0))
+                    writer.uint32(/* id 2, wireType 0 =*/16).int64(message.uid);
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count") && message.count !== 0)
+                    writer.uint32(/* id 3, wireType 0 =*/24).int32(message.count);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified C2S_ShopSell message, length delimited. Does not implicitly {@link jpt.base.C2S_ShopSell.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {jpt.base.C2S_ShopSell.$Properties} message C2S_ShopSell message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            C2S_ShopSell.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a C2S_ShopSell message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.C2S_ShopSell & jpt.base.C2S_ShopSell.$Shape} C2S_ShopSell
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_ShopSell.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.C2S_ShopSell();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.npcId = value;
+                            else
+                                delete message.npcId;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.uid = value;
+                            else
+                                delete message.uid;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.count = value;
+                            else
+                                delete message.count;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a C2S_ShopSell message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.C2S_ShopSell & jpt.base.C2S_ShopSell.$Shape} C2S_ShopSell
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            C2S_ShopSell.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a C2S_ShopSell message.
+             * @function verify
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            C2S_ShopSell.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
+                        return "npcId: integer|Long expected";
+                if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
+                    if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
+                        return "uid: integer|Long expected";
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
+                    if (!$util.isInteger(message.count))
+                        return "count: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a C2S_ShopSell message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.C2S_ShopSell} C2S_ShopSell
+             */
+            C2S_ShopSell.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.C2S_ShopSell)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.C2S_ShopSell: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.C2S_ShopSell();
+                if (object.npcId != null)
+                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                        if ($util.Long)
+                            message.npcId = $util.Long.fromValue(object.npcId, false);
+                        else if (typeof object.npcId === "string")
+                            message.npcId = $parseInt(object.npcId, 10);
+                        else if (typeof object.npcId === "number")
+                            message.npcId = object.npcId;
+                        else if (typeof object.npcId === "object")
+                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                if (object.uid != null)
+                    if (typeof object.uid === "object" ? object.uid.low || object.uid.high : $Number(object.uid) !== 0)
+                        if ($util.Long)
+                            message.uid = $util.Long.fromValue(object.uid, false);
+                        else if (typeof object.uid === "string")
+                            message.uid = $parseInt(object.uid, 10);
+                        else if (typeof object.uid === "number")
+                            message.uid = object.uid;
+                        else if (typeof object.uid === "object")
+                            message.uid = new $util.LongBits(object.uid.low >>> 0, object.uid.high >>> 0).toNumber();
+                if (object.count != null)
+                    if ($Number(object.count) !== 0)
+                        message.count = object.count | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a C2S_ShopSell message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {jpt.base.C2S_ShopSell} message C2S_ShopSell
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            C2S_ShopSell.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults) {
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.uid = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.uid = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.count = 0;
+                }
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
+                    else if (typeof message.npcId === "number")
+                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                    else
+                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.uid = typeof message.uid === "number" ? $BigInt(message.uid) : $util.Long.fromBits(message.uid.low >>> 0, message.uid.high >>> 0, false).toBigInt();
+                    else if (typeof message.uid === "number")
+                        object.uid = options.longs === $String ? $String(message.uid) : message.uid;
+                    else
+                        object.uid = options.longs === $String ? $util.Long.prototype.toString.call(message.uid) : options.longs === $Number ? new $util.LongBits(message.uid.low >>> 0, message.uid.high >>> 0).toNumber() : message.uid;
+                if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
+                    object.count = message.count;
+                return object;
+            };
+
+            /**
+             * Converts this C2S_ShopSell to JSON.
+             * @function toJSON
+             * @memberof jpt.base.C2S_ShopSell
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            C2S_ShopSell.prototype.toJSON = function() {
+                return C2S_ShopSell.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for C2S_ShopSell
+             * @function getTypeUrl
+             * @memberof jpt.base.C2S_ShopSell
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            C2S_ShopSell.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.C2S_ShopSell";
+            };
+
+            return C2S_ShopSell;
+        })();
+
+        base.ShopItemProto = (function() {
+
+            /**
+             * Properties of a ShopItemProto.
+             * @typedef {Object} jpt.base.ShopItemProto.$Properties
+             * @property {number|null} [itemlistId] ShopItemProto itemlistId
+             * @property {string|null} [code] ShopItemProto code
+             * @property {string|null} [name] ShopItemProto name
+             * @property {number|Long|null} [price] ShopItemProto price
+             * @property {number|null} [kind] ShopItemProto kind
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a ShopItemProto.
+             * @memberof jpt.base
+             * @interface IShopItemProto
+             * @augments jpt.base.ShopItemProto.$Properties
+             * @deprecated Use jpt.base.ShopItemProto.$Properties instead.
+             */
+
+            /**
+             * Shape of a ShopItemProto.
+             * @typedef {jpt.base.ShopItemProto.$Properties} jpt.base.ShopItemProto.$Shape
+             */
+
+            /**
+             * Constructs a new ShopItemProto.
+             * @memberof jpt.base
+             * @classdesc Represents a ShopItemProto.
+             * @constructor
+             * @param {jpt.base.ShopItemProto.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const ShopItemProto = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * ShopItemProto itemlistId.
+             * @member {number} itemlistId
+             * @memberof jpt.base.ShopItemProto
+             * @instance
+             */
+            ShopItemProto.prototype.itemlistId = 0;
+
+            /**
+             * ShopItemProto code.
+             * @member {string} code
+             * @memberof jpt.base.ShopItemProto
+             * @instance
+             */
+            ShopItemProto.prototype.code = "";
+
+            /**
+             * ShopItemProto name.
+             * @member {string} name
+             * @memberof jpt.base.ShopItemProto
+             * @instance
+             */
+            ShopItemProto.prototype.name = "";
+
+            /**
+             * ShopItemProto price.
+             * @member {number|Long} price
+             * @memberof jpt.base.ShopItemProto
+             * @instance
+             */
+            ShopItemProto.prototype.price = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * ShopItemProto kind.
+             * @member {number} kind
+             * @memberof jpt.base.ShopItemProto
+             * @instance
+             */
+            ShopItemProto.prototype.kind = 0;
+
+            /**
+             * Creates a new ShopItemProto instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {jpt.base.ShopItemProto.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.ShopItemProto} ShopItemProto instance
+             * @type {{
+             *   (properties: jpt.base.ShopItemProto.$Shape): jpt.base.ShopItemProto & jpt.base.ShopItemProto.$Shape;
+             *   (properties?: jpt.base.ShopItemProto.$Properties): jpt.base.ShopItemProto;
+             * }}
+             */
+            ShopItemProto.create = function(properties) {
+                return new ShopItemProto(properties);
+            };
+
+            /**
+             * Encodes the specified ShopItemProto message. Does not implicitly {@link jpt.base.ShopItemProto.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {jpt.base.ShopItemProto.$Properties} message ShopItemProto message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ShopItemProto.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId") && message.itemlistId !== 0)
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.itemlistId);
+                if (message.code != null && $Object.hasOwnProperty.call(message, "code") && message.code !== "")
+                    writer.uint32(/* id 2, wireType 2 =*/18).string(message.code);
+                if (message.name != null && $Object.hasOwnProperty.call(message, "name") && message.name !== "")
+                    writer.uint32(/* id 3, wireType 2 =*/26).string(message.name);
+                if (message.price != null && $Object.hasOwnProperty.call(message, "price") && (typeof message.price === "object" ? message.price.low || message.price.high : message.price !== 0))
+                    writer.uint32(/* id 4, wireType 0 =*/32).int64(message.price);
+                if (message.kind != null && $Object.hasOwnProperty.call(message, "kind") && message.kind !== 0)
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.kind);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified ShopItemProto message, length delimited. Does not implicitly {@link jpt.base.ShopItemProto.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {jpt.base.ShopItemProto.$Properties} message ShopItemProto message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            ShopItemProto.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a ShopItemProto message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.ShopItemProto & jpt.base.ShopItemProto.$Shape} ShopItemProto
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ShopItemProto.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.ShopItemProto();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.itemlistId = value;
+                            else
+                                delete message.itemlistId;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.code = value;
+                            else
+                                delete message.code;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.name = value;
+                            else
+                                delete message.name;
+                            continue;
+                        }
+                    case 4: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.price = value;
+                            else
+                                delete message.price;
+                            continue;
+                        }
+                    case 5: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.kind = value;
+                            else
+                                delete message.kind;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a ShopItemProto message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.ShopItemProto & jpt.base.ShopItemProto.$Shape} ShopItemProto
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            ShopItemProto.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a ShopItemProto message.
+             * @function verify
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            ShopItemProto.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
+                    if (!$util.isInteger(message.itemlistId))
+                        return "itemlistId: integer expected";
+                if (message.code != null && $Object.hasOwnProperty.call(message, "code"))
+                    if (!$util.isString(message.code))
+                        return "code: string expected";
+                if (message.name != null && $Object.hasOwnProperty.call(message, "name"))
+                    if (!$util.isString(message.name))
+                        return "name: string expected";
+                if (message.price != null && $Object.hasOwnProperty.call(message, "price"))
+                    if (!$util.isInteger(message.price) && !(message.price && $util.isInteger(message.price.low) && $util.isInteger(message.price.high)))
+                        return "price: integer|Long expected";
+                if (message.kind != null && $Object.hasOwnProperty.call(message, "kind"))
+                    if (!$util.isInteger(message.kind))
+                        return "kind: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a ShopItemProto message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.ShopItemProto} ShopItemProto
+             */
+            ShopItemProto.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.ShopItemProto)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.ShopItemProto: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.ShopItemProto();
+                if (object.itemlistId != null)
+                    if ($Number(object.itemlistId) !== 0)
+                        message.itemlistId = object.itemlistId | 0;
+                if (object.code != null)
+                    if (typeof object.code !== "string" || object.code.length)
+                        message.code = $String(object.code);
+                if (object.name != null)
+                    if (typeof object.name !== "string" || object.name.length)
+                        message.name = $String(object.name);
+                if (object.price != null)
+                    if (typeof object.price === "object" ? object.price.low || object.price.high : $Number(object.price) !== 0)
+                        if ($util.Long)
+                            message.price = $util.Long.fromValue(object.price, false);
+                        else if (typeof object.price === "string")
+                            message.price = $parseInt(object.price, 10);
+                        else if (typeof object.price === "number")
+                            message.price = object.price;
+                        else if (typeof object.price === "object")
+                            message.price = new $util.LongBits(object.price.low >>> 0, object.price.high >>> 0).toNumber();
+                if (object.kind != null)
+                    if ($Number(object.kind) !== 0)
+                        message.kind = object.kind | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a ShopItemProto message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {jpt.base.ShopItemProto} message ShopItemProto
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            ShopItemProto.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults) {
+                    object.itemlistId = 0;
+                    object.code = "";
+                    object.name = "";
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.price = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.price = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.kind = 0;
+                }
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
+                    object.itemlistId = message.itemlistId;
+                if (message.code != null && $Object.hasOwnProperty.call(message, "code"))
+                    object.code = message.code;
+                if (message.name != null && $Object.hasOwnProperty.call(message, "name"))
+                    object.name = message.name;
+                if (message.price != null && $Object.hasOwnProperty.call(message, "price"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.price = typeof message.price === "number" ? $BigInt(message.price) : $util.Long.fromBits(message.price.low >>> 0, message.price.high >>> 0, false).toBigInt();
+                    else if (typeof message.price === "number")
+                        object.price = options.longs === $String ? $String(message.price) : message.price;
+                    else
+                        object.price = options.longs === $String ? $util.Long.prototype.toString.call(message.price) : options.longs === $Number ? new $util.LongBits(message.price.low >>> 0, message.price.high >>> 0).toNumber() : message.price;
+                if (message.kind != null && $Object.hasOwnProperty.call(message, "kind"))
+                    object.kind = message.kind;
+                return object;
+            };
+
+            /**
+             * Converts this ShopItemProto to JSON.
+             * @function toJSON
+             * @memberof jpt.base.ShopItemProto
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            ShopItemProto.prototype.toJSON = function() {
+                return ShopItemProto.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for ShopItemProto
+             * @function getTypeUrl
+             * @memberof jpt.base.ShopItemProto
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            ShopItemProto.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.ShopItemProto";
+            };
+
+            return ShopItemProto;
+        })();
+
+        base.S2C_ShopOpen = (function() {
+
+            /**
+             * Properties of a S2C_ShopOpen.
+             * @typedef {Object} jpt.base.S2C_ShopOpen.$Properties
+             * @property {number|Long|null} [npcId] S2C_ShopOpen npcId
+             * @property {number|null} [kind] S2C_ShopOpen kind
+             * @property {Array.<jpt.base.ShopItemProto.$Properties>|null} [items] S2C_ShopOpen items
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a S2C_ShopOpen.
+             * @memberof jpt.base
+             * @interface IS2C_ShopOpen
+             * @augments jpt.base.S2C_ShopOpen.$Properties
+             * @deprecated Use jpt.base.S2C_ShopOpen.$Properties instead.
+             */
+
+            /**
+             * Shape of a S2C_ShopOpen.
+             * @typedef {jpt.base.S2C_ShopOpen.$Properties} jpt.base.S2C_ShopOpen.$Shape
+             */
+
+            /**
+             * Constructs a new S2C_ShopOpen.
+             * @memberof jpt.base
+             * @classdesc Represents a S2C_ShopOpen.
+             * @constructor
+             * @param {jpt.base.S2C_ShopOpen.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const S2C_ShopOpen = function (properties) {
+                this.items = [];
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * S2C_ShopOpen npcId.
+             * @member {number|Long} npcId
+             * @memberof jpt.base.S2C_ShopOpen
+             * @instance
+             */
+            S2C_ShopOpen.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * S2C_ShopOpen kind.
+             * @member {number} kind
+             * @memberof jpt.base.S2C_ShopOpen
+             * @instance
+             */
+            S2C_ShopOpen.prototype.kind = 0;
+
+            /**
+             * S2C_ShopOpen items.
+             * @member {Array.<jpt.base.ShopItemProto.$Properties>} items
+             * @memberof jpt.base.S2C_ShopOpen
+             * @instance
+             */
+            S2C_ShopOpen.prototype.items = $util.emptyArray;
+
+            /**
+             * Creates a new S2C_ShopOpen instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {jpt.base.S2C_ShopOpen.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.S2C_ShopOpen} S2C_ShopOpen instance
+             * @type {{
+             *   (properties: jpt.base.S2C_ShopOpen.$Shape): jpt.base.S2C_ShopOpen & jpt.base.S2C_ShopOpen.$Shape;
+             *   (properties?: jpt.base.S2C_ShopOpen.$Properties): jpt.base.S2C_ShopOpen;
+             * }}
+             */
+            S2C_ShopOpen.create = function(properties) {
+                return new S2C_ShopOpen(properties);
+            };
+
+            /**
+             * Encodes the specified S2C_ShopOpen message. Does not implicitly {@link jpt.base.S2C_ShopOpen.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {jpt.base.S2C_ShopOpen.$Properties} message S2C_ShopOpen message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            S2C_ShopOpen.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.kind != null && $Object.hasOwnProperty.call(message, "kind") && message.kind !== 0)
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.kind);
+                if (message.items != null && message.items.length)
+                    for (let i = 0; i < message.items.length; ++i)
+                        $root.jpt.base.ShopItemProto.encode(message.items[i], writer.uint32(/* id 3, wireType 2 =*/26).fork(), _depth + 1).ldelim();
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified S2C_ShopOpen message, length delimited. Does not implicitly {@link jpt.base.S2C_ShopOpen.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {jpt.base.S2C_ShopOpen.$Properties} message S2C_ShopOpen message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            S2C_ShopOpen.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a S2C_ShopOpen message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.S2C_ShopOpen & jpt.base.S2C_ShopOpen.$Shape} S2C_ShopOpen
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            S2C_ShopOpen.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.S2C_ShopOpen();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.npcId = value;
+                            else
+                                delete message.npcId;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.kind = value;
+                            else
+                                delete message.kind;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 2)
+                                break;
+                            if (!(message.items && message.items.length))
+                                message.items = [];
+                            message.items.push($root.jpt.base.ShopItemProto.decode(reader, reader.uint32(), $undefined, _depth + 1));
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a S2C_ShopOpen message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.S2C_ShopOpen & jpt.base.S2C_ShopOpen.$Shape} S2C_ShopOpen
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            S2C_ShopOpen.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a S2C_ShopOpen message.
+             * @function verify
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            S2C_ShopOpen.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
+                        return "npcId: integer|Long expected";
+                if (message.kind != null && $Object.hasOwnProperty.call(message, "kind"))
+                    if (!$util.isInteger(message.kind))
+                        return "kind: integer expected";
+                if (message.items != null && $Object.hasOwnProperty.call(message, "items")) {
+                    if (!$Array.isArray(message.items))
+                        return "items: array expected";
+                    for (let i = 0; i < message.items.length; ++i) {
+                        let error = $root.jpt.base.ShopItemProto.verify(message.items[i], _depth + 1);
+                        if (error)
+                            return "items." + error;
+                    }
+                }
+                return null;
+            };
+
+            /**
+             * Creates a S2C_ShopOpen message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.S2C_ShopOpen} S2C_ShopOpen
+             */
+            S2C_ShopOpen.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.S2C_ShopOpen)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.S2C_ShopOpen: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.S2C_ShopOpen();
+                if (object.npcId != null)
+                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                        if ($util.Long)
+                            message.npcId = $util.Long.fromValue(object.npcId, false);
+                        else if (typeof object.npcId === "string")
+                            message.npcId = $parseInt(object.npcId, 10);
+                        else if (typeof object.npcId === "number")
+                            message.npcId = object.npcId;
+                        else if (typeof object.npcId === "object")
+                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                if (object.kind != null)
+                    if ($Number(object.kind) !== 0)
+                        message.kind = object.kind | 0;
+                if (object.items) {
+                    if (!$Array.isArray(object.items))
+                        throw $TypeError(".jpt.base.S2C_ShopOpen.items: array expected");
+                    message.items = $Array(object.items.length);
+                    for (let i = 0; i < object.items.length; ++i) {
+                        if (!$util.isObject(object.items[i]))
+                            throw $TypeError(".jpt.base.S2C_ShopOpen.items: object expected");
+                        message.items[i] = $root.jpt.base.ShopItemProto.fromObject(object.items[i], _depth + 1);
+                    }
+                }
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a S2C_ShopOpen message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {jpt.base.S2C_ShopOpen} message S2C_ShopOpen
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            S2C_ShopOpen.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.arrays || options.defaults)
+                    object.items = [];
+                if (options.defaults) {
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.kind = 0;
+                }
+                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
+                    else if (typeof message.npcId === "number")
+                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                    else
+                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                if (message.kind != null && $Object.hasOwnProperty.call(message, "kind"))
+                    object.kind = message.kind;
+                if (message.items && message.items.length) {
+                    object.items = $Array(message.items.length);
+                    for (let j = 0; j < message.items.length; ++j)
+                        object.items[j] = $root.jpt.base.ShopItemProto.toObject(message.items[j], options, _depth + 1);
+                }
+                return object;
+            };
+
+            /**
+             * Converts this S2C_ShopOpen to JSON.
+             * @function toJSON
+             * @memberof jpt.base.S2C_ShopOpen
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            S2C_ShopOpen.prototype.toJSON = function() {
+                return S2C_ShopOpen.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for S2C_ShopOpen
+             * @function getTypeUrl
+             * @memberof jpt.base.S2C_ShopOpen
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            S2C_ShopOpen.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.S2C_ShopOpen";
+            };
+
+            return S2C_ShopOpen;
+        })();
+
         base.Position = (function() {
 
             /**
@@ -39296,6 +41581,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|Long|null} [expireTime] GroundItemProto expireTime
              * @property {string|null} [name] GroundItemProto name
              * @property {string|null} [dorpItem] GroundItemProto dorpItem
+             * @property {number|Long|null} [money] GroundItemProto money
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -39392,6 +41678,14 @@ export const jpt = $root.jpt = (() => {
             GroundItemProto.prototype.dorpItem = "";
 
             /**
+             * GroundItemProto money.
+             * @member {number|Long} money
+             * @memberof jpt.base.GroundItemProto
+             * @instance
+             */
+            GroundItemProto.prototype.money = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
              * Creates a new GroundItemProto instance using the specified properties.
              * @function create
              * @memberof jpt.base.GroundItemProto
@@ -39439,6 +41733,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 7, wireType 2 =*/58).string(message.name);
                 if (message.dorpItem != null && $Object.hasOwnProperty.call(message, "dorpItem") && message.dorpItem !== "")
                     writer.uint32(/* id 8, wireType 2 =*/66).string(message.dorpItem);
+                if (message.money != null && $Object.hasOwnProperty.call(message, "money") && (typeof message.money === "object" ? message.money.low || message.money.high : message.money !== 0))
+                    writer.uint32(/* id 9, wireType 0 =*/72).int64(message.money);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -39565,6 +41861,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.dorpItem;
                             continue;
                         }
+                    case 9: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.money = value;
+                            else
+                                delete message.money;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -39639,6 +41944,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.dorpItem != null && $Object.hasOwnProperty.call(message, "dorpItem"))
                     if (!$util.isString(message.dorpItem))
                         return "dorpItem: string expected";
+                if (message.money != null && $Object.hasOwnProperty.call(message, "money"))
+                    if (!$util.isInteger(message.money) && !(message.money && $util.isInteger(message.money.low) && $util.isInteger(message.money.high)))
+                        return "money: integer|Long expected";
                 return null;
             };
 
@@ -39707,6 +42015,16 @@ export const jpt = $root.jpt = (() => {
                 if (object.dorpItem != null)
                     if (typeof object.dorpItem !== "string" || object.dorpItem.length)
                         message.dorpItem = $String(object.dorpItem);
+                if (object.money != null)
+                    if (typeof object.money === "object" ? object.money.low || object.money.high : $Number(object.money) !== 0)
+                        if ($util.Long)
+                            message.money = $util.Long.fromValue(object.money, false);
+                        else if (typeof object.money === "string")
+                            message.money = $parseInt(object.money, 10);
+                        else if (typeof object.money === "number")
+                            message.money = object.money;
+                        else if (typeof object.money === "object")
+                            message.money = new $util.LongBits(object.money.low >>> 0, object.money.high >>> 0).toNumber();
                 return message;
             };
 
@@ -39748,6 +42066,11 @@ export const jpt = $root.jpt = (() => {
                         object.expireTime = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.name = "";
                     object.dorpItem = "";
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.money = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.money = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                 }
                 if (message.groundItemId != null && $Object.hasOwnProperty.call(message, "groundItemId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -39780,6 +42103,13 @@ export const jpt = $root.jpt = (() => {
                     object.name = message.name;
                 if (message.dorpItem != null && $Object.hasOwnProperty.call(message, "dorpItem"))
                     object.dorpItem = message.dorpItem;
+                if (message.money != null && $Object.hasOwnProperty.call(message, "money"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.money = typeof message.money === "number" ? $BigInt(message.money) : $util.Long.fromBits(message.money.low >>> 0, message.money.high >>> 0, false).toBigInt();
+                    else if (typeof message.money === "number")
+                        object.money = options.longs === $String ? $String(message.money) : message.money;
+                    else
+                        object.money = options.longs === $String ? $util.Long.prototype.toString.call(message.money) : options.longs === $Number ? new $util.LongBits(message.money.low >>> 0, message.money.high >>> 0).toNumber() : message.money;
                 return object;
             };
 

@@ -14,6 +14,7 @@
  * 用法：npx tsx scripts/verify-uisound.ts
  */
 import { readFileSync } from 'node:fs';
+import { installDomStub } from './dom-stub.js';
 
 const store = new Map<string, string>();
 (globalThis as unknown as { localStorage: Storage }).localStorage = {
@@ -32,17 +33,7 @@ function check(label: string, got: unknown, want: unknown): void {
   console.log(`${ok ? '  ✓' : '  ✗'} ${label}：${JSON.stringify(got)}${ok ? '' : `（期望 ${JSON.stringify(want)}）`}`);
 }
 
-// 最小 DOM 桩：`sfx.ts` 在 **import 时**就注册 document/window 监听（解锁音频、全局点击音），
-// 不桩掉的话在 node 里根本 import 不进来 —— 那样只能退化成"读源码字符串"，验不到真表。
-const noopTarget = { addEventListener: () => {}, removeEventListener: () => {}, dispatchEvent: () => true };
-(globalThis as unknown as Record<string, unknown>).document = {
-  ...noopTarget, documentElement: { style: {} }, body: { appendChild: () => {}, style: {} },
-  createElement: () => ({ style: {}, classList: { add: () => {} }, appendChild: () => {} }),
-  querySelector: () => null,
-};
-(globalThis as unknown as Record<string, unknown>).window = {
-  ...noopTarget, innerWidth: 1280, innerHeight: 720,
-};
+installDomStub();
 
 const sfxMod = await import('../src/audio/sfx.js');
 const { ITEM_SOUND_FILES } = await import('../src/audio/item-sounds.js');
@@ -70,8 +61,16 @@ check('排除 .jp-bag-item / .jp-items-equip',
 
 console.log('\n④ 药水槽（画布 HUD 的道具）不再播界面音 —— 交给动作处理器播道具音');
 check('药水槽分支里没有 playUi', /POTION_RECTS\[i\]!\) \{[\s\S]{0,600}?playUi/.test(hudSrc), false);
-check('拿起药水播的是**该物品自己的** sound（不是硬编码 17）',
-  /playItemSound\(itemDefById\(it\.itemlistId\)\?\.sound\)/.test(mainSrc), true);
+// "放进容器"的判定**只有一处**（用户 2026-09-14："无论是鼠标操作、拾取操作（服务器发来消息），
+// 都应该执行相同的逻辑"）：放在 store 的 commit 层，各 UI 路径不再自己播（否则就是两份判定，
+// 迟早漂移成"鼠标放下有声音、拾取进背包没有"）。
+const storeSrc = readFileSync(new URL('../src/app/gameStore.ts', import.meta.url), 'utf8');
+check('store 里有唯一的"放进容器"判定 notifyPlacedItems',
+  /function notifyPlacedItems\(/.test(storeSrc) && /notifyPlacedItems\(beforeItems/.test(storeSrc), true);
+check('ItemPanel 不再自己播道具音（全部由 store 统一）', /playItemSound\(/.test(panelSrc), false);
+check('main.ts 不再自己播道具音（拿起/放入都走 store）', /playItemSound\(/.test(mainSrc), false);
+check('整包快照走静默（进图不该逐件出声）', /silently\(\(\) => commit\(\{ inventory: inv \}\)\)/.test(storeSrc), true);
+check('回滚走静默（事情没发生，不该出声）', /silently\(\(\) => commit\(\{ inventory: \{ \.\.\.cur, items \} \}\)\)/.test(storeSrc), true);
 
 console.log('\n⑤ 失败音挂在"服务端拒绝"的唯一入口上（一处覆盖拿起/放下/交换/拾取的失败）');
 check('item.op.* 分支里播 denied',
@@ -117,6 +116,112 @@ check('loadBuffer 取不到音频时 warn（过去是 `if (!resp.ok) return null
     }
     check('ITEM_SOUND_FILES 全部文件在资产里存在' + `（${Object.keys(ITEM_SOUND_FILES).length} 个）`, missing, []);
   }
+}
+
+console.log('\n⑨ "放进容器"是**事件**，判定只有一处（store 的 commit 层）—— 行为验证，不是读源码');
+{
+  const g = await import('../src/app/gameStore.js');
+  const played: string[] = [];
+  sfxMod.sfx.play = (p: string) => { played.push(p); };   // 劫持播放，只观察"请求了哪个文件"
+  const last = () => played[played.length - 1];
+  const reset = () => { played.length = 0; };
+  const item = (uid: number, itemlistId: number, location: number, slot: number, count = 1) => ({
+    uid, itemlistId, itemCode: 0, location, slot, count,
+  });
+
+  // ① 服务端推送：拾取进背包（原来**完全没声音**——用户 2026-09-14 报的就是它）
+  reset();
+  g.setInventory({ items: [], gold: 0 } as never);          // 快照：整包替换，必须静默
+  const afterSnapshot = played.length;
+  g.upsertInventoryItem(item(7, 1, 10, 5) as never);         // listId=1 Stone Axe → SoundIndex 1
+  check('快照（整包替换）不出声', afterSnapshot, 0);
+  check('拾取进背包 → 播物品自带音', last(), 'wav/effects/items/axes.wav');
+
+  // ② **变多 = 放进**（用户 2026-09-14：捡药水合并进药水槽要有声音）；**变少 = 不是放进**（喝药）
+  reset();
+  g.upsertInventoryItem(item(7, 1, 10, 5, 3) as never);
+  check('数量变多 → 出声（合并 = 放进）', played.length, 1);
+  reset();
+  g.upsertInventoryItem(item(7, 1, 10, 5, 2) as never);
+  check('数量变少（喝药/消耗）→ 不出声', played.length, 0);
+
+  // ②b **服务端推送的合并**（用户 2026-09-14 实测："捡起药水合并到药水槽没有音效"）：
+  //     这条路径客户端表里**没有"消失的源"**（源是地面物），所以必须靠"某堆变多"来判 —— 正是 ② 那条规则。
+  reset();
+  g.setInventory({ items: [item(21, 423, 0, 11, 2)] } as never);    // 药水槽里已有 2 瓶
+  reset();
+  g.upsertInventoryItem(item(21, 423, 0, 11, 3) as never);          // 服务端推"变成 3 瓶"
+  check('★ 捡药水合并进药水槽（服务端推送）→ 出声', last(), 'wav/effects/items/potion.wav');
+
+  // ③ 服务端推送：进药水槽（自动灌槽），同样要出声
+  reset();
+  g.upsertInventoryItem(item(9, 423, 0, 11) as never);       // listId=423 Mini Mana Potion → 17
+  check('进药水槽 → 播药水音', last(), 'wav/effects/items/potion.wav');
+
+  // ④ 鼠标操作（本地乐观）走同一条判定：立即出声，不等服务端
+  reset();
+  g.localBagMove(9, 30, 10);                                 // 药水槽 → 背包格 30
+  check('鼠标操作（本地）立即出声', last(), 'wav/effects/items/potion.wav');
+
+  // ⑤ 合并（手上那件并进同类堆，从表里消失）→ 也是"放进"，出声
+  reset();
+  g.setInventory({ items: [item(20, 423, 0, -1), item(21, 423, 10, 40, 1)] } as never);
+  g.localStackMerge(20, 21);
+  check('合并进已有堆 → 出声（原版 LastSetInvenItem 同样播）', last(), 'wav/effects/items/potion.wav');
+
+  // ⑤b 丢到地面（手上那件消失，但没人变多）→ **不**算放进，不出声（丢弃音另有入口）
+  reset();
+  g.setInventory({ items: [item(30, 423, 0, -1)] } as never);
+  g.throwItem(30);
+  check('丢到地面：只播丢弃音，不被误判成"放进"（原来会再播一次物品音）',
+    played, ['wav/effects/items/item drop.wav']);
+
+  // ⑤c **按 W 换武器**：服务端把主/备装备槽的行都推一遍 → 只有**真的换位**的那两件出声
+  // （用户 2026-09-14："按W交换武器……也应该触发音效"。客户端 W 键没有本地捷径，
+  //  只 `sendSwitchWeapon()` → 靠服务端 ItemUpdate 回来 → 走的正是同一个判定）
+  reset();
+  g.setInventory({ items: [
+    item(40, 1, 0, 1),          // 主手：斧（SoundIndex 1）
+    item(41, 301, 0, 8),        // 装备槽 8 上一件护腕（SoundIndex 14）—— 这次**不动**
+    item(42, 1, 20, 1),         // 备用手：另一把斧
+  ] } as never);
+  reset();
+  g.upsertInventoryItem(item(40, 1, 20, 1) as never);   // 主手那把 → 备用槽（换出去了）
+  g.upsertInventoryItem(item(42, 1, 0, 1) as never);    // 备用那把 → 主手
+  g.upsertInventoryItem(item(41, 301, 0, 8) as never);  // 这次没动 → 不应出声
+  check('W 换武器：换位的两件都出声', played.length, 2);
+  check('W 换武器：没换位的那件不出声', played.every((f) => f.endsWith('axes.wav')), true);
+
+  // ⑤d **未来容器**（仓库 location=30；邮箱等同理）不需要任何新音效代码 ——
+  // 规则只看 (location, slot)，与容器无关（用户 2026-09-14："未来要做的仓库、邮箱……都应该统一执行相同逻辑"）
+  const { LOC } = await import('../src/game/itemLocations.js');
+  reset();
+  g.setInventory({ items: [item(50, 423, LOC.BAG, 60)] } as never);
+  reset();
+  g.localBagMove(50, 3, LOC.WAREHOUSE);                  // 背包 → 仓库
+  check('PUT_ITEM 进仓库（location=30）同样出声', last(), 'wav/effects/items/potion.wav');
+
+  // ⑤e THROW_ITEM：丢出容器 → 丢弃音；而服务端说"没了"（consume，默认）→ 安静
+  reset();
+  g.setInventory({ items: [item(60, 423, LOC.BAG, 5)] } as never);
+  reset();
+  g.throwItem(60);
+  check('THROW_ITEM（玩家动作 throwItem）播丢弃音', last(), 'wav/effects/items/item drop.wav');
+  reset();
+  g.setInventory({ items: [item(61, 423, LOC.BAG, 6)] } as never);
+  reset();
+  g.applyItemRemoved(61);                                // 服务端通知（喝掉最后一瓶/扫地/GM）→ 静默
+  check('服务端通知 applyItemRemoved 不出声（两个操作码分开）', played.length, 0);
+
+  // ⑥ 回滚 = 事情没发生，不该出声（失败音另有入口）
+  reset();
+  g.setInventory({ items: [item(9, 423, 0, -1)] } as never);   // 手上拿着那瓶
+  g.beginOptimistic([item(9, 423, 0, -1) as never] as never);
+  g.localBagMove(9, 31, 10);
+  check('（回滚前那次本地移动出过声）', played.length > 0, true);
+  reset();
+  g.rollbackOptimistic();
+  check('回滚不出声', played.length, 0);
 }
 
 console.log(fail === 0 ? '\n全部通过' : `\n${fail} 项不符`);

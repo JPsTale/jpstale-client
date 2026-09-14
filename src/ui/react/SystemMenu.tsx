@@ -4,6 +4,7 @@ import { mapAudio } from '../../maps/map-audio.js';
 import { sfx } from '../../audio/sfx.js';
 import { closeSystemMenu } from '../../app/gameStore.js';
 import { KeyBinding, GameAction } from '../KeyBinding.js';
+import { DISPLAY_PREFS_DEFAULT, DISPLAY_RANGE_KEYS, type DisplayPrefs } from '../display-prefs.js';
 
 // 系统菜单（X 键）：居中模态 + 纵向主菜单逐级进入。
 // 主菜单：回到角色选择 / 退出登录 / 音效设置 / 画面设置 / 键位设置 / 功能设置。
@@ -17,6 +18,12 @@ export interface SystemMenuSettings {
   /** 客户端帧率上限（0=不限制/跟随显示器）；画面设置里可调 */
   getFps?: () => number;
   setFps?: (fps: number) => void;
+  /**
+   * 怪物显示预算（画面设置里可调，见 ui/display-prefs.ts 与 render/monster-visibility.ts）。
+   * 给玩家一个**逃生门**：关掉即退回旧行为（所有 AOI 怪都显示、都算动画）。
+   */
+  getDisplayPrefs?: () => DisplayPrefs;
+  setDisplayPrefs?: (p: DisplayPrefs) => void;
 }
 
 type SubPage = 'main' | 'audio' | 'keys' | 'video' | 'function';
@@ -26,6 +33,9 @@ const FPS_OPTIONS: number[] = [30, 60, 120, 0];
 
 function VideoPage({ settings }: { settings: SystemMenuSettings }) {
   const [fps, setFpsState] = useState(settings.getFps?.() ?? 0);
+  const [prefs, setPrefs] = useState<DisplayPrefs>(
+    settings.getDisplayPrefs?.() ?? DISPLAY_PREFS_DEFAULT);
+  const apply = (p: DisplayPrefs) => { setPrefs(p); settings.setDisplayPrefs?.(p); };
   return (
     <div className="jp-men-page">
       <div className="jp-men-row">
@@ -39,6 +49,35 @@ function VideoPage({ settings }: { settings: SystemMenuSettings }) {
               onClick={() => { setFpsState(v); settings.setFps?.(v); }}
             >
               {v === 0 ? t('menu.fpsUnlimited') : String(v)}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* 怪物显示预算：怪多时按距离/数量裁剪并每秒轮换。关掉 = 全部显示（旧行为）。 */}
+      <div className="jp-men-row">
+        <span className="jp-men-key-label">{t('menu.monsterBudget')}</span>
+        <div className="jp-men-opts">
+          <input
+            type="checkbox"
+            checked={prefs.monsterBudget}
+            onChange={(e) => apply({ ...prefs, monsterBudget: e.target.checked })}
+          />
+        </div>
+      </div>
+      {/* 显示距离档：档位与数量上限见 render/monster-visibility.ts 的 VIS_TIERS。
+          关掉预算时这一行没有意义，跟着禁用（而不是隐藏 —— 玩家能看到它还在）。 */}
+      <div className="jp-men-row">
+        <span className="jp-men-key-label">{t('menu.displayRange')}</span>
+        <div className="jp-men-opts">
+          {DISPLAY_RANGE_KEYS.map((k) => (
+            <button
+              key={k}
+              type="button"
+              disabled={!prefs.monsterBudget}
+              className={prefs.range === k ? 'jp-men-opt jp-men-opt--on' : 'jp-men-opt'}
+              onClick={() => apply({ ...prefs, range: k })}
+            >
+              {t('menu.range.' + k)}
             </button>
           ))}
         </div>

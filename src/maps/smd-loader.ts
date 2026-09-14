@@ -6,7 +6,7 @@
  * 否则弱网/低端机上的卡顿会被误当成"本来就该卡"。
  */
 import { parseSMD, type SMDData } from '../core/smd-parser.js';
-import { cachedFetch } from '../core/asset-cache.js';
+import { cachedFetch, noteCacheHitBytes } from '../core/asset-cache.js';
 import { reportFallback } from '../char/fallback-log.js';
 
 interface Pending {
@@ -28,8 +28,14 @@ function ensureWorker(): Worker | null {
   if (worker || workerBroken) return worker;
   try {
     worker = new Worker(new URL('./smd-parse.worker.ts', import.meta.url), { type: 'module' });
-    worker.onmessage = (e: MessageEvent<{ id: number; ok: boolean; data?: SMDData; error?: string }>) => {
-      const { id, ok, data, error } = e.data;
+    worker.onmessage = (e: MessageEvent<{ id: number; ok: boolean; data?: SMDData; error?: string; bytes?: number }>) => {
+      const { id, ok, data, error, bytes } = e.data;
+      // Worker 上报的"已加载字节"（其内部 cachedFetch 的统计与主线程不互通 —— 见 smd-parse.worker.ts）。
+      // id = -1 是这类不带请求的旁路消息，直接累加进"已加载总量"。
+      if (typeof bytes === 'number') {
+        noteCacheHitBytes(bytes);
+        return;
+      }
       const p = pending.get(id);
       if (!p) return;
       pending.delete(id);
