@@ -76,6 +76,7 @@ function renderPanel(panel: OpenPanel) {
 export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSettings }) {
   const { openPanels, systemMenuOpen } = useSyncExternalStore(subscribeGame, getGameSnapshot);
 
+
   // 「手持道具时点游戏画面 → 丢到地面」注册在**全局**（不随面板开关，`PanelsRoot` 常驻 World）。
   // 从 HUD 药水槽拿起药水时背包是关着的 —— 挂在面板里就收不到点击（用户 2026-09-14 实测）。
   useEffect(() => {

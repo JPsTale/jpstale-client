@@ -29,7 +29,8 @@ interface Row {
 
 export function createDeathPanel(container: HTMLElement, onChoose: (choice: 1 | 2 | 3) => void): DeathPanel {
   const root = document.createElement('div');
-  root.style.cssText = 'display:none;position:fixed;inset:0;z-index:800;align-items:center;justify-content:center;'
+  root.dataset.layer = 'deathPanel';   // 参与"谁激活谁最上"（声明即参与）
+  root.style.cssText = 'display:none;position:fixed;inset:0;align-items:center;justify-content:center;'
     + 'background:rgba(0,0,0,0.55);color:#eee;font:15px/1.6 system-ui,sans-serif;';
 
   const box = document.createElement('div');

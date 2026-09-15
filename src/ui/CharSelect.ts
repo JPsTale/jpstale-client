@@ -3,14 +3,14 @@ import { t } from '../i18n/index.js';
 import { CharLoadResult } from '../render/char-loader.js';
 import { loadCharacterModelLite } from '../render/lite-loader.js';
 import { createAnimStateMachine, AnimStateMachine } from '../char/anim-state-machine.js';
-import { evalSkeleton, applyToBones, advanceAnimFrame } from '../char/animation.js';
+import { createAnimPlayer, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
 import { loadCharTextures } from '../render/char-texture-loader.js';
 import { createCameraControls } from './camera-controls.js';
-import { CHRMOTION_EXT } from '../char/char-format.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, findBone, WEAPON_BONES, sheatheBone } from '../render/weapon-loader.js';
+import { loadWeaponModel, WeaponMount, sheatheBone, type MountResult } from '../render/weapon-loader.js';
 import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
+import { reportFallback } from '../char/fallback-log.js';
 
 export interface CharacterAppearance {
   classId: number;
@@ -104,14 +104,11 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   let skeletonGroup: THREE.Group | null = null;
   let charResult: CharLoadResult | null = null;
   let animState: AnimStateMachine | null = null;
+  /** 每帧推进/求值/施加骨骼 —— **与游戏内同一个实现**（char/anim-player.ts） */
+  let animPlayer: AnimPlayer | null = null;
   let animFrameId = 0;
-  let animFrame = 0;
   let loadGeneration = 0; // prevents stale async loads from adding models
   let motionList: MotionInfo[] = []; // TmFrame 偏移后的动画列表（调试列表用）
-  const tmp = new THREE.Matrix4();
-  const posV = new THREE.Vector3();
-  const quatQ = new THREE.Quaternion();
-  const sclV = new THREE.Vector3();
 
   // BGM
   let bgm: HTMLAudioElement | null = null;
@@ -468,6 +465,8 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       const result = await loadCharacterModelLite(jobId, head, armorNum, bodyInxOverride);
       if (gen !== loadGeneration) return; // stale load, discard
       charResult = result;
+      // 每帧的帧推进/求值/施加：**与游戏内同一个实现**
+      animPlayer = createAnimPlayer(result.animSmb, result.bones, result.skeleton);
       // Hide meshes until textures load (prevent grey flash)
       result.bodyGroup.visible = false;
       result.headGroup.visible = false;
@@ -479,31 +478,41 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       if (gen !== loadGeneration) return;
       result.bodyGroup.visible = true;
       result.headGroup.visible = true; // stale after texture load
+      // ⚠ 武器码必须在**挂载之前**写：`WeaponMount` 要用它决定**收械槽与镜像份**
+      // （刺客匕首的双腰挂就是 `mirrorLeftBone(idcode)` 决定的 —— 它曾经因为这里顺序不对
+      //  + 选角页自己一套实现而只挂了一边，用户 2026-09-15 实测）。
+      // 这三个是**共享变量**（状态机与预览都读），只在"确认这次加载仍有效"之后写。
+      currentWeaponIdcode = appearance?.weaponIdcode && appearance.weaponIdcode > 0 ? appearance.weaponIdcode : null;
+      currentWeaponType = currentWeaponIdcode ? getWeaponTypeFromIdCode(currentWeaponIdcode) : null;
+      console.log('[CharSelect] 武器：idcode=' + (currentWeaponIdcode ?? 'null')
+        + ' type=' + (currentWeaponType ?? 'null') + ' → 收械槽骨 ' + sheatheBone(currentWeaponIdcode ?? 0)
+        + '（idcode 缺失时会退成默认背挂点）');
       // 武器挂载（如有）
       if (appearance?.weaponDorp) {
         await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos, gen);
       }
       if (gen !== loadGeneration) return;
-      // ⚠ 这三个是**共享变量**（动画状态机与预览都读它们），只能在"确认这次加载仍然有效"之后写：
-      // 过期加载若在 await 之后写，会把新预览的武器码/姿态覆盖成旧角色的
-      // （`getWeaponIdCode` 会拿它选动画，`weaponStance` 会让下一次 onStanceChange 变成空操作）。
-      currentWeaponIdcode = appearance?.weaponIdcode && appearance.weaponIdcode > 0 ? appearance.weaponIdcode : null;
-      currentWeaponType = currentWeaponIdcode ? getWeaponTypeFromIdCode(currentWeaponIdcode) : null;
-      weaponStance = 'combat';
-animState = createAnimStateMachine({
+      animState = createAnimStateMachine({
         getMotions: () => motionList,
         getClassId: () => jobId,
         getWeaponIdCode: () => currentWeaponIdcode,
         getWeaponType: () => currentWeaponType,
         getFieldState: () => 1, // 角色选择界面等同安全区：空手 idle + 武器收鞘姿态
-        onStanceChange: (stance) => { setWeaponStance(stance); },
+        onStanceChange: (stance) => { applyWeaponStance(stance); },
         onMotionChange: (motion: MotionInfo) => {
           // 1 tick = 160 帧；.inx startFrame/endFrame 单位是 tick（已 TmFrame 偏移）
-          animFrame = motion.startFrame * 160;
+          animPlayer?.setFrame(motion.startFrame * 160);
         },
       });
       buildMotionList();
-      animState.triggerIdle(); // onMotionChange 已设 animFrame=startFrame*160，勿再覆盖
+      // ⚠ **装配完必须主动断言一次姿态**：只靠 `onStanceChange` 事件是不够的 ——
+      // 事件可能在武器挂载完成前就发过（那一次会被丢弃，而这之后不会再有第二次），
+      // 于是武器一直留在战斗挂点上（用户 2026-09-15 实测：选角页弓留在手里 / 匕首只挂一边）。
+      // 状态机的 `getStance()` 是"它现在认为的姿态"，装配完读一次就能对齐。
+      if (!animState.triggerIdle()) {
+        reportFallback('anim', `选角预览 job=${jobId} 没有可用站姿条目 → 停在绑定姿势`);
+      }
+      applyWeaponStance(animState.getStance() ?? 'sheathed');
     } catch (err) {
       console.warn('CharSelect: loadPreview failed', err);
       currentPreviewJobId = null;
@@ -514,71 +523,53 @@ animState = createAnimStateMachine({
 
   let weaponGroup: THREE.Group | null = null;
   /**
-   * **挂过的**武器组全量名单。清理时按这份名单逐个摘，而不是只按当前 `weaponGroup` 引用 ——
-   * 并发/过期加载可能留下孤儿组，只认一个引用就会漏（见上面 `attachWeaponPreview` 的说明）。
+   * 武器挂载 = **共享的 `WeaponMount`**（自机 / 远端 / 检查器 / 选角页同一份实现）。
+   *
+   * ⚠ 这里曾自己实现一套（`weaponGroup` + `attachedWeaponGroups` + `currentCombatBone` +
+   * `weaponStance` + 手写 `findBone` 搬运），于是**少了一个能力：镜像** —— 游戏里刺客匕首走
+   * `WeaponMount.mirrorLeftBone` 镜像成左右两份（`Bip weapon05` / 左右腰 `Bip in_Dagger*`），
+   * 选角页却只挂了一份（用户 2026-09-15 实测："刺客只挂了一边"）。
+   * 这正是 AGENTS #15 说的"同一个判定在仓库里出现第二份，哪怕只差一点，就是 bug 的种子"。
+   * 现在只保留"加载 → 代际校验 → 喂给共享实现"。
    */
-  const attachedWeaponGroups: THREE.Group[] = [];
+  const weaponMount = new WeaponMount();
   let currentWeaponIdcode: number | null = null;
   let currentWeaponType: string | null = null;
-  let weaponStance = 'combat';
 
-  // 鏀惰捣濮挎€侀楠硷紙鏂囨。 搂8.2 / m6 瀹炴祴锛夛細鍓戞枾鍏ヨ儗 in01锛屽紦 in-bow锛屽崄瀛楀紦 in-cro锛屽寱棣?in_DaggerL/R
-  function sheatheBoneForType(): string {
-    // 唯一实现：按 idcode 查源码移植的收械白名单
-    return sheatheBone(currentWeaponIdcode ?? 0);
-  }
-  // @ts-expect-error 旧的按类型分支已由共享判定取代（保留此处以防别处引用）
-  function _legacySheatheBone(weaponType: string | null, weaponPos: number): string {
-    switch (weaponType) {
-      case 'BOW': return WEAPON_BONES.SHEATHE_BOW;
-      case 'CROSSBOW': return WEAPON_BONES.SHEATHE_CROSSBOW;
-      case 'DAGGER': return weaponPos === 2 ? 'Bip in_DaggerL' : 'Bip in_DaggerR';
-      default: return WEAPON_BONES.SHEATHE_BACK; // AXE/SWORD/HAMMER/JAVELIN/SCYTHE/STAFF 鍏ヨ儗
+  /** 把挂载结果打出来（含**镜像份**与**缺失骨**）—— 挂载/姿态的每个出口都要可查（AGENTS #19/#12） */
+  function logMount(what: string, res: MountResult): void {
+    console.log('[CharSelect] ' + what + '：主手=' + (res.mainBone ?? '未挂')
+      + ' 镜像=' + (res.mirrorBone ?? '无（该武器不镜像）'));
+    if (res.missingBone) {
+      reportFallback('weapon', `选角预览找不到挂载骨 ${res.missingBone}（main=${res.mainBone ?? 'none'}）`);
     }
   }
 
-  async function setWeaponStance(stance: 'combat' | 'sheathed') {
-    if (!weaponGroup || !skeletonGroup || weaponStance === stance) return;
-    const fromBone = stance === 'combat' ? sheatheBoneForType() : currentCombatBone;
-    const toBone = stance === 'combat' ? currentCombatBone : sheatheBoneForType();
-    if (!fromBone || !toBone) return;
-    const from = findBone(skeletonGroup, fromBone);
-    const to = findBone(skeletonGroup, toBone);
-    if (!from || !to) return;
-    weaponGroup.parent?.remove(weaponGroup);
-    to.add(weaponGroup);
-    weaponStance = stance;
+  /** 姿态（持械 ↔ 收械）——由状态机的 `onStanceChange` 触发，装配完还会**主动断言**一次 */
+  function applyWeaponStance(stance: 'combat' | 'sheathed'): void {
+    if (!weaponGroup || !skeletonGroup) return;   // 没有武器 → 无事可做
+    if (weaponMount.currentStance === stance) return;
+    logMount('武器姿态 ' + stance, weaponMount.setStance(skeletonGroup, stance));
   }
-
-  let currentCombatBone = WEAPON_BONES.RIGHT_HAND;
 
   async function attachWeaponPreview(dorpItem: string, weaponPos: number, gen: number) {
     if (!weaponGroup) {
       try {
         const result = await loadWeaponModel(dorpItem);
         // ⚠ 代际守卫必须在**这里**（=改场景的那一层），不能只靠调用方在 await 返回后再 check：
-        // 本函数自己就会写模块级 `weaponGroup` 并 `bone.add(...)`。两次预览重叠时，
-        // 过期的那一次会把 `weaponGroup` 抢成自己的组并留在骨骼上，而新的一次随后清理时
-        // 只按当前引用清 → 清不掉它。用户实测（2026-09-14）：角色选择页"手里和背后各有一把武器"
-        // （旧组卡在战斗挂点、新组被姿态切换搬到背上）。
+        // 本函数自己就会把组挂进骨骼。两次预览重叠时，过期的那一次会把武器留在骨骼上，
+        // 而新的一次随后清理时只按当前引用清 → 清不掉它。用户实测（2026-09-14）：
+        // 角色选择页"手里和背后各有一把武器"。
         // 同一条教训见 AGENTS #11 第三条：守卫要下沉到真正改状态的那一层。
         if (gen !== loadGeneration) return;
         weaponGroup = result.group;
-        // modelPosition: 2=LeftHand, 4=RightHand (default) 鈥斺€?瀵归綈 pviewer
-        const boneName = weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
-        currentCombatBone = boneName;
-        const bone = findBone(skeletonGroup!, boneName);
-        if (!bone) {
-          console.warn('CharSelect: 找不到武器挂载骨骼', boneName);
-          weaponGroup = null;
-          return;
-        }
-        bone.add(weaponGroup);
-        attachedWeaponGroups.push(weaponGroup);   // 记全量：清理时按这份名单逐个摘
-        weaponStance = 'combat';
+        // 挂载（战斗骨由 weaponPos 定：2=左手，其余右手；**收械骨与镜像份由 idcode 定**）
+        const res = weaponMount.mount(skeletonGroup!, result.group, currentWeaponIdcode, weaponPos, 'combat');
+        logMount('武器挂载 ' + dorpItem + '（weaponPos=' + weaponPos + '）', res);
         await loadCharTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
       } catch (err) {
-        console.warn('CharSelect: 姝﹀櫒鍔犺浇澶辫触', dorpItem, err);
+        console.warn('CharSelect: 武器加载失败', dorpItem, err);
+        weaponMount.detach();     // 组可能已经挂上去了：这里必须收干净，否则它会留在骨上无人管理
         weaponGroup = null;
       }
     }
@@ -590,12 +581,10 @@ animState = createAnimStateMachine({
       skeletonGroup.remove(charResult.bodyGroup);
       skeletonGroup.remove(charResult.headGroup);
     }
-    // 按**全量名单**摘掉每一把挂过的武器（`weaponGroup` 只是"当前那把"的引用，
-    // 并发/过期加载留下的孤儿组不在它上面 → 只按它清会漏掉一把留在骨骼上）。
-    for (const g of attachedWeaponGroups) {
-      g.parent?.remove(g);
-    }
-    attachedWeaponGroups.length = 0;
+    // 武器（含**镜像份**）由共享实现自己摘 —— 主手与镜像是一对，分开清必然漏一份。
+    // 这取代了旧的"挂过的组全量名单"：那份名单之所以存在，是因为当时挂载是这里手写的
+    // （见 `weaponMount` 的说明）。现在往骨骼上加东西的只有 `WeaponMount`，它自己持有两份引用。
+    weaponMount.detach();
     weaponGroup = null;
     currentWeaponIdcode = null;
     currentWeaponType = null;
@@ -611,30 +600,16 @@ animState = createAnimStateMachine({
     currentPreviewAppearance = '';
   }
 
-  // 构建 TmFrame 偏移后的动画列表（供动画状态机使用）
+  /**
+   * 动作列表 = **游戏内同一个构造器**（`char/anim-player.buildMotionList`），
+   * 只多一层 `only` 过滤：
+   * lite 骨架包只带**一条**条目的关键帧（见 `CharLoadResult.liteInxIndices` / lite-loader 头部"契约"），
+   * 不过滤的话匹配器可能选中同条件的另一个变体（如 `stand_unarmed~2`），那条在 lite 里没有关键帧 →
+   * 求值回退成绑定姿态，表现为"角色站着不动"且不报错（用户 2026-09-14 实测）。
+   */
   function buildMotionList() {
     if (!charResult) return;
-    motionList = [];
-    const smb = charResult.animSmb;
-    const tmFrame = smb.tmFrame;
-    const bip = charResult.bipInxInfo;
-    // lite 骨架包只带**一条**条目的关键帧（见 CharLoadResult.liteInxIndices / lite-loader 头部"契约"）：
-    // 不过滤的话，匹配器可能选中同条件的另一个变体（如 stand_unarmed~2），那个条目没有关键帧 →
-    // 求值回退成绑定姿态，表现是"角色站着不动"且不报错（用户 2026-09-14 实测）。
-    const allow = charResult.liteInxIndices;
-    for (let i = CHRMOTION_EXT; i < bip.motionCount; i++) {
-      if (allow && !allow.includes(i)) continue;
-      const mi = bip.motions[i];
-      if (!mi.state && !mi.startFrame && !mi.endFrame) continue;
-      let startFrame = mi.startFrame;
-      let endFrame = mi.endFrame;
-      if (tmFrame && mi.motionFrame > 0 && tmFrame[mi.motionFrame - 1]) {
-        const off = tmFrame[mi.motionFrame - 1].startFrame / 160;
-        startFrame += off;
-        endFrame += off;
-      }
-      motionList.push({ ...mi, startFrame, endFrame });
-    }
+    motionList = buildMotionListShared(charResult.animSmb, charResult.bipInxInfo, charResult.liteInxIndices);
   }
 
   function startRenderLoop() {
@@ -651,19 +626,18 @@ animState = createAnimStateMachine({
       const adt = lastMs ? Math.min((nowMs - lastMs) / 1000, 0.1) : 1 / 60;
       lastMs = nowMs;
 
-      if (charResult && animState) {
+      if (charResult && animState && animPlayer) {
         const motion = animState.getCurrentMotion();
         if (motion) {
-          // 帧推进走共享实现（char/animation.ts），避免各处各写一份导致语义漂移
-          const step = advanceAnimFrame(animFrame, motion, adt);
-          animFrame = step.frame;
+          // 帧推进 + 求值 + 施加 + 更新矩阵：**与游戏内同一个实现**（char/anim-player.ts）。
+          // ⚠ 这里曾经自己写一套：`evalSkeleton`（每帧新建工作区）且不调 updateBoneWorlds，
+          // 于是姿态比游戏内晚一帧（用户 2026-09-15："不要自己搞一套动画"）。
+          const step = animPlayer.advance(motion, adt);
           if (step.ended) {
             const next = animState.onAnimationEnd();
-            if (next) animFrame = next.startFrame * 160;
+            if (next) animPlayer.setFrame(next.startFrame * 160);
           }
-          const skelFrames = evalSkeleton(charResult.animSmb, animFrame, false);
-          applyToBones(charResult.bones, skelFrames, tmp, posV, quatQ, sclV);
-          charResult.skeleton.update();
+          animPlayer.apply(motion.animSmb);
         }
       }
 

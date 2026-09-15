@@ -213,7 +213,7 @@ export default function ChatWindow() {
   // 折叠态：单行下条（跟随拖动位置）
   if (collapsed) {
     return (
-      <div className="jp-chat jp-chat--collapsed" style={{ left: geo.x, top: geo.y }} onClick={() => setChatCollapsed(false)}>
+      <div data-layer="chat" data-layer-host="panels" className="jp-chat jp-chat--collapsed" style={{ left: geo.x, top: geo.y }} onClick={() => setChatCollapsed(false)}>
         <span className="jp-chat-preview" style={{ color: last ? CHANNEL_COLORS[last.channel] ?? '#e8e6e1' : '#9aa0a6' }}>
           {last ? renderLine(last) : t('chat.empty')}
         </span>
@@ -226,7 +226,7 @@ export default function ChatWindow() {
   const shownTail = shown.slice(-MAX_MSG);
 
   return (
-    <div className="jp-chat" style={{ left: geo.x, top: geo.y, width: geo.w, height: geo.h }}>
+    <div data-layer="chat" data-layer-host="panels" className="jp-chat" style={{ left: geo.x, top: geo.y, width: geo.w, height: geo.h }}>
       <div
         className="jp-chat-tabs"
         onPointerDown={onTabBarPointerDown}

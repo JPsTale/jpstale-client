@@ -10,6 +10,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { OutlinePass } from 'three/examples/jsm/postprocessing/OutlinePass.js';
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { loadMap, updateFrameAnimations } from '../maps/fore1.js';
+import { loadUiImage } from '../render/ui-texture.js';
 import { mapSmdPath, MAP_CATALOG } from '../maps/map-catalog.js';
 import { minimapBase } from '../maps/map-data.js';
 import { mapDecorList } from '../maps/map-decor.js';
@@ -20,6 +21,7 @@ import { CollisionDebug } from '../maps/collision-debug.js';
 import { installNaNGeometryWatch, scanNaNGeometry, reportNaNGeometry } from '../render/nan-scan.js';
 import type { NaNGeometryHit } from '../render/nan-scan.js';
 import { canEnterMap, mapLevelRequirement } from '../game/safeZones.js';
+import { monsterStopRing } from '../game/combatRange.js';
 import { isInputBlocked } from '../app/inputGate.js';
 import { appendSystemMessage } from '../app/chatStore.js';
 import { mapLightProfile } from '../maps/map-light.js';
@@ -41,10 +43,8 @@ import { playItemSound } from '../audio/item-sounds.js';
 import { createEffectManager } from '../render/effects/effect-manager.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
-import { CHRMOTION_EXT } from '../char/char-format.js';
-import { evalSkeletonInto, createEvalWorkspace, applyToBones, advanceAnimFrame, ANIM_UNITS_PER_SEC, type EvalWorkspace } from '../char/animation.js';
-import { decodeTextureAsync } from '../core/texture.js';
-import { fetchAsset } from '../core/asset-manager.js';
+import { advanceAnimFrame } from '../char/animation.js';
+import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
 import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
@@ -193,6 +193,10 @@ export interface WorldView {
   applyPlayerDeath(playerId: number): void;
   /** 复活目标图是否与当前图不同（main.ts 据此决定要不要盖加载遮罩） */
   respawnNeedsMapLoad(mapId: number): boolean;
+  /** 大地图用：当前地图 + 自机世界坐标（含朝向） */
+  worldMapPlayer(): { mapId: number; x: number; z: number; angle: number };
+  /** 大地图用：地图上的其他实体（NPC / 怪物 / 队友） */
+  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number }[];
   /** 服务端权威换图校准（game.mapSwitched）：对齐 currentMapId 并同步区域 */
   applyMapSwitched(mapId: number): void;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
@@ -259,10 +263,10 @@ export interface WorldView {
   monsterDisappear(monsterId: number): void;
   /** 怪物死亡（S2C_MonsterDeath）→ 移除(尸体由服务端后续以 Disappear 兜底) */
   monsterDeath(monsterId: number): void;
-  /** NPC 出现（S2C_NpcAppear）：静态站桩，播 idle 动画 + 头顶名字标签 */
-  npcAppear(npcId: number, nameKey: string, modelFile: string, x: number, y: number, z: number, angle: number): void;
+  /** NPC 出现（S2C_NpcAppear）：静态站桩，播 idle 动画 + 头顶名字标签。entityId = 运行时实体 id */
+  npcAppear(entityId: number, nameKey: string, modelFile: string, x: number, y: number, z: number, angle: number): void;
   /** NPC 消失（S2C_NpcDisappear）→ 移除 */
-  npcDisappear(npcId: number): void;
+  npcDisappear(entityId: number): void;
   /**
    * 地面物品出现（S2C_GroundItemAppear）：加载 DropItem 模型渲染（dorpItem 可空→旗帜兜底）。
    *
@@ -298,8 +302,8 @@ export interface WorldViewOpts {
                animIndex?: number, animClip?: string) => void;
   /** 点击地面物品（拾取意图）→ main.ts 发 C2S_PickupItem。拾取距离由服务端权威裁决。 */
   onPickupGroundItem?: (groundItemId: number) => void;
-  /** 走到 NPC 身边（Chase 到位）→ 交互（开店/对话）。原版是点击即交互，我们沿用 Chase 到位的时机。 */
-  onNpcInteract?: (npcId: number) => void;
+  /** 走到 NPC 身边（Chase 到位）→ 交互（开店/对话）。参数是 NPC 的**运行时实体 id**。 */
+  onNpcInteract?: (entityId: number) => void;
   /** 攻击起手（挥拳开始）→ main.ts 发 C2S_AttackStart(targetId, clientSeq, segments)。
    *  animIndex/animClip = 本次挥击动画（旁观者据此播同一条，见 onMoveInt 说明）。 */
   onAttackStart?: (monsterId: number, clientSeq: number, segments: number,
@@ -358,24 +362,15 @@ function selfAttackGateMs(): number {
 }
 
 /**
- * 追击停步环半径（世界单位，用户 2026-09-14 定）：追目标时**不要踏进这个环**。
- *
- * 作用不是"缩减攻击距离"，而是给判定留余量 —— 若满步长一路走进判定边界以内，
- * 角色会停在"边界内侧一步"的位置，而进入/离开判定每帧重算，位置一抖就越线来回翻
- * （表现为贴着怪高频蹭）。停在 32 这个环上距边界就有 8 的余量。
- *
- * 三类目标共用它，但**交互类目标另有更近的停步环**（见 `INTERACT_RANGE`）：
- * 停太远会够不到拾取/对话判定。
- */
-const NEAR_RANGE = 32;
-
-/**
  * 交互类目标（掉落物 / NPC / 其他玩家）的停步环半径。
  *
- * 这几类要**停在判定范围之内**才能触发交互，所以不能沿用 32：
- *   - 掉落物：客户端即时拾取判定 `PICK_ACT_RANGE`；停在 32 正好压线，一抖就拾不到；
+ * 这几类要**停在判定范围之内**才能触发交互，所以比怪物那个环更近：
+ *   - 掉落物：客户端即时拾取判定 `PICK_ACT_RANGE = 32`；停在 32 正好压线，一抖就拾不到；
  *   - NPC 对话：服务端 `NPC_INTERACT_RANGE = 96`（宽），但贴太近在视觉上像"撞上去"，取 24 自然；
  *   - 其他玩家：无服务端距离校验，跟 NPC 取齐。
+ *
+ * ⚠ 怪物的停步环**不在这里**——它是"攻击距离的函数"，见 `game/combatRange.ts`。
+ * 曾经两者共用一个硬编码 32，服务端把近战单手调成 30 后它就成了"停在攻击距离之外"的死区。
  */
 const INTERACT_RANGE = 24;
 
@@ -383,9 +378,11 @@ const INTERACT_RANGE = 24;
  * 自机攻击距离 = 服务端下发的 `shootingRange`，**不做本地二次加工**。
  *
  * 那个字段就是"攻击距离"本身（服务端 `PlayerStatCalculator.shootingRangeOf` 已分档：
- * 远程=装备射程 / 近战双手 80 / 近战单手与徒手 40），服务端 `CombatService.attackRange`
+ * 远程=装备射程 / 近战双手 60 / 近战单手与徒手 30），服务端 `CombatService.attackRange`
  * 读的是同一个值 ⇒ 面板显示、客户端停步距离、服务端距离裁决三者一致。
  * ⚠ 曾经这里写 `max(shootingRange, 48)`，那个 48 会把"单手 40"顶成 48 —— 已删。
+ * ⚠ 停在哪儿由它算出（`monsterStopRing`）——**别在别处再写一个停步距离**：
+ * 两个数字一旦漂开（环 ≥ 射程）追击就会卡死在"够不着"的位置，见 `game/combatRange.ts`。
  */
 function selfAttackRange(): number {
   return getGameSnapshot().character?.shootingRange ?? 0;
@@ -501,7 +498,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let animState: ReturnType<typeof createAnimStateMachine> | null = null;
   let motionList: MotionInfo[] = [];
   let animFrameId = 0;
-  let animFrame = 0;
+  /**
+   * 自机动画播放器（帧推进 + 求值 + 施加到骨骼）—— **与选角预览/远端/怪物/NPC 同一份实现**
+   * （`char/anim-player.ts`）。自机建模时创建；未建模时为 null。
+   */
+  let selfPlayer: AnimPlayer | null = null;
   // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
   let selfAnimRate = 1;
   // 本次挥拳的命中帧跟踪：motion + 目标 + 事件帧（相对 startFrame×160，非零）+ 已触发段数
@@ -818,29 +819,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const mmLoading = new Set<string>();
   let mmAssetsInit = false;          // arrow/mapbox 一次性
 
+  /**
+   * 小地图用的界面纹理（arrow / mapbox）—— 解码流程已抽到 `src/render/ui-texture.ts`，
+   * 大地图组件用**同一份**（不然就是两份实现，见 AGENTS #15）。
+   */
   async function ensureMMImg(url: string): Promise<void> {
     if (mmImg.has(url) || mmLoading.has(url)) return;
     mmLoading.add(url);
     try {
-      // 走 AssetManager（缓存 + 按 kind 统计）
-      let buf: ArrayBuffer;
-      try {
-        buf = await fetchAsset(url, 'texture:ui');
-      } catch {
-        return;   // 取不到就跳过（原来是 `if (!resp.ok) return;`）
-      }
-      // dev 服务器对缺失文件回退成 index.html(200)；按魔数排除
-      if (buf.byteLength === 0 || new Uint8Array(buf)[0] === 0x3c /* '<' */) return;
-      const dec = await decodeTextureAsync(buf);
-      if (!dec) return;
-      const c = document.createElement('canvas');
-      c.width = dec.width; c.height = dec.height;
-      c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(dec.pixels), dec.width, dec.height), 0, 0);
-      const img = new Image();
-      img.src = c.toDataURL();
-      await new Promise<void>((r) => { img.onload = () => r(); img.onerror = () => r(); });
-      mmImg.set(url, img);
-    } catch { /* 缺资源忽略 */ } finally {
+      const img = await loadUiImage(url);
+      if (img) mmImg.set(url, img);
+    } finally {
       mmLoading.delete(url);
     }
   }
@@ -872,6 +861,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       mmAssetsInit = true;
       ensureMMImg('/res/image/arrow.tga');
       ensureMMImg('/res/image/mapbox.tga');
+      ensureMMImg('/res/image/npc.tga');
     }
     if (mapHandles.size === 0) return;
 
@@ -911,6 +901,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       drawImgSub(tile, dx, dy, dw, dh,
         (xA - gx0) / spanX, (zA - gz0) / spanZ,
         (xB - xA) / spanX, (zB - zA) / spanZ);
+    }
+
+    // NPC 绿点（原版 DrawMapNPC：遍历 NPC，仅 |Δ| < 视窗才画，8×8 npc.tga 中心对齐）
+    const npcMark = mmImg.get('/res/image/npc.tga');
+    if (npcMark) {
+      for (const [, actor] of npcs) {
+        const nx = actor.root.position.x, nz = actor.root.position.z;
+        if (nx < winX0 || nx > winX1 || nz < winZ0 || nz > winZ1) continue;
+        const sx = 1 + (nx - winX0) * pxScale;
+        const sy = MM_BOX_Y + 1 + (nz - winZ0) * pxScale;
+        mmCtx.drawImage(npcMark, sx - 3, sy - 3, 8, 8);
+      }
     }
 
     // 玩家箭头：窗口以玩家为中心 ⇒ 恒在框中心旋转（原版 DrawMapArrow）
@@ -1020,10 +1022,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     setAutoRecenter(false);   // 交回给"平滑到位"那一刻再打开（见 updateCamera）
   }
 
-  const tmp = new THREE.Matrix4();
-  const posV = new THREE.Vector3();
-  const quatQ = new THREE.Quaternion();
-  const sclV = new THREE.Vector3();
+  // 施加姿势用的临时量已收进 `char/anim-player.ts`（与姿势尾巴同一处，唯一一份）
   const clock = new THREE.Clock();
 
   function ensure3D(): void {
@@ -1239,6 +1238,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     skeleton = priv.skeleton;
     animSmb = result.animSmb;
     bipInxInfo = result.bipInxInfo;
+    // 自机动画播放器：**与选角预览/怪物/NPC 同一份实现**（char/anim-player.ts）
+    selfPlayer = createAnimPlayer(result.animSmb, bones, skeleton);
 
     // charGroup 装配：骨架根 + 身体组 + 头组（身体组可整体换内容，头/骨架不动）
     charGroup = new THREE.Group();
@@ -1284,7 +1285,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       getFieldState: () => currentFieldState(),
       onStanceChange: (stance) => { setSelfWeaponStance(stance); },
       onMotionChange: (motion: MotionInfo) => {
-        animFrame = motion.startFrame * 160;
+        selfPlayer?.setFrame(motion.startFrame * 160);
         // 记下这条动画的语义 ID：移动/起手上报时要把它同步出去（旁观者据此播同一条）
         selfAnimClip = semanticEntryOfMotion(motionList, semanticEntriesForJob(jobId), motion)?.clip ?? '';
       },
@@ -1578,29 +1579,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     for (const c of root.children) removeFromAnywhere(c, target);
   }
 
-  function buildMotionListFor(
-    animSmb: Awaited<ReturnType<typeof loadCharacterModel>>['animSmb'],
-    bipInxInfo: Awaited<ReturnType<typeof loadCharacterModel>>['bipInxInfo'],
-  ): MotionInfo[] {
-    const list: MotionInfo[] = [];
-    const tmFrame = animSmb.tmFrame;
-    for (let i = CHRMOTION_EXT; i < bipInxInfo.motionCount; i++) {
-      const mi = bipInxInfo.motions[i];
-      if (!mi.state && !mi.startFrame && !mi.endFrame) continue;
-      let startFrame = mi.startFrame;
-      let endFrame = mi.endFrame;
-      if (tmFrame && mi.motionFrame > 0 && tmFrame[mi.motionFrame - 1]) {
-        const off = tmFrame[mi.motionFrame - 1].startFrame / 160;
-        startFrame += off;
-        endFrame += off;
-      }
-      list.push({ ...mi, startFrame, endFrame });
-    }
-    return list;
-  }
-
+  /** 动作列表 —— **与选角预览同一个构造器**（char/anim-player.buildMotionList） */
   function buildMotionList(): void {
-    if (animSmb && bipInxInfo) motionList = buildMotionListFor(animSmb, bipInxInfo);
+    if (animSmb && bipInxInfo) motionList = buildMotionListShared(animSmb, bipInxInfo);
   }
 
   /**
@@ -1885,7 +1866,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           return;
         case 'npc':
           moveTarget = { kind: 'npc', id: tag.id };
-          console.log('[WorldView] 选中 NPC npcId=' + tag.id + ' → Chase');
+          console.log('[WorldView] 选中 NPC entityId=' + tag.id + ' → Chase');
           return;
         case 'item': {
           const g = groundItems.get(tag.id);
@@ -2442,7 +2423,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // ==================== NPC（S2C_NpcAppear，静态站桩） ====================
   interface NpcActor {
-    npcId: number;
+    entityId: number;
     root: THREE.Group;
     nameKey: string;
     topY: number; // 模型顶高（名牌锚点偏移，modelTopY(group)+0.5）
@@ -2456,14 +2437,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   const npcs = new Map<number, NpcActor>();
   const npcSpawning = new Set<number>();
-  const pendingNpcAppears: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
+  const pendingNpcAppears: { entityId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
 
-  function spawnNpc(info: { npcId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }): void {
+  function spawnNpc(info: { entityId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }): void {
     if (!scene) {
       pendingNpcAppears.push(info);
       return;
     }
-    const nid = info.npcId;
+    const nid = info.entityId;
     if (npcs.has(nid) || npcSpawning.has(nid)) return;
     npcSpawning.add(nid);
     void (async () => {
@@ -2477,7 +2458,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.add(result.group);
         root.position.set(info.x, info.y, info.z);
         root.rotation.y = info.angle || 0;
-        root.userData.npcId = nid; // 光标 Talk/点选 Chase 命中用
+        root.userData.entityId = nid; // 光标 Talk/点选 Chase 命中用
         root.userData.kind = 'npc'; // 场景对象分类标签（调试/诊断用；悬停与点击的判定走 pickTargetAt 的屏幕矩形）
         scene!.add(root);
 
@@ -2485,12 +2466,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const animState = createAnimStateMachine({
           getMotions: () => actorObj.motionList,
           getClassId: () => 0,
-          // 同怪物：NPC 无上报者 → 由 (npcId, 状态) 确定性派生，各客户端站姿一致
+          // 同怪物：NPC 无上报者 → 由 (entityId, 状态) 确定性派生，各客户端站姿一致
           getAnimSeed: () => deriveAnimSeed(nid, 0),
           onMotionChange: (motion: MotionInfo) => { actorObj.animFrame = motion.startFrame * 160; },
         });
         actorObj = {
-          npcId: nid,
+          entityId: nid,
           root,
           nameKey: info.nameKey,
           topY: modelTopY(result.group) + 0.5,
@@ -2513,13 +2494,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     })();
   }
 
-  function despawnNpc(npcId: number): void {
-    const actor = npcs.get(npcId);
+  function despawnNpc(entityId: number): void {
+    const actor = npcs.get(entityId);
     if (actor) {
       scene?.remove(actor.root);
-      npcs.delete(npcId);
+      npcs.delete(entityId);
     }
-    npcSpawning.delete(npcId);
+    npcSpawning.delete(entityId);
   }
 
   /** 每帧：NPC 仅播 idle 动画（静态，无位置插值）；STAND 播一段时间后随机切换另一个 STAND（更鲜活） */
@@ -2533,7 +2514,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const motion = actor.animState.getCurrentMotion();
       if (!motion) continue;
-      actor.animFrame += ANIM_UNITS_PER_SEC * Math.min(dt, 0.1);
+      actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt).frame;
       const endFrame = motion.endFrame * 160;
       const startFrame = motion.startFrame * 160;
       if (actor.animFrame >= endFrame) {
@@ -2545,14 +2526,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (next) actor.animFrame = next.startFrame * 160;
         }
       }
-      const npcAnimSmb = motion.animSmb ?? actor.animSmb;
-      const skelFrames = evalSkeletonInto(npcAnimSmb, actor.animFrame, false, evalWsFor(npcAnimSmb));
-      applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
-      // 关键：手动更新骨骼的 matrixWorld。Skeleton.update() 只读 matrixWorld 算 boneMatrices，
-      // 不会更新 matrixWorld；脱离场景图的孤立根骨（如武器 waraxe）否则会停在 bind 值 → 武器不显示。
-      // updateBoneWorlds 只对根骨调一次（force=true 会递归整棵子树），不再逐骨各递归一遍（O(n²)）。
-      updateBoneWorlds(actor.bones);
-      actor.skeleton.update();
+      // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
+      applyPose(motion.animSmb ?? actor.animSmb, actor.animFrame, actor.bones, actor.skeleton);
     }
   }
 
@@ -2673,7 +2648,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!t || t.kind === 'ground') return false;
     if (t.kind === 'monster' && root.userData.monsterId === t.id) return true;
     if (t.kind === 'player' && root.userData.playerId === t.id) return true;
-    if (t.kind === 'npc' && root.userData.npcId === t.id) return true;
+    if (t.kind === 'npc' && root.userData.entityId === t.id) return true;
     return false;
   }
 
@@ -2782,18 +2757,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfMaxHp = Math.max(hp, maxHp);
   }
   /**
-   * 服务端权威换图校准（`game.mapSwitched`）：服务端 findMapPrecise 判定玩家跨图后通知。
-   * 本地判图（findCurrentMap）是高频预判，可能与服务端差一个身位——以本消息对齐
-   * currentMapId 并同步区域/音频/姿态，防止两端归属漂移。
+   * **换图的唯一入口** —— 底下所有"进了另一张图"的路都必须走这里。
+   *
+   * 为什么必须唯一：换图要连带做的事有四件（区域预加载 / 音频 / 村庄↔野外姿态 / 地图名大字），
+   * 而"谁发现了换图"有三个来源：① 本地判图（走路越界，高频预判）② 服务端校准
+   * （`game.mapSwitched`，与本地可能差一个身位）③ 传送（`applyTeleport`）。
+   * 我此前只在 ② 里做了大字提示，于是"走过去"和"传送过去"都没有地图名（用户实测）。
+   * 收敛到这里之后，**再加换图的连带动作只需改一处**，不会再出现"某条路漏了一件事"。
+   *
+   * @param reason 仅用于日志（区分是谁发现的换图）
+   * @returns 是否真的换了图
    */
-  function applyMapSwitched(mapId: number): void {
-    if (!scene || mapId === currentMapId) return;
+  function enterMap(mapId: number, reason: string): boolean {
+    if (!scene || !mapId || mapId === currentMapId) return false;
     currentMapId = mapId;
     mapAudio.enterMap(currentMapId);
     void syncMapRegions(currentMapId);
-    animState?.reselectForCurrentState(); // 村庄↔野外姿态随图变
-    showMapBanner(mapId);
-    console.log('[WorldView] 服务端换图校准: map=' + mapId);
+    animState?.reselectForCurrentState();   // 村庄↔野外姿态随图变
+    showMapBanner(mapId);                   // 进图地图名大字（三条路都走这里）
+    console.log(`[WorldView] 换图(${reason}): map=${mapId}`);
+    return true;
+  }
+
+  /**
+   * 服务端权威换图校准（`game.mapSwitched`）：服务端 findMapPrecise 判定玩家跨图后通知。
+   * 本地判图是高频预判，可能与服务端差一个身位——以本消息对齐 currentMapId，
+   * 防止两端归属漂移。大字提示由 `enterMap` 统一负责：本地已判过则不重复弹。
+   */
+  function applyMapSwitched(mapId: number): void {
+    enterMap(mapId, '服务端校准');
   }
 
   /**
@@ -2841,8 +2833,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           `目标图 map ${info.mapId} 未加载成功 → 保持原位不动（避免掉出地图）`);
         return;
       }
-      currentMapId = info.mapId;      // 与下面的设位置在同一帧内完成，不产生"新图 + 旧位置"
-      mapAudio.enterMap(currentMapId);
+      // 与下面的设位置在同一帧内完成，不产生"新图 + 旧位置"；大字提示也由它出
+      enterMap(info.mapId, '传送');
     }
 
     // 3) y：服务端已按**目标地图**地形算过；为 0（该点无可站立地面）时用本地地形补，
@@ -3124,21 +3116,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const MAP_BANNER_FADE_IN_MS = 350;
   const MAP_BANNER_HOLD_MS = 2600;
   const MAP_BANNER_FADE_OUT_MS = 900;
-  const MAP_BANNER_COOLDOWN_MS = 20000;
+  /**
+   * 同一张图的冷却 —— **只做防抖，不做"限制"**：它只需要挡住"贴着边界来回蹭"
+   * （跨越一次至少得跑过去再掉头，本来就有跑动时间），所以取 2 秒足够。
+   * **按图分别计时**（不是全局一个时间戳）—— 全局时间戳会把"刚去过 A，现在第一次进 B"
+   * 也当成刷屏而**吃掉 B 的提示**（那正是"换图了却没字"的成因之一）。
+   * 别把这值调大：走过一张图再回来（回城买东西再出门、进副本打完出来）本来就该再报一次。
+   */
+  const MAP_BANNER_COOLDOWN_MS = 2000;
   let mapBanner: { mapId: number; name: string; born: number } | null = null;
-  let mapBannerLastShownAt = 0;
-  let mapBannerLastMapId = -1;
+  const mapBannerShownAt = new Map<number, number>();   // mapId → 上次弹的时刻
 
   function showMapBanner(mapId: number): void {
+    if (!mapId) return;
     const now = performance.now();
-    if (now - mapBannerLastShownAt < MAP_BANNER_COOLDOWN_MS) return;   // 冷却：边缘往返防刷
-    if (mapId === mapBannerLastMapId) return;                          // 同图不重复
+    const last = mapBannerShownAt.get(mapId) ?? -Infinity;
+    if (now - last < MAP_BANNER_COOLDOWN_MS) return;   // 同一张图冷却内不重弹（边缘往返防刷）
     const key = `map.${mapId}`;
     const localized = t(key);
     const name = localized === key ? `Map ${mapId}` : localized;        // 缺翻译回退 Map N
     mapBanner = { mapId, name, born: now };
-    mapBannerLastShownAt = now;
-    mapBannerLastMapId = mapId;
+    mapBannerShownAt.set(mapId, now);
   }
 
   function drawMapBanner(ctx: CanvasRenderingContext2D, now: number, w: number, h: number): void {
@@ -3489,35 +3487,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   // ==================== 动画求值热路径（零分配 + 只更新根骨）====================
-  /**
-   * 按 smb 复用的求值工作区。**显式持有**（不是"函数内部隐式缓存"）：谁用谁负责，
-   * 免得共享可变状态在别处被悄悄踩掉（AGENTS #11/#15）。
-   * 不同模型（怪物/自机/NPC/子模型）各有各的 workspace，各用各的互不干扰。
-   */
-  const evalWsBySmb = new Map<object, EvalWorkspace>();
-  function evalWsFor(smb: object): EvalWorkspace {
-    let ws = evalWsBySmb.get(smb);
-    if (!ws) {
-      ws = createEvalWorkspace(smb as Parameters<typeof createEvalWorkspace>[0]);
-      evalWsBySmb.set(smb, ws);
-    }
-    return ws;
-  }
-
-  /**
-   * 更新骨骼的世界矩阵。
-   *
-   * 原写法是 `bones.forEach(b => b.updateMatrixWorld(true))` —— 每根骨都强制递归**整棵子树**，
-   * 于是 25 根骨要算约 25×25/2 次矩阵乘（O(n²)，实测占单只开销 20%）。
-   * 只对**根骨**调一次即可：`force=true` 会把整棵子树都更新掉。
-   * 判据用"父节点不是 Bone"（骨架根被挂在 Group 下，所以根的 parent 不是 Bone）。
-   */
-  function updateBoneWorlds(bones: THREE.Bone[]): void {
-    for (const b of bones) {
-      const p = b.parent;
-      if (!p || !(p as THREE.Bone).isBone) b.updateMatrixWorld(true);
-    }
-  }
+  // 求值工作区（`evalWorkspaceFor`）与骨骼世界矩阵更新（`updateBoneWorlds`）已经收进
+  // `char/anim-player.ts` —— 那里是**唯一一份**，自机/远端/怪物/NPC/选角预览共用。此前这里
+  // 各留了一份（选角预览连 workspace 都没有，每帧新建），见该文件头部说明。
 
   function updateMonsters(dt: number): void {
     const now = performance.now();
@@ -3554,15 +3526,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 被显示预算裁掉的怪：位置/朝向照常插值（否则重新出现时会瞬移），但**到此为止** ——
       // 下面的 setRemoteMonsterAnim（状态机）与骨架求值全部跳过。省的就是这 0.075ms/只。
       // animFrame 照常推进，保证它重新出现时动作是连续的、而不是从起手帧重来。
+      const motionAtCull = actor.animState.getCurrentMotion();
       if (actor.culled) {
-        actor.animFrame += ANIM_UNITS_PER_SEC * Math.min(dt, 0.1);
+        // 被裁掉也要推进帧（重新出现时动作才是连续的，而不是从起手帧重来）
+        if (motionAtCull) actor.animFrame = advanceAnimFrame(actor.animFrame, motionAtCull, dt).frame;
         continue;
       }
       setRemoteMonsterAnim(actor, s0.anim);
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
-        actor.animFrame += ANIM_UNITS_PER_SEC * Math.min(dt, 0.1);
+        actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt).frame;
         const endFrame = motion.endFrame * 160;
         const startFrame = motion.startFrame * 160;
         if (actor.animFrame >= endFrame) {
@@ -3574,11 +3548,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) actor.animFrame = next.startFrame * 160;
           }
         }
-        const actorAnimSmb = motion.animSmb ?? actor.animSmb;
-        const skelFrames = evalSkeletonInto(actorAnimSmb, actor.animFrame, false, evalWsFor(actorAnimSmb));
-        applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
-        updateBoneWorlds(actor.bones);
-        actor.skeleton.update();
+        // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
+        applyPose(motion.animSmb ?? actor.animSmb, actor.animFrame, actor.bones, actor.skeleton);
       }
     }
   }
@@ -3725,7 +3696,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         root.userData.kind = 'player'; // 场景对象分类标签（调试/诊断用；悬停与点击的判定走 pickTargetAt 的屏幕矩形）
         scene.add(root);
 
-        const motionList2 = buildMotionListFor(result.animSmb, result.bipInxInfo);
+        const motionList2 = buildMotionListShared(result.animSmb, result.bipInxInfo);
         let actorObj!: RemoteActor;
         // 远端动画状态机：**getter 与自机同一套**（此前只有 getMotions/getClassId/onMotionChange
         // 三个 → 没有武器语义、也没有场所位，于是远端永远播通用/空手动画、进安全区也不换姿态）。
@@ -3907,11 +3878,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (next) actor.animFrame = next.startFrame * 160;
           }
         }
-        const actorAnimSmb = motion.animSmb ?? actor.animSmb;
-        const skelFrames = evalSkeletonInto(actorAnimSmb, actor.animFrame, false, evalWsFor(actorAnimSmb));
-        applyToBones(actor.bones, skelFrames, tmp, posV, quatQ, sclV);
-        updateBoneWorlds(actor.bones);
-        actor.skeleton.update();
+        // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
+        applyPose(motion.animSmb ?? actor.animSmb, actor.animFrame, actor.bones, actor.skeleton);
       }
     }
   }
@@ -4058,11 +4026,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 而进入/离开判定是**每帧重算**的 —— 位置与控制有抖动时会越线来回翻，
     // 表现为角色贴着目标高频来回蹭。
     // 停步环按目标类别取：交互类（掉落物/NPC/玩家）= `INTERACT_RANGE`（要够得着判定），
-    // 怪物 = `NEAR_RANGE`（要给攻击距离留余量）。
+    // 怪物 = `monsterStopRing(攻击距离)`（**必须落在攻击距离以内**，否则停在这儿就够不着怪，
+    // 见 `game/combatRange.ts`；2026-09-15 空手/单手武器就死在这上面）。
     if (forcedFace !== undefined && moveTarget) {
       const tp = chaseTargetPos();
       if (tp) {
-        const ring = moveTarget.kind === 'monster' ? NEAR_RANGE : INTERACT_RANGE;
+        const ring = moveTarget.kind === 'monster' ? monsterStopRing(selfAttackRange()) : INTERACT_RANGE;
         const gap = Math.hypot(tp.x - selfPos.x, tp.z - selfPos.z) - ring;
         if (gap <= 0) return false;                  // 已在环内 → 停住，交给交互/攻击判定
         if (step > gap) step = gap;                  // 本帧会越线 → 只走到环上
@@ -4141,12 +4110,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 换图：移动后用 AABB+高度精确判定所属地图，跨图时同步地图区域（2 跳内保留）
       const foundMap = findCurrentMap(selfPos.x, selfPos.z);
       if (foundMap !== currentMapId && rafMs - lastMapSwitch > 200) {
-        currentMapId = foundMap;
         lastMapSwitch = rafMs;
-        mapAudio.enterMap(currentMapId);
-        void syncMapRegions(currentMapId);
-        // 村庄↔野外姿态：跨图后重选待机/走/跑动画（安全区查服务端下发表）
-        animState?.reselectForCurrentState();
+        // 走过去的换图：区域/音频/姿态/地图名大字都由 enterMap 一并处理
+        enterMap(foundMap, '本地判图');
       }
       // 坐标已经落进某张**尚未加载**的图 → 立刻触发区域同步。
       // 这一条不能省：换图判定被"脚下有面"兜住时 currentMapId 不会变，上面那个分支永不执行，
@@ -4272,15 +4238,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const dt = clock.getDelta();
     rafMs += dt * 1000;
 
-    // 自机动画（delta-time：帧率无关）
-    if (animState && animSmb && skeleton && bones.length) {
+    // 自机动画（delta-time：帧率无关）—— 帧推进/求值/施加全走共享播放器（char/anim-player.ts），
+    // 与选角预览、远端玩家、怪物、NPC 同一份实现
+    if (animState && selfPlayer) {
       const motion = animState.getCurrentMotion();
       if (motion) {
         // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用触发攻击时按攻速设的 selfAnimRate
         if (animState.getCurrentState() !== animState.STATE.ATTACK) selfAnimRate = 1;
-        // 帧推进走共享实现（char/animation.ts，与检查器/char-demo 同一函数）
-        const step = advanceAnimFrame(animFrame, motion, dt, selfAnimRate);
-        animFrame = step.frame;
+        const step = selfPlayer.advance(motion, dt, selfAnimRate);
         // 命中帧检测（原版 exm character.cpp:2631）：compFrame 跨过 eventFrame[i] → 发该段 C2S_AttackHit
         // 用 step.raw（未回绕）判定，否则循环动作回绕后会漏判/重判
         if (animState.getCurrentState() === animState.STATE.ATTACK && selfAttackMotion) {
@@ -4311,16 +4276,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (step.ended) {
           // 死亡：停在末帧前一帧（原版 `frame = (EndFrame-1)*160`），尸体不起身 —— 等复活消息
           if (animState.getCurrentState() === animState.STATE.DEAD) {
-            animFrame = Math.max(motion.startFrame, motion.endFrame - 1) * 160;
+            selfPlayer.setFrame(Math.max(motion.startFrame, motion.endFrame - 1) * 160);
           } else {
             const next = animState.onAnimationEnd();
-            if (next) animFrame = next.startFrame * 160;
+            if (next) selfPlayer.setFrame(next.startFrame * 160);
           }
         }
-        const skelFrames = evalSkeletonInto(animSmb, animFrame, false, evalWsFor(animSmb));
-        applyToBones(bones, skelFrames, tmp, posV, quatQ, sclV);
-        updateBoneWorlds(bones);
-        skeleton.update();
+        selfPlayer.apply();
       }
     }
 
@@ -4371,7 +4333,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       moveStuckStart = 0;
       if (hit && targetReached && hit.kind === 'item') {
         // 到位 → 对"选中的这一件"发拾取请求（服务端裁决并入包推送）
-        const cd = lastChaseDist;   // 在计算到达时记下的距离（这里 moveTarget 已清空，不能再算）
+        const cd = lastChaseDist;
+   // 在计算到达时记下的距离（这里 moveTarget 已清空，不能再算）
         // 打出**客户端此刻自己算的距离**：服务端若回 "too far"，两者一比就能判定是
         // "客户端到位判定错"还是"跑动位移没上报到服务端"（用户 2026-09-14 实测：服务端报 33.27
         // 恰等于**点击时**的距离，这行日志用来一刀切开）。
@@ -4583,6 +4546,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       firstFramePending = false;
       loadHooks?.onProgress?.(4, 4);
       loadHooks?.onReady?.();
+      showMapBanner(currentMapId);   // 进图/传送落地后的地图名大字（等加载页收起再弹，否则被遮罩盖住）
     }
 
     // ── 剖析器：场景侧计数 + 整帧渲染统计 ──
@@ -4734,6 +4698,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     async show(enterGame, hooks) {
       loadHooks = hooks ?? null;
       firstFramePending = false;
+      // 换角色/重进：地图名大字的"同图冷却"计时作废 —— 否则小退→换号→重进同一张图时
+      // 会被上一局的计时吃掉（用户实测"进图没有地图名"）
+      mapBannerShownAt.clear();
       root.style.display = 'block';
       ensure3D();
       if (!scene || !camera) {
@@ -4870,6 +4837,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyPlayerDeath,
     applyMapSwitched,
     respawnNeedsMapLoad: (mapId: number) => !!scene && mapId !== currentMapId,
+    /** 大地图（`src/ui/WorldMap.ts`）用：当前地图 + 自机世界坐标 —— 世界图上画"你在这" */
+    worldMapPlayer: () => ({ mapId: currentMapId, x: selfPos.x, z: selfPos.z, angle: selfAngle }),
+    /**
+     * 大地图用：地图上的其他实体（图标与小地图同源）。
+     *   · NPC  = `npcs`（原版小地图也只画这些）
+     *   · 怪物 = `monsters`（**原版小地图不画怪物**，用户要求画；标红区分）
+     *   · 队友 = **暂无数据源** —— 客户端还没接队伍系统（协议里是 `S2C_PartyUpdate`），
+     *           队伍状态一落地就往这里塞，别的地方不用改
+     */
+    worldMapEntities: () => {
+      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number }[] = [];
+      for (const [, n] of npcs) out.push({ kind: 'npc', x: n.root.position.x, z: n.root.position.z });
+      // 怪物不按"显示预算"过滤：地图要看到全部（`culled` 只是这一帧不渲染）
+      for (const [, m] of monsters) out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z });
+      return out;
+    },
     applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '') => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {
@@ -4909,10 +4892,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
     monsterDeath: (monsterId) => despawnMonster(Number(monsterId)),
-    npcAppear: (npcId, nameKey, modelFile, x, y, z, angle) => {
-      spawnNpc({ npcId: Number(npcId), nameKey: nameKey || '', modelFile: modelFile || '', x: Number(x), y: Number(y), z: Number(z), angle: Number(angle) || 0 });
+    npcAppear: (entityId, nameKey, modelFile, x, y, z, angle) => {
+      spawnNpc({ entityId: Number(entityId), nameKey: nameKey || '', modelFile: modelFile || '', x: Number(x), y: Number(y), z: Number(z), angle: Number(angle) || 0 });
     },
-    npcDisappear: (npcId) => despawnNpc(Number(npcId)),
+    npcDisappear: (entityId) => despawnNpc(Number(entityId)),
     groundItemAppear: (groundItemId, name, x, y, z, dorpItem, itemId, quantity, money) => {
       spawnGroundItem(
         Number(groundItemId), name || '', Number(x), Number(y), Number(z),

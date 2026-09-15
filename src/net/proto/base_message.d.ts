@@ -6697,8 +6697,8 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** S2C_NpcAppear npcId. */
-            npcId: (number|Long);
+            /** S2C_NpcAppear entityId. */
+            entityId: (number|Long);
 
             /** S2C_NpcAppear nameKey. */
             nameKey: string;
@@ -6796,8 +6796,8 @@ export namespace jpt {
             /** Properties of a S2C_NpcAppear. */
             interface $Properties {
 
-                /** S2C_NpcAppear npcId */
-                npcId?: (number|Long|null);
+                /** S2C_NpcAppear entityId */
+                entityId?: (number|Long|null);
 
                 /** S2C_NpcAppear nameKey */
                 nameKey?: (string|null);
@@ -6838,8 +6838,8 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** S2C_NpcDisappear npcId. */
-            npcId: (number|Long);
+            /** S2C_NpcDisappear entityId. */
+            entityId: (number|Long);
 
             /**
              * Creates a new S2C_NpcDisappear instance using the specified properties.
@@ -6925,8 +6925,8 @@ export namespace jpt {
             /** Properties of a S2C_NpcDisappear. */
             interface $Properties {
 
-                /** S2C_NpcDisappear npcId */
-                npcId?: (number|Long|null);
+                /** S2C_NpcDisappear entityId */
+                entityId?: (number|Long|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -12511,8 +12511,8 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** C2S_NpcInteract npcId. */
-            npcId: (number|Long);
+            /** C2S_NpcInteract entityId. */
+            entityId: (number|Long);
 
             /**
              * Creates a new C2S_NpcInteract instance using the specified properties.
@@ -12598,8 +12598,8 @@ export namespace jpt {
             /** Properties of a C2S_NpcInteract. */
             interface $Properties {
 
-                /** C2S_NpcInteract npcId */
-                npcId?: (number|Long|null);
+                /** C2S_NpcInteract entityId */
+                entityId?: (number|Long|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -12628,8 +12628,8 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** C2S_ShopBuy npcId. */
-            npcId: (number|Long);
+            /** C2S_ShopBuy entityId. */
+            entityId: (number|Long);
 
             /** C2S_ShopBuy itemlistId. */
             itemlistId: number;
@@ -12721,8 +12721,8 @@ export namespace jpt {
             /** Properties of a C2S_ShopBuy. */
             interface $Properties {
 
-                /** C2S_ShopBuy npcId */
-                npcId?: (number|Long|null);
+                /** C2S_ShopBuy entityId */
+                entityId?: (number|Long|null);
 
                 /** C2S_ShopBuy itemlistId */
                 itemlistId?: (number|null);
@@ -12757,8 +12757,8 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** C2S_ShopSell npcId. */
-            npcId: (number|Long);
+            /** C2S_ShopSell entityId. */
+            entityId: (number|Long);
 
             /** C2S_ShopSell uid. */
             uid: (number|Long);
@@ -12850,8 +12850,8 @@ export namespace jpt {
             /** Properties of a C2S_ShopSell. */
             interface $Properties {
 
-                /** C2S_ShopSell npcId */
-                npcId?: (number|Long|null);
+                /** C2S_ShopSell entityId */
+                entityId?: (number|Long|null);
 
                 /** C2S_ShopSell uid */
                 uid?: (number|Long|null);
@@ -13027,8 +13027,8 @@ export namespace jpt {
             /** Unknown fields preserved while decoding when enabled */
             $unknowns?: Uint8Array[];
 
-            /** S2C_ShopOpen npcId. */
-            npcId: (number|Long);
+            /** S2C_ShopOpen entityId. */
+            entityId: (number|Long);
 
             /** S2C_ShopOpen kind. */
             kind: number;
@@ -13120,8 +13120,8 @@ export namespace jpt {
             /** Properties of a S2C_ShopOpen. */
             interface $Properties {
 
-                /** S2C_ShopOpen npcId */
-                npcId?: (number|Long|null);
+                /** S2C_ShopOpen entityId */
+                entityId?: (number|Long|null);
 
                 /** S2C_ShopOpen kind */
                 kind?: (number|null);

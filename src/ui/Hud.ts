@@ -6,6 +6,16 @@ import { clearHoverItem, getGameSnapshot, registerUiHitTest, setHoverSpot, subsc
 import { isInputBlocked } from '../app/inputGate.js';
 import { sfx } from '../audio/sfx.js';
 
+/**
+ * HUD 回传的动作 —— **只在这里写一次**（原先接口与内部变量各写一份联合类型，
+ * 加 'worldmap' 时只改了一处 → tsc 报类型不兼容；重复的联合类型就是这类 bug 的温床）。
+ */
+export type HudAction =
+  | 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'worldmap'
+  | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
+  | 'system' | 'status' | 'skills' | 'inventory';
+
+
 /** 药水快捷槽（ITEMSLOT 11/12/13）一格的显示数据；空槽 url='' */
 export interface PotionSlotView { url: string; count: number }
 
@@ -34,8 +44,7 @@ export interface Hud {
   /** 更新三个药水槽的显示（图标+数量）；HUD 内部保留其余状态，无需重传整份 HudState */
   setPotions(p: PotionSlotView[]): void
   /** 用户动作回调（走跑/相机/地图按钮 / 系统按钮 / 角色状态按钮 / 技能面板按钮等） */
-  onAction?: (action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
-    | 'system' | 'status' | 'skills' | 'inventory', mods?: { shift?: boolean }) => void
+  onAction?: (action: HudAction, mods?: { shift?: boolean }) => void
 }
 
 const W = 1280
@@ -386,8 +395,8 @@ export function createHud(container: HTMLElement): Hud {
     uiState.mapOnFlag = on;
   }
 
-  let onAction: ((action: 'toggleRun' | 'toggleCamera' | 'toggleMinimap' | 'potion1' | 'potion2' | 'potion3' | 'potionUse1' | 'potionUse2' | 'potionUse3'
-    | 'system' | 'status' | 'skills' | 'inventory', mods?: { shift?: boolean }) => void) | undefined;
+  let mapBtnLastPress = 0;   // 小地图按钮：两次按压间隔判双击（见命中处理）
+  let onAction: ((action: HudAction, mods?: { shift?: boolean }) => void) | undefined;
 
   // 走跑/相机/地图按钮点击：下降沿触发（ptrDown false→true 只触发一次，按住不重复）
   let prevPtrDown = false;
@@ -423,7 +432,14 @@ export function createHud(container: HTMLElement): Hud {
     }
     if (inRect(mx, my, SMALL_BTN.run)) { sfx.playUi('click'); onAction?.('toggleRun'); return; }
     if (inRect(mx, my, SMALL_BTN.cam)) { sfx.playUi('click'); onAction?.('toggleCamera'); return; }
-    if (inRect(mx, my, SMALL_BTN.map)) { sfx.playUi('click'); onAction?.('toggleMinimap'); return; }
+    if (inRect(mx, my, SMALL_BTN.map)) {
+      // 原版（ex-machina Main.cpp:998）：**双击小地图 = 开大地图**，单击只是开关场内小地图。
+      // 这里用两次按压的间隔判双击（HUD 走 window pointerdown + 边沿检测，没有原生 click/dblclick）。
+      const now = performance.now();
+      if (now - mapBtnLastPress < 350) { mapBtnLastPress = 0; sfx.playUi('click'); onAction?.('worldmap'); }
+      else { mapBtnLastPress = now; sfx.playUi('click'); onAction?.('toggleMinimap'); }
+      return;
+    }
     // 6 功能按钮（b0..b5）：b0=角色状态、b1=背包、b2=技能面板、b5=系统
     for (let bt = 0; bt < 6; bt++) {
       if (mx >= 648 + bt * 25 && mx < 648 + bt * 25 + 25 && my >= 560 && my < 587) {

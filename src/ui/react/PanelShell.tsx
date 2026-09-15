@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
+import { useState, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { t } from '../../i18n/index.js';
 import { closePanel, type OpenPanel } from '../../app/gameStore.js';
 
@@ -25,11 +25,6 @@ export default function PanelShell({ title, children, panel, align = 'center', w
   const [pos, setPos] = useState(() => posMemory.get(panel) ?? { x: 0, y: 0 });
   const draggable = align === 'left';
 
-  // 拖动/复位后写入位置记忆
-  useEffect(() => {
-    posMemory.set(panel, pos);
-  }, [pos, panel]);
-
   function onHeadPointerDown(e: ReactPointerEvent<HTMLElement>) {
     if (!draggable) return;
     const start = { x: e.clientX, y: e.clientY, px: pos.x, py: pos.y };
@@ -55,6 +50,9 @@ export default function PanelShell({ title, children, panel, align = 'center', w
   return (
     <div className="jp-overlay">
       <div
+        data-panel={panel}
+        data-layer={`panel:${panel}`}
+        data-layer-host="panels"
         className={`jp-panel${align === 'left' ? ' jp-panel--left' : ''}${wide ? ' jp-panel--wide' : ''}`}
         style={style}
         role="dialog"

@@ -4,7 +4,10 @@
 #jp-react-panels {
   position: fixed;
   inset: 0;
-  z-index: 80;
+  /* ⚠ **不设 z-index**（保持 auto）：容器一旦成为层叠上下文，里面的面板就没法与大地图窗口
+     直接比大小了。参与者是**每个面板自己**（PanelShell 里登记 `panel:xxx`）——
+     曾经整层升降，用户 2026-09-15 纠正：那样"关掉角色面板再打开"会连带背包一起顶到地图上面。
+     常驻子层各自固定：持物图标 1300 / 悬停信息 1350 / 聊天窗 60/1000 / 拆分遮罩 1150。 */
   pointer-events: none;
   font-family: "Microsoft YaHei", "PingFang SC", "Segoe UI", system-ui, sans-serif;
 }
@@ -840,7 +843,7 @@
 .jp-menu-overlay {
   position: fixed;
   inset: 0;
-  z-index: 200;
+  z-index: 200;   /* 基准值；参与排序后由 layerStack 动态改写（注册前的兜底，别删） */
   background: rgba(0, 0, 0, 0.55);
   display: flex;
   align-items: center;
@@ -1046,6 +1049,7 @@
 /* ==================== 游戏内聊天窗（玻璃质感） ==================== */
 .jp-chat {
   position: absolute;
+  z-index: 60;   /* 基准值；参与排序后由 layerStack 动态改写（注册前的兜底，别删） */
   width: min(420px, 40vw);
   min-width: 260px;
   background: linear-gradient(160deg, rgba(16, 20, 31, 0.9) 0%, rgba(12, 15, 24, 0.82) 48%, rgba(6, 9, 16, 0.78) 100%);
@@ -1391,7 +1395,7 @@
 .jp-split-mask {
   position: fixed;
   inset: 0;
-  z-index: 1150;
+  z-index: 1150;   /* 基准值；参与排序后由 layerStack 动态改写（注册前的兜底，别删） */
   background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;

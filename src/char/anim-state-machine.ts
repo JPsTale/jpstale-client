@@ -84,6 +84,15 @@ export interface AnimStateMachine {
   onAnimationEnd: () => MotionInfo | null;
   getCurrentState: () => number;
   getCurrentMotion: () => MotionInfo | null;
+  /**
+   * 当前武器姿态（**首次选择之前是 null**）。
+   *
+   * 调用方（选角预览）必须能在**装配完之后主动读一次**它来断言武器位置 ——
+   * 只依赖 `onStanceChange` 事件是不够的：事件可能在武器挂载完成前就发过
+   * （那一次会被丢弃，之后再没有第二次），于是武器会一直留在错误的挂载骨上。
+   * 见 AGENTS #37。
+   */
+  getStance: () => 'combat' | 'sheathed' | null;
   playMotion: (motion: MotionInfo | null) => boolean;
   /** 武器更换后按当前状态重选动画实例（STAND/WALK/RUN 立即生效；攻击/技能等一次性状态不打断） */
   reselectForCurrentState: () => void;
@@ -408,6 +417,8 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function getCurrentState(): number { return currentState; }
   function getCurrentMotion(): MotionInfo | null { return currentMotion; }
+  /** 当前武器姿态（首次选择前为 null）。调用方装配完武器后据此**主动断言**一次，别只等事件。 */
+  function getStance(): 'combat' | 'sheathed' | null { return currentStance; }
 
   // 直接播放指定动画（调试用），不经过状态机随机选择
   function playMotion(motion: MotionInfo | null): boolean {
@@ -451,6 +462,7 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     onAnimationEnd,
     getCurrentState,
     getCurrentMotion,
+    getStance,
     playMotion,
     reselectForCurrentState,
   };

@@ -546,8 +546,8 @@ export default function ItemPanel() {
     // —— 不走"拿起"，直接发卖出请求；钱到手时由 store 的统一判定播金币音。
     const shop = snap.shop;
     if (shop?.sellMode) {
-      console.log('[shop:sell] 卖出 uid=', it.uid, 'listId=', it.itemlistId, 'npc=', shop.npcId);
-      sendShopSell(shop.npcId, it.uid, 1);
+      console.log('[shop:sell] 卖出 uid=', it.uid, 'listId=', it.itemlistId, 'npc=', shop.entityId);
+      sendShopSell(shop.entityId, it.uid, 1);
       setShopSellMode(false);   // 原版卖一次即回到普通光标
       return;
     }

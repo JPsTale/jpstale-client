@@ -204,7 +204,7 @@ export function installBridge(): void {
         price: Number(it.price) || 0,
         kind: Number(it.kind) || 0,
       }));
-      setShop(Number(o.npcId) || 0, items);
+      setShop(Number(o.entityId) || 0, items);
       openPanel('shop');
     }
   });
@@ -232,17 +232,17 @@ export function sendBagSwap(handUid: number, targetUid: number, toLocation: numb
   send(bagSwap(handUid, targetUid, toLocation, toSlot));
 }
 
-/** 拿起 → 鼠标位（装备栏 slot=-1）。服务端权威：移动位置 + 撤装备效果 + 断线可恢复。 */
-export function sendNpcInteract(npcId: number): void {
-    send(npcInteract(npcId));
+/** 点击世界里的 NPC（只报**实体 id**；服务端据此查定义/校验距离）。 */
+export function sendNpcInteract(entityId: number): void {
+    send(npcInteract(entityId));
 }
 
-export function sendShopBuy(npcId: number, itemlistId: number, count = 1): void {
-    send(shopBuy(npcId, itemlistId, count));
+export function sendShopBuy(entityId: number, itemlistId: number, count = 1): void {
+    send(shopBuy(entityId, itemlistId, count));
 }
 
-export function sendShopSell(npcId: number, uid: number, count = 1): void {
-    send(shopSell(npcId, uid, count));
+export function sendShopSell(entityId: number, uid: number, count = 1): void {
+    send(shopSell(entityId, uid, count));
 }
 
 /** 拿起。`count > 0` 且小于现有量 = **拆分**（只拿 count 个，余数留在原格，用户 2026-09-14）。 */

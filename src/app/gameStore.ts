@@ -199,8 +199,8 @@ export interface GameSnapshot {
    * 存位置 ⇒ 渲染时按当前物品表现查 ⇒ 位置上换了什么就显示什么。
    */
   hoverSpot: { src: HoverSource; x: number; y: number } | null;
-  /** NPC 商店：打开中的商店与卖出模式（null = 没开） */
-  shop: { npcId: number; items: ShopItem[]; sellMode: boolean } | null;
+  /** NPC 商店：打开中的商店（entityId = NPC 运行时实体 id）与卖出模式（null = 没开） */
+  shop: { entityId: number; items: ShopItem[]; sellMode: boolean } | null;
 }
 
 const LS_FISTS = 'pt.fistBindings';
@@ -554,8 +554,8 @@ export interface ShopItem {
  * 当前打开的商店（null = 没开）。`sellMode` 是原版的"点 Sell 按钮后光标变卖出光标"：
  * 打开它以后，**点自己背包里的物品**就是卖出（`ItemPanel` 据此改行为）。
  */
-export function setShop(npcId: number, items: ShopItem[]): void {
-  commit({ shop: { npcId, items, sellMode: false } });
+export function setShop(entityId: number, items: ShopItem[]): void {
+  commit({ shop: { entityId, items, sellMode: false } });
 }
 
 export function clearShop(): void {
@@ -758,6 +758,9 @@ export function closeAllPanels(): void {
 
 // —— 系统菜单（X 键）：模态，独占（打开时收起所有面板）——
 export function openSystemMenu(): void {
+  // 静默失效是这个项目反复踩的坑（AGENTS #19）：面板开没开、被谁挡住，日志里要能看见
+  console.log('[ui] openSystemMenu: 当前 openPanels=', snapshot.openPanels.length,
+    'systemMenuOpen=', snapshot.systemMenuOpen);
   if (snapshot.systemMenuOpen) return;
   if (snapshot.openPanels.length > 0) commit({ openPanels: [], systemMenuOpen: true });
   else commit({ systemMenuOpen: true });

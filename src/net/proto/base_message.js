@@ -20683,7 +20683,7 @@ export const jpt = $root.jpt = (() => {
             /**
              * Properties of a S2C_NpcAppear.
              * @typedef {Object} jpt.base.S2C_NpcAppear.$Properties
-             * @property {number|Long|null} [npcId] S2C_NpcAppear npcId
+             * @property {number|Long|null} [entityId] S2C_NpcAppear entityId
              * @property {string|null} [nameKey] S2C_NpcAppear nameKey
              * @property {string|null} [modelFile] S2C_NpcAppear modelFile
              * @property {jpt.base.Position.$Properties|null} [position] S2C_NpcAppear position
@@ -20720,12 +20720,12 @@ export const jpt = $root.jpt = (() => {
             };
 
             /**
-             * S2C_NpcAppear npcId.
-             * @member {number|Long} npcId
+             * S2C_NpcAppear entityId.
+             * @member {number|Long} entityId
              * @memberof jpt.base.S2C_NpcAppear
              * @instance
              */
-            S2C_NpcAppear.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            S2C_NpcAppear.prototype.entityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
              * S2C_NpcAppear nameKey.
@@ -20791,8 +20791,8 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId") && (typeof message.entityId === "object" ? message.entityId.low || message.entityId.high : message.entityId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.entityId);
                 if (message.nameKey != null && $Object.hasOwnProperty.call(message, "nameKey") && message.nameKey !== "")
                     writer.uint32(/* id 2, wireType 2 =*/18).string(message.nameKey);
                 if (message.modelFile != null && $Object.hasOwnProperty.call(message, "modelFile") && message.modelFile !== "")
@@ -20862,9 +20862,9 @@ export const jpt = $root.jpt = (() => {
                             if (wireType !== 0)
                                 break;
                             if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
-                                message.npcId = value;
+                                message.entityId = value;
                             else
-                                delete message.npcId;
+                                delete message.entityId;
                             continue;
                         }
                     case 2: {
@@ -20948,9 +20948,9 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
-                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
-                        return "npcId: integer|Long expected";
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
+                    if (!$util.isInteger(message.entityId) && !(message.entityId && $util.isInteger(message.entityId.low) && $util.isInteger(message.entityId.high)))
+                        return "entityId: integer|Long expected";
                 if (message.nameKey != null && $Object.hasOwnProperty.call(message, "nameKey"))
                     if (!$util.isString(message.nameKey))
                         return "nameKey: string expected";
@@ -20986,16 +20986,16 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let message = new $root.jpt.base.S2C_NpcAppear();
-                if (object.npcId != null)
-                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                if (object.entityId != null)
+                    if (typeof object.entityId === "object" ? object.entityId.low || object.entityId.high : $Number(object.entityId) !== 0)
                         if ($util.Long)
-                            message.npcId = $util.Long.fromValue(object.npcId, false);
-                        else if (typeof object.npcId === "string")
-                            message.npcId = $parseInt(object.npcId, 10);
-                        else if (typeof object.npcId === "number")
-                            message.npcId = object.npcId;
-                        else if (typeof object.npcId === "object")
-                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                            message.entityId = $util.Long.fromValue(object.entityId, false);
+                        else if (typeof object.entityId === "string")
+                            message.entityId = $parseInt(object.entityId, 10);
+                        else if (typeof object.entityId === "number")
+                            message.entityId = object.entityId;
+                        else if (typeof object.entityId === "object")
+                            message.entityId = new $util.LongBits(object.entityId.low >>> 0, object.entityId.high >>> 0).toNumber();
                 if (object.nameKey != null)
                     if (typeof object.nameKey !== "string" || object.nameKey.length)
                         message.nameKey = $String(object.nameKey);
@@ -21033,21 +21033,21 @@ export const jpt = $root.jpt = (() => {
                 if (options.defaults) {
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
-                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                        object.entityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
-                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                        object.entityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.nameKey = "";
                     object.modelFile = "";
                     object.position = null;
                     object.angle = 0;
                 }
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
-                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
-                    else if (typeof message.npcId === "number")
-                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                        object.entityId = typeof message.entityId === "number" ? $BigInt(message.entityId) : $util.Long.fromBits(message.entityId.low >>> 0, message.entityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.entityId === "number")
+                        object.entityId = options.longs === $String ? $String(message.entityId) : message.entityId;
                     else
-                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                        object.entityId = options.longs === $String ? $util.Long.prototype.toString.call(message.entityId) : options.longs === $Number ? new $util.LongBits(message.entityId.low >>> 0, message.entityId.high >>> 0).toNumber() : message.entityId;
                 if (message.nameKey != null && $Object.hasOwnProperty.call(message, "nameKey"))
                     object.nameKey = message.nameKey;
                 if (message.modelFile != null && $Object.hasOwnProperty.call(message, "modelFile"))
@@ -21092,7 +21092,7 @@ export const jpt = $root.jpt = (() => {
             /**
              * Properties of a S2C_NpcDisappear.
              * @typedef {Object} jpt.base.S2C_NpcDisappear.$Properties
-             * @property {number|Long|null} [npcId] S2C_NpcDisappear npcId
+             * @property {number|Long|null} [entityId] S2C_NpcDisappear entityId
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -21125,12 +21125,12 @@ export const jpt = $root.jpt = (() => {
             };
 
             /**
-             * S2C_NpcDisappear npcId.
-             * @member {number|Long} npcId
+             * S2C_NpcDisappear entityId.
+             * @member {number|Long} entityId
              * @memberof jpt.base.S2C_NpcDisappear
              * @instance
              */
-            S2C_NpcDisappear.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            S2C_NpcDisappear.prototype.entityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
              * Creates a new S2C_NpcDisappear instance using the specified properties.
@@ -21164,8 +21164,8 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId") && (typeof message.entityId === "object" ? message.entityId.low || message.entityId.high : message.entityId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.entityId);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -21227,9 +21227,9 @@ export const jpt = $root.jpt = (() => {
                             if (wireType !== 0)
                                 break;
                             if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
-                                message.npcId = value;
+                                message.entityId = value;
                             else
-                                delete message.npcId;
+                                delete message.entityId;
                             continue;
                         }
                     }
@@ -21280,9 +21280,9 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
-                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
-                        return "npcId: integer|Long expected";
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
+                    if (!$util.isInteger(message.entityId) && !(message.entityId && $util.isInteger(message.entityId.low) && $util.isInteger(message.entityId.high)))
+                        return "entityId: integer|Long expected";
                 return null;
             };
 
@@ -21304,16 +21304,16 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let message = new $root.jpt.base.S2C_NpcDisappear();
-                if (object.npcId != null)
-                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                if (object.entityId != null)
+                    if (typeof object.entityId === "object" ? object.entityId.low || object.entityId.high : $Number(object.entityId) !== 0)
                         if ($util.Long)
-                            message.npcId = $util.Long.fromValue(object.npcId, false);
-                        else if (typeof object.npcId === "string")
-                            message.npcId = $parseInt(object.npcId, 10);
-                        else if (typeof object.npcId === "number")
-                            message.npcId = object.npcId;
-                        else if (typeof object.npcId === "object")
-                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                            message.entityId = $util.Long.fromValue(object.entityId, false);
+                        else if (typeof object.entityId === "string")
+                            message.entityId = $parseInt(object.entityId, 10);
+                        else if (typeof object.entityId === "number")
+                            message.entityId = object.entityId;
+                        else if (typeof object.entityId === "object")
+                            message.entityId = new $util.LongBits(object.entityId.low >>> 0, object.entityId.high >>> 0).toNumber();
                 return message;
             };
 
@@ -21337,16 +21337,16 @@ export const jpt = $root.jpt = (() => {
                 if (options.defaults)
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
-                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                        object.entityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
-                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                        object.entityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
-                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
-                    else if (typeof message.npcId === "number")
-                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                        object.entityId = typeof message.entityId === "number" ? $BigInt(message.entityId) : $util.Long.fromBits(message.entityId.low >>> 0, message.entityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.entityId === "number")
+                        object.entityId = options.longs === $String ? $String(message.entityId) : message.entityId;
                     else
-                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                        object.entityId = options.longs === $String ? $util.Long.prototype.toString.call(message.entityId) : options.longs === $Number ? new $util.LongBits(message.entityId.low >>> 0, message.entityId.high >>> 0).toNumber() : message.entityId;
                 return object;
             };
 
@@ -36623,7 +36623,7 @@ export const jpt = $root.jpt = (() => {
             /**
              * Properties of a C2S_NpcInteract.
              * @typedef {Object} jpt.base.C2S_NpcInteract.$Properties
-             * @property {number|Long|null} [npcId] C2S_NpcInteract npcId
+             * @property {number|Long|null} [entityId] C2S_NpcInteract entityId
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -36656,12 +36656,12 @@ export const jpt = $root.jpt = (() => {
             };
 
             /**
-             * C2S_NpcInteract npcId.
-             * @member {number|Long} npcId
+             * C2S_NpcInteract entityId.
+             * @member {number|Long} entityId
              * @memberof jpt.base.C2S_NpcInteract
              * @instance
              */
-            C2S_NpcInteract.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            C2S_NpcInteract.prototype.entityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
              * Creates a new C2S_NpcInteract instance using the specified properties.
@@ -36695,8 +36695,8 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId") && (typeof message.entityId === "object" ? message.entityId.low || message.entityId.high : message.entityId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.entityId);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -36758,9 +36758,9 @@ export const jpt = $root.jpt = (() => {
                             if (wireType !== 0)
                                 break;
                             if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
-                                message.npcId = value;
+                                message.entityId = value;
                             else
-                                delete message.npcId;
+                                delete message.entityId;
                             continue;
                         }
                     }
@@ -36811,9 +36811,9 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
-                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
-                        return "npcId: integer|Long expected";
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
+                    if (!$util.isInteger(message.entityId) && !(message.entityId && $util.isInteger(message.entityId.low) && $util.isInteger(message.entityId.high)))
+                        return "entityId: integer|Long expected";
                 return null;
             };
 
@@ -36835,16 +36835,16 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let message = new $root.jpt.base.C2S_NpcInteract();
-                if (object.npcId != null)
-                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                if (object.entityId != null)
+                    if (typeof object.entityId === "object" ? object.entityId.low || object.entityId.high : $Number(object.entityId) !== 0)
                         if ($util.Long)
-                            message.npcId = $util.Long.fromValue(object.npcId, false);
-                        else if (typeof object.npcId === "string")
-                            message.npcId = $parseInt(object.npcId, 10);
-                        else if (typeof object.npcId === "number")
-                            message.npcId = object.npcId;
-                        else if (typeof object.npcId === "object")
-                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                            message.entityId = $util.Long.fromValue(object.entityId, false);
+                        else if (typeof object.entityId === "string")
+                            message.entityId = $parseInt(object.entityId, 10);
+                        else if (typeof object.entityId === "number")
+                            message.entityId = object.entityId;
+                        else if (typeof object.entityId === "object")
+                            message.entityId = new $util.LongBits(object.entityId.low >>> 0, object.entityId.high >>> 0).toNumber();
                 return message;
             };
 
@@ -36868,16 +36868,16 @@ export const jpt = $root.jpt = (() => {
                 if (options.defaults)
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
-                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                        object.entityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
-                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                        object.entityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
-                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
-                    else if (typeof message.npcId === "number")
-                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                        object.entityId = typeof message.entityId === "number" ? $BigInt(message.entityId) : $util.Long.fromBits(message.entityId.low >>> 0, message.entityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.entityId === "number")
+                        object.entityId = options.longs === $String ? $String(message.entityId) : message.entityId;
                     else
-                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                        object.entityId = options.longs === $String ? $util.Long.prototype.toString.call(message.entityId) : options.longs === $Number ? new $util.LongBits(message.entityId.low >>> 0, message.entityId.high >>> 0).toNumber() : message.entityId;
                 return object;
             };
 
@@ -36914,7 +36914,7 @@ export const jpt = $root.jpt = (() => {
             /**
              * Properties of a C2S_ShopBuy.
              * @typedef {Object} jpt.base.C2S_ShopBuy.$Properties
-             * @property {number|Long|null} [npcId] C2S_ShopBuy npcId
+             * @property {number|Long|null} [entityId] C2S_ShopBuy entityId
              * @property {number|null} [itemlistId] C2S_ShopBuy itemlistId
              * @property {number|null} [count] C2S_ShopBuy count
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
@@ -36949,12 +36949,12 @@ export const jpt = $root.jpt = (() => {
             };
 
             /**
-             * C2S_ShopBuy npcId.
-             * @member {number|Long} npcId
+             * C2S_ShopBuy entityId.
+             * @member {number|Long} entityId
              * @memberof jpt.base.C2S_ShopBuy
              * @instance
              */
-            C2S_ShopBuy.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            C2S_ShopBuy.prototype.entityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
              * C2S_ShopBuy itemlistId.
@@ -37004,8 +37004,8 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId") && (typeof message.entityId === "object" ? message.entityId.low || message.entityId.high : message.entityId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.entityId);
                 if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId") && message.itemlistId !== 0)
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.itemlistId);
                 if (message.count != null && $Object.hasOwnProperty.call(message, "count") && message.count !== 0)
@@ -37071,9 +37071,9 @@ export const jpt = $root.jpt = (() => {
                             if (wireType !== 0)
                                 break;
                             if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
-                                message.npcId = value;
+                                message.entityId = value;
                             else
-                                delete message.npcId;
+                                delete message.entityId;
                             continue;
                         }
                     case 2: {
@@ -37142,9 +37142,9 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
-                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
-                        return "npcId: integer|Long expected";
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
+                    if (!$util.isInteger(message.entityId) && !(message.entityId && $util.isInteger(message.entityId.low) && $util.isInteger(message.entityId.high)))
+                        return "entityId: integer|Long expected";
                 if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
                     if (!$util.isInteger(message.itemlistId))
                         return "itemlistId: integer expected";
@@ -37172,16 +37172,16 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let message = new $root.jpt.base.C2S_ShopBuy();
-                if (object.npcId != null)
-                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                if (object.entityId != null)
+                    if (typeof object.entityId === "object" ? object.entityId.low || object.entityId.high : $Number(object.entityId) !== 0)
                         if ($util.Long)
-                            message.npcId = $util.Long.fromValue(object.npcId, false);
-                        else if (typeof object.npcId === "string")
-                            message.npcId = $parseInt(object.npcId, 10);
-                        else if (typeof object.npcId === "number")
-                            message.npcId = object.npcId;
-                        else if (typeof object.npcId === "object")
-                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                            message.entityId = $util.Long.fromValue(object.entityId, false);
+                        else if (typeof object.entityId === "string")
+                            message.entityId = $parseInt(object.entityId, 10);
+                        else if (typeof object.entityId === "number")
+                            message.entityId = object.entityId;
+                        else if (typeof object.entityId === "object")
+                            message.entityId = new $util.LongBits(object.entityId.low >>> 0, object.entityId.high >>> 0).toNumber();
                 if (object.itemlistId != null)
                     if ($Number(object.itemlistId) !== 0)
                         message.itemlistId = object.itemlistId | 0;
@@ -37211,19 +37211,19 @@ export const jpt = $root.jpt = (() => {
                 if (options.defaults) {
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
-                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                        object.entityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
-                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                        object.entityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.itemlistId = 0;
                     object.count = 0;
                 }
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
-                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
-                    else if (typeof message.npcId === "number")
-                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                        object.entityId = typeof message.entityId === "number" ? $BigInt(message.entityId) : $util.Long.fromBits(message.entityId.low >>> 0, message.entityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.entityId === "number")
+                        object.entityId = options.longs === $String ? $String(message.entityId) : message.entityId;
                     else
-                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                        object.entityId = options.longs === $String ? $util.Long.prototype.toString.call(message.entityId) : options.longs === $Number ? new $util.LongBits(message.entityId.low >>> 0, message.entityId.high >>> 0).toNumber() : message.entityId;
                 if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
                     object.itemlistId = message.itemlistId;
                 if (message.count != null && $Object.hasOwnProperty.call(message, "count"))
@@ -37264,7 +37264,7 @@ export const jpt = $root.jpt = (() => {
             /**
              * Properties of a C2S_ShopSell.
              * @typedef {Object} jpt.base.C2S_ShopSell.$Properties
-             * @property {number|Long|null} [npcId] C2S_ShopSell npcId
+             * @property {number|Long|null} [entityId] C2S_ShopSell entityId
              * @property {number|Long|null} [uid] C2S_ShopSell uid
              * @property {number|null} [count] C2S_ShopSell count
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
@@ -37299,12 +37299,12 @@ export const jpt = $root.jpt = (() => {
             };
 
             /**
-             * C2S_ShopSell npcId.
-             * @member {number|Long} npcId
+             * C2S_ShopSell entityId.
+             * @member {number|Long} entityId
              * @memberof jpt.base.C2S_ShopSell
              * @instance
              */
-            C2S_ShopSell.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            C2S_ShopSell.prototype.entityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
              * C2S_ShopSell uid.
@@ -37354,8 +37354,8 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId") && (typeof message.entityId === "object" ? message.entityId.low || message.entityId.high : message.entityId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.entityId);
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid") && (typeof message.uid === "object" ? message.uid.low || message.uid.high : message.uid !== 0))
                     writer.uint32(/* id 2, wireType 0 =*/16).int64(message.uid);
                 if (message.count != null && $Object.hasOwnProperty.call(message, "count") && message.count !== 0)
@@ -37421,9 +37421,9 @@ export const jpt = $root.jpt = (() => {
                             if (wireType !== 0)
                                 break;
                             if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
-                                message.npcId = value;
+                                message.entityId = value;
                             else
-                                delete message.npcId;
+                                delete message.entityId;
                             continue;
                         }
                     case 2: {
@@ -37492,9 +37492,9 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
-                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
-                        return "npcId: integer|Long expected";
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
+                    if (!$util.isInteger(message.entityId) && !(message.entityId && $util.isInteger(message.entityId.low) && $util.isInteger(message.entityId.high)))
+                        return "entityId: integer|Long expected";
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
                     if (!$util.isInteger(message.uid) && !(message.uid && $util.isInteger(message.uid.low) && $util.isInteger(message.uid.high)))
                         return "uid: integer|Long expected";
@@ -37522,16 +37522,16 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let message = new $root.jpt.base.C2S_ShopSell();
-                if (object.npcId != null)
-                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                if (object.entityId != null)
+                    if (typeof object.entityId === "object" ? object.entityId.low || object.entityId.high : $Number(object.entityId) !== 0)
                         if ($util.Long)
-                            message.npcId = $util.Long.fromValue(object.npcId, false);
-                        else if (typeof object.npcId === "string")
-                            message.npcId = $parseInt(object.npcId, 10);
-                        else if (typeof object.npcId === "number")
-                            message.npcId = object.npcId;
-                        else if (typeof object.npcId === "object")
-                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                            message.entityId = $util.Long.fromValue(object.entityId, false);
+                        else if (typeof object.entityId === "string")
+                            message.entityId = $parseInt(object.entityId, 10);
+                        else if (typeof object.entityId === "number")
+                            message.entityId = object.entityId;
+                        else if (typeof object.entityId === "object")
+                            message.entityId = new $util.LongBits(object.entityId.low >>> 0, object.entityId.high >>> 0).toNumber();
                 if (object.uid != null)
                     if (typeof object.uid === "object" ? object.uid.low || object.uid.high : $Number(object.uid) !== 0)
                         if ($util.Long)
@@ -37568,9 +37568,9 @@ export const jpt = $root.jpt = (() => {
                 if (options.defaults) {
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
-                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                        object.entityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
-                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                        object.entityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
                         object.uid = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
@@ -37578,13 +37578,13 @@ export const jpt = $root.jpt = (() => {
                         object.uid = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.count = 0;
                 }
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
-                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
-                    else if (typeof message.npcId === "number")
-                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                        object.entityId = typeof message.entityId === "number" ? $BigInt(message.entityId) : $util.Long.fromBits(message.entityId.low >>> 0, message.entityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.entityId === "number")
+                        object.entityId = options.longs === $String ? $String(message.entityId) : message.entityId;
                     else
-                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                        object.entityId = options.longs === $String ? $util.Long.prototype.toString.call(message.entityId) : options.longs === $Number ? new $util.LongBits(message.entityId.low >>> 0, message.entityId.high >>> 0).toNumber() : message.entityId;
                 if (message.uid != null && $Object.hasOwnProperty.call(message, "uid"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
                         object.uid = typeof message.uid === "number" ? $BigInt(message.uid) : $util.Long.fromBits(message.uid.low >>> 0, message.uid.high >>> 0, false).toBigInt();
@@ -38038,7 +38038,7 @@ export const jpt = $root.jpt = (() => {
             /**
              * Properties of a S2C_ShopOpen.
              * @typedef {Object} jpt.base.S2C_ShopOpen.$Properties
-             * @property {number|Long|null} [npcId] S2C_ShopOpen npcId
+             * @property {number|Long|null} [entityId] S2C_ShopOpen entityId
              * @property {number|null} [kind] S2C_ShopOpen kind
              * @property {Array.<jpt.base.ShopItemProto.$Properties>|null} [items] S2C_ShopOpen items
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
@@ -38074,12 +38074,12 @@ export const jpt = $root.jpt = (() => {
             };
 
             /**
-             * S2C_ShopOpen npcId.
-             * @member {number|Long} npcId
+             * S2C_ShopOpen entityId.
+             * @member {number|Long} entityId
              * @memberof jpt.base.S2C_ShopOpen
              * @instance
              */
-            S2C_ShopOpen.prototype.npcId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+            S2C_ShopOpen.prototype.entityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
              * S2C_ShopOpen kind.
@@ -38129,8 +38129,8 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId") && (typeof message.npcId === "object" ? message.npcId.low || message.npcId.high : message.npcId !== 0))
-                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.npcId);
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId") && (typeof message.entityId === "object" ? message.entityId.low || message.entityId.high : message.entityId !== 0))
+                    writer.uint32(/* id 1, wireType 0 =*/8).int64(message.entityId);
                 if (message.kind != null && $Object.hasOwnProperty.call(message, "kind") && message.kind !== 0)
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.kind);
                 if (message.items != null && message.items.length)
@@ -38197,9 +38197,9 @@ export const jpt = $root.jpt = (() => {
                             if (wireType !== 0)
                                 break;
                             if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
-                                message.npcId = value;
+                                message.entityId = value;
                             else
-                                delete message.npcId;
+                                delete message.entityId;
                             continue;
                         }
                     case 2: {
@@ -38267,9 +38267,9 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
-                    if (!$util.isInteger(message.npcId) && !(message.npcId && $util.isInteger(message.npcId.low) && $util.isInteger(message.npcId.high)))
-                        return "npcId: integer|Long expected";
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
+                    if (!$util.isInteger(message.entityId) && !(message.entityId && $util.isInteger(message.entityId.low) && $util.isInteger(message.entityId.high)))
+                        return "entityId: integer|Long expected";
                 if (message.kind != null && $Object.hasOwnProperty.call(message, "kind"))
                     if (!$util.isInteger(message.kind))
                         return "kind: integer expected";
@@ -38303,16 +38303,16 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let message = new $root.jpt.base.S2C_ShopOpen();
-                if (object.npcId != null)
-                    if (typeof object.npcId === "object" ? object.npcId.low || object.npcId.high : $Number(object.npcId) !== 0)
+                if (object.entityId != null)
+                    if (typeof object.entityId === "object" ? object.entityId.low || object.entityId.high : $Number(object.entityId) !== 0)
                         if ($util.Long)
-                            message.npcId = $util.Long.fromValue(object.npcId, false);
-                        else if (typeof object.npcId === "string")
-                            message.npcId = $parseInt(object.npcId, 10);
-                        else if (typeof object.npcId === "number")
-                            message.npcId = object.npcId;
-                        else if (typeof object.npcId === "object")
-                            message.npcId = new $util.LongBits(object.npcId.low >>> 0, object.npcId.high >>> 0).toNumber();
+                            message.entityId = $util.Long.fromValue(object.entityId, false);
+                        else if (typeof object.entityId === "string")
+                            message.entityId = $parseInt(object.entityId, 10);
+                        else if (typeof object.entityId === "number")
+                            message.entityId = object.entityId;
+                        else if (typeof object.entityId === "object")
+                            message.entityId = new $util.LongBits(object.entityId.low >>> 0, object.entityId.high >>> 0).toNumber();
                 if (object.kind != null)
                     if ($Number(object.kind) !== 0)
                         message.kind = object.kind | 0;
@@ -38351,18 +38351,18 @@ export const jpt = $root.jpt = (() => {
                 if (options.defaults) {
                     if ($util.Long) {
                         let long = new $util.Long(0, 0, false);
-                        object.npcId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                        object.entityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
-                        object.npcId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                        object.entityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.kind = 0;
                 }
-                if (message.npcId != null && $Object.hasOwnProperty.call(message, "npcId"))
+                if (message.entityId != null && $Object.hasOwnProperty.call(message, "entityId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
-                        object.npcId = typeof message.npcId === "number" ? $BigInt(message.npcId) : $util.Long.fromBits(message.npcId.low >>> 0, message.npcId.high >>> 0, false).toBigInt();
-                    else if (typeof message.npcId === "number")
-                        object.npcId = options.longs === $String ? $String(message.npcId) : message.npcId;
+                        object.entityId = typeof message.entityId === "number" ? $BigInt(message.entityId) : $util.Long.fromBits(message.entityId.low >>> 0, message.entityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.entityId === "number")
+                        object.entityId = options.longs === $String ? $String(message.entityId) : message.entityId;
                     else
-                        object.npcId = options.longs === $String ? $util.Long.prototype.toString.call(message.npcId) : options.longs === $Number ? new $util.LongBits(message.npcId.low >>> 0, message.npcId.high >>> 0).toNumber() : message.npcId;
+                        object.entityId = options.longs === $String ? $util.Long.prototype.toString.call(message.entityId) : options.longs === $Number ? new $util.LongBits(message.entityId.low >>> 0, message.entityId.high >>> 0).toNumber() : message.entityId;
                 if (message.kind != null && $Object.hasOwnProperty.call(message, "kind"))
                     object.kind = message.kind;
                 if (message.items && message.items.length) {

@@ -159,7 +159,8 @@ npm run bake-maps -- --all --scale=8
 
 ## 六、大地图 demo（世界 → 区域 → 地图）
 
-- 页面 `worldmap.html`（dev 页）+ `src/tools/worldmap-demo.ts`。
+- **组件本体在 `src/ui/WorldMap.ts`**（游戏与调试宿主共用同一份实现；API/接线见 `docs/worldmap.md`）。
+  页面 `worldmap.html` + `src/tools/worldmap-demo.ts` 只是宿主：URL 带状态、`?selftest=1` 跑 54 条断言。
 - **数据只有一套**：已烘的平面图（统一比例尺、像素 (0,0) ↔ AABB 西北角），
   所以任何一层都是"按世界坐标把若干张图摆上去 + 决定看哪一块"，不需要为每层各做资产。
 - 层级（判据见 `src/maps/planemap-regions.ts` 顶部）：

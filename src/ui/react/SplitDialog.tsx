@@ -48,7 +48,7 @@ export default function SplitDialog() {
   const takeAll = n >= req.total;
 
   return (
-    <div className="jp-split-mask" onPointerDown={(e) => { if (e.target === e.currentTarget) cancelSplit(); }}>
+    <div data-layer="splitDialog" className="jp-split-mask" onPointerDown={(e) => { if (e.target === e.currentTarget) cancelSplit(); }}>
       <div className="jp-split" role="dialog" aria-modal="true">
         <div className="jp-split-name">{req.name}</div>
         <div className="jp-split-row">

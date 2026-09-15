@@ -17,12 +17,15 @@ import { createDeathPanel } from './ui/DeathPanel.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
+import { createWorldMap } from './ui/WorldMap.js';
 import type { EnterGameInfo, WorldLoadHooks } from './ui/WorldView.js';
 import { t } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
+import { isInputBlocked } from './app/inputGate.js';
 import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
+import { installLayerStack } from './ui/layerStack.js';
 import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract } from './net/bridge.js';
 import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
 import { itemDefById, itemIconUrl } from './game/data/itemDefs.js';
@@ -53,13 +56,26 @@ const worldView = createWorldView(app, {
   // 点击地面物品 → 拾取（服务端距离裁决 + 入背包 + 广播消失）
   // 拾取：背包面板开着 → 直接拿到手上（原版 `cInvenTory.OpenFlag` 分支：窗口开着时拾取物进 MouseItem，
   // 不需要背包空格）；关着 → 自动进背包空格。手上已有东西时服务端仍进背包（不覆盖手上那件）。
-  onNpcInteract: (npcId) => sendNpcInteract(npcId),
+  onNpcInteract: (entityId) => sendNpcInteract(entityId),
   onPickupGroundItem: (groundItemId) =>
     sendPickupItem(groundItemId, getGameSnapshot().openPanels.includes('inventory')),
   // 攻击起手（挥拳开始）→ C2S_AttackStart；命中帧（每段）→ C2S_AttackHit。服务端权威裁决+结算。
   onAttackStart: (monsterId, clientSeq, segments, animIndex, animClip) =>
     send(attackStart(monsterId, clientSeq, segments, animIndex, animClip)),
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
+});
+/**
+ * 大地图组件（`src/ui/WorldMap.ts`）—— 与 `worldmap.html` 的 demo **同一份实现**。
+ * 玩家位置由 `worldView.worldMapPlayer()` 提供，世界图上画"你在这"（原版世界图上也有这个箭头）。
+ *
+ * ⚠ 必须在 `worldView` **之后**创建：`createWorldMap` 结尾会 `syncChrome()` → `syncCoords()`
+ * **立即**读一次玩家坐标（渲染右下角那个读数），闭包再懒也来不及 —— 早于 worldView 就是 TDZ 报错。
+ */
+const worldMap = createWorldMap(app, {
+  getPlayer: () => worldView.worldMapPlayer(),       // 每次重绘现读（含朝向）
+  getEntities: () => worldView.worldMapEntities(),   // NPC 绿点 / 怪物红点 / 队友（图标与小地图同源）
+  revealAll: false,    // 副本/战场只在玩家身处其中时才出现在地图上（用户 2026-09-15 定）
+  openAtPlayer: true,  // 每次打开都定位到玩家**当前**所在图（切图后也一样），右键/← 再退回大陆
 });
 
 // 转发客户端权威移动（含位置 + 可选动画覆盖 + 当前动画条目）
@@ -225,6 +241,8 @@ const keyBinding = createKeyBinding();
 
 // React 面板层（Phase 1 基建）：只渲染 store.openPanel；桥接把 proto 消息写进 store。
 const reactPanels = createReactPanels(app);
+// 层栈：一次安装，之后**声明即参与**（`data-layer` 属性），不需要在各处手动注册
+installLayerStack(app);
 installBridge();
 console.info('[ui] react panels layer ready — dev: window.__pt.ui.show/hide');
 
@@ -268,6 +286,7 @@ function hideAll() {
   serverSelectPanel.hide();
   charSelectPanel.hide();
   hudPanel.hide();
+  worldMap.hide();     // 切屏时大地图一并收起（它是全屏 overlay）
   worldView.hide();
   loadingScreen.hide();
   reactPanels.hide();
@@ -304,6 +323,10 @@ keyBinding.onKeyDown((action) => {
       break;
     case 'minimap':
       hudPanel.setMapFlag(worldView.toggleMinimap());
+      break;
+    case 'worldmap':
+      // 原版：M 开大地图（单机是自己那张图，这里是"世界 → 地图"）
+      if (!isInputBlocked()) worldMap.toggle();
       break;
     case 'walkRun':
       hudPanel.setRunFlag(worldView.toggleRun());
@@ -364,6 +387,8 @@ hudPanel.onAction = (action, mods) => {
     hudPanel.setCamFlag(worldView.toggleCameraMode());
   } else if (action === 'toggleMinimap') {
     hudPanel.setMapFlag(worldView.toggleMinimap());
+  } else if (action === 'worldmap') {
+    if (!isInputBlocked()) worldMap.toggle();
   } else if (action === 'potion1' || action === 'potion2' || action === 'potion3') {
     // 点药水槽：**手里有道具 → 放进这一格**（原版左键拿起→点槽放下；同种/容量由服务端校验）；
     // 空手 → 等同于对应数字键（使用该槽里的药水）。
@@ -973,7 +998,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
     case 'npcAppear': {
       const n = msg.npcAppear!;
       worldView.npcAppear(
-        Number(n.npcId),
+        Number(n.entityId),
         n.nameKey || '',
         n.modelFile || '',
         n.position?.x || 0,
@@ -984,7 +1009,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
       break;
     }
     case 'npcDisappear': {
-      worldView.npcDisappear(Number(msg.npcDisappear!.npcId));
+      worldView.npcDisappear(Number(msg.npcDisappear!.entityId));
       break;
     }
     case 'groundItemAppear': {

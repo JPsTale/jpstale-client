@@ -57,7 +57,7 @@ export default function ShopPanel() {
       </div>
       <div className="jp-shop-list">
         {rows.map((o) => (
-          <ShopRow key={o.itemlistId} offer={o} gold={gold} count={count} onCount={setCount} npcId={shop.npcId} />
+          <ShopRow key={o.itemlistId} offer={o} gold={gold} count={count} onCount={setCount} entityId={shop.entityId} />
         ))}
       </div>
       {shop.sellMode ? <div className="jp-shop-hint">{t('shop.sellHint')}</div> : null}
@@ -65,12 +65,12 @@ export default function ShopPanel() {
   );
 }
 
-function ShopRow({ offer, gold, count, onCount, npcId }: {
+function ShopRow({ offer, gold, count, onCount, entityId }: {
   offer: ShopItem;
   gold: number;
   count: number;
   onCount: (n: number) => void;
-  npcId: number;
+  entityId: number;
 }) {
   const def = itemDefById(offer.itemlistId);
   const icon = def ? itemIconUrl(def) : null;
@@ -82,8 +82,8 @@ function ShopRow({ offer, gold, count, onCount, npcId }: {
     <button
       type="button"
       className={`jp-shop-row${afford ? '' : ' jp-shop-row--poor'}`}
-      onDoubleClick={() => sendShopBuy(npcId, offer.itemlistId, n)}
-      onClick={() => sendShopBuy(npcId, offer.itemlistId, n)}
+      onDoubleClick={() => sendShopBuy(entityId, offer.itemlistId, n)}
+      onClick={() => sendShopBuy(entityId, offer.itemlistId, n)}
       title={t('shop.buy')}
     >
       {icon ? <img className="jp-shop-icon" src={icon} alt="" draggable={false} /> : null}

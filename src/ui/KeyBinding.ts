@@ -3,7 +3,7 @@
 export type GameAction = 
   | 'moveForward' | 'moveBackward' | 'moveLeft' | 'moveRight'
   | 'attack' | 'skill'
-  | 'walkRun' | 'cameraMode' | 'minimap'
+  | 'walkRun' | 'cameraMode' | 'minimap' | 'worldmap'
   | 'status' | 'skillPanel' | 'inventory' | 'party' | 'quest' | 'system'
   | 'showGroundItems'
   | 'skill1' | 'skill2' | 'skill3' | 'skill4' | 'skill5' | 'skill6'
@@ -35,6 +35,7 @@ const DEFAULT_BINDINGS: Record<GameAction, string | null> = {
   walkRun: 'KeyR',
   cameraMode: 'KeyZ',
   minimap: 'Tab',
+  worldmap: 'KeyM',   // 原版大地图就是 M（ex-machina Main.cpp:3327 的 `wParam == 'M'`）
   status: 'KeyC',
   skillPanel: 'KeyS',
   inventory: 'KeyV',

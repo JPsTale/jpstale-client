@@ -201,7 +201,7 @@ export default function SystemMenu({ settings }: { settings: SystemMenuSettings 
   });
 
   return (
-    <div className="jp-overlay jp-menu-overlay" onClick={close}>
+    <div data-layer="systemMenu" data-layer-host="panels" className="jp-overlay jp-menu-overlay" onClick={close}>
       <div className="jp-panel jp-menu" onClick={(e) => e.stopPropagation()}>
         <header className="jp-panel-head">
           <span className="jp-panel-title">{page === 'main' ? t('menu.title') : t('menu.back')}</span>

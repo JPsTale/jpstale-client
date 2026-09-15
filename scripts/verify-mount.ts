@@ -10,9 +10,15 @@
  *
  * 用法：npx tsx scripts/verify-mount.ts
  */
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import * as THREE from 'three';
+import { parseSmb } from '../src/core/char-parser.js';
 import { WeaponMount, WEAPON_BONES } from '../src/render/weapon-loader.js';
 import dbRaw from '../src/game/data/item-weapon-semantics.generated.json';
+
+const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url));
 
 const DB = dbRaw as unknown as {
   byIdcode: Record<string, { name: string; type: string; sheathe?: { slot: string; src: string } }>;
@@ -133,5 +139,42 @@ console.log(`样本：匕首=${dagger} / 入背剑=${sword} / 留手上剑=${han
   check('报出缺失的骨名', res.missingBone, WEAPON_BONES.ASSASSIN_LEFT);
 }
 
+// ⑥ **接线**：选角预览必须走这份共享实现（否则它的行为与游戏内必然漂移 —— 已经发生过两次）
+//    2026-09-15 用户实测："角色选择页的刺客只挂了一边"：选角页当时自己写了一套挂载（无镜像），
+//    于是游戏内左右腰各一把、选角页只有一把。这类"第二份实现"只能靠源码接线断言钉住。
+{
+  console.log('\n⑥ 选角预览的武器挂载 = 共享实现（源码接线）');
+  const src = readFileSync(resolve(SCRIPT_DIR, '../src/ui/CharSelect.ts'), 'utf8');
+  check('用 WeaponMount.mount 挂载', src.includes('weaponMount.mount('), true);
+  check('用 WeaponMount.setStance 搬姿态', src.includes('weaponMount.setStance('), true);
+  check('清理用 WeaponMount.detach', src.includes('weaponMount.detach()'), true);
+  // ⚠ 这两条用**正则匹配代码**而不是裸 includes：CharSelect 的注释里就写了这两个旧名字
+  // （"这里曾自己实现一套：… + currentCombatBone + …"），裸 includes 会把注释也算成违规。
+  check('不再自己判战斗骨（currentCombatBone 已删）', /currentCombatBone\s*[:=]/.test(src), false);
+  check('不再自己记挂过的组（attachedWeaponGroups 已删）',
+    /attachedWeaponGroups\s*[.=[\]]|const attachedWeaponGroups/.test(src), false);
+  check('装配完主动断言一次姿态（不只等事件）', src.includes('animState.getStance()'), true);
+}
+
+// ⑦ 刺客的镜像**落点必须真的存在**：m6 骨架（含选角预览用的 lite 包）要有那四根骨。
+//    否则 `mirrorBone` 会是 null、第二把匕首静默消失 —— 正是用户看到的"只挂一边"。
+{
+  console.log('\n⑦ m6（刺客）骨架的武器/腰挂骨');
+  const assetRoot = process.env.PT_ASSET_ROOT ?? 'E:/JPsTale/client';
+  const need = ['Bip weapon01', WEAPON_BONES.ASSASSIN_LEFT, WEAPON_BONES.SHEATHE_DAGGER_L, WEAPON_BONES.SHEATHE_DAGGER_R];
+  for (const [label, rel] of [['完整包', 'char/tmabcd/m6.smb'], ['lite 包（选角预览用）', 'char/tmabcd/lite/m6.smb']] as const) {
+    const p = resolve(assetRoot, rel);
+    if (!existsSync(p)) {
+      console.log(`  ! 未找到 ${rel}（assetRoot=${assetRoot}）→ 跳过该项，不静默通过`);
+      continue;
+    }
+    const buf = readFileSync(p);
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    const names = new Set(parseSmb(ab).objects.map((o) => o.nodeName));
+    for (const n of need) check(`${label} 有 ${n}`, names.has(n), true);
+  }
+}
+
 console.log(fail === 0 ? '\n全部通过' : `\n${fail} 项不符`);
 process.exit(fail === 0 ? 0 : 1);
+
