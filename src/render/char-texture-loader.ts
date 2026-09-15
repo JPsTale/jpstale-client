@@ -40,6 +40,10 @@ export async function fetchAndDecodeTexture(
     );
     tex.flipY = true;
     tex.colorSpace = THREE.SRGBColorSpace;
+    // 与地图纹理（texture-loader）同一滤波策略：mipmap 线性，避免降采样"马赛克/颗粒"
+    tex.generateMipmaps = true;
+    tex.minFilter = THREE.LinearMipmapLinearFilter;
+    tex.magFilter = THREE.LinearFilter;
     if (anisotropy > 1) tex.anisotropy = anisotropy;
     tex.needsUpdate = true;
     return tex;

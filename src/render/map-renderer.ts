@@ -9,6 +9,10 @@ import type { SMDData } from '../core/smd-parser';
 
 const WORLD_SCALE = 1 / 256;
 
+/** 距离雾默认区间（world 单位）：游戏内表现，用户 2026-09-12 指定。烘图用 setFogRange(0,0) 关掉 */
+const FOG_NEAR = 2400;
+const FOG_FAR = 3000;
+
 /** map-renderer 的材质判定配置（由调用方 getMatConfig 回调提供,源自 index.html:1453-1483） */
 export interface MatConfig {
   hasTex: boolean;
@@ -41,6 +45,9 @@ interface MaterialRenderData {
   faceCount: number;
   isTransparent: boolean;
   hasAnimation: boolean;
+  /** 引擎的水面材质（`windMeshBottom & 0x7FF == 0x200`）：运行时用来做水波，
+   *  离线烘图时会按它剔除水面（用户 2026-09-15：海水不烘进平面图） */
+  isWater: boolean;
 }
 
 export interface SceneLightWorld {
@@ -69,6 +76,10 @@ export class MapRenderer {
   buildTimeMs = 0;
   buildCellTimeMs = 0;
   private renderStamp = 0;
+  /** 出现于任一水面材质的原始顶点索引集合（B'：让共享顶点的岸边也吃水波）。beginBuild 填 */
+  private waterVertSet: Uint8Array | null = null;
+  /** 距离雾区间：所有材质的 uFogRange 都引用这一个实例（见 setFogRange） */
+  readonly fogRange = new THREE.Vector2(FOG_NEAR, FOG_FAR);
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -174,6 +185,29 @@ export class MapRenderer {
       else matFaces.set(m, [i]);
     }
 
+    // 水面顶点集合：凡出现在任一水面材质（windMeshBottom & 0x7FF == 0x200）面里的原始顶点索引。
+    // 这些顶点在水面 mesh 里被水波位移；原版靠"全局顶点池共享"让引用同一顶点的岸边面也一起动，
+    // 我们按材质拆了 mesh、顶点按面平铺，共享关系丢失 —— 于是给这些顶点的**岸边副本**打上 mask，
+    // 在岸边 shader 里用同一坐标公式位移（坐标相同 → 位移逐位一致 → 无缝）。
+    const waterMatSet = new Set<number>();
+    for (let i = 0; i < smdData.materials.length; i++) {
+      const m = smdData.materials[i];
+      if (m.windMeshBottom && !(m.useState & 0x4000) && (m.windMeshBottom & 0x7FF) === 0x200) {
+        waterMatSet.add(i);
+      }
+    }
+    this.waterVertSet = null;
+    if (waterMatSet.size > 0) {
+      const set = new Uint8Array(smdData.nVertex);
+      for (let i = 0; i < smdData.nFace; i++) {
+        if (!waterMatSet.has(smdData.faceMat[i])) continue;
+        set[smdData.triIdx[i * 3]] = 1;
+        set[smdData.triIdx[i * 3 + 1]] = 1;
+        set[smdData.triIdx[i * 3 + 2]] = 1;
+      }
+      this.waterVertSet = set;
+    }
+
     return matFaces;
   }
 
@@ -210,6 +244,24 @@ export class MapRenderer {
     const uv0 = config.hasTex ? new Float32Array(nFaces * 6) : null;
     const uv1 = (config.hasLM || config.hasSecondTex) ? new Float32Array(nFaces * 6) : null;
 
+    // 材质级的风/水判定（几何循环前就要知道，才能决定是否建 aWaterEdge）
+    const mat = smdData.materials[matIdx];
+    let windKind = 0;
+    let waterKind = false;
+    if (mat.windMeshBottom && !(mat.useState & 0x4000)) {
+      const wc = mat.windMeshBottom & 0x7FF;
+      if (wc === 0x20) windKind = 1;
+      else if (wc === 0x40) windKind = 2;
+      else if (wc === 0x80) windKind = 3;
+      else if (wc === 0x100) windKind = 4;
+      else if (wc === 0x200) waterKind = true;
+    }
+    // 非水面材质、且全图存在水面顶点时才建 mask。wind 材质不参与（原版一个顶点只按先碰它的面算一次，
+    // wind 与 water 并存属另一种顺序分支；此处沿用现状：wind 顶点不做水波，避免叠加两套位移公式）。
+    const wantsWaterEdge = !waterKind && !windKind && this.waterVertSet != null;
+    const waterEdge = wantsWaterEdge ? new Float32Array(nFaces * 3) : null;
+    let waterEdgeCount = 0;
+
     const va = new THREE.Vector3(), vb = new THREE.Vector3(), vc = new THREE.Vector3();
     const ab = new THREE.Vector3(), ac = new THREE.Vector3(), fn = new THREE.Vector3();
 
@@ -224,6 +276,7 @@ export class MapRenderer {
       const vids = [a, bb, c];
       for (let j = 0; j < 3; j++) {
         const vi = vids[j];
+        if (waterEdge && this.waterVertSet![vi]) { waterEdge[fi * 3 + j] = 1; waterEdgeCount++; }
         const wx = smdData.verts[vi * 3] * S;         // raw A(东) → +X
         const wy = smdData.verts[vi * 3 + 1] * S;
         const wz = -smdData.verts[vi * 3 + 2] * S;    // raw C(北) → −Z
@@ -350,18 +403,11 @@ export class MapRenderer {
     if (uv1) geom.setAttribute('uv2', new THREE.BufferAttribute(uv1, 2));
     geom.setIndex(new THREE.BufferAttribute(outIndices, 1));
 
-    const mat = smdData.materials[matIdx];
-    let windKind = 0;
-    let waterKind = false;
-    if (mat.windMeshBottom && !(mat.useState & 0x4000)) {
-      const wc = mat.windMeshBottom & 0x7FF;
-      if (wc === 0x20) windKind = 1;
-      else if (wc === 0x40) windKind = 2;
-      else if (wc === 0x80) windKind = 3;
-      else if (wc === 0x100) windKind = 4;
-      else if (wc === 0x200) waterKind = true;
-    }
-    const threeMat = this.buildThreeMaterial(matIdx, mat, config, texMap, windKind, minY, maxY, waterKind);
+    // 只有真的含共享顶点才建 attribute / 注入（否则该材质 shader 保持原样，零开销）
+    const waterEdgeKind = waterEdgeCount > 0;
+    if (waterEdgeKind) geom.setAttribute('aWaterEdge', new THREE.BufferAttribute(waterEdge!, 1));
+
+    const threeMat = this.buildThreeMaterial(matIdx, mat, config, texMap, windKind, minY, maxY, waterKind, waterEdgeKind);
 
     const mesh = new THREE.Mesh(geom, threeMat);
     mesh.frustumCulled = false;
@@ -386,6 +432,7 @@ export class MapRenderer {
       faceCount: faceList.length,
       isTransparent: config.isTransparent,
       hasAnimation: config.hasAnimation,
+      isWater: waterKind,
     };
   }
 
@@ -450,6 +497,7 @@ export class MapRenderer {
     windYMin: number,
     windYMax: number,
     waterKind: boolean,
+    waterEdgeKind: boolean,
   ): THREE.MeshBasicMaterial {
     void matIdx; void texMap;
     const opts: THREE.MeshBasicMaterialParameters = {
@@ -519,6 +567,7 @@ export class MapRenderer {
       if (hasScroll) ckParts.push('S' + scrollSlot.map((s) => s.slot + s.kind + s.mult).join(''));
       if (windKind) ckParts.push('W' + windKind);
       if (waterKind) ckParts.push('A');
+      if (waterEdgeKind) ckParts.push('E');
       if (needLM) ckParts.push('L');
       if (need2Tex) ckParts.push('T');
       if (ckParts.length > 0) threeMat.customProgramCacheKey = () => ckParts.join('');
@@ -540,6 +589,10 @@ export class MapRenderer {
         declInline += '\nuniform vec2 uWindMag;';
       }
       if (waterKind) declInline += '\nuniform float uWaterTime;';
+      if (waterEdgeKind) {
+        declInline += '\nattribute float aWaterEdge;';
+        declInline += '\nuniform float uWaterTime;';
+      }
       declInline += '\nvarying float vPtFogZ;';
       declInline += '\nvarying vec3 vPtWorldPos;';
       declInline += '\nuniform vec3 uEnvLight;';
@@ -588,6 +641,23 @@ export class MapRenderer {
         shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', waterCode);
       }
 
+      // 岸边共享顶点：与水面试**同一坐标公式**，位移乘 aWaterEdge（0/1）。
+      // 与水面顶点坐标相同 → 位移逐位一致 → 水岸边界无缝同动；岸边其余顶点 mask=0 静止。
+      // 与 windKind/waterKind 互斥（见 buildMaterialGeometry 的 wantsWaterEdge），故 replace 目标必存在。
+      if (waterEdgeKind) {
+        const waterEdgeCode =
+          '#include <begin_vertex>\n' +
+          '  {\n' +
+          '    float _rx = (-transformed.z * 256.0 * 8.0 + uWaterTime) * 0.5;\n' +
+          '    float _rz = (-transformed.x * 256.0 * 8.0 + uWaterTime) * 0.5;\n' +
+          '    float _wa = _rx / 4096.0 * 6.28318530718;\n' +
+          '    float _wb = _rz / 4096.0 * 6.28318530718;\n' +
+          '    transformed.z += sin(_wa) * 8.0 * aWaterEdge;\n' +
+          '    transformed.x += sin(_wb) * 8.0 * aWaterEdge;\n' +
+          '  }';
+        shader.vertexShader = shader.vertexShader.replace('#include <begin_vertex>', waterEdgeCode);
+      }
+
       {
         const fogCode =
           '#include <project_vertex>\n' +
@@ -605,7 +675,7 @@ export class MapRenderer {
           '#include <common>\n' +
           (needLM ? 'uniform sampler2D uLightMap;\nin vec2 vMyLightMapUv;\n' : '') +
           (need2Tex ? 'uniform sampler2D uSecondTex;\nin vec2 vMyLightMapUv;\n' : '') +
-          'varying float vPtFogZ;',
+          'uniform vec2 uFogRange;\nvarying float vPtFogZ;',
         );
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <color_fragment>',
@@ -615,10 +685,16 @@ export class MapRenderer {
           // 距离雾（远处压暗）：原版权值是 1152 起衰减、约 1664 全黑 —— 太近，地图大半看不见。
           // 用户 2026-09-12 指定：**2400 开始渐变、3000 完全看不见**（线性；1.0 处等于全黑，
           // 所以两端都是准确值，不像原版 255/256 那样留 0.4% 残影）。相机 far=4000，仍在其内。
-          '  { float _z = vPtFogZ; if (_z > 2400.0) { float _dlev = (_z - 2400.0) / 600.0; if (_dlev > 1.0) _dlev = 1.0; diffuseColor.rgb *= 1.0 - _dlev; } }',
+          // ⚠ 阈值走 uniform：**离线烘图（俯视正交，相机必然在很远处）必须关掉它**
+          //   —— 这是第三人称的距离雾，俯视图整张都超过 3000，不关就是全黑。
+          //   `uFogRange.x <= 0` = 关闭。默认值 (2400,3000) 与游戏内完全一致。
+          '  { float _z = vPtFogZ; if (uFogRange.x > 0.0 && _z > uFogRange.x) {'
+          + ' float _dlev = (_z - uFogRange.x) / (uFogRange.y - uFogRange.x);'
+          + ' if (_dlev > 1.0) _dlev = 1.0; diffuseColor.rgb *= 1.0 - _dlev; } }',
         );
         if (needLM) shader.uniforms.uLightMap = { value: config.lightmapTex };
         if (need2Tex) shader.uniforms.uSecondTex = { value: config.secondTex };
+        shader.uniforms.uFogRange = { value: this.fogRange };
         shader.uniforms.uEnvLight = { value: new THREE.Vector3(0, 0, 0) };
         shader.uniforms.uTorchPos = { value: new THREE.Vector3(0, 0, 0) };
         shader.uniforms.uTorchColor = { value: new THREE.Vector3(0, 0, 0) };
@@ -634,6 +710,7 @@ export class MapRenderer {
         shader.uniforms.uWindMag = { value: new THREE.Vector2(vWindDX, vWindDZ) };
       }
       if (waterKind) shader.uniforms.uWaterTime = { value: 0 };
+      if (waterEdgeKind) shader.uniforms.uWaterTime = { value: 0 };
       threeMat.userData.shader = shader;
     };
 
@@ -687,6 +764,16 @@ export class MapRenderer {
       if (!shader || !shader.uniforms.uWaterTime) continue;
       shader.uniforms.uWaterTime.value = ms;
     }
+  }
+
+  /**
+   * 距离雾区间（world 单位）；`near <= 0` = 关闭。离线烘图（俯视正交，相机必然在 2km 外）必须关。
+   * ⚠ 所有材质**共用同一个 Vector2 实例**：`userData.shader` 要等首次 render 才存在，
+   *   所以"改已有 shader 的 uniform"这条路在烘图（改完才渲染）时是空转 —— 共享实例才让
+   *   改动在首帧上传时就生效。这也让游戏侧随时改都有效。
+   */
+  setFogRange(near: number, far: number): void {
+    this.fogRange.set(near, far);
   }
 
   updateDayNight(

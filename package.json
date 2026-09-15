@@ -31,8 +31,11 @@
     "verify-cursor": "npx tsx scripts/verify-cursor.ts",
     "verify-itemhover": "npx tsx scripts/verify-itemhover.ts",
     "verify-uisound": "npx tsx scripts/verify-uisound.ts",
+    "verify-water": "npx tsx scripts/verify-water-shared.ts",
     "diag-climb": "tsx scripts/diag-climb.ts",
-    "potions": "tsx scripts/extract-potion-effects.ts"
+    "potions": "tsx scripts/extract-potion-effects.ts",
+    "bake-maps": "tsx scripts/bake-maps.ts",
+    "map-levels": "npx tsx scripts/extract-map-levels.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",
