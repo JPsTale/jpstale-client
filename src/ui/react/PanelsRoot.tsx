@@ -11,6 +11,7 @@ import { ItemInfoLayer } from './ItemInfo.js';
 import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
 import ChatWindow from './ChatWindow.js';
 import SplitDialog from './SplitDialog.js';
+import WorldMapPanel, { type WorldMapPanelOptions } from './WorldMapPanel.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
 /**
@@ -40,7 +41,10 @@ function HeldCursor() {
   return held ? <HeldIcon held={held} pos={pos} /> : null;
 }
 
-function renderPanel(panel: OpenPanel) {
+function renderPanel(panel: OpenPanel, worldMapOptions: WorldMapPanelOptions) {
+  if (panel === 'worldmap') {
+    return <WorldMapPanel key="worldmap" {...worldMapOptions} />;
+  }
   if (panel === 'charStatus') {
     return (
       <PanelShell key="charStatus" panel="charStatus" title={t('panel.title')} align="left">
@@ -73,7 +77,7 @@ function renderPanel(panel: OpenPanel) {
 }
 
 // 面板根：渲染所有打开中的面板 + 系统菜单（模态，独占打开）。
-export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSettings }) {
+export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSettings; worldMapOptions?: WorldMapPanelOptions }) {
   const { openPanels, systemMenuOpen } = useSyncExternalStore(subscribeGame, getGameSnapshot);
 
 
@@ -91,7 +95,7 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
     <>
       {/* 游戏内聊天窗（常驻 World，折叠态缺省展开由 store 控制） */}
       <ChatWindow />
-      {openPanels.map(renderPanel)}
+      {openPanels.map((p) => renderPanel(p, props.worldMapOptions ?? {}))}
       {/* 手持物品光标（常驻，与面板开关无关） */}
       <HeldCursor />
       {/* 物品信息框（常驻：面板关着 / 悬停 HUD 药水槽时也要显示） */}

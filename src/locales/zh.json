@@ -72,7 +72,8 @@
     },
     "skills": "技能",
     "inventory": "背包",
-    "shop": "商店"
+    "shop": "商店",
+    "worldmap": "世界地图"
   },
   "stats": {
     "hit": "命中",

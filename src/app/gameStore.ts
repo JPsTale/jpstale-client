@@ -8,7 +8,7 @@ import { itemDefById } from '../game/data/itemDefs.js';
 import { isTwoHandWeaponClass } from '../game/itemClass.js';
 import { playItemSound, playItemDropSound } from '../audio/item-sounds.js';
 
-export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop';
+export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap';
 
 // 拳位装备：标识一个技能（用职业目录+图标文件，跨职业唯一稳定）。
 // iconFile === 'skill_normal'（无 .bmp）表示普通攻击。

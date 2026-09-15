@@ -3,6 +3,7 @@ import { AppScreen, getScreen } from '../../app/State.js';
 import { openPanel, togglePanel, closeAllPanels, getGameSnapshot, type OpenPanel } from '../../app/gameStore.js';
 import PanelsRoot from './PanelsRoot.js';
 import type { SystemMenuSettings } from './SystemMenu.js';
+import type { WorldMapPanelOptions } from './WorldMapPanel.js';
 import './panels.css';
 
 export interface ReactPanels {
@@ -11,6 +12,8 @@ export interface ReactPanels {
   toggle(panel: OpenPanel): void;
   /** 系统菜单设置（键位对象 + 画质 setter + 大退/小退回调；由 main.ts 注入） */
   setSystemMenuSettings(settings: SystemMenuSettings): void;
+  /** 世界地图的数据源（玩家位置/实体；由 main.ts 注入 —— 地图内容在 React 里挂载） */
+  setWorldMapOptions(opts: WorldMapPanelOptions): void;
   dispose(): void;
 }
 
@@ -31,8 +34,11 @@ export function createReactPanels(container: HTMLElement): ReactPanels {
   // 现在：容器 z-index = 当前最高层的值（空容器退回基准），既是层叠上下文、又不与地图窗口比较大小。
   // 装的是：各面板（`panel:` 前缀族）、系统菜单、聊天窗
   let systemMenuSettings: SystemMenuSettings | undefined;
+  let worldMapOptions: WorldMapPanelOptions = {};
   const root = createRoot(host);
-  const rerender = () => root.render(<PanelsRoot systemMenuSettings={systemMenuSettings} />);
+  const rerender = () => root.render(
+    <PanelsRoot systemMenuSettings={systemMenuSettings} worldMapOptions={worldMapOptions} />,
+  );
   rerender();
   /**
    * 游戏画面是否**真的**在显示 —— 面板开关的守卫用它，而不是 `getScreen()`。
@@ -71,6 +77,10 @@ export function createReactPanels(container: HTMLElement): ReactPanels {
     },
     setSystemMenuSettings: (settings) => {
       systemMenuSettings = settings;
+      rerender();
+    },
+    setWorldMapOptions: (opts) => {
+      worldMapOptions = opts;
       rerender();
     },
     dispose: () => {

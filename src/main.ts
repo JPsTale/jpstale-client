@@ -17,7 +17,6 @@ import { createDeathPanel } from './ui/DeathPanel.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
-import { createWorldMap } from './ui/WorldMap.js';
 import type { EnterGameInfo, WorldLoadHooks } from './ui/WorldView.js';
 import { t } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
@@ -65,18 +64,13 @@ const worldView = createWorldView(app, {
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
 });
 /**
- * 大地图组件（`src/ui/WorldMap.ts`）—— 与 `worldmap.html` 的 demo **同一份实现**。
- * 玩家位置由 `worldView.worldMapPlayer()` 提供，世界图上画"你在这"（原版世界图上也有这个箭头）。
+ * 世界地图 —— 现在是**普通面板**（`panel:worldmap`，由 `WorldMapPanel` 渲染），
+ * 与背包/角色/技能/NPC 商店共用 `PanelShell` 外壳、层级栈与 `openPanels` 开关。
  *
- * ⚠ 必须在 `worldView` **之后**创建：`createWorldMap` 结尾会 `syncChrome()` → `syncCoords()`
- * **立即**读一次玩家坐标（渲染右下角那个读数），闭包再懒也来不及 —— 早于 worldView 就是 TDZ 报错。
+ * 这里只注入它需要的**数据源**（玩家位置 / 地图上的实体）：
+ * 闭包是懒执行的，真正读取发生在面板打开后 —— 所以下面那行 `setWorldMapOptions`
+ * 必须在 `worldView` 已建好之后调用（它就在 `createReactPanels` 那一段）。
  */
-const worldMap = createWorldMap(app, {
-  getPlayer: () => worldView.worldMapPlayer(),       // 每次重绘现读（含朝向）
-  getEntities: () => worldView.worldMapEntities(),   // NPC 绿点 / 怪物红点 / 队友（图标与小地图同源）
-  revealAll: false,    // 副本/战场只在玩家身处其中时才出现在地图上（用户 2026-09-15 定）
-  openAtPlayer: true,  // 每次打开都定位到玩家**当前**所在图（切图后也一样），右键/← 再退回大陆
-});
 
 // 转发客户端权威移动（含位置 + 可选动画覆盖 + 当前动画条目）
 function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z: number, anim = 0,
@@ -241,6 +235,11 @@ const keyBinding = createKeyBinding();
 
 // React 面板层（Phase 1 基建）：只渲染 store.openPanel；桥接把 proto 消息写进 store。
 const reactPanels = createReactPanels(app);
+// 世界地图的数据源（地图内容在 React 面板里挂载；这里只递闭包）
+reactPanels.setWorldMapOptions({
+  getPlayer: () => worldView.worldMapPlayer(),       // 每次重绘现读（含朝向）
+  getEntities: () => worldView.worldMapEntities(),   // NPC 绿点 / 怪物红点 / 队友（图标与小地图同源）
+});
 // 层栈：一次安装，之后**声明即参与**（`data-layer` 属性），不需要在各处手动注册
 installLayerStack(app);
 installBridge();
@@ -286,8 +285,7 @@ function hideAll() {
   serverSelectPanel.hide();
   charSelectPanel.hide();
   hudPanel.hide();
-  worldMap.hide();     // 切屏时大地图一并收起（它是全屏 overlay）
-  worldView.hide();
+  worldView.hide();    // 切屏时大地图随 reactPanels.hide() 一起收起（它现在就是普通面板）
   loadingScreen.hide();
   reactPanels.hide();
   setChatVisible(false);
@@ -325,8 +323,9 @@ keyBinding.onKeyDown((action) => {
       hudPanel.setMapFlag(worldView.toggleMinimap());
       break;
     case 'worldmap':
-      // 原版：M 开大地图（单机是自己那张图，这里是"世界 → 地图"）
-      if (!isInputBlocked()) worldMap.toggle();
+      // 原版：M 开大地图（单机是自己那张图，这里是"世界 → 地图"）。
+      // 走 store 的面板开关 —— 和背包/角色/技能同一条路（Esc 也因此自动生效）
+      if (!isInputBlocked()) reactPanels.toggle('worldmap');
       break;
     case 'walkRun':
       hudPanel.setRunFlag(worldView.toggleRun());
@@ -388,7 +387,7 @@ hudPanel.onAction = (action, mods) => {
   } else if (action === 'toggleMinimap') {
     hudPanel.setMapFlag(worldView.toggleMinimap());
   } else if (action === 'worldmap') {
-    if (!isInputBlocked()) worldMap.toggle();
+    if (!isInputBlocked()) reactPanels.toggle('worldmap');
   } else if (action === 'potion1' || action === 'potion2' || action === 'potion3') {
     // 点药水槽：**手里有道具 → 放进这一格**（原版左键拿起→点槽放下；同种/容量由服务端校验）；
     // 空手 → 等同于对应数字键（使用该槽里的药水）。

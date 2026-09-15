@@ -1,0 +1,70 @@
+/**
+ * 世界地图**内容**的样式（窗口外壳的样式在 `react/panels.css`）。
+ *
+ * 为什么是独立 .css 而不是塞在 `WorldMap.ts` 的模板字符串里（2026-09-16）：
+ * 塞在 TS 模板里时，**注释中一个反引号就会提前结束模板**，后面的 CSS 变成 JS 代码 ——
+ * 症状是 `tsc` 报莫名其妙的 `Property 'jp' does not exist`、运行时 `xxx is not defined`、
+ * 面板干脆不渲染。这个坑一天踩了三次，靠"记得别写反引号"是防不住的；
+ * 放进 .css 文件后编辑器有语法高亮、反引号随便写，问题从根上消失。
+ *
+ * 色板：中性 UI 色对齐面板体系（`.jp-panel` 的 #181a1f / #262a31 / #3a3f46 / #e8e6e1）；
+ * 功能色保持不动 —— 传送门青 #6fe3ff、出生点绿 #8bf08b、比例尺蓝 #9fd0ff、
+ * 玩家坐标黄 #ffe9b0、警告红 #4a2020 —— 那些是**信息编码**，不是装饰。
+ */
+/* 色板：中性 UI 色**对齐面板体系**（`.jp-panel` 的 #181a1f/#262a31/#3a3f46/#e8e6e1）——
+   地图内容是独立开发时定的另一套冷蓝灰，合并外壳后标题栏与内容会"两个色系"。用户 2026-09-16 指出。
+   功能色（传送门青 #6fe3ff / 出生点绿 #8bf08b / 比例尺蓝 #9fd0ff / 玩家坐标黄 #ffe9b0 / 警告红）
+   **保持不动**：那些是信息编码，不是装饰。
+   ⚠ 本段位于模板字符串内：注释**不许有反引号**。
+
+   ⚠ 只保留**地图内容**的样式。窗口外壳（边框/背景/标题栏/拖动/缩放/关闭/层级/显隐）
+   全部由 React 面板外壳 \`PanelShell\` 提供 —— 见文件头"为什么地图也走 PanelShell"。
+   这里**不许**再出现 position:fixed 的全屏包裹层或自建窗口：那正是"两套窗口"的开端。 */
+
+/* 内容根：填满 .jp-panel-body（PanelShell 已把 body 设为 flex:1 + position:relative） */
+.jp-wm-body { position: absolute; inset: 0; overflow: hidden; color: #e8e6e1;
+  font: 13px/1.5 "Microsoft YaHei", system-ui, sans-serif; }
+/* 左侧竖条**浮在地图之上**（不占画布宽度）—— 用户 2026-09-15："你的按钮不是浮在 canvas 上，
+   而是单独占了一竖条空间"。半透明底，免得压住地图细节。 */
+.jp-wm-strip { position: absolute; left: 0; top: 0; bottom: 0; z-index: 3; width: 34px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 6px 0; background: #161d27cc; border-right: 1px solid #2b354266;
+  /* 按钮不参与压缩（缩的只能是中间的滑条），否则矮窗口里按钮会被挤扁 */
+  overflow: hidden; }
+.jp-wm-strip > .jp-wm-btn { flex: none; }
+.jp-wm-btn { min-width: 26px; padding: 2px 7px; background: #262a31; border: 1px solid #3a3f4680;
+  border-radius: 4px; color: #e8e6e1; cursor: pointer; font: inherit; line-height: 1.4; }
+.jp-wm-btn:hover { background: #33373d; }
+.jp-wm-btn[disabled] { opacity: .4; cursor: default; }
+.jp-wm-btn.on { background: #3d4450; box-shadow: inset 0 0 0 1px #ffd47966; }
+.jp-wm-strip .jp-wm-btn { min-width: 26px; padding: 2px 4px; }
+.jp-wm-cvwrap { position: absolute; inset: 0; }
+/* `user-select/-webkit-user-drag/touch-action`：配合 pointerdown 的 preventDefault，
+   彻底关掉浏览器对 canvas 的**原生拖拽**与文本选择（否则拖动会变成"禁止"光标、
+   页面收不到 pointer 事件）。touch-action:none 让触屏拖动也走我们的平移。 */
+.jp-wm-cv { display: block; width: 100%; height: 100%;
+  user-select: none; -webkit-user-drag: none; touch-action: none; }
+/* 比例尺滑块（竖排，上下两端 +/−）。
+   ⚠ 滑条是**固定长度**（用户 2026-09-16 明确："要么减少滑条的长度要么把最小高度放大点"；
+   我一度改成"随窗口伸缩"，被否 —— 滑条长度会变来变去，手感与刻度都不该变）。
+   取值依据：竖条内容总高 = 5 按钮(26+4gap) + 比例尺(+26 +4 +滑条 +4 +−26) + padding12
+   = 222 + 滑条高；最小窗口 MIN_H=340 减去标题栏 34 ⇒ 可用 306 ⇒ 滑条 ≤ 84。
+   取 76px 留出余量，保证缩到最小高度时"−"按钮完整可见。 */
+.jp-wm-scale { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 2px; }
+.jp-wm-track { position: relative; width: 6px; height: 76px; background: #1d2025;
+  border: 1px solid #3a3f4680; border-radius: 3px; cursor: pointer; }
+.jp-wm-thumb { position: absolute; left: -6px; width: 16px; height: 8px; margin-top: -4px;
+  background: #9fd0ff; border: 1px solid #2b3542; border-radius: 2px; pointer-events: none; }
+/* 坐标：右上 = 鼠标指向，右下 = 玩家 */
+.jp-wm-coord { position: absolute; color: #e8eef5; font: 12px/1.4 monospace; pointer-events: none;
+  text-shadow: 0 1px 2px #000c; }
+.jp-wm-coord.mouse { right: 8px; top: 6px; color: #cfe3f5; }
+.jp-wm-coord.self { right: 8px; bottom: 6px; color: #ffe9b0; }
+.jp-wm-legend { position: absolute; left: 40px; bottom: 6px; color: #9aa0a6; font-size: 12px;
+  pointer-events: none; text-shadow: 0 1px 2px #000c; }
+.jp-wm-legend i { font-style: normal; }
+.jp-wm-legend .g { color: #6fe3ff; }
+.jp-wm-legend .s { color: #8bf08b; }
+.jp-wm-tip { position: absolute; display: none; padding: 4px 7px; background: #0a0c12ee; border: 1px solid #3a3f46;
+  border-radius: 4px; color: #eaf0f6; font-size: 12px; pointer-events: none; white-space: pre; }
+.jp-wm-warn { display: none; padding: 6px 10px; background: #4a2020; color: #ffc9c0; font-size: 12px; }

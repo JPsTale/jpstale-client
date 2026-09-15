@@ -24,12 +24,12 @@ import {
 import levelData from '../maps/map-levels.generated.json';
 import { t } from '../i18n/index.js';
 import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
+import { setCursorMode } from './cursor.js';
+import './worldmap.css';   // 地图内容的样式（不再是 TS 里的模板字符串 —— 见该文件头部注释）
 import { loadUiImage, tintUiImage } from '../render/ui-texture.js';
-import { bringToFront, isTopLayer } from './layerStack.js';
 
 interface Box { minX: number; minZ: number; maxX: number; maxZ: number }
 interface MapEntry { id: number; name: string; box: Box; img: HTMLImageElement | null; failed: boolean }
-interface Rect { x: number; y: number; w: number; h: number }
 
 /** 点位（传送门 / 出生点）—— 位置来自 `fields.json`；图标是我们画的（原版世界图上没有这些图标） */
 export interface Poi {
@@ -78,6 +78,21 @@ export interface WorldMapOptions {
   revealAll?: boolean;
   /** 打开时是否直接定位到玩家所在地图（默认 true，像 FF14 那样"一开就是我在的地方"） */
   openAtPlayer?: boolean;
+  /**
+   * 标题栏内容变化（面包屑 / 当前图名 / "非激活半透明"开关）→ 推给 React 渲染。
+   *
+   * 为什么是回调：窗口标题栏现在由 `PanelShell` 渲染，地图只负责**内容**。
+   * 地图改 `state`（进/退层级）时通过它通知 React 重画标题栏 —— 地图不再自己动 DOM 外壳。
+   */
+  onChrome?: (c: WorldMapChrome) => void;
+}
+
+/** 地图推给窗口外壳的标题栏信息（见 `WorldMapOptions.onChrome`） */
+export interface WorldMapChrome {
+  /** 面包屑：第一段可点（回上级区域），后面若干段只读 */
+  crumbs: { text: string; go: (() => void) | null }[];
+  /** "非激活时半透明"开关是否打开（竖条上那颗 ◐ 按钮驱动） */
+  dim: boolean;
 }
 
 /**
@@ -95,11 +110,12 @@ export interface WorldMapState {
 export type PoiMode = 'off' | 'gates' | 'all';
 
 export interface WorldMapHandle {
+  /** 内容根元素（不是窗口 —— 窗口由 `PanelShell` 渲染） */
   readonly el: HTMLElement;
-  readonly visible: boolean;
+  /** 挂载初始化（`WorldMapPanel` 的 useEffect 调） */
   show(): void;
+  /** 卸载收尾（`WorldMapPanel` 的 useEffect cleanup 调） */
   hide(): void;
-  toggle(): boolean;
   /** 直接跳到某一层（URL 状态 / 自检用） */
   goTo(s: Partial<WorldMapState>): void;
   getState(): WorldMapState;
@@ -117,8 +133,6 @@ export interface WorldMapHandle {
   redraw(): void;
   destroy(): void;
   /** 窗口几何（宿主/自检用；改动也会落进 ui-prefs） */
-  getWindowRect(): Rect;
-  setWindowRect(r: Partial<Rect>): void;
   /** 竖条第 3 个按钮：非激活时半透明 */
   isDimUnfocused(): boolean;
   setDimUnfocused(v: boolean): void;
@@ -154,80 +168,12 @@ export interface WorldMapHandle {
 }
 
 const LEVELS: Record<string, number> = levelData.levels as Record<string, number>;
-const MIN_W = 520, MIN_H = 340;
 /**
  * 比例尺范围（世界单位/像素，越小越放大）：**8 ~ 128**（用户 2026-09-15 定为 4~128，随后调整为 8~128）。
  * 顶端 = 8 单位/px（约 2 倍于烘图基准 16），底端 = 128 单位/px。
  */
 const ZOOM_MIN = 8, ZOOM_MAX = 128;
 
-const STYLE_ID = 'jp-worldmap-style';
-const STYLE = `
-/* z-index 由 layerStack 动态给（"谁激活谁最上"）——别再写死，否则又会压住后打开的面板 */
-.jp-wm { position: fixed; inset: 0; display: none; pointer-events: none; }
-.jp-wm.on { display: block; }
-.jp-wm-win { position: absolute; display: flex; flex-direction: column; pointer-events: auto;
-  background: #0d1117f2; border: 1px solid #2b3542; border-radius: 6px; overflow: hidden;
-  box-shadow: 0 10px 34px #0009; color: #e6e9ee; font: 13px/1.5 "Microsoft YaHei", system-ui, sans-serif;
-  transition: opacity .15s ease; }
-/* 非激活（且开了"非激活时半透明"）→ 左侧控件与右下角拉伸手柄一起隐藏。
-   用 visibility 而**不是** display:none —— 后者会让画布重排（地图尺寸跳一下）。 */
-.jp-wm-win.unfocused .jp-wm-strip, .jp-wm-win.unfocused .jp-wm-grip { visibility: hidden; }
-.jp-wm-title { display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 10px; cursor: move;
-  background: #161d27; border-bottom: 1px solid #2b3542; user-select: none; }
-.jp-wm-crumb { font-weight: 600; white-space: nowrap; }
-.jp-wm-crumb .link { color: #7fc4ff; cursor: pointer; }
-.jp-wm-btns { margin-left: auto; display: flex; gap: 4px; }
-.jp-wm-btn { min-width: 26px; padding: 2px 7px; background: #1d2735; border: 1px solid #33415280;
-  border-radius: 4px; color: #dfe5ec; cursor: pointer; font: inherit; line-height: 1.4; }
-.jp-wm-btn:hover { background: #26364a; }
-.jp-wm-btn[disabled] { opacity: .4; cursor: default; }
-.jp-wm-btn.on { background: #2c3f57; box-shadow: inset 0 0 0 1px #ffd47966; }
-.jp-wm-btn.close:hover { background: #5a2b2b; }
-.jp-wm-body { position: relative; min-height: 0; flex: 1; }
-/* 左侧竖条**浮在地图之上**（不占画布宽度）—— 用户 2026-09-15："你的按钮不是浮在 canvas 上，
-   而是单独占了一竖条空间"。半透明底，免得压住地图细节。 */
-.jp-wm-strip { position: absolute; left: 0; top: 0; bottom: 0; z-index: 3; width: 34px;
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 6px 0; background: #121821cc; border-right: 1px solid #232a3566; }
-.jp-wm-strip .jp-wm-btn { min-width: 26px; padding: 2px 4px; }
-.jp-wm-cvwrap { position: absolute; inset: 0; }
-.jp-wm-cv { display: block; width: 100%; height: 100%; }
-/* 比例尺滑块（竖排，上下两端 +/−） */
-.jp-wm-scale { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-top: 2px; }
-.jp-wm-track { position: relative; width: 6px; height: 132px; background: #1b2431; border: 1px solid #33415280;
-  border-radius: 3px; cursor: pointer; }
-.jp-wm-thumb { position: absolute; left: -6px; width: 16px; height: 8px; margin-top: -4px;
-  background: #9fd0ff; border: 1px solid #2b3542; border-radius: 2px; pointer-events: none; }
-/* 当前比例读数：浮在滑块右侧、与滑块同高（跟着它上下走） */
-.jp-wm-scaleval { position: absolute; left: 28px; transform: translateY(-50%); white-space: nowrap;
-  padding: 1px 5px; background: #0b0f14d9; border: 1px solid #33415280; border-radius: 3px;
-  color: #cfe3f5; font: 11px/1.5 monospace; pointer-events: none; }
-/* 坐标：右上 = 鼠标指向，右下 = 玩家 */
-.jp-wm-coord { position: absolute; color: #e8eef5; font: 12px/1.4 monospace; pointer-events: none;
-  text-shadow: 0 1px 2px #000c; }
-.jp-wm-coord.mouse { right: 8px; top: 6px; color: #cfe3f5; }
-.jp-wm-coord.self { right: 8px; bottom: 6px; color: #ffe9b0; }
-.jp-wm-legend { position: absolute; left: 40px; bottom: 6px; color: #a8b6c6; font-size: 12px;
-  pointer-events: none; text-shadow: 0 1px 2px #000c; }
-.jp-wm-legend i { font-style: normal; }
-.jp-wm-legend .g { color: #6fe3ff; }
-.jp-wm-legend .s { color: #8bf08b; }
-.jp-wm-tip { position: absolute; display: none; padding: 4px 7px; background: #0b0f14ee; border: 1px solid #3a4756;
-  border-radius: 4px; color: #eaf0f6; font-size: 12px; pointer-events: none; white-space: pre; }
-.jp-wm-grip { position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize;
-  background: linear-gradient(135deg, transparent 46%, #66788f 46%, #66788f 54%, transparent 54%,
-    transparent 66%, #66788f 66%, #66788f 76%, transparent 76%); }
-.jp-wm-warn { display: none; padding: 6px 10px; background: #4a2020; color: #ffc9c0; font-size: 12px; }
-`;
-
-function ensureStyle(): void {
-  if (document.getElementById(STYLE_ID)) return;
-  const s = document.createElement('style');
-  s.id = STYLE_ID;
-  s.textContent = STYLE;
-  document.head.appendChild(s);
-}
 
 /**
  * 要不要在**图上**标地图名？
@@ -246,7 +192,6 @@ export function mapLabelOf(id: number, name: string): string {
 }
 
 export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): WorldMapHandle {
-  ensureStyle();
   const assetDir = opts.assetDir ?? 'image/planemap';
   const browse = opts.browse !== false;
   const revealAll = opts.revealAll === true;
@@ -335,19 +280,9 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     if (s.length) startsByMap.set(f.id, s);
   }
 
-  // ── DOM ───────────────────────────────────────────────────────────
-  const root = document.createElement('div');
-  root.className = 'jp-wm';
-  const win = document.createElement('div');
-  win.className = 'jp-wm-win';
-  const title = document.createElement('div');
-  title.className = 'jp-wm-title';
-  const crumb = document.createElement('div');
-  crumb.className = 'jp-wm-crumb';
-  const btns = document.createElement('div');
-  btns.className = 'jp-wm-btns';
-  const warn = document.createElement('div');
-  warn.className = 'jp-wm-warn';
+  // ── DOM：**只建"地图内容"** ────────────────────────────────────────
+  // 窗口外壳（边框/标题栏/拖动/缩放/关闭/层级/显隐）由 React `PanelShell` 提供，
+  // 这里只往它给的 `host`（`.jp-panel-body`）里放内容 —— 这样地图和其它面板**共用一套窗口**。
   const body = document.createElement('div');
   body.className = 'jp-wm-body';
   const strip = document.createElement('div');
@@ -364,16 +299,19 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   legend.className = 'jp-wm-legend';
   const tip = document.createElement('div');
   tip.className = 'jp-wm-tip';
-  const grip = document.createElement('div');
-  grip.className = 'jp-wm-grip';
 
-  wrap.append(canvas, mouseCoord, selfCoord, legend, tip, grip);
-  title.append(crumb, btns);
+  wrap.append(canvas, mouseCoord, selfCoord, legend, tip);
   body.append(wrap, strip);   // 竖条在画布之上（绝对定位，不占宽度）
-  win.append(title, warn, body);
-  root.append(win);
-  host.appendChild(root);
+  host.appendChild(body);
   const ctx = canvas.getContext('2d')!;
+
+  // 画布尺寸跟着**内容容器**走（以前是跟着窗口 `win` 走）。
+  // 用 ResizeObserver 而不是 window.resize：PanelShell 拖拽改尺寸、切面板、改布局，
+  // 容器都会变，window 的 resize 一条都收不到。
+  const ro = typeof ResizeObserver !== 'undefined'
+    ? new ResizeObserver(() => resizeCanvas())
+    : null;
+  ro?.observe(wrap);
 
   const state: WorldMapState = { level: 1, groupId: 'continent', mapId: null };
   let view = { cx: 0, cz: 0, unit: 40 };   // unit = 世界单位/屏幕像素
@@ -385,7 +323,15 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   let dimUnfocused = prefs.worldMapDim;
   const dimAlpha = prefs.worldMapDimAlpha;
   let visible = false;
-  let focused = false;   // 鼠标是否在窗口里（决定是否半透明）
+  /**
+   * **跟随玩家**（用户 2026-09-16："'把我放在地图中间'按钮被激活后，地图的行为应该类似小地图，
+   * 永远把玩家位置居中"）：开启后每次重绘都把视野中心设成玩家坐标，玩家走到哪地图跟到哪。
+   * 与"点一下居中一次"的区别：这是**开关**（竖条第 2 颗按钮，亮起表示开着）。
+   *
+   * 拖动画布 = 自动关掉跟随（`canvas` 的 pointerdown）：否则会变成"拖了又被拉回"，
+   * 玩家不知道是卡住了还是本来如此 —— 关掉它，并让按钮熄灭作为反馈。
+   */
+  let followPlayer = false;
 
   const curGroup = (): OffworldGroup | null => groupById(state.groupId);
   const mapLabel = (id: number): string => mapLabelOf(id, maps.get(id)?.name ?? `#${id}`);
@@ -469,33 +415,12 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     return out;
   }
 
-  // ── 窗口几何（持久化，坏数据一律回默认）───────────────────────────
-  function defaultRect(): Rect {
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const w = Math.max(MIN_W, Math.min(1280, Math.round(vw * 0.8)));
-    const h = Math.max(MIN_H, Math.min(860, Math.round(vh * 0.8)));
-    return { x: Math.round((vw - w) / 2), y: Math.round((vh - h) / 2), w, h };
-  }
-
-  let rect: Rect = prefs.worldMapRect ?? defaultRect();
-
-  function clampRect(r: Rect): Rect {
-    const vw = window.innerWidth, vh = window.innerHeight;
-    const w = Math.max(MIN_W, Math.min(Math.max(MIN_W, vw - 16), Math.round(r.w)));
-    const h = Math.max(MIN_H, Math.min(Math.max(MIN_H, vh - 16), Math.round(r.h)));
-    const x = Math.max(-w + 140, Math.min(vw - 140, Math.round(r.x)));
-    const y = Math.max(0, Math.min(vh - 32, Math.round(r.y)));
-    return { x, y, w, h };
-  }
-
-  function setRect(r: Partial<Rect>, persist = true): void {
-    rect = clampRect({ ...rect, ...r });
-    win.style.left = `${rect.x}px`;
-    win.style.top = `${rect.y}px`;
-    win.style.width = `${rect.w}px`;
-    win.style.height = `${rect.h}px`;
-    resizeCanvas();
-    if (persist) saveUiPrefs({ worldMapRect: rect });
+  /** 只把视野中心移到这批地图的包围盒中心，**不改缩放**（切图用） */
+  function centerOnBox(ids: number[]): void {
+    const b = unionBox(ids);
+    if (!b) return;
+    view.cx = (b.minX + b.maxX) / 2;
+    view.cz = (b.minZ + b.maxZ) / 2;
   }
 
   function fitTo(ids: number[], pad = 0.06): void {
@@ -676,8 +601,27 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     if (w === 0 || h === 0) return;
     ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    ctx.fillStyle = '#1d4260';   // 底色 = 海色（平面图里水面是透明的，这层底就相当于"水"）
-    ctx.fillRect(0, 0, w, h);
+
+    // **不画任何底色**（用户 2026-09-16）：canvas 保持透明，露出面板自身的底
+    // （`.jp-panel` 的 #181a1f）—— 于是地图与其它面板天然同色，不需要"对齐色板"。
+    //
+    // 演进记录（三次都试过，别再绕回去）：
+    //   ① 原先整幅铺海色 `#1d4260`（因为平面图烘焙时**水面是透明的**，需要一层底代表"水"）
+    //      → 整个地图面板一片深蓝，和背包/角色面板的深灰不一致；
+    //   ② 改成"图幅内铺海色、图幅外铺面板底" → 区域层是多图平铺，各图 AABB 之间的缝隙
+    //      正好落在底色上，变成**一块块蓝**，比①更难看（"东一块西一块的蓝色还不如全铺满"）；
+    //   ③ 最终：**什么都不画**。水（透明像素）与图幅外的空白都露出同一个面板底，
+    //      陆地仍是烘出来的贴图 —— 既能区分水陆，又天然与其它面板同色。
+    // 判据：画布四角像素的 alpha 应为 0（透明），而不是某个颜色。
+    // 跟随玩家：把视野中心钉在玩家坐标上（在画地图之前设好，本帧立即生效）
+    if (followPlayer) {
+      const p = opts.getPlayer?.();
+      if (p && typeof p.x === 'number' && typeof p.z === 'number') {
+        // 玩家换图了 → 先切过去（`syncToPlayer` 会 goTo 到新图；下一帧再居中）
+        if (state.level === 2 && state.mapId !== p.mapId) syncToPlayer();
+        else { view.cx = p.x; view.cz = p.z; }
+      }
+    }
 
     const main = layerMapIds();
     for (const id of main) drawMap(id, 1, state.level === 1);   // 边框只在"可点"的区域层出现
@@ -750,12 +694,12 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   }
 
   let upBtn!: HTMLButtonElement;
+  let centerBtn!: HTMLButtonElement;
   let dimBtn!: HTMLButtonElement;
   let poiBtn!: HTMLButtonElement;
   let labelBtn!: HTMLButtonElement;
   let track!: HTMLDivElement;
   let thumb!: HTMLDivElement;
-  let scaleVal!: HTMLDivElement;
 
   function buildStrip(): void {
     strip.innerHTML = '';
@@ -763,7 +707,8 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
       const t2 = parentTarget();
       if (t2) goTo(t2);
     });
-    const centerBtn = mkBtn('◎', '把我放到画面中央（不改缩放）', centerOnPlayer);
+    centerBtn = mkBtn('◎', '跟随玩家：开/关（开启后像小地图那样，永远把玩家放在画面中心）',
+      () => setFollowPlayer(!followPlayer));
     dimBtn = mkBtn('◐', `非激活时半透明（当前 ${Math.round(dimAlpha * 100)}%）`, () => setDimUnfocused(!dimUnfocused));
     poiBtn = mkBtn('◆', '开关地图上的图标（传送门 / 出生点）', cyclePoi);
     labelBtn = mkBtn('A', '开关地图上的文字', () => setLabels(!labelsOn));
@@ -777,10 +722,7 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     thumb = document.createElement('div');
     thumb.className = 'jp-wm-thumb';
     track.appendChild(thumb);
-    scaleVal = document.createElement('div');
-    scaleVal.className = 'jp-wm-scaleval';
-    scaleVal.title = '当前比例尺：1 像素 = N 世界单位（1 单位 = 1cm；烘图基准 16 单位/像素）';
-    track.appendChild(scaleVal);
+    // 滑条右侧的"当前比例"读数**已删**（用户 2026-09-16："滑条游标右侧不要再显示比例尺具体数值了"）
     const minus = mkBtn('−', '缩小', () => zoom(1.3));
     wrapScale.append(plus, track, minus);
 
@@ -814,9 +756,6 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     const t = zoomToT(view.unit);
     const top = Math.round(t * (track.clientHeight - 8) + 4);
     thumb.style.top = `${top}px`;
-    // 当前比例：`N 单位/px`（说的就是 view.unit）。跟着滑块上下走。
-    scaleVal.style.top = `${top}px`;
-    scaleVal.textContent = `${Math.round(view.unit)} 单位/px`;
   }
   function setZoomFromTrack(clientY: number): void {
     const r = track.getBoundingClientRect();
@@ -827,26 +766,21 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     draw();
   }
 
+  /**
+   * 把"窗口标题栏要显示的东西"推给 React（`PanelShell` 渲染）。
+   * 关闭按钮由 PanelShell 自带；这里只出**面包屑**与"非激活半透明"开关状态。
+   */
   function syncChrome(): void {
-    crumb.innerHTML = '';
     const g = curGroup();
-    const parts: { text: string; act: (() => void) | null }[] = [
-      { text: g?.name ?? '大陆', act: state.level === 2 && g ? () => goTo({ level: 1, groupId: g.id, mapId: null }) : null },
+    const crumbs: { text: string; go: (() => void) | null }[] = [
+      { text: g?.name ?? '大陆', go: state.level === 2 && g ? () => goTo({ level: 1, groupId: g.id, mapId: null }) : null },
     ];
-    if (state.mapId !== null) parts.push({ text: mapLabel(state.mapId), act: null });
-    parts.forEach((p, i) => {
-      if (i > 0) crumb.appendChild(document.createTextNode(' › '));
-      const el = document.createElement('span');
-      el.textContent = p.text;
-      if (p.act) { el.className = 'link'; el.onclick = p.act; }
-      crumb.appendChild(el);
-    });
-
-    btns.innerHTML = '';
-    btns.append(mkBtn('×', '关闭（M / Esc）', hide, 'close'));
+    if (state.mapId !== null) crumbs.push({ text: mapLabel(state.mapId), go: null });
+    opts.onChrome?.({ crumbs, dim: dimUnfocused });
 
     // 竖条按钮状态
     upBtn.disabled = parentTarget() === null;
+    centerBtn.classList.toggle('on', followPlayer);
     dimBtn.classList.toggle('on', dimUnfocused);
     poiBtn.classList.toggle('on', poiMode !== 'off');
     labelBtn.classList.toggle('on', labelsOn);
@@ -894,7 +828,14 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   }
 
   // ── 导航 ──────────────────────────────────────────────────────────
-  function goTo(next: Partial<WorldMapState>): void {
+  /**
+   * 跳到某个层级/地图。
+   *
+   * `fit` = 是否**重新取景**（会改缩放）。默认 **false**：切图只改中心、**保持玩家设定的缩放**
+   * （用户 2026-09-16："切换地图后缩放比例被改了"）。
+   * 只有"刚打开地图"这一次需要重新取景（那时还没有"玩家的缩放"可言）。
+   */
+  function goTo(next: Partial<WorldMapState>, opts2?: { fit?: boolean }): void {
     let s: WorldMapState = { ...state, ...next };
     // 区域 id 认不出来（手改 URL / 分组表改过）→ 退回大陆，不留在半坏状态
     if (!groupById(s.groupId)) {
@@ -903,7 +844,9 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     }
     Object.assign(state, s);
     const ids = idsOfState();
-    fitTo(ids.length ? ids : (groupById('continent')?.mapIds ?? []));
+    const list = ids.length ? ids : (groupById('continent')?.mapIds ?? []);
+    if (opts2?.fit) fitTo(list);
+    else centerOnBox(list);   // 只居中，**不动缩放**
     hoverId = null;
     hoverPoi = null;
     syncChrome();
@@ -927,6 +870,13 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
    *   · 同一张图 / 同一区域（区域层且玩家在本区域）→ **只居中，不改缩放**
    *   · 否则 → 切到玩家所在那张图（切换要重新取景，故这种情形会改缩放）
    */
+  /** 开/关"跟随玩家"（竖条第 2 颗按钮）。开启时立刻居中一次，之后每帧跟随 */
+  function setFollowPlayer(v: boolean): void {
+    followPlayer = v;
+    if (v) centerOnPlayer();
+    syncChrome();
+  }
+
   function centerOnPlayer(): void {
     const p = opts.getPlayer?.();
     if (!p) return;
@@ -976,18 +926,7 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   function setDimUnfocused(v: boolean): void {
     dimUnfocused = v;
     saveUiPrefs({ worldMapDim: v });
-    applyFocusStyle();
-    syncChrome();
-  }
-
-  /**
-   * 非激活（鼠标不在窗口里）时：窗口半透明 **+ 左侧控件与拉伸手柄隐藏**（用户 2026-09-15）。
-   * 关掉这个开关就恢复 100% 不透明、控件常驻。
-   */
-  function applyFocusStyle(): void {
-    const inactive = dimUnfocused && !focused;
-    win.style.opacity = inactive ? String(dimAlpha) : '1';
-    win.classList.toggle('unfocused', inactive);
+    syncChrome();   // 把新的开关状态推给 PanelShell（它负责真正的半透明）
   }
 
   function setLabels(v: boolean): void {
@@ -1014,61 +953,59 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     return [e.clientX - r.left, e.clientY - r.top];
   }
 
-  let drag: { kind: 'win' | 'size' | 'pan'; x: number; y: number; r: Rect } | null = null;
+  // 窗口拖动 / 缩放 / 主题焦点的进出，全部由 `PanelShell` 负责（那是"窗口"的事）。
+  // 这里只剩**地图自己的平移**：在画布上按住拖动 = 移动视野。
+  //
+  // ⚠ 平移的 move/up 必须挂在 **window** 上，不能只挂 canvas（用户 2026-09-16 实测：
+  //   "按住拖拽拖不动，鼠标变禁止行动，松开后地图粘在鼠标上"）。三个原因叠在一起：
+  //   ① 只挂 canvas ⇒ 指针一离开画布就断（拖不动）；
+  //   ② pointerdown 不 `preventDefault()` ⇒ 浏览器启动**原生拖拽**（那个"禁止"光标就是它，
+  //      而且它会接管鼠标事件，页面收不到 pointermove/pointerup）；
+  //   ③ pointerup 没落回页面 ⇒ drag 没清 ⇒ 之后指针一动就继续平移（"粘住"）。
+  let drag: { kind: 'pan'; x: number; y: number } | null = null;
   let moved = false;
-  function onWindowPointerDown(e: PointerEvent, kind: 'win' | 'size'): void {
-    if (e.button !== 0) return;
-    drag = { kind, x: e.clientX, y: e.clientY, r: { ...rect } };
-    try {
-      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);   // 合成事件下会抛，忽略即可
-    } catch { /* 没有真实指针：不影响拖动逻辑（我们只读 clientX/Y） */ }
-    e.preventDefault();
-  }
-  title.addEventListener('pointerdown', (e) => {
-    if ((e.target as HTMLElement).tagName === 'BUTTON') return;
-    onWindowPointerDown(e, 'win');
-  });
-  grip.addEventListener('pointerdown', (e) => onWindowPointerDown(e, 'size'));
-  function onPointerMove(e: PointerEvent): void {
-    if (!drag) return;
+  function onPointerUp(): void { drag = null; }
+  window.addEventListener('pointerup', onPointerUp);
+  window.addEventListener('pointercancel', onPointerUp);
+
+  /** 平移：window 级（拖出画布/拖到别的面板上都继续，直到松手） */
+  function onPanMove(e: PointerEvent): void {
+    if (drag?.kind !== 'pan') return;
     const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
     if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
-    if (drag.kind === 'win') setRect({ x: drag.r.x + dx, y: drag.r.y + dy });
-    else setRect({ w: drag.r.w + dx, h: drag.r.h + dy });
+    view.cx -= dx * view.unit;
+    view.cz -= dy * view.unit;
+    drag = { kind: 'pan', x: e.clientX, y: e.clientY };
+    draw();
   }
-  function onPointerUp(): void { drag = null; }
-  window.addEventListener('pointermove', onPointerMove);
-  window.addEventListener('pointerup', onPointerUp);
-
-  // 非激活半透明：鼠标是否在窗口里（进入 = 激活）
-  win.addEventListener('pointerenter', () => { focused = true; applyFocusStyle(); });
-  win.addEventListener('pointerleave', () => { focused = false; applyFocusStyle(); });
+  window.addEventListener('pointermove', onPanMove);
 
   canvas.addEventListener('pointerdown', (e) => {
-    if (e.button === 0) { drag = { kind: 'pan', x: e.clientX, y: e.clientY, r: { ...rect } }; moved = false; }
+    if (e.button !== 0) return;
+    // 阻止浏览器原生拖拽（图片/canvas 的默认 drag）与文本选择 —— 少了这句，
+    // 拖拽会被浏览器接管：显示"禁止"光标、且页面收不到后续 pointer 事件。
+    e.preventDefault();
+    // 手动平移 = 想自己看 → 自动关掉跟随（否则"拖了又被拉回"，看起来像卡住）
+    if (followPlayer) { followPlayer = false; syncChrome(); }
+    drag = { kind: 'pan', x: e.clientX, y: e.clientY };
+    moved = false;
   });
   canvas.addEventListener('pointermove', (e) => {
+    if (drag) return;   // 拖动中：平移由 window 级统一处理（含拖出画布），这里不重复
     const [sx, sy] = localXY(e);
-    if (drag?.kind === 'pan') {
-      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-      if (Math.abs(dx) + Math.abs(dy) > 3) moved = true;
-      view.cx -= dx * view.unit;
-      view.cz -= dy * view.unit;
-      drag = { kind: 'pan', x: e.clientX, y: e.clientY, r: drag.r };
-      draw();
-      return;
-    }
     const [wx, wz] = toWorld(sx, sy);
     mouseWorld = [wx, wz];
     const poi = poiAt(sx, sy);
     const ids = layerMapIds();
     const id = mapAt(wx, wz, ids);
     if (poi !== hoverPoi) { hoverPoi = poi; draw(); }
-    if (id !== hoverId) {
-      hoverId = id;
-      canvas.style.cursor = poi ? 'help' : id !== null ? 'pointer' : 'default';
-      draw();
-    }
+    if (id !== hoverId) { hoverId = id; draw(); }
+    // 悬停**不换光标**（用户 2026-09-16："算了，不要 pickup 了，保持默认吧"）：
+    // 地图上移动始终是游戏默认光标。悬停反馈由地图自身的高亮承担（见 drawMap 的 hoverable）。
+    //
+    // ⚠ 也绝不能写 `canvas.style.cursor = 'help'/'pointer'`（我原来就是那么写的，被用户指出）：
+    //   游戏光标设在 `document.documentElement`、**靠继承传播**，子元素自己设 cursor 就会
+    //   把它覆盖成**系统箭头** —— 表现是"一进地图，PT 的光标图标就没了"。
     if (poi) {
       tip.style.display = 'block';
       tip.style.left = `${sx + 14}px`;
@@ -1108,76 +1045,56 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
    * ⚠ 只在**它是栈顶**时响应：大地图开着的玩家再打开背包，此刻栈顶是面板容器，
    * ESC 该关的是背包（那由面板自己的处理负责），不能顺手把地图也关了。
    */
-  function onKey(e: KeyboardEvent): void {
-    if (!visible || e.key !== 'Escape') return;
-    if (!isTopLayer('worldmap')) return;
-    e.preventDefault();
-    e.stopPropagation();
-    hide();
-  }
-  window.addEventListener('keydown', onKey, true);
-  const onWinResize = (): void => setRect({});
-  window.addEventListener('resize', onWinResize);
+  // Esc 关闭：走 `main.ts` 的统一分级（它只看 `openPanels`，地图并进来后自动生效），
+  //   这里不再自己抢 Esc —— 以前那套 `isTopLayer('worldmap')` 判据是"自带窗口"时代的产物。
+  // 窗口尺寸变化：`PanelShell` 改尺寸 → 内容容器跟着变 → ResizeObserver 触发重算画布（见下）。
 
-  // 分组表自检：不通过要说出来（不然界面只是"少了几张图"，没人知道为什么）
+  // 分组表体检：不通过要说出来（不然界面只是"少了几张图"，没人知道为什么）。
+  // 原来它还渲染一条壳内提示条；窗口合并到 PanelShell 后没有"壳"可放 —— 走 console.error，
+  // 不再需要用户盯着一块红条看（数据问题应该在日志里被看见，而不是在 UI 里被忽略）。
   const problems = checkGroups(FIELDS.map((f) => f.id));
-  if (problems.length > 0) {
-    console.warn('[worldmap] 大陆/分组自检: ' + problems.join('; '));
-    warn.textContent = '大陆/分组自检: ' + problems.join('；');
-    warn.style.display = 'block';
-  }
+  if (problems.length > 0) console.error('[worldmap] 大陆/分组自检未通过: ' + problems.join('; '));
 
   buildStrip();
-  setRect({}, false);
   syncChrome();
-  applyFocusStyle();
-  // 参与"谁激活谁最上"：
-  //  · 层声明在**窗口** `win` 上（能拖能关的那扇窗，才是玩家眼里的"一层"）；
-  //  · 容器 `root` 声明为**宿主容器**（`data-layer-host-container`），它的 z-index 由层栈
-  //    按"组内最高层"合成。
-  //
-  // ⚠ 容器**必须有** z-index，否则整层会被世界画面盖住 —— 而且这个坑很隐蔽：
-  //   `position: fixed` **本身就会创建层叠上下文**（CSS Positioned Layout 规范），
-  //   于是窗口自己的 `z-index: 103` 只在容器内有效，容器以 `z-index: auto` 参与外层，
-  //   在 `#world-root{z-index:50}` 面前等同 0 ⇒ 地图窗口一个像素都看不见（用户 2026-09-16 实测截图）。
-  //   最小复现：容器 `fixed + z:auto` 时子元素 z=999 依然被外层 z=50 盖住；给容器 z=100 后子元素才到最上。
-  win.dataset.layer = 'worldmap';
-  win.dataset.layerHost = 'worldmap';
-  root.dataset.layerHostContainer = 'worldmap';
+  // ⚠ 层的声明**不在这里**了：窗口是 `PanelShell` 渲染的（它带 `data-layer="panel:worldmap"`），
+  //   地图只提供内容。历史上这里有 `win.dataset.layer` + `root.dataset.layerHostContainer`
+  //   —— 那是"自带一套窗口"的产物，也正是"地图被世界层盖住、一个像素看不见"那类坑的温床。
 
+  /** 挂载后的初始化（由 `WorldMapPanel` 在 useEffect 里调）：定位到玩家所在图 + 启动重绘 */
   function show(): void {
     if (visible) return;
     visible = true;
-    bringToFront('worldmap');   // 刚打开 → 最上（此后点别处会被别的层顶下去）
-    root.classList.add('on');
-    setRect({}, false);
+    // 进地图时把光标收回**游戏默认图标**：否则"进图前指着的怪/道具"留下的 attack/pickup
+    // 会跟着带进地图（地图上不再有那些目标，光标却不还原）。
+    setCursorMode('default');
     resizeCanvas();
     // 默认"一开就是我在的地方"（像 FF14）：副本里 → 直接是该副本；野外 → 直接是所在的那张图，
     // 右键/↑ 再退回它的区域、再退回世界。宿主想自己控层级（URL 状态、自检）就把 openAtPlayer 设 false。
     const p = openAtPlayer ? opts.getPlayer?.() : null;
     if (p && maps.has(p.mapId)) {
-      goTo({ level: 2, groupId: layerOf(p.mapId)?.id ?? 'continent', mapId: p.mapId });
+      // 刚打开 → 重新取景（`fit: true`）：这一次要"把玩家所在图铺满视野"
+      goTo({ level: 2, groupId: layerOf(p.mapId)?.id ?? 'continent', mapId: p.mapId }, { fit: true });
       lastPlayerMapId = p.mapId;   // 已经定位过了，别让 syncToPlayer 再切一次
     } else {
-      goTo({ level: 1, groupId: 'continent', mapId: null });
+      goTo({ level: 1, groupId: 'continent', mapId: null }, { fit: true });
     }
     requestAnimationFrame(tick);
     opts.onVisibility?.(true);
   }
+  /** 卸载前收尾（由 `WorldMapPanel` 的 useEffect cleanup 调）：停重绘 + 收提示 */
   function hide(): void {
     if (!visible) return;
     visible = false;
-    root.classList.remove('on');
     tip.style.display = 'none';
     opts.onVisibility?.(false);
   }
 
   return {
-    el: root,
-    get visible() { return visible; },
+    /** 内容根元素（`PanelShell` 的 body 里那一层）。**不是窗口** —— 窗口由 PanelShell 渲染 */
+    el: body,
     show,
     hide,
-    toggle() { visible ? hide() : show(); return visible; },
     goTo,
     getState: () => ({ ...state }),
     focusMap(mapId: number) {
@@ -1191,14 +1108,10 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     redraw: draw,
     destroy() {
       visible = false;   // 停掉重绘循环（否则 rAF 会一直跑在已移除的组件上）
-      window.removeEventListener('keydown', onKey, true);
-      window.removeEventListener('resize', onWinResize);
-      window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerup', onPointerUp);
-      root.remove();
+      ro?.disconnect();
+      body.remove();
     },
-    getWindowRect: () => ({ ...rect }),
-    setWindowRect: (r) => setRect(r),
     isDimUnfocused: () => dimUnfocused,
     setDimUnfocused,
     isLabelsOn: () => labelsOn,

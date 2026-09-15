@@ -109,49 +109,34 @@ bigMap.focusMap(id); bigMap.redraw(); bigMap.destroy();
 | `WorldView.ts` | `worldMapPlayer()` 暴露 `{ mapId, x, z, angle }`（当前图 + 自机世界坐标 + 朝向）；`worldMapEntities()` 暴露地图上要画的实体（见下一节） |
 | `main.ts` | `createWorldMap` 必须在 **`createWorldView` 之后**：组件结尾的 `syncChrome() → syncCoords()` 会**立即**读一次玩家坐标（右下角那个读数），闭包再懒也来不及 —— 早于 worldView 就是 `Cannot access 'worldView' before initialization` |
 
-### 层级：由**激活栈**决定（`src/ui/layerStack.ts`）—— **声明即参与**
+### 结构：地图就是**普通面板**（`panel:worldmap`）
 
-规则（用户定）：**谁被激活谁在最上**（激活 = 刚打开，或点击它）。
+用户 2026-09-16："**这个地图必须走 reactpanel，和其他面板走一套东西而不是两套。**"
 
-实现（用户 2026-09-16 定的做法）：激活时先给自己一个最大序号，然后**把当前所有层重排成 1..N**
-（`A:101 B:102 C:103` → 激活 A 后 `B:101 C:102 A:103`），z-index = `100 + 序号`。
+合并前地图自带一整套窗口（`.jp-wm` 全屏包裹层 + `.jp-wm-win` 窗口 + 自建标题栏/拖动/缩放/关闭/
+显隐/层级声明），于是同一件事有两处实现，代价是实打实的：
 
-为什么重排而不是"每次 +1、涨到阈值再压缩"：**z-index 永远是最小的连续整数**，
-"会不会涨到 9999+/溢出（32 位上限 2147483647）"这个问题**根本不会产生**；
-与相邻层（世界 50 / 常驻装饰 1150+）永远留足余量，不需要算概率。重排只重编号、不改先后，
-开销 O(层数) 而窗口数是个位数。
+- 层级要各接一遍 —— 漏过地图（"M 地图始终在最底层"）；
+- 容器层叠上下文坑**连踩两次**：面板容器一次、地图容器一次，症状都是"窗口在、位置对、一个像素看不见"。
 
-**加新窗口不需要改层栈代码，只要在元素上写两个属性**（`MutationObserver` 自动登记/注销）：
+现在的分工（**只有一套窗口**）：
 
-```html
-<div data-layer="panel:shop">…</div>                     <!-- 一扇窗（独立） -->
-<div data-layer="chat" data-layer-host="panels">…</div>   <!-- 归属宿主容器 panels -->
-<div id="jp-react-panels" data-layer-host-container="panels">…</div>  <!-- 宿主容器 -->
-<div data-layer="worldmap">…</div>                        <!-- 大地图窗口 -->
-```
-
-这么改的原因（用户 2026-09-16）："**所有 UI 面板应该都是这同一套逻辑吧？难道每次都要你手动加？**"
-—— 之前每加一扇窗都要手写 `registerLayer(...)`，于是漏掉了 NPC 商店、拆分弹框、死亡面板，
-而且漏了没有任何提示。现在"参不参与排序、叫什么名字"写在元素自己身上，读代码就能看见。
-
-| 参与排序（有 `data-layer`） | 刻意不参与 |
+| 谁 | 管什么 |
 |---|---|
-| 各面板 `panel:*`（背包/角色/技能/NPC 商店，均由 `PanelShell` 一处声明） | 加载页 1400（永远压住一切） |
-| 系统菜单 `systemMenu`、聊天窗 `chat` | 开发工具 DevLog/Perf 100000 |
-| 大地图 `worldmap` | 常驻装饰：持物图标 1300 / 悬停信息 1350 / 世界内小地图 60 |
-| 拆分堆叠弹框 `splitDialog`、死亡三选项 `deathPanel` | |
+| `PanelShell`（React） | 窗口外壳：标题栏、关闭、拖动、缩放把手、非激活半透明、层级声明 |
+| `WorldMapPanel.tsx` | 窗口的**状态**：`rect`（位置尺寸，持久化在 `ui-prefs.worldMapRect`）+ 面包屑/半透明开关的 React state |
+| `WorldMap.ts` | **只出内容**：canvas 绘制、交互、点位/实体；通过 `options.onChrome` 把面包屑推给 React |
+| `gameStore.openPanels` | 开关：M 键 = `reactPanels.toggle('worldmap')`，和背包/角色/技能同一条路 |
 
-三条不变量（都是踩坑换来的，详见 `layerStack.ts` 文件头）：
-1. **登记"窗口"本身，不是它的全屏包裹层**（地图那次：`.jp-wm` 成了层叠上下文，`win` 永远浮不出来）。
-2. **宿主容器的 z-index = 组内当前最高层的值**（空容器退回基准）：容器必须自己有 z-index 才能让整组
-   压住世界层，但那又会让它成为层叠上下文 —— 合成值同时满足两件事。
-   ⚠ **漏了这条就会"窗口在、位置对、却一个像素看不见"**：`position: fixed` **自身就会创建层叠
-   上下文**（CSS Positioned Layout 规范），于是窗口自己的 `z-index:103` 只在容器内有效，容器以
-   `z-index:auto` 参与外层，在 `#world-root{z-index:50}` 面前等同 0 ⇒ 被世界画面整个盖住。
-   最小复现：容器 `fixed + z:auto` 时子元素 `z:999` 仍被外层 `z:50` 盖住；给容器 `z:100` 后子元素才到最上。
-   这个坑**面板容器和地图容器各犯过一次**（用户 2026-09-16 截图实测），别再有第三次。
-3. **只写 `z-index`**，不碰 `display`/`pointer-events`。想临时提高优先级用**内联 zIndex 覆盖**，
-   别写 `!important`（会把层栈整条链打断）。
+带来的直接结果：
+
+- **`Esc` 自动正确**：`main.ts` 的 Esc 分级只看 `openPanels`，地图并在里面之后不需要任何特判；
+- **层级不再需要地图特例**：它带 `data-layer="panel:worldmap"`，和其它面板一样由层栈排队；
+- 原来的"地图容器必须有 z-index"那类坑**从根上不存在**（容器已经没有了）。
+
+⚠ 受控尺寸的窗口要清掉 `.jp-panel` 那套"居中变体"的定位：`transform: translateX(-50%)`
+会把窗口再左移半个宽度（实测 1269px 宽的窗口被推 634px、x 从 159 变 -475，左侧竖条整条看不到）。
+见 `panels.css` 的 `.jp-panel--abs`。
 
 ### ESC = 直接关闭
 

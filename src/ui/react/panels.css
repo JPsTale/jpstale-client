@@ -36,7 +36,7 @@
 .jp-panel-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   padding: 8px 12px;
   background: linear-gradient(#262a31, #1d2025);
   border-bottom: 1px solid #3a3f46;
@@ -47,6 +47,48 @@
   font-weight: 600;
   letter-spacing: 1px;
 }
+
+/* 关闭按钮始终靠右（标题栏现在是 flex-start + gap，好让 headerExtra 紧贴标题） */
+.jp-panel-close { margin-left: auto; }
+
+/* 受控尺寸的窗口（世界地图）：位置尺寸由内联 style 给。
+   ⚠ 必须清掉 `.jp-panel` 那套"居中变体"的定位 —— 尤其 `transform: translateX(-50%)`：
+   它会把窗口再左移半个宽度（实测 1269px 宽的窗口被推了 634px，x 从 159 变成 -475，
+   左侧竖条整条看不到）。内联 style 只写 left/top/width/height，管不到 transform/bottom。 */
+.jp-panel--abs { left: auto; right: auto; top: auto; bottom: auto; transform: none; width: auto;
+  /* 拖动/缩放时不选中文字（地图面板没有需要选中的内容） */
+  user-select: none; -webkit-user-select: none;
+  /* ⚠ 必须是 flex 列容器：`.jp-panel-body` 靠 `flex:1` 撑满剩余高度，
+     而 body 里的内容（地图画布）是**绝对定位**、撑不开父级 —— 少了这行 body 高度就是 0，
+     画布尺寸随之变 0，表现是"窗口在、里面什么都不画"（用户 2026-09-16 实测）。 */
+  display: flex; flex-direction: column; }
+.jp-panel--abs .jp-panel-head { flex: none; cursor: move; touch-action: none; user-select: none; }
+.jp-panel--abs .jp-panel-body { flex: 1; min-height: 0; position: relative; padding: 0; }
+
+/* 地图的层级面包屑：**浮在画布左上角**（不是标题栏的一部分）。
+   left 让开左侧竖条的 34px；带半透明底，免得压在地图纹理上看不清。 */
+.jp-wm-crumb {
+  position: absolute; left: 42px; top: 8px; z-index: 4;
+  display: flex; align-items: center;
+  padding: 2px 8px; border-radius: 4px;
+  background: #0a0c12cc; border: 1px solid #3a3f4680;
+  font-size: 12px; line-height: 1.6; font-weight: 400; color: #9aa0a6;
+  white-space: nowrap; user-select: none;
+}
+.jp-wm-crumb .link { color: #7fc4ff; cursor: pointer; }
+.jp-wm-crumb .link:hover { text-decoration: underline; }
+.jp-wm-crumb .sep { color: #6a7282; }
+
+/* 右下角缩放把手（`resizable` 时才渲染） */
+.jp-panel-grip {
+  position: absolute; right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize;
+  background: linear-gradient(135deg, transparent 46%, #66788f 46%, #66788f 54%, transparent 54%,
+    transparent 66%, #66788f 66%, #66788f 76%, transparent 76%);
+}
+
+/* 非激活时隐藏"窗口内的浮动控件"（世界地图的竖条/把手）—— 用户 2026-09-15 定的行为。
+   用 visibility 而**不是** display:none：后者会让画布重排（地图尺寸跳一下）。 */
+.jp-panel--unfocused .jp-wm-strip, .jp-panel--unfocused .jp-panel-grip { visibility: hidden; }
 
 .jp-panel-close {
   background: none;

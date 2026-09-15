@@ -4848,6 +4848,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      */
     worldMapEntities: () => {
       const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number }[] = [];
+      // ⚠ **不要**按"这只实体属于哪张图"过滤：怪物的出现/消失由服务端 **AOI（全局坐标 + 距离）**
+      //   推送，玩家站在图 A 边缘时，图 B 的怪本来就会被推过来 —— 这是**正确的**，因为它确实离玩家近。
+      //   （曾试图用"收到 appear 时玩家在哪张图"当归属，被用户指出是错的：那会把图 B 的怪误标成图 A，
+      //   玩家真进了图 B 反而不显示。归属判据必须是坐标，不是"收到消息时的场景"。）
+      //   地图侧再用**当前图的 AABB** 收窄（`WorldMap.drawnEntities`），两层各管各的。
       for (const [, n] of npcs) out.push({ kind: 'npc', x: n.root.position.x, z: n.root.position.z });
       // 怪物不按"显示预算"过滤：地图要看到全部（`culled` 只是这一帧不渲染）
       for (const [, m] of monsters) out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z });

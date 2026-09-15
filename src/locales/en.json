@@ -72,7 +72,8 @@
     },
     "skills": "Skills",
     "inventory": "Inventory",
-    "shop": "Shop"
+    "shop": "Shop",
+    "worldmap": "World Map"
   },
   "stats": {
     "hit": "Hit",
