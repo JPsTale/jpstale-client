@@ -46,6 +46,12 @@ export interface WorldMapEntity {
   kind: 'npc' | 'monster' | 'party';
   x: number;
   z: number;
+  /**
+   * 朝向（弧度，与 three 的 `rotation.y` 同义：0 = 朝世界 +z）。
+   * 地图上的**怪物画成三角形，尖指向它**（用户 2026-09-16 要求）。
+   * 缺省时三角尖朝下（+z）—— 只是没角度，不是"面朝北"。
+   */
+  angle?: number;
 }
 
 export interface WorldMapPlayer {
@@ -240,14 +246,14 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   } as const;
   // 值类型 = `drawImage` 的源：原色图标是 `Image`（经 loadUiImage 等过 onload），
   // 染色图标是 `HTMLCanvasElement`（同步可画，见 `tintUiImage` 的注释）
-  const markers: Partial<Record<'arrow' | 'npc' | 'party' | 'monster' | 'partyFar',
+  const markers: Partial<Record<'arrow' | 'npc' | 'party' | 'partyFar',
     HTMLImageElement | HTMLCanvasElement>> = {};
   void (async () => {
     const [arrow, npc, party] = await Promise.all([
       loadUiImage(MARKER_SRC.arrow), loadUiImage(MARKER_SRC.npc), loadUiImage(MARKER_SRC.party),
     ]);
     if (arrow) markers.arrow = arrow;
-    if (npc) { markers.npc = npc; markers.monster = tintUiImage(npc, '#ff5252'); }
+    if (npc) markers.npc = npc;   // 怪物不再用染色图标（改成画三角，见 drawMonsterMark）
     if (party) { markers.party = party; markers.partyFar = tintUiImage(party, '#ff5252'); }
     draw();   // 图标到齐后补画一帧
   })();
@@ -540,6 +546,36 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
 
   /** 诊断：上一次 drawEntities 实际发出的绘制（自检读不到图标时用来定位是哪一步没了） */
   let lastEntityDraws: string[] = [];
+  /**
+   * 怪物标记 = **实心三角，尖指朝向**（用户 2026-09-16："把大地图上的怪物红色方块换成三角形，
+   * 其中的尖尖表示怪物的面向角度"）。
+   *
+   * 角度换算：three 里朝向向量是 `(sin a, cos a)`（世界 x-z 平面，见 `WorldView` 的移动方向），
+   * 地图是俯视的（屏幕 x = 世界 x，屏幕 y = 世界 z）⇒ 屏幕上的朝向向量同样是 `(sin a, cos a)`。
+   * 三角默认尖朝 **+y（屏幕下 = 世界 +z）**，要转到 `(sin a, cos a)` 需 `rotate(-a)`：
+   *   rotate(θ)·(0,1) = (-sinθ, cosθ) = (sin a, cos a) ⇒ θ = -a。
+   *
+   * 为什么不再用"npc.tga 染色"：那是个**方块**，表达不了朝向；三角是画出来的 path，
+   * 旋转无成本，也比 8×8 的小图在缩放下更清晰。
+   */
+  function drawMonsterMark(x: number, y: number, angle?: number): void {
+    ctx.save();
+    ctx.translate(x, y);
+    if (typeof angle === 'number') ctx.rotate(-angle);
+    ctx.beginPath();
+    ctx.moveTo(0, 5.5);        // 尖
+    ctx.lineTo(-4.5, -4);      // 左下
+    ctx.lineTo(4.5, -4);       // 右下
+    ctx.closePath();
+    ctx.fillStyle = '#ff5252';
+    ctx.fill();
+    // 描边：地图纹理本身颜色多变（沙漠/草地/雪地），深色边让三角在哪儿都看得清
+    ctx.strokeStyle = 'rgba(0,0,0,.6)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawEntities(): void {
     const self = opts.getPlayer?.();
     lastEntityDraws = [];
@@ -548,8 +584,8 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
       if (e.kind === 'npc' && markers.npc) {
         ctx.drawImage(markers.npc, sx - 4, sy - 4, 8, 8);
         lastEntityDraws.push(`npc@${Math.round(sx)},${Math.round(sy)}`);
-      } else if (e.kind === 'monster' && markers.monster) {
-        ctx.drawImage(markers.monster, sx - 4, sy - 4, 8, 8);
+      } else if (e.kind === 'monster') {
+        drawMonsterMark(sx, sy, e.angle);
         lastEntityDraws.push(`monster@${Math.round(sx)},${Math.round(sy)}`);
       } else if (e.kind === 'party') {
         const near = !!(self && typeof self.x === 'number' && typeof self.z === 'number'
@@ -1127,7 +1163,7 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     getLastEntityDraws: () => lastEntityDraws.slice(),
     getMarkerStates() {
       const out: Record<string, string> = {};
-      for (const k of ['arrow', 'npc', 'monster', 'party', 'partyFar'] as const) {
+      for (const k of ['arrow', 'npc', 'party', 'partyFar'] as const) {   // 怪物是画出来的三角，无图标
         const im = markers[k];
         out[k] = im
           ? (im instanceof HTMLCanvasElement ? `${im.width}x${im.height}` : `${im.naturalWidth}x${im.naturalHeight}`)

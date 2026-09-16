@@ -88,7 +88,12 @@
 
 /* 非激活时隐藏"窗口内的浮动控件"（世界地图的竖条/把手）—— 用户 2026-09-15 定的行为。
    用 visibility 而**不是** display:none：后者会让画布重排（地图尺寸跳一下）。 */
-.jp-panel--unfocused .jp-wm-strip, .jp-panel--unfocused .jp-panel-grip { visibility: hidden; }
+/* 失焦（非激活）时隐藏"浮在地图上的控件"：左侧竖条、左下角图例、右下角缩放手柄。
+   与"非激活半透明"同一个开关：关掉半透明（`dimWhenUnfocused` 不传）时它们常驻。
+   用 visibility 而**不是** display:none —— 后者会重排、地图尺寸会跳一下。 */
+.jp-panel--unfocused .jp-wm-strip,
+.jp-panel--unfocused .jp-wm-legend,
+.jp-panel--unfocused .jp-panel-grip { visibility: hidden; }
 
 .jp-panel-close {
   background: none;

@@ -196,7 +196,7 @@ export interface WorldView {
   /** 大地图用：当前地图 + 自机世界坐标（含朝向） */
   worldMapPlayer(): { mapId: number; x: number; z: number; angle: number };
   /** 大地图用：地图上的其他实体（NPC / 怪物 / 队友） */
-  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number }[];
+  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number }[];
   /** 服务端权威换图校准（game.mapSwitched）：对齐 currentMapId 并同步区域 */
   applyMapSwitched(mapId: number): void;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
@@ -2769,7 +2769,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * @returns 是否真的换了图
    */
   function enterMap(mapId: number, reason: string): boolean {
-    if (!scene || !mapId || mapId === currentMapId) return false;
+    // ⚠ 判据必须用 `Number.isFinite`，**不能写 `!mapId`** —— 地图 **0**（阿卡西亚森林）是合法地图，
+    //   而 `!0 === true` 会让它永远进不来：切图被吞 → 区域不重载（小地图/大地图都不变）→ 名字大字也不弹。
+    //   （用户 2026-09-16 实测："进入地图 0 之后小地图和大地图都不会变了，也不出 mapbanner 了"，
+    //     并直接猜到"是不是 mapId 要求大于 0？" —— 就是这个。）
+    if (!scene || !Number.isFinite(mapId) || mapId === currentMapId) return false;
     currentMapId = mapId;
     mapAudio.enterMap(currentMapId);
     void syncMapRegions(currentMapId);
@@ -3128,7 +3132,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const mapBannerShownAt = new Map<number, number>();   // mapId → 上次弹的时刻
 
   function showMapBanner(mapId: number): void {
-    if (!mapId) return;
+    if (!Number.isFinite(mapId)) return;   // ⚠ 不是 `!mapId`：地图 0 合法（同 enterMap）
     const now = performance.now();
     const last = mapBannerShownAt.get(mapId) ?? -Infinity;
     if (now - last < MAP_BANNER_COOLDOWN_MS) return;   // 同一张图冷却内不重弹（边缘往返防刷）
@@ -4847,15 +4851,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      *           队伍状态一落地就往这里塞，别的地方不用改
      */
     worldMapEntities: () => {
-      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number }[] = [];
+      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number }[] = [];
       // ⚠ **不要**按"这只实体属于哪张图"过滤：怪物的出现/消失由服务端 **AOI（全局坐标 + 距离）**
       //   推送，玩家站在图 A 边缘时，图 B 的怪本来就会被推过来 —— 这是**正确的**，因为它确实离玩家近。
       //   （曾试图用"收到 appear 时玩家在哪张图"当归属，被用户指出是错的：那会把图 B 的怪误标成图 A，
       //   玩家真进了图 B 反而不显示。归属判据必须是坐标，不是"收到消息时的场景"。）
       //   地图侧再用**当前图的 AABB** 收窄（`WorldMap.drawnEntities`），两层各管各的。
       for (const [, n] of npcs) out.push({ kind: 'npc', x: n.root.position.x, z: n.root.position.z });
-      // 怪物不按"显示预算"过滤：地图要看到全部（`culled` 只是这一帧不渲染）
-      for (const [, m] of monsters) out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z });
+      // 怪物不按"显示预算"过滤：地图要看到全部（`culled` 只是这一帧不渲染）。
+      // **带上朝向** `rotation.y`（服务端 `S2C_MonsterAppear.angle` / `MonsterMove` 一直在发，
+      // 我们一直存在 `root.rotation.y`）—— 地图把它画成三角形，尖指朝向（用户 2026-09-16）。
+      for (const [, m] of monsters) {
+        out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z, angle: m.root.rotation.y });
+      }
       return out;
     },
     applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '') => {

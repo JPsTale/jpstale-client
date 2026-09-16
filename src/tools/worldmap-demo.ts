@@ -50,8 +50,26 @@ const bigMap = createWorldMap(host, {
       angle: q.get('playerAngle') !== null ? Number(q.get('playerAngle')) : 0.6,
     };
   },
+  // ?entities=1 → 放一组**假实体**演示图标：四个朝向的怪（三角，尖指朝向）+ 一个 NPC（绿点对照）。
+  // 只是 demo 的假数据（游戏里由 `worldView.worldMapEntities()` 提供真实怪物与朝向）。
+  getEntities: q.get('entities') === '1' ? () => {
+    const b = (FIELDS.find((f) => f.id === 3) as unknown as { bounds?: Box } | undefined)?.bounds;
+    if (!b) return [];
+    const cx = (b.minX + b.maxX) / 2, cz = (b.minZ + b.maxZ) / 2, R = 700;
+    return [
+      { kind: 'monster' as const, x: cx, z: cz - R, angle: 0 },              // 0     → 朝 +z（屏幕下）
+      { kind: 'monster' as const, x: cx + R, z: cz, angle: Math.PI / 2 },    // π/2   → 朝 +x（屏幕右）
+      { kind: 'monster' as const, x: cx, z: cz + R, angle: Math.PI },        // π     → 朝 -z（屏幕上）
+      { kind: 'monster' as const, x: cx - R, z: cz, angle: -Math.PI / 2 },   // -π/2  → 朝 -x（屏幕左）
+      { kind: 'npc' as const, x: cx, z: cz },                                // 对照：绿点
+    ];
+  } : undefined,
 });
 bigMap.show();
+
+// 调试入口：控制台里 `bigMap.worldToScreen(x, z)` / `bigMap.getState()` 随手可查
+// （demo 页的宿主代码，不是组件的一部分）
+(window as unknown as { bigMap: typeof bigMap }).bigMap = bigMap;
 
 // URL 初始状态：?level=1&region=kelvezu、?level=2&map=3
 const lv = Number(q.get('level') ?? '0');
