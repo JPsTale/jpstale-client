@@ -741,9 +741,9 @@ export default function ItemPanel() {
   /** 右键使用：只上送 uid，效果与校验全在服务端（原版 RButtonDown 也是只表达"用这一件"） */
   function onUseBag(it: GameItem) {
     if (held) return;                 // 手里拿着东西时右键无效（对齐原版 MouseItem.Flag 守卫）
-    // 本地立刻播 EAT（原版 sinActionPotion/ActionEtherCore 都在点击瞬间切动作，不等服务端往返）
-    requestPlayEat(useEffectKindOf(it.itemCode));
-    sendUseItem(it.uid);
+    // 本地立刻播 EAT（原版 sinActionPotion/ActionEtherCore 都在点击瞬间切动作，不等服务端往返）。
+    // 只有"真的开始吃"才发请求：EAT 中 / 冷却中时返回 false，那一下整体无效（原版同）。
+    if (requestPlayEat(useEffectKindOf(it.itemCode))) sendUseItem(it.uid);
   }
 
   return (

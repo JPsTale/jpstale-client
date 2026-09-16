@@ -428,7 +428,8 @@
       "dropOverLimit": "Ground is full, drop discarded",
       "unknownGm": "Unknown GM command: /{name} (GM system in development)",
       "unknown": "Unknown command: /{name}",
-      "invalidNumber": "Invalid number in command: {cmd}"
+      "invalidNumber": "Invalid number in command: {cmd}",
+      "useItemTooFast": "Use failed: too soon after the last use"
     },
     "pickup": {
       "bagFull": "Bag is full, cannot pick up",

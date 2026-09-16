@@ -4216,6 +4216,12 @@ export namespace jpt {
             /** S2C_PlayerAppear clanMark. */
             clanMark: string;
 
+            /** S2C_PlayerAppear walkSpeed. */
+            walkSpeed: number;
+
+            /** S2C_PlayerAppear runSpeed. */
+            runSpeed: number;
+
             /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -4332,6 +4338,12 @@ export namespace jpt {
 
                 /** S2C_PlayerAppear clanMark */
                 clanMark?: (string|null);
+
+                /** S2C_PlayerAppear walkSpeed */
+                walkSpeed?: (number|null);
+
+                /** S2C_PlayerAppear runSpeed */
+                runSpeed?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -6325,6 +6337,9 @@ export namespace jpt {
             /** S2C_MonsterAppear monsterEffectId. */
             monsterEffectId: number;
 
+            /** S2C_MonsterAppear animRate. */
+            animRate: number;
+
             /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -6441,6 +6456,9 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear monsterEffectId */
                 monsterEffectId?: (number|null);
+
+                /** S2C_MonsterAppear animRate */
+                animRate?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -6598,6 +6616,9 @@ export namespace jpt {
             /** S2C_MonsterMove animState. */
             animState: number;
 
+            /** S2C_MonsterMove animIndex. */
+            animIndex: number;
+
             /**
              * Creates a new S2C_MonsterMove instance using the specified properties.
              * @param [properties] Properties to set
@@ -6693,6 +6714,9 @@ export namespace jpt {
 
                 /** S2C_MonsterMove animState */
                 animState?: (number|null);
+
+                /** S2C_MonsterMove animIndex */
+                animIndex?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -8593,6 +8617,9 @@ export namespace jpt {
             /** S2C_Damage missed. */
             missed: boolean;
 
+            /** S2C_Damage blocked. */
+            blocked: boolean;
+
             /**
              * Creates a new S2C_Damage instance using the specified properties.
              * @param [properties] Properties to set
@@ -8688,6 +8715,9 @@ export namespace jpt {
 
                 /** S2C_Damage missed */
                 missed?: (boolean|null);
+
+                /** S2C_Damage blocked */
+                blocked?: (boolean|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

@@ -25,7 +25,8 @@
     "diag-climb": "tsx scripts/diag-climb.ts",
     "potions": "tsx scripts/extract-potion-effects.ts",
     "bake-maps": "tsx scripts/bake-maps.ts",
-    "map-levels": "npx tsx scripts/extract-map-levels.ts"
+    "map-levels": "npx tsx scripts/extract-map-levels.ts",
+    "monster-anim": "tsx scripts/extract-monster-anim.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

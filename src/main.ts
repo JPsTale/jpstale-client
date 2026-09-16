@@ -394,8 +394,9 @@ keyBinding.onKeyDown((action) => {
         console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
         break;
       }
-      requestPlayEat(useEffectKindOf(itemByUid(uid)?.itemCode));
-      sendUseItem(uid);
+      // 只有"真的开始吃"才发请求 —— EAT 中 / 冷却中时 `requestPlayEat` 返回 false，
+      // 那一下按键整体无效（原版 `sinActionPotion` 返回 FALSE 时连 `pUsePotion` 都不设）。
+      if (requestPlayEat(useEffectKindOf(itemByUid(uid)?.itemCode))) sendUseItem(uid);
       break;
     }
   }
@@ -460,8 +461,8 @@ hudPanel.onAction = (action, mods) => {
     if (uid == null) {
       console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
     } else if (getHeldUid() == null) {
-      requestPlayEat(useEffectKindOf(itemByUid(uid)?.itemCode));   // EAT + 粒子/音效（唯一入口）
-      sendUseItem(uid);
+      // 同数字键：EAT 中 / 冷却中 → 那一下按键整体无效（不吃也不发）
+      if (requestPlayEat(useEffectKindOf(itemByUid(uid)?.itemCode))) sendUseItem(uid);
     }
   } else if (action === 'system') {
     openSystemMenu();
@@ -827,6 +828,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
           offHandPos: pa.offHandPos || 0,
           sizeLevel: pa.sizeLevel || 0,
         } : undefined,
+        a.walkSpeed || 0,   // 走/跑动画按实际移速缩放播放速度（0 = 服务端没给 → 退成 1 档）
+        a.runSpeed || 0,
       );
       break;
     }
@@ -876,6 +879,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.angle || 0,
         !!a.dead,
         a.monsterEffectId || 0,
+        a.animRate || 0,   // 动画播放速率（服务端按 DB attackspeed 算好下发）
       );
       break;
     }
@@ -941,6 +945,12 @@ onMessage((msg: jpt.base.ServerMessage) => {
       if (d.missed) {
         // 怪这一刀没打中（原版 sinGetMonsterAccuracy）：只飘 MISS，不扣血、不播受击硬直/受击音
         worldView.showFloater(null, tid, 'MISS', '#d8dce3', false);
+        break;
+      }
+      if (d.blocked) {
+        // 被格挡：同样不扣血、不播受击硬直/音，飘 "Blocked" + 随机播 impact/block{1,2,3}.wav
+        worldView.showFloater(null, tid, 'Blocked', '#9fd8ff', false);
+        sfx.play('wav/effects/impact/block' + (1 + Math.floor(Math.random() * 3)) + '.wav');
         break;
       }
       worldView.showFloater(null, tid, '-' + (d.damage || 0), '#ff6b6b', false);

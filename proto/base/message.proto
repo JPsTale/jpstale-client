@@ -349,6 +349,10 @@ message S2C_PlayerAppear {
   float angle = 9;                     // 当前朝向（弧度，0=+Z），远端出现即正确显示朝向
   string clan_name = 10;               // 公会名（clandb.ul.clanname），无公会为空串（头顶名牌）
   string clan_mark = 11;               // 公会图标（clandb.clanlist.iconid 转字符串），无公会为空串
+  // 移动速度（游戏单位/秒）—— 旁观者用它缩放该角色的走/跑**动画播放速度**：
+  // 动画是按 1 档基准做的，加速装备/药水让位移变快后步频得跟着变，否则看起来在滑行。
+  int32 walk_speed = 12;
+  int32 run_speed = 13;
 }
 
 message S2C_PlayerDisappear {
@@ -540,6 +544,11 @@ message S2C_MonsterAppear {
   // 把"尸体"和"活怪"区分开（否则会看到尸体站着）。
   bool dead = 10;
   int32 monster_effect_id = 11; // 怪物音效/特效 ID（对应 C++ dwCharSoundCode / EMonsterEffectID）
+  // 动画**播放速率倍率**（相对客户端基准 `ANIM_UNITS_PER_SEC`）= 步进 × 70 ÷ 4800。
+  // 服务端持有 `attackspeed` 档位（客户端没有），算好下发 —— 客户端直接当 `animRate` 用。
+  // 这样 `attackspeed` 才真正作用于动画速度（快怪动画播得快），且与**服务端算的动画时长同源**
+  // （服务端"等动画播完"必须等于客户端实际播完的时间）。
+  float anim_rate = 12;
 }
 
 message S2C_MonsterDisappear {
@@ -551,6 +560,9 @@ message S2C_MonsterMove {
   Position position = 2;
   float angle = 3;      // 面朝方向（弧度，0=Z+）
   int32 anim_state = 4; // 动画 token：0x0040 STAND / 0x0050 WALK / 0x0060 RUN / 0x0100 ATTACK
+  // 该状态的**条目索引**（.inx 序号）—— 服务端从 monster-anim.json 里选定的变体，
+  // 客户端直接 playMotion(该条目)。与玩家 anim_index 同一语义（谁决定谁下发，见 docs/chars/动画同步.md）。
+  int32 anim_index = 5;
 }
 
 message S2C_NpcAppear {
@@ -669,6 +681,9 @@ message S2C_Damage {
   // 怪打玩家的命中判定未通过（原版 sinGetMonsterAccuracy）：damage=0、血量不变，
   // 客户端在受害者头顶飘 MISS（与自机挥空同款），不播受击硬直/受击音。
   bool missed = 4;
+  // 被格挡（格挡判定通过）：damage=0、血量不变，客户端飘 "Blocked" 并随机播
+  // wav/effects/impact/block{1,2,3}.wav。与 missed 分开：格挡有音、miss 没有。
+  bool blocked = 5;
 }
 
 // 资源回复广播（与 S2C_Damage 对称：带权威 current 值，客户端在目标头顶飘字）。

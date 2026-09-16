@@ -12776,6 +12776,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [angle] S2C_PlayerAppear angle
              * @property {string|null} [clanName] S2C_PlayerAppear clanName
              * @property {string|null} [clanMark] S2C_PlayerAppear clanMark
+             * @property {number|null} [walkSpeed] S2C_PlayerAppear walkSpeed
+             * @property {number|null} [runSpeed] S2C_PlayerAppear runSpeed
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -12896,6 +12898,22 @@ export const jpt = $root.jpt = (() => {
             S2C_PlayerAppear.prototype.clanMark = "";
 
             /**
+             * S2C_PlayerAppear walkSpeed.
+             * @member {number} walkSpeed
+             * @memberof jpt.base.S2C_PlayerAppear
+             * @instance
+             */
+            S2C_PlayerAppear.prototype.walkSpeed = 0;
+
+            /**
+             * S2C_PlayerAppear runSpeed.
+             * @member {number} runSpeed
+             * @memberof jpt.base.S2C_PlayerAppear
+             * @instance
+             */
+            S2C_PlayerAppear.prototype.runSpeed = 0;
+
+            /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_PlayerAppear
@@ -12949,6 +12967,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 10, wireType 2 =*/82).string(message.clanName);
                 if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark") && message.clanMark !== "")
                     writer.uint32(/* id 11, wireType 2 =*/90).string(message.clanMark);
+                if (message.walkSpeed != null && $Object.hasOwnProperty.call(message, "walkSpeed") && message.walkSpeed !== 0)
+                    writer.uint32(/* id 12, wireType 0 =*/96).int32(message.walkSpeed);
+                if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed") && message.runSpeed !== 0)
+                    writer.uint32(/* id 13, wireType 0 =*/104).int32(message.runSpeed);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -13099,6 +13121,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.clanMark;
                             continue;
                         }
+                    case 12: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.walkSpeed = value;
+                            else
+                                delete message.walkSpeed;
+                            continue;
+                        }
+                    case 13: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.runSpeed = value;
+                            else
+                                delete message.runSpeed;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -13184,6 +13224,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
                     if (!$util.isString(message.clanMark))
                         return "clanMark: string expected";
+                if (message.walkSpeed != null && $Object.hasOwnProperty.call(message, "walkSpeed"))
+                    if (!$util.isInteger(message.walkSpeed))
+                        return "walkSpeed: integer expected";
+                if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed"))
+                    if (!$util.isInteger(message.runSpeed))
+                        return "runSpeed: integer expected";
                 return null;
             };
 
@@ -13249,6 +13295,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.clanMark != null)
                     if (typeof object.clanMark !== "string" || object.clanMark.length)
                         message.clanMark = $String(object.clanMark);
+                if (object.walkSpeed != null)
+                    if ($Number(object.walkSpeed) !== 0)
+                        message.walkSpeed = object.walkSpeed | 0;
+                if (object.runSpeed != null)
+                    if ($Number(object.runSpeed) !== 0)
+                        message.runSpeed = object.runSpeed | 0;
                 return message;
             };
 
@@ -13285,6 +13337,8 @@ export const jpt = $root.jpt = (() => {
                     object.angle = 0;
                     object.clanName = "";
                     object.clanMark = "";
+                    object.walkSpeed = 0;
+                    object.runSpeed = 0;
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -13313,6 +13367,10 @@ export const jpt = $root.jpt = (() => {
                     object.clanName = message.clanName;
                 if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
                     object.clanMark = message.clanMark;
+                if (message.walkSpeed != null && $Object.hasOwnProperty.call(message, "walkSpeed"))
+                    object.walkSpeed = message.walkSpeed;
+                if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed"))
+                    object.runSpeed = message.runSpeed;
                 return object;
             };
 
@@ -19556,6 +19614,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [angle] S2C_MonsterAppear angle
              * @property {boolean|null} [dead] S2C_MonsterAppear dead
              * @property {number|null} [monsterEffectId] S2C_MonsterAppear monsterEffectId
+             * @property {number|null} [animRate] S2C_MonsterAppear animRate
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -19676,6 +19735,14 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterAppear.prototype.monsterEffectId = 0;
 
             /**
+             * S2C_MonsterAppear animRate.
+             * @member {number} animRate
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.animRate = 0;
+
+            /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterAppear
@@ -19729,6 +19796,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 10, wireType 0 =*/80).bool(message.dead);
                 if (message.monsterEffectId != null && $Object.hasOwnProperty.call(message, "monsterEffectId") && message.monsterEffectId !== 0)
                     writer.uint32(/* id 11, wireType 0 =*/88).int32(message.monsterEffectId);
+                if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate") && !$Object.is(message.animRate, 0))
+                    writer.uint32(/* id 12, wireType 5 =*/101).float(message.animRate);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -19882,6 +19951,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.monsterEffectId;
                             continue;
                         }
+                    case 12: {
+                            if (wireType !== 5)
+                                break;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animRate = value;
+                            else
+                                delete message.animRate;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -19965,6 +20043,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.monsterEffectId != null && $Object.hasOwnProperty.call(message, "monsterEffectId"))
                     if (!$util.isInteger(message.monsterEffectId))
                         return "monsterEffectId: integer expected";
+                if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate"))
+                    if (typeof message.animRate !== "number")
+                        return "animRate: number expected";
                 return null;
             };
 
@@ -20028,6 +20109,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.monsterEffectId != null)
                     if ($Number(object.monsterEffectId) !== 0)
                         message.monsterEffectId = object.monsterEffectId | 0;
+                if (object.animRate != null)
+                    if (!$Object.is($Number(object.animRate), 0))
+                        message.animRate = $Number(object.animRate);
                 return message;
             };
 
@@ -20064,6 +20148,7 @@ export const jpt = $root.jpt = (() => {
                     object.angle = 0;
                     object.dead = false;
                     object.monsterEffectId = 0;
+                    object.animRate = 0;
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -20092,6 +20177,8 @@ export const jpt = $root.jpt = (() => {
                     object.dead = message.dead;
                 if (message.monsterEffectId != null && $Object.hasOwnProperty.call(message, "monsterEffectId"))
                     object.monsterEffectId = message.monsterEffectId;
+                if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate"))
+                    object.animRate = options.json && !$isFinite(message.animRate) ? $String(message.animRate) : message.animRate;
                 return object;
             };
 
@@ -20423,6 +20510,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.Position.$Properties|null} [position] S2C_MonsterMove position
              * @property {number|null} [angle] S2C_MonsterMove angle
              * @property {number|null} [animState] S2C_MonsterMove animState
+             * @property {number|null} [animIndex] S2C_MonsterMove animIndex
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -20487,6 +20575,14 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterMove.prototype.animState = 0;
 
             /**
+             * S2C_MonsterMove animIndex.
+             * @member {number} animIndex
+             * @memberof jpt.base.S2C_MonsterMove
+             * @instance
+             */
+            S2C_MonsterMove.prototype.animIndex = 0;
+
+            /**
              * Creates a new S2C_MonsterMove instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterMove
@@ -20526,6 +20622,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 3, wireType 5 =*/29).float(message.angle);
                 if (message.animState != null && $Object.hasOwnProperty.call(message, "animState") && message.animState !== 0)
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.animState);
+                if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex") && message.animIndex !== 0)
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.animIndex);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -20616,6 +20714,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.animState;
                             continue;
                         }
+                    case 5: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.animIndex = value;
+                            else
+                                delete message.animIndex;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -20678,6 +20785,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.animState != null && $Object.hasOwnProperty.call(message, "animState"))
                     if (!$util.isInteger(message.animState))
                         return "animState: integer expected";
+                if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex"))
+                    if (!$util.isInteger(message.animIndex))
+                        return "animIndex: integer expected";
                 return null;
             };
 
@@ -20720,6 +20830,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.animState != null)
                     if ($Number(object.animState) !== 0)
                         message.animState = object.animState | 0;
+                if (object.animIndex != null)
+                    if ($Number(object.animIndex) !== 0)
+                        message.animIndex = object.animIndex | 0;
                 return message;
             };
 
@@ -20749,6 +20862,7 @@ export const jpt = $root.jpt = (() => {
                     object.position = null;
                     object.angle = 0;
                     object.animState = 0;
+                    object.animIndex = 0;
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -20763,6 +20877,8 @@ export const jpt = $root.jpt = (() => {
                     object.angle = options.json && !$isFinite(message.angle) ? $String(message.angle) : message.angle;
                 if (message.animState != null && $Object.hasOwnProperty.call(message, "animState"))
                     object.animState = message.animState;
+                if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex"))
+                    object.animIndex = message.animIndex;
                 return object;
             };
 
@@ -26090,6 +26206,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [damage] S2C_Damage damage
              * @property {number|null} [currentHp] S2C_Damage currentHp
              * @property {boolean|null} [missed] S2C_Damage missed
+             * @property {boolean|null} [blocked] S2C_Damage blocked
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -26154,6 +26271,14 @@ export const jpt = $root.jpt = (() => {
             S2C_Damage.prototype.missed = false;
 
             /**
+             * S2C_Damage blocked.
+             * @member {boolean} blocked
+             * @memberof jpt.base.S2C_Damage
+             * @instance
+             */
+            S2C_Damage.prototype.blocked = false;
+
+            /**
              * Creates a new S2C_Damage instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_Damage
@@ -26193,6 +26318,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.currentHp);
                 if (message.missed != null && $Object.hasOwnProperty.call(message, "missed") && message.missed !== false)
                     writer.uint32(/* id 4, wireType 0 =*/32).bool(message.missed);
+                if (message.blocked != null && $Object.hasOwnProperty.call(message, "blocked") && message.blocked !== false)
+                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.blocked);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -26286,6 +26413,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.missed;
                             continue;
                         }
+                    case 5: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.bool())
+                                message.blocked = value;
+                            else
+                                delete message.blocked;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -26346,6 +26482,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.missed != null && $Object.hasOwnProperty.call(message, "missed"))
                     if (typeof message.missed !== "boolean")
                         return "missed: boolean expected";
+                if (message.blocked != null && $Object.hasOwnProperty.call(message, "blocked"))
+                    if (typeof message.blocked !== "boolean")
+                        return "blocked: boolean expected";
                 return null;
             };
 
@@ -26386,6 +26525,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.missed != null)
                     if (object.missed)
                         message.missed = $Boolean(object.missed);
+                if (object.blocked != null)
+                    if (object.blocked)
+                        message.blocked = $Boolean(object.blocked);
                 return message;
             };
 
@@ -26415,6 +26557,7 @@ export const jpt = $root.jpt = (() => {
                     object.damage = 0;
                     object.currentHp = 0;
                     object.missed = false;
+                    object.blocked = false;
                 }
                 if (message.targetId != null && $Object.hasOwnProperty.call(message, "targetId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -26429,6 +26572,8 @@ export const jpt = $root.jpt = (() => {
                     object.currentHp = message.currentHp;
                 if (message.missed != null && $Object.hasOwnProperty.call(message, "missed"))
                     object.missed = message.missed;
+                if (message.blocked != null && $Object.hasOwnProperty.call(message, "blocked"))
+                    object.blocked = message.blocked;
                 return object;
             };
 

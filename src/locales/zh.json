@@ -428,7 +428,8 @@
       "dropOverLimit": "地面物品已满，掉落被丢弃",
       "unknownGm": "未知GM命令: /{name}（GM 系统开发中）",
       "unknown": "未知命令: /{name}",
-      "invalidNumber": "命令参数格式错误: {cmd}"
+      "invalidNumber": "命令参数格式错误: {cmd}",
+      "useItemTooFast": "使用失败：距离上次使用太近"
     },
     "pickup": {
       "bagFull": "背包已满，无法拾取",

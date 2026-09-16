@@ -217,7 +217,7 @@ export interface WorldView {
   /** 自机等级（跨图边界的等级门槛判定用） */
   setSelfLevel(level: number): void;
   /** 碰撞调试可视化的开关（F9 / `?coll=1` / 控制台都走它） */
-  /** 使用道具：播 EAT 动画 + 事件帧的粒子/音效（与 requestPlayEat 同一实现） */
+  /** 使用道具：播 EAT 动画 + 事件帧的粒子/音效（与 requestPlayEat 同一实现）。false = 没吃成（别发请求） */
   playEat(kind?: UseEffectKind): boolean;
   /**
    * 请求切换武器套（W 键）。空闲时立刻兑现；一次性动画（攻击/技能/受击/吃药）未播完时
@@ -265,7 +265,7 @@ export interface WorldView {
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string, useSeq?: number, useItemIdcode?: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
-  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
+  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkWps?: number, runWps?: number): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
   /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型 */
@@ -278,9 +278,9 @@ export interface WorldView {
    * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
    * 直接摆成死亡姿势，不播 idle。
    */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
-  monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void;
+  monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
   monsterDisappear(monsterId: number): void;
   /**
@@ -435,6 +435,13 @@ const COMBAT_WINDOW_MS = 3000;
 const EAT_EFFECT_LIFT = 48;
 
 /**
+ * 吃药冷却（毫秒）= 原版 `sinUsePotionDelayFlag` 的 **50 帧**（`sinInvenTory.cpp:794`：
+ * `dwUsePotionDelayTime > 50` 才清零），按原版 70Hz 主循环换算 ⇒ 50/70 ≈ 714ms。
+ * 期间再按吃药键**无效**（不吃、不播、不发请求）。
+ */
+const EAT_COOLDOWN_MS = Math.round((50 / 70) * 1000);
+
+/**
  * 「使用道具」的表现入口（EAT 动画 + 粒子 + 音效）——**唯一实现**，右键/数字键/点药水槽三处都调它。
  * 原版：`sinActionPotion()`（playsub.cpp:1076）切 `CHRMOTION_STATE_EAT`；
  * `.in` 里每职业的 EAT 条目是 `물약먹기동작1/2`（weapon=all，野外/村庄都能用）。
@@ -447,11 +454,20 @@ const EAT_EFFECT_LIFT = 48;
  *
  * ⚠ 此处曾写"原版喝药水没有粒子特效"——**是错的**：`StartEffect(EFFECT_POTION*)` 就在上面两处。
  */
-let playEatRequest: ((kind: UseEffectKind) => void) | null = null;
+let playEatRequest: ((kind: UseEffectKind) => boolean) | null = null;
 
-/** 请求播放"使用道具"表现；kind=null 表示只播动画（家族未登记）。未进图时静默忽略 */
-export function requestPlayEat(kind: UseEffectKind = null): void {
-  playEatRequest?.(kind);
+/**
+ * 请求播放"使用道具"表现。
+ *
+ * @returns **是否真的开始吃了** —— 调用方据此决定要不要发 `C2S_UseItem`。
+ *   返回 false 的两种情况（都要**不吃也不发**，对齐原版）：
+ *   · 家族未登记（kind=null）；
+ *   · 正在吃 / 刚吃过（见 `EAT_COOLDOWN_MS`）—— 原版 `sinActionPotion()` 在 EAT 中直接
+ *     `return FALSE`，调用方连 `pUsePotion` 都不设（`playsub.cpp:1078`）⇒ 这一下按键无效。
+ *   未进图时也返回 false（静默忽略）。
+ */
+export function requestPlayEat(kind: UseEffectKind = null): boolean {
+  return playEatRequest ? playEatRequest(kind) : false;
 }
 
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
@@ -559,6 +575,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfAttackEventFrames: number[] = [];
   /** 待触发的「使用道具」粒子/音效（药水在 EAT 事件帧才放，见 playEatInternal） */
   let selfEatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null = null;
+  /** 上次吃药的时刻（`performance.now()`）—— 冷却见 `EAT_COOLDOWN_MS`（原版 sinUsePotionDelayFlag） */
+  let lastEatAt = -1e9;
   /**
    * 已应用到自机的**外观指纹**（`CharSelect.appearanceModelKey`）—— "模型是否真的变了"的判据。
    *
@@ -776,6 +794,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 本地移动步速 world/s（默认 EU 最高档；S2C_PlayerState.walk_speed/run_speed 到达后 setSpeed 覆盖为玩家属性速度）
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
   let selfWalkWps = (((25 * 10 + 250) * 180) >> 8) / 256 * 60;  // ≈82.3
+  /**
+   * 「1 档」移动速度（= 上面那两个默认值，即无任何速度加成时的基准）——
+   * 用来把走/跑动画的播放速度按**实际移速**缩放（用户 2026-09-16 要求）。
+   *
+   * 为什么需要：动画本身是按基准速度做的，玩家穿上加速装备（或吃了加速药）后
+   * 位移变快、脚步却还是原来那套 ⇒ 看起来在"滑行"。按 `实际 ÷ 1档` 缩放播放速度，
+   * 步频才跟得上位移。
+   */
+  const BASE_WALK_WPS = selfWalkWps;
+  const BASE_RUN_WPS = selfRunWps;
   // 上报状态机
   let wasMoving = false;        // 上一帧是否在移动（本地动画/停止上报去重）
   let lastMoveReportAt = 0;
@@ -2375,7 +2403,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState: ReturnType<typeof createAnimStateMachine>;
     motionList: MotionInfo[];
     animFrame: number;
-    animRate: number; // 动画播放速率倍率（1=基准；挥拳按攻速对应时长改写，离开 ATTACK 复原）
+    animRate: number; // 动画播放速率倍率（1=基准；挥拳按攻速对应时长改写，走/跑按移速缩放，其余复原）
+    /** 该玩家的移动速度（游戏单位/秒，`S2C_PlayerAppear` 带来）—— 走/跑动画按它缩放播放速度 */
+    walkWps: number;
+    runWps: number;
     faceAngle: number | null; // 挥拳期间强制朝向（signalAttack 算，updateRemotes 在 ATTACK 态采用）
     snaps: RemoteSnap[];
     lastAnimState: number;
@@ -2534,6 +2565,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animState: ReturnType<typeof createAnimStateMachine>;
     motionList: MotionInfo[];
     animFrame: number;
+    /**
+     * 动画播放速率倍率（服务端随 Appear 下发的 `anim_rate`）。
+     *
+     * 为什么由服务端给：它来自 DB 的 `attackspeed` 档位（原版 `GetAttackFrameSpeed` = 播放步进），
+     * 而**客户端没有这个数据**。服务端算成"相对客户端基准的倍率"下发，客户端直接当 `animRate` 用
+     * ⇒ `attackspeed` 才真正作用于动画速度，且与**服务端算的动画时长同源**
+     * （服务端"等动画播完"必须等于客户端实际播完的时间）。
+     */
+    animRate: number;
     snaps: RemoteSnap[];
     lastAnimState: number;
     /**
@@ -2567,7 +2607,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     sub?: MonsterModelResult['sub'];
     /** 当前显示的是否为副模型（仅在真变化时才翻 visible，避免逐帧写） */
     subActive: boolean;
-    /** 怪物攻击事件帧：进入 ATTACK 时从 motionList 取 eventFrame[0]，渲染循环交叉检测后播音 */
+    /** 上一条应用的**服务端选定条目索引**（去重键的一部分；同一刀内服务端会重发同一条） */
+    lastAnimIndex: number;
+    /** 怪物攻击事件帧：进入 ATTACK 时从当前 motion 取 eventFrame[0]，渲染循环交叉检测后播音 */
     attackSoundFrame: number | null;
     /** 上一帧的 compFrame（用于事件帧交叉检测） */
     lastCompFrame: number;
@@ -2587,10 +2629,43 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 进场竞态：与玩家 pendingAppears 同理（世界未建好时暂存，show() 后重放）
   const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number; dead?: boolean }[] = [];
 
-  function setRemoteMonsterAnim(actor: MonsterActor, animState: number): void {
+  /**
+   * 给本刀的攻击音效**装锚点**：记下"事件帧"，由渲染循环在 `compFrame` 跨过它时播
+   * （原版 `character.cpp:2687`）。用**当前 motion** 的 `eventFrame`，不是"动作表里第一条 ATTACK"
+   * —— 服务端可能选的是别的变体（条目不同、事件帧也不同）。
+   * 该条目没有事件帧 → **不播**并上报（原版 `EventFrame[0]` 为 0 时同样不播，AGENTS #12 不静默）。
+   */
+  function armMonsterAttackSound(actor: MonsterActor): void {
+    const ef = actor.animState.getCurrentMotion()?.eventFrame;
+    if (ef && ef[0] && ef[0] > 0) {
+      actor.attackSoundFrame = ef[0];
+      actor.lastCompFrame = 0;   // 重置，让首帧也能检测到交叉
+    } else {
+      reportFallback('sfx', `怪物 ${actor.name}#${actor.monsterId} 的攻击条目没有事件帧 → 挥击音不播`);
+      actor.attackSoundFrame = null;
+    }
+  }
+
+  function setRemoteMonsterAnim(actor: MonsterActor, animState: number, animIndex = 0): void {
     // 尸体：服务端的移动/动画 token 一律不采信 —— 否则一条迟到的 S2C_MonsterMove（哪怕只是转身）
     // 就会把尸体触发回 STAND/WALK（死亡态本身挡住 triggerIdle 的守卫，但攻击/行走分支会绕过它）。
     if (actor.dead) return;
+    // **服务端选定了条目**（攻击时才带，见 `S2C_MonsterMove.anim_index`）→ 直接播那一条。
+    // 与玩家 `anim_index` 同一条链路：服务端决定播哪一条，客户端不自己选
+    // （见 docs/chars/语义化动画系统.md —— 服务端持有动画数据、选变体、下发 ID）。
+    // 去重键含 `animIndex`：同一刀内服务端会因位置变化重发同一条 ⇒ 必须挡住，否则动画每帧从头播。
+    if (animIndex > 0) {
+      if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex) return;
+      const picked = actor.motionList.find((m) => m.index === animIndex) ?? null;
+      if (picked && actor.animState.playMotion(picked)) {
+        actor.lastAnimState = animState;
+        actor.lastAnimIndex = animIndex;
+        if (animState === ANIM_ATTACK) armMonsterAttackSound(actor);
+        return;
+      }
+      reportFallback('anim', `怪物 ${actor.name}#${actor.monsterId} 服务端选定的条目 #${animIndex} `
+        + `在本地动作表里不存在（模型 ${actor.modelKey}）→ 回退本地匹配（两端动画数据可能不同代）`);
+    }
     const isAttack = animState === ANIM_ATTACK;
     if (isAttack) {
       // 服务端每刀重发 ANIM_ATTACK（lastBroadcastAnim 强制 -1）。若上一刀攻击动画
@@ -2610,19 +2685,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (animState === ANIM_RUN) actor.animState.triggerRun();
     else if (animState === ANIM_WALK) actor.animState.triggerWalk();
     else if (animState === ANIM_ATTACK) {
-      if (actor.animState.triggerAttack(true)) {
-        // 怪物挥击音：不在状态切换时播放，而是等 compFrame 跨过事件帧再播（与原版 character.cpp:2687 对齐）
-        const atkMotion = actor.motionList.find((m) => m.state === ANIM_ATTACK);
-        const ef = atkMotion?.eventFrame;
-        if (ef && ef[0] && ef[0] > 0) {
-          actor.attackSoundFrame = ef[0];
-          actor.lastCompFrame = 0; // 重置，让首帧也能检测到交叉
-        } else {
-          // 该条目没有事件帧 → **不播**（原版 EventFrame[0] 为 0 时同样不播），只上报
-          reportFallback('sfx', `怪物 ${actor.name}#${actor.monsterId} 的攻击条目没有事件帧 → 挥击音不播`);
-          actor.attackSoundFrame = null;
-        }
-      }
+      if (actor.animState.triggerAttack(true)) armMonsterAttackSound(actor);
     }
     else if (animState === 0x0110) { // DAMAGE
       actor.animState.triggerDamage();
@@ -2649,6 +2712,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     dead?: boolean;
     /** 服务端 `monster_effect_id`（对应 C++ `dwCharSoundCode` / `EMonsterEffectID`）—— 用于音效目录解析 */
     monsterEffectId?: number;
+    /** 服务端算好的动画播放速率倍率（来自 DB `attackspeed`，客户端没有这个数据） */
+    animRate?: number;
   }): void {
     if (!scene) {
       pendingMonsterAppears.push(actorInfo);
@@ -2716,6 +2781,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState,
           motionList: result.motionList,
           animFrame: 0,
+          // 服务端算好的播放速率（来自 DB attackspeed）；0/缺失 → 退成 1（= 客户端基准速度）
+          animRate: actorInfo.animRate && actorInfo.animRate > 0 ? actorInfo.animRate : 1,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: dead ? ANIM_DEAD : 0x0040 }],
           lastAnimState: dead ? ANIM_DEAD : 0x0040,
           culled: false,
@@ -2724,6 +2791,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           subPart,
           sub: result.sub,
           subActive: false,
+          lastAnimIndex: 0,
           attackSoundFrame: null,
           lastCompFrame: 0,
         };
@@ -3820,14 +3888,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  function applyMonsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void {
+  function applyMonsterMove(monsterId: number, x: number, y: number, z: number, angle: number,
+                            animState: number, animIndex = 0): void {
     const actor = monsters.get(monsterId);
     if (!actor) return;
     const lastSnap = actor.snaps[actor.snaps.length - 1];
     if (lastSnap && performance.now() - lastSnap.t > REMOTE_RESYNC_MS) {
       actor.snaps.length = 0;
     }
-    actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState });
+    // `animIndex` = **服务端选定的动画条目**（攻击时才有；见 S2C_MonsterMove.anim_index）。
+    // 有它就照播那一条 —— 与玩家 `anim_index` 同一条链路（服务端决定，客户端不自己选）。
+    actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState, animIndex });
     if (actor.snaps.length > 32) actor.snaps.shift();
   }
 
@@ -3934,10 +4005,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const motionAtCull = actor.animState.getCurrentMotion();
       if (actor.culled) {
         // 被裁掉也要推进帧（重新出现时动作才是连续的，而不是从起手帧重来）
-        if (motionAtCull) actor.animFrame = advanceAnimFrame(actor.animFrame, motionAtCull, dt).frame;
+        if (motionAtCull) actor.animFrame = advanceAnimFrame(actor.animFrame, motionAtCull, dt, actor.animRate).frame;
         continue;
       }
-      setRemoteMonsterAnim(actor, s0.anim);
+      setRemoteMonsterAnim(actor, s0.anim, s0.animIndex ?? 0);
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
@@ -3960,7 +4031,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 若照常推进它就会**继续循环/播完回站** —— 所以那种情况下一帧都不推进，原地冻住。
         const deadFrozen = actor.dead && actor.animState.getCurrentState() !== actor.animState.STATE.DEAD;
         if (!deadFrozen) {
-          actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt).frame;
+          // 播放速率由服务端给（`attackspeed` 档位换算，客户端没这个数据）——
+          // 与"服务端等动画播完的时长"同源，两边时间才对得上。
+          actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt, actor.animRate).frame;
           // 攻击音效：等 compFrame 跨过事件帧再播（原版 character.cpp:2687-2689）
           if (actor.attackSoundFrame != null) {
             const compFrame = actor.animFrame - motion.startFrame * 160;
@@ -4085,7 +4158,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance }): void {
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; walkWps?: number; runWps?: number }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
@@ -4166,6 +4239,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           motionList: motionList2,
           animFrame: 0,
           animRate: 1,
+          // 移动速度（0 = 服务端没给 ⇒ 退成 1 档基准，播放速率恒 1）
+          walkWps: actorInfo.walkWps ?? 0,
+          runWps: actorInfo.runWps ?? 0,
           faceAngle: null,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
@@ -4308,8 +4384,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
-        // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用 signalAttack 设的 animRate（delta-time）
-        if (actor.animState.getCurrentState() !== actor.animState.STATE.ATTACK) actor.animRate = 1;
+        // 播放速率（与自机同一套规则）：
+        //   ATTACK → 保持 signalAttack 设的倍率（按攻速）；WALK/RUN → 按**实际移速 ÷ 1档**缩放
+        //   （动画按 1 档做的，加速装备/药水让位移变快后步频要跟上，否则看起来在滑行）；
+        //   其余 → 1。移速由 `S2C_PlayerAppear` 带来，0 = 服务端没给 ⇒ 退成 1 档（速率 1）。
+        const rst = actor.animState.getCurrentState();
+        if (rst === actor.animState.STATE.WALK) {
+          actor.animRate = actor.walkWps > 0 ? actor.walkWps / BASE_WALK_WPS : 1;
+        } else if (rst === actor.animState.STATE.RUN) {
+          actor.animRate = actor.runWps > 0 ? actor.runWps / BASE_RUN_WPS : 1;
+        } else if (rst !== actor.animState.STATE.ATTACK) {
+          actor.animRate = 1;
+        }
         // 帧推进走共享实现（与自机/检查器同一函数）—— 命中帧判定必须用未回绕的 raw
         const step = advanceAnimFrame(actor.animFrame, motion, dt, actor.animRate);
         actor.animFrame = step.frame;
@@ -4715,7 +4801,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const motion = animState.getCurrentMotion();
       if (motion) {
         // 挥拳变速：非 ATTACK 态复原基准速率；ATTACK 用触发攻击时按攻速设的 selfAnimRate
-        if (animState.getCurrentState() !== animState.STATE.ATTACK) selfAnimRate = 1;
+        // 播放速率：攻击用起手时按攻速算的倍率；走/跑按**实际移速 ÷ 1档移速**缩放
+        // （否则穿上加速装备后位移变快、步频不变 ⇒ 看起来在滑行，用户 2026-09-16）；
+        // 其余状态（站/受击/吃药…）恒 1。
+        const curSt = animState.getCurrentState();
+        if (curSt === animState.STATE.ATTACK) {
+          // 保持起手时设的 selfAnimRate（按攻速镜像服务端公式）
+        } else if (curSt === animState.STATE.WALK) {
+          selfAnimRate = BASE_WALK_WPS > 0 ? selfWalkWps / BASE_WALK_WPS : 1;
+        } else if (curSt === animState.STATE.RUN) {
+          selfAnimRate = BASE_RUN_WPS > 0 ? selfRunWps / BASE_RUN_WPS : 1;
+        } else {
+          selfAnimRate = 1;
+        }
         const step = selfPlayer.advance(motion, dt, selfAnimRate);
         // 命中帧检测（原版 exm character.cpp:2631）：compFrame 跨过 eventFrame[i] → 发该段 C2S_AttackHit
         // 用 step.raw（未回绕）判定，否则循环动作回绕后会漏判/重判
@@ -5243,8 +5341,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 家族未登记（既不是药水也不是以太核心）→ 原版根本不会进 EAT
     // （`sinActionPotion` / `ActionEtherCore` 只被这两类调）⇒ 不播，且报出来（AGENTS #12：别静默）。
     if (!kind) { reportFallback('use-item', '该物品未登记使用表现（非药水/以太核心）'); return false; }
+    // **正在吃 / 刚吃过 → 这一下按键无效**（不吃、不播、也不发请求）。原版两条守卫：
+    //   ① `sinActionPotion()` 开头 `State != EAT && != DEAD`，在 EAT 中直接 `return FALSE`
+    //      ⇒ 调用方连 `pUsePotion` 都不设（`playsub.cpp:1078`）；
+    //   ② `sinUsePotionDelayFlag`：吃完后 **50 帧**（70Hz ≈ 0.71s）内不能再吃
+    //      （`sinInvenTory.cpp:791-798` 计时、:1176 置位）。
+    // 少了这两条，连按 123 会让 EAT 动画一次次从头重播（用户 2026-09-16 实测）。
+    const now = performance.now();
+    if (animState?.getCurrentState() === animState?.STATE.EAT) {
+      console.log('[potion] 正在吃上一个（EAT 中）→ 这一下按键无效');
+      return false;
+    }
+    if (now - lastEatAt < EAT_COOLDOWN_MS) {
+      console.log('[potion] 距上次吃药 ' + Math.round(now - lastEatAt) + 'ms < '
+        + EAT_COOLDOWN_MS + 'ms（原版 sinUsePotionDelayFlag 50 帧）→ 这一下按键无效');
+      return false;
+    }
     const ok = animState?.triggerEat() ?? false;   // 失败已在状态机里 reportFallback
     if (!ok) return false;
+    lastEatAt = now;
     if (kind === 'return') {
       // 以太核心：原版在**点击瞬间**就放（playsub.cpp:1111 ActionEtherCore）
       fireEatEffectAt(selfPos, kind);
@@ -5278,7 +5393,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  playEatRequest = (kind: UseEffectKind) => { void playEatInternal(kind); };
+  playEatRequest = (kind: UseEffectKind) => playEatInternal(kind);
 
   return {
     beginWorldEnter: () => beginWorldEnter(),
@@ -5477,8 +5592,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     },
-    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance) => {
-      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance });
+    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance, walkWps, runWps) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance, walkWps, runWps });
     },
     setSpeed: (walkWps, runWps) => {
       // 服务端权威属性速度（世界/秒）；非法值忽略，保留当前值
@@ -5489,11 +5604,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateSelfAppearance: (appearance) => { applySelfAppearance(appearance); },
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead });
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0 });
     },
-    monsterMove: (monsterId, x, y, z, angle, animState) => {
-      applyMonsterMove(Number(monsterId), x, y, z, angle, animState);
+    monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
+      applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
     monsterDeath: (monsterId) => monsterDeath(Number(monsterId)),
