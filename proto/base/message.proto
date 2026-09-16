@@ -532,6 +532,7 @@ message S2C_MonsterAppear {
   // 中途走进视野或重连的观察者拿不到死亡事件，只能靠 Appear 上的这个标记
   // 把"尸体"和"活怪"区分开（否则会看到尸体站着）。
   bool dead = 10;
+  int32 monster_effect_id = 11; // 怪物音效/特效 ID（对应 C++ dwCharSoundCode / EMonsterEffectID）
 }
 
 message S2C_MonsterDisappear {

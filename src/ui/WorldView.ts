@@ -134,6 +134,14 @@ export interface WorldLoadHooks {
 }
 
 export interface WorldView {
+  /**
+   * 开始一次新的进场（发 `C2S_SelectCharacter` 时调，**必须在发之前**）。
+   *
+   * 丢掉上一局残留的 Appear 暂存。服务端先发视野内 Appear、**再**发 `S2C_EnterGame`，
+   * 所以本局的 Appear 会在世界建好前到达并暂存 —— 清点落在"进场发起"而非"世界建好"
+   * （详见实现处注释：清早了会连本局的 Appear 一起清掉）。
+   */
+  beginWorldEnter(): void;
   show(enterGame: EnterGameInfo, hooks?: WorldLoadHooks): void;
   hide(): void;
   destroy(): void;
@@ -262,7 +270,7 @@ export interface WorldView {
    * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
    * 直接摆成死亡姿势，不播 idle。
    */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
@@ -572,11 +580,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let mouseSeen = false;
 
   // ---- hover 发光外轮廓（design-hover-outline.md）----
-  // 颜色常量：掉落物金黄 / 怪物淡红 / NPC+其他玩家绿；自机不描边。
+  // 颜色常量：掉落物金黄 / 怪物淡红 / NPC 绿 / 玩家白；自机不描边。
   const HOVER_COLOR_ITEM = 0xffd24a;
   const HOVER_COLOR_MONSTER = 0xff6b6b;
   const HOVER_COLOR_NPC = 0x54ff9f;
-  const HOVER_COLOR_PLAYER = 0x54ff9f;
+  /**
+   * 玩家用**白**色（用户 2026-09-16：必须与 NPC 的绿色区分开）。
+   *
+   * 曾经与 NPC 同为 `0x54ff9f` —— 人多时根本分不清点中的是人还是 NPC，
+   * 而"点人"与"点 NPC"发起的交互完全不同。
+   * 颜色是 `outlinePass.visibleEdgeColor.set(...)`（直接赋值、不是相乘），所以白色是有效高亮。
+   */
+  const HOVER_COLOR_PLAYER = 0xffffff;
   let outlinePass: OutlinePass | null = null;
   let composer: EffectComposer | null = null;
   let hoverTarget: { root: THREE.Object3D; color: number } | null = null;
@@ -606,7 +621,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           else if (R > 170 && G > 110 && B < 90 && R > B + 60) gold++;
         }
       }
-      const targetColorName = key === HOVER_COLOR_ITEM ? '金黄(item)' : key === HOVER_COLOR_MONSTER ? '红(monster)' : '绿(npc/player)';
+      const targetColorName = key === HOVER_COLOR_ITEM ? '金黄(item)' : key === HOVER_COLOR_MONSTER ? '红(monster)' : key === HOVER_COLOR_NPC ? '绿(npc)' : '白(player)';
       console.log(`[hover-diag] 屏幕扫描(步长${step}): green=${green} red=${red} gold=${gold} | hover目标色=${targetColorName}`);
       // 红/金/绿任何一类有像素 → 光圈已画出（但需先排除背景本身含亮色）
     } catch (e) {
@@ -2412,6 +2427,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface MonsterActor {
     monsterId: number;
     name: string;
+    /** 服务端 `monster_effect_id`：用于音效目录解析 */
+    monsterEffectId: number;
     /** 模型资产路径（音效目录名解析用：<怪物名>/<怪物名>.smd → 目录 basename） */
     modelKey: string;
     hp: number;
@@ -2443,6 +2460,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      * 本地必须有自己的一道门。凡是"服务端 token 驱动的状态机调用"都要先看这个标志。
      */
     dead: boolean;
+    /**
+     * 主体/副模型的**显示部件**（各自一整个 Group：骨架 + 网格）。
+     *
+     * 为什么要两组：原版 `smCHAR::SetMotionFromCode` 在主模型动作表里**查不到**某个状态时，
+     * 会去查**副模型**（`.inx` 的 `subModelFile`）的动作表，查到就 `MotionSelectFrame = 1`
+     * 并改用副模型渲染（`PatDispMode & DISP_MODE_PATSUB` → `Pattern2`）。实测 66 个带 DEAD 的
+     * 副模型里 **63 个骨架与主模型完全不同** ⇒ 必须连网格+骨架一起换，只换动画数据会错位。
+     * 于是"显示哪一具"由**当前播放条目**的 `subModel` 标记决定（见 updateMonsters）。
+     */
+    mainPart: THREE.Group;
+    subPart?: THREE.Group;
+    /** 副模型部件（与 subPart 同生共死；只有一份来源，别在别处再存） */
+    sub?: MonsterModelResult['sub'];
+    /** 当前显示的是否为副模型（仅在真变化时才翻 visible，避免逐帧写） */
+    subActive: boolean;
+    /** 怪物攻击事件帧：进入 ATTACK 时从 motionList 取 eventFrame[0]，渲染循环交叉检测后播音 */
+    attackSoundFrame: number | null;
+    /** 上一帧的 compFrame（用于事件帧交叉检测） */
+    lastCompFrame: number;
   }
   const monsters = new Map<number, MonsterActor>();
   const monsterSpawning = new Set<number>();
@@ -2469,6 +2505,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 仍未播完（状态机还在 ATTACK）则忽略重复包；播完回 STAND 后允许再次重播。
       if (actor.lastAnimState === ANIM_ATTACK &&
           actor.animState.getCurrentState() !== actor.animState.STATE.STAND) {
+        console.log(`[MonsterAnim] ${actor.name}#${actor.monsterId} ATTACK blocked (lastAnim=ATTACK, state=${actor.animState.getCurrentState()})`);
         return;
       }
     } else if (animState === actor.lastAnimState) {
@@ -2478,14 +2515,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (animState === ANIM_RUN) { if (!actor.animState.triggerRun()) actor.animState.triggerWalk(); }
     else if (animState === ANIM_WALK) { if (!actor.animState.triggerWalk()) actor.animState.triggerIdle(); }
     else if (animState === ANIM_ATTACK) {
-      const wasStand = actor.animState.getCurrentState() === actor.animState.STATE.STAND;
       if (!actor.animState.triggerAttack(true)) actor.animState.triggerIdle();
-      else if (wasStand) {
-        // 怪物挥击音（原版 CharPlaySound：动作态 ATTACK → <怪物目录>/attack N.wav）
-        sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_ATTACK', actor.root.position);
+      else {
+        // 怪物挥击音：不在状态切换时播放，而是等 compFrame 跨过事件帧再播（与原版 character.cpp:2687 对齐）
+        const atkMotion = actor.motionList.find((m) => m.state === ANIM_ATTACK);
+        const ef = atkMotion?.eventFrame;
+        if (ef && ef[0] && ef[0] > 0) {
+          actor.attackSoundFrame = ef[0];
+          actor.lastCompFrame = 0; // 重置，让首帧也能检测到交叉
+        } else {
+          // 无事件帧数据时立即播放（兜底，不会静默）
+          sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_ATTACK', actor.root.position, actor.monsterEffectId);
+          actor.attackSoundFrame = null;
+        }
       }
     }
-    else actor.animState.triggerIdle();
+    else if (animState === 0x0110) { // DAMAGE
+      actor.animState.triggerDamage();
+      sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_DAMAGE', actor.root.position, actor.monsterEffectId);
+      console.log(`[MonsterAnim] ${actor.name}#${actor.monsterId} DAMAGE`);
+    }
+    else if (animState === 0x0150) { // SKILL
+      actor.animState.triggerSkill();
+      sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_SKILL', actor.root.position, actor.monsterEffectId);
+    }
+    else {
+      actor.animState.triggerIdle();
+      // 原版 character.cpp:6220 — 切回 STAND 时 25% 概率播待机音（rand()%4==0）
+      if (animState === 0x0040 && Math.random() < 0.25) {
+        sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_STAND', actor.root.position, actor.monsterEffectId);
+      }
+    }
   }
 
   function spawnMonster(actorInfo: {
@@ -2493,6 +2553,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number;
     /** 服务端 Appear 就带尸体标记（中途进场/重连时看见的已死怪） */
     dead?: boolean;
+    /** 服务端 `monster_effect_id`（对应 C++ `dwCharSoundCode` / `EMonsterEffectID`）—— 用于音效目录解析 */
+    monsterEffectId?: number;
   }): void {
     if (!scene) {
       pendingMonsterAppears.push(actorInfo);
@@ -2514,8 +2576,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const dead = !!actorInfo.dead || monsterDiedDuringLoad.has(mid);
 
         const root = new THREE.Group();
-        root.add(result.skeletonGroup);
-        root.add(result.group);
+        // 主体与副模型各包一层 Group：换"哪一具"只需翻一个 visible（见 MonsterActor 注释）
+        const mainPart = new THREE.Group();
+        mainPart.add(result.skeletonGroup);
+        mainPart.add(result.group);
+        root.add(mainPart);
+        let subPart: THREE.Group | undefined;
+        if (result.sub) {
+          subPart = new THREE.Group();
+          subPart.add(result.sub.skeletonGroup);
+          subPart.add(result.sub.group);
+          subPart.visible = false;   // 副模型先藏起来，等当前动作条目声明它（如死亡动作）
+          root.add(subPart);
+        }
         root.position.set(actorInfo.x, actorInfo.y, actorInfo.z);
         root.rotation.y = actorInfo.angle || 0;
         root.userData.monsterId = mid; // 光标 Attack/点选 Chase 命中用
@@ -2535,6 +2608,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         });
         actorObj = {
           monsterId: mid,
+          monsterEffectId: actorInfo.monsterEffectId || 0,
           name: actorInfo.name,
           modelKey: actorInfo.modelFile,
           hp: actorInfo.hp || 0,
@@ -2552,6 +2626,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           lastAnimState: dead ? ANIM_DEAD : 0x0040,
           culled: false,
           dead,
+          mainPart,
+          subPart,
+          sub: result.sub,
+          subActive: false,
+          attackSoundFrame: null,
+          lastCompFrame: 0,
         };
         monsters.set(mid, actorObj);
         if (dead) applyMonsterDeathPose(actorObj);
@@ -2628,6 +2708,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (actor.dead) return;
     applyMonsterDeathPose(actor);
+    sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_DEAD', actor.root.position, actor.monsterEffectId);
     clearMonsterTargets(actor);
     console.log('[WorldView] 怪物死亡(尸体保留): id=' + monsterId + ' name=' + actor.name);
   }
@@ -2636,6 +2717,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function despawnMonster(monsterId: number): void {
     const actor = monsters.get(monsterId);
     if (actor) {
+      sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_WARP', actor.root.position, actor.monsterEffectId);
       scene?.remove(actor.root);
       monsters.delete(monsterId);
     }
@@ -3765,12 +3847,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
+        // 换"哪一具模型"：由**当前播放条目**决定，而不是由"死没死"决定 ——
+        // 原版就是这么做的（主表查不到该状态 → 用副模型的动作表 + 副模型的网格，
+        // 见 MonsterActor.mainPart 注释）。独立死亡模型（`*-die`）只是这条路最常见的一种用途。
+        const useSub = !!motion.subModel && !!actor.subPart;
+        if (useSub !== actor.subActive) {
+          actor.subActive = useSub;
+          actor.mainPart.visible = !useSub;
+          if (actor.subPart) actor.subPart.visible = useSub;
+        }
+        // 骨架/动画源必须与"正在显示的那一具"一致：副模型与主模型骨架**通常完全不同**
+        // （实测 63/66），拿副模型的动作套主模型的骨头会错位。
+        const partBones = useSub && actor.sub ? actor.sub.bones : actor.bones;
+        const partSkel = useSub && actor.sub ? actor.sub.skeleton : actor.skeleton;
+        const partSmb = useSub && actor.sub ? actor.sub.animSmb : actor.animSmb;
         // 尸体：只在"当前确实播着死亡条目"时才推进帧（推到末帧后 advanceAnimFrame 自动钳住）。
         // 模型没有 DEAD 条目时（triggerDead 失败）当前 motion 会留在死亡那一刻的 walk/idle，
         // 若照常推进它就会**继续循环/播完回站** —— 所以那种情况下一帧都不推进，原地冻住。
         const deadFrozen = actor.dead && actor.animState.getCurrentState() !== actor.animState.STATE.DEAD;
         if (!deadFrozen) {
           actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt).frame;
+          // 攻击音效：等 compFrame 跨过事件帧再播（原版 character.cpp:2687-2689）
+          if (actor.attackSoundFrame != null) {
+            const compFrame = actor.animFrame - motion.startFrame * 160;
+            if (actor.lastCompFrame < actor.attackSoundFrame && compFrame >= actor.attackSoundFrame) {
+              sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_ATTACK', actor.root.position, actor.monsterEffectId);
+              actor.attackSoundFrame = null;
+            }
+          }
+          actor.lastCompFrame = actor.animFrame - motion.startFrame * 160;
           const endFrame = motion.endFrame * 160;
           const startFrame = motion.startFrame * 160;
           if (actor.animFrame >= endFrame) {
@@ -3784,7 +3889,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
         }
         // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
-        applyPose(motion.animSmb ?? actor.animSmb, actor.animFrame, actor.bones, actor.skeleton);
+        applyPose(motion.animSmb ?? partSmb, actor.animFrame, partBones, partSkel);
       }
     }
   }
@@ -4004,15 +4109,34 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
+  /**
+   * 开始一次新的进场（客户端发 `C2S_SelectCharacter` 时由 `main.ts` 的 `enterCharacter` 调）。
+   *
+   * 只做一件事：丢掉**上一局**残留的 Appear 暂存（玩家/怪物/地面物品/NPC）。
+   *
+   * ⚠ 为什么不能把"清暂存"和"清场景"放在一起（`clearWorldActors`，它跑在 `show()` 里）：
+   * 服务端的顺序是 **先 `aoiManager.onPlayerEnter(...)` 发视野内 Appear，再发 `S2C_EnterGame`**
+   * （`AccountService` 里就是 `onPlayerEnter` 在前）。于是**本局**的 Appear 会在本机世界建好之前
+   * 就到达并进入暂存，等 `show()` 重放 —— 若在 `show()` 里清暂存，等于把本局刚收到的全清掉，
+   * 症状就是"进场后看不到附近任何玩家/地面物品"（用户 2026-09-16 联机实测）。
+   * 判据是"**这次进场之前 vs 之后**"，所以清点必须落在进场发起那一刻。
+   */
+  function beginWorldEnter(): void {
+    pendingAppears.length = 0;
+    pendingMonsterAppears.length = 0;
+    pendingGroundItems.length = 0;
+    pendingNpcAppears.length = 0;
+  }
+
   // 进图重进（show 再次调用）前清场：移除上一段游戏生涯的远端演员/怪物/自机模型。
   // 小退→重进同/换号时，旧 charGroup 若不移除会残留场景（出生点出现"自己的另一个号"）。
+  // ⚠ 只清**场景对象与已挂载的表**，**不动 pending* 暂存** —— 那些暂存属于本局（见 beginWorldEnter）。
   function clearWorldActors(): void {
     for (const actor of remotes.values()) {
       scene?.remove(actor.root);
     }
     remotes.clear();
     remoteSpawning.clear();
-    pendingAppears.length = 0;
 
     for (const actor of monsters.values()) {
       scene?.remove(actor.root);
@@ -4021,20 +4145,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     monsterSpawning.clear();
     monsterCancelled.clear();
     monsterDiedDuringLoad.clear();   // 清场时同样要清 —— 否则换图后残留的 id 会把下一只同 id 的怪错当尸体
-    pendingMonsterAppears.length = 0;
 
     for (const g of groundItems.values()) {
       scene?.remove(g.root);
     }
     groundItems.clear();
-    pendingGroundItems.length = 0;
 
     for (const a of npcs.values()) {
       scene?.remove(a.root);
     }
     npcs.clear();
     npcSpawning.clear();
-    pendingNpcAppears.length = 0;
 
     if (charGroup) {
       scene?.remove(charGroup);
@@ -4668,10 +4789,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       reportMove(running ? 2 : 1);
     } else if (wasMoving) {
-      // 本地已停：立即上报停止（mode 0 + 当前位置），随后切 IDLE
+      // 本地已停：**先切 IDLE，再上报停止**（顺序不能反）。
+      //
+      // 上报带的是"我正在播哪一条动画"（`reportableAnimIndex`），而旁观者的
+      // `setRemoteAnim` 是**条目优先于状态**（`if (animIndex > 0) playMotion(该条目)`）。
+      // 若先上报再 triggerIdle，此刻状态机还是 WALK/RUN ⇒ 透传过去的是**行走条目**，
+      // 旁观者照着播它，而行走动画是 `repeat` ⇒ **永远原地走下去**
+      // （用户 2026-09-16 联机实测："别人停下后我这看到的还是走/跑动画"）。
+      // 先切 IDLE 则上报的是站姿条目，两端一致。
       wasMoving = false;
-      reportMove(0);
       if (animState) animState.triggerIdle();
+      reportMove(0);
       if (charGroup) { charGroup.position.copy(selfPos); charGroup.rotation.y = selfAngle; }
     } else if (mouseDown) {
       // 静止但按着鼠标（光标贴角色，方向无效）：保持朝向即时
@@ -4956,6 +5084,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   playEatRequest = () => { void playEatInternal(); };
 
   return {
+    beginWorldEnter: () => beginWorldEnter(),
     async show(enterGame, hooks) {
       loadHooks = hooks ?? null;
       firstFramePending = false;
@@ -5156,8 +5285,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateSelfAppearance: (appearance) => { void reloadSelfModel(appearance); },
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead });
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead });
     },
     monsterMove: (monsterId, x, y, z, angle, animState) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState);

@@ -78,6 +78,22 @@ function sendMoveIntent(angle: number, mode: 0 | 1 | 2, x: number, y: number, z:
   send(playerMove(angle, mode, x, y, z, anim, animIndex, animClip));
 }
 
+/**
+ * 选角进场（**唯一入口** —— 换角色/续传自动进场都必须走它）。
+ *
+ * 在这里先 `worldView.beginWorldEnter()` 丢掉**上一局**残留的 Appear 暂存。
+ * 必须在**发起进场这一刻**清，不能等到世界建好（`show()`）再清：
+ * 服务端是先 `aoiManager.onPlayerEnter(...)` 发视野内玩家/怪的 Appear，**再**发 `S2C_EnterGame`
+ * （`AccountService` 里就是这个顺序），而此刻本机世界还没建好 ⇒ 这些 Appear 全在暂存里等着重放。
+ * 若在 `show()` 里清暂存，就把**本局刚收到**的 Appear 一起清掉了
+ * —— 症状是"进场后看不到附近任何玩家/地面物品"（用户 2026-09-16 联机实测）。
+ * 判据是"这次进场之前 vs 之后"，所以清点只能落在进场发起处。
+ */
+function enterCharacter(characterId: number): void {
+  worldView.beginWorldEnter();
+  send(selectCharacter(characterId));
+}
+
 // 加载页：进图时进度条**按已加载字节渐进**（4 个阶段的回调粒度太粗，会长时间不动 ——
 // 用户 2026-09-14 实测"它根本不走，只有在加载完之后才动一下"）。refMB 是经验参考量。
 const loadingScreen = createLoadingScreen(app, { progressFromBytes: { refMB: 40 } });
@@ -495,7 +511,7 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       charSelectPanel.show(chars, {
         onSelect: (characterId) => {
           saveResume({ charId: characterId, screen: 'WORLD' }); // 目标界面；enterGame 到达后确认
-          send(selectCharacter(characterId));
+          enterCharacter(characterId);
         },
         onCreate: (name, classId, head) => send(createCharacter(name, classId, head)),
         onLogout: () => {
@@ -657,7 +673,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         if (target) {
           console.log('[app] 续传：自动选角进入世界', target.name);
           saveResume({ screen: 'WORLD', charId: target.characterId });
-          send(selectCharacter(target.characterId));
+          enterCharacter(target.characterId);
         }
       } else {
         resumeAuto = null;
@@ -850,10 +866,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.position?.y || 0,
         a.position?.z || 0,
         a.angle || 0,
-        // 尸体标记（服务端 S2C_MonsterAppear.dead）：中途进场/重连时看见的已死怪。
-        // 这种怪**不会**再收到 monsterDeath（死亡事件只发给死亡当刻在场的观察者），
-        // 漏传这个字段的表现就是"尸体站着"。
         !!a.dead,
+        a.monsterEffectId || 0,
       );
       break;
     }

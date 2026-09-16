@@ -19497,6 +19497,7 @@ export const jpt = $root.jpt = (() => {
              * @property {string|null} [modelFile] S2C_MonsterAppear modelFile
              * @property {number|null} [angle] S2C_MonsterAppear angle
              * @property {boolean|null} [dead] S2C_MonsterAppear dead
+             * @property {number|null} [monsterEffectId] S2C_MonsterAppear monsterEffectId
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -19609,6 +19610,14 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterAppear.prototype.dead = false;
 
             /**
+             * S2C_MonsterAppear monsterEffectId.
+             * @member {number} monsterEffectId
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.monsterEffectId = 0;
+
+            /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterAppear
@@ -19660,6 +19669,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 9, wireType 5 =*/77).float(message.angle);
                 if (message.dead != null && $Object.hasOwnProperty.call(message, "dead") && message.dead !== false)
                     writer.uint32(/* id 10, wireType 0 =*/80).bool(message.dead);
+                if (message.monsterEffectId != null && $Object.hasOwnProperty.call(message, "monsterEffectId") && message.monsterEffectId !== 0)
+                    writer.uint32(/* id 11, wireType 0 =*/88).int32(message.monsterEffectId);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -19804,6 +19815,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.dead;
                             continue;
                         }
+                    case 11: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.monsterEffectId = value;
+                            else
+                                delete message.monsterEffectId;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -19884,6 +19904,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.dead != null && $Object.hasOwnProperty.call(message, "dead"))
                     if (typeof message.dead !== "boolean")
                         return "dead: boolean expected";
+                if (message.monsterEffectId != null && $Object.hasOwnProperty.call(message, "monsterEffectId"))
+                    if (!$util.isInteger(message.monsterEffectId))
+                        return "monsterEffectId: integer expected";
                 return null;
             };
 
@@ -19944,6 +19967,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.dead != null)
                     if (object.dead)
                         message.dead = $Boolean(object.dead);
+                if (object.monsterEffectId != null)
+                    if ($Number(object.monsterEffectId) !== 0)
+                        message.monsterEffectId = object.monsterEffectId | 0;
                 return message;
             };
 
@@ -19979,6 +20005,7 @@ export const jpt = $root.jpt = (() => {
                     object.modelFile = "";
                     object.angle = 0;
                     object.dead = false;
+                    object.monsterEffectId = 0;
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -20005,6 +20032,8 @@ export const jpt = $root.jpt = (() => {
                     object.angle = options.json && !$isFinite(message.angle) ? $String(message.angle) : message.angle;
                 if (message.dead != null && $Object.hasOwnProperty.call(message, "dead"))
                     object.dead = message.dead;
+                if (message.monsterEffectId != null && $Object.hasOwnProperty.call(message, "monsterEffectId"))
+                    object.monsterEffectId = message.monsterEffectId;
                 return object;
             };
 

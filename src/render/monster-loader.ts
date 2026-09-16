@@ -13,12 +13,10 @@
 import { parseInx, parseSmb } from '../core/char-parser.js';
 import { loadParsedAsset } from '../core/asset-manager.js';
 import { buildSkeleton, buildSkinnedMesh } from './skinned-builder.js';
+import { reportFallback } from '../char/fallback-log.js';
 import type { InxData, MotionInfo, SmbData } from '../char/char-format.js';
-import { CHRMOTION_EXT, CHRMOTION_STATE_DEAD } from '../char/char-format.js';
+import { CHRMOTION_EXT } from '../char/char-format.js';
 import type * as THREE from 'three';
-
-/** 原版载入动作表时对死亡动作扣掉的帧数（`fileread.cpp`，见 `buildMotionList` 内注释） */
-const DEAD_MOTION_END_TRIM = 8;
 
 /**
  * 取资产 + 解析，走 AssetManager 的统一入口（见 core/asset-manager.ts）。
@@ -97,15 +95,14 @@ export function buildMotionList(animSmb: SmbData, inx: InxData): MotionInfo[] {
       startFrame += off;
       endFrame += off;
     }
-    // 死亡动作末帧对齐原版：`fileread.cpp` 在载入动作表时把 DEAD 条目的 EndFrame 减 8
-    //（NewSourcePT `SrcGame/src/fileread.cpp:446-448`、ex-machina `fileread.cpp:392-395`，
-    // 两棵树逐字相同）。目的就是让**尸体停在"已经躺好"那一帧**，而不是过渡的最后 8 帧
-    // ——那是死透前还在下沉的画面。客户端渲染用的就是这张表（原版客户端同一份 fileread），
-    // 所以这 8 帧必须同样扣掉，否则我们的尸体比原版多趴 8 帧的"余动"。
-    // （实测 555 个怪物 .inx 里 462 个带 0x120 条目，最短 18 帧 > 8，扣完仍为正。）
-    if (mi.state === CHRMOTION_STATE_DEAD) {
-      endFrame -= DEAD_MOTION_END_TRIM;
-    }
+    // ⚠ **不要**给死亡动作扣帧。曾在 `fileread.cpp` 里看到
+    // `if (State == DEAD) EndFrame -= 8;` 而在这里跟着扣了 8，那是**用错了分支**：
+    // 那两处（ex-machina `fileread.cpp:394`、NewSourcePT `:446`）都在 `AddModelDecode()` 里
+    // —— 它是**INI 文本兜底解析器**，只在二进制模型文件缺失/打不开时才走
+    //（`smModelDecode()`：`if (lpFile && dwFileLen == sizeof(smMODELINFO))` 走二进制主路径，
+    //  else 才 `AddModelDecode`）。主路径按结构体读 + `MotionKeyWordDecode` 解包，
+    // **全仓没有任何减 8**。我们读的就是二进制 `.inx`，属于主路径 ⇒ 死亡动画**播到声明末帧**
+    // 再冻住（原版客户端同样如此），扣掉这 8 帧会让尸体停在还没躺稳的姿势上。
     list.push({ ...mi, startFrame, endFrame });
   }
   return list;
@@ -126,6 +123,26 @@ export interface MonsterModelResult {
   group: THREE.Group;
   meshes: THREE.SkinnedMesh[];
   texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[];
+  motionList: MotionInfo[];
+  /**
+   * 副模型（`subModelFile`）—— 一整具模型，与主体**各有各的网格与骨架**。
+   *
+   * 何时显示：当前播放的动作条目带 `subModel: true` 时（见 `MotionInfo.subModel`）。
+   * 典型用途是**独立死亡模型**（主模型没有 DEAD、副模型才有）。`motionList` 已并入总表，
+   * 这里保存的是渲染所需的另一套网格/骨架/动画。
+   */
+  sub?: MonsterSubModel;
+}
+
+/** 副模型的渲染部件（与主体同构，但不含 texturesToLoad —— 已并入主体的加载列表） */
+export interface MonsterSubModel {
+  modelBase: string;
+  animSmb: SmbData;
+  bones: THREE.Bone[];
+  skeleton: THREE.Skeleton;
+  skeletonGroup: THREE.Group;
+  group: THREE.Group;
+  meshes: THREE.SkinnedMesh[];
   motionList: MotionInfo[];
 }
 
@@ -179,23 +196,63 @@ export async function loadMonsterModel(inxPath: string): Promise<MonsterModelRes
   const skel = buildSkeleton(animSmb, false);
   const built = buildSkinnedMesh(mesh, animSmb, meshNames, false, skel);
 
-  // 子模型：攻击/受击/死亡等动作常定义在 subModelFile 的 inx + 另一套 .smb
-  // （如 Minigue：a1 只有 RUN/WALK/STAND，a2 才有 ATTACK/DAMAGE/DEAD）。
-  // 合并其条目，并让每条携带所属 animSmb 供渲染时按当前 motion 切换采样源。
+  // 副模型（`subModelFile`，即 `*-die.INI` 那类）：原版 `SetMotionFromCode` 先查主模型动作表，
+  // **查不到才查副模型**（`if (FindCnt == 0 && AnimDispMode && lpDinaPattern2)`），
+  // 查到就 `MotionSelectFrame = 1` 并用副模型渲染（`PatDispMode & DISP_MODE_PATSUB` → `Pattern2`）。
+  // 两种用途都在这条路上：
+  //   · **独立死亡模型**：主模型没有 DEAD，副模型（尸体模型）才有 —— 实测 66 个这样的副模型；
+  //   · **另一套动作**：如 MonminiG a1 只有 RUN/WALK/STAND，a2 才有 ATTACK/DAMAGE（9 个，无 DEAD）。
+  // 故副模型要**当成一整具模型装配**（网格+骨架+动作表），不能只把动作条目并进来了事 ——
+  // 实测带 DEAD 的 66 个副模型里 **63 个骨架与主模型完全不同**，动作套错骨架会错位。
   let motionList = buildMotionList(animSmb, motionInx);
+  let sub: MonsterSubModel | undefined;
   if (inxInfo.subModelFile && inxInfo.subModelFile.trim().length > 0) {
-    const subInx = await loadInxWithFallback(inxInfo.subModelFile);
-    if (subInx) {
+    try {
+      const subInx = await loadInxWithFallback(inxInfo.subModelFile);
+      if (!subInx) throw new Error('副模型 .inx 解析失败');
       const subModelBase = lowerBase(subInx.modelFile);
+      const subInxBase = lowerBase(inxInfo.subModelFile).replace(/\.(ini|in)$/, '');
+      const subName = subModelBase.substring(subModelBase.lastIndexOf('/') + 1);
+      const subMesh = await loadMesh([subModelBase, subInxBase, subInxBase.substring(0, subInxBase.lastIndexOf('/') + 1) + subName]);
+      if (!subMesh) throw new Error('副模型 .smd 加载失败: ' + subModelBase);
       const subAnimBase = subInx.motionFile && subInx.motionFile.trim().length > 0
         ? lowerBase(subInx.motionFile)
         : subModelBase;
       const subSmb = await loadAnim([subAnimBase, subModelBase].filter(Boolean) as string[]);
-      if (subSmb) {
-        motionList = motionList.concat(
-          buildMotionList(subSmb, subInx).map(m => ({ ...m, animSmb: subSmb })),
-        );
-      }
+      if (!subSmb) throw new Error('副模型 .smb 加载失败: base=' + subAnimBase);
+
+      const subHigh = subInx.highModel.modelNames.filter(Boolean);
+      const subDef = subInx.defaultModel.modelNames.filter(Boolean);
+      const subLow = subInx.lowModel.modelNames.filter(Boolean);
+      const subMeshNames = subHigh.length > 0 ? subHigh : subDef.length > 0 ? subDef : subLow.length > 0 ? subLow : null;
+
+      const subSkel = buildSkeleton(subSmb, false);
+      const subBuilt = buildSkinnedMesh(subMesh, subSmb, subMeshNames, false, subSkel);
+      sub = {
+        modelBase: subModelBase,
+        animSmb: subSmb,
+        bones: subSkel.bones,
+        skeleton: subSkel.skeleton,
+        skeletonGroup: subSkel.skeletonGroup,
+        group: subBuilt.group,
+        meshes: subBuilt.meshes,
+        motionList: buildMotionList(subSmb, subInx),
+      };
+      // 副模型的动作条目并进总表供**选条**用，但只并入**主模型没有的状态** ——
+      // 原版是"先查主表，`FindCnt == 0` 才查副表"（见上），所以主模型已有的状态永远轮不到副模型。
+      // 每条打上 `subModel` 标记：渲染时按当前条目切到副模型的网格+骨架（见 WorldView.updateMonsters）。
+      const mainStates = new Set(
+        motionList.filter(m => m.state && m.endFrame > m.startFrame).map(m => m.state),
+      );
+      const extra = sub.motionList.filter(m => m.state && m.endFrame > m.startFrame && !mainStates.has(m.state));
+      motionList = motionList.concat(extra.map(m => ({ ...m, animSmb: subSmb, subModel: true })));
+      built.texturesToLoad.push(...subBuilt.texturesToLoad);
+    } catch (e) {
+      // 不静默（AGENTS #12）：声明了副模型却装不起来 = 这只怪死后不会躺下，
+      // 而现象（"它死了但站着"）与"这个模型本来就没有死亡动作"完全是两回事
+      reportFallback('anim', `怪物 ${inxPath} 声明了副模型 ${inxInfo.subModelFile}，但装载失败`
+        + ` → 该怪死后不会换尸体模型（停在死亡那一刻的姿势）：${(e as Error).message}`);
+      console.warn('[monster-loader] 副模型装载失败', inxPath, inxInfo.subModelFile, e);
     }
   }
 
@@ -212,5 +269,6 @@ export async function loadMonsterModel(inxPath: string): Promise<MonsterModelRes
     meshes: built.meshes,
     texturesToLoad: built.texturesToLoad,
     motionList,
+    sub,
   };
 }

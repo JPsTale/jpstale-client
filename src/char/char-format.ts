@@ -114,6 +114,18 @@ export interface MotionInfo {
   motionFrame: number;
   /** 该条目所属动画 .smb：仅子模型(subModelFile)条目携带，缺省用主体 animSmb */
   animSmb?: SmbData;
+  /**
+   * 该条目来自**副模型**（`.inx` 的 `subModelFile`，即 `*-die.INI` 那类）。
+   *
+   * 原版同名机制：`smCHAR::SetMotionFromCode` 先查主模型动作表，**查不到才查副模型**，
+   * 查到就 `MotionSelectFrame = 1` 并改用副模型渲染（`PatDispMode & DISP_MODE_PATSUB` → `Pattern2`）。
+   * 所以"这条动作属于哪具模型"是**逐条目**的属性，不是角色的属性。
+   *
+   * ⚠ 为什么必须显式标出来：实测 66 个带 DEAD 的副模型里 **63 个骨架与主模型完全不同**
+   * （例：figon 主独有 29 根骨、副独有 51 根）⇒ 把副模型的动作套在主模型骨架上会错位。
+   * 渲染方据此**连网格+骨架一起切**，不能只换 `animSmb`。
+   */
+  subModel?: boolean;
 }
 
 export interface ModelGroup {

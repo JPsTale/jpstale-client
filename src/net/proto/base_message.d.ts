@@ -6310,6 +6310,9 @@ export namespace jpt {
             /** S2C_MonsterAppear dead. */
             dead: boolean;
 
+            /** S2C_MonsterAppear monsterEffectId. */
+            monsterEffectId: number;
+
             /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -6423,6 +6426,9 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear dead */
                 dead?: (boolean|null);
+
+                /** S2C_MonsterAppear monsterEffectId */
+                monsterEffectId?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

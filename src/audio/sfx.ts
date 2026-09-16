@@ -22,6 +22,7 @@ import { encodeAssetPath } from '../core/texture';
 import { fetchAsset } from '../core/asset-manager.js';
 import rawTables from './data/sfx-tables.json';
 import rawFolders from './data/sfx-folders.json';
+import { MONSTER_EFFECT_DIR } from './data/sound-effect-map';
 
 /* ─────────── 数据表 ─────────── */
 
@@ -220,6 +221,11 @@ async function loadBuffer(path: string): Promise<DecodedSound | null> {
         console.warn('[sfx] 取音频失败：' + url + ' — ' + String(e));
         return null;
       }
+      // 精灵客户端把 WAV 头 4 字节从 RIFF 改成了 JODO，浏览器不认 → 转回来
+      const u8 = new Uint8Array(ab);
+      if (u8.length >= 4 && u8[0] === 0x4A && u8[1] === 0x4F && u8[2] === 0x44 && u8[3] === 0x4F) {
+        u8[0] = 0x52; u8[1] = 0x49; u8[2] = 0x46; u8[3] = 0x46; // "RIFF"
+      }
       // 必须在 decodeAudioData 之前读采样率：解码会重采样到设备采样率，
       // 且部分浏览器会把原 ArrayBuffer detach 掉。
       const srcRate = wavSampleRate(ab) ?? FREQ_BASE * FREQ_UNIT;
@@ -366,10 +372,26 @@ for (const dir of Object.keys(folderManifest)) {
 }
 
 /** 由模型路径 / 名称 / 职业目录名解析音效目录（取 basename、去扩展名、小写） */
-function resolveDir(key: string): string | null {
-  const norm = key.replace(/\\/g, '/').toLowerCase();
-  const base = norm.slice(norm.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '');
-  return dirByBase.get(base) ?? null;
+function resolveDir(key: string, monsterEffectId?: number): string | null {
+  // 怪物：按服务端下发的 effectId 查映射表（等价于 C++ snFindEffects[]）
+  if (monsterEffectId && monsterEffectId !== 0) {
+    const base = MONSTER_EFFECT_DIR[monsterEffectId];
+    if (base) {
+      const dir = dirByBase.get(base) ?? null;
+      if (dir) return dir;
+      console.warn(`[SFX] resolveDir: effectId=0x${monsterEffectId.toString(16)} base=${base} → NOT in folderManifest`);
+    } else {
+      console.warn(`[SFX] resolveDir: effectId=0x${monsterEffectId.toString(16)} → 无映射，请补 MONSTER_EFFECT_DIR`);
+    }
+    return null;
+  }
+  if (key) {
+    const norm = key.replace(/\\/g, '/').toLowerCase();
+    const base = norm.slice(norm.lastIndexOf('/') + 1).replace(/\.[^.]+$/, '');
+    const dir = dirByBase.get(base) ?? null;
+    if (dir) return dir;
+  }
+  return null;
 }
 
 /**
@@ -386,9 +408,16 @@ const JOB_SOUND_DIR: Record<number, string> = {
 
 /** 在指定音效目录下按动作态取一个文件播放 */
 function playDir(dir: string | null, motion: MotionState, pos: ListenerPos): void {
-  if (!dir) return;
+  if (!dir) {
+    console.warn(`[SFX] playDir: dir=null, motion=${motion}`);
+    return;
+  }
   const bucket = folderManifest[dir]?.[motion];
-  const file = pick(bucket?.map((f) => `${dir}/${f}`));
+  if (!bucket || bucket.length === 0) {
+    console.warn(`[SFX] playDir: dir=${dir}, motion=${motion} → no files in manifest`);
+    return;
+  }
+  const file = pick(bucket.map((f) => `${dir}/${f}`));
   if (file) start(file, { pos });
 }
 
@@ -583,9 +612,9 @@ export const sfx = {
     if (file) start(file, { pos });
   },
 
-  /** 按目录名播角色音：怪物用怪物名或模型资产路径（modelFile），NPC 同理 */
-  playSoundByName(key: string, motion: MotionState, pos: ListenerPos): void {
-    playDir(resolveDir(key), motion, pos);
+  /** 按目录名播角色音：怪物用 effectId 优先，退化到模型路径名 */
+  playSoundByName(key: string, motion: MotionState, pos: ListenerPos, monsterEffectId?: number): void {
+    playDir(resolveDir(key, monsterEffectId), motion, pos);
   },
 
   /** 玩家（自机/远端）受击、死亡音：按职业 id 定位 wav/effects/player/<class> */
