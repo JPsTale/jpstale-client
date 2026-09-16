@@ -182,7 +182,7 @@ export function missContinue(dist: number, dur: number): { length: number; durat
 }
 
 /**
- * 飞行时长（秒）—— 纯函数，便于回归（`npm run verify-projectile`）。
+ * 飞行时长（秒）—— 纯函数。
  *
  * 给出 `flightTime` 就用它（夹到 [MIN,MAX]）：调用方按"释放 → 首个事件帧"的动画时长算，
  * 于是箭**正好在命中帧到达**；没有事件帧数据时退成"距离 ÷ `FALLBACK_SPEED`"。

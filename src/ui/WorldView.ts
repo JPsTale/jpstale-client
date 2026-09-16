@@ -40,6 +40,9 @@ import { isSafeMap } from '../game/safeZones.js';
 import { getWeaponTypeFromIdCode, getHandType, getHandTypeFromIdCode } from '../char/weapon-type.js';
 import { sfx, weaponSoundCode, type HandType, type VoiceHandle } from '../audio/sfx.js';
 import { playItemSound } from '../audio/item-sounds.js';
+import { USE_EFFECT_INI, useEffectKindOf, type UseEffectKind } from '../game/useEffect.js';
+import { predictSwitchAppearance } from '../game/weapon-set.js';
+import { POTION_BURST, POTION_PARTICLE_SIZE, POTION_LIGHT_SIZE } from '../render/effects/potion-burst.js';
 import { createEffectManager } from '../render/effects/effect-manager.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
@@ -52,7 +55,7 @@ import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
 import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
 import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import type { CharacterAppearance } from './CharSelect.js';
-import { armorNumFromIdCode } from './CharSelect.js';
+import { armorNumFromIdCode, appearanceModelKey } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, WeaponMount } from '../render/weapon-loader.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
@@ -214,8 +217,13 @@ export interface WorldView {
   /** 自机等级（跨图边界的等级门槛判定用） */
   setSelfLevel(level: number): void;
   /** 碰撞调试可视化的开关（F9 / `?coll=1` / 控制台都走它） */
-  /** 使用药水：播 EAT 动画 + 喝药音效（与 requestPlayEat 同一实现） */
-  playEat(): boolean;
+  /** 使用道具：播 EAT 动画 + 事件帧的粒子/音效（与 requestPlayEat 同一实现） */
+  playEat(kind?: UseEffectKind): boolean;
+  /**
+   * 请求切换武器套（W 键）。空闲时立刻兑现；一次性动画（攻击/技能/受击/吃药）未播完时
+   * 缓存到动作结束（对齐原版 `sinChangeSetFlag`，`character.cpp:3817`）。
+   */
+  requestSwitchWeapon(): void;
   setCollisionDebug(on: boolean): void;
   isCollisionDebug(): boolean;
   /** 扫描场景，列出几何里含非有限值的对象（定位 three 的"包围球 NaN"告警） */
@@ -255,7 +263,7 @@ export interface WorldView {
   /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
   showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
-  applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string): void;
+  applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string, useSeq?: number, useItemIdcode?: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
   playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
@@ -329,6 +337,14 @@ export interface WorldViewOpts {
                    animIndex?: number, animClip?: string) => void;
   /** 命中帧（每段一次）→ main.ts 发 C2S_AttackHit(targetId, hitIndex)。 */
   onAttackHit?: (monsterId: number, hitIndex: number) => void;
+  /**
+   * 兑现一次「切换武器套」（W 键）→ main.ts 发 C2S_SwitchWeapon。
+   *
+   * 不直接在按键处发：动画没播完时切武器会让"模型换了、动画还是旧武器那套"
+   * （用户 2026-09-16 实测）。由 WorldView 在合适的时机（`STATE < 0x100`，即站/走/跑）
+   * 才回调 —— 对齐原版 `sinChangeSetFlag` 的兑现条件（`character.cpp:3817`）。
+   */
+  onSwitchWeapon?: () => void;
 }
 
 // 动画状态 wire token（与 S2C_PlayerMove.anim_state / C2S anim_state 同义）
@@ -337,6 +353,8 @@ const ANIM_RUN = 0x0060;
 const ANIM_FALLDOWN = 0x0070;
 const ANIM_FALLSTAND = 0x0071;
 const ANIM_FALLDAMAGE = 0x0072;
+/** 使用道具（= 原版 CHRMOTION_STATE_EAT，character.h:750；服务端 `broadcastEatIfPotion` 用它广播） */
+const ANIM_EAT = 0x0140;
 /** 死亡（= 原版 CHRMOTION_STATE_DEAD，见 char-format 的唯一定义；这里只用于"复活了没有"的比较） */
 const ANIM_DEAD = CHRMOTION_STATE_DEAD;
 
@@ -413,18 +431,27 @@ const NPC_TAG_RANGE = 768;  // NPC 名牌 12 格（对齐 exm：NPC RendPoint.z 
 // "进入战斗"窗口：最近 N 毫秒自机受击/发起攻击 → 玩家血条显示
 const COMBAT_WINDOW_MS = 3000;
 
-/**
- * 「使用药水」的表现入口（动画 + 音效）——**唯一实现**，右键/数字键/点药水槽三处都调它。
- * 原版：`sinActionPotion()`（playsub.cpp:1661）切 `CHRMOTION_STATE_EAT`；
- * 音效 `SIN_SOUND_EAT_POTION`(=20, sinItem.h:281) → `wav/effects/items/potion.wav`。
- * `.in` 里每职业的 EAT 条目是 `물약먹기동작1/2`（weapon=all，野外/村庄都能用）。
- * ⚠ **原版喝药水没有粒子特效**：`StartEffect` 只出现在以太核心 `ActionEtherCore` 里。
- */
-let playEatRequest: (() => void) | null = null;
+/** 使用道具的粒子高度：脚下 + 48（原版 `pY + 48 * fONE`；世界单位 = 原版 float 单位，见 collision 的 OBJ_*_RAW） */
+const EAT_EFFECT_LIFT = 48;
 
-/** 请求播放"喝药"表现（动画+音效）；未进图时静默忽略 */
-export function requestPlayEat(): void {
-  playEatRequest?.();
+/**
+ * 「使用道具」的表现入口（EAT 动画 + 粒子 + 音效）——**唯一实现**，右键/数字键/点药水槽三处都调它。
+ * 原版：`sinActionPotion()`（playsub.cpp:1076）切 `CHRMOTION_STATE_EAT`；
+ * `.in` 里每职业的 EAT 条目是 `물약먹기동작1/2`（weapon=all，野外/村庄都能用）。
+ *
+ * **粒子与音效的时机分两条**（逐分支照抄，别合并）：
+ *   · 药水 —— 在 EAT 的**事件帧**才播（`character.cpp:6324` `if (MotionInfo->EventFrame[0])`）：
+ *     粒子 `EFFECT_POTION{1,2,3}` + 音 `SIN_SOUND_EAT_POTION`(=20)。
+ *   · 以太核心 —— `ActionEtherCore`（`playsub.cpp:1111`）在**点击瞬间**就
+ *     `StartEffect(EFFECT_RETURN1)` + `SkillPlaySound(SKILL_SOUND_LEARN)`。
+ *
+ * ⚠ 此处曾写"原版喝药水没有粒子特效"——**是错的**：`StartEffect(EFFECT_POTION*)` 就在上面两处。
+ */
+let playEatRequest: ((kind: UseEffectKind) => void) | null = null;
+
+/** 请求播放"使用道具"表现；kind=null 表示只播动画（家族未登记）。未进图时静默忽略 */
+export function requestPlayEat(kind: UseEffectKind = null): void {
+  playEatRequest?.(kind);
 }
 
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
@@ -530,6 +557,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfAttackMotion: MotionInfo | null = null;
   let selfAttackTargetId = 0;
   let selfAttackEventFrames: number[] = [];
+  /** 待触发的「使用道具」粒子/音效（药水在 EAT 事件帧才放，见 playEatInternal） */
+  let selfEatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null = null;
+  /**
+   * 已应用到自机的**外观指纹**（`CharSelect.appearanceModelKey`）—— "模型是否真的变了"的判据。
+   *
+   * 只在它变了时才重建模型 + 重选动画；否则整件事跳过（用户 2026-09-16：
+   * 整理背包 / 换戒指不该让角色动画从头播一遍）。判据覆盖武器 / 副手 / 躯干甲 / 头 / 转职，
+   * 不是"只判武器"。
+   */
+  let selfAppearanceKey = '';
+  /**
+   * 待兑现的「切换武器套」请求（W 键）—— 原版 `sinChangeSetFlag`（`character.cpp:3818/4553`）。
+   *
+   * 攻击/技能/受击/吃药等**一次性动画未播完时不能切**：武器模型会先换掉，而手上还在播
+   * 旧武器那一套挥击动画 ⇒ "动画和武器不匹配"（用户 2026-09-16 实测）。
+   * 原版把请求存进 flag，只在 `MotionInfo->State < 0x100`（站/走/跑这类移动态）时才兑现。
+   */
+  let pendingSwitchWeapon = false;
+
   /** 本次挥拳**各段**的挥击音句柄（key = hit_index）。miss 结果到达时按段替换那一声（见 playSelfAttackResult） */
   const selfAttackVoices = new Map<number, VoiceHandle | null>();
   /** 本机攻击序号（每次起手自增），用于把 S2C_AttackPlan 与本次攻击对齐 */
@@ -1609,7 +1655,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
 
-    // 武器已变：按当前状态重选动画实例（持剑/持弓站姿等随武器切换），一次性状态不打断
+    // 模型已变：按当前状态重选动画实例（持剑/持弓站姿、换甲后的身体网格等随装备切换），
+    // 一次性状态不打断。**判据在调用方**：`updateSelfAppearance` 已用
+    // `appearanceModelKey` 过滤过"模型真的变了"，所以走到这里就是该重选。
     animState?.reselectForCurrentState();
   }
 
@@ -2229,11 +2277,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 定身：下落 或 受击硬直（DAMAGE）中 → 禁止水平移动/转向（对齐原版：DAMAGE 与 FALLDOWN 均定身）。
    * 硬直播完（onAnimationEnd→STAND）后自动解除，若仍按住鼠标则恢复走/跑。
    */
-  /** 定身：掉落中、受击硬直、**死亡躺下** —— 期间不接受移动/转向/攻击（原版 DEAD 时点击无效） */
+  /**
+   * 定身：期间**不接受移动/转向**（原版 DEAD 时连点击都无效）。
+   *
+   * 判据逐条对齐原版 `playmain.cpp:1744` —— 那句 `if (MsTraceMode && State != ATTACK
+   * && State != EAT && State != SKILL)` 把**移动与攻击输入整块屏蔽**掉，即
+   * **ATTACK / EAT / SKILL 三个状态都不能移动**（攻击中"挥着拳滑走"就是漏了这条，用户 2026-09-16 实测）。
+   * 另外两条是原版别处的定身：FALLDOWN（掉落中）与 DEAD（死亡躺下）。
+   * DAMAGE（受击硬直）比原版更严 —— 原版硬直其实可动，但我们的停步/追击手感更需要它站住。
+   *
+   * 硬直播完（`onAnimationEnd` → STAND）后自动解除，若仍按住鼠标则由下面的移动分支恢复走/跑。
+   */
   function isRooted(): boolean {
+    const st = animState?.getCurrentState();
     return falling || selfDead
-      || (!!animState && (animState.getCurrentState() === animState.STATE.DAMAGE
-                          || animState.getCurrentState() === animState.STATE.DEAD));
+      || st === animState?.STATE.ATTACK
+      || st === animState?.STATE.SKILL
+      || st === animState?.STATE.EAT
+      || st === animState?.STATE.DAMAGE
+      || st === animState?.STATE.DEAD;
   }
 
   function mouseFacing(): number | null {
@@ -2289,6 +2351,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animIndex?: number;
     /** 同一条动画的语义 ID（`SemanticEntry.clip`）：仅用于校验两端动画数据是否同代 */
     animClip?: string;
+    /** 使用道具广播的序号（0=非使用道具）—— 去重键的一部分，见 setRemoteAnim */
+    useSeq?: number;
+    /** 使用道具的 idcode（旁观者据此推表现种类，与自机同一个 useEffectKindOf） */
+    useItemIdcode?: number;
   }
   interface RemoteActor {
     playerId: number;
@@ -2315,6 +2381,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     lastAnimState: number;
     /** 上一次应用过的动画条目索引（对方上报值；用于"同状态内换变体"的识别） */
     lastAnimIndex: number;
+    /** 上一次应用过的「使用道具」序号（去重键第三项；站着连喝两瓶时前两项相同，靠它区分） */
+    lastUseSeq: number;
+    /** 待触发的使用道具粒子/音效（药水在 EAT 事件帧才放，与自机同一条规则） */
+    eatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null;
     /** 该远端的外观（武器/副手/头/甲）—— **远端动画 getter 的唯一数据源**。
      *  缺失时动画退化成"通用/空手"（正是此前远端不随武器变化的原因）。 */
     appearance?: CharacterAppearance;
@@ -2392,7 +2462,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * （旧实现用 Math.random 选变体）而在不同客户端上看到同一个角色播不同动作。
    * 无值（旧服务端/怪物等没有上报者）→ 回退本地匹配并上报降级。
    */
-  function setRemoteAnim(actor: RemoteActor, animState: number, animIndex = 0, animClip = ''): void {
+  function setRemoteAnim(actor: RemoteActor, animState: number, animIndex = 0, animClip = '',
+                         useSeq = 0, useItemIdcode = 0): void {
     // 对方复活了（anim_state 不再是死亡）→ **必须先解除死亡态**：
     // DEAD 属于"不可被站姿同步打断"的状态，不清掉它，后面所有 triggerIdle 都会被守卫拦下，
     // 远端会永远躺在原地。
@@ -2400,9 +2471,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       actor.animState.resurrect();
     }
     // 两者都要看：同一个状态里也可能换变体（例：站着换武器 → 站姿条目变，anim_state 不变）
-    if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex) return;
+    // useSeq 也进去重键：使用道具广播的 (anim_state, anim_index) 在站着连喝两瓶时完全相同，
+    // 只看前两项会把第二次整个吞掉（原版旁观者每次都播）。
+    if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex
+        && useSeq === actor.lastUseSeq) return;
     actor.lastAnimState = animState;
     actor.lastAnimIndex = animIndex;
+    actor.lastUseSeq = useSeq;
     // 指定条目优先：状态机只负责"该播什么状态"，具体是哪一条由对方客户端说了算
     if (animIndex > 0) {
       const picked = actor.motionList.find((m) => m.index === animIndex) ?? null;
@@ -2415,9 +2490,26 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (animState === ANIM_RUN) actor.animState.triggerRun();
     else if (animState === ANIM_WALK) actor.animState.triggerWalk();
-    else if (animState === ANIM_FALLDOWN) { if (!actor.animState.triggerFallDown()) actor.animState.triggerIdle(); }
-    else if (animState === ANIM_FALLSTAND) { if (!actor.animState.triggerFallStand()) actor.animState.triggerIdle(); }
-    else if (animState === ANIM_FALLDAMAGE) { if (!actor.animState.triggerFallDamage()) actor.animState.triggerIdle(); }
+    // 掉落三态：失败就失败（状态机内部会 `reportFallback` 说明"该模型没有这个条目"），
+    // **不拿 idle 顶上** —— 顶上会把"缺数据"伪装成"正常播放"（AGENTS #12/#53）。
+    else if (animState === ANIM_FALLDOWN) actor.animState.triggerFallDown();
+    else if (animState === ANIM_FALLSTAND) actor.animState.triggerFallStand();
+    else if (animState === ANIM_FALLDAMAGE) actor.animState.triggerFallDamage();
+    // 别人使用道具：服务端 `broadcastUseItem` 广播的就是这个状态 + 道具 idcode。
+    // 表现与自机**同一条规则**：药水在 EAT 事件帧放（下面 updateRemotes 里判定），以太核心立即放。
+    else if (animState === ANIM_EAT) {
+      if (actor.animState.triggerEat()) {
+        const kind = useEffectKindOf(useItemIdcode);
+        if (kind === 'return') {
+          fireEatEffectAt(actor.root.position, kind);
+        } else {
+          const motion = actor.animState.getCurrentMotion();
+          actor.eatEffect = kind && motion ? { kind, motion, fired: false } : null;
+        }
+      }
+    }
+    // 其余（服务端说 STAND，或本版还没认识的状态值）→ 站。
+    // 这是**忠实照做**，不是 fallback：服务端说"站着"，客户端就站着。
     else actor.animState.triggerIdle();
   }
 
@@ -2503,20 +2595,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (isAttack) {
       // 服务端每刀重发 ANIM_ATTACK（lastBroadcastAnim 强制 -1）。若上一刀攻击动画
       // 仍未播完（状态机还在 ATTACK）则忽略重复包；播完回 STAND 后允许再次重播。
+      // 重复包直接丢 —— **不打印**：服务端每刀重发，一次战斗能刷出几万行（用户 2026-09-16）。
       if (actor.lastAnimState === ANIM_ATTACK &&
           actor.animState.getCurrentState() !== actor.animState.STATE.STAND) {
-        console.log(`[MonsterAnim] ${actor.name}#${actor.monsterId} ATTACK blocked (lastAnim=ATTACK, state=${actor.animState.getCurrentState()})`);
         return;
       }
     } else if (animState === actor.lastAnimState) {
       return;
     }
     actor.lastAnimState = animState;
-    if (animState === ANIM_RUN) { if (!actor.animState.triggerRun()) actor.animState.triggerWalk(); }
-    else if (animState === ANIM_WALK) { if (!actor.animState.triggerWalk()) actor.animState.triggerIdle(); }
+    // **忠实照做**：服务端下发什么状态就播什么（`MonsterAOI.animOf` 只会发 0x40/0x50/0x60/0x100）。
+    // 没有对应条目 → 失败就失败（状态机内部 `reportFallback` 说明原因），
+    // **绝不拿别的动作顶上** —— 顶上会把"缺数据"伪装成"正常播放"（AGENTS #12/#53）。
+    if (animState === ANIM_RUN) actor.animState.triggerRun();
+    else if (animState === ANIM_WALK) actor.animState.triggerWalk();
     else if (animState === ANIM_ATTACK) {
-      if (!actor.animState.triggerAttack(true)) actor.animState.triggerIdle();
-      else {
+      if (actor.animState.triggerAttack(true)) {
         // 怪物挥击音：不在状态切换时播放，而是等 compFrame 跨过事件帧再播（与原版 character.cpp:2687 对齐）
         const atkMotion = actor.motionList.find((m) => m.state === ANIM_ATTACK);
         const ef = atkMotion?.eventFrame;
@@ -2524,8 +2618,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           actor.attackSoundFrame = ef[0];
           actor.lastCompFrame = 0; // 重置，让首帧也能检测到交叉
         } else {
-          // 无事件帧数据时立即播放（兜底，不会静默）
-          sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_ATTACK', actor.root.position, actor.monsterEffectId);
+          // 该条目没有事件帧 → **不播**（原版 EventFrame[0] 为 0 时同样不播），只上报
+          reportFallback('sfx', `怪物 ${actor.name}#${actor.monsterId} 的攻击条目没有事件帧 → 挥击音不播`);
           actor.attackSoundFrame = null;
         }
       }
@@ -4076,6 +4170,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
           lastAnimIndex: 0,
+          lastUseSeq: 0,
+          eatEffect: null,
           appearance: app,
           weaponMount: new WeaponMount(),
           offHandGroup: null,
@@ -4207,7 +4303,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         (actor.animState.getCurrentState() === actor.animState.STATE.ATTACK && actor.faceAngle !== null)
           ? actor.faceAngle
           : pAng;
-      setRemoteAnim(actor, s0.anim, s0.animIndex ?? 0, s0.animClip ?? '');
+      setRemoteAnim(actor, s0.anim, s0.animIndex ?? 0, s0.animClip ?? '',
+        s0.useSeq ?? 0, s0.useItemIdcode ?? 0);
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
@@ -4233,6 +4330,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
                  && compFrame >= actor.attack.eventFrames[actor.attack.hitFired]!) {
             playRemoteAttackSegment(actor);
             actor.attack.hitFired++;
+          }
+        }
+        // 别人使用道具（药水）：粒子/音效在 EAT 的**事件帧**放 —— 与自机同一条规则
+        if (actor.eatEffect && !actor.eatEffect.fired
+            && actor.animState.getCurrentState() === actor.animState.STATE.EAT) {
+          const ev = actor.eatEffect.motion.eventFrame.find((f) => f > 0);
+          if (ev && step.raw - actor.eatEffect.motion.startFrame * 160 >= ev) {
+            actor.eatEffect.fired = true;
+            fireEatEffectAt(actor.root.position, actor.eatEffect.kind);
           }
         }
         if (step.ended) {
@@ -4647,6 +4753,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             selfAttackHitFired++;
           }
         }
+        // 使用道具：粒子/音效在 EAT 的**事件帧**放（原版 character.cpp:6324 同一处判定）
+        if (selfEatEffect && !selfEatEffect.fired
+            && animState.getCurrentState() === animState.STATE.EAT) {
+          const ev = selfEatEffect.motion.eventFrame.find((f) => f > 0);
+          if (ev && step.raw - selfEatEffect.motion.startFrame * 160 >= ev) {
+            selfEatEffect.fired = true;
+            fireEatEffectAt(selfPos, selfEatEffect.kind);
+          }
+        }
         if (step.ended) {
           // 死亡：停在末帧前一帧（原版 `frame = (EndFrame-1)*160`），尸体不起身 —— 等复活消息
           if (animState.getCurrentState() === animState.STATE.DEAD) {
@@ -4657,6 +4772,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
         }
         selfPlayer.apply();
+        // 兑现待切的武器套：原版同一处判据 `MotionInfo->State < 0x100`（站/走/跑才算"动作播完"）
+        if (pendingSwitchWeapon && animState.getCurrentState() < 0x100) {
+          pendingSwitchWeapon = false;
+          // **乐观切换**（用户 2026-09-16 定）：发请求的**同一帧**就把外观换成备用套的，
+          // 不等服务器往返 —— 否则本帧稍后攻击循环起手时 `selfAppearance` 还是旧武器，
+          // 那一刀会用旧武器选动画，等外观到了就"模型新、动画旧"。
+          // 预测可能不准，但服务端的 `S2C_AppearanceUpdate` 一到就按指纹校正（见 applySelfAppearance）。
+          const predicted = predictSwitchAppearance(
+            selfAppearance, getGameSnapshot().inventory?.items ?? []);
+          if (predicted) applySelfAppearance(predicted);
+          opts?.onSwitchWeapon?.();
+        }
       }
     }
 
@@ -4782,13 +4909,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       reportMoveNow(0, landAnim);
       if (animState) animState.triggerIdle();
     } else if (moved) {
-      if (!wasMoving) {
-        wasMoving = true;
-        if (running) animState?.triggerRun();
-        else animState?.triggerWalk();
+      wasMoving = true;
+      // 走/跑：**每帧对齐**（不是边沿触发）。
+      //
+      // 为什么不能只在"开始移动"那一下触发：一次性动作（挥拳/受击/吃药）播完时，
+      // 没人会再喊一次"我在跑"，边沿触发就会让它停在 STAND 上滑行。
+      // 每帧对齐则"动作播完 → 回 STAND → 下一帧这里接回走/跑"，自动成立。
+      //
+      // 守卫放在**这里**（自机本地输入这一层），不在状态机里 ——
+      // 怪物/远端的动画由服务端状态包驱动，状态机必须对它们忠实照做（用户 2026-09-16 指出）。
+      if (animState && !animState.isOneShot()) {
+        const st = animState.getCurrentState();
+        const S = animState.STATE;
+        // 失败就失败（`triggerRun` 内部会上报"该模型没有 RUN 条目"），**不拿走路顶上**：
+        // 顶上会让"缺数据"看起来像正常播放，而且掩盖了"服务端在跑、客户端在走"的真实差异。
+        if (st !== S.WALK && st !== S.RUN) {
+          if (running) animState.triggerRun();
+          else animState.triggerWalk();
+        }
       }
       reportMove(running ? 2 : 1);
-    } else if (wasMoving) {
+    } else if (wasMoving && !isRooted()) {
       // 本地已停：**先切 IDLE，再上报停止**（顺序不能反）。
       //
       // 上报带的是"我正在播哪一条动画"（`reportableAnimIndex`），而旁观者的
@@ -4797,6 +4938,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 旁观者照着播它，而行走动画是 `repeat` ⇒ **永远原地走下去**
       // （用户 2026-09-16 联机实测："别人停下后我这看到的还是走/跑动画"）。
       // 先切 IDLE 则上报的是站姿条目，两端一致。
+      //
+      // ⚠ `!isRooted()`：**定身**（攻击/技能/吃药/受击/掉落）期间的"停步"不在这里处理 ——
+      // 位置本来就没动（服务端收不到新移动包），而此刻服务端对动画的认知（攻击由
+      // `S2C_AttackStart` 单独广播）比一条 STAND 更准；上报 STAND 反而会把旁观者的攻击动画掐掉。
+      // 定身解除后由上面的 `moved` 分支自然接回（它每帧对齐，会重新声明走/跑）。
       wasMoving = false;
       if (animState) animState.triggerIdle();
       reportMove(0);
@@ -4813,7 +4959,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (monsterEngaged && moveTarget && moveTarget.kind === 'monster' && !falling && charGroup) {
       charGroup.rotation.y = selfAngle; // 面向目标（停步时 updateMovement 不接管旋转）
       const st = animState?.getCurrentState();
-      const busy = st === animState?.STATE.ATTACK || st === animState?.STATE.SKILL || st === animState?.STATE.DAMAGE;
+      // EAT 也在内：喝药期间不能起手攻击（原版 playmain.cpp:1744 屏蔽的正是 ATTACK/EAT/SKILL 三者）。
+      const busy = st === animState?.STATE.ATTACK || st === animState?.STATE.SKILL
+        || st === animState?.STATE.DAMAGE || st === animState?.STATE.EAT;
       if (!busy && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
         // 非攻击/技能/受击中，且已过起手闸门（镜像服务端冷却）→ 发起下一次挥拳（普攻动画）
         if (animState.triggerAttack(true)) {
@@ -5038,6 +5186,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   // —— 外观更新（穿脱装备/武器切换/转职换头 S2C_AppearanceUpdate 驱动）——
   // 自机：增量替换（身体网格 swapSelfBody / 头部 swapSelfHead），骨架/动画常驻；就绪前旧模型保持显示
+  /**
+   * 应用一份自机外观 —— **唯一入口**（服务端推送 `updateSelfAppearance` 与
+   * W 键的**乐观预测**都走它）。
+   *
+   * **模型真的变了才重建**：判据是外观指纹（覆盖武器/副手/躯干甲/头/转职，见
+   * `appearanceModelKey`）。服务端已经做了"没变就不推"，这里是客户端自己的第二道闸 ——
+   * 即便收到冗余推送（或乐观预测与服务端答案一致）也不会重建模型、不会把动画从头播一遍
+   * （用户 2026-09-16 实测"整理背包动画就重播"）。
+   */
+  function applySelfAppearance(appearance: CharacterAppearance | undefined): void {
+    const key = appearanceModelKey(appearance);
+    if (key === selfAppearanceKey) return;
+    selfAppearanceKey = key;
+    void reloadSelfModel(appearance);
+  }
+
   async function reloadSelfModel(appearance: CharacterAppearance | undefined): Promise<void> {
     if (appearance) selfAppearance = appearance;
     if (!scene) return;
@@ -5070,18 +5234,51 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
-   * 喝药：动作 + 音（**唯一实现**，两个入口 `playEatRequest` / `playEat` 都走它）。
-   * 音走道具音表：原版 `character.cpp` 在角色做"吃东西"动作时 `sinPlaySound(SIN_SOUND_EAT_POTION)`
-   * = 20 = drink1.wav。**不再写死 `'/res/wav/...'`** —— `sfx.play()` 内部已拼 `RES_BASE='/res/'`，
-   * 再带一次就成了 `/res//res/...` ⇒ 404 ⇒ 过去还是静默返回（本来就一直没响）。
+   * 使用道具：EAT 动画 + 事件帧的粒子/音效（**唯一实现**，`playEatRequest` / `playEat` 都走它）。
+   *
+   * 音走道具音表：原版 `sinUsePotion` 里 `sinPlaySound(SIN_SOUND_EAT_POTION)` = 20 = drink1.wav。
+   * **不写死 `'/res/wav/...'`** —— `sfx.play()` 内部已拼 `RES_BASE='/res/'`，再带一次就是 404。
    */
-  function playEatInternal(): boolean {
+  function playEatInternal(kind: UseEffectKind): boolean {
+    // 家族未登记（既不是药水也不是以太核心）→ 原版根本不会进 EAT
+    // （`sinActionPotion` / `ActionEtherCore` 只被这两类调）⇒ 不播，且报出来（AGENTS #12：别静默）。
+    if (!kind) { reportFallback('use-item', '该物品未登记使用表现（非药水/以太核心）'); return false; }
     const ok = animState?.triggerEat() ?? false;   // 失败已在状态机里 reportFallback
-    playItemSound(20);
-    return ok;
+    if (!ok) return false;
+    if (kind === 'return') {
+      // 以太核心：原版在**点击瞬间**就放（playsub.cpp:1111 ActionEtherCore）
+      fireEatEffectAt(selfPos, kind);
+    } else {
+      // 药水：记下待触发，由渲染循环在 EAT 事件帧放（character.cpp:6324）
+      const motion = animState!.getCurrentMotion();
+      selfEatEffect = motion ? { kind, motion, fired: false } : null;
+    }
+    return true;
   }
 
-  playEatRequest = () => { void playEatInternal(); };
+  /**
+   * 放「使用道具」的粒子 + 音效（**自机与旁观者同一实现**）。
+   * 位置 = 脚下 + `EAT_EFFECT_LIFT`（原版 `pY + 48 * fONE`；fONE=256 且我方世界单位 = 原版 float 单位）。
+   */
+  function fireEatEffectAt(base: { x: number; y: number; z: number }, kind: UseEffectKind): void {
+    if (!kind) return;
+    const pos = { x: base.x, y: base.y + EAT_EFFECT_LIFT, z: base.z };
+    if (kind === 'return') {
+      void effects?.spawn(USE_EFFECT_INI[kind], { pos });
+      // EFFECT_RETURN1 配 SKILL_SOUND_LEARN（effectsnd.cpp:414 → wav/effects/skill/learn_skill.wav）
+      sfx.playSkill(0x1000);
+    } else {
+      // 药水：**30 颗物理粒子**（原版 EFFECT_POTION{1,2,3}，见 potion-burst.ts 的调查结论）——
+      // 不是"一张会飘的动画"，是每颗各自四散 + 上抛 + 重力 + 自转，寿命到就消失。
+      // size 必须显式给：potion1.ini 无 Size 段，否则会大 4 倍（见 POTION_PARTICLE_SIZE）。
+      void effects?.spawn(USE_EFFECT_INI[kind], { pos, burst: POTION_BURST, size: POTION_PARTICLE_SIZE });
+      // 原版每张 POTION{1,2,3} 之前都先叠一张 120×120 的 Light1 闪光
+      void effects?.spawn('Light1', { pos, size: POTION_LIGHT_SIZE });
+      playItemSound(20);   // SIN_SOUND_EAT_POTION
+    }
+  }
+
+  playEatRequest = (kind: UseEffectKind) => { void playEatInternal(kind); };
 
   return {
     beginWorldEnter: () => beginWorldEnter(),
@@ -5101,6 +5298,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       clearWorldActors();
       if (enterGame.appearance) {
         selfAppearance = enterGame.appearance;
+        // 进图这套外观就是"当前模型"⇒ 记下指纹，之后的 AppearanceUpdate 才能正确判断"变没变"
+        selfAppearanceKey = appearanceModelKey(enterGame.appearance);
       }
 
       // 重放进场竞态期间缓存的远端 Appear（此刻 scene 已就绪）
@@ -5203,7 +5402,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     setSelfHp,
     setSelfName,
     setSelfLevel,
-    playEat: () => playEatInternal(),
+    playEat: (kind: UseEffectKind = null) => playEatInternal(kind),
+    requestSwitchWeapon: () => {
+      // 站/走/跑（STATE < 0x100）→ 立刻兑现；否则缓存，等渲染循环里动作播完
+      if ((animState?.getCurrentState() ?? 0) < 0x100) { opts?.onSwitchWeapon?.(); return; }
+      pendingSwitchWeapon = true;
+    },
     setCollisionDebug: (on: boolean) => collisionDebug.setEnabled(on),
     isCollisionDebug: () => collisionDebug.isEnabled(),
     scanNaNGeometry: () => {
@@ -5254,7 +5458,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       return out;
     },
-    applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '') => {
+    applyPlayerMove: (playerId, x, y, z, angle, animState, animIndex = 0, animClip = '', useSeq = 0, useItemIdcode = 0) => {
       const pid = Number(playerId);
       if (pid === selfPlayerId) {
         // 方向二：自机位置自己权威，忽略回推（服务端不修正正常移动；换图/重生等由 enterGame 处理）
@@ -5268,7 +5472,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (lastSnap && performance.now() - lastSnap.t > REMOTE_RESYNC_MS) {
             actor.snaps.length = 0;
           }
-          actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState, animIndex, animClip });
+          actor.snaps.push({ t: performance.now(), x, y, z, angle, anim: animState, animIndex, animClip, useSeq, useItemIdcode });
           if (actor.snaps.length > 32) actor.snaps.shift();
         }
       }
@@ -5282,7 +5486,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (Number.isFinite(runWps) && runWps > 0) selfRunWps = runWps;
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
-    updateSelfAppearance: (appearance) => { void reloadSelfModel(appearance); },
+    updateSelfAppearance: (appearance) => { applySelfAppearance(appearance); },
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
     monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId) => {

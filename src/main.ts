@@ -26,7 +26,8 @@ import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installLayerStack } from './ui/layerStack.js';
 import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract } from './net/bridge.js';
-import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
+import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
+import { useEffectKindOf } from './game/useEffect.js';
 import { itemDefById, itemIconUrl } from './game/data/itemDefs.js';
 import { overweightBlocks } from './game/itemRules.js';
 import type { PotionSlotView } from './ui/Hud.js';
@@ -62,6 +63,8 @@ const worldView = createWorldView(app, {
   onAttackStart: (monsterId, clientSeq, segments, animIndex, animClip) =>
     send(attackStart(monsterId, clientSeq, segments, animIndex, animClip)),
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
+  // 武器套切换的兑现（W 键被缓存到动作播完才回调，见 WorldView.requestSwitchWeapon）
+  onSwitchWeapon: () => sendSwitchWeapon(),
 });
 /**
  * 世界地图 —— 现在是**普通面板**（`panel:worldmap`，由 `WorldMapPanel` 渲染），
@@ -367,8 +370,10 @@ keyBinding.onKeyDown((action) => {
       setChatInputOpen(true);
       break;
     case 'switchWeapon':
-      // W 键：当前装备套 ↔ 备用武器套（主手+副手整对互换，服务端裁决）
-      sendSwitchWeapon();
+      // W 键：当前装备套 ↔ 备用武器套（主手+副手整对互换，服务端裁决）。
+      // **不直接发**：攻击/技能/吃药动画没播完就换武器，会出现"模型换了、动画还是旧武器那套"。
+      // 交给 WorldView 在动作播完时回调（对齐原版 sinChangeSetFlag 的兑现时机）。
+      worldView.requestSwitchWeapon();
       break;
     case 'showGroundItems':
       worldView.toggleGroundItemLabels();
@@ -389,6 +394,7 @@ keyBinding.onKeyDown((action) => {
         console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
         break;
       }
+      requestPlayEat(useEffectKindOf(itemByUid(uid)?.itemCode));
       sendUseItem(uid);
       break;
     }
@@ -454,7 +460,7 @@ hudPanel.onAction = (action, mods) => {
     if (uid == null) {
       console.log('[potion] 药水槽 ' + (idx + 1) + ' 是空的');
     } else if (getHeldUid() == null) {
-      requestPlayEat();      // EAT 动画 + 喝药音效（唯一入口）
+      requestPlayEat(useEffectKindOf(itemByUid(uid)?.itemCode));   // EAT + 粒子/音效（唯一入口）
       sendUseItem(uid);
     }
   } else if (action === 'system') {
@@ -782,6 +788,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         m.animState || 0,
         m.animIndex || 0,   // 对方播的那一条动画（服务端透传）→ 旁观者直接播同一条
         m.animClip || '',
+        m.useSeq || 0,          // 使用道具序号（去重）→ 站着连喝两瓶也会每次都播
+        m.useItemIdcode || 0,   // 使用道具的 idcode → 旁观者推粒子/音（与自机同一函数）
       );
       break;
     }
@@ -1005,11 +1013,16 @@ onMessage((msg: jpt.base.ServerMessage) => {
       });
       break;
     }
-    case 'heal': {
-      const h = msg.heal!;
-      const tid = Number(h.targetId ?? 0);
-      worldView.showFloater(null, tid, '+' + (h.healAmount || 0), '#5cff8a', false);
-      worldView.applyUnitHp(tid, h.currentHp || 0, false);
+    case 'recovery': {
+      // 资源回复（与 'damage' 对称）：HP 绿字 / MP 蓝字。各为 0 = 该项没回复 → 不飘。
+      // ⚠ 被动缓慢回复**不发**这条（服务端 RegenerationService 只刷 HUD，不广播）。
+      const r = msg.recovery!;
+      const tid = Number(r.targetId ?? 0);
+      const hp = r.hpAmount || 0;
+      const mp = r.mpAmount || 0;
+      if (hp > 0) worldView.showFloater(null, tid, '+' + hp, '#5cff8a', false);
+      if (mp > 0) worldView.showFloater(null, tid, '+' + mp, '#5cb8ff', false);
+      worldView.applyUnitHp(tid, r.currentHp || 0, false);
       break;
     }
     case 'npcAppear': {

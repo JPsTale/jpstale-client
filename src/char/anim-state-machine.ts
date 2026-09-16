@@ -86,6 +86,14 @@ export interface AnimStateMachine {
   getCurrentState: () => number;
   getCurrentMotion: () => MotionInfo | null;
   /**
+   * 当前是否处于**一次性动作**（攻击/技能/受击/吃药/死亡/落地…）。
+   *
+   * 给**自机的移动分支**用：本地输入是"每帧对齐"的，一次性动作期间不该被走/跑顶掉，
+   * 而动作播完（回 STAND）后下一帧要能自动接回走/跑。
+   * ⚠ 怪物/远端玩家**不需要**这个 —— 它们的动画由服务端状态包驱动，忠实照做即可。
+   */
+  isOneShot: () => boolean;
+  /**
    * 当前武器姿态（**首次选择之前是 null**）。
    *
    * 调用方（选角预览）必须能在**装配完之后主动读一次**它来断言武器位置 ——
@@ -213,7 +221,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     // retry=true：允许选中与当前相同的攻击动画（怪物每刀重发 ANIM_ATTACK 时从头重播），
     // 不排除 currentMotion，保证周期攻击每刀都有挥击动作。
     const motion = findMotionForState(STATE.ATTACK, !retry);
-    if (!motion) { log2('No matching attack animation'); return false; }
+    if (!motion) {
+      reportFallback('anim', '该模型没有 ATTACK 条目 → 这一刀没有挥击动作');
+      return false;
+    }
     currentState = STATE.ATTACK;
     applyMotion(motion);
     log2('Attack: 0x' + motion.state.toString(16) + ' [' + motion.startFrame + ',' + motion.endFrame + ']');
@@ -277,9 +288,29 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     return candidates;
   }
 
+  /**
+   * 走/跑是**站姿同步**（每帧按移动意图重选），它**不能把一次性动作顶掉** ——
+   * 否则喝药/受击的动画与音效会被瞬间抢占（用户 2026-09-16 实测）。
+   *
+   * 原版依据：`playmain.cpp:1744` 在 `ATTACK / EAT / SKILL` 期间**整个屏蔽**移动与攻击输入，
+   * 所以那几个状态根本不会被"重新开始移动"打断。这里用同一组守卫，
+   * 与 `triggerIdle` 的守卫是同一个 `isOneShotState`（一条判据，别写两份）。
+   */
+  /**
+   * 走 / 跑：**直接生效**，不设守卫、不记意图。
+   *
+   * 忠实于调用方给的状态 —— 怪物/远端玩家的动画是**服务端说了算**的，
+   * 客户端在这里加任何"意图"都会让它偏离服务端（用户 2026-09-16 实测的怪物滑行就是这么来的）。
+   *
+   * "攻击中按着鼠标不该打断挥拳"是**自机本地输入**的事，守卫在 `WorldView` 的移动分支里
+   * （见那里的 `isOneShot()` 判定），不在这里。
+   */
   function triggerWalk(): boolean {
     const motion = findMotionForState(STATE.WALK, false);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 WALK 条目 → 移动期间只能播站姿（看起来像滑行）');
+      return false;
+    }
     currentState = STATE.WALK;
     applyMotion(motion);
     return true;
@@ -287,7 +318,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function triggerRun(): boolean {
     const motion = findMotionForState(STATE.RUN, false);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 RUN 条目 → 跑动期间保持当前动画（看起来像滑行）');
+      return false;
+    }
     currentState = STATE.RUN;
     applyMotion(motion);
     return true;
@@ -297,7 +331,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     // 一次性态（ATTACK/SKILL/DAMAGE 等）不回 STAND：STAND 同步包/自然停步不掐断挥拳与受击
     if (isOneShotState(currentState)) return false;
     const motion = findMotionForState(STATE.STAND, excludeCurrent);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 STAND 条目 → 无法回到站姿');
+      return false;
+    }
     currentState = STATE.STAND;
     applyMotion(motion);
     return true;
@@ -314,7 +351,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
       return false;
     }
     const motion = findMotionForState(STATE.DAMAGE, false);
-    if (!motion) { log2('No matching damage animation'); return false; }
+    if (!motion) {
+      reportFallback('anim', '该模型没有 DAMAGE 条目 → 受击无硬直动作');
+      return false;
+    }
     currentState = STATE.DAMAGE;
     applyMotion(motion);
     log2('Damage: 0x' + motion.state.toString(16) + ' [' + motion.startFrame + ',' + motion.endFrame + ']');
@@ -323,7 +363,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function triggerFallDown(): boolean {
     const motion = findMotionForState(STATE.FALLDOWN, false);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 FALLDOWN 条目 → 下落无动作');
+      return false;
+    }
     currentState = STATE.FALLDOWN;
     applyMotion(motion);
     return true;
@@ -346,7 +389,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function triggerFallStand(): boolean {
     const motion = findMotionForState(STATE.FALLSTAND, false);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 FALLSTAND 条目 → 落地无动作');
+      return false;
+    }
     currentState = STATE.FALLSTAND;
     applyMotion(motion);
     return true;
@@ -354,7 +400,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function triggerFallDamage(): boolean {
     const motion = findMotionForState(STATE.FALLDAMAGE, false);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 FALLDAMAGE 条目 → 落地伤害无动作');
+      return false;
+    }
     currentState = STATE.FALLDAMAGE;
     applyMotion(motion);
     return true;
@@ -362,7 +411,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function triggerTaunt(): boolean {
     const motion = findMotionForState(STATE.TAUNT, false);
-    if (!motion) { log2('No matching taunt animation'); return false; }
+    if (!motion) {
+      reportFallback('anim', '该模型没有 TAUNT 条目');
+      return false;
+    }
     currentState = STATE.TAUNT;
     applyMotion(motion);
     return true;
@@ -370,7 +422,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function triggerYahoo(): boolean {
     const motion = findMotionForState(STATE.YAHOO, false);
-    if (!motion) { log2('No matching yahoo animation'); return false; }
+    if (!motion) {
+      reportFallback('anim', '该模型没有 YAHOO 条目');
+      return false;
+    }
     currentState = STATE.YAHOO;
     applyMotion(motion);
     return true;
@@ -402,6 +457,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     // 死亡：停在末帧（原版把 frame 钉在 EndFrame-1），不自动回 STAND
     if (currentState === STATE.DEAD) return null;
     if (isOneShotState(currentState)) { // 含 DAMAGE（受击播完回 STAND）
+      // 一次性动作播完 → 回 STAND。
+      // 自机"接着走/跑"由**调用方**在下一帧按移动意图重新声明（见 WorldView 的移动分支，
+      // 那里是每帧对齐、不是边沿触发）；怪物/远端则由服务端下一条状态包驱动。
+      // 状态机在这里不该猜"接下来该播什么"。
       return toStand() ? currentMotion : null;
     }
     return null;
@@ -410,7 +469,10 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
   /** 内部专用：从任意一次性态回 STAND（不走 triggerIdle 的守卫） */
   function toStand(): boolean {
     const motion = findMotionForState(STATE.STAND, false);
-    if (!motion) return false;
+    if (!motion) {
+      reportFallback('anim', '该模型没有 STAND 条目 → 无法回到站姿');
+      return false;
+    }
     currentState = STATE.STAND;
     applyMotion(motion);
     return true;
@@ -418,6 +480,7 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
 
   function getCurrentState(): number { return currentState; }
   function getCurrentMotion(): MotionInfo | null { return currentMotion; }
+  function isOneShot(): boolean { return isOneShotState(currentState); }
   /** 当前武器姿态（首次选择前为 null）。调用方装配完武器后据此**主动断言**一次，别只等事件。 */
   function getStance(): 'combat' | 'sheathed' | null { return currentStance; }
 
@@ -463,6 +526,7 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
     onAnimationEnd,
     getCurrentState,
     getCurrentMotion,
+    isOneShot,
     getStance,
     playMotion,
     reselectForCurrentState,

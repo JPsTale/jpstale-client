@@ -97,7 +97,7 @@ message ServerMessage {
     S2C_SkillAttack skill_attack = 401;
     S2C_AoeAttack aoe_attack = 402;
     S2C_Damage damage = 403;
-    S2C_Heal heal = 404;
+    S2C_Recovery recovery = 404;   // 资源回复广播（HP/MP）。**不是 heal** —— 回魔也叫它
     S2C_BuffApply buff_apply = 405;
     S2C_BuffRemove buff_remove = 406;
     S2C_AttackStart attack_start = 407;  // 起手广播（旁观者立刻挥拳）
@@ -363,6 +363,13 @@ message S2C_PlayerMove {
   int64 timestamp = 5;
   int32 anim_index = 6;    // 该玩家客户端上报的**动画条目索引**（原样透传）→ 旁观者直接播同一条
   string anim_clip = 7;    // 同一条的语义 ID（校验两端动画数据是否同代）
+  // 使用道具广播（仅 anim_state=EAT 时有意义）：旁观者据此播粒子+音，与自机同一套表现。
+  // use_seq 每次使用自增（0=非使用道具）——旁观者用它去重：同一玩家站着连喝两瓶，
+  //   (anim_state, anim_index) 完全相同，只靠前两项去重会**吞掉第二次**。
+  // use_item_idcode 是该道具的 idcode → 旁观者用与自机同一个 useEffectKindOf 推表现种类
+  //   （服务端不解释表现，只透传"用了哪件"，与 anim_index/anim_clip 同一原则）。
+  int32 use_seq = 8;
+  int32 use_item_idcode = 9;
 }
 
 // 进入游戏：选角色成功后服务端主动下发（对齐原版 RECORDDATA 进图语义）。
@@ -664,10 +671,17 @@ message S2C_Damage {
   bool missed = 4;
 }
 
-message S2C_Heal {
+// 资源回复广播（与 S2C_Damage 对称：带权威 current 值，客户端在目标头顶飘字）。
+// **叫 recovery 不叫 heal**：回魔、回体力都是同一件事，heal 只覆盖了"治疗"。
+// 一条消息同时带 HP 与 MP —— 一次回复可能两者都有（如药水、治疗法术），拆两条会多一次往返。
+// 各自为 0 表示该项没回复（不是"回复 0 点"）。HP → 绿字，MP → 蓝字。
+// ⚠ **被动缓慢回复（RegenerationService）不走这条** —— 每秒一条会把飘字刷爆（用户 2026-09-16 明确）。
+message S2C_Recovery {
   int64 target_id = 1;
-  int32 heal_amount = 2;
+  int32 hp_amount = 2;     // HP 回复量（0 = 没回血）
   int32 current_hp = 3;
+  int32 mp_amount = 4;     // MP 回复量（0 = 没回蓝）
+  int32 current_mp = 5;
 }
 
 message S2C_BuffApply {

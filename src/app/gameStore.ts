@@ -255,6 +255,12 @@ export function potionUidInSlot(idx: number): number | null {
   return it ? it.uid : null;
 }
 
+/** 按 uid 找物品（**任意位置**，含装备栏/鼠标位/仓库）。找不到返回 null。 */
+export function itemByUid(uid: number): GameItem | null {
+  const items = getGameSnapshot().inventory?.items ?? [];
+  return items.find((x) => x.uid === uid) ?? null;
+}
+
 export function getGameSnapshot(): GameSnapshot {
   return snapshot;
 }

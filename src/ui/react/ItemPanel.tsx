@@ -9,8 +9,9 @@ import { t } from '../../i18n/index.js';
 import { appendSystemMessage } from '../../app/chatStore.js';
 import { clearHoverItem } from '../../app/gameStore.js';
 import { requestSplit } from '../../app/splitStore.js';
-import { ITEM_CLASS, isStackable, isPotionClass, isTwoHandWeaponClass } from '../../game/itemClass.js';
+import { ITEM_CLASS, isStackable, isTwoHandWeaponClass } from '../../game/itemClass.js';
 import { requestPlayEat } from '../WorldView.js';
+import { useEffectKindOf } from '../../game/useEffect.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { sendEquipItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap, sendShopSell } from '../../net/bridge.js';
@@ -740,8 +741,8 @@ export default function ItemPanel() {
   /** 右键使用：只上送 uid，效果与校验全在服务端（原版 RButtonDown 也是只表达"用这一件"） */
   function onUseBag(it: GameItem) {
     if (held) return;                 // 手里拿着东西时右键无效（对齐原版 MouseItem.Flag 守卫）
-    // 药水：本地立刻播 EAT（原版 sinActionPotion 在点击瞬间切动作，不等服务端往返）
-    if (isPotionClass(defOf(it)?.class)) requestPlayEat();
+    // 本地立刻播 EAT（原版 sinActionPotion/ActionEtherCore 都在点击瞬间切动作，不等服务端往返）
+    requestPlayEat(useEffectKindOf(it.itemCode));
     sendUseItem(it.uid);
   }
 

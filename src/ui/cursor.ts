@@ -47,7 +47,7 @@ function fileOf(mode: CursorMode, mouseDown: boolean): string {
  *   `getitem_cursor2` = **(15,5)**；`buycursor`/`sellcursor`/`repaircursor` = (1,0)/(3,0)/(3,0)。
  * 我们过去给**所有**图硬编码热点 `3 3` ⇒ 拿拾取图去点地上的物品时，真实判定点比看到的指尖
  * 偏左/偏上最多 12px，"应该点中了却没点中"（用户 2026-09-14 实测报的正是这个）。
- * 回归：`npm run verify-cursor`（逐图断言实测热点）。
+ * 热点取"该图内第一个不透明像素"（可见的尖），不是写死的偏移。
  */
 function firstOpaquePixel(dec: { width: number; height: number; pixels: Uint8Array }): { hx: number; hy: number } {
   const alphaThreshold = 8;

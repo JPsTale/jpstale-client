@@ -22,12 +22,53 @@ import { EFFECT_HZ } from '../../core/effect/anim-ini.js';
 /** INI 未提供 Size 段时的默认世界尺寸（角色高约 46 世界单位，取 32 与命中特效同量级） */
 const DEFAULT_SIZE = 32;
 
+/**
+ * 物理粒子爆发 —— 原版 `HoPrimitiveBillboard` + `HoPhysicsParticle`（`HoEffect.cpp:7114` 药水即此）。
+ *
+ * 原版把**同一份 INI 动画复制 N 份**，每份各自带一个物理体：
+ *   每帧 `vy += gravity; pos += velocity; 自转 += step`，寿命到就整颗消失。
+ * 而 `EffectManager.spawn` 原本只放**一份静止的**动画（那正是"粒子不会动"的原因）。
+ * 给出 `burst` 就按上面这套跑。
+ *
+ * ⚠ 单位换算：原版这几个量是**每帧**的原始单位（`fONE=256` ⇒ 除以 256 得世界单位），
+ * 而本运行时是**每秒**制 ⇒ 先 ÷256 再 ×70（原版 `MainEffect` 按 1/70 s 步进）。
+ * 换算逐项写在调用方（`potion-burst.ts`），这里只认世界单位/秒。
+ */
+export interface BurstSpec {
+  /** 份数（原版 30） */
+  count: number;
+  /** 水平初速（世界单位/秒）；方向在 XZ 面上随机 */
+  speed: number;
+  /** 垂直初速（世界单位/秒） */
+  speedY: number;
+  /** 重力（世界单位/秒²，负值向下） */
+  gravity: number;
+  /** 寿命（秒）；到期整颗移除（不等 INI 播完） */
+  life: { min: number; max: number };
+  /** 自转（度/秒） */
+  spin: number;
+}
+
 export interface SpawnOpts {
   pos: { x: number; y: number; z: number };
   /** 整体尺寸倍率（默认 1） */
   scale?: number;
+  /**
+   * **INI 没有 Size 段时**用的尺寸（世界单位），替代 `DEFAULT_SIZE`。
+   *
+   * 为什么需要：原版 `HoEffectMgr::Start` 的很多分支是**显式**给尺寸的
+   * （`StartBillRectPrimitive(x,y,z,sizeX,sizeY,ini)` / `SetSize(...)`），
+   * 而那些 INI 自己并没有 Size 段 —— 我方 `DEFAULT_SIZE = 32` 只是兜底猜值。
+   * 药水就是典型：原版 `SetSize(8,8)`（`HoEffect.cpp:7144`）而 `potion1.ini` 无 Size 段
+   * ⇒ 不覆盖的话粒子会**大 4 倍**，"飞出去一小段"看着就像没动（用户 2026-09-16 实测）。
+   *
+   * ⚠ INI **有** Size 段时本项不生效（逐帧尺寸动画说了算）—— 那才是原版没显式给尺寸的情形。
+   */
+  size?: number;
   /** 跟随目标（如骨骼 Object3D）；给出后用其世界坐标 + offset */
   attach?: THREE.Object3D;
+  /** 物理粒子爆发：给出时复制 count 份并按原版物理运动（见 BurstSpec） */
+  burst?: BurstSpec;
 }
 
 interface Instance {
@@ -42,6 +83,14 @@ interface Instance {
   attach?: THREE.Object3D;
   offset: THREE.Vector3;
   tmp: THREE.Vector3;
+  /** 物理粒子（burst）：速度 / 重力 / 寿命 / 自转。`life <= 0` = 不是爆发粒子（按 INI 播完） */
+  vel: THREE.Vector3;
+  gravity: number;
+  life: number;
+  age: number;
+  /** 自转（度/秒）与累计角度（度）—— 叠在 INI 每帧的 angle 之上 */
+  spin: number;
+  spinDeg: number;
 }
 
 export interface EffectManager {
@@ -132,7 +181,8 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
     const s = Math.max(0.5, inst.size * inst.scale);
     inst.sprite.scale.set(s, s, 1);
     inst.mat.opacity = Math.min(1, Math.max(0, f.alpha / 255));
-    inst.mat.rotation = f.angle === null ? 0 : (f.angle * Math.PI) / 180;
+    // 旋转 = INI 每帧的角度 + 物理粒子的累计自转（原版 DirectionAngle 与 PutAngle 是两回事，相加）
+    inst.mat.rotation = ((f.angle ?? 0) + inst.spinDeg) * (Math.PI / 180);
   }
 
   async function spawn(name: string, opts: SpawnOpts): Promise<boolean> {
@@ -153,26 +203,43 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
       // 一帧贴图都没有 → 视为无法播放（避免生成不可见精灵）
       if (!eff.frames.some((f) => f.tex)) return false;
 
-      const mat = new THREE.SpriteMaterial({
-        transparent: true,
-        depthWrite: false,
-        depthTest: true,
-        color: 0xffffff,
-      });
-      applyBlend(mat, eff.blend);
-      const sprite = new THREE.Sprite(mat);
-      root.add(sprite);
+      // 爆发：同一份 INI 复制 count 份，每份一个物理体（原版 30 个 HoPrimitiveBillboard）
+      const burst = opts.burst;
+      const n = burst ? Math.max(1, Math.round(burst.count)) : 1;
+      for (let i = 0; i < n; i++) {
+        const mat = new THREE.SpriteMaterial({
+          transparent: true,
+          depthWrite: false,
+          depthTest: true,
+          color: 0xffffff,
+        });
+        applyBlend(mat, eff.blend);
+        const sprite = new THREE.Sprite(mat);
+        root.add(sprite);
 
-      const inst: Instance = {
-        sprite, mat, eff, t: 0, frameIdx: 0,
-        size: eff.frames[0]?.size ?? DEFAULT_SIZE,
-        scale: opts.scale ?? 1,
-        attach: opts.attach,
-        offset: new THREE.Vector3(opts.pos.x, opts.pos.y, opts.pos.z),
-        tmp: new THREE.Vector3(),
-      };
-      applyFrame(inst);
-      live.push(inst);
+        const inst: Instance = {
+          sprite, mat, eff, t: 0, frameIdx: 0,
+          size: eff.frames[0]?.size ?? opts.size ?? DEFAULT_SIZE,
+          scale: opts.scale ?? 1,
+          attach: opts.attach,
+          offset: new THREE.Vector3(opts.pos.x, opts.pos.y, opts.pos.z),
+          tmp: new THREE.Vector3(),
+          vel: new THREE.Vector3(), gravity: 0, life: 0, age: 0, spin: 0, spinDeg: 0,
+        };
+        if (burst) {
+          // 水平方向随机（原版 `ang = rand() % ANGLE_360`，x 用 cos、z 用 sin）
+          const a = Math.random() * Math.PI * 2;
+          inst.vel.set(Math.cos(a) * burst.speed, burst.speedY, Math.sin(a) * burst.speed);
+          inst.gravity = burst.gravity;
+          inst.life = burst.life.min + Math.random() * (burst.life.max - burst.life.min);
+          inst.spin = burst.spin;
+          // 自转的**初始相位**也随机，否则 30 颗同相起步（原版每颗 DirectionAngle 从 0 起，
+          // 但各自的步进是 destAngle/Live、且 Live 随机 ⇒ 天然错开；这里直接给随机初相，等价且更稳）
+          inst.spinDeg = Math.random() * 360;
+        }
+        applyFrame(inst);
+        live.push(inst);
+      }
       return true;
     } catch {
       return false;
@@ -202,6 +269,24 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
       const inst = live[i]!;
       inst.t += dt;
 
+      // 物理粒子（burst）：`vy += g·dt; pos += v·dt; 自转 += ω·dt`，寿命到就整颗移除。
+      // 原版是每帧直接加（`HoPrimitiveBillboard::Main` → `LocalX += DirectionVelocity.x`），
+      // 这里是每秒制，等价（换算见 BurstSpec）。
+      if (inst.life > 0) {
+        inst.age += dt;
+        if (inst.age >= inst.life) {
+          root.remove(inst.sprite);
+          inst.mat.dispose();
+          live.splice(i, 1);
+          continue;
+        }
+        inst.vel.y += inst.gravity * dt;
+        inst.offset.x += inst.vel.x * dt;
+        inst.offset.y += inst.vel.y * dt;
+        inst.offset.z += inst.vel.z * dt;
+        inst.spinDeg += inst.spin * dt;
+      }
+
       // 推进帧（可跨多帧，保证低帧率下时长准确）
       let guard = 0;
       while (inst.frameIdx < inst.eff.frames.length - 1
@@ -211,6 +296,8 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
         inst.frameIdx++;
         applyFrame(inst);
       }
+      // 自转是逐帧累积的（上面 +dt），要每帧刷一次旋转，否则只在换帧时才动
+      if (inst.life > 0) applyFrame(inst);
 
       // 位置：跟随目标或固定点
       if (inst.attach) inst.attach.getWorldPosition(inst.tmp).add(inst.offset);

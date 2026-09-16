@@ -35,6 +35,34 @@ export function armorNumFromIdCode(idCode: number): number {
   return n;
 }
 
+/**
+ * 外观里**决定 3D 模型长相**的那些字段拼成的指纹 —— 判断"角色模型是否真的变了"的**唯一判据**。
+ *
+ * 用途（用户 2026-09-16）：服务端在每次物品操作后都可能推 `S2C_AppearanceUpdate`，
+ * 而客户端**只有指纹变了**才该重建模型 / 重选动画 —— 否则"整理一下背包"或"换枚戒指"
+ * 都会把当前动画从头播一遍。
+ *
+ * ⚠ **不是"只判武器"**：任意一项变了都算"模型变了" ——
+ *   · 武器位 `weaponDorp/Idcode/Pos`（换武器 / 换挂点）
+ *   · 副手 `offHandDorp/Idcode/Kind/Pos`（盾 / 匕首）
+ *   · 躯干甲 `bodyModel/bodyModelIdcode`（**盔甲 / 袍子换的就是它**）
+ *   · 头与转职阶级 `head/rank`（**换头 / 换头饰档位换的是它**）
+ * 反过来，背包 / 仓库 / 药水槽 / 戒指 / 项链 / 耳环 **不在外观里**
+ * （服务端 `AppearanceService.derive` 也不看它们）⇒ 指纹不变、什么都不做。
+ *
+ * 加字段前先问一句：**这一项会换网格吗？** 会就加进来，不会就别加
+ * （否则又变成"随便动一下就重播"）。
+ */
+export function appearanceModelKey(a: CharacterAppearance | undefined): string {
+  if (!a) return '';
+  return [
+    a.classId, a.head, a.rank,
+    a.bodyModel ?? '', a.bodyModelIdcode ?? 0,
+    a.weaponDorp ?? '', a.weaponIdcode ?? 0, a.weaponPos ?? 0,
+    a.offHandDorp ?? '', a.offHandIdcode ?? 0, a.offHandKind ?? 0, a.offHandPos ?? 0,
+  ].join('|');
+}
+
 // 地图 id → i18n 名称；无翻译时回退英文 "Map {id}"
 export function mapNameById(mapId: number): string {
   const key = `map.${mapId}`;
