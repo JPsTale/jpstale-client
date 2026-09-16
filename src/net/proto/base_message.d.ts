@@ -6307,6 +6307,9 @@ export namespace jpt {
             /** S2C_MonsterAppear angle. */
             angle: number;
 
+            /** S2C_MonsterAppear dead. */
+            dead: boolean;
+
             /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -6417,6 +6420,9 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear angle */
                 angle?: (number|null);
+
+                /** S2C_MonsterAppear dead */
+                dead?: (boolean|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

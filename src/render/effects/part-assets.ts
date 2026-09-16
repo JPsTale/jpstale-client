@@ -56,6 +56,34 @@ export function loadPart(name: string): Promise<LoadedPart | null> {
   return job;
 }
 
+/**
+ * 由**代码里的 spec** 造一个 LoadedPart（不读脚本文件）。
+ *
+ * 用途：原版有一类特效的参数**只写在 C++ 里**（没有 `.part`/INI 数据文件），
+ * 例如法杖普攻那颗弹 `MONSTER_IMP_SHOT1`（`HoParticle.cpp:213-246`）。
+ * 那种情况没办法"按名字播"，只能把参数搬成 spec —— 但纹理解析、诊断等收尾工作
+ * 与脚本路径**必须共用这一份实现**（否则又是第二套加载逻辑）。
+ */
+export async function loadPartFromSystem(name: string, system: PartSystem): Promise<LoadedPart> {
+  const textures: Array<THREE.DataTexture | null> = [];
+  const paths: Array<string | null> = [];
+  const missing: string[] = [];
+  for (const em of system.emitters) {
+    if (!em.texture) { textures.push(null); paths.push(null); continue; }
+    const p = normalizeTexturePath(em.texture);
+    paths.push(p);
+    const tex = await fetchAndDecodeTexture('/res/' + p);
+    if (!tex) missing.push(p);
+    textures.push(tex);
+  }
+  return {
+    name,
+    system,
+    textures,
+    diag: { scriptPath: '(代码内 spec)', emitterCount: system.emitters.length, textures: paths, missing },
+  };
+}
+
 async function loadPartUncached(name: string): Promise<LoadedPart | null> {
   for (const scriptPath of partScriptPaths(name)) {
     const text = await fetchText('/res/' + scriptPath);

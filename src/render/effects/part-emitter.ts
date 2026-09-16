@@ -91,8 +91,14 @@ interface EmitterInstance {
   mesh: THREE.Mesh;
   mat: THREE.ShaderMaterial;
   geom: THREE.BufferGeometry;
-  /** 生成原点（系统位置 + `.part` 的 position） */
+  /** 生成原点（系统位置 + `.part` 的 position）；`follow` 非空时它是**相对跟随点的偏移** */
   origin: [number, number, number];
+  /**
+   * 跟随节点（可选）：新粒子在"它的世界坐标 + `origin` 偏移"处生成 —— 于是发射器跟着
+   * 飞行物走（如法术弹），而**已生成的粒子留在原地**形成尾迹（与原件同观感）。
+   * 显式持有对象（不是每帧传坐标）是为了让"这一发粒子属于哪个飞行物"一目了然。
+   */
+  follow: THREE.Object3D | null;
   /** 尺寸倍率 */
   scale: number;
   /** 每个粒子的状态 */
@@ -114,9 +120,24 @@ interface EmitterInstance {
   done: boolean;
 }
 
+/**
+ * 一次发射的句柄：**能停**。
+ *
+ * 为什么需要它（用户 2026-09-16 实测"法球飞到目标身上会残留一段时间，看起来非常古怪"）：
+ * 发射器有自己的持续时间（原版 `Age = 0.9s`），而投射物早就到点了 —— 停不下来的话，
+ * 后面的粒子全堆在命中点上。飞行物到点就该 `stop()`。
+ */
+export interface PartHandle {
+  /** 停止发射（已在飞的粒子自然消亡，发射器随后自动移除） */
+  stop(): void;
+}
+
 export interface PartRuntime {
-  /** 播放一个 `.part` 系统 */
-  spawn(part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number): void;
+  /** 播放一个 `.part` 系统；`follow` 非空时跟随该节点（飞行投射物用）。返回可停止的句柄 */
+  spawn(
+    part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number,
+    follow?: THREE.Object3D | null,
+  ): PartHandle;
   update(dt: number, camera: THREE.Camera): void;
   clear(): void;
   stats(): { emitters: number; particles: number };
@@ -130,12 +151,13 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
   const live: EmitterInstance[] = [];
   const tmpA = new THREE.Vector3();
   const tmpB = new THREE.Vector3();
+  const followTmp = new THREE.Vector3();   // 跟随节点的世界坐标（每次生成时取一次）
   const camRight = new THREE.Vector3();
   const camUp = new THREE.Vector3();
 
   function buildEmitter(
     em: PartEmitter, tex: THREE.DataTexture | null,
-    origin: [number, number, number], scale: number,
+    origin: [number, number, number], scale: number, follow: THREE.Object3D | null,
   ): EmitterInstance {
     const n = Math.max(1, Math.min(2048, Math.round(em.numParticles)));
     const geom = new THREE.BufferGeometry();
@@ -166,7 +188,7 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
 
     // 系统级 position + 生成位置偏移（原版：粒子位置 = 生成原点 + emitRadius 滚动）
     return {
-      emitter: em, mesh, mat, geom, origin, scale, n,
+      emitter: em, mesh, mat, geom, origin, scale, follow, n,
       alive: new Uint8Array(n),
       age: new Float32Array(n), life: new Float32Array(n),
       pos: new Float32Array(n * 3), vel: new Float32Array(n * 3),
@@ -184,7 +206,17 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
     const i = ei.spawned++;
     if (i >= ei.n) return;
     const em = ei.emitter;
-    const origin = ei.origin;
+    // 生成原点：跟随节点（飞行投射物）时取它**当前**世界坐标 ⇒ 尾迹自然留在身后；
+    // 不跟随时用固定 origin（原行为，未改）
+    let origin = ei.origin;
+    if (ei.follow) {
+      ei.follow.getWorldPosition(followTmp);
+      origin = [
+        followTmp.x + ei.origin[0],
+        followTmp.y + ei.origin[1],
+        followTmp.z + ei.origin[2],
+      ];
+    }
     ei.alive[i] = 1;
     ei.age[i] = 0;
     ei.life[i] = Math.max(0.02, roll(em.lifetime));
@@ -213,7 +245,10 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
     ei.angle0[i] = a0; ei.fangle[i] = a1;
   }
 
-  function spawn(part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number): void {
+  function spawn(
+    part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number,
+    follow: THREE.Object3D | null = null,
+  ): PartHandle {
     const sysPos = part.system.position ? vecOf(part.system.position) : [0, 0, 0];
     const origin: [number, number, number] = [
       pos.x + sysPos[0]! * scale,
@@ -222,8 +257,19 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
     ];
     for (let k = 0; k < part.system.emitters.length; k++) {
       const em = part.system.emitters[k]!;
-      live.push(buildEmitter(em, part.textures[k] ?? null, origin, scale));
+      const tex = part.textures[k] ?? null;
+      // 留痕：贴图为 null（解码失败）时画面就是"什么都没有"，不报错 ⇒ 这里必须说出来
+      console.log('[part] 生成 emitter「' + em.name + '」粒子上限 ' + Math.round(em.numParticles)
+        + ' 发射率 ' + em.emitRate + '/s 寿命 ' + JSON.stringify(em.lifetime)
+        + ' 贴图=' + (tex ? 'ok' : '⚠ null（解码失败）')
+        + ' 跟随=' + (follow ? '有' : '无') + ' 原点 (' + origin.map((v) => v.toFixed(1)).join(',') + ')');
+      live.push(buildEmitter(em, tex, origin, scale, follow));
     }
+    // 句柄只认这一次生成的那些 emitter（`stop` 后它们各自发完手上粒子即被移除）
+    // ⚠ 空 emitters 时 `slice(-0)` 会取到**全部**，那会误停别人的发射器 ⇒ 单独处理
+    const n = part.system.emitters.length;
+    const created = n > 0 ? live.slice(-n) : [];
+    return { stop() { for (const ei of created) ei.done = true; } };
   }
 
   function update(dt: number, camera: THREE.Camera): void {

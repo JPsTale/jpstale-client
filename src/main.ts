@@ -850,6 +850,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.position?.y || 0,
         a.position?.z || 0,
         a.angle || 0,
+        // 尸体标记（服务端 S2C_MonsterAppear.dead）：中途进场/重连时看见的已死怪。
+        // 这种怪**不会**再收到 monsterDeath（死亡事件只发给死亡当刻在场的观察者），
+        // 漏传这个字段的表现就是"尸体站着"。
+        !!a.dead,
       );
       break;
     }

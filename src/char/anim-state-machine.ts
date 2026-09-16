@@ -13,6 +13,7 @@
  */
 
 import type { MotionInfo } from './char-format.js';
+import { CHRMOTION_STATE_DEAD } from './char-format.js';
 import { findMotions, findMotionsByType, pickMotion, pickSemanticMotion, type SemanticEntry } from './anim-match.js';
 import { reportFallback } from './fallback-log.js';
 
@@ -26,7 +27,7 @@ export const STATE: Record<string, number> = {
   FALLDAMAGE: 0x0180,
   ATTACK: 0x0100,
   DAMAGE: 0x0110,
-  DEAD: 0x0120,
+  DEAD: CHRMOTION_STATE_DEAD,
   EAT: 0x0140,
   SKILL: 0x0150,
   YAHOO: 0x0220,

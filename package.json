@@ -31,6 +31,7 @@
     "verify-cursor": "npx tsx scripts/verify-cursor.ts",
     "verify-itemhover": "npx tsx scripts/verify-itemhover.ts",
     "verify-chase": "npx tsx scripts/verify-chase-range.ts",
+    "verify-projectile": "npx tsx scripts/verify-projectile.ts",
     "verify-uisound": "npx tsx scripts/verify-uisound.ts",
     "verify-water": "npx tsx scripts/verify-water-shared.ts",
     "diag-climb": "tsx scripts/diag-climb.ts",

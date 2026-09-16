@@ -19496,6 +19496,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [maxHp] S2C_MonsterAppear maxHp
              * @property {string|null} [modelFile] S2C_MonsterAppear modelFile
              * @property {number|null} [angle] S2C_MonsterAppear angle
+             * @property {boolean|null} [dead] S2C_MonsterAppear dead
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -19600,6 +19601,14 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterAppear.prototype.angle = 0;
 
             /**
+             * S2C_MonsterAppear dead.
+             * @member {boolean} dead
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.dead = false;
+
+            /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterAppear
@@ -19649,6 +19658,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 8, wireType 2 =*/66).string(message.modelFile);
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle") && !$Object.is(message.angle, 0))
                     writer.uint32(/* id 9, wireType 5 =*/77).float(message.angle);
+                if (message.dead != null && $Object.hasOwnProperty.call(message, "dead") && message.dead !== false)
+                    writer.uint32(/* id 10, wireType 0 =*/80).bool(message.dead);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -19784,6 +19795,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.angle;
                             continue;
                         }
+                    case 10: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.bool())
+                                message.dead = value;
+                            else
+                                delete message.dead;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -19861,6 +19881,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle"))
                     if (typeof message.angle !== "number")
                         return "angle: number expected";
+                if (message.dead != null && $Object.hasOwnProperty.call(message, "dead"))
+                    if (typeof message.dead !== "boolean")
+                        return "dead: boolean expected";
                 return null;
             };
 
@@ -19918,6 +19941,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.angle != null)
                     if (!$Object.is($Number(object.angle), 0))
                         message.angle = $Number(object.angle);
+                if (object.dead != null)
+                    if (object.dead)
+                        message.dead = $Boolean(object.dead);
                 return message;
             };
 
@@ -19952,6 +19978,7 @@ export const jpt = $root.jpt = (() => {
                     object.maxHp = 0;
                     object.modelFile = "";
                     object.angle = 0;
+                    object.dead = false;
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -19976,6 +20003,8 @@ export const jpt = $root.jpt = (() => {
                     object.modelFile = message.modelFile;
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle"))
                     object.angle = options.json && !$isFinite(message.angle) ? $String(message.angle) : message.angle;
+                if (message.dead != null && $Object.hasOwnProperty.call(message, "dead"))
+                    object.dead = message.dead;
                 return object;
             };
 

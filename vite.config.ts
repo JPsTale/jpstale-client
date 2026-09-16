@@ -161,12 +161,19 @@ export default defineConfig(({ mode }) => {
       outDir: 'dist',
       sourcemap: false,
       rollupOptions: {
+        // 生产只出**游戏入口**。其余 html 是**开发工具页**（资产检查器 / 地图查看器 / 平面图 /
+        // 大地图 demo）—— 运行时一行都不引用它们（`src/tools/` 只单向依赖 src，没人反向引用），
+        // 打进产物只会让部署包里多几 MB 无用的东西（用户 2026-09-16 指出）。
+        // dev 下这些页面照常可访问（vite 按文件服务）；偶尔要构建它们时：
+        //   PT_BUILD_TOOLS=1 npm run build
         input: {
           main: resolve(import.meta.dirname, 'index.html'),
-          'map-demo': resolve(import.meta.dirname, 'map-demo.html'),
-          'asset-inspector': resolve(import.meta.dirname, 'asset-inspector.html'),
-          planemap: resolve(import.meta.dirname, 'planemap.html'),
-          worldmap: resolve(import.meta.dirname, 'worldmap.html'),
+          ...(process.env.PT_BUILD_TOOLS === '1' ? {
+            'map-demo': resolve(import.meta.dirname, 'map-demo.html'),
+            'asset-inspector': resolve(import.meta.dirname, 'asset-inspector.html'),
+            planemap: resolve(import.meta.dirname, 'planemap.html'),
+            worldmap: resolve(import.meta.dirname, 'worldmap.html'),
+          } : {}),
         },
       },
     },

@@ -11,6 +11,15 @@
 
 export const CHRMOTION_EXT = 10;
 
+/**
+ * 死亡动作态（原版 `character.h` 的 `CHRMOTION_STATE_DEAD`）。
+ *
+ * **唯一常量定义** —— 这个值在别处被拼过至少三遍（下面的标签表、`WorldView.ANIM_DEAD`、
+ * `anim-state-machine.STATE.DEAD`、怪物载入时"对死亡动作扣 8 帧"的判定），
+ * 任何一处写错都表现为"尸体不躺下 / 尸体多趴 8 帧"这类很难定位的现象，故收敛到这里。
+ */
+export const CHRMOTION_STATE_DEAD = 0x0120;
+
 export const CHRMOTION_STATE: Record<number, string> = {
   0x00: 'NONE',
   0x40: 'STAND',

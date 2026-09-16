@@ -43,8 +43,10 @@ import { playItemSound } from '../audio/item-sounds.js';
 import { createEffectManager } from '../render/effects/effect-manager.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
+import { CHRMOTION_STATE_DEAD } from '../char/char-format.js';
 import { advanceAnimFrame } from '../char/animation.js';
 import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
+import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, type ProjectileManager } from '../render/projectile.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
 import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
@@ -255,13 +257,22 @@ export interface WorldView {
   updateRemoteAppearance(playerId: number, appearance?: CharacterAppearance): void;
   /** 换头（转职换头饰/道具换发型）：只替换头部网格，骨架/身体/动画不动 */
   changeSelfHead(jobId: number, faceNum: number, tier: number): void;
-  /** 怪物出现（S2C_MonsterAppear）：modelFile 资产路径 + 位置/朝向 → 渲染怪物演员 */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number): void;
+  /**
+   * 怪物出现（`S2C_MonsterAppear`）：modelFile 资产路径 + 位置/朝向 → 渲染怪物演员。
+   * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
+   * 直接摆成死亡姿势，不播 idle。
+   */
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number): void;
-  /** 怪物消失（S2C_MonsterDisappear）→ 移除 */
+  /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
   monsterDisappear(monsterId: number): void;
-  /** 怪物死亡（S2C_MonsterDeath）→ 移除(尸体由服务端后续以 Disappear 兜底) */
+  /**
+   * 怪物死亡（S2C_MonsterDeath）→ **留下尸体**：播死亡动作、停在末帧，等 Disappear 才移除。
+   *
+   * 与 `monsterDisappear` 是两条事件（原版同样：死＝动作态 0x120，删＝`FrameCounter > 400` 的
+   * `Close()`）。**不要**在这里移除 actor，也**不要**给尸体加本地计时器 —— 停留时长只有一个来源。
+   */
   monsterDeath(monsterId: number): void;
   /** NPC 出现（S2C_NpcAppear）：静态站桩，播 idle 动画 + 头顶名字标签。entityId = 运行时实体 id */
   npcAppear(entityId: number, nameKey: string, modelFile: string, x: number, y: number, z: number, angle: number): void;
@@ -318,8 +329,8 @@ const ANIM_RUN = 0x0060;
 const ANIM_FALLDOWN = 0x0070;
 const ANIM_FALLSTAND = 0x0071;
 const ANIM_FALLDAMAGE = 0x0072;
-/** 死亡（对齐原版 CHRMOTION_STATE_DEAD；S2C_PlayerDeath 走的不是 anim_state，这里只用于"复活了没有"的比较） */
-const ANIM_DEAD = 0x0120;
+/** 死亡（= 原版 CHRMOTION_STATE_DEAD，见 char-format 的唯一定义；这里只用于"复活了没有"的比较） */
+const ANIM_DEAD = CHRMOTION_STATE_DEAD;
 
 // ===== 玩家普通攻击（design-player-combat.md）=====
 // 挥拳动画时长 = 服务端攻击间隔 + 此冗余，保证客户端节奏不慢于服务端冷却（结构性防丢刀）
@@ -503,6 +514,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * （`char/anim-player.ts`）。自机建模时创建；未建模时为 null。
    */
   let selfPlayer: AnimPlayer | null = null;
+  /** 远程攻击的投射物（弓/弩 → 箭；标枪 → 标枪本身）。纯表现，见 render/projectile.ts */
+  let projectileMgr: ProjectileManager | null = null;
   // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
   let selfAnimRate = 1;
   // 本次挥拳的命中帧跟踪：motion + 目标 + 事件帧（相对 startFrame×160，非零）+ 已触发段数
@@ -521,6 +534,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   /** 已按计划播过音的段 → **当时播的是哪套判定**（missed/critical）。结果到达时用它判断要不要修正 */
   const selfPlanSounded = new Map<number, { missed: boolean; critical: boolean }>();
   let selfAttackHitFired = 0;
+  /** 本次攻击的投射物是否已放（见 spawnProjectile 与 RELEASE_LEAD_FRAMES 的说明） */
+  let selfProjectileFired = false;
   let selfPos = new THREE.Vector3();
   let rafMs = 0;
   // 进图加载 hooks（show() 每次重置；首帧渲染后触发 onReady，供 main.ts 收起加载页）
@@ -1090,6 +1105,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // 特效实例管理（INI 广告牌特效；depthWrite=false + 按 BlendType 混合）
     effects = createEffectManager(scene);
+    // ⚠ 顺序有讲究：投射物管理器**必须**在特效管理器之后建 —— 法术弹的粒子是挂到飞行节点上的
+    // （`projectile.ts` 里 `fx.spawnSystem`），早建一步拿到的就是 `null` ⇒ 箭/标枪照常、法术弹静默没有特效
+    // （2026-09-16 用户实测"看不到粒子特效"的根因）。
+    projectileMgr = createProjectileManager(scene, effects);
   }
 
   // 有效小时：调试键覆盖优先，否则跟随 GameClock
@@ -1468,21 +1487,30 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
+  /**
+   * 单位**身体中部**的世界坐标（命中特效与投射物的共同落点）。
+   *
+   * ⚠ 这是**唯一实现**：白光 `NormalHit1`（`spawnEffectOnUnit`）与箭/法术弹的落点都用它
+   * —— 用户 2026-09-16 实测"箭的目标位置与视觉不符"，根因就是箭飞向脚下的 `root.position`
+   * 而白光打在身上（AGENTS #15：同一判定只能有一份）。
+   * 高度规则本身在 `render/projectile.unitBodyAnchorY`（那边也用同一函数，便于自检钉住）。
+   */
+  function unitBodyAnchor(targetId: number): THREE.Vector3 | null {
+    if (targetId === selfPlayerId) return new THREE.Vector3(selfPos.x, unitBodyAnchorY(selfPos.y, selfTopY), selfPos.z);
+    const mon = monsters.get(targetId);
+    const rem = mon ? null : remotes.get(targetId);
+    const root = mon?.root ?? rem?.root;
+    if (!root) return null;
+    const topY = mon?.topY ?? rem?.topY ?? 1.7;
+    return new THREE.Vector3(root.position.x, unitBodyAnchorY(root.position.y, topY), root.position.z);
+  }
+
   /** 命中/暴击等特效：摆到目标单位身体中部（怪物/远端玩家/自机） */
   function spawnEffectOnUnit(targetId: number, name: string): void {
     if (!effects) return;
-    let x: number, y: number, z: number;
-    if (targetId === selfPlayerId) {
-      x = selfPos.x; y = selfPos.y + selfTopY * 0.5; z = selfPos.z;
-    } else {
-      const mon = monsters.get(targetId);
-      const rem = mon ? null : remotes.get(targetId);
-      const root = mon?.root ?? rem?.root;
-      if (!root) return;
-      const topY = mon?.topY ?? rem?.topY ?? 1.7;
-      x = root.position.x; y = root.position.y + topY * 0.5; z = root.position.z;
-    }
-    void effects.spawn(name, { pos: { x, y, z } });
+    const p = unitBodyAnchor(targetId);
+    if (!p) return;
+    void effects.spawn(name, { pos: { x: p.x, y: p.y, z: p.z } });
   }
 
   /**
@@ -1569,6 +1597,97 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 武器已变：按当前状态重选动画实例（持剑/持弓站姿等随武器切换），一次性状态不打断
     animState?.reselectForCurrentState();
   }
+
+  /**
+   * 攻击目标的世界坐标（投射物终点）。怪物优先，其次 NPC/远端玩家 —— 与"点选/追踪"用的是同一批 actor 表。
+   * 找不到（目标已消失/还没进视野）返回 null ⇒ 调用方不发射（宁可不射，也不要射向 (0,0,0)）。
+   */
+  function attackTargetPos(targetId: number): THREE.Vector3 | null {
+    const mon = monsters.get(targetId);
+    if (mon) return mon.root.position.clone();
+    const npc = npcs.get(targetId);
+    if (npc) return npc.root.position.clone();
+    const rem = remotes.get(targetId);
+    if (rem) return rem.root.position.clone();
+    return null;
+  }
+
+  /**
+   * 放一支投射物（**自机与旁观者共用这一处判据**）：
+   *   弓/弩 → 一支箭；标枪 → 标枪本身；法杖/图腾（且职业是法师/祭司/萨满）→ 法术弹（粒子）。
+   *
+   * 只做三件事：判"射什么"（`projectileChoiceOf`，唯一实现）→ 取起点/终点 → 交给投射物管理器。
+   * 起点取**武器挂载组所在的那根骨** ⇒ 自机与旁观者用的是同一个"出手位置"（组挂在骨上，父节点即骨）；
+   * 飞行时长取"释放 → 首个事件帧"的动画时长 ⇒ 箭正好在命中帧到达目标（见 render/projectile.ts 文件头）。
+   *
+   * @param eventFrame 首个事件帧（相对 startFrame 的子帧单位，见 `MotionInfo.eventFrame`）；无则按弹速兜底
+   * @param rate 该次攻击的动画速率（事件帧时间 = 帧 ÷ (ANIM_UNITS_PER_SEC × rate)）
+   * @param planOf 取"本次攻击的服务端计划"的函数（**miss 判定与命中音效同一份数据源**）。
+   *   ⚠ 必须是**取值函数**而不是计划本身：自机的计划在起手之后才到（服务端回包），
+   *   捕获当时的 `null` 会让 miss 判定永远拿不到 → 静默退化成"永远算命中"。
+   */
+  function spawnProjectile(
+    mount: WeaponMount, root: THREE.Object3D, idcode: number, dorpItem: string | null | undefined,
+    jobId: number | null | undefined,
+    targetId: number, eventFrame: number | undefined, rate: number,
+    planOf: () => Map<number, { missed: boolean; critical: boolean }> | null,
+  ): void {
+    if (!projectileMgr || !scene) {
+      console.log('[projectile] 跳过：管理器未就绪 mgr=' + !!projectileMgr + ' scene=' + !!scene);
+      return;
+    }
+    const choice = projectileChoiceOf(idcode, dorpItem, jobId);
+    if (!choice) {
+      console.log('[projectile] 跳过：该武器不射 idcode=' + idcode + ' dorp=' + (dorpItem ?? '无')
+        + ' job=' + (jobId ?? '无') + ' type=' + (getWeaponTypeFromIdCode(idcode) ?? '未知'));
+      // "本该射却没有模型"（例如私服新增、OpenItem 里没有的标枪）要可见 —— 但每个 idcode 只报一次，
+      // 免得每刀一条。近战武器走不到这里（`isRangedWeapon` 为假）。
+      if (isRangedWeapon(idcode) && !reportedNoProjectileModel.has(idcode)) {
+        reportedNoProjectileModel.add(idcode);
+        reportFallback('projectile', `idcode=${idcode}（dorp=${dorpItem ?? '无'}）没有投射物模型 → 本次不显示飞行物`);
+      }
+      return;
+    }
+    // 起点骨：武器挂着就用武器骨（父节点即骨）；**空手时退到右手武器骨 `Bip weapon01`**
+    // —— 法师/祭司/萨满**空手普攻也施法**（用户实测），没有武器骨就发不出来。
+    // 这与原版 `GetAttackPoint()`（`character.cpp:283` 取 `HvRightHand.ObjBip`）是同一个位置，
+    // 不是"降级"：手骨本来就是空手施法的出手点。
+    const bone = mount.group?.parent
+      ?? findBone(root, WEAPON_BONES.RIGHT_HAND)
+      ?? findBone(root, WEAPON_BONES.LEFT_HAND);
+    if (!bone) {
+      console.log('[projectile] 跳过：找不到出手骨（武器骨/右手/左手都没有）');
+      return;
+    }
+    // 落点 = **命中特效（白光 NormalHit1）打的那一点**（目标身体中部）——
+    // 不是脚下的 root.position（用户实测"箭的目标位置与视觉不符"就是这个）
+    const to = unitBodyAnchor(targetId) ?? attackTargetPos(targetId);
+    if (!to) {
+      console.log('[projectile] 跳过：目标 ' + targetId + ' 不在场内（拿不到落点）');
+      return;
+    }
+    const from = bone.getWorldPosition(new THREE.Vector3());
+    // 飞行时长 = "放箭 → 事件帧"那段动画时间（于是到达时刻 = 事件帧）；取不到事件帧则按弹速兜底
+    const flightTime = releaseFlightTime(eventFrame, rate);
+    console.log('[projectile] 发射 kind=' + choice.kind + ' 从 ' + bone.name
+      + ' (' + from.x.toFixed(1) + ',' + from.y.toFixed(1) + ',' + from.z.toFixed(1) + ')'
+      + ' → 目标 ' + targetId + ' (' + to.x.toFixed(1) + ',' + to.y.toFixed(1) + ',' + to.z.toFixed(1) + ')'
+      + ' 飞行=' + (flightTime !== undefined ? flightTime.toFixed(3) + 's' : '按弹速')
+      + ' 事件帧=' + (eventFrame ?? '无'));
+    projectileMgr.spawn(choice, {
+      from, to, flightTime,
+      // 目标会走动 ⇒ 每帧取它此刻的锚点，箭才会落在"白光打中的地方"（时长不变，速度自适应）
+      track: () => unitBodyAnchor(targetId),
+      // miss 判定：与命中音效同源（第 0 段的计划）；计划还没到 → 返回 null（按命中处理，与音效的乐观分支一致）
+      // 每帧/到点**现查**（计划可能是在起手之后才到的，见 `planOf` 的说明）
+      missed: () => {
+        const p = planOf()?.get(0);
+        return p ? p.missed : null;
+      },
+    });
+  }
+  /** 已上报过"该射却没有模型"的 idcode（去重，见 `spawnProjectile`） */
+  const reportedNoProjectileModel = new Set<number>();
 
   /** 从 root 整棵树里把 target 从其父摘除（target 可能挂任一骨骼下）。 */
   function removeFromAnywhere(root: THREE.Object3D, target: THREE.Object3D): void {
@@ -1978,10 +2097,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return hit;
     };
 
-    // ① 怪物（对齐原版遍历角色取最近）
+    // ① 怪物（对齐原版遍历角色取最近）。尸体不参与 —— 原版的目标过滤就是
+    //    `Life[0] > 0`（`playsub.cpp` / `playmain.cpp` 的 CancelAttack 判定），
+    //    否则会出现"点中尸体当攻击目标、怪死了还在原地挥拳"。
     const monsterList: [PickTag, number, number, number][] = [];
     for (const [id, m] of monsters) {
-      if (m.culled || !m.root.visible) continue;
+      if (m.culled || !m.root.visible || m.dead) continue;
       const p = m.root.position;
       monsterList.push([{ kind: 'monster', id, root: m.root }, p.x, p.y + S.monster * 0.5, p.z]);
     }
@@ -2192,6 +2313,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       /** 非零事件帧（子帧偏移，相对动作起点） */
       eventFrames: number[];
       hitFired: number;
+      /** 本次攻击的目标（起手时记下；放箭的落点与 miss 判定都要用） */
+      targetId: number;
+      /** 本次攻击的投射物是否已放（放箭时刻 = 首个事件帧 − `RELEASE_LEAD_FRAMES`，见 spawnProjectile） */
+      projFired: boolean;
       plan: Map<number, { missed: boolean; critical: boolean }> | null;
       voices: Map<number, VoiceHandle>;
       /** "计划未到"时乐观播过命中音的段号（计划迟到时据此纠正，见 applyRemoteAttackPlan） */
@@ -2309,15 +2434,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      * 但**位置插值与动画相位照常推进**：否则它重新出现时会瞬移、动作从头开始。
      */
     culled: boolean;
+    /**
+     * 尸体：已收到 `S2C_MonsterDeath`，动画冻在死亡动作末帧，等 `S2C_MonsterDisappear` 才移除。
+     *
+     * 为什么要这个标志（而不是"看 hp==0"）：尸体**仍然在移动/动画消息的广播范围内**，
+     * 服务端只要发一条 `S2C_MonsterMove`（哪怕只是转身）就会把尸体"救活"成站立/行走 ——
+     * 服务端在死后不再广播（`broadcastMove` 对 `!isAlive()` 直接 return），但那依赖远端行为，
+     * 本地必须有自己的一道门。凡是"服务端 token 驱动的状态机调用"都要先看这个标志。
+     */
+    dead: boolean;
   }
   const monsters = new Map<number, MonsterActor>();
   const monsterSpawning = new Set<number>();
-  // 加载途中被 despawn（死亡/消失）的怪 id：异步加载完成后若命中则放弃挂载，避免"尸体复活"孤儿
+  // 加载途中被 despawn（消失）的怪 id：异步加载完成后若命中则放弃挂载，避免"尸体复活"孤儿
   const monsterCancelled = new Set<number>();
+  /**
+   * 加载途中**死亡**的怪 id —— 与 `monsterCancelled` 相反：不是放弃，而是加载完成后直接进入尸体态。
+   *
+   * 必须分开记，否则"刚现身的怪被秒杀"这类情况**没有尸体**：`monsterDeath` 到达时
+   * `monsters` 里还没有这个 actor（模型还在下载），若按"取消"处理，加载完成就什么都不挂。
+   * （同族的异步加载竞态：AGENTS #11 第三条 / #25 ④ / #30。）
+   */
+  const monsterDiedDuringLoad = new Set<number>();
   // 进场竞态：与玩家 pendingAppears 同理（世界未建好时暂存，show() 后重放）
-  const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number }[] = [];
+  const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number; dead?: boolean }[] = [];
 
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number): void {
+    // 尸体：服务端的移动/动画 token 一律不采信 —— 否则一条迟到的 S2C_MonsterMove（哪怕只是转身）
+    // 就会把尸体触发回 STAND/WALK（死亡态本身挡住 triggerIdle 的守卫，但攻击/行走分支会绕过它）。
+    if (actor.dead) return;
     const isAttack = animState === ANIM_ATTACK;
     if (isAttack) {
       // 服务端每刀重发 ANIM_ATTACK（lastBroadcastAnim 强制 -1）。若上一刀攻击动画
@@ -2346,6 +2491,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function spawnMonster(actorInfo: {
     monsterId: number; name: string; modelFile: string;
     hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number;
+    /** 服务端 Appear 就带尸体标记（中途进场/重连时看见的已死怪） */
+    dead?: boolean;
   }): void {
     if (!scene) {
       pendingMonsterAppears.push(actorInfo);
@@ -2359,6 +2506,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const result = await loadMonsterModel(actorInfo.modelFile);
         await loadTextures(result.texturesToLoad);
         if (monsters.has(mid) || monsterCancelled.has(mid)) return; // 加载途中已被 despawn → 放弃
+        // 两种"一出生就是尸体"的来源，都必须在**加载完成后**才生效（模型还没到，无法摆姿势）：
+        //   ① Appear 自带 dead —— 中途进场/重连时看见的已死怪。这种**永远不会**再收到 Death
+        //      （它只发给死亡当刻在场的观察者），不看这个标记就会把尸体当活怪站着；
+        //   ② 加载途中收到了 Death —— 模型还在下载时怪就被打死。
+        // 不能按"取消"处理（monsterCancelled 那条路）：那会让"刚现身的怪被秒杀"没有尸体。
+        const dead = !!actorInfo.dead || monsterDiedDuringLoad.has(mid);
 
         const root = new THREE.Group();
         root.add(result.skeletonGroup);
@@ -2395,22 +2548,91 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animState,
           motionList: result.motionList,
           animFrame: 0,
-          snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: 0x0040 }],
-          lastAnimState: 0x0040,
+          snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: dead ? ANIM_DEAD : 0x0040 }],
+          lastAnimState: dead ? ANIM_DEAD : 0x0040,
           culled: false,
+          dead,
         };
         monsters.set(mid, actorObj);
-        animState.triggerIdle();
-        console.log('[WorldView] 怪物出现: id=' + mid + ' model=' + actorInfo.modelFile + ' name=' + actorInfo.name);
+        if (dead) applyMonsterDeathPose(actorObj);
+        else animState.triggerIdle();
+        console.log('[WorldView] 怪物出现: id=' + mid + ' model=' + actorInfo.modelFile + ' name=' + actorInfo.name
+          + (dead ? ' [尸体]' : ''));
       } catch (e) {
         console.warn('[WorldView] 怪物加载失败 id=' + mid + ' model=' + actorInfo.modelFile, e);
       } finally {
         monsterSpawning.delete(mid);
         monsterCancelled.delete(mid);
+        monsterDiedDuringLoad.delete(mid);
       }
     })();
   }
 
+  /**
+   * 让一只怪进入**尸体态**：播死亡动作并停在末帧（原版 `playsub.cpp` 死亡分支
+   * `frame = (MotionInfo->EndFrame - 1) * 160` —— 尸体不起身）。
+   *
+   * 唯一入口：`monsterDeath`（死亡当刻在场/迟到加载中）与 `spawnMonster`（Appear 就带 dead）
+   * 都走这里 —— 两条路必须完全同一种表现，否则"我自己打死的"和"我进场时它已经死了"
+   * 会呈现两种尸体（AGENTS #15：同一个判定出现第二份就是 bug 的种子）。
+   *
+   * 模型没有 DEAD 条目（实测 555 个怪物 .inx 里 94 个没有内联 0x120，资产里另有独立的
+   * `*-die` 模型）时 `triggerDead()` 返回 false 并 `reportFallback` —— 此时**不编造动作**，
+   * 尸体停在当前帧（"仅停止操作"），降级清单里能看到确切是哪个模型缺条目。
+   */
+  function applyMonsterDeathPose(actor: MonsterActor): void {
+    actor.dead = true;
+    actor.hp = 0;
+    actor.stateBar = false;
+    // 失败时**不做任何替代动作**（AGENTS #12：禁止静默兜底 —— 随机播一条别的动作会让
+    // "这个模型没有死亡动画"这件事彻底看不出来）。此时动画停在收到死亡那一刻的姿势，
+    // 冻结由 updateMonsters 里"非 DEAD 条目不推进帧"实现，同时 reportFallback 已进降级清单。
+    actor.animState.triggerDead();
+  }
+
+  /**
+   * 已经指向这具尸体的**目标**要在它死掉那一刻失效：`pickTargetAt` 已在源头排除尸体，
+   * 所以这里只处理"死之前就已经在追/悬停"的那一个。
+   *
+   * 清 `moveTarget` 就等于停掉自动攻击循环（主循环的 `monsterEngaged` 以它为驱动），
+   * 与原版一致 —— 目标的 `Life[0] <= 0` 时 `CancelAttack()`（`playmain.cpp:1781-1786`）。
+   * ⚠ **不清 `selfAttackTargetId`**：已经挥出去的那一拳还要在命中帧上报目标，提前清会让它打空
+   * （该纪律见 `cancelTarget` 的注释）；它也不是选点来源。
+   */
+  function clearMonsterTargets(actor: MonsterActor): void {
+    if (moveTarget?.kind === 'monster' && moveTarget.id === actor.monsterId) {
+      moveTarget = null;
+      moveStuckStart = 0;
+    }
+    if (hoverTarget?.root === actor.root) {
+      hoverTarget = null;
+    }
+  }
+
+  function monsterDeath(monsterId: number): void {
+    const actor = monsters.get(monsterId);
+    if (!actor) {
+      // 无 actor 的两种"还没挂上"的窗口，都要把死亡意图记下来（原因见下），
+      // 否则这两种情况下**没有尸体**，而且客户端还会把它当活怪显示到 Disappear 为止：
+      //   ① 世界还没建好，Appear 被暂存在 pendingMonsterAppears（进场首帧就是这个窗口）
+      //   ② 模型正在加载（刚现身的怪被秒杀）
+      const pending = pendingMonsterAppears.find((p) => p.monsterId === monsterId);
+      if (pending) {
+        pending.dead = true;
+        return;
+      }
+      if (monsterSpawning.has(monsterId)) monsterDiedDuringLoad.add(monsterId);
+      else console.log('[WorldView] 收到未知怪物的死亡事件: id=' + monsterId
+        + '（本地没有它的 actor，也没有在加载/暂存 → 可能刚换过图，世界已被清空）');
+      return;
+    }
+    if (actor.dead) return;
+    applyMonsterDeathPose(actor);
+    clearMonsterTargets(actor);
+    console.log('[WorldView] 怪物死亡(尸体保留): id=' + monsterId + ' name=' + actor.name);
+  }
+
+  /** 怪物消失（`S2C_MonsterDisappear`）：真正移除 —— 尸体停留到此为止（服务端 decay 到点发的） */
   function despawnMonster(monsterId: number): void {
     const actor = monsters.get(monsterId);
     if (actor) {
@@ -2419,6 +2641,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (monsterSpawning.has(monsterId)) monsterCancelled.add(monsterId); // 加载途中 → 标记取消
     monsterSpawning.delete(monsterId);
+    monsterDiedDuringLoad.delete(monsterId); // 已经"消失"了，不该再等加载变成尸体
   }
 
   // ==================== NPC（S2C_NpcAppear，静态站桩） ====================
@@ -2973,6 +3196,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           motion: m,
           eventFrames: Array.from(m.eventFrame).filter((f) => f > 0),
           hitFired: 0,
+          targetId,
+          projFired: false,
           plan: pending && performance.now() - pending.at < 2000 ? pending.map : null,
           voices: new Map(),
           optimistic: new Set(),
@@ -3251,7 +3476,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // 怪物：范围内常显；远处仅"悬停/点击选中"才显示（对齐 exm：普通怪名的默认行为是选中才显示）
     for (const a of monsters.values()) {
-      if (!a.root.visible) continue;
+      if (!a.root.visible || a.dead) continue;   // 尸体不挂名牌/血条（原版血条按 Life 判定，尸体已不参与）
       const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
       const far = dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE;
       const sel = isSelected(a.root);
@@ -3540,16 +3765,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
       const motion = actor.animState.getCurrentMotion();
       if (motion) {
-        actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt).frame;
-        const endFrame = motion.endFrame * 160;
-        const startFrame = motion.startFrame * 160;
-        if (actor.animFrame >= endFrame) {
-          if (motion.repeat) {
-            const len = endFrame - startFrame;
-            actor.animFrame = startFrame + ((actor.animFrame - startFrame) % len);
-          } else {
-            const next = actor.animState.onAnimationEnd();
-            if (next) actor.animFrame = next.startFrame * 160;
+        // 尸体：只在"当前确实播着死亡条目"时才推进帧（推到末帧后 advanceAnimFrame 自动钳住）。
+        // 模型没有 DEAD 条目时（triggerDead 失败）当前 motion 会留在死亡那一刻的 walk/idle，
+        // 若照常推进它就会**继续循环/播完回站** —— 所以那种情况下一帧都不推进，原地冻住。
+        const deadFrozen = actor.dead && actor.animState.getCurrentState() !== actor.animState.STATE.DEAD;
+        if (!deadFrozen) {
+          actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt).frame;
+          const endFrame = motion.endFrame * 160;
+          const startFrame = motion.startFrame * 160;
+          if (actor.animFrame >= endFrame) {
+            if (motion.repeat) {
+              const len = endFrame - startFrame;
+              actor.animFrame = startFrame + ((actor.animFrame - startFrame) % len);
+            } else {
+              const next = actor.animState.onAnimationEnd();
+              if (next) actor.animFrame = next.startFrame * 160;
+            }
           }
         }
         // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
@@ -3789,6 +4020,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     monsters.clear();
     monsterSpawning.clear();
     monsterCancelled.clear();
+    monsterDiedDuringLoad.clear();   // 清场时同样要清 —— 否则换图后残留的 id 会把下一只同 id 的怪错当尸体
     pendingMonsterAppears.length = 0;
 
     for (const g of groundItems.values()) {
@@ -3868,6 +4100,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (actor.animState.getCurrentState() === actor.animState.STATE.ATTACK
             && actor.attack && actor.attack.motion === motion) {
           const compFrame = step.raw - motion.startFrame * 160;
+          // 放箭：与自机同一条规则（事件帧前 RELEASE_LEAD_FRAMES 帧、飞行用掉这段提前量）
+          if (!actor.attack.projFired && actor.attack.eventFrames.length > 0
+              && compFrame >= actor.attack.eventFrames[0]! - RELEASE_LEAD_FRAMES * 160) {
+            actor.attack.projFired = true;
+            spawnProjectile(actor.weaponMount, actor.root, actor.appearance?.weaponIdcode ?? 0, actor.appearance?.weaponDorp ?? null,
+              actor.appearance?.classId ?? null, actor.attack.targetId, actor.attack.eventFrames[0], actor.animRate,
+              () => actor.attack?.plan ?? null);
+          }
           while (actor.attack.hitFired < actor.attack.eventFrames.length
                  && compFrame >= actor.attack.eventFrames[actor.attack.hitFired]!) {
             playRemoteAttackSegment(actor);
@@ -4254,6 +4494,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 用 step.raw（未回绕）判定，否则循环动作回绕后会漏判/重判
         if (animState.getCurrentState() === animState.STATE.ATTACK && selfAttackMotion) {
           const compFrame = step.raw - selfAttackMotion.startFrame * 160;
+          // 放箭：拉满弓那一下（首个事件帧前 RELEASE_LEAD_FRAMES 帧）—— 与射出去的命中音效同一时刻
+          // 到达（飞行时长 = 这段提前量）。放一次就够（同一刀不会连放）。
+          if (!selfProjectileFired && selfAttackEventFrames.length > 0
+              && compFrame >= selfAttackEventFrames[0]! - RELEASE_LEAD_FRAMES * 160) {
+            selfProjectileFired = true;
+            spawnProjectile(selfWeaponMount, charGroup!, selfAppearance?.weaponIdcode ?? 0, selfAppearance?.weaponDorp ?? null,
+              selfAppearance?.classId ?? null, selfAttackTargetId, selfAttackEventFrames[0], selfAnimRate,
+              () => selfAttackPlan);
+          }
           while (selfAttackHitFired < selfAttackEventFrames.length
                  && compFrame >= selfAttackEventFrames[selfAttackHitFired]) {
             const seg = selfAttackHitFired;
@@ -4450,6 +4699,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             selfAttackTargetId = targetId;
             selfAttackEventFrames = Array.from(m.eventFrame).filter((f) => f > 0);
             selfAttackHitFired = 0;
+            selfProjectileFired = false;
             selfAttackVoices.clear();
             selfAttackPlan = null;            // 新一次攻击：上一份计划作废
             selfPlanSounded.clear();
@@ -4464,6 +4714,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           // 并回 S2C_AttackPlan（B 方案）。段数 = 非零事件帧个数（无事件帧则 1 段）。
           opts?.onAttackStart?.(targetId, selfAttackSeq, selfAttackEventFrames.length || 1,
             selfAttackMotion?.index ?? 0, selfAnimClip);
+          // ⚠ 投射物**不在这里**放（用户 2026-09-16 实测："抬手拉弓时箭就飞出去了"）：
+          //   原版放箭在事件帧那一刻，而我们的命中判定/音效也在事件帧 ⇒ 改到"事件帧前
+          //   RELEASE_LEAD_FRAMES 帧"放箭、飞行正好用掉这段时间（到达时刻仍 = 事件帧）。
+          //   见下方逐帧的"放箭检查"。
           // ⚠ 挥击音**不在这里播**：原版在**命中帧**（事件帧）才调 WeaponPlaySound，
           //   且是**每段一次**（多段攻击每段都响）。见下方逐帧的事件帧派发。
         }
@@ -4484,6 +4738,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // NPC（静态站桩，仅 idle 动画）
     updateNpcs(dt);
     perfMark('NPC');
+    // 投射物（弓/弩的箭、标枪）：纯表现，飞行到点即消失
+    projectileMgr?.update(dt);
+    perfMark('投射物');
     // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
     updateGroundItems(rafMs);
     perfMark('地面物品');
@@ -4862,6 +5119,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // **带上朝向** `rotation.y`（服务端 `S2C_MonsterAppear.angle` / `MonsterMove` 一直在发，
       // 我们一直存在 `root.rotation.y`）—— 地图把它画成三角形，尖指朝向（用户 2026-09-16）。
       for (const [, m] of monsters) {
+        // 尸体不上图：它不是"这里的怪"，标上去只会让玩家以为还有活怪在（原版小地图本来也不画怪）
+        if (m.dead) continue;
         out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z, angle: m.root.rotation.y });
       }
       return out;
@@ -4897,14 +5156,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateSelfAppearance: (appearance) => { void reloadSelfModel(appearance); },
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0 });
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead });
     },
     monsterMove: (monsterId, x, y, z, angle, animState) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState);
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
-    monsterDeath: (monsterId) => despawnMonster(Number(monsterId)),
+    monsterDeath: (monsterId) => monsterDeath(Number(monsterId)),
     npcAppear: (entityId, nameKey, modelFile, x, y, z, angle) => {
       spawnNpc({ entityId: Number(entityId), nameKey: nameKey || '', modelFile: modelFile || '', x: Number(x), y: Number(y), z: Number(z), angle: Number(angle) || 0 });
     },
@@ -4962,6 +5221,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (outlinePass) outlinePass = null;
       if (renderer) renderer.dispose();
       renderer = null;
+      // 投射物：摘掉在飞的（模型缓存留着 —— 按 URL 缓存，与 asset-manager 同一约定，换图不必重下）
+      projectileMgr?.dispose();
+      projectileMgr = null;
       scene = null;
       camera = null;
       mapHandles.clear();

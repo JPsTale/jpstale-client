@@ -14,8 +14,11 @@ import { parseInx, parseSmb } from '../core/char-parser.js';
 import { loadParsedAsset } from '../core/asset-manager.js';
 import { buildSkeleton, buildSkinnedMesh } from './skinned-builder.js';
 import type { InxData, MotionInfo, SmbData } from '../char/char-format.js';
-import { CHRMOTION_EXT } from '../char/char-format.js';
+import { CHRMOTION_EXT, CHRMOTION_STATE_DEAD } from '../char/char-format.js';
 import type * as THREE from 'three';
+
+/** 原版载入动作表时对死亡动作扣掉的帧数（`fileread.cpp`，见 `buildMotionList` 内注释） */
+const DEAD_MOTION_END_TRIM = 8;
 
 /**
  * 取资产 + 解析，走 AssetManager 的统一入口（见 core/asset-manager.ts）。
@@ -93,6 +96,15 @@ export function buildMotionList(animSmb: SmbData, inx: InxData): MotionInfo[] {
       const off = tmFrame[mi.motionFrame - 1].startFrame / 160;
       startFrame += off;
       endFrame += off;
+    }
+    // 死亡动作末帧对齐原版：`fileread.cpp` 在载入动作表时把 DEAD 条目的 EndFrame 减 8
+    //（NewSourcePT `SrcGame/src/fileread.cpp:446-448`、ex-machina `fileread.cpp:392-395`，
+    // 两棵树逐字相同）。目的就是让**尸体停在"已经躺好"那一帧**，而不是过渡的最后 8 帧
+    // ——那是死透前还在下沉的画面。客户端渲染用的就是这张表（原版客户端同一份 fileread），
+    // 所以这 8 帧必须同样扣掉，否则我们的尸体比原版多趴 8 帧的"余动"。
+    // （实测 555 个怪物 .inx 里 462 个带 0x120 条目，最短 18 帧 > 8，扣完仍为正。）
+    if (mi.state === CHRMOTION_STATE_DEAD) {
+      endFrame -= DEAD_MOTION_END_TRIM;
     }
     list.push({ ...mi, startFrame, endFrame });
   }

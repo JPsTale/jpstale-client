@@ -11,7 +11,10 @@
  */
 import * as THREE from 'three';
 import { loadEffect, type LoadedEffect, type EffectDiag } from './effect-assets.js';
-import { loadPart, type LoadedPart } from './part-assets.js';
+import { loadPart, loadPartFromSystem, type LoadedPart } from './part-assets.js';
+import type { PartHandle } from './part-emitter.js';
+import type { PartSystem } from '../../core/effect/part-script.js';
+import { reportFallback } from '../../char/fallback-log.js';
 import { createPartRuntime, type PartRuntime } from './part-emitter.js';
 import type { EffectBlend } from '../../core/effect/anim-ini.js';
 import { EFFECT_HZ } from '../../core/effect/anim-ini.js';
@@ -44,6 +47,12 @@ interface Instance {
 export interface EffectManager {
   /** 播放一个特效：先按 INI 广告牌解析，找不到再按 `.part` 粒子脚本解析 */
   spawn(name: string, opts: SpawnOpts): Promise<boolean>;
+  /**
+   * 播放一份**代码内 spec**（没有数据文件的那类原版特效，如法杖普攻弹 `MONSTER_IMP_SHOT1`）。
+   * `opts.attach` 给出时粒子跟随该节点（飞行投射物），尾迹留在身后。
+   * 返回**可停止的句柄**（飞行物到点要 `stop()`，否则粒子会堆在命中点上）——失败返回 null。
+   */
+  spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<PartHandle | null>;
   /** 每帧推进（`.part` 的朝向需要相机） */
   update(dt: number, camera: THREE.Camera): void;
   clear(): void;
@@ -172,6 +181,20 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
     }
   }
 
+  async function spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<PartHandle | null> {
+    const part = await loadPartFromSystem(system.name || 'inline', system);
+    console.log('[fx] 播代码内 spec「' + part.name + '」：emitter ' + part.diag.emitterCount
+      + ' 个，贴图 ' + JSON.stringify(part.diag.textures)
+      + (part.diag.missing.length ? ' ⚠ 缺失 ' + part.diag.missing.join(',') : '')
+      + '，跟随节点=' + !!opts.attach);
+    const handle = parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null);
+    partDiag = part.diag;
+    if (part.diag.missing.length) {
+      reportFallback('fx', `代码内 spec「${part.name}」贴图缺失：${part.diag.missing.join(', ')}`);
+    }
+    return handle;
+  }
+
   function update(dt: number, camera: THREE.Camera): void {
     parts.update(dt, camera);
 
@@ -215,6 +238,7 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
 
   return {
     spawn,
+    spawnSystem,
     update,
     clear,
     stats: () => ({ active: live.length, pending, loaded, parts: parts.stats().emitters }),
