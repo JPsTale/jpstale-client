@@ -42,14 +42,15 @@ import { sfx, weaponSoundCode, type HandType, type VoiceHandle } from '../audio/
 import { playItemSound } from '../audio/item-sounds.js';
 import { USE_EFFECT_INI, useEffectKindOf, type UseEffectKind } from '../game/useEffect.js';
 import { predictSwitchAppearance } from '../game/weapon-set.js';
-import { POTION_BURST, POTION_PARTICLE_SIZE, POTION_LIGHT_SIZE } from '../render/effects/potion-burst.js';
+// 药水的那几张 INI 与 `POTION_BURST` 参数已移交给 `render/effects/quarks-runtime.ts`（改走 three.quarks）
 import { createEffectManager } from '../render/effects/effect-manager.js';
+import { createQuarksRuntime } from '../render/effects/quarks-runtime.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_STATE_DEAD } from '../char/char-format.js';
 import { advanceAnimFrame } from '../char/animation.js';
 import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
-import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, type ProjectileManager } from '../render/projectile.js';
+import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, MAGIC_JOBS, type ProjectileManager } from '../render/projectile.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
 import { loadCameraPrefs, saveCameraPrefs, CAM_DIST_MIN, CAM_DIST_MAX, CAM_ANX_MIN, CAM_ANX_MAX } from './camera-prefs.js';
@@ -57,7 +58,7 @@ import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode, appearanceModelKey } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, WeaponMount } from '../render/weapon-loader.js';
+import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, weaponSizeMax, WeaponMount } from '../render/weapon-loader.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
@@ -180,7 +181,7 @@ export interface WorldView {
   /** 记录自机 playerId（enterGame.playerId），供 S2C_PlayerMove 路由收敛 */
   setSelfId(playerId: number): void;
   /** 自机移动速度（世界单位/秒，服务端权威属性）；默认 EU 最高档，S2C_PlayerState 到达后覆盖 */
-  setSpeed(walkWps: number, runWps: number): void;
+  setSpeed(walkWps: number, runWps: number, walkAnimRate?: number, runAnimRate?: number): void;
   /** playerId 是否为自机（供 S2C_PlayerAppear 丢弃自己的外观快照） */
   isSelf(playerId: number): boolean;
   /** 自机 hp/maxHp（S2C_PlayerState 喂入；名牌血条用） */
@@ -265,7 +266,7 @@ export interface WorldView {
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string, useSeq?: number, useItemIdcode?: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
-  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkWps?: number, runWps?: number): void;
+  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkAnimRate?: number, runAnimRate?: number): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
   /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型 */
@@ -503,6 +504,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let running = uiPrefs0.running;
   let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
   let effects: ReturnType<typeof createEffectManager> | null = null; // INI 广告牌特效
+  /** three.quarks 粒子运行时（现阶段接管：药水爆发、法术弹）见 `render/effects/quarks-runtime.ts` */
+  let quarksFx: ReturnType<typeof createQuarksRuntime> | null = null;
 
   // ── 昼夜状态（移植 /pt/maps index.html:512-615，忠实原版 Winmain.cpp:5394 + playmain.cpp:2981）──
   let dayNightHour = 12;          // 当前游戏小时（由 main.ts 喂入）
@@ -569,6 +572,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let projectileMgr: ProjectileManager | null = null;
   // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
   let selfAnimRate = 1;
+  /** 自机走/跑动画速率（服务端下发，1 档 = 1.0）—— 客户端不再自己换算 */
+  let selfWalkAnimRate = 1;
+  let selfRunAnimRate = 1;
   // 本次挥拳的命中帧跟踪：motion + 目标 + 事件帧（相对 startFrame×160，非零）+ 已触发段数
   let selfAttackMotion: MotionInfo | null = null;
   let selfAttackTargetId = 0;
@@ -795,15 +801,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfRunWps = (((25 * 10 + 250) * 460) >> 8) / 256 * 60;   // ≈210.5
   let selfWalkWps = (((25 * 10 + 250) * 180) >> 8) / 256 * 60;  // ≈82.3
   /**
-   * 「1 档」移动速度（= 上面那两个默认值，即无任何速度加成时的基准）——
-   * 用来把走/跑动画的播放速度按**实际移速**缩放（用户 2026-09-16 要求）。
+   * 「1 档」移动速度 —— 基准，用来把走/跑动画的播放速度按**实际移速**缩放（用户 2026-09-16 要求）。
    *
    * 为什么需要：动画本身是按基准速度做的，玩家穿上加速装备（或吃了加速药）后
    * 位移变快、脚步却还是原来那套 ⇒ 看起来在"滑行"。按 `实际 ÷ 1档` 缩放播放速度，
    * 步频才跟得上位移。
+   *
+   * ⚠ **此前这里直接取了上面那两句默认值，而它们是「档位 25（EU 最高档）」**（同 797 行注释）；
+   * 档位体系见 `docs/movement-speed-analysis.md`：`MoveSpeed = 档位*10 + 250`，范围 **1~25**。
+   * 于是基准 = 82.3/210.5 而真正的一档 = 42.7/109.5 ⇒ 基准偏大 **1.93 倍**，
+   * 一档时 `rate = 42.7/82.3 ≈ 0.52`，**动画速度只有一半**（用户实测："1 档移动速度明显降低"）。
+   * 修法：基准改按**档位 1** 的公式算 ⇒ 一档 `rate = 1`，加速后 `rate > 1`（正是原设计意图）。
    */
-  const BASE_WALK_WPS = selfWalkWps;
-  const BASE_RUN_WPS = selfRunWps;
+  // 「1 档基准」不再由客户端持有 —— 走/跑动画速率改由**服务端查表下发**
+  //（`GameConstants.WALK_ANIM_RATE`，随 `S2C_PlayerState` / `S2C_PlayerAppear` 到达）。
+  // 此前客户端用"本地的默认值"当 1 档基准，而那份默认值其实是档位 25 ⇒ 一档动画被拖慢一半（用户实测）。
   // 上报状态机
   let wasMoving = false;        // 上一帧是否在移动（本地动画/停止上报去重）
   let lastMoveReportAt = 0;
@@ -840,7 +852,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   /** 边界门槛提示的节流（别每帧都刷屏） */
   let lastGateMsgAt = 0;
   // 掉落状态（对齐原版：下落有 FALLDOWN 动画，下落中不能水平移动/转向）
-  let falling = false;          // 是否正在下落
+  /**
+   * 是否进入下落且要播 FALLDOWN（`diff > 32`）。
+   *
+   * ⚠ 别拿它当"是否在下落"用：8~32 之间同样在逐帧下落（原版 `character.cpp:1766-1771` 的
+   * `pY -= 8 * fONE`），而那时**不进 FALLDOWN**；原版在那段里也不禁止水平移动
+   * ⇒ "小坎上能走过去"是原版行为。曾为此加过一个"只要在掉就定身"的 `descending`，
+   * 那是**偏离原版**的，已回滚。
+   */
+  let falling = false;
   let fallHeight = 0;           // 下落起始高度差（触发 FALLDAMAGE 判定）
   let lastY = 0;                // 上一帧自机 y（检测下落位移，同步角色高度）
 
@@ -1194,10 +1214,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     // 特效实例管理（INI 广告牌特效；depthWrite=false + 按 BlendType 混合）
     effects = createEffectManager(scene);
+    // three.quarks 运行时（与 effects 并存：现阶段只接管药水与法术弹，其余仍走 INI/`.part`）
+    quarksFx = createQuarksRuntime(scene);
     // ⚠ 顺序有讲究：投射物管理器**必须**在特效管理器之后建 —— 法术弹的粒子是挂到飞行节点上的
     // （`projectile.ts` 里 `fx.spawnSystem`），早建一步拿到的就是 `null` ⇒ 箭/标枪照常、法术弹静默没有特效
     // （2026-09-16 用户实测"看不到粒子特效"的根因）。
-    projectileMgr = createProjectileManager(scene, effects);
+    projectileMgr = createProjectileManager(scene, effects, quarksFx);
   }
 
   // 有效小时：调试键覆盖优先，否则跟随 GameClock
@@ -1496,7 +1518,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    *  传 idcode 是因为**剑族要用低字判短剑**（WS201-203 → small swing 15）。 */
   function selfWeaponSoundCode(): number {
     const job = getGameSnapshot().character?.job ?? 0;
-    return weaponSoundCode(selfWeaponType(), selfHandType(), job === 7 || job === 8, selfAppearance?.weaponIdcode || 0);
+    // 施法职业判据复用 `MAGIC_JOBS`（唯一实现，`render/projectile.ts`）：此前这里是手写的
+    // `job === 7 || job === 8`，**漏了萨满 10** ⇒ 空手时 `isCaster` 为假、攻击音落到 punch hit；
+    // 萨满拿法杖也会走钝击音而非 casting（用户实测："祭司徒手的攻击音是物理职业的音效"）。
+    return weaponSoundCode(selfWeaponType(), selfHandType(), MAGIC_JOBS.has(job), selfAppearance?.weaponIdcode || 0);
   }
 
   /**
@@ -1758,6 +1783,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     const from = bone.getWorldPosition(new THREE.Vector3());
+    // 原版出手点 = 武器骨 + **沿武器伸出方向偏移「半个武器长度」**：
+    // `GetAttackPoint`（exm `character.cpp:301`）取 `tz = ChrTool->SizeMax / 2` 沿武器骨的局部 Z 偏移，
+    // 而 `SizeMax` 是装武器时从 mesh 量的（`:1413-1424`，遍历子网格取 maxY）。
+    // 方向这里取"骨 → 武器组包围盒中心"（即武器伸出方向），长度取 `weaponSizeMax`——
+    // 与原版同义，且不依赖"模型以 Y 为长轴"的建模约定（我方做过 Z-up→Y-up 转换）。
+    {
+      const wg = mount.group;
+      const sizeMax = wg ? weaponSizeMax(wg) : 0;
+      if (wg && sizeMax > 0) {
+        const dir = new THREE.Box3().setFromObject(wg).getCenter(new THREE.Vector3()).sub(from);
+        if (dir.lengthSq() > 1e-6) from.addScaledVector(dir.normalize(), sizeMax / 2);
+      }
+    }
     // 飞行时长 = "放箭 → 事件帧"那段动画时间（于是到达时刻 = 事件帧）；取不到事件帧则按弹速兜底
     const flightTime = releaseFlightTime(eventFrame, rate);
     console.log('[projectile] 发射 kind=' + choice.kind + ' 从 ' + bone.name
@@ -2323,7 +2361,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       || st === animState?.STATE.SKILL
       || st === animState?.STATE.EAT
       || st === animState?.STATE.DAMAGE
-      || st === animState?.STATE.DEAD;
+      || st === animState?.STATE.DEAD
+      // 落地表现期间同样要定身：**落地那一刻 `falling` 已被置回 false**
+      //（见 `updateFalling` 的落地分支），而起身/落地受伤动画还在播
+      // ⇒ 不列在这里就能在"起身"中走开（用户实测）。`FALLDOWN` 由 `falling` 覆盖，不必再列。
+      || st === animState?.STATE.FALLSTAND
+      || st === animState?.STATE.FALLDAMAGE;
   }
 
   function mouseFacing(): number | null {
@@ -2405,8 +2448,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     animFrame: number;
     animRate: number; // 动画播放速率倍率（1=基准；挥拳按攻速对应时长改写，走/跑按移速缩放，其余复原）
     /** 该玩家的移动速度（游戏单位/秒，`S2C_PlayerAppear` 带来）—— 走/跑动画按它缩放播放速度 */
-    walkWps: number;
-    runWps: number;
+    /** 走/跑动画速率（服务端下发；1 档 = 1.0）—— 不再存速度值（那条消息里那对字段已废弃） */
+    animWalkRate: number;
+    animRunRate: number;
     faceAngle: number | null; // 挥拳期间强制朝向（signalAttack 算，updateRemotes 在 ATTACK 态采用）
     snaps: RemoteSnap[];
     lastAnimState: number;
@@ -4158,7 +4202,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
-  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; walkWps?: number; runWps?: number }): void {
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; animWalkRate?: number; animRunRate?: number }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
@@ -4240,8 +4284,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animFrame: 0,
           animRate: 1,
           // 移动速度（0 = 服务端没给 ⇒ 退成 1 档基准，播放速率恒 1）
-          walkWps: actorInfo.walkWps ?? 0,
-          runWps: actorInfo.runWps ?? 0,
+          animWalkRate: actorInfo.animWalkRate ?? 1,
+          animRunRate: actorInfo.animRunRate ?? 1,
           faceAngle: null,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle ?? 0, anim: 0x0040 }],
           lastAnimState: 0x0040,
@@ -4390,9 +4434,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         //   其余 → 1。移速由 `S2C_PlayerAppear` 带来，0 = 服务端没给 ⇒ 退成 1 档（速率 1）。
         const rst = actor.animState.getCurrentState();
         if (rst === actor.animState.STATE.WALK) {
-          actor.animRate = actor.walkWps > 0 ? actor.walkWps / BASE_WALK_WPS : 1;
+          actor.animRate = actor.animWalkRate > 0 ? actor.animWalkRate : 1;
         } else if (rst === actor.animState.STATE.RUN) {
-          actor.animRate = actor.runWps > 0 ? actor.runWps / BASE_RUN_WPS : 1;
+          actor.animRate = actor.animRunRate > 0 ? actor.animRunRate : 1;
         } else if (rst !== actor.animState.STATE.ATTACK) {
           actor.animRate = 1;
         }
@@ -4709,7 +4753,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (diff > 8 * 256) {
       // 下落中：逐帧下落（对齐原版 PHeight 8/帧），首帧触发 FALLDOWN
       selfPos.y = (pY - 8 * 256) / 256;
-      if (diff > 32 * 256 && !falling) {
+      if (diff > 32 * 256 && !falling) {  // > 32 才进 FALLDOWN（8~32 只有下落、不播动画）
         falling = true;
         fallHeight = diff;
         animState.triggerFallDown();
@@ -4720,6 +4764,29 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfPos.y = groundY / 256;
     if (falling) {
       falling = false;
+      // 落地扬尘 —— 照原版 `smCHAR::SetSmoking`（exm `character.cpp:1685-1693`，它在
+      // `updateFalling` 的落地分支被调，`:1785` / `:1874`）：
+      //   ① **左右各一团**（原版 `GetMoveLocation(±4 * fONE, 0, 0, 0, Angle.y, 0)`）
+      //   ② 尺寸 **20 × 20**（`StartEffect(..., 20, 20, EFFECT_DUST1)`）
+      //   ③ 位置 **脚下 + 8**（`pY + 8 * fONE`）
+      // ⚠ 只在**真的掉落**时喷：这里的 `if (falling)` 已经把"掉落落地"与"贴地跟随"
+      //（`diff <= 8`，不置 falling）分开了，后者不该有扬尘。
+      // ⚠ 跑步**没有**这个效果 —— 原版脚步声事件帧里只有音效、涉水波纹、冰面脚印（`:4231-4262`）。
+      if (effects) {
+        const rad = ((selfAngle ?? 0) * Math.PI) / 180;
+        const rx = Math.cos(rad);
+        const rz = -Math.sin(rad);
+        for (const side of [-4, 4]) {
+          void effects.spawn('Dust1', {
+            pos: {
+              x: selfPos.x + rx * side,
+              y: selfPos.y + 8,
+              z: selfPos.z + rz * side,
+            },
+            size: 20,
+          });
+        }
+      }
       if (fallHeight > 200 * 256) animState.triggerFallDamage();
       else animState.triggerFallStand();
     }
@@ -4808,9 +4875,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (curSt === animState.STATE.ATTACK) {
           // 保持起手时设的 selfAnimRate（按攻速镜像服务端公式）
         } else if (curSt === animState.STATE.WALK) {
-          selfAnimRate = BASE_WALK_WPS > 0 ? selfWalkWps / BASE_WALK_WPS : 1;
+          selfAnimRate = selfWalkAnimRate;      // 走：服务端下发的速率（查表值，1 档 = 1.0）
         } else if (curSt === animState.STATE.RUN) {
-          selfAnimRate = BASE_RUN_WPS > 0 ? selfRunWps / BASE_RUN_WPS : 1;
+          selfAnimRate = selfRunAnimRate;       // 跑：同上
         } else {
           selfAnimRate = 1;
         }
@@ -5140,6 +5207,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     perfMark('音频更新');
     // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
     if (effects && camera) effects.update(dt, camera);
+    if (quarksFx) quarksFx.update(dt);
     perfMark('技能特效');
 
     // 小地图
@@ -5386,9 +5454,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 药水：**30 颗物理粒子**（原版 EFFECT_POTION{1,2,3}，见 potion-burst.ts 的调查结论）——
       // 不是"一张会飘的动画"，是每颗各自四散 + 上抛 + 重力 + 自转，寿命到就消失。
       // size 必须显式给：potion1.ini 无 Size 段，否则会大 4 倍（见 POTION_PARTICLE_SIZE）。
-      void effects?.spawn(USE_EFFECT_INI[kind], { pos, burst: POTION_BURST, size: POTION_PARTICLE_SIZE });
-      // 原版每张 POTION{1,2,3} 之前都先叠一张 120×120 的 Light1 闪光
-      void effects?.spawn('Light1', { pos, size: POTION_LIGHT_SIZE });
+      // 药水已改走 **three.quarks**（见 `render/effects/quarks-runtime.ts`）：30 颗物理粒子 +
+      // 那记 120×120 闪光，参数仍是同一份 `POTION_BURST`。
+      // 换的原因之一：旧实现把粒子寿命截断在 INI 动画播完那一刻（`potion1.ini` 65 帧 = 0.929s），
+      // 而原版是寿命独立控制（`SetLive(rand()%20+55)` = 55~74 帧 = 0.786~1.057s，动画是 `ANI_LOOP`）。
+      // `kind` 决定用哪支：HP/MP/STM 三种药水的贴图（颜色）不同，参数共用
+      quarksFx?.playPotion(kind, pos);
       playItemSound(20);   // SIN_SOUND_EAT_POTION
     }
   }
@@ -5592,13 +5663,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     },
-    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance, walkWps, runWps) => {
-      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance, walkWps, runWps });
+    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance, animWalkRate, animRunRate) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance, animWalkRate, animRunRate });
     },
-    setSpeed: (walkWps, runWps) => {
-      // 服务端权威属性速度（世界/秒）；非法值忽略，保留当前值
+    setSpeed: (walkWps, runWps, walkAnimRate, runAnimRate) => {
+      // 速度（世界/秒）—— 用于**本地移动步长**；非法值忽略，保留当前值
       if (Number.isFinite(walkWps) && walkWps > 0) selfWalkWps = walkWps;
       if (Number.isFinite(runWps) && runWps > 0) selfRunWps = runWps;
+      // 动画速率：**服务端查表算好下发**（`GameConstants.WALK_ANIM_RATE`）—— 客户端不再自己换算。
+      // 此前是"速度 ÷ 本地硬编码基准"，而那份基准停在档位 25 ⇒ 一档动画被拖慢一半（用户实测）。
+      if (typeof walkAnimRate === 'number' && walkAnimRate > 0) selfWalkAnimRate = walkAnimRate;
+      if (typeof runAnimRate === 'number' && runAnimRate > 0) selfRunAnimRate = runAnimRate;
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     updateSelfAppearance: (appearance) => { applySelfAppearance(appearance); },

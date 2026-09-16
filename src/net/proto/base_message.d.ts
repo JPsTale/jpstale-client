@@ -4216,11 +4216,11 @@ export namespace jpt {
             /** S2C_PlayerAppear clanMark. */
             clanMark: string;
 
-            /** S2C_PlayerAppear walkSpeed. */
-            walkSpeed: number;
+            /** S2C_PlayerAppear animWalkRate. */
+            animWalkRate: number;
 
-            /** S2C_PlayerAppear runSpeed. */
-            runSpeed: number;
+            /** S2C_PlayerAppear animRunRate. */
+            animRunRate: number;
 
             /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
@@ -4339,11 +4339,11 @@ export namespace jpt {
                 /** S2C_PlayerAppear clanMark */
                 clanMark?: (string|null);
 
-                /** S2C_PlayerAppear walkSpeed */
-                walkSpeed?: (number|null);
+                /** S2C_PlayerAppear animWalkRate */
+                animWalkRate?: (number|null);
 
-                /** S2C_PlayerAppear runSpeed */
-                runSpeed?: (number|null);
+                /** S2C_PlayerAppear animRunRate */
+                animRunRate?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -4852,6 +4852,12 @@ export namespace jpt {
             /** S2C_PlayerState runSpeed. */
             runSpeed: number;
 
+            /** S2C_PlayerState animWalkRate. */
+            animWalkRate: number;
+
+            /** S2C_PlayerState animRunRate. */
+            animRunRate: number;
+
             /** S2C_PlayerState levelExp. */
             levelExp: (number|Long);
 
@@ -4989,6 +4995,12 @@ export namespace jpt {
 
                 /** S2C_PlayerState runSpeed */
                 runSpeed?: (number|null);
+
+                /** S2C_PlayerState animWalkRate */
+                animWalkRate?: (number|null);
+
+                /** S2C_PlayerState animRunRate */
+                animRunRate?: (number|null);
 
                 /** S2C_PlayerState levelExp */
                 levelExp?: (number|Long|null);
@@ -5890,6 +5902,12 @@ export namespace jpt {
             /** S2C_CharacterStatus runSpeed. */
             runSpeed: number;
 
+            /** S2C_CharacterStatus animWalkRate. */
+            animWalkRate: number;
+
+            /** S2C_CharacterStatus animRunRate. */
+            animRunRate: number;
+
             /** S2C_CharacterStatus attackSpeed. */
             attackSpeed: number;
 
@@ -6105,6 +6123,12 @@ export namespace jpt {
 
                 /** S2C_CharacterStatus runSpeed */
                 runSpeed?: (number|null);
+
+                /** S2C_CharacterStatus animWalkRate */
+                animWalkRate?: (number|null);
+
+                /** S2C_CharacterStatus animRunRate */
+                animRunRate?: (number|null);
 
                 /** S2C_CharacterStatus attackSpeed */
                 attackSpeed?: (number|null);

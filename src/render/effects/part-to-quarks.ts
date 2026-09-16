@@ -1,0 +1,338 @@
+/**
+ * `.part` → three.quarks 转换器（**验证用**，2026-09-16）
+ *
+ * 目的：量出"用现成粒子框架复刻 PT 特效"的真实缺口，而不是把它当正式实现。
+ * 依据与结论见 `docs/粒子特效-能力分析与框架选型.md`。
+ *
+ * 三条已知的**语义差异**（本文件按能跑通的方式处理，逐条标注）：
+ *
+ * 1. **时间基准**：PT 的关键帧时间是**绝对秒**（`fade so at 0.5 color` = 粒子出生后 0.5 秒），
+ *    而 quarks 的 behavior 一律按 `age / life`（归一化寿命比例）求值。
+ *    当 PT 的 `lifetime` 是区间随机时，两者**不可能同时成立**。
+ *    这里用 lifetime 的中值把秒折算成比例；`lifetime` 为定值时二者等价。
+ *
+ * 2. **发射位置与速度**：PT 的 `emitradius`（盒内均匀随机）与 `initial velocity` 是**两个独立的键**；
+ *    而 quarks 的 `EmitterShape.initialize` 是唯一能写 `particle.velocity` 的地方，其内置形状
+ *    （如 RectangleEmitter）会把速度设成"从中心向外"（`velocity = position.normalize() * startSpeed`）。
+ *    故这里自带 `PartBoxEmitter`（见下），按 PT 语义分别写位置与速度 —— **缺口可补的证明**。
+ *
+ * 3. **颜色**：PT 的 `initial color` 与 `fade so at <t> color` 是**绝对色**，
+ *    而 quarks 的 `ColorOverLife` 会与 `startColor` **相乘**。故 startColor 传白色，
+ *    整条颜色轨道由 Gradient 承担。
+ */
+import * as THREE from 'three';
+// ⚠ 导出面很窄：`three.quarks` 只导出 16 个名字（ParticleSystem / RenderMode / 各 Batch / QuarksUtil…），
+// **值发生器与 behaviors 一律在 `quarks.core`**（three.quarks 内部同样 import 自它 ⇒ 同一份类实例）。
+// 且 `ContinuousLinearFunction` 是内部类、不公开 —— 线性多关键帧见下面的 LinearTrack。
+import { ParticleSystem, RenderMode } from 'three.quarks';
+import {
+  ConstantValue, IntervalValue, Gradient, Vector3Function,
+  SizeOverLife, ColorOverLife,
+  Vector3 as QVec3,
+  type EmitterShape, type FunctionValueGenerator,
+} from 'quarks.core';
+import {
+  roll,
+  type PartEmitter, type PartSystem, type Num, type Rgba, type Vec3,
+} from '../../core/effect/part-script.js';
+
+/* ─────────── PT 的属性轨道（线性多关键帧） ─────────── */
+
+/**
+ * PT 的属性轨道：**相邻关键帧之间线性插值**（原版 `HoNewParticleEvent_*::DoItToIt` 的 Step 机制）。
+ *
+ * 为什么自己实现：quarks 公开的数值发生器只有 Constant / Interval / Bezier 系，
+ * 而 PT 的语义就是**线性**关键帧。用贝塞尔去凑直线是绕路，直接实现 `FunctionValueGenerator`
+ * 接口（4 个方法）语义更准。时间单位是归一化的寿命比例（见文件头条 1）。
+ */
+class LinearTrack implements FunctionValueGenerator {
+  type = 'function' as const;
+  constructor(private readonly keys: Array<[number, number]>) {}   // [时间 0..1, 值]
+
+  startGen(): void { /* 无内部状态 */ }
+
+  genValue(_memory: unknown, t = 0): number {
+    const ks = this.keys;
+    if (ks.length === 0) return 0;
+    if (t <= ks[0]![0]) return ks[0]![1];
+    for (let i = 1; i < ks.length; i++) {
+      const [t1, v1] = ks[i]!;
+      if (t <= t1) {
+        const [t0, v0] = ks[i - 1]!;
+        const span = t1 - t0;
+        return span <= 0 ? v1 : v0 + (v1 - v0) * ((t - t0) / span);
+      }
+    }
+    return ks[ks.length - 1]![1];
+  }
+
+  toJSON(): { type: 'function'; keys: Array<[number, number]> } {
+    return { type: 'function', keys: this.keys };
+  }
+
+  clone(): LinearTrack { return new LinearTrack(this.keys.map((k) => [k[0], k[1]] as [number, number])); }
+}
+
+/* ─────────── 值映射 ─────────── */
+
+/** PT 的标量（定值或区间）→ quarks 的值发生器 */
+function numGen(n: Num | null | undefined, fallback = 0): ConstantValue | IntervalValue {
+  if (!n) return new ConstantValue(fallback);
+  return n.k === 'n' ? new ConstantValue(n.v) : new IntervalValue(n.a, n.b);
+}
+
+/** 取一个 Num 的代表值（用于把区间折叠成单点，如归一化时间基准） */
+function midOf(n: Num | null | undefined, fallback = 0): number {
+  if (!n) return fallback;
+  return n.k === 'n' ? n.v : (n.a + n.b) / 2;
+}
+
+/** PT 的 rgba（各分量可区间）→ quarks 的 Gradient（颜色 + 独立 alpha 两条轨道） */
+function colorToGradient(stops: Array<{ t: number; c: Rgba }>): Gradient {
+  const colors: Array<[QVec3, number]> = [];
+  const alphas: Array<[number, number]> = [];
+  for (const s of stops) {
+    // PT 的颜色分量是 0..255，quarks 的 Vector4/Gradient 一律 0..1
+    colors.push([new QVec3(midOf(s.c.r) / 255, midOf(s.c.g) / 255, midOf(s.c.b) / 255), s.t]);
+    alphas.push([midOf(s.c.a, 255) / 255, s.t]);
+  }
+  return new Gradient(colors, alphas);
+}
+
+/**
+ * PT 的"绝对值轨道" → quarks 的**尺寸倍率轨道**。
+ *
+ * ⚠ 语义差异（实测项之一）：quarks 的 `SizeOverLife` 是**乘法**
+ * （`particle.size = startSize × factor(t)`），而 PT 的 `fade so final size` 是**绝对值**。
+ * 折法：整体除以 `track(0)` ⇒ `factor(0)=1`、`factor(1)=final/init`，
+ * 而出生值仍由 `startSize` 承担（保留 PT 的区间随机）。
+ * `initial size` 是**定值**时两者完全等价；是**区间随机**时，每个粒子的终点会按自己的初值等比缩放
+ * （PT 是全部落到同一绝对值）。要精确复刻需自定义 behavior —— quarks 的 `Particle.startSize`
+ * 是可见的，所以那是可行的，只是不再是"现成能力"。
+ */
+function factorTrack(
+  init: Num | null | undefined,
+  kfs: Array<{ t: number; v: Num }>,
+  final: Num | null | undefined,
+): ConstantValue | IntervalValue | LinearTrack {
+  const v0 = midOf(init, 1) || 1;
+  const keys: Array<[number, number]> = [[0, 1]];
+  for (const k of kfs) if (k.t > 0 && k.t < 1) keys.push([k.t, midOf(k.v) / v0]);
+  if (final) keys.push([1, midOf(final) / v0]);
+  if (keys.length === 1) return new ConstantValue(1);   // 无终点也无中间帧 ⇒ 尺寸恒定
+  return new LinearTrack(keys);
+}
+
+/** 白色常量：startColor 传白，颜色轨道全部由 ColorOverLife 的 Gradient 承担（文件头条 3） */
+function whiteColor(): Gradient {
+  return new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]);
+}
+
+/** 由 emitter 的 keyframes 取某属性的**带时间**关键帧（时间已折算为比例） */
+function kfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; c: Rgba }> {
+  const out: Array<{ t: number; c: Rgba }> = [];
+  const kfs = em.keyframes[prop];
+  if (!kfs) return out;
+  for (const k of kfs) {
+    if (k.value.k !== 'color') continue;
+    out.push({ t: Math.min(1, k.time / lifetimeSec), c: k.value.v });
+  }
+  return out;
+}
+
+/** 由 emitter 的 keyframes 取某属性的数值关键帧（时间已归一化为寿命比例） */
+function numKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; v: Num }> {
+  const kfs = em.keyframes[prop];
+  if (!kfs) return [];
+  const out: Array<{ t: number; v: Num }> = [];
+  for (const k of kfs) {
+    if (k.value.k !== 'num') continue;
+    out.push({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v });
+  }
+  return out;
+}
+
+/* ─────────── PT 语义的盒形发射器（缺口可补的证明，约 30 行） ─────────── */
+
+/**
+ * PT 的发射语义：位置 = `emitradius` 三轴**各自区间**内均匀随机（相对系统原点），
+ * 速度 = `initial velocity` 三轴各自区间内均匀随机。
+ * quarks 内置形状都不是这个语义（RectangleEmitter 是 2D 边框 + 径向速度），故自定义。
+ */
+export class PartBoxEmitter implements EmitterShape {
+  type = 'partBox';
+  constructor(private radius: Vec3, private velocity: Vec3) {}
+  initialize(p: { position: QVec3; velocity: QVec3 }): void {
+    p.position.x = roll(this.radius.x);
+    p.position.y = roll(this.radius.y);
+    p.position.z = roll(this.radius.z);
+    p.velocity.x = roll(this.velocity.x);
+    p.velocity.y = roll(this.velocity.y);
+    p.velocity.z = roll(this.velocity.z);
+  }
+  update(): void { /* 盒是静态的，无需推进 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): PartBoxEmitter { return new PartBoxEmitter(this.radius, this.velocity); }
+}
+
+/* ─────────── 面朝向 / 混合 ─────────── */
+
+/**
+ * PT 的 4 种面朝向 → quarks 的 RenderMode。
+ * 对应关系（原版 `AddFace*` 见 `plans/2026-09-11-audio-effects.md` §6.3）：
+ *   ONE   朝向相机   → BillBoard
+ *   TWO   水平 XZ 面 → HorizontalBillBoard
+ *   THREE 竖直条带   → VerticalBillBoard
+ *   FOUR  拖尾       → Trail
+ */
+export function renderModeOf(particleType: number): RenderMode {
+  switch (particleType) {
+    case 1: return RenderMode.BillBoard;
+    case 2: return RenderMode.HorizontalBillBoard;
+    case 3: return RenderMode.VerticalBillBoard;
+    case 4: return RenderMode.Trail;
+    default: return RenderMode.BillBoard;
+  }
+}
+
+/**
+ * PT 的 5 种混合 → three 的混合。
+ * LAMP/ALPHA 是一等映射；COLOR/SHADOW/INVSHADOW 是 D3D 的因子组合，
+ * 靠 three 的 CustomBlending + blendSrc/blendDst 表达（因子表与我方 `part-emitter` 一致）。
+ * 返回 undefined 表示"用默认"，由材质承担具体因子。
+ */
+export function applyBlend(mat: THREE.Material, blend: PartEmitter['blend']): void {
+  switch (blend) {
+    case 'lamp':
+      mat.blending = THREE.AdditiveBlending;
+      break;
+    case 'alpha':
+      mat.blending = THREE.NormalBlending;
+      break;
+    case 'color':
+      mat.blending = THREE.CustomBlending;
+      mat.blendSrc = THREE.SrcColorFactor; mat.blendDst = THREE.OneMinusSrcColorFactor;
+      break;
+    case 'shadow':
+      mat.blending = THREE.CustomBlending;
+      mat.blendSrc = THREE.ZeroFactor; mat.blendDst = THREE.SrcColorFactor;
+      break;
+    case 'invshadow':
+      mat.blending = THREE.CustomBlending;
+      mat.blendSrc = THREE.ZeroFactor; mat.blendDst = THREE.OneMinusSrcColorFactor;
+      break;
+  }
+}
+
+/* ─────────── 主转换 ─────────── */
+
+export interface ConvertOptions {
+  /** 只转前 N 个 emitter（默认全部） */
+  maxEmitters?: number;
+}
+
+export interface ConvertedEmitter {
+  system: ParticleSystem;
+  emitterName: string;
+  /** 转换过程中的诊断（缺资产、语义近似等），逐条显示在验证页上 */
+  notes: string[];
+}
+
+/**
+ * 把一个 `.part` 系统转成若干 `ParticleSystem`（原版每个 `eventsequence` 一个）。
+ * 纹理**由调用方给**（走 client 的 `part-assets.loadPart`：那份 tga/bmp 解码是唯一实现，
+ * 浏览器不能直接解码这两种格式）。
+ */
+export function convertPart(
+  sys: PartSystem,
+  textures: Array<THREE.Texture | null>,
+  opts: ConvertOptions = {},
+): ConvertedEmitter[] {
+  const out: ConvertedEmitter[] = [];
+  const count = Math.min(opts.maxEmitters ?? sys.emitters.length, sys.emitters.length);
+
+  for (let i = 0; i < count; i++) {
+    const em = sys.emitters[i]!;
+    const notes: string[] = [];
+    const lifeSec = midOf(em.lifetime, 1) || 1;
+    const tex = textures[i] ?? null;
+    if (em.texture && !tex) notes.push(`贴图未加载：${em.texture}`);
+    if (!em.texture) notes.push('该发射器无 texture 键');
+
+    // 材质只承担混合；贴图走 ParticleSystem.texture
+    const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: true });
+    applyBlend(material, em.blend);
+
+    // 尺寸：PT 的 size = 宽、sizeExt = 高（两维独立）
+    // ⚠ `sizeExt` **缺失时取 size**（PT/我方 `part-emitter` 的既有规则：`s1 = sizeExt ? roll(sizeExt) : s0`）。
+    // 此前我默认给 1 ⇒ 只有宽没有高的粒子被压成 `16×1` 的细条，观感是"只剩一条淡拖尾"（用户实测法球）。
+    // startSize = 出生值（保留区间随机）；SizeOverLife = 倍率轨道（语义见 factorTrack）
+    const sizeGen = new Vector3Function(
+      numGen(em.initialSize, 1),
+      numGen(em.initialSizeExt ?? em.initialSize, 1),
+      new ConstantValue(1),
+    );
+    const sizeFactor = new Vector3Function(
+      factorTrack(em.initialSize, numKfOf(em, 'size', lifeSec), em.finalSize),
+      factorTrack(
+        em.initialSizeExt ?? em.initialSize,
+        numKfOf(em, 'sizeext', lifeSec),
+        em.finalSizeExt ?? em.finalSize,
+      ),
+      new ConstantValue(1),
+    );
+
+    // 颜色：整条轨道交给 Gradient（startColor 传白，见文件头条 3）
+    const colorStops = [
+      ...(em.initialColor ? [{ t: 0, c: em.initialColor }] : []),
+      ...kfOf(em, 'color', lifeSec),
+      ...(em.finalColor ? [{ t: 1, c: em.finalColor }] : []),
+    ];
+    const colorGen = colorStops.length >= 2
+      ? colorToGradient(colorStops)
+      : colorToGradient([{ t: 0, c: em.initialColor ?? { r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 }, b: { k: 'n', v: 255 }, a: { k: 'n', v: 255 } } }, { t: 1, c: em.finalColor ?? em.initialColor ?? { r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 }, b: { k: 'n', v: 255 }, a: { k: 'n', v: 0 } } }]);
+
+    // 发射时长：PT 是"发够 numParticles 个"⇒ 时长 = 数量 / 速率（之后粒子继续存活）
+    const emitDur = Math.max(0.05, em.numParticles / Math.max(1, em.emitRate));
+
+    const behaviors = [
+      new SizeOverLife(sizeFactor),
+      new ColorOverLife(colorGen),
+    ];
+
+    const system = new ParticleSystem({
+      duration: emitDur,
+      looping: Math.max(1, Math.round(em.loops)) > 1,
+      shape: new PartBoxEmitter(em.emitRadius, em.initialVelocity),
+      startLife: numGen(em.lifetime, 1),
+      startSize: sizeGen,
+      startColor: whiteColor(),
+      startSpeed: new ConstantValue(1),   // 速度已由 PartBoxEmitter 写入，这里不叠加
+      // ⚠ `emitRate`/`numParticles`/`loops`/`delay` 在解析器里**已经是数字**（`buildEmitter` 已 roll），
+      // 不是 `Num`（{k:'n'|'r'}）⇒ 不能过 `numGen`（那会造出 IntervalValue(undefined,undefined)，
+      // genValue 返回 NaN，而 quarks 把它累积进 waitEmiting ⇒ 发射数 NaN ⇒ **一个粒子都不生成**，且不报错）
+      emissionOverTime: new ConstantValue(Math.max(1, em.emitRate)),
+      renderMode: renderModeOf(em.particleType),
+      // Trail（PT 的 TYPE_FOUR）**必须**给 `startLength`：否则 quarks 在 `spawn` 的 Trail 分支
+      // 直接读 `rendererEmitterSettings.startLength.startGen` → undefined 抛错（实测踩到）。
+      // ⚠ 语义近似：PT 的 AddFaceTrace 没有"长度"这个字段，这里取 `sizeExt`（高）当拖尾长度 ——
+      // 属我方决定，与 PT 参数不是一对一。
+      rendererEmitterSettings: em.particleType === 4
+        ? { startLength: numGen(em.initialSizeExt ?? em.initialSize, 20) }
+        : undefined,
+      material,
+      behaviors,
+      worldSpace: false,
+    });
+    if (tex) system.texture = tex;
+
+    if (em.delay > 0) notes.push(`delay=${em.delay} 未映射（quarks 无发射延迟，暂靠时长近似）`);
+    if (em.gravity && (roll(em.gravity.x) || roll(em.gravity.y) || roll(em.gravity.z))) {
+      notes.push(`gravity=(${midOf(em.gravity.x)},${midOf(em.gravity.y)},${midOf(em.gravity.z)}) 未映射（需恒定力 behavior）`);
+    }
+    if (em.lifetime && em.lifetime.k === 'r') notes.push('lifetime 为区间 ⇒ 关键帧时间按中值折算（见文件头条 1）');
+
+    out.push({ system, emitterName: em.name, notes });
+  }
+  return out;
+}

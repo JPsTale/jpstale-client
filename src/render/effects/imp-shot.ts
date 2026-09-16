@@ -97,6 +97,7 @@ export function impShotSystem(): PartSystem {
       finalPartAngle: null,
       finalLocalAngle: null,
       finalVelocity: null,
+      keyframes: {},                  // 代码内 spec：无 `fade so at` 中间帧
     }],
   };
 }

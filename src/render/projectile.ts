@@ -29,10 +29,23 @@ import { loadSmdFromUrl } from './weapon-loader.js';
 import { loadCharTextures } from './char-texture-loader.js';
 import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 import type { EffectManager } from './effects/effect-manager.js';
-import { impShotSystem } from './effects/imp-shot.js';
 
 /** 箭的模型（我方资产 `client/weapons/arrow.smd`，经 `/res/*` 资产通道取） */
 export const ARROW_URL = '/res/weapons/arrow.smd';
+
+/**
+ * 法术弹的**固定飞行速度**（世界单位/秒）—— 原版值，不是我方调的。
+ *
+ * 出处：`HoEffectTracker::Start()`（exm `HoEffect.cpp:9310`）对 `MONSTER_IMP_SHOT1` 设
+ * `Vx = dir.x * 1300`（raw/帧），**只在 Start 设一次、`Main()` 不再改** ⇒ **匀速**。
+ * 换算：`1300 / 256(fONE) × 70(每秒帧数) ≈ 355.5`。
+ *
+ * ⚠ 为什么法术弹**不能**沿用"释放→事件帧"那条时长规则：那条是给**箭**定的（箭的判定在事件帧，
+ * 必须那一刻到达）。而原版法杖**不置 `ShootingFlag`**、弹在当帧生成、**伤害在起手就结算完了**
+ * ⇒ 这颗弹是**纯演出**，原版让它按固定速度自然飞完（飞到距离 < 800 才爆），与事件帧无关。
+ * 之前混用同一规则，导致弹被"压缩"到事件帧那一刻到达、速度比原版**快约 23%**（用户实测）。
+ */
+export const MAGIC_SPEED_WPS = (1300 / 256) * 70;
 
 /** 没有事件帧数据时的弹速（世界单位/秒）。有事件帧时不用它 —— 时长由动画给。 */
 export const FALLBACK_SPEED = 900;
@@ -265,7 +278,14 @@ export function tipAxisOf(kind: ProjectileKind): THREE.Vector3 {
   return TIP_AXIS[kind].clone();
 }
 
-export function createProjectileManager(scene: THREE.Scene, fx: EffectManager | null = null): ProjectileManager {
+export function createProjectileManager(
+  scene: THREE.Scene,
+  /** 保留仅为兼容既有调用点：**法术弹已改走 three.quarks**（见第三个参数），箭/标枪本就不用它 */
+  fx: EffectManager | null = null,
+  /** quarks 运行时（法术弹已改走它，见 `render/effects/quarks-runtime.ts`） */
+  quarksFx: { attachMagic(node: THREE.Object3D): (() => void) | null } | null = null,
+): ProjectileManager {
+  void fx;
   const live: Live[] = [];
   const _q = new THREE.Quaternion();
   const _pos = new THREE.Vector3();
@@ -298,35 +318,32 @@ export function createProjectileManager(scene: THREE.Scene, fx: EffectManager | 
       const len = dir.length();
       if (!(len > 0.01)) return;   // 起点终点重合（贴着打）→ 没什么可飞的
       dir.divideScalar(len);
-      const dur = flightDuration(len, spec.flightTime);
+      // 法术弹：**固定速度**（原版 355.5 世界/秒，见 MAGIC_SPEED_WPS 的出处）；
+      // 箭/标枪：仍按"释放→事件帧"（它们的判定在事件帧，必须那一刻到达）
+      const dur = choice.kind === 'magic'
+        ? Math.max(0.05, len / MAGIC_SPEED_WPS)
+        : flightDuration(len, spec.flightTime);
       const to = spec.to.clone();
 
       if (choice.kind === 'magic') {
         // 法术弹 = **一堆发光粒子挂在飞行节点上**（原版就是粒子系统，不是网格模型）：
         // 节点从手飞到目标，粒子跟着它生成 ⇒ 尾迹自然留在身后。
-        // 节点的世界坐标由 `getWorldPosition` 自己更新（three 会 updateWorldMatrix），故不必入场景图。
+        // 节点不必入场景图：`getWorldPosition` 会自己更新世界矩阵。
+        //
+        // **已改走 three.quarks**（见 `render/effects/quarks-runtime.ts`）：参数仍直接取自
+        // `impShotSystem()`（同一份 spec，经转换器过一遍），`attachMagic` 内部预载过纹理，
+        // 因此是**同步**返回卸载函数 —— 不再有"句柄比创建晚到"的那个竞态。
         const node = new THREE.Object3D();
         node.position.copy(spec.from);
-        // ⚠ 别静默吞异常（曾经 `.catch(() => {})` 把"特效管理器是 null / 贴图缺失"全吃掉了）
-        if (!fx) {
-          console.warn('[projectile] 法术弹没有特效管理器（fx=null）→ 只有飞行节点、没有粒子'
-            + '（检查 createProjectileManager 是否在 createEffectManager 之后调用）');
-        } else {
-          void fx.spawnSystem(impShotSystem(), { pos: { x: 0, y: 0, z: 0 }, attach: node })
-            .then((h) => {
-              if (!h) { console.warn('[projectile] 法术弹粒子没挂上（spawnSystem 返回 null）'); return; }
-              // 贴图是异步加载的：句柄可能比"创建"晚到 —— 那时弹可能**已经到点并被移除**，
-              // 此时再没人会调 stop ⇒ 立刻停掉（否则粒子会堆在命中点上，就是用户看到的"残留"）
-              const l = live.find((x) => x.obj === node);
-              if (l) l.stop = h.stop;
-              else { h.stop(); console.log('[projectile] 粒子加载完成时弹已到点 → 立即停止发射'); }
-            })
-            .catch((e) => { console.warn('[projectile] 法术弹粒子播放失败', e); });
+        const unmount = quarksFx?.attachMagic(node) ?? null;
+        if (!unmount) {
+          console.warn('[projectile] 法术弹没有 quarks 运行时（quarksFx=null 或预载未完成）'
+            + '→ 只有飞行节点、没有粒子');
         }
         live.push({
           kind: choice.kind, obj: node, from: spec.from.clone(), to, dir, dur, t: 0, spin: 0,
           track: spec.track, missed: spec.missed, speed: len / Math.max(dur, 1e-3), extended: false,
-          stop: null,
+          stop: unmount,
         });
         return;
       }

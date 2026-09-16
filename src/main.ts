@@ -701,7 +701,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const ps = msg.playerState!;
       // 自机移动速度接入服务端权威属性（walk/run speed 世界/秒；playerState 到 any 帧都设置）
       if (typeof ps.walkSpeed === 'number' && typeof ps.runSpeed === 'number') {
-        worldView.setSpeed(ps.walkSpeed, ps.runSpeed);
+        // 速度值用于**本地移动步长**；动画速率由服务端查表算好一并下发（1 档 = 1.0）
+        worldView.setSpeed(ps.walkSpeed, ps.runSpeed, ps.animWalkRate || 0, ps.animRunRate || 0);
       }
       worldView.setSelfLevel(Number(ps.level) || 1);   // 跨图边界的等级门槛判定用
       const hudState: HudState = {
@@ -828,8 +829,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
           offHandPos: pa.offHandPos || 0,
           sizeLevel: pa.sizeLevel || 0,
         } : undefined,
-        a.walkSpeed || 0,   // 走/跑动画按实际移速缩放播放速度（0 = 服务端没给 → 退成 1 档）
-        a.runSpeed || 0,
+        // 走/跑**动画速率**（服务端查表算好；1 档 = 1.0）——本消息里不再传速度值（那对字段已废弃）
+        a.animWalkRate || 1,
+        a.animRunRate || 1,
       );
       break;
     }

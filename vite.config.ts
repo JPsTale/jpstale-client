@@ -16,7 +16,9 @@ const loadBackend = (mode: string) => {
 // 同一个插件顺带挂 **烘焙落盘端点** `/__bake`（`npm run bake-maps` 的作业页用）：
 // 平面图是离线生成的大文件，落资产根（与原版的 field/map、image/guidemap 同类），不进 git；
 // 浏览器侧没有本地文件权限，所以由 dev server 代写。仅在 dev（configureServer）存在。
-function devAssets(mode: string): Plugin {
+// studio（efria-studio）复用本插件作为唯一实现，故必须导出。
+// ⚠ 它按 `process.cwd()` 找 .env ⇒ studio 侧需要自己的 .env 提供 VITE_ASSET_ROOT。
+export function devAssets(mode: string): Plugin {
   const env = loadEnv(mode, process.cwd(), '');
   const assetRoot = resolve(env.VITE_ASSET_ROOT);
   const MIME: Record<string, string> = {

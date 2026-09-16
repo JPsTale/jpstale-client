@@ -280,6 +280,83 @@ export function preloadAssets(urls: string[]): Promise<void[]> {
 
 export function cacheSize(): number { return memory.size; }
 
+/* ─────────── 精灵图集（sprite sheet）拼接 ─────────── */
+
+/**
+ * 一张**解码后的原始 RGBA 图** —— 我方贴图解码后都是这个形状（见 `core/texture.ts`）。
+ * 故图集拼接在这层是**纯 TypedArray 操作、不依赖 three**：资产层不该认识渲染框架。
+ */
+export interface RawImage { data: Uint8Array | Uint8ClampedArray; width: number; height: number }
+
+export interface RawSheet {
+  data: Uint8Array;
+  /** 图集总宽 = 帧宽 × cols */
+  width: number;
+  /** 图集总高 = 帧高 × rows */
+  height: number;
+  cols: number;
+  rows: number;
+  /** 实际写入的帧数 */
+  count: number;
+  /** 尺寸与第一帧不一致、被跳过的帧下标（**不静默**，调用方应上报） */
+  mismatched: number[];
+}
+
+/** 图集缓存（键 = 帧键）。将来 studio 在预处理阶段产出图集后，这一层换成"读现成图集"即可 */
+const sheetCache = new Map<string, RawSheet>();
+
+/**
+ * 把 N 张**等大**的独立贴图拼成一张网格图集。
+ *
+ * 为什么需要：three.quarks 的帧动画只认 sprite sheet（`uTileCount` / `vTileCount` /
+ * `startTileIndex` + `FrameOverLife`），而原版 PT 的帧动画是**一排独立文件**
+ * （`ImageData.Name` 去掉扩展名后接 1-based 序号，见 `core/effect/anim-ini.ts` 的
+ * `resolveImageFrames`）。要交给 quarks 就得先拼起来。
+ *
+ * 位置（用户 2026-09-16 定）：放 `asset-cache` —— 这是**资产层**的事，与"用哪个粒子框架"无关；
+ * 将来 studio 提前把图集产出来，本函数退化为"读现成图集"，调用方一行不改。
+ *
+ * 排列：行优先 `cols × rows`（`cols = ceil(sqrt(n))`）。
+ * 尺寸不一致时以**第一张**为准，其余跳过并记入 `mismatched`（不猜、不缩放）。
+ */
+export function buildSheet(frames: RawImage[], cacheKey?: string): RawSheet | null {
+  if (frames.length === 0) return null;
+  if (cacheKey) {
+    const hit = sheetCache.get(cacheKey);
+    if (hit) return hit;
+  }
+  const fw = frames[0]!.width;
+  const fh = frames[0]!.height;
+  if (!(fw > 0 && fh > 0)) return null;
+
+  const cols = Math.ceil(Math.sqrt(frames.length));
+  const rows = Math.ceil(frames.length / cols);
+  const sw = fw * cols;
+  const out = new Uint8Array(sw * fh * rows * 4);
+  const mismatched: number[] = [];
+  let count = 0;
+
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i]!;
+    if (f.width !== fw || f.height !== fh) { mismatched.push(i); continue; }
+    const col = i % cols;
+    const row = (i / cols) | 0;
+    for (let y = 0; y < fh; y++) {
+      const src = y * fw * 4;
+      const dst = ((row * fh + y) * sw + col * fw) * 4;
+      out.set(f.data.subarray(src, src + fw * 4), dst);   // 源宽 = 目标宽 ⇒ 可整行拷
+    }
+    count++;
+  }
+
+  const sheet: RawSheet = { data: out, width: sw, height: fh * rows, cols, rows, count, mismatched };
+  if (cacheKey) sheetCache.set(cacheKey, sheet);
+  return sheet;
+}
+
+/** 清空图集缓存 */
+export function clearSheetCache(): void { sheetCache.clear(); }
+
 /** 清空资产缓存（内存 + IndexedDB）—— 换包/排障用 */
 export async function clearAssetCache(): Promise<void> {
   memory.clear();

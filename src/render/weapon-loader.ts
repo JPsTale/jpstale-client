@@ -47,6 +47,25 @@ export async function loadDropItemModel(dorpItem: string | null): Promise<{ grou
 }
 
 /**
+ * 武器的「长度」—— 等价于原版 `smCHARTOOL::SizeMax`。**按需算，调用方自己缓存**（形状不变）。
+ *
+ * 原版怎么拿的（exm `character.cpp:1413-1424`，`SetTool` 装武器时）：
+ *   加载武器 mesh，遍历**所有子网格**取 `maxY` 的最大值 ⇒ `HvRightHand.SizeMax`；
+ *   随后 `GetAttackPoint`（`:301`）用它算出手点：`tz = SizeMax / 2`，
+ *   沿**右手武器骨的局部 Z**（= 武器伸出方向）偏移 ⇒ 出手点是"武器中部"而非骨根部。
+ *
+ * ⚠ 轴向差异：原版量的是**模型局部 Y**，前提是"武器模型以 Y 为长轴"。我方
+ * `loadSmdFromUrl` 统一做过 Z-up→Y-up 转换，原版那个 Y 在我方未必还是 Y
+ * ⇒ 这里取**包围盒最长的那一维**：语义仍是"从挂点到顶端的长度"，但不依赖建模约定。
+ */
+export function weaponSizeMax(group: THREE.Object3D): number {
+  const box = new THREE.Box3().setFromObject(group);
+  if (!Number.isFinite(box.max.x)) return 0;
+  const size = box.getSize(new THREE.Vector3());
+  return Math.max(size.x, size.y, size.z);
+}
+
+/**
  * 从任意 .smd 构建静态 Group（角色/武器/物品同构），Y-up 顶点转换在此统一。
  */
 export async function loadSmdFromUrl(url: string, label: string): Promise<{ group: THREE.Group; texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] }> {

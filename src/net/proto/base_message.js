@@ -12776,8 +12776,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [angle] S2C_PlayerAppear angle
              * @property {string|null} [clanName] S2C_PlayerAppear clanName
              * @property {string|null} [clanMark] S2C_PlayerAppear clanMark
-             * @property {number|null} [walkSpeed] S2C_PlayerAppear walkSpeed
-             * @property {number|null} [runSpeed] S2C_PlayerAppear runSpeed
+             * @property {number|null} [animWalkRate] S2C_PlayerAppear animWalkRate
+             * @property {number|null} [animRunRate] S2C_PlayerAppear animRunRate
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -12898,20 +12898,20 @@ export const jpt = $root.jpt = (() => {
             S2C_PlayerAppear.prototype.clanMark = "";
 
             /**
-             * S2C_PlayerAppear walkSpeed.
-             * @member {number} walkSpeed
+             * S2C_PlayerAppear animWalkRate.
+             * @member {number} animWalkRate
              * @memberof jpt.base.S2C_PlayerAppear
              * @instance
              */
-            S2C_PlayerAppear.prototype.walkSpeed = 0;
+            S2C_PlayerAppear.prototype.animWalkRate = 0;
 
             /**
-             * S2C_PlayerAppear runSpeed.
-             * @member {number} runSpeed
+             * S2C_PlayerAppear animRunRate.
+             * @member {number} animRunRate
              * @memberof jpt.base.S2C_PlayerAppear
              * @instance
              */
-            S2C_PlayerAppear.prototype.runSpeed = 0;
+            S2C_PlayerAppear.prototype.animRunRate = 0;
 
             /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
@@ -12967,10 +12967,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 10, wireType 2 =*/82).string(message.clanName);
                 if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark") && message.clanMark !== "")
                     writer.uint32(/* id 11, wireType 2 =*/90).string(message.clanMark);
-                if (message.walkSpeed != null && $Object.hasOwnProperty.call(message, "walkSpeed") && message.walkSpeed !== 0)
-                    writer.uint32(/* id 12, wireType 0 =*/96).int32(message.walkSpeed);
-                if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed") && message.runSpeed !== 0)
-                    writer.uint32(/* id 13, wireType 0 =*/104).int32(message.runSpeed);
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate") && !$Object.is(message.animWalkRate, 0))
+                    writer.uint32(/* id 14, wireType 5 =*/117).float(message.animWalkRate);
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate") && !$Object.is(message.animRunRate, 0))
+                    writer.uint32(/* id 15, wireType 5 =*/125).float(message.animRunRate);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -13121,22 +13121,22 @@ export const jpt = $root.jpt = (() => {
                                 delete message.clanMark;
                             continue;
                         }
-                    case 12: {
-                            if (wireType !== 0)
+                    case 14: {
+                            if (wireType !== 5)
                                 break;
-                            if (value = reader.int32())
-                                message.walkSpeed = value;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animWalkRate = value;
                             else
-                                delete message.walkSpeed;
+                                delete message.animWalkRate;
                             continue;
                         }
-                    case 13: {
-                            if (wireType !== 0)
+                    case 15: {
+                            if (wireType !== 5)
                                 break;
-                            if (value = reader.int32())
-                                message.runSpeed = value;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animRunRate = value;
                             else
-                                delete message.runSpeed;
+                                delete message.animRunRate;
                             continue;
                         }
                     }
@@ -13224,12 +13224,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
                     if (!$util.isString(message.clanMark))
                         return "clanMark: string expected";
-                if (message.walkSpeed != null && $Object.hasOwnProperty.call(message, "walkSpeed"))
-                    if (!$util.isInteger(message.walkSpeed))
-                        return "walkSpeed: integer expected";
-                if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed"))
-                    if (!$util.isInteger(message.runSpeed))
-                        return "runSpeed: integer expected";
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate"))
+                    if (typeof message.animWalkRate !== "number")
+                        return "animWalkRate: number expected";
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
+                    if (typeof message.animRunRate !== "number")
+                        return "animRunRate: number expected";
                 return null;
             };
 
@@ -13295,12 +13295,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.clanMark != null)
                     if (typeof object.clanMark !== "string" || object.clanMark.length)
                         message.clanMark = $String(object.clanMark);
-                if (object.walkSpeed != null)
-                    if ($Number(object.walkSpeed) !== 0)
-                        message.walkSpeed = object.walkSpeed | 0;
-                if (object.runSpeed != null)
-                    if ($Number(object.runSpeed) !== 0)
-                        message.runSpeed = object.runSpeed | 0;
+                if (object.animWalkRate != null)
+                    if (!$Object.is($Number(object.animWalkRate), 0))
+                        message.animWalkRate = $Number(object.animWalkRate);
+                if (object.animRunRate != null)
+                    if (!$Object.is($Number(object.animRunRate), 0))
+                        message.animRunRate = $Number(object.animRunRate);
                 return message;
             };
 
@@ -13337,8 +13337,8 @@ export const jpt = $root.jpt = (() => {
                     object.angle = 0;
                     object.clanName = "";
                     object.clanMark = "";
-                    object.walkSpeed = 0;
-                    object.runSpeed = 0;
+                    object.animWalkRate = 0;
+                    object.animRunRate = 0;
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -13367,10 +13367,10 @@ export const jpt = $root.jpt = (() => {
                     object.clanName = message.clanName;
                 if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
                     object.clanMark = message.clanMark;
-                if (message.walkSpeed != null && $Object.hasOwnProperty.call(message, "walkSpeed"))
-                    object.walkSpeed = message.walkSpeed;
-                if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed"))
-                    object.runSpeed = message.runSpeed;
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate"))
+                    object.animWalkRate = options.json && !$isFinite(message.animWalkRate) ? $String(message.animWalkRate) : message.animWalkRate;
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
+                    object.animRunRate = options.json && !$isFinite(message.animRunRate) ? $String(message.animRunRate) : message.animRunRate;
                 return object;
             };
 
@@ -14714,6 +14714,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [moveSpeed] S2C_PlayerState moveSpeed
              * @property {number|null} [walkSpeed] S2C_PlayerState walkSpeed
              * @property {number|null} [runSpeed] S2C_PlayerState runSpeed
+             * @property {number|null} [animWalkRate] S2C_PlayerState animWalkRate
+             * @property {number|null} [animRunRate] S2C_PlayerState animRunRate
              * @property {number|Long|null} [levelExp] S2C_PlayerState levelExp
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
@@ -14883,6 +14885,22 @@ export const jpt = $root.jpt = (() => {
             S2C_PlayerState.prototype.runSpeed = 0;
 
             /**
+             * S2C_PlayerState animWalkRate.
+             * @member {number} animWalkRate
+             * @memberof jpt.base.S2C_PlayerState
+             * @instance
+             */
+            S2C_PlayerState.prototype.animWalkRate = 0;
+
+            /**
+             * S2C_PlayerState animRunRate.
+             * @member {number} animRunRate
+             * @memberof jpt.base.S2C_PlayerState
+             * @instance
+             */
+            S2C_PlayerState.prototype.animRunRate = 0;
+
+            /**
              * S2C_PlayerState levelExp.
              * @member {number|Long} levelExp
              * @memberof jpt.base.S2C_PlayerState
@@ -14958,6 +14976,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 17, wireType 0 =*/136).int32(message.runSpeed);
                 if (message.levelExp != null && $Object.hasOwnProperty.call(message, "levelExp") && (typeof message.levelExp === "object" ? message.levelExp.low || message.levelExp.high : message.levelExp !== 0))
                     writer.uint32(/* id 18, wireType 0 =*/144).int64(message.levelExp);
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate") && !$Object.is(message.animWalkRate, 0))
+                    writer.uint32(/* id 19, wireType 5 =*/157).float(message.animWalkRate);
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate") && !$Object.is(message.animRunRate, 0))
+                    writer.uint32(/* id 20, wireType 5 =*/165).float(message.animRunRate);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -15165,6 +15187,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.runSpeed;
                             continue;
                         }
+                    case 19: {
+                            if (wireType !== 5)
+                                break;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animWalkRate = value;
+                            else
+                                delete message.animWalkRate;
+                            continue;
+                        }
+                    case 20: {
+                            if (wireType !== 5)
+                                break;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animRunRate = value;
+                            else
+                                delete message.animRunRate;
+                            continue;
+                        }
                     case 18: {
                             if (wireType !== 0)
                                 break;
@@ -15275,6 +15315,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed"))
                     if (!$util.isInteger(message.runSpeed))
                         return "runSpeed: integer expected";
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate"))
+                    if (typeof message.animWalkRate !== "number")
+                        return "animWalkRate: number expected";
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
+                    if (typeof message.animRunRate !== "number")
+                        return "animRunRate: number expected";
                 if (message.levelExp != null && $Object.hasOwnProperty.call(message, "levelExp"))
                     if (!$util.isInteger(message.levelExp) && !(message.levelExp && $util.isInteger(message.levelExp.low) && $util.isInteger(message.levelExp.high)))
                         return "levelExp: integer|Long expected";
@@ -15380,6 +15426,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.runSpeed != null)
                     if ($Number(object.runSpeed) !== 0)
                         message.runSpeed = object.runSpeed | 0;
+                if (object.animWalkRate != null)
+                    if (!$Object.is($Number(object.animWalkRate), 0))
+                        message.animWalkRate = $Number(object.animWalkRate);
+                if (object.animRunRate != null)
+                    if (!$Object.is($Number(object.animRunRate), 0))
+                        message.animRunRate = $Number(object.animRunRate);
                 if (object.levelExp != null)
                     if (typeof object.levelExp === "object" ? object.levelExp.low || object.levelExp.high : $Number(object.levelExp) !== 0)
                         if ($util.Long)
@@ -15449,6 +15501,8 @@ export const jpt = $root.jpt = (() => {
                         object.levelExp = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
                         object.levelExp = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.animWalkRate = 0;
+                    object.animRunRate = 0;
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -15511,6 +15565,10 @@ export const jpt = $root.jpt = (() => {
                         object.levelExp = options.longs === $String ? $String(message.levelExp) : message.levelExp;
                     else
                         object.levelExp = options.longs === $String ? $util.Long.prototype.toString.call(message.levelExp) : options.longs === $Number ? new $util.LongBits(message.levelExp.low >>> 0, message.levelExp.high >>> 0).toNumber() : message.levelExp;
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate"))
+                    object.animWalkRate = options.json && !$isFinite(message.animWalkRate) ? $String(message.animWalkRate) : message.animWalkRate;
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
+                    object.animRunRate = options.json && !$isFinite(message.animRunRate) ? $String(message.animRunRate) : message.animRunRate;
                 return object;
             };
 
@@ -17706,6 +17764,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [moveSpeed] S2C_CharacterStatus moveSpeed
              * @property {number|null} [walkSpeed] S2C_CharacterStatus walkSpeed
              * @property {number|null} [runSpeed] S2C_CharacterStatus runSpeed
+             * @property {number|null} [animWalkRate] S2C_CharacterStatus animWalkRate
+             * @property {number|null} [animRunRate] S2C_CharacterStatus animRunRate
              * @property {number|null} [attackSpeed] S2C_CharacterStatus attackSpeed
              * @property {number|null} [critical] S2C_CharacterStatus critical
              * @property {number|null} [block] S2C_CharacterStatus block
@@ -17978,6 +18038,22 @@ export const jpt = $root.jpt = (() => {
             S2C_CharacterStatus.prototype.runSpeed = 0;
 
             /**
+             * S2C_CharacterStatus animWalkRate.
+             * @member {number} animWalkRate
+             * @memberof jpt.base.S2C_CharacterStatus
+             * @instance
+             */
+            S2C_CharacterStatus.prototype.animWalkRate = 0;
+
+            /**
+             * S2C_CharacterStatus animRunRate.
+             * @member {number} animRunRate
+             * @memberof jpt.base.S2C_CharacterStatus
+             * @instance
+             */
+            S2C_CharacterStatus.prototype.animRunRate = 0;
+
+            /**
              * S2C_CharacterStatus attackSpeed.
              * @member {number} attackSpeed
              * @memberof jpt.base.S2C_CharacterStatus
@@ -18225,6 +18301,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 43, wireType 0 =*/344).int32(message.currentWeight);
                 if (message.levelExp != null && $Object.hasOwnProperty.call(message, "levelExp") && (typeof message.levelExp === "object" ? message.levelExp.low || message.levelExp.high : message.levelExp !== 0))
                     writer.uint32(/* id 44, wireType 0 =*/352).int64(message.levelExp);
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate") && !$Object.is(message.animWalkRate, 0))
+                    writer.uint32(/* id 45, wireType 5 =*/365).float(message.animWalkRate);
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate") && !$Object.is(message.animRunRate, 0))
+                    writer.uint32(/* id 46, wireType 5 =*/373).float(message.animRunRate);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -18534,6 +18614,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.runSpeed;
                             continue;
                         }
+                    case 45: {
+                            if (wireType !== 5)
+                                break;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animWalkRate = value;
+                            else
+                                delete message.animWalkRate;
+                            continue;
+                        }
+                    case 46: {
+                            if (wireType !== 5)
+                                break;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animRunRate = value;
+                            else
+                                delete message.animRunRate;
+                            continue;
+                        }
                     case 29: {
                             if (wireType !== 0)
                                 break;
@@ -18810,6 +18908,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.runSpeed != null && $Object.hasOwnProperty.call(message, "runSpeed"))
                     if (!$util.isInteger(message.runSpeed))
                         return "runSpeed: integer expected";
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate"))
+                    if (typeof message.animWalkRate !== "number")
+                        return "animWalkRate: number expected";
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
+                    if (typeof message.animRunRate !== "number")
+                        return "animRunRate: number expected";
                 if (message.attackSpeed != null && $Object.hasOwnProperty.call(message, "attackSpeed"))
                     if (!$util.isInteger(message.attackSpeed))
                         return "attackSpeed: integer expected";
@@ -18991,6 +19095,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.runSpeed != null)
                     if ($Number(object.runSpeed) !== 0)
                         message.runSpeed = object.runSpeed | 0;
+                if (object.animWalkRate != null)
+                    if (!$Object.is($Number(object.animWalkRate), 0))
+                        message.animWalkRate = $Number(object.animWalkRate);
+                if (object.animRunRate != null)
+                    if (!$Object.is($Number(object.animRunRate), 0))
+                        message.animRunRate = $Number(object.animRunRate);
                 if (object.attackSpeed != null)
                     if ($Number(object.attackSpeed) !== 0)
                         message.attackSpeed = object.attackSpeed | 0;
@@ -19131,6 +19241,8 @@ export const jpt = $root.jpt = (() => {
                         object.levelExp = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
                         object.levelExp = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.animWalkRate = 0;
+                    object.animRunRate = 0;
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -19245,6 +19357,10 @@ export const jpt = $root.jpt = (() => {
                         object.levelExp = options.longs === $String ? $String(message.levelExp) : message.levelExp;
                     else
                         object.levelExp = options.longs === $String ? $util.Long.prototype.toString.call(message.levelExp) : options.longs === $Number ? new $util.LongBits(message.levelExp.low >>> 0, message.levelExp.high >>> 0).toNumber() : message.levelExp;
+                if (message.animWalkRate != null && $Object.hasOwnProperty.call(message, "animWalkRate"))
+                    object.animWalkRate = options.json && !$isFinite(message.animWalkRate) ? $String(message.animWalkRate) : message.animWalkRate;
+                if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
+                    object.animRunRate = options.json && !$isFinite(message.animRunRate) ? $String(message.animRunRate) : message.animRunRate;
                 return object;
             };
 

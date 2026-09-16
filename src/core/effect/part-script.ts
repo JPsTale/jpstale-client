@@ -27,8 +27,9 @@
  * 分量里可以再嵌 `random(a,b)`。另有引号字符串（纹理路径）。
  *
  * 已知精简（见阶段 3 说明）：
- *  - **多关键帧** `fade so at N <属性>` + `at N eventtimer` 只取首尾（initial → final）做线性插值；
- *    带 `fade so at` 的文件约占 1/3，属于后续细化项。
+ *  - **多关键帧**：解析层现已**完整收集**（`PartEmitter.keyframes`，含中间帧与 `at <t> eventtimer`），
+ *    但运行时（`render/effects/part-emitter.ts`）仍只取首尾（initial → final）做线性插值 —— 缺口在渲染侧，不在解析侧。
+ *    带 `fade so at` 的文件约占 1/3。
  *  - `ParticleTypes[4]` 表在 ex-machina 里**只有声明没有定义**（反编译缺失），
  *    故 TYPE_ONE..FOUR 的精确渲染模式无法查证，运行时按"朝向相机的广告牌 + 旋转"近似。
  */
@@ -45,6 +46,24 @@ export type PartValue =
   | { k: 'str'; v: string };
 
 export type PartBlend = 'lamp' | 'alpha' | 'color' | 'shadow' | 'invshadow';
+
+/** 一个带时间戳的关键帧。`time` 单位是**秒**（原版 `fade so at <t> <属性>` 的 t，实测最大到 12） */
+export interface PartKeyframe {
+  time: number;
+  value: PartValue;
+}
+
+/**
+ * emitter 内的多关键帧轨道：属性名 → 按时间升序的关键帧。
+ *
+ * 为什么必须收集（2026-09-16）：原版每条属性是一条**带时间戳的事件链**，相邻事件之间
+ * 按 `Step = (新值 − 当前值) / (下一帧时间 − 当前帧时间)` 线性推进
+ * （ex-machina `HoNewParticle.cpp` 各 `HoNewParticleEvent_*::DoItToIt`）。
+ * 此前本解析器只保留 `initial X` 与 `fade so final X` 两个端点，**中间帧被丢弃**，
+ * 于是"多关键帧"在渲染侧无从实现（`render/effects/part-emitter.ts` 文件头亦自认此缺口）。
+ * 转到粒子框架时，中间帧是必需的（框架的曲线发生器正是按 `[值, 时间]` 列表表达）。
+ */
+export type PartKeyframes = Record<string, PartKeyframe[]>;
 
 export interface PartEmitter {
   name: string;
@@ -73,6 +92,8 @@ export interface PartEmitter {
   finalPartAngle: Vec3 | null;
   finalLocalAngle: Vec3 | null;
   finalVelocity: Vec3 | null;
+  /** 多关键帧轨道（`fade so at <t> <属性>`）；含端点帧，按时间升序 */
+  keyframes: PartKeyframes;
 }
 
 export interface PartSystem {
@@ -139,7 +160,14 @@ function parseValue(raw: string): PartValue | null {
   const col = parseRgba(s);
   if (col) return { k: 'color', v: col };
   const n = parseNum(s);
-  return n ? { k: 'num', v: n } : null;
+  if (n) return { k: 'num', v: n };
+  // 裸标识符（`TYPE_THREE` / `BLEND_LAMP` / `BLEND_INVSHADOW` …）。
+  // ⚠ 此前这里返回 null ⇒ 调用方 `if (!val) continue` **整行丢弃**，后果：
+  //   `particletype` 恒为默认 TYPE_TWO（水平面）、`sourceblendmode` 恒为默认 LAMP（加法）
+  //   ⇒ 全部 SHADOW / INVSHADOW / ALPHA 粒子都在按加法渲染，且 4 种面朝向只剩一种。
+  // 2026-09-16 在 efria-studio 的粒子验证页（`.part` → three.quarks）实测发现。
+  const bare = /^[A-Za-z_][A-Za-z0-9_]*$/.exec(s);
+  return bare ? { k: 'str', v: bare[0] } : null;
 }
 
 /* ─────────── 枚举 ─────────── */
@@ -184,37 +212,54 @@ export function parsePart(text: string): PartSystem {
   /** 当前 emitter 的键值对（键已小写、压缩空格） */
   let kv: Map<string, PartValue> | null = null;
 
-  for (const raw of text.split(/\r?\n/)) {
-    let line = raw.trim();
+  // ⚠ 资产里有**紧凑写法**：一行挤多条语句（`alas_keep.part` 全文 2186 字节只占 ~10 行）。
+  // 旧的"逐行 + 行首锚定"解析会把同一行里的 `eventsequence` 与后续键值对**整批丢掉**
+  // ⇒ 该文件解析出 0 个 emitter（表现为"特效不存在"）。2026-09-16 在 efria-studio 的
+  // 粒子验证页（`.part` → three.quarks）实测发现。
+  // 规范化只做两件无损的事：把 `{`/`}` 与 `eventsequence` 拆到独立行；键值对改用**全局正则**扫描
+  //（值文法只有 数字/random/XYZ/rgba/引号串/裸标识符 六种，故可以精确圈定值的边界）。
+  const norm = text
+    .replace(/[{}]/g, (m) => `\n${m}\n`)
+    .replace(/\beventsequence\b/gi, '\neventsequence');
+
+  const PS_RE = /^particlesystem\s+"([^"]*)"\s*([\d.]*)/i;
+  const ES_RE = /^eventsequence\s+"([^"]*)"/i;
+  // 值边界必须支持**一层嵌套**：`xyz(random(-20,20),0,random(-20,20))` 是常态
+  //（旧的 `xyz\([^)]*\)` 会在第一个 `)` 停下 ⇒ 值残缺 ⇒ 整条被丢弃）
+  const KV_RE = /([A-Za-z_][A-Za-z0-9_ .]*?)\s*=\s*((?:random|xyz|rgba)\((?:[^()]|\([^()]*\))*\)|"[^"]*"|[A-Za-z_][A-Za-z0-9_]*|-?\d+(?:\.\d+)?)/gi;
+
+  for (const raw of norm.split(/\r?\n/)) {
+    const line = raw.trim();
     if (!line || line.startsWith('//')) continue;
 
     // particlesystem "名字" 1.00 {
-    const ps = /^particlesystem\s+"([^"]*)"\s*([\d.]*)/i.exec(line);
+    const ps = PS_RE.exec(line);
     if (ps) {
       sys.name = ps[1] ?? '';
       sys.version = Number(ps[2] || 1) || 1;
       continue;
     }
     // eventsequence "名字" {
-    const es = /^eventsequence\s+"([^"]*)"/i.exec(line);
+    const es = ES_RE.exec(line);
     if (es) {
       kv = new Map();
       kv.set('__name', { k: 'str', v: es[1] ?? '' });
-      continue;
     }
     // 块结束：把当前 emitter 收尾
     if (line.startsWith('}')) {
       if (kv) { sys.emitters.push(buildEmitter(kv)); kv = null; }
       continue;
     }
-    // 键 = 值
-    const m = /^([A-Za-z_][A-Za-z0-9_ ]*?)\s*=\s*(.+?);?$/.exec(line);
-    if (!m) continue;
-    const key = m[1]!.trim().toLowerCase().replace(/\s+/g, ' ');
-    const val = parseValue(m[2]!);
-    if (!val) continue;
-    if (kv) { if (!kv.has(key)) kv.set(key, val); }         // emitter 内：同名取第一次
-    else if (key === 'position') sys.position = vecOf(val);  // 系统级：position
+    // 键 = 值：一行可能有多对（紧凑写法）
+    KV_RE.lastIndex = 0;
+    let m: RegExpExecArray | null;
+    while ((m = KV_RE.exec(line)) !== null) {
+      const key = m[1]!.trim().toLowerCase().replace(/\s+/g, ' ');
+      const val = parseValue(m[2]!);
+      if (!val) continue;
+      if (kv) { if (!kv.has(key)) kv.set(key, val); }         // emitter 内：同名取第一次
+      else if (key === 'position') sys.position = vecOf(val);  // 系统级：position
+    }
   }
   // 容错：最后一块没写 } 也要收
   if (kv) sys.emitters.push(buildEmitter(kv));
@@ -223,6 +268,7 @@ export function parsePart(text: string): PartSystem {
 
 function buildEmitter(kv: Map<string, PartValue>): PartEmitter {
   const g = (k: string) => kv.get(k);
+  const keyframes = collectKeyframes(kv);
   return {
     name: strOf(g('__name')) ?? '',
     blend: toBlend(strOf(g('sourceblendmode')) ?? 'BLEND_LAMP'),
@@ -247,5 +293,21 @@ function buildEmitter(kv: Map<string, PartValue>): PartEmitter {
     finalPartAngle: vecOf(g('fade so final partangle')),
     finalLocalAngle: vecOf(g('fade so final localangle')),
     finalVelocity: vecOf(g('fade so final velocity')),
+    keyframes,
   };
+}
+
+/** 收集 `fade so at <t> <属性>` 形式的中间关键帧（同属性按时间升序） */
+function collectKeyframes(kv: Map<string, PartValue>): PartKeyframes {
+  const out: PartKeyframes = {};
+  for (const [key, value] of kv) {
+    const m = /^fade so at\s+(-?[\d.]+)\s+(.+)$/.exec(key);
+    if (!m) continue;
+    const time = Number(m[1]);
+    if (!Number.isFinite(time)) continue;
+    const prop = m[2]!.trim();
+    (out[prop] ??= []).push({ time, value });
+  }
+  for (const list of Object.values(out)) list.sort((a, b) => a.time - b.time);
+  return out;
 }

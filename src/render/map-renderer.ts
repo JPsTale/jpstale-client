@@ -400,7 +400,10 @@ export class MapRenderer {
     geom.setAttribute('normal', new THREE.BufferAttribute(nrm2, 3));
     geom.setAttribute('color', new THREE.BufferAttribute(col2, 3));
     if (uv0) geom.setAttribute('uv', new THREE.BufferAttribute(uv0, 2));
-    if (uv1) geom.setAttribute('uv2', new THREE.BufferAttribute(uv1, 2));
+    // ⚠ 第二套 UV 用**自有 attribute 名**（`aLightMapUv`），不用 three 的 `uv1`：
+    // 后者需要 three 注入 `attribute vec2 uv1;`（仅当材质用到 uv1 贴图时），我们只是自己读它 ⇒
+    // 声明缺失、shader 编译失败。属性名与 shader 里的引用必须同时改。
+    if (uv1) geom.setAttribute('aLightMapUv', new THREE.BufferAttribute(uv1, 2));
     geom.setIndex(new THREE.BufferAttribute(outIndices, 1));
 
     // 只有真的含共享顶点才建 attribute / 注入（否则该材质 shader 保持原样，零开销）
@@ -582,7 +585,14 @@ export class MapRenderer {
     threeMat.userData.scrollSlots = scrollSlot;
     threeMat.onBeforeCompile = (shader) => {
       let declInline = '#include <common>';
-      if (needLM || need2Tex) declInline += '\nout vec2 vMyLightMapUv;';
+      if (needLM || need2Tex) {
+        declInline += '\nout vec2 vMyLightMapUv;';
+        // ⚠ **自己声明 attribute，不要用 three 的 `uv1`**：three 只在材质真的用到 uv1 贴图
+        // （如 `aoMap`）时才注入 `attribute vec2 uv1;` —— 我们只是在自己的注入 shader 里读它，
+        // three 不会替我们声明 ⇒ `'uv1' : undeclared identifier`、shader 编译失败、材质整体不渲染。
+        // 与 `aWaterEdge` 同一做法：用自有名字，绕开 three 的 UV 声明机制。
+        declInline += '\nattribute vec2 aLightMapUv;';
+      }
       if (scrollU0 || scrollU1) declInline += '\nuniform vec2 uScrollU;';
       if (windKind) {
         declInline += '\nuniform float uWindTime;';
@@ -606,7 +616,7 @@ export class MapRenderer {
 
       let uvInline = '#include <uv_vertex>';
       if (needLM || need2Tex) {
-        uvInline += '\nvMyLightMapUv = uv2;';
+        uvInline += '\nvMyLightMapUv = aLightMapUv;';
         if (scrollU1) uvInline += '\nvMyLightMapUv.x += uScrollU.y;';
       }
       // three 的 vUv 仅在 USE_UV 时声明（有 map/uv 的材质）；无则跳过滚动避免编译错

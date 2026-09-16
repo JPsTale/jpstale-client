@@ -476,7 +476,9 @@ export function weaponSoundCode(
     case 'DAGGER': return 15;                  // 短刃挥击
     case 'PHANTOM': return one ? 17 : 18;      // 法术武器 → 同法杖 casting
     case 'KNUCKLE': return 14;                 // 拳套 → punch hit
-    default: return 14;                        // 空手 punch hit
+    // 空手：**法系职业走 casting**（原版魔法职业空手也是施法，放法球 —— 见 AGENTS #48 ⑦⑧），
+    // 其余职业才是 punch hit。此前一律 14 ⇒ 祭司空手攻击听起来像物理职业的拳头（用户实测）。
+    default: return isCaster ? (one ? 17 : 18) : 14;
   }
 }
 
