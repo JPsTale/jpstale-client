@@ -18,11 +18,11 @@
  *
  * ## 两个字段的语义已核实（不是猜）
  *
- *   · `InitMaxFrame(25)` → `HoEffectMeshController::InitMaxFrame`：`m_iMaxFrame = int(frame*160)`，
- *     `Main` 按 **30fps** 推进（`160*30*elapsedTime`），到点 `m_iLoopCount++`；
- *     `InitLoop(1)` ⇒ **播一次就灭**。⇒ 它是**寿命（25 帧 ≈ 0.833s）**，**不是网格动画**
- *     （`static-fx.ts` 里为法阵记的"序列帧尚未查明"由此结案：网格是静态的，
- *     看得见的"动"来自 `EventFadeColor` 的**秒级** alpha 包络）。
+ *   · `InitMaxFrame(25)` → **"这份网格有 25 帧，按 30fps 播完"**（**更正**：我先判成"只是寿命、
+ *     网格是静态的" ✗）。依据：`HoEffectView::UpdateMesh:619` `m_Pat->Frame = m_iCurrentFrame`
+ *     → `smPAT3D::SetFrame` → `smOBJ3D::TmAnimation`（旋转 `TmRotate` + 位移 `GetPosFrame`）。
+ *     `InitLoop(1)` = 播一轮即灭 ⇒ 帧号范围 0..`InitMaxFrame×160` = 0..**4000**（见 `MESH_MAX_FRAME`）。
+ *     网格的 alpha 另有 `EventFadeColor` 的**秒级**包络（两者并行）。
  *   · `InitEndTime(a,b)` → `CreateNewParticle` 里 `part.m_fEndTime = m_fEndTime.GetRandom()`
  *     ⇒ **粒子寿命**（随机区间）= 我们的 `lifetime`。
  *
@@ -178,15 +178,11 @@ function meshAlphaAt(t: number): number {
  *
  * @param caster 施法者世界坐标（原版 `pX/pY/pZ`）
  * @param yaw 施法者朝向（弧度，原版 `Angle.y` —— 调用方在放招前已转向目标）
- * @param scale **整体缩放**（诊断用，默认 1）。用户实测"冰块没逐渐远离、离得太近" ——
- *   三簇在 20/70/120（间距 50）而每颗尺寸 40~60、生成盒 120×40 ⇒ 相邻两簇会糊在一起。
- *   到底是"线该更长"还是"块该更小"，得靠眼睛定 ⇒ 实验室给个旋钮拧到像原版，
- *   再把倍数固化到 `SYSTEMS` 的数字里（那才是"数据"，不是运行时缩放）。
+ * @param scale **整体缩放**（默认 1 = 忠实数据）。用户实机核对过：×1 与游戏内"几乎一模一样"
+ *   ⇒ 不需要缩放；这个口子留着只为将来别的调用点。
  */
 export function runGlacialSpike(
   deps: GlacialSpikeDeps, caster: { x: number; y: number; z: number }, yaw: number, scale = 1,
-  /** 试验项（默认 = 忠实 Lua）：网格额外前后偏移、网格复制份数（>1 时按三簇大冰块的 20/70/120 摆） */
-  opts: { meshOffset?: number; meshCopies?: number } = {},
 ): void {
   if (!deps.effects) { deps.log?.('  ✗ Glacial Spike：没有 effects（未接渲染器）'); return; }
   const angY = radToPtAngle(yaw);
@@ -212,37 +208,23 @@ export function runGlacialSpike(
   const lp = worldOf(0, 0, LIGHT.forward);
   deps.dynLights?.set(lp.x, lp.y, lp.z, LIGHT.r, LIGHT.g, LIGHT.b, LIGHT.a, LIGHT.power, LIGHT.decPower);
 
-  // **冰块的网格本体**（静态 `.smd` + `EventFadeColor` 的秒级 alpha 包络）
+  // **冰块的网格本体**（静态几何 + 对象级 `tmPos` 逐帧位移 + `EventFadeColor` 的 alpha 包络）
   //
-  // ⚠ 位置：Lua 的 Parent 在 `(0,-5,-20)` ⇒ **前方 20**（"近身范围"就是它）。但网格本身是
-  //   一块**约 100 单位高、54 宽**的晶体群 ⇒ 摆在 20 处会罩住施法者（截图即如此）。
-  // ⚠ 份数：数据里只有**一份**网格；而 `PiScript::RegisterCommand` 的 28 条 Lua API 里
-  //   **没有任何复制/偏移网格的命令** ⇒ "前方还有几簇晶体"是**我们的决定**，不是原版数据。
-  //   故这里给实验室两个旋钮（`opts`）先看效果，定下来再固化。
-  const copies = Math.max(1, Math.round(opts.meshCopies ?? 1));
-  const placements = copies <= 1
-    ? [{ f: PARENT.forward + (opts.meshOffset ?? 0), s: 1 }]
-    // 多份时按三簇大冰块的落点与尺寸比例摆（20/70/120 ↔ 40/50/60）
-    : [{ f: 20, s: 1 }, { f: 70, s: 1.25 }, { f: 120, s: 1.5 }];
+  // 位置：Lua 的 Parent 在 `(0,-5,-20)` ⇒ **前方 20**（"从近身范围开始"就是它）。
+  // 只有**一份**网格（`PiScript::RegisterCommand` 的 28 条 Lua API 里没有任何复制网格的命令）——
+  // "往前一簇簇"不是靠复制，而是靠**对象自己的位移关键帧**：12 块冰从远处逐帧扫到位
+  // （见 `MESH_MAX_FRAME` 与 `updateGlacialSpikes`）。早期我给它加过"复制份数/额外偏移"两个
+  // 旋钮想凑出多簇 —— 那是**被证伪的猜测**，已删。
   void loadStaticSmd(MESH).then((r) => {
     if (!r) { deps.log?.(`  ✗ 冰枪网格 ${MESH} 加载失败`); return; }
-    const at = placements.map((p) => ({ p, pos: worldOf(PARENT.x, PARENT.y, p.f) }));
-    // 第一份用原对象；其余 clone（几何/材质共享 ⇒ 换透明度会一起变，先这样，够用）
-    r.group.position.set(at[0]!.pos.x, at[0]!.pos.y, at[0]!.pos.z);
+    const mp = worldOf(PARENT.x, PARENT.y, PARENT.forward);
+    r.group.position.set(mp.x, mp.y, mp.z);
     r.group.rotation.y = yaw;
-    r.group.scale.setScalar(scale * placements[0]!.s);
+    if (scale !== 1) r.group.scale.setScalar(scale);
     deps.scene.add(r.group);
     fading.push({ group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks });
-    for (let i = 1; i < at.length; i++) {
-      const c = r.group.clone(true);
-      c.position.set(at[i]!.pos.x, at[i]!.pos.y, at[i]!.pos.z);
-      c.rotation.y = yaw;
-      c.scale.setScalar(scale * placements[i]!.s);
-      deps.scene.add(c);
-      fading.push({ group: c, age: 0, dispose: () => { /* 与母对象共享几何 ⇒ 由母对象 dispose */ } });
-    }
-    deps.log?.(`  ❄ 冰块网格就位 ×${placements.length}（前方 ${placements.map((p) => (p.f * scale).toFixed(0)).join(' / ')}`
-      + `，缩放 ${placements.map((p) => (scale * p.s).toFixed(2)).join(' / ')}`
+    deps.log?.(`  ❄ 冰块网格就位（前方 ${(PARENT.forward * scale).toFixed(0)}`
+      + `，位移动画 ${r.tracks?.length ?? 0} 条轨道 / ${MESH_MAX_FRAME} 帧`
       + `，寿命 ${MESH_LIFE_SEC.toFixed(2)}s，alpha ${MESH_FADE.map((e) => e.a).join('/')}）`);
   });
 }

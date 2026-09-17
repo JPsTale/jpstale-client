@@ -19,19 +19,17 @@
  * `.smd` 和两张贴图。所以这里：顶点**直接铺开**（不做骨骼预乘）、UV 按面取（`texLinks`）、
  * 贴图按材质表（`materials[].texturePaths`）。
  *
- * ## "序列帧"问题**已结案**（2026-09-18）
+ * ## "序列帧"问题的**更正**（2026-09-18，我先前写错过一版）
  *
- * 此前这里记着："原版对 `MAAM2.ASE` 还设了 `AniMaxCount = 20` / `AniDelayTime = 4`（序列帧），
- * 静态 `.smd` 只有一帧数据，表达不了那 20 帧；**尚未查明**。"
- *
- * 现查源码结案（`HoBaram/NewEffect/HoEffectController.cpp:183,207`）：
- *   `InitMaxFrame(frame)` → `m_iMaxFrame = int(frame * 160)`；
- *   `Main` 里 `m_fCurrentFrame += 160*30*elapsedTime`（**30fps**），到点就把 `m_fCurrentFrame` 归零、
- *   `m_iLoopCount++`，而 `InitLoop(1)` 时**直接置为不活跃**。
- * ⇒ 那个"帧数"是**寿命**（帧 @30fps），**不是网格动画**。网格始终是静态的，
- *   看得见的"动"来自 `EventFadeColor` 的**秒级** alpha 包络。
- * ⇒ 故本模块"按静态模型渲染"是**对的**；调用方自己给"寿命 + alpha 包络"即可
- *   （见 `glacial-spike.ts` 的 `MESH_LIFE_SEC`/`MESH_FADE`、`cast-circle-runner.ts` 的包络）。
+ * 我先写过"`AniMaxCount = 20` / `InitMaxFrame(25)` 是**寿命**、网格是静态的" —— **错的** ✗。
+ * 真相（`smObj3d.cpp` / `HoEffectView.cpp`）：帧号是**真的**，`HoEffectView::UpdateMesh:619`
+ * `m_Pat->Frame = m_iCurrentFrame`，`smPAT3D::SetFrame` → `smOBJ3D::TmAnimation`：
+ *   · 旋转用 `TmRotate`（这就是下面逐对象应用的矩阵）；
+ *   · 位移用 `GetPosFrame(frame)`（`smObj3d.cpp:999`）—— **线性插值、值即平移**；
+ *   · 另有 `tmRot` / `tmScale` 两类轨道（本模块暂未用）。
+ * 判据是 `!TmFrameCnt && (TmRotCnt > 0 || TmPosCnt > 0 || TmScaleCnt > 0)`
+ * ⇒ **有任一轨道就播**（我当初只看 `tmFrameCnt` 就下结论，于是漏掉了动画）。
+ * 实现在 `StaticMeshTrack` / `applyStaticMeshTracks`，由调用方按帧推进。
  */
 
 import * as THREE from 'three';
