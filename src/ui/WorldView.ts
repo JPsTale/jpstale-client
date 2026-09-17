@@ -36,6 +36,7 @@ import {
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { updateCastCircleMeshes } from '../render/effects/cast-circle-runner.js';
+import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
@@ -511,6 +512,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let running = uiPrefs0.running;
   let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
   let effects: ReturnType<typeof createEffectManager> | null = null; // INI 广告牌特效
+  /**
+   * 动态光池（原版 `SetDynLight`）—— **80 槽 PointLight**，实验室与游戏同一份实现。
+   *
+   * ⚠ 此前游戏侧**没有建它**，所以所有 `SetDynLight` 都无处落地（用户实测："动态光对怪物没起作用"，
+   * 不是错觉）。也注意：**地图用的是 `MeshBasicMaterial`（不受光）**，所以地图不会吃到动态光 ——
+   * 那是另一件事（要让地图受光得改地图渲染器）。
+   */
+  let dynLights: DynLightPool | null = null;
   /** three.quarks 粒子运行时（现阶段接管：药水爆发、法术弹）见 `render/effects/quarks-runtime.ts` */
   let quarksFx: ReturnType<typeof createQuarksRuntime> | null = null;
 
@@ -1252,6 +1261,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // ⚠ **必须把 quarksFx 注进去**：`spawnSystem`/`spawn` 的渲染都委托给它（"全用 quark"）。
     // ⚠ 且它由 `effects.update` 统一推进 ⇒ **这里不要再 update 一次**（会 2 倍速）。
     effects = createEffectManager(quarksFx);
+    dynLights = createDynLightPool(scene);
     // ⚠ 顺序有讲究：投射物管理器**必须**在特效管理器之后建 —— 法术弹的粒子是挂到飞行节点上的
     // （`projectile.ts` 里 `fx.spawnSystem`），早建一步拿到的就是 `null` ⇒ 箭/标枪照常、法术弹静默没有特效
     // （2026-09-16 用户实测"看不到粒子特效"的根因）。
@@ -1874,6 +1884,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return {
       effects,
       scene: scene!,
+      dynLights,
       playSound: (path: string, pos: { x: number; y: number; z: number }) => { sfx.play(path, { pos }); },
       log: (msg: string) => console.log('[skillfx]' + msg),
     };
@@ -4176,7 +4187,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             fireMonsterAttackEvent({
               modelKey: actor.modelKey, effectId: actor.monsterEffectId,
               pos: actor.root.position, facing: actor.root.rotation.y,
-              effects, sfx,
+              // 动态光池（原版 `SetDynLight`）：此前游戏侧没建池 ⇒ 所有动态光无处落地
+              effects, sfx, dynLights,
             });
           }
           actor.lastCompFrame = compFrame;
@@ -5333,6 +5345,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (effects && camera) effects.update(dt);
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
+    dynLights?.update(dt);            // 动态光衰减（原版逐帧 power -= decPower）
     perfMark('技能特效');
 
     // 小地图
