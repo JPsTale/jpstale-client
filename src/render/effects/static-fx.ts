@@ -38,6 +38,7 @@ import * as THREE from 'three';
 import { parseSmb } from '../../core/char-parser.js';
 import { normalizeTexturePath } from './part-assets.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
+import { getMoveLocation, FONE } from '../../core/geom.js';
 
 export interface StaticModelResult {
   group: THREE.Group;
@@ -83,6 +84,17 @@ export async function loadStaticSmd(
   root.name = 'static-fx:' + p;
 
   for (const obj of smd.objects) {
+    // **对象自带的局部变换**（每个 `obj` 都有自己的 `posi` / `angle`）—— 多块拼成的网格全靠它摆位。
+    // ⚠ 此前这里只用裸顶点 ⇒ 所有对象叠在原点：`pt_4-1-25.smd` 是 **12 块冰**，
+    //   于是"冰块都在一个位置"（用户实测）。角色模型没露过这个问题，是因为它们靠**骨骼绑定矩阵**摆位。
+    // 单位：顶点在解析时已 ÷256，`posi` 也是定点 ⇒ 同样 ÷256；`angle` 是 PT 角制式（4096）直接可用。
+    // 旋转顺序用 `getMoveLocation`（PT 的 Z→X→Y 同一套），再统一 Z-up → Y-up。
+    const op = obj.posi ?? { x: 0, y: 0, z: 0 };
+    const oa = obj.angle ?? { x: 0, y: 0, z: 0 };
+    const put = (vx: number, vy: number, vz: number): [number, number, number] => {
+      const r = getMoveLocation(vx, vy, vz, oa.x, oa.y, oa.z);
+      return toYup(r.x + op.x / FONE, r.y + op.y / FONE, r.z + op.z / FONE);
+    };
     // 顶点按**面**展开（UV 是逐面的，同 `buildSkinnedMesh` 的做法）
     let tri = 0;
     // 逐材质分组：一个 obj 的面可能引用不同材质
@@ -101,7 +113,7 @@ export async function loadStaticSmd(
       for (let k = 0; k < 3; k++) {
         const v = obj.vertices[f.v[k]];
         if (!v) continue;
-        const [x, y, z] = toYup(v.x, v.y, v.z);
+        const [x, y, z] = put(v.x, v.y, v.z);
         bucket.pos.push(x, y, z);
         bucket.uv.push(tl ? tl.u[k]! : 0, tl ? 1.0 - tl.v[k]! : 0);
       }

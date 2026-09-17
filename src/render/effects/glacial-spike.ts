@@ -173,6 +173,8 @@ function meshAlphaAt(t: number): number {
  */
 export function runGlacialSpike(
   deps: GlacialSpikeDeps, caster: { x: number; y: number; z: number }, yaw: number, scale = 1,
+  /** 试验项（默认 = 忠实 Lua）：网格额外前后偏移、网格复制份数（>1 时按三簇大冰块的 20/70/120 摆） */
+  opts: { meshOffset?: number; meshCopies?: number } = {},
 ): void {
   if (!deps.effects) { deps.log?.('  ✗ Glacial Spike：没有 effects（未接渲染器）'); return; }
   const angY = radToPtAngle(yaw);
@@ -199,17 +201,37 @@ export function runGlacialSpike(
   deps.dynLights?.set(lp.x, lp.y, lp.z, LIGHT.r, LIGHT.g, LIGHT.b, LIGHT.a, LIGHT.power, LIGHT.decPower);
 
   // **冰块的网格本体**（静态 `.smd` + `EventFadeColor` 的秒级 alpha 包络）
-  const mp = worldOf(PARENT.x, PARENT.y, PARENT.forward);
+  //
+  // ⚠ 位置：Lua 的 Parent 在 `(0,-5,-20)` ⇒ **前方 20**（"近身范围"就是它）。但网格本身是
+  //   一块**约 100 单位高、54 宽**的晶体群 ⇒ 摆在 20 处会罩住施法者（截图即如此）。
+  // ⚠ 份数：数据里只有**一份**网格；而 `PiScript::RegisterCommand` 的 28 条 Lua API 里
+  //   **没有任何复制/偏移网格的命令** ⇒ "前方还有几簇晶体"是**我们的决定**，不是原版数据。
+  //   故这里给实验室两个旋钮（`opts`）先看效果，定下来再固化。
+  const copies = Math.max(1, Math.round(opts.meshCopies ?? 1));
+  const placements = copies <= 1
+    ? [{ f: PARENT.forward + (opts.meshOffset ?? 0), s: 1 }]
+    // 多份时按三簇大冰块的落点与尺寸比例摆（20/70/120 ↔ 40/50/60）
+    : [{ f: 20, s: 1 }, { f: 70, s: 1.25 }, { f: 120, s: 1.5 }];
   void loadStaticSmd(MESH).then((r) => {
     if (!r) { deps.log?.(`  ✗ 冰枪网格 ${MESH} 加载失败`); return; }
-    r.group.position.set(mp.x, mp.y, mp.z);
+    const at = placements.map((p) => ({ p, pos: worldOf(PARENT.x, PARENT.y, p.f) }));
+    // 第一份用原对象；其余 clone（几何/材质共享 ⇒ 换透明度会一起变，先这样，够用）
+    r.group.position.set(at[0]!.pos.x, at[0]!.pos.y, at[0]!.pos.z);
     r.group.rotation.y = yaw;
-    if (scale !== 1) r.group.scale.setScalar(scale);
+    r.group.scale.setScalar(scale * placements[0]!.s);
     deps.scene.add(r.group);
     fading.push({ group: r.group, age: 0, dispose: r.dispose });
-    deps.log?.(`  ❄ 冰块网格就位（前方 ${(PARENT.forward * scale).toFixed(0)}，`
-      + `寿命 ${MESH_LIFE_SEC.toFixed(2)}s，alpha ${MESH_FADE.map((e) => e.a).join('/')}`
-      + `${scale !== 1 ? `，缩放 ×${scale}` : ''}）`);
+    for (let i = 1; i < at.length; i++) {
+      const c = r.group.clone(true);
+      c.position.set(at[i]!.pos.x, at[i]!.pos.y, at[i]!.pos.z);
+      c.rotation.y = yaw;
+      c.scale.setScalar(scale * placements[i]!.s);
+      deps.scene.add(c);
+      fading.push({ group: c, age: 0, dispose: () => { /* 与母对象共享几何 ⇒ 由母对象 dispose */ } });
+    }
+    deps.log?.(`  ❄ 冰块网格就位 ×${placements.length}（前方 ${placements.map((p) => (p.f * scale).toFixed(0)).join(' / ')}`
+      + `，缩放 ${placements.map((p) => (scale * p.s).toFixed(2)).join(' / ')}`
+      + `，寿命 ${MESH_LIFE_SEC.toFixed(2)}s，alpha ${MESH_FADE.map((e) => e.a).join('/')}）`);
   });
 }
 

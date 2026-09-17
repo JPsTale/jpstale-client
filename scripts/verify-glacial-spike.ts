@@ -95,5 +95,26 @@ for (const p of ['effect/neweffect/res/object/pt_4-1-25.smd', 'effect/neweffect/
   ok(fs.existsSync(path.join(ASSET, p)), `${p} 存在`);
 }
 
+console.log('\n④ 网格的形状（信息项：它是一"簇"，不是多帧）');
+{
+  const p = path.join(ASSET, 'effect/neweffect/res/object/pt_4-1-25.smd');
+  const b = fs.readFileSync(p);
+  const { parseSmb } = await import('../src/core/char-parser.js');
+  const smd = parseSmb(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer);
+  const objs = smd.objects ?? [];
+  const verts = objs.reduce((n, o) => n + o.vertices.length, 0);
+  // 实测（2026-09-18）：12 个对象、每个 66 顶点、**顶点包围盒几乎相同**（都建在原点）、
+  // `posi/angle` 全 0、`tmFrameCnt` = 0 ⇒ 这份网格是"**一簇** 12 根尖刺，无摆放/无帧数据"。
+  // 即"往前一簇簇晶体"不可能由它产出（Lua API 里也没有复制网格的命令）——
+  // 那些"越远越大"的簇在数据里是**粒子系统**（`InitSize` 40/50/60）。
+  const zeroTransform = objs.every((o) => (o.posi?.x ?? 0) === 0 && (o.angle?.y ?? 0) === 0);
+  const noFrames = objs.every((o) => (o.tmFrameCnt ?? 0) === 0);
+  console.log(`    objects = ${objs.length}，总顶点 = ${verts}`
+    + `，各对象顶点数 = ${objs.slice(0, 10).map((o) => o.vertices.length).join('/')}`
+    + `，无对象变换 = ${zeroTransform}，无帧数据 = ${noFrames}`);
+  ok(objs.length === 12 && zeroTransform && noFrames,
+    '网格 = 一簇（12 根尖刺，无摆放/无帧）⇒ "多簇晶体"只能是我们的决定（已给实验室旋钮）');
+}
+
 console.log(`\n${fail === 0 ? '全部通过' : `✗ ${fail} 项未通过`}`);
 process.exit(fail === 0 ? 0 : 1);

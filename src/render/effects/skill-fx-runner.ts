@@ -86,6 +86,10 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
    * 用户拧到像原版，把倍数报回来，再把数字**固化进数据**（而不是留个运行时缩放）。
    */
   fxScale?: number;
+  /** 试验项（默认 = 忠实数据）：网格额外前后偏移 */
+  meshOffset?: number;
+  /** 试验项（默认 1 = 忠实数据）：网格复制几份（>1 时按 20/70/120、40/50/60 比例摆） */
+  meshCopies?: number;
 }
 
 export const CODE_SKILL_FX: Record<string, (
@@ -150,6 +154,7 @@ export const CODE_SKILL_FX: Record<string, (
     runGlacialSpike(
       { effects: ctx.effects, scene: ctx.scene, dynLights: ctx.dynLights, log: ctx.log },
       caster, ctx.casterYaw ?? 0, ctx.fxScale ?? 1,
+      { meshOffset: ctx.meshOffset, meshCopies: ctx.meshCopies },
     );
   },
 };
