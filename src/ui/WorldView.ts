@@ -38,6 +38,8 @@ import {
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast } from '../render/effects/cast-circle-runner.js';
+import { updateGlacialSpikes } from '../render/effects/glacial-spike.js';
+import { CODE_SKILL_FX } from '../render/effects/skill-fx-runner.js';
 import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
@@ -4280,6 +4282,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               effects, sfx, dynLights,
               // 本条动作的第几个事件帧（原版 `MotionEvent`）—— 有的飞出物靠它分左右（VigorBall）
               motionEvent: motionEventIndexOf(motion.eventFrame, evFrame),
+              // 这一招的目标（身体中部）—— 目前只被 `code` 类特效用（如 Glacial Spike 用不到）
+              aim: unitBodyAnchor(selfPlayerId),
+              // **代码内组合特效**（`def.code`，如 Glacial Spike）：转交**与玩家技能同一个注册表**
+              // ⇒ 同一招在怪物侧与玩家侧是同一份实现（AGENTS #15）
+              fireCode: (code, target) => {
+                const fn = CODE_SKILL_FX[code];
+                if (!fn) { console.log(`[skillfx] ✗ 代码特效「${code}」未注册`); return; }
+                fn({
+                  ...skillFxCtx(),
+                  motionEvent: motionEventIndexOf(motion.eventFrame, evFrame),
+                  casterYaw: flyYaw,
+                  targetGetter: () => unitBodyAnchor(selfPlayerId),
+                }, flyOrigin, target);
+              },
               // **飞出物**（`def.fly`，原版 `AssaParticle_*`）：驱动是**共用实现**
               // （`monster-fly-runner.ts`）—— 此前只有实验室实现 ⇒ 游戏里这类特效根本不飞。
               // 目标 = **自机**（与射击怪的箭同一条：这几招打的就是玩家）
@@ -5489,6 +5505,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
+    updateGlacialSpikes(dt);          // 冰枪网格的 alpha 包络与寿命（共用实现）
     dynLights?.update(dt);            // 动态光衰减（原版逐帧 power -= decPower）
     perfMark('技能特效');
 

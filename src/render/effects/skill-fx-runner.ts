@@ -19,6 +19,7 @@ import { playerSparkCount } from './multi-spark.js';
 import { runCastCircle } from './cast-circle-runner.js';
 import { runMonsterFly, type FlyDeps } from './monster-fly-runner.js';
 import { FX_VIGOR_BALL, pickMonsterFxAsset } from './monster-attack-fx.js';
+import { runGlacialSpike } from './glacial-spike.js';
 import { reportFallback } from '../../char/fallback-log.js';
 
 /** 技能表的一行（`skill-fx.json` 的形状） */
@@ -131,6 +132,19 @@ export const CODE_SKILL_FX: Record<string, (
         target: getTarget,
         motionEvent: ctx.motionEvent ?? 1,
       },
+    );
+  },
+  // **Glacial Spike**（`SKILL_PLAY_GLACIAL_SPIKE`，祭司 `mp60 g_spike.bmp`）——
+  // 与怪物 D_PR 的 `'Z'`（`character.cpp:14926`）**同一招同一个函数**（`SkillCelestialGlacialSpike`）
+  // ⇒ 共用 `glacial-spike.ts`（那里面是从 NewEffect Lua 移植的参数与寿命/alpha 语义）。
+  // 它是**朝向前方**的地面效果（近身 → 前方 100，越远越大），只依赖 `casterYaw`，不需要目标。
+  glacialspike: (ctx, caster) => {
+    if (ctx.casterYaw == null) {
+      ctx.log?.('  ⚠ Glacial Spike：没给 casterYaw ⇒ 只会朝 +z 放（应传角色朝向）');
+    }
+    runGlacialSpike(
+      { effects: ctx.effects, scene: ctx.scene, dynLights: ctx.dynLights, log: ctx.log },
+      caster, ctx.casterYaw ?? 0,
     );
   },
 };

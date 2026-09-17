@@ -19,12 +19,19 @@
  * `.smd` 和两张贴图。所以这里：顶点**直接铺开**（不做骨骼预乘）、UV 按面取（`texLinks`）、
  * 贴图按材质表（`materials[].texturePaths`）。
  *
- * ## 尚未表达的部分（如实记录，不静默）
+ * ## "序列帧"问题**已结案**（2026-09-18）
  *
- * 原版对 `MAAM2.ASE` 还设了 `AniMaxCount = 20` / `AniDelayTime = 4`（序列帧）。
- * 静态 `.smd` 只有一帧数据，这里**表达不了**那 20 帧 —— 要么它靠贴图图集做 UV 动画，
- * 要么原版另有帧数据源；**尚未查明**，故先按静态模型渲染，并在返回值里带上 `animated: false`
- * 让调用方知情。
+ * 此前这里记着："原版对 `MAAM2.ASE` 还设了 `AniMaxCount = 20` / `AniDelayTime = 4`（序列帧），
+ * 静态 `.smd` 只有一帧数据，表达不了那 20 帧；**尚未查明**。"
+ *
+ * 现查源码结案（`HoBaram/NewEffect/HoEffectController.cpp:183,207`）：
+ *   `InitMaxFrame(frame)` → `m_iMaxFrame = int(frame * 160)`；
+ *   `Main` 里 `m_fCurrentFrame += 160*30*elapsedTime`（**30fps**），到点就把 `m_fCurrentFrame` 归零、
+ *   `m_iLoopCount++`，而 `InitLoop(1)` 时**直接置为不活跃**。
+ * ⇒ 那个"帧数"是**寿命**（帧 @30fps），**不是网格动画**。网格始终是静态的，
+ *   看得见的"动"来自 `EventFadeColor` 的**秒级** alpha 包络。
+ * ⇒ 故本模块"按静态模型渲染"是**对的**；调用方自己给"寿命 + alpha 包络"即可
+ *   （见 `glacial-spike.ts` 的 `MESH_LIFE_SEC`/`MESH_FADE`、`cast-circle-runner.ts` 的包络）。
  */
 
 import * as THREE from 'three';

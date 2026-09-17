@@ -3915,7 +3915,7 @@
    },
    "event": {
     "fx": [
-     "lua:skillcelestialglacialspike"
+     "code:glacialspike"
     ],
     "sfx": [
      "wav/effects/skill/morion/glacialspike 01.wav",

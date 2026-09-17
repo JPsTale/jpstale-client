@@ -38,6 +38,12 @@
         "code:vigorball"
       ],
       "note": "**跟踪弹**（两颗，左右 ±45°）—— 必须走代码：原版 `character.cpp:16338 case SKILL_PLAY_VIGOR_BALL → AssaParticle_VigorBall`，与怪物 D_PR 的 `'H'`（`:14912`）是**同一个函数**，靠「主 SetPos 拖尾 + 附加 SetAttachPos 贴体 + 每帧朝目标加速」组合出来（AssaParticle.cpp:5465 Main）。自动派生的 part:skill3priestessvigorball1/2 只是那两个粒子系统本身，原地播不出飞行（且玩家技能这条链此前没有 part: 加载器，等于什么都没播）。共用实现在 CODE_SKILL_FX.vigorball（spec 见 FX_VIGOR_BALL）。"
+    },
+    "Glacial Spike": {
+      "eventFx": [
+        "code:glacialspike"
+      ],
+      "note": "**朝向前方的一列冰块**（近身 → 前方 100，越远越大）—— 原版是 NewEffect 的 Lua 脚本 `Effect/NewEffect/SkillCelestialGlacialSpike.lua`（1 网格 + 5 粒子系统 + 正前方蓝光 power 700）：玩家 `character.cpp:16338` 一族 / 怪物 D_PR 的 `'Z'`（`:14926`）**同一个函数** `SkillCelestialGlacialSpike`。Lua 不是一个资产文件，故走 code:（render/effects/glacial-spike.ts 逐条移植）。自动派生的 lua:skillcelestialglacialspike 此前没有加载器 ⇒ 什么都不播。"
     }
   }
 }

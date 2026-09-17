@@ -88,6 +88,14 @@ export interface MonsterAttackFxDef {
    */
   sound?: string | string[];
   /**
+   * **代码内组合的特效**（键 = `skill-fx-runner.CODE_SKILL_FX`）—— 一个技能由"网格 + 若干粒子系统 +
+   * 动态光"组合而成、没有单一资产文件时用它（如 Glacial Spike：从 NewEffect 的 Lua 脚本移植而来）。
+   *
+   * 本模块**不执行**它（要碰 three）——只声明，由调用方转交 `CODE_SKILL_FX`（与玩家技能同一个注册表）。
+   * 有 `code` 时 `asset` 只当显示名用（日志/检查器）。
+   */
+  code?: string;
+  /**
    * **起手音**（技能动画开始时播，不是事件帧）—— 原版 `character.cpp:14070`
    *   `BeginSkill_Monster` 里的 `SkillPlaySound(SKILL_SOUND_SKILL_CASTING_MAGICIAN, …)`
    *   = `wav/effects/skill/morion/casting_m.wav`（`effectsnd.cpp:537`）。
@@ -198,6 +206,24 @@ export const FX_VIGOR_BALL: MonsterAttackFxDef = {
   note: "character.cpp:14912(怪物 case 'H') / :16338(玩家 SKILL_PLAY_VIGOR_BALL) / "
     + 'hoAssaParticleEffect.cpp:4152-4200 / AssaParticle.cpp:5465(Main),5551(Start),5597-5598; '
     + 'dpr.inx idx17 事件帧 4640+7040',
+};
+
+/**
+ * **Glacial Spike** —— 玩家（`SKILL_PLAY_GLACIAL_SPIKE`）与怪物 D_PR `'Z'` **同一招**。
+ *
+ * 实现是**代码内组合**（1 个静态网格 + 5 个粒子系统 + 一盏正前方蓝光，全部来自 NewEffect 的
+ * Lua 脚本）⇒ 声明 `code: 'glacialspike'`，由调用方转交 `CODE_SKILL_FX`
+ * （与玩家技能**同一个注册表**，实现在 `glacial-spike.ts`）。
+ */
+export const FX_GLACIAL_SPIKE: MonsterAttackFxDef = {
+  asset: 'GlacialSpike',        // 显示名（真身是 `code`，见字段说明）
+  height: 0,
+  code: 'glacialspike',
+  sound: ['wav/effects/skill/morion/glacialspike 01.wav',
+    'wav/effects/skill/morion/glacialspike 02.wav'],
+  note: "character.cpp:14926 怪物 case 'Z'（另含 SetDynLight 正前方 64、蓝 power 700）"
+    + ' / 玩家 SKILL_PLAY_GLACIAL_SPIKE / HoNewEffectFunction.cpp:590 SkillCelestialGlacialSpike'
+    + '（Lua: Effect/NewEffect/SkillCelestialGlacialSpike.lua）',
 };
 
 /**
@@ -502,11 +528,24 @@ export interface MonsterAttackEventCtx {
    */
   motionEvent?: number;
   /**
+   * 这一招的**目标位置**（身体中部；原版 `chrAttackTarget->pY + PatHeight/2` 那类）。
+   *
+   * 由调用方给（它才知道"怪物在打谁"）——目前只被 `code` 类特效用（如 Glacial Spike 其实
+   * 不需要目标，但"朝目标方向"的招会有用）。缺省 = 没有目标。
+   */
+  aim?: { x: number; y: number; z: number } | null;
+  /**
    * **飞出物**（`MonsterAttackFxDef.fly`）交给调用方放出 —— 与 `fireSparks` 同理由：
    * 驱动要碰 three（载体节点 + 粒子跟随），而"目标是谁、站在哪"是调用方的场景知识。
    * 调用方应转交 `monster-fly-runner.runMonsterFly`（**唯一驱动**，游戏与实验室同一份）。
    */
   fireFly?: (asset: string, fly: MonsterFlySpec, motionEvent: number) => void;
+  /**
+   * **代码内组合特效**（`MonsterAttackFxDef.code`）交给调用方执行 —— 与 `fireSparks`/`fireFly` 同理由：
+   * 它要碰 three（网格/场景），而"目标是谁"是调用方的场景知识。
+   * 调用方应转交 `skill-fx-runner.CODE_SKILL_FX`（**与玩家技能同一个注册表**）。
+   */
+  fireCode?: (code: string, target: { x: number; y: number; z: number } | null) => void;
 }
 
 /**
@@ -617,6 +656,12 @@ function fireDef(
   const skillSound = pickMonsterSound(def, ctx.variant);
   if (skillSound) ctx.sfx?.play?.(skillSound, { pos: ctx.pos });
 
+  // **代码内组合特效**（`def.code`，如 Glacial Spike）：交给调用方转交 `CODE_SKILL_FX`
+  // —— 与玩家技能**同一个注册表**，于是两边同一招只需要一份实现。
+  if (def.code) {
+    ctx.fireCode?.(def.code, ctx.aim ?? null);
+    return null;
+  }
   // **多火花**：发射几颗是**本特效自己的属性**（`sparks.num`）—— 直接交给调用方，
   // 本模块不解析、不裁剪、不让调用方再选（那是把技能机制混进特效层，层级错了）。
   if (def.sparks) {
