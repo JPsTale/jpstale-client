@@ -50,9 +50,26 @@ export interface DynLightSink {
       power: number, decPower: number): boolean;
 }
 
+/**
+ * 给**顶点着色器**吃的动态光数据（自写注入用，见台账 §18）。
+ *
+ * 布局（每盏 2 个 vec4，共 160 个 —— WebGL2 顶点保底 256）：
+ *   `posRange[i*4+0..2]` = 世界坐标 · `+3` = **R（世界单位）** = `max(64, Power>>1)`
+ *   `colAlpha[i*4+0..2]` = 已按 `Power/255` 缩放的颜色 · `+3` = 同缩放的 alpha
+ * 并且**压紧**在前 `count` 个槽里 —— 着色器只能"常量上界 for + 按 count break"
+ * （GLSL ES 1.0 的 uniform 数组下标必须是常量索引表达式），散的槽位会让它没法定界。
+ */
+export interface DynLightData {
+  posRange: Float32Array;
+  colAlpha: Float32Array;
+  count: number;
+}
+
 export interface DynLightPool extends DynLightSink {
   /** 每帧推进（衰减）—— 原版 `DynLightMain()` */
   update(dt: number): void;
+  /** 着色器用的数据面（见 `DynLightData`；每帧末已压紧） */
+  data(): DynLightData;
   /** 当前点亮的盏数（实验室/诊断用） */
   active(): number;
   /** 池上限（诊断用） */
@@ -78,7 +95,16 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
   const dec = new Float64Array(DYN_LIGHT_MAX);
   const base = new Float64Array(DYN_LIGHT_MAX * 4);
 
-  /** 按当前 Power 重算颜色/强度/半径（原版 `Apply()` 每帧都这么做） */
+  /** 着色器数据面（每帧末压紧；见 `DynLightData`） */
+  const posRange = new Float32Array(DYN_LIGHT_MAX * 4);
+  const colAlpha = new Float32Array(DYN_LIGHT_MAX * 4);
+  let dataCount = 0;
+
+  /**
+   * 按当前 Power 重算颜色/强度/半径（原版 `Apply()` 每帧都这么做）。
+   * ⚠ `three` 的 PointLight 那两支（`intensity`/`distance`）**保留**，供仍走 three 灯的对象
+   *   （角色/怪物=Phong、实验室地面）用；**数据面**才是自写注入要吃的（台账 §18.4 的迁移分阶段）。
+   */
   function apply(i: number): void {
     const l = lights[i]!;
     const p = power[i]!;
@@ -90,9 +116,29 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
     const k = p / 255;
     l.color.setRGB((base[i * 4]! * k) / 255, (base[i * 4 + 1]! * k) / 255, (base[i * 4 + 2]! * k) / 255);
     l.intensity = ((p * base[i * 4 + 3]!) / 255 / 255) * DYN_LIGHT_INTENSITY_SCALE;
-    // Range = (Power>>1)*fONE，下限 64（世界单位）
+    // Range = (Power>>1)*fONE，下限 64（世界单位）—— 与原版 `Apply()` 一致
     l.distance = Math.max(64, p >> 1);
     l.visible = true;
+  }
+
+  /** 每帧末把**点亮的光**压紧写进数据面（着色器靠 `count` 定界，见 `DynLightData`） */
+  function packData(): void {
+    let n = 0;
+    for (let i = 0; i < DYN_LIGHT_MAX; i++) {
+      const p = power[i]!;
+      if (p <= 0) continue;
+      const l = lights[i]!;
+      const o = n * 4;
+      posRange[o] = l.position.x; posRange[o + 1] = l.position.y; posRange[o + 2] = l.position.z;
+      posRange[o + 3] = l.distance;                       // R（世界单位）
+      const k = p / 255;
+      colAlpha[o] = (base[i * 4]! * k) / 255;
+      colAlpha[o + 1] = (base[i * 4 + 1]! * k) / 255;
+      colAlpha[o + 2] = (base[i * 4 + 2]! * k) / 255;
+      colAlpha[o + 3] = (((p * base[i * 4 + 3]!) / 255) / 255) / 255;
+      n++;
+    }
+    dataCount = n;
   }
 
   return {
@@ -114,6 +160,7 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
       dec[slot] = decPower;
       l.position.set(x, y, z);
       apply(slot);
+      packData();
       return true;
     },
 
@@ -127,6 +174,11 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
         if (power[i]! <= 0) power[i] = 0;
         apply(i);
       }
+      packData();
+    },
+
+    data() {
+      return { posRange, colAlpha, count: dataCount };
     },
 
     active() {
