@@ -1794,6 +1794,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     jobId: number | null | undefined,
     targetId: number, eventFrame: number | undefined, rate: number,
     planOf: () => Map<number, { missed: boolean; critical: boolean }> | null,
+    /** 出手抬高（世界单位）—— 原版**逐怪不同**：玩家 34、SKELETONRANGE 28、DARKGUARD/REVIVED_ARCHER 38 */
+    launchLift = 34,
   ): void {
     if (!projectileMgr || !scene) {
       console.log('[projectile] 跳过：管理器未就绪 mgr=' + !!projectileMgr + ' scene=' + !!scene);
@@ -1824,7 +1826,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     //   （换角色/换怪可能就是错的骨、甚至没有那根骨 —— 本项目已多次栽在"押资产命名"上）。
     //   附带收益：不再有"找不到出手骨就发不出来"的分支。
     const from = root.getWorldPosition(new THREE.Vector3());
-    from.y += 34;
+    from.y += launchLift;
     // 沿武器伸出方向再偏移「半个武器长度」：原版 `GetAttackPoint`（exm `character.cpp:301`）
     // 取 `tz = ChrTool->SizeMax / 2` 沿武器偏移，`SizeMax` 从 mesh 量（`:1413-1424`）。
     // 方向取"出手点 → 武器组包围盒中心"（= 武器伸出方向）——**只用 mesh，不看骨骼名** ✓
