@@ -81,6 +81,11 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
    * 只给 `target`（快照）时用它兜底并**上报**。
    */
   targetGetter?: () => { x: number; y: number; z: number } | null;
+  /**
+   * **整体缩放**（诊断用，默认 1）—— 给"数字对不对"这类问题一个可拧的旋钮：
+   * 用户拧到像原版，把倍数报回来，再把数字**固化进数据**（而不是留个运行时缩放）。
+   */
+  fxScale?: number;
 }
 
 export const CODE_SKILL_FX: Record<string, (
@@ -144,7 +149,7 @@ export const CODE_SKILL_FX: Record<string, (
     }
     runGlacialSpike(
       { effects: ctx.effects, scene: ctx.scene, dynLights: ctx.dynLights, log: ctx.log },
-      caster, ctx.casterYaw ?? 0,
+      caster, ctx.casterYaw ?? 0, ctx.fxScale ?? 1,
     );
   },
 };

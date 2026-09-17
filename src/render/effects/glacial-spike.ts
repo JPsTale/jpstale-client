@@ -96,25 +96,30 @@ const SYSTEMS: ReadonlyArray<SystemDef> = [
 const num = (v: number): Num => ({ k: 'n', v });
 const rng = (a: number, b: number): Num => ({ k: 'r', a, b });
 
-/** 一条 Lua `ParticleSystem` → 我们的 `PartSystem`（单个 emitter） */
-function partOf(s: SystemDef): PartSystem {
+/** 一条 Lua `ParticleSystem` → 我们的 `PartSystem`（单个 emitter）。`scale` 供实验室调参（默认 1） */
+function partOf(s: SystemDef, scale = 1): PartSystem {
+  const sz = (v: number) => num(v * scale);
   const e: PartEmitter = {
     name: '', blend: 'lamp', particleType: 1,       // 面朝向：Lua 没写 ⇒ 默认朝相机的广告板
     numParticles: s.count, emitRate: s.emitRate,
     loops: 1, delay: 0,
     lifetime: rng(s.life[0], s.life[1]),            // `InitEndTime` = 粒子寿命（已核实）
-    emitRadius: { x: rng(s.box[0], s.box[1]), y: rng(s.box[2], s.box[3]), z: rng(s.box[4], s.box[5]) },
+    emitRadius: {
+      x: rng(s.box[0] * scale, s.box[1] * scale),
+      y: rng(s.box[2] * scale, s.box[3] * scale),
+      z: rng(s.box[4] * scale, s.box[5] * scale),
+    },
     initialVelocity: {
       x: rng(s.vel[0], s.vel[1]), y: rng(s.vel[2], s.vel[3]), z: rng(s.vel[4], s.vel[5]),
     },
     gravity: { x: num(0), y: num(0), z: num(0) },
     texture: TEX,
-    initialSize: num(s.size[0]), initialSizeExt: num(s.size[1]),
+    initialSize: sz(s.size[0]), initialSizeExt: sz(s.size[1]),
     initialColor: { r: num(s.rgba[0]), g: num(s.rgba[1]), b: num(s.rgba[2]), a: num(s.rgba[3]) },
     initialPartAngle: null, initialLocalAngle: null,
     // 终点色 = 同色 alpha 0（Lua 没给终点 ⇒ 我方取"末端淡出"，见文件头）
     finalColor: { r: num(s.rgba[0]), g: num(s.rgba[1]), b: num(s.rgba[2]), a: num(0) },
-    finalSize: num(s.size[0]), finalSizeExt: num(s.size[1]),
+    finalSize: sz(s.size[0]), finalSizeExt: sz(s.size[1]),
     finalPartAngle: null, finalLocalAngle: null, finalVelocity: null,
     keyframes: {},
   };
@@ -152,9 +157,13 @@ function meshAlphaAt(t: number): number {
  *
  * @param caster 施法者世界坐标（原版 `pX/pY/pZ`）
  * @param yaw 施法者朝向（弧度，原版 `Angle.y` —— 调用方在放招前已转向目标）
+ * @param scale **整体缩放**（诊断用，默认 1）。用户实测"冰块没逐渐远离、离得太近" ——
+ *   三簇在 20/70/120（间距 50）而每颗尺寸 40~60、生成盒 120×40 ⇒ 相邻两簇会糊在一起。
+ *   到底是"线该更长"还是"块该更小"，得靠眼睛定 ⇒ 实验室给个旋钮拧到像原版，
+ *   再把倍数固化到 `SYSTEMS` 的数字里（那才是"数据"，不是运行时缩放）。
  */
 export function runGlacialSpike(
-  deps: GlacialSpikeDeps, caster: { x: number; y: number; z: number }, yaw: number,
+  deps: GlacialSpikeDeps, caster: { x: number; y: number; z: number }, yaw: number, scale = 1,
 ): void {
   if (!deps.effects) { deps.log?.('  ✗ Glacial Spike：没有 effects（未接渲染器）'); return; }
   const angY = radToPtAngle(yaw);
@@ -164,15 +173,15 @@ export function runGlacialSpike(
    * ⇒ 这里直接喂 `GetMoveLocation`（它的 **+z 就是前方**，`character.cpp:14929` 那盏灯即证）。
    */
   const worldOf = (lx: number, ly: number, lf: number) => {
-    const off = getMoveLocation(lx, ly, lf, 0, angY, 0);
+    const off = getMoveLocation(lx * scale, ly * scale, lf * scale, 0, angY, 0);
     return { x: caster.x + off.x, y: caster.y + off.y, z: caster.z + off.z };
   };
 
   for (const s of SYSTEMS) {
     const at = worldOf(s.at.x + PARENT.x, s.at.y + PARENT.y, s.at.forward + PARENT.forward);
-    void deps.effects.spawnSystem(partOf(s), { pos: at });
-    deps.log?.(`  ❄ 冰枪粒子：size ${s.size[0]}×${s.size[1]}（${s.count} 颗）→ 前方 ${s.at.forward}`
-      + `　${s.line}`);
+    void deps.effects.spawnSystem(partOf(s, scale), { pos: at });
+    deps.log?.(`  ❄ 冰枪粒子：size ${(s.size[0] * scale).toFixed(0)}×${(s.size[1] * scale).toFixed(0)}`
+      + `（${s.count} 颗）→ 前方 ${((s.at.forward + PARENT.forward) * scale).toFixed(0)}　${s.line}`);
   }
 
   // **正前方那盏蓝光**（原版 `character.cpp:14929`）
@@ -185,10 +194,12 @@ export function runGlacialSpike(
     if (!r) { deps.log?.(`  ✗ 冰枪网格 ${MESH} 加载失败`); return; }
     r.group.position.set(mp.x, mp.y, mp.z);
     r.group.rotation.y = yaw;
+    if (scale !== 1) r.group.scale.setScalar(scale);
     deps.scene.add(r.group);
     fading.push({ group: r.group, age: 0, dispose: r.dispose });
-    deps.log?.(`  ❄ 冰块网格就位（前方 ${PARENT.forward}，寿命 ${MESH_LIFE_SEC.toFixed(2)}s，`
-      + `alpha ${MESH_FADE.map((e) => e.a).join('/')}）`);
+    deps.log?.(`  ❄ 冰块网格就位（前方 ${(PARENT.forward * scale).toFixed(0)}，`
+      + `寿命 ${MESH_LIFE_SEC.toFixed(2)}s，alpha ${MESH_FADE.map((e) => e.a).join('/')}`
+      + `${scale !== 1 ? `，缩放 ×${scale}` : ''}）`);
   });
 }
 
