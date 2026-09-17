@@ -4,6 +4,7 @@ import { requestPlayEat } from './ui/WorldView.js';
 import { AppScreen, transition, getScreen } from './app/State.js';
 import { connect, send, onMessage, onJsonMessage, disconnect, setToken, clearToken, onTimeSync, onConnState, onReconnect, startAutoReconnect, stopAutoReconnect } from './net/transport.js';
 import { createCharacter, selectCharacter, playerMove, backToCharacterSelect, logout, attackStart, attackHit, respawnChoice, unstuck } from './net/protocol.js';
+import './ui/theme.css';
 import { createLoginPanel } from './ui/LoginPanel.js';
 import { createLoginBackdrop } from './ui/LoginBackdrop.js';
 import { sound } from './core/sound.js';
@@ -18,7 +19,7 @@ import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
 import { createWorldView } from './ui/WorldView.js';
 import type { EnterGameInfo, WorldLoadHooks } from './ui/WorldView.js';
-import { t } from './i18n/index.js';
+import { t, tOr } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
 import { isInputBlocked } from './app/inputGate.js';
 import { setSafeMaps } from './game/safeZones.js';
@@ -510,6 +511,8 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
           saveResume({ server: { id: s.id, name: s.name, ip: s.ip, port: s.port }, screen: 'SERVER_SELECT' });
           connect(`ws://${s.ip}:${s.port}/ws`, true);
         }
+      }, () => {
+        forceBackToLogin('logoutReason');
       });
       break;
     }
@@ -524,6 +527,15 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
         onLogout: () => {
           // 服务端权威：只发退出意图；auth.logout 到达后客户端才清 token/断开回登录
           send(logout());
+        },
+        onBackToServers: async () => {
+          disconnect(); // 断游戏服连接但保留 token（intentional，不触发重连警告）
+          saveResume({ screen: 'SERVER_SELECT' }); // 回选服：下一屏目标即 SERVER_SELECT
+          try {
+            go(AppScreen.SERVER_SELECT, await fetchServerList());
+          } catch {
+            go(AppScreen.SERVER_SELECT, []); // 列表拉不到 → 空态 + 退出按钮兜底
+          }
         },
       });
       break;
@@ -606,9 +618,26 @@ reactPanels.setSystemMenuSettings({
 });
 
 
+async function fetchServerList(): Promise<ServerInfo[]> {
+  const res = await fetch(`${apiBase}/api/game/servers`);
+  const data = await res.json();
+  if (data.code !== 200) {
+    console.warn(`[web] 服务器列表获取失败 code=${data.code} msg=${data.msg}`);
+    return [];
+  }
+  return (data.data ?? []).map((s: any) => ({
+    id: s.id,
+    name: s.name ?? `Server ${s.id}`,
+    ip: s.ip,
+    port: s.port,
+    online: !!s.online,
+  }));
+}
+
 async function onLogin(username: string, password: string) {
   if (getScreen() !== AppScreen.LOGIN) return;
   clearResume(); // 新一次手动登录：丢弃上次会话续传状态
+  loginPanel.setBusy(true); // 连接中：禁用按钮并提示，防止重复提交
   try {
     const passHash = sha256(`${username.toUpperCase()}:${password}`).toUpperCase();
     const res = await fetch(`${apiBase}/api/game/login`, {
@@ -617,22 +646,20 @@ async function onLogin(username: string, password: string) {
       body: JSON.stringify({ account: username, password: passHash }),
     });
     const data = await res.json();
-    if (!data.success) {
-      showPanelFor(AppScreen.LOGIN, data.message || '登录失败');
+    if (data.code !== 200) {
+      // 服务端只回 translate key（如 error.web.loginFailed），翻不出来才退回本地兜底文案
+      showPanelFor(AppScreen.LOGIN, tOr(data.msg, t('gui.login.failed')));
       return;
     }
-    setToken(data.token);
-    saveResume({ token: data.token });
-    const servers: ServerInfo[] = (data.servers ?? []).map((s: any) => ({
-      id: s.id,
-      name: s.name ?? `Server ${s.id}`,
-      ip: s.ip,
-      port: s.port,
-      online: !!s.online,
-    }));
+    setToken(data.data.token);
+    saveResume({ token: data.data.token });
+    // 服务器列表走独立接口（登录不复用、不耦合选服）
+    const servers = await fetchServerList();
     go(AppScreen.SERVER_SELECT, servers);
   } catch (e) {
-    showPanelFor(AppScreen.LOGIN, '连接服务器失败');
+    showPanelFor(AppScreen.LOGIN, t('net.connFailed'));
+  } finally {
+    loginPanel.setBusy(false);
   }
 }
 
@@ -693,7 +720,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         // server will send updated characterList automatically
       } else {
         console.warn('[app] create character failed', r.errorCode);
-        charSelectPanel.handleCreateResult(false, `创建失败 (${r.errorCode})`);
+        charSelectPanel.handleCreateResult(false, t('gui.charCreate.failedRetry'));
       }
       break;
     }

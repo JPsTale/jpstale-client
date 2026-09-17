@@ -77,6 +77,7 @@ export interface CharSelect {
     onSelect: (characterId: number) => void;
     onCreate: (name: string, classId: number, head: number) => void;
     onLogout: () => void;
+    onBackToServers: () => void;
   }): void;
   hide(): void;
   destroy(): void;
@@ -112,7 +113,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   container.appendChild(root);
 
   let characters: CharacterInfo[] = [];
-  let opts: { onSelect: (id: number) => void; onCreate: (name: string, classId: number, head: number) => void; onLogout: () => void } | null = null;
+  let opts: { onSelect: (id: number) => void; onCreate: (name: string, classId: number, head: number) => void; onLogout: () => void; onBackToServers: () => void } | null = null;
 
   // creation mode state
   let selectedJobId: number | null = null;
@@ -191,9 +192,14 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     logoutBtn.style.cssText = 'padding:10px;background:transparent;color:#fff;border:1px solid #555;cursor:pointer;font-size:14px;';
     logoutBtn.onclick = () => opts?.onLogout();
 
+    const backToServersBtn = document.createElement('button');
+    backToServersBtn.textContent = t('gui.charSel.backToServers');
+    backToServersBtn.style.cssText = 'padding:10px;background:transparent;color:#fff;border:1px solid #555;cursor:pointer;font-size:14px;';
+    backToServersBtn.onclick = () => opts?.onBackToServers();
+
     const btnRow = document.createElement('div');
     btnRow.style.cssText = 'display:flex;flex-direction:column;gap:8px;';
-    btnRow.append(enterBtn, createBtn, logoutBtn);
+    btnRow.append(enterBtn, createBtn, backToServersBtn, logoutBtn);
     side.appendChild(btnRow);
 
     listEl.appendChild(side);

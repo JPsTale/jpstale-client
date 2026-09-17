@@ -1,8 +1,9 @@
-import { t } from '../i18n/index.js';
+import { t, tOr } from '../i18n/index.js';
 
 export interface LoginPanel {
   show(error?: string): void;
   hide(): void;
+  setBusy(busy: boolean): void;
   destroy(): void;
 }
 
@@ -20,18 +21,20 @@ export function createLoginPanel(container: HTMLElement, opts: {
     <button>${t('gui.login.submit')}</button>
   `;
   el.querySelectorAll('input').forEach(i => i.style.cssText = 'padding:6px 12px;width:240px;font-size:14px');
-  el.querySelector('button')!.style.cssText = 'padding:6px 24px;font-size:14px;cursor:pointer';
+  const btn = el.querySelector('button')!;
+  btn.style.cssText = 'padding:6px 24px;font-size:14px;cursor:pointer';
 
   const errEl = el.querySelector('.error')!;
   const inputs = el.querySelectorAll('input');
   const usernameInput = inputs[0];
   const passwordInput = inputs[1];
-
-  el.querySelector('button')!.onclick = () => {
-    opts.onLogin(usernameInput.value.trim(), passwordInput.value);
+  const submit = () => {
+    if (opts.onLogin) opts.onLogin(usernameInput.value.trim(), passwordInput.value);
   };
+
+  btn.onclick = submit;
   passwordInput.onkeydown = (e) => {
-    if (e.key === 'Enter') opts.onLogin(usernameInput.value.trim(), passwordInput.value);
+    if (e.key === 'Enter') submit();
   };
 
   container.appendChild(el);
@@ -39,10 +42,16 @@ export function createLoginPanel(container: HTMLElement, opts: {
   return {
     show(error?: string) {
       el.style.display = 'flex';
-      errEl.textContent = error ? t(`error.${error}`) ?? error : '';
+      // tOr：error 可能来自服务端、不在文案表里；表里没有就显示原串，别显示 "error.xxx"
+      errEl.textContent = error ? tOr(`error.${error}`, error) : '';
       usernameInput.focus();
     },
     hide() { el.style.display = 'none'; },
+    setBusy(busy: boolean) {
+      btn.disabled = busy;
+      btn.textContent = t(busy ? 'gui.login.connecting' : 'gui.login.submit');
+      btn.style.cursor = busy ? 'wait' : 'pointer';
+    },
     destroy() { el.remove(); },
   };
 }

@@ -19,6 +19,12 @@ export function t(key: string, params?: Record<string, string | number>): string
   return msg;
 }
 
+/** 翻译不到（t 回退为 key 自身）时回退到 fallback 原文，避免显示 "error.xxx" 样式的 key。 */
+export function tOr(key: string, fallback: string, params?: Record<string, string | number>): string {
+  const msg = t(key, params);
+  return msg === key && fallback !== undefined ? fallback : msg;
+}
+
 export function setLocale(loc: string): void {
   locale = loc;
   localStorage.setItem('locale', loc);

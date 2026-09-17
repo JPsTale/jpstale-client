@@ -4,18 +4,23 @@
       "title": "登录",
       "username": "账号",
       "password": "密码",
-      "submit": "登录"
+      "submit": "登录",
+      "connecting": "登录中...",
+      "failed": "登录失败"
     },
     "server": {
       "title": "选择服务器",
       "online": "● 在线",
-      "offline": "○ 离线"
+      "offline": "○ 离线",
+      "empty": "暂无可用服务器",
+      "logout": "返回登录"
     },
     "charSel": {
       "title": "角色选择",
       "create": "创建角色",
       "enter": "进入游戏",
-      "logout": "换账号",
+      "logout": "退出登录",
+      "backToServers": "返回服务器列表",
       "level": "Lv.{level}",
       "location": "{map}"
     },
@@ -107,63 +112,63 @@
     "archer": "弓箭手",
     "pikeman": "枪兵",
     "assassin": "刺客",
-    "knight": "骑士",
+    "knight": "游侠",
     "atalanta": "魔枪兵",
     "priestess": "祭司",
-    "magician": "法师",
+    "magician": "魔法师",
     "shaman": "萨满"
   },
   "map": {
-    "0": "阿卡西亚森林",
-    "1": "竹林",
-    "2": "自由之地",
-    "3": "里查顿城",
-    "4": "古代庇护所",
-    "5": "失落之城",
-    "6": "废墟村",
+    "0": "胶之林",
+    "1": "竹之林",
+    "2": "自由庭院",
+    "3": "里查登",
+    "4": "废墟墓地",
+    "5": "废墟",
+    "6": "废墟村庄",
     "7": "诅咒之地",
     "8": "遗忘之地",
-    "9": "纳维斯克城",
+    "9": "内维斯克",
     "10": "绿洲",
     "11": "古代战场",
-    "12": "禁地",
-    "13": "古代监狱F1",
-    "14": "古代监狱F2",
-    "15": "古代监狱F3",
-    "16": "棋房",
+    "12": "封印之地",
+    "13": "古代地牢1层",
+    "14": "古代地牢2层",
+    "15": "古代地牢3层",
+    "16": "GM房间",
     "17": "精灵森林",
-    "18": "黄昏之地",
-    "19": "宁静之谷",
+    "18": "黄昏树林",
+    "19": "秋之谷",
     "20": "风之路",
-    "21": "皮莱城",
-    "22": "诅咒神殿F1",
-    "23": "诅咒神殿F2",
-    "24": "蘑菇洞",
-    "25": "蜂窝洞",
+    "21": "菲尔拉",
+    "22": "古代神殿1层",
+    "23": "古代神殿2层",
+    "24": "蘑菇洞穴",
+    "25": "蜂房洞穴",
     "26": "黑暗圣殿",
-    "27": "混沌铁路",
-    "28": "佩鲁姆之心",
-    "29": "艾拉",
+    "27": "没落都市",
+    "28": "普隆的心脏",
+    "29": "幽拉村庄",
     "30": "贝拉塔",
-    "31": "加鲁比亚峡谷",
+    "31": "凯拉笔山谷",
     "32": "竞技场",
     "33": "祝福城堡",
-    "34": "贪婪之湖",
+    "34": "贪婪湖泊",
     "35": "冰封圣殿",
-    "36": "凯尔维祖巢穴",
-    "37": "迷失之岛",
-    "38": "失落神殿",
-    "39": "坠落之地",
-    "40": "无尽之塔F1",
-    "41": "无尽之塔F2",
-    "42": "诅咒神殿F3",
-    "43": "无尽之塔F3",
-    "44": "冰矿山1F",
-    "45": "亚特兰蒂斯城",
-    "46": "神秘森林1",
-    "47": "神秘森林2",
-    "48": "神秘森林3",
-    "49": "战斗之城",
+    "36": "凯尔维祖的巢穴",
+    "37": "迷失之地",
+    "38": "迷失寺庙",
+    "39": "场景图",
+    "40": "无尽之塔1层",
+    "41": "无尽之塔2层",
+    "42": "古代神殿3层",
+    "43": "无尽之塔3层",
+    "44": "凯拉比矿洞",
+    "45": "亚特兰蒂斯",
+    "46": "远古草地",
+    "47": "远古森林",
+    "48": "绿野仙踪",
+    "49": "阿瑞斯城",
     "50": "神秘沙漠3",
     "51": "神秘沙漠2",
     "52": "神秘沙漠1",
@@ -195,7 +200,22 @@
     "11": "传送作弊",
     "12": "无敌作弊",
     "13": "无效角色名",
-    "14": "角色名已存在"
+    "14": "角色名已存在",
+    "web": {
+      "loginFailed": "账号或密码错误",
+      "accountDisabled": "账号已被封禁或停用",
+      "oldPasswordWrong": "当前密码不正确",
+      "passwordUnchanged": "新密码不能与当前密码相同",
+      "notLogin": "未登录或登录已失效",
+      "noPermission": "没有权限执行该操作",
+      "paramError": "请求参数无效",
+      "userNotFound": "用户不存在",
+      "mapNotFound": "地图不存在",
+      "accountExists": "账号已存在",
+      "emailExists": "该邮箱已被注册",
+      "notInClan": "角色不在公会中",
+      "clanNameTaken": "公会名已存在"
+    }
   },
   "skills": {
     "pt": "技能点",
@@ -469,7 +489,8 @@
     "backToLogin": "返回登录",
     "autoLogin": "自动登录中...",
     "disconnecting": "正在断开连接...",
-    "logoutReason": "连接已断开，请重新登录"
+    "logoutReason": "连接已断开，请重新登录",
+    "connFailed": "无法连接服务器，请检查网络后重试"
   },
   "shop": {
     "kind": {
@@ -616,7 +637,7 @@
       ]
     },
     "wtype": {
-      "SWORD": "单手剑",
+      "SWORD": "剑",
       "AXE": "斧",
       "HAMMER": "锤",
       "SPEAR": "枪",
@@ -633,40 +654,40 @@
   "npc": {
     "gmOnly": "只有管理员能使用这个 NPC",
     "mushroom_cave_keeper": {
-      "name": "Mushroom Cave Keeper"
+      "name": "蘑菇洞穴看守"
     },
     "miscellaneous_store_lynn": {
-      "name": "Miscellaneous Store, Lynn"
+      "name": "杂货店, 林恩"
     },
     "miscellaneous_store_lette": {
-      "name": "Miscellaneous Store, Lette"
+      "name": "杂货店，莱特"
     },
     "cursed_temple_guardian": {
       "name": "Cursed Temple Guardian"
     },
     "blacksmith_frain": {
-      "name": "Blacksmith Frain"
+      "name": "铁匠弗兰"
     },
     "blacksmith_andrew": {
       "name": "铁匠巴特兹"
     },
     "event_girl": {
-      "name": "Event Girl"
+      "name": "活动女孩"
     },
     "force_master": {
-      "name": "Force Master"
+      "name": "力量大师"
     },
     "gardener_omi": {
-      "name": "Gardener Omi"
+      "name": "园丁欧米"
     },
     "atlantis_guard": {
-      "name": "Atlantis Guard"
+      "name": "亚特兰蒂斯守卫"
     },
     "hair_stylelist": {
-      "name": "Hair Stylelist"
+      "name": "发型列表"
     },
     "huntress": {
-      "name": "Huntress"
+      "name": "女猎人"
     },
     "item_collector_linh": {
       "name": "Item Collector, Linh"
@@ -675,16 +696,16 @@
       "name": "物品发放员"
     },
     "mayor_maz": {
-      "name": "Mayor Maz"
+      "name": "领主马兹"
     },
     "battle_portal": {
-      "name": "Battle Portal"
+      "name": "阿瑞斯传送"
     },
     "precious_item_shop": {
       "name": "管家安德斯"
     },
     "atlantis_prison_guard": {
-      "name": "Atlantis Prison Guard"
+      "name": "亚特兰蒂斯监狱守卫"
     },
     "atlantis_special_item_shop": {
       "name": "管家安德斯"
@@ -693,28 +714,28 @@
       "name": "Stonesmith Hong"
     },
     "supply_store_ny": {
-      "name": "Supply Store, Ny"
+      "name": "杂货店, 奈"
     },
     "warehouse_keeper_doj": {
-      "name": "Warehouse Keeper, Doj"
+      "name": "仓库管理员, 多依"
     },
     "clever_daemon": {
-      "name": "Clever Daemon"
+      "name": "聪明的戴蒙"
     },
     "battle_controls": {
       "name": "Battle Controls"
     },
     "battle_guard": {
-      "name": "Battle Guard"
+      "name": "阿瑞斯守卫"
     },
     "battle_master": {
-      "name": "Battle Master"
+      "name": "战场大师"
     },
     "mystery_portal": {
       "name": "Mystery Portal"
     },
     "battle_potion_store": {
-      "name": "Battle Potion Store"
+      "name": "阿瑞斯药水店"
     },
     "secretary_dunnavan": {
       "name": "Secretary Dunnavan"
@@ -726,37 +747,37 @@
       "name": "管家安德斯"
     },
     "bless_castle_guard": {
-      "name": "Bless Castle Guard"
+      "name": "祝福城堡守卫"
     },
     "rossa": {
       "name": "卖主谢尔比"
     },
     "shellbi": {
-      "name": "Shellbi"
+      "name": "谢尔比"
     },
     "rozalie": {
       "name": "卖主罗莎"
     },
     "kara": {
-      "name": "杂货店克利斯"
+      "name": "杂货店，卡拉"
     },
     "kiri": {
-      "name": "杂货店克利斯"
+      "name": "杂货店，基利"
     },
     "dungeon_keeper": {
-      "name": "Dungeon Keeper"
+      "name": "地下城看守"
     },
     "cursed_land_bridge_guard": {
       "name": "Cursed Land Bridge Guard"
     },
     "miscellaneous_store_savy": {
-      "name": "卖主罗莎"
+      "name": "杂货店，罗莎"
     },
     "eura_force_master": {
       "name": "力量大师"
     },
     "eura_guard_andrei": {
-      "name": "Eura Guard, Andrei"
+      "name": "幽拉守卫，安德烈"
     },
     "miscellaneous_store_eura": {
       "name": "杂货店劳伦"
@@ -765,7 +786,7 @@
       "name": "幽拉仓库管理员"
     },
     "supply_store_resia": {
-      "name": "Supply Store, Resia"
+      "name": "杂货店, Resia"
     },
     "eura_iron_guard": {
       "name": "Eura Iron Guard"
@@ -777,7 +798,7 @@
       "name": "卖主谢尔比"
     },
     "cave_guard": {
-      "name": "Cave Guard"
+      "name": "洞穴守卫"
     },
     "pitchman_dela": {
       "name": "杂货店皮利亚"
@@ -804,10 +825,10 @@
       "name": "Civilian Minuren"
     },
     "blacksmith_umph": {
-      "name": "Blacksmith Umph"
+      "name": "铁匠 Umph"
     },
     "blacksmith_drol": {
-      "name": "Blacksmith Drol"
+      "name": "铁匠 Drol"
     },
     "navisko_guard": {
       "name": "内维斯克守卫"
@@ -816,10 +837,10 @@
       "name": "纽特"
     },
     "miscellaneous_store_byant": {
-      "name": "Miscellaneous Store, Byant"
+      "name": "杂货店，拜安特"
     },
     "warehouse_keeper_omidor": {
-      "name": "Warehouse keeper, Omidor"
+      "name": "仓库管理员，欧米多"
     },
     "arcane_moriph": {
       "name": "Arcane Moriph"
@@ -837,16 +858,16 @@
       "name": "铁匠巴特兹"
     },
     "blacksmith_defrain": {
-      "name": "Blacksmith Defrain"
+      "name": "铁匠 Defrain"
     },
     "phillai_force_master": {
-      "name": "Phillai Force Master"
+      "name": "菲尔拉力量大师"
     },
     "phillai_guard": {
-      "name": "Phillai Guard"
+      "name": "菲尔拉守卫"
     },
     "witchcraft_store": {
-      "name": "Witchcraft Store"
+      "name": "魔具店"
     },
     "clever_newter": {
       "name": "纽特"
@@ -855,19 +876,19 @@
       "name": "SOD布玛熊"
     },
     "phillai_prison_guard": {
-      "name": "Phillai Prison Guard"
+      "name": "菲尔拉监狱守卫"
     },
     "phillai_quest_shop": {
-      "name": "杂货店皮利亚"
+      "name": "菲尔拉任务商店"
     },
     "royal_mage_ray": {
       "name": "皇家法师雷"
     },
     "phillai_robe_shop": {
-      "name": "Phillai Robe Shop"
+      "name": "菲尔拉法袍店"
     },
     "phillai_sheltom_shop": {
-      "name": "Phillai Sheltom Shop"
+      "name": "菲尔拉魔石店"
     },
     "witchcraft_academy_raymon": {
       "name": "Witchcraft Academy, Raymon"
@@ -876,7 +897,7 @@
       "name": "管家安德斯"
     },
     "miscellaneous_store_phillya": {
-      "name": "杂货店皮利亚"
+      "name": "杂货店，菲利亚"
     },
     "warehouse_keeper_lavendar": {
       "name": "Warehouse keeper, Lavendar"
@@ -900,10 +921,10 @@
       "name": "Blacksmith Gus"
     },
     "ricarten_force_master": {
-      "name": "Ricarten Force Master"
+      "name": "里查登力量大师"
     },
     "ricarten_guard": {
-      "name": "Ricarten Guard"
+      "name": "里查登守卫"
     },
     "mixing_craftsman_morald": {
       "name": "合成大师莫拉德"
@@ -915,10 +936,10 @@
       "name": "Ricarten Party Shop"
     },
     "ricarten_prison_guard": {
-      "name": "Ricarten Prison Guard"
+      "name": "里查登监狱守卫"
     },
     "ricarten_quest_shop_wanda": {
-      "name": "Ricarten Quest Shop, Wanda"
+      "name": "里查登任务商店, Wanda"
     },
     "santa_girl": {
       "name": "捐献女孩"
@@ -933,16 +954,16 @@
       "name": "技能导师维尔坎"
     },
     "soccerfan": {
-      "name": "Soccerfan"
+      "name": "球迷"
     },
     "ricarten_special_item_shop": {
       "name": "管家安德斯"
     },
     "miscellaneous_store_namy": {
-      "name": "Miscellaneous Store, Namy"
+      "name": "杂货店, Namy"
     },
     "traveller": {
-      "name": "Traveller"
+      "name": "旅行者"
     },
     "warehouse_keeper_arent": {
       "name": "仓库管理员阿伦特"
@@ -1014,13 +1035,13 @@
       "name": "Item Shop"
     },
     "blacksmith_solo": {
-      "name": "Blacksmith Solo"
+      "name": "铁匠索罗"
     },
     "miscellaneous_store_rey": {
-      "name": "Miscellaneous Store, Rey"
+      "name": "杂货店，蕾"
     },
     "miscellaneous_store_leia": {
-      "name": "Miscellaneous Store, Leia"
+      "name": "杂货店，莱娅"
     },
     "blacksmith_plagueis": {
       "name": "Blacksmith Plagueis"
