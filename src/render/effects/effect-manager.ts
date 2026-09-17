@@ -204,7 +204,10 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
         if (!part) return false;
         loaded++;
         partDiag = part.diag;
-        parts.spawn(part, opts.pos, opts.scale ?? 1);
+        // ⚠ 这一跳此前**没有**把 `attach` / `velocity` 传下去 —— 而**`.part` 文件的飞出物
+        //   走的正是这条**（不是 `spawnSystem` 那条，那条是"代码内 spec"）。
+        //   所以"调用方给了初速度、粒子却不飞"的根因就在这儿：参数在最后一跳被丢掉。
+        parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity);
         return true;
       }
       loaded++;
