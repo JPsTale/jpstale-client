@@ -118,6 +118,11 @@ export function runCastCircle(
     r.group.position.set(at.x, at.y, at.z);
     ctx.scene.add(r.group);
     fading.push({ group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks });
-    ctx.log?.(`  ⭕ 法阵本体 ${fam.mesh.split('\\').pop()}：${r.group.children.length} 个网格`);
+    // 帧动画的状态**必须回显**：这是"页面是不是旧副本 / 轨道有没有读到"的唯一自证点
+    //（用户实测过"实验室好了、游戏里没有"——那次是页面加载早于提交）
+    const nTracks = r.tracks?.length ?? 0;
+    ctx.log?.(`  ⭕ 法阵本体 ${fam.mesh.split('\\').pop()}：${r.group.children.length} 个网格，`
+      + `帧动画 ${nTracks} 条轨道 / ${CIRCLE_ANI_MAX_FRAME / 160} 帧`
+      + `${nTracks === 0 ? '（⚠ 没有轨道 ⇒ 只会淡入淡出）' : `，${(CAST_MESH_LIFE).toFixed(2)}s 播完`}`);
   });
 }
