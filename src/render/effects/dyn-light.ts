@@ -138,6 +138,12 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
       colAlpha[o + 3] = (((p * base[i * 4 + 3]!) / 255) / 255) / 255;
       n++;
     }
+    // 尾部清零：`R = 0` 即哨兵（着色器里盒式判据 `d.x < R` 对 R=0 恒不成立）
+    // ⇒ 着色器**不需要 count uniform**，也就省掉"每帧写标量"的那次 JS（数组是共享引用，three 每次绘制自动上传）
+    for (let i = n; i < DYN_LIGHT_MAX; i++) {
+      posRange[i * 4] = 0; posRange[i * 4 + 1] = 0; posRange[i * 4 + 2] = 0; posRange[i * 4 + 3] = 0;
+      colAlpha[i * 4] = 0; colAlpha[i * 4 + 1] = 0; colAlpha[i * 4 + 2] = 0; colAlpha[i * 4 + 3] = 0;
+    }
     dataCount = n;
   }
 

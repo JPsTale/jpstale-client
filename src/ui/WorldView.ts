@@ -1363,7 +1363,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
 
     for (const mh of mapHandles.values()) {
-      mh.mapRenderer.updateDayNight(envLight, sceneLights, torchPos, torchColor, torchRange);
+      mh.mapRenderer.updateDayNight(envLight, sceneLights, torchPos, torchColor, torchRange,
+        dynLights?.data());
     }
     // 角色等受光材质（Phong）同步压暗：dir/amb 强度随 DarkLevel 线性降
     const k = 1 - dayDark / 255;

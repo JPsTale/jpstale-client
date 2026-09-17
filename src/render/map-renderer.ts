@@ -5,6 +5,7 @@
  * 顶点着色注入: wind / water / fog / lightmap / 昼夜光 / 火把。
  */
 import * as THREE from 'three';
+import { DYN_LIGHT_MAX } from './effects/dyn-light.js';
 import type { SMDData } from '../core/smd-parser';
 
 const WORLD_SCALE = 1 / 256;
@@ -612,6 +613,9 @@ export class MapRenderer {
       declInline += '\nuniform vec3 uSceneLightPos[8];';
       declInline += '\nuniform vec3 uSceneLightColor[8];';
       declInline += '\nuniform float uSceneLightRange[8];';
+      declInline += '\nuniform vec4 uDynLightPos[80];';
+      declInline += '\nuniform vec4 uDynLightColor[80];';
+      declInline += '\nvarying vec3 vDynLight;';
       shader.vertexShader = shader.vertexShader.replace('#include <common>', declInline);
 
       let uvInline = '#include <uv_vertex>';
@@ -622,6 +626,30 @@ export class MapRenderer {
       // three 的 vUv 仅在 USE_UV 时声明（有 map/uv 的材质）；无则跳过滚动避免编译错
       if (scrollU0) uvInline += '\n#if defined(USE_UV)\nvUv.x += uScrollU.x;\n#endif';
       shader.vertexShader = shader.vertexShader.replace('#include <uv_vertex>', uvInline);
+
+      // **动态光累加**（逐顶点 = 原版 Gouraud；原版 `smRENDER3D::SetDynamicObjLight`）。
+      // 与原版两处**有意差异**（台账 §18.4）：① 剔除用**世界空间**（原版相机空间 ⇒ 盒跟着相机转，判为缺陷）
+      // 其余照抄：盒式 `|Δ|<R`、衰减 `1 − d²/R²`（**不是反平方**）、每通道上限 540/256。
+      // `R = 0` 是尾槽哨兵（`packData` 已按 count 压紧并清零尾部）⇒ 不需要 count uniform。
+      const dynLightCode =
+        '#include <project_vertex>\n' +
+        '  {\n' +
+        '    vec3 _wp = (modelMatrix * vec4(transformed, 1.0)).xyz;\n' +
+        '    vec3 _acc = vec3(0.0);\n' +
+        '    for (int _i = 0; _i < 80; _i++) {\n' +
+        '      vec4 _lp = uDynLightPos[_i];\n' +
+        '      float _R = _lp.w;\n' +
+        '      if (_R <= 0.0) break;\n' +
+        '      vec3 _d = abs(_wp - _lp.xyz);\n' +
+        '      if (_d.x < _R && _d.y < _R && _d.z < _R) {\n' +
+        '        float _dd = dot(_d, _d);\n' +
+        '        float _R2 = _R * _R;\n' +
+        '        if (_dd < _R2) _acc += uDynLightColor[_i].rgb * (1.0 - _dd / _R2);\n' +
+        '      }\n' +
+        '    }\n' +
+        '    vDynLight = min(_acc, vec3(540.0 / 256.0));\n' +
+        '  }';
+      shader.vertexShader = shader.vertexShader.replace('#include <project_vertex>', dynLightCode);
 
       if (windKind) {
         const windCode =
@@ -702,6 +730,11 @@ export class MapRenderer {
           + ' float _dlev = (_z - uFogRange.x) / (uFogRange.y - uFogRange.x);'
           + ' if (_dlev > 1.0) _dlev = 1.0; diffuseColor.rgb *= 1.0 - _dlev; } }',
         );
+        // 动态光：加在**顶点色相乘之前**（原版 `AddLight` 是加进顶点色、再乘贴图 ⇒ 与 `<color_fragment>` 同序）
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <color_fragment>',
+          'diffuseColor.rgb += vDynLight;\n#include <color_fragment>',
+        );
         if (needLM) shader.uniforms.uLightMap = { value: config.lightmapTex };
         if (need2Tex) shader.uniforms.uSecondTex = { value: config.secondTex };
         shader.uniforms.uFogRange = { value: this.fogRange };
@@ -712,6 +745,9 @@ export class MapRenderer {
         shader.uniforms.uSceneLightPos = { value: Array.from({ length: 8 }, () => new THREE.Vector3()) };
         shader.uniforms.uSceneLightColor = { value: Array.from({ length: 8 }, () => new THREE.Vector3()) };
         shader.uniforms.uSceneLightRange = { value: new Float32Array(8) };
+        // 动态光：**共享引用**（池原地改内容 ⇒ three 每次绘制自动上传，无需每帧 JS）
+        shader.uniforms.uDynLightPos = { value: new Float32Array(DYN_LIGHT_MAX * 4) };
+        shader.uniforms.uDynLightColor = { value: new Float32Array(DYN_LIGHT_MAX * 4) };
       }
 
       if (scrollU0 || scrollU1) shader.uniforms.uScrollU = { value: new THREE.Vector2(0, 0) };
@@ -792,6 +828,8 @@ export class MapRenderer {
     torchPos: THREE.Vector3,
     torchColor: THREE.Vector3,
     torchRange: number,
+    /** 动态效果光的数据面（`DynLightPool.data()`）—— 共享引用，只在此换一次 */
+    dyn?: { posRange: Float32Array; colAlpha: Float32Array },
   ): void {
     for (const mrd of this.materials) {
       const threeMat = mrd.mesh.material as THREE.MeshBasicMaterial;
@@ -815,7 +853,13 @@ export class MapRenderer {
           }
         }
       }
-      if (shader.uniforms.uTorchPos) shader.uniforms.uTorchPos.value.copy(torchPos);
+            // 动态光：只在**引用变了**时换（幂等；内容由池原地更新 ⇒ 无需每帧拷贝）
+      if (dyn && shader.uniforms.uDynLightPos
+          && shader.uniforms.uDynLightPos.value !== dyn.posRange) {
+        shader.uniforms.uDynLightPos.value = dyn.posRange;
+        shader.uniforms.uDynLightColor.value = dyn.colAlpha;
+      }
+if (shader.uniforms.uTorchPos) shader.uniforms.uTorchPos.value.copy(torchPos);
       if (shader.uniforms.uTorchColor) shader.uniforms.uTorchColor.value.copy(torchColor);
       if (shader.uniforms.uTorchRange) shader.uniforms.uTorchRange.value = torchRange;
     }
