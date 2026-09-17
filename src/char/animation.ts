@@ -426,3 +426,26 @@ export function crossEventFrames(
   }
   return { hit, fired: i };
 }
+
+/**
+ * 跨过的这个事件帧是本条动作的**第几个**事件帧（1 起）= 原版 `MotionEvent`。
+ *
+ * 用途：有的特效按"第几个事件帧"分左右（原版 `AssaParticle_VigorBall`：
+ * `MotionEvent == 1 ? Angle.y - ANGLE_45 : Angle.y + ANGLE_45`）。
+ * 原版是"每跨过一个事件帧就 `MotionEvent++`"，与"按 `.inx` 里非零事件帧的顺序取序号"
+ * 在一次播放里等价（每个事件帧只跨过一次）—— 后者无状态，故取后者。
+ *
+ * @returns 没找到（`frame` 不在表里）时返回 0，调用方按"未知"处理
+ */
+export function motionEventIndexOf(
+  eventFrames: readonly number[], frame: number,
+): number {
+  let n = 0;
+  for (const f of eventFrames) {
+    if (f > 0) {
+      n++;
+      if (f === frame) return n;
+    }
+  }
+  return 0;
+}

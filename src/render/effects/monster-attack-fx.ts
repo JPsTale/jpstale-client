@@ -11,7 +11,7 @@
  */
 
 import { reportFallback } from '../../char/fallback-log.js';
-import { getMoveLocation, radToPtAngle } from '../../core/geom.js';
+import { getMoveLocation, radToPtAngle, FONE } from '../../core/geom.js';
 // 只 import 类型：本模块刻意**不依赖 three**（游戏与实验室各自把池传进来）
 import type { DynLightSink } from './dyn-light.js';
 
@@ -58,7 +58,7 @@ export interface MonsterAttackFxDef {
    * 依据：`AssaParticle.cpp:7474` `Main()` 每帧 `step = 5*fONE + 100`（≈5.39 世界单位/帧），
    * 按 60fps 约 **323/秒**。
    */
-  fly?: { speed: number };
+  fly?: MonsterFlySpec;
   /**
    * **多火花**（原版 `sinEffect_MultiSpark`）：一次发射 `num` 颗，横向散开后朝目标飞。
    *
@@ -75,12 +75,18 @@ export interface MonsterAttackFxDef {
   sparks?: {
     /** 发射几颗（本特效自身的参数，对应原版调用点 `sinEffect_MultiSpark(..., 5)` 的那个 5） */
     num: number;
-    /**
-     * 火花音（事件帧播）—— 原版 `SkillPlaySound(SKILL_SOUND_SKILL_MULTISPARK, …)`
-     *   = `wav/effects/skill/morion/multispark 1.wav`（`effectsnd.cpp:551`）。
-     */
-    sound?: string;
   };
+  /**
+   * **技能音**（事件帧播）—— 原版 `SkillPlaySound(SKILL_SOUND_*)`，如
+   * `wav/effects/skill/morion/vigorball 1.wav`（`effectsnd.cpp:682`）。
+   *
+   * ⚠ 它与**动作音**（`playMotionSound`：按动作态取 `skill N.wav` / `attack N.wav`）
+   *   **两条路都播**，不是二选一 —— 原版 `character.cpp:14903` 那一支里
+   *   `sinEffect_XXX(...)` 与 `SkillPlaySound(...)` 各一句，而通用动作音在事件帧块里
+   *   另有 `CharPlaySound(this)`（`:4236`）。
+   * 给数组 = 原版有多个候选（如 `VigorBall 1/2` 的 `rand()%2`）⇒ 由 `ctx.variant` 选，库内不随机。
+   */
+  sound?: string | string[];
   /**
    * **起手音**（技能动画开始时播，不是事件帧）—— 原版 `character.cpp:14070`
    *   `BeginSkill_Monster` 里的 `SkillPlaySound(SKILL_SOUND_SKILL_CASTING_MAGICIAN, …)`
@@ -94,6 +100,54 @@ export interface MonsterAttackFxDef {
   dynLight?: { r: number; g: number; b: number; a: number; power: number; decPower: number };
   /** 取证出处（源码文件:行号）。**每条必填**：填错不会报错，只会静默播成别人的特效 */
   note: string;
+}
+
+/**
+ * **飞出物**的规格（原版 `AssaParticle_*` 那一族）—— 驱动的**唯一实现**在
+ * `monster-fly-runner.ts`（游戏与实验室共用）。本模块只持数据、不碰 three。
+ *
+ * 起点/目标/朝向由调用方给（那个模块的 `FlyLaunch`）：本模块不知道"目标是谁"。
+ */
+export interface MonsterFlySpec {
+  /**
+   * **附加**粒子系统（原版 `AssaParticle_VigorBall`：`hoAssaParticleEffect.cpp:4181`
+   * `ParticleIDExt1 = g_NewParticleMgr.Start("Skill3PriestessVigorBall2", pos)`）——
+   * 主粒子用本条的 `asset`（原版 `SetPos` 逐帧覆盖 ⇒ 整团搬运），附加的同样挂到载体上
+   * （原版 `SetAttachPos`）。
+   */
+  systems?: Array<{ asset: string }>;
+  /** **直线**模式：世界单位/秒（原版 `AssaParticle.cpp:7474` 每帧 `step = 5*fONE + 100` ⇒ ≈323/秒） */
+  speed?: number;
+  /**
+   * **跟踪**模式（原版 `AssaSkill3VigorBall::Main`，`AssaParticle.cpp:5465`）——
+   * 每帧 `Velocity += 指向目标的单位向量`（加速度 1 单位/帧²）；下列量都是"每帧"的。
+   */
+  homing?: {
+    /** 到达距离（原版 `length < 15`） */
+    arriveDist: number;
+    /** 超时帧数（原版 `Time > 100`） */
+    arriveFrames: number;
+    /** 近距阻尼起点（原版 `length < 100`） */
+    dampDist: number;
+    /** 阻尼系数（原版 `*0.85`） */
+    damp: number;
+    /** 速度软上限（原版 `|Velocity| > 10` 时 `*0.9`） */
+    maxSpeedPerFrame: number;
+    softClamp: number;
+  };
+  /** 起点抬高（世界单位；原版 `curPos.y = pY + 5000` ⇒ 5000/256 ≈ 19.5） */
+  lift?: number;
+  /** 初速（世界单位/**帧**，方向 = 射手朝向 ± `yawOffsetDeg`）—— 原版 `GeoResult * 2` */
+  initialSpeedPerFrame?: number;
+  /** 发射偏航偏移（度） */
+  yawOffsetDeg?: number;
+  /** 按事件帧镜像：第 1 个事件帧取负、其后取正（原版 `MotionEvent == 1 ? -45 : +45`） */
+  mirrorByMotionEvent?: boolean;
+  /** 到达（原版 `SetStop` + `Start("…Hit1")`）：命中资产 + 动态光 */
+  hit?: {
+    asset?: string;
+    dynLight?: { r: number; g: number; b: number; a: number; power: number; decPower: number };
+  };
 }
 
 /**
@@ -153,13 +207,17 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
   //   `AssaParticle.cpp:7474` `Main()` → 每帧沿 `ShootingAngle` 前进 `5*fONE + 100`（**朝目标飞**）
   //   ⚠ 原版这是**飞出物**。这里先按**原地粒子**登记（先把粒子本身做出来），
   //     飞行轨迹留作下一步。
+  // ⚠ 到达时才起那盏橙色动态光（`AssaParticle.cpp:7495` `SetDynLight(pos, 255,150,50,255,200,2)`）
   0x1580: {
     asset: 'IronMonsterRunicGuardianShot1',
     height: 30,
     // 原版是**飞出物**：`AssaParticle.cpp:7474` `Main()` 每帧 `step = 5*fONE + 100`
     //   （≈5.39 世界单位/帧）⇒ 60fps 下约 323/秒。终点 = 目标 `pY + 24*fONE`。
-    fly: { speed: 323 },
-    note: 'character.cpp:4606 / hoAssaParticleEffect.cpp:5530-5539 / AssaParticle.cpp:7443,7474',
+    fly: {
+      speed: 323,
+      hit: { dynLight: { r: 255, g: 150, b: 50, a: 255, power: 200, decPower: 2 } },
+    },
+    note: 'character.cpp:4606 / hoAssaParticleEffect.cpp:5530-5539 / AssaParticle.cpp:7443,7474,7495',
   },
 
   // 0x1960 = snCHAR_SOUND_REVIVED_PRIESTESS（被复活的祭司 / 死亡祭司）—— **多技能怪**。
@@ -196,19 +254,39 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
         height: 0,                     // 起点 = 怪物原点（源码用 `pChar->pX/pY/pZ`，无高度偏移）
         // 5 = 原版**怪物 case 的取值**（`sinEffect_MultiSpark(..., 5)`），不是特效的限制：
         // `num` 就是这个特效发几颗，改成 100 也完全没问题。
-        sparks: {
-          num: 5,
-          // `effectsnd.cpp:551` `{ "…\Morion\MultiSpark 1.wav", SKILL_SOUND_SKILL_MULTISPARK }`
-          sound: 'wav/effects/skill/morion/multispark 1.wav',
-        },
+        // 技能音：`effectsnd.cpp:551` `{ "…\Morion\MultiSpark 1.wav", SKILL_SOUND_SKILL_MULTISPARK }`
+        sound: 'wav/effects/skill/morion/multispark 1.wav',
+        sparks: { num: 5 },
         // ⚠ 这盏白光**不是"起手"** —— 它在 `sinEffect_MultiSpark` 的**发射**里
         //   （`sinSkillEffect.cpp:813` `SetDynLight(pChar->pX, pChar->pY, pChar->pZ, 255,255,255,255,140,1)`）
         //   ⇒ 属于 `'O'` 这一招，不属于宿主条目。（早先我记成"起手"是错的。）
         dynLight: { r: 255, g: 255, b: 255, a: 255, power: 140, decPower: 1 },
         note: "character.cpp:14903 case 'O' / sinSkillEffect.cpp:813 动态光,881 发射,244 驱动,1766 命中；动作 dpr.inx idx16 事件帧 3360",
       },
-      // `'H'`（VigorBall / `hoAssaParticleEffect.cpp:4152`）与 `'Z'`（GlacialSpike /
-      // `HoNewEffectFunction.cpp:590` 的 Lua 脚本）**尚未提取资产** ⇒ **不登记**。
+      H: {
+        // 原版 `character.cpp:14912` `case 'H': AssaParticle_VigorBall(this, chrAttackTarget);`
+        //   + `switch (rand() % 2)` 播 `SKILL_VIGOR_BALL1/2`（`effectsnd.cpp:682-683`）
+        asset: 'Skill3PriestessVigorBall1',   // 主粒子（`AssaParticle.cpp:5597` Start("…VigorBall1")）
+        height: 0,                            // 起点抬高走 `fly.lift`（原版 `curPos.y = pY + 5000`）
+        // ⚠ 同目录另有 2 号系统（`AssaParticle.cpp:5598` `Start("…VigorBall2")`），**两个同时在飞**
+        //   ⇒ 用 `systems` 附加，**不是**把 asset 写成数组（数组的语义是"多候选、挑一个"）
+        sound: ['wav/effects/skill/morion/vigorball 1.wav',
+          'wav/effects/skill/morion/vigorball 2.wav'],
+        fly: {
+          systems: [{ asset: 'Skill3PriestessVigorBall2' }],
+          lift: 5000 / FONE,                  // ≈19.5 世界单位
+          yawOffsetDeg: 45,
+          mirrorByMotionEvent: true,          // 两个事件帧各一颗，左右各一（`MotionEvent == 1` 取负）
+          initialSpeedPerFrame: 6,            // 侧偏量 3*fONE 的中值 × 2（`GeoResult * 2`）⇒ 6/帧
+          homing: {
+            arriveDist: 15, arriveFrames: 100, dampDist: 100, damp: 0.85,
+            maxSpeedPerFrame: 10, softClamp: 0.9,
+          },
+          hit: { asset: 'Skill3PriestessVigorBallHit1' },
+        },
+        note: "character.cpp:14912 case 'H' / hoAssaParticleEffect.cpp:4152-4200 / AssaParticle.cpp:5465(Main),5551(Start),5597-5598; dpr.inx idx17 事件帧 4640+7040",
+      },
+      // `'Z'`（GlacialSpike / `HoNewEffectFunction.cpp:590` 的 Lua 脚本）**尚未提取** ⇒ **不登记**。
       // 调用方拿到 `undefined` 就是"这一招还没核验"，不静默兜底成别的招。
     },
     note: 'character.cpp:14903 `switch (MotionInfo->KeyCode)`；动作表 dpr.inx idx16=\'O\' 事件帧3360 / idx17=\'H\' / idx18=\'Z\'',
@@ -385,6 +463,19 @@ export interface MonsterAttackEventCtx {
    * 数量是特效的属性，不是调用方的选择。
    */
   fireSparks?: (spec: NonNullable<MonsterAttackFxDef['sparks']>) => void;
+  /**
+   * 本条动作的**第几个事件帧**（1 起，= 原版 `MotionEvent`）。
+   *
+   * 有的飞出物按它分左右：`AssaParticle_VigorBall`（`hoAssaParticleEffect.cpp:4170/4188`）
+   * 第 1 个事件帧走 `Angle.y - ANGLE_45`，其后走 `+ANGLE_45`。不给按 1 算。
+   */
+  motionEvent?: number;
+  /**
+   * **飞出物**（`MonsterAttackFxDef.fly`）交给调用方放出 —— 与 `fireSparks` 同理由：
+   * 驱动要碰 three（载体节点 + 粒子跟随），而"目标是谁、站在哪"是调用方的场景知识。
+   * 调用方应转交 `monster-fly-runner.runMonsterFly`（**唯一驱动**，游戏与实验室同一份）。
+   */
+  fireFly?: (asset: string, fly: MonsterFlySpec, motionEvent: number) => void;
 }
 
 /**
@@ -395,6 +486,18 @@ export interface MonsterAttackEventCtx {
  */
 export function pickMonsterFxAsset(def: MonsterAttackFxDef, variant = 0): string {
   const list = Array.isArray(def.asset) ? def.asset : [def.asset];
+  return list[Math.abs(variant) % list.length]!;
+}
+
+/**
+ * 技能音的候选选择（规则与 `pickMonsterFxAsset` 一致：**调用方给 `variant`，库内不随机**）。
+ *
+ * 原版这里是 `switch (rand() % 2)`（`character.cpp:14915` 的 `VigorBall 1/2`）——
+ * 我们把它提到调用方：实验室用它做"2 选 1"，将来要服务端权威随机就换成下发索引。
+ */
+export function pickMonsterSound(def: MonsterAttackFxDef, variant = 0): string | null {
+  if (!def.sound) return null;
+  const list = Array.isArray(def.sound) ? def.sound : [def.sound];
   return list[Math.abs(variant) % list.length]!;
 }
 
@@ -475,18 +578,26 @@ export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<bool
 function fireDef(
   def: MonsterAttackFxDef, ctx: MonsterAttackEventCtx, effects: FxSpawner,
 ): Promise<boolean> | null {
+  // **两条音效都播，不是二选一**（原版 `character.cpp:14903` 那一支里 `sinEffect_XXX(...)` 与
+  // `SkillPlaySound(...)` 各一句；通用动作音另有 `CharPlaySound`，见 `:4236`）：
+  //   ① 动作音 = 按**动作态**取桶（技能动作 ⇒ `skill N.wav`，普攻 ⇒ `attack N.wav`）
+  //   ② 技能音 = 这一招自己的音（`def.sound`，如 `VigorBall 1/2`）
+  playMotionSound(ctx);
+  const skillSound = pickMonsterSound(def, ctx.variant);
+  if (skillSound) ctx.sfx?.play?.(skillSound, { pos: ctx.pos });
+
   // **多火花**：发射几颗是**本特效自己的属性**（`sparks.num`）—— 直接交给调用方，
   // 本模块不解析、不裁剪、不让调用方再选（那是把技能机制混进特效层，层级错了）。
   if (def.sparks) {
-    // **技能**：音效是**技能音**，不是普攻的挥击音 ——
-    // 原版技能走 `SkillPlaySound(SKILL_SOUND_*)`（`effectsnd.cpp` 的逐条路径表），
-    // 而挥击音那套是"按怪物目录取 `CHRMOTION_STATE_ATTACK`"，两者不同源。
-    if (def.sparks.sound) ctx.sfx?.play?.(def.sparks.sound, { pos: ctx.pos });
     ctx.fireSparks?.(def.sparks);
     return null;
   }
-  // 非技能（普攻/法术类）：动作音按怪物目录 + **动作态**解析（技能动作 ⇒ `skill N.wav`）
-  playMotionSound(ctx);
+  // **飞出物**（原版 `AssaParticle_*`，如 VigorBall）：驱动在 `monster-fly-runner.ts`
+  // —— 游戏与实验室**共用同一份**（此前只有实验室实现 ⇒ 游戏里根本不飞）
+  if (def.fly) {
+    ctx.fireFly?.(pickMonsterFxAsset(def, ctx.variant), def.fly, ctx.motionEvent ?? 1);
+    return null;
+  }
   // 落点 = 怪物原点 + 原版 `GetMoveLocation(...)` 算出的偏移。
   // **照抄参数、由等价函数算**（`core/geom.getMoveLocation`）—— 不做语义翻译：
   // 当初把 `GeoResult_*` 翻译成"前方 N 单位"，就漏掉了它来自上一行调用，于是粒子落在身上。

@@ -35,6 +35,7 @@ import {
   fireSkillCast, fireSkillEvent, skillFxRowByIcon, type SkillFxRow,
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
+import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateCastCircleMeshes } from '../render/effects/cast-circle-runner.js';
 import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
@@ -56,7 +57,7 @@ import { createQuarksRuntime } from '../render/effects/quarks-runtime.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_STATE_DEAD } from '../char/char-format.js';
-import { advanceAnimFrame, crossEventFrames } from '../char/animation.js';
+import { advanceAnimFrame, crossEventFrames, motionEventIndexOf } from '../char/animation.js';
 import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
 import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, MAGIC_JOBS, type ProjectileManager } from '../render/projectile.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
@@ -4179,13 +4180,44 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           // 玩家侧 / 怪物 / 怪物实验室三处不再各写一遍（AGENTS #15）
           const crossed = crossEventFrames(actor.attackEventFrames, actor.attackFired, compFrame);
           actor.attackFired = crossed.fired;
-          for (const _frame of crossed.hit) {
+          for (const evFrame of crossed.hit) {
+            // 闭包里别读外层可能为 null 的变量（TS18047：收窄不进闭包）—— 先取出来
+            const flyOrigin = actor.root.position;
+            const flyYaw = actor.root.rotation.y;
+            const fxMgr = effects;
+            const scn = scene;
             // 与原版同源：同一个事件帧里既播音效也起特效（共用实现见 monster-attack-fx.ts）
             fireMonsterAttackEvent({
               modelKey: actor.modelKey, effectId: actor.monsterEffectId,
               pos: actor.root.position, facing: actor.root.rotation.y,
               // 动态光池（原版 `SetDynLight`）：此前游戏侧没建池 ⇒ 所有动态光无处落地
               effects, sfx, dynLights,
+              // 本条动作的第几个事件帧（原版 `MotionEvent`）—— 有的飞出物靠它分左右（VigorBall）
+              motionEvent: motionEventIndexOf(motion.eventFrame, evFrame),
+              // **飞出物**（`def.fly`，原版 `AssaParticle_*`）：驱动是**共用实现**
+              // （`monster-fly-runner.ts`）—— 此前只有实验室实现 ⇒ 游戏里这类特效根本不飞。
+              // 目标 = **自机**（与射击怪的箭同一条：这几招打的就是玩家）
+              fireFly: (asset, fly, motionEvent) => {
+                // 世界未就绪（与 `spawnProjectile` 同款处理：跳过并**说出来**，不静默）
+                if (!fxMgr || !scn) {
+                  console.log('[fly] 跳过：特效管理器/场景未就绪 mgr=' + !!fxMgr + ' scene=' + !!scn);
+                  return;
+                }
+                runMonsterFly(
+                  {
+                    spawn: (a, o) => fxMgr.spawn(a, o),
+                    addToScene: (o) => scn.add(o),
+                    dynLight: dynLights,
+                  },
+                  asset, fly,
+                  {
+                    pos: { x: flyOrigin.x, y: flyOrigin.y + (fly.lift ?? 0), z: flyOrigin.z },
+                    yaw: flyYaw,
+                    target: () => unitBodyAnchor(selfPlayerId),
+                    motionEvent,
+                  },
+                );
+              },
               // 动作音的音效桶 = **正在播的那条动作的动作态**（原版 `CharPlaySound` 用 `MotionInfo->State`）
               // ⇒ 技能动作播 `skill N.wav`、普攻播 `attack N.wav`（此前一律按普攻取，技能在播普攻音）
               motionSound: eventFrameSoundState(motion.state),
@@ -5356,6 +5388,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (effects && camera) effects.update(dt);
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
+    updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
     dynLights?.update(dt);            // 动态光衰减（原版逐帧 power -= decPower）
     perfMark('技能特效');
 
@@ -5895,6 +5928,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       renderer = null;
       // 投射物：摘掉在飞的（模型缓存留着 —— 按 URL 缓存，与 asset-manager 同一约定，换图不必重下）
       projectileMgr?.dispose();
+      clearMonsterFlies();            // 飞出物载体节点随世界一起清（否则残留到下一个世界）
       projectileMgr = null;
       scene = null;
       camera = null;
