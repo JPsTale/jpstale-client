@@ -9,7 +9,7 @@ import * as THREE from 'three';
 import {
   castCircleSystems, castCircleFamily, CAST_LIFT, CAST_MESH_FADE,
 } from './cast-circle.js';
-import { loadStaticSmd } from './static-fx.js';
+import { loadStaticSmd, applyStaticMeshTracks, type StaticMeshTrack } from './static-fx.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import type { SystemSpawner } from './multi-spark-runner.js';
 import { monsterCastOf } from './monster-attack-fx.js';
@@ -51,7 +51,18 @@ export function fireMonsterSkillCast(
 }
 
 /** 需要按包络淡入淡出的法阵本体（模块级：调用方只调 `updateCastCircleMeshes`） */
-const fading: { group: THREE.Group; age: number; dispose: () => void }[] = [];
+/**
+ * 法阵本体网格的**帧动画**参数（原版 `SetAssaEffect` 的 `AniMaxCount = 20` / 播一轮）：
+ * 实测 `maam2.smd` 的 `tmScale` 正好 21 个关键帧排到 frame 3200（= 20 帧 × 160 ✓），
+ * 值 `(1,1,z)` 的 z 从 1 涨到 9、且减速 ⇒ **法阵是"张开"出来的**，不是纯淡入淡出。
+ *
+ * `AniDelayTime = 4` 的含义未查明（帧间隔？起始延迟？）⇒ 先按 30fps 播完 20 帧（≈0.67s）。
+ */
+const CIRCLE_ANI_SEC = 20 / 30;
+const CIRCLE_ANI_MAX_FRAME = 20 * 160;
+const fading: Array<{
+  group: THREE.Group; age: number; dispose: () => void; tracks?: StaticMeshTrack[];
+}> = [];
 
 /** 本体的可见系数（原版 `cASSAMESH::Main`：前 `CAST_MESH_FADE` 秒渐显，随后同速率渐隐） */
 function meshAlphaAt(t: number): number {
@@ -65,6 +76,10 @@ export function updateCastCircleMeshes(dt: number): void {
   for (let i = fading.length - 1; i >= 0; i--) {
     const f = fading[i]!;
     f.age += dt;
+    // **帧动画**（原版 `smOBJ3D::TmAnimation`）：按 30fps 播完 `AniMaxCount` 帧 ⇒ 法阵"张开"
+    if (f.tracks?.length) {
+      applyStaticMeshTracks(f.tracks, Math.min(f.age / CIRCLE_ANI_SEC, 1) * CIRCLE_ANI_MAX_FRAME);
+    }
     const a = meshAlphaAt(f.age);
     f.group.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | undefined;
@@ -98,7 +113,7 @@ export function runCastCircle(
     if (!r) { ctx.log?.(`  ✗ 法阵模型 ${fam.mesh} 加载失败`); return; }
     r.group.position.set(at.x, at.y, at.z);
     ctx.scene.add(r.group);
-    fading.push({ group: r.group, age: 0, dispose: r.dispose });
+    fading.push({ group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks });
     ctx.log?.(`  ⭕ 法阵本体 ${fam.mesh.split('\\').pop()}：${r.group.children.length} 个网格`);
   });
 }

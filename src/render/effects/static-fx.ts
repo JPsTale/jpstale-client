@@ -56,31 +56,47 @@ export interface StaticModelResult {
   dispose(): void;
 }
 
-/** 一个对象的逐帧位移轨道（`group` 会被逐帧设 position） */
+/** 一个对象的逐帧轨道（`group` 会被逐帧设 position / scale） */
 export interface StaticMeshTrack {
   group: THREE.Object3D;
+  /** 位移关键帧（原版 `GetPosFrame`）：帧号 160/帧，值即 PT 空间平移 */
   keys: Array<{ frame: number; x: number; y: number; z: number }>;
+  /** 缩放关键帧（原版 `GetScaleFrame`）：如法阵 `maam2` 的 z 从 1 → 9（张开），20 帧 */
+  scaleKeys?: Array<{ frame: number; x: number; y: number; z: number }>;
 }
 
 /**
- * 按 `frame`（动画单位）推进一条轨道 —— **逐行照抄** `smOBJ3D::GetPosFrame`（`smObj3d.cpp:999`）：
- * 线性插值、关键帧值直接当平移（PT 空间）用、再统一 Z-up → Y-up。
- * 帧号早于首个关键帧时**不改位置**（原版直接 `return frame`，坐标系原样保留）。
+ * 按 `frame`（动画单位）推进轨道 —— **逐行照抄** `smOBJ3D::GetPosFrame` / `GetScaleFrame`
+ * （`smObj3d.cpp:999` / `:1031`）：线性插值、值直接用、帧号早于首个关键帧则**不改**。
+ *
+ * 坐标系：位移走 `toYup`（含 PT→three 的轴映射）；缩放只是**轴序置换**（PT 的 z↔three 的 y、
+ * PT 的 y↔three 的 −z ⇒ 缩放的负号无所谓 ⇒ `set(sx, sz, sy)`）—— 法阵的 `tmScale.z` = PT 的"上"，
+ * 在 three 里落在 y 轴 ✓。
  */
 export function applyStaticMeshTracks(tracks: StaticMeshTrack[], frame: number): void {
   for (const t of tracks) {
     const k = t.keys;
-    if (!k.length || k[0]!.frame > frame) continue;
-    let i = 0;
-    while (i + 1 < k.length && !(k[i]!.frame <= frame && k[i + 1]!.frame > frame)) i++;
-    const a = k[i]!, b = k[Math.min(i + 1, k.length - 1)]!;
-    const ch = b.frame - a.frame;
-    const alpha = ch > 0 ? (frame - a.frame) / ch : 0;
-    const x = a.x + (b.x - a.x) * alpha;
-    const y = a.y + (b.y - a.y) * alpha;
-    const z = a.z + (b.z - a.z) * alpha;
-    const [px, py, pz] = toYup(x, y, z);
-    t.group.position.set(px, py, pz);
+    if (k.length && k[0]!.frame <= frame) {
+      let i = 0;
+      while (i + 1 < k.length && !(k[i]!.frame <= frame && k[i + 1]!.frame > frame)) i++;
+      const a = k[i]!, b = k[Math.min(i + 1, k.length - 1)]!;
+      const alpha = b.frame > a.frame ? (frame - a.frame) / (b.frame - a.frame) : 0;
+      const [px, py, pz] = toYup(
+        a.x + (b.x - a.x) * alpha, a.y + (b.y - a.y) * alpha, a.z + (b.z - a.z) * alpha,
+      );
+      t.group.position.set(px, py, pz);
+    }
+    const sc = t.scaleKeys;
+    if (sc && sc.length && sc[0]!.frame <= frame) {
+      let i = 0;
+      while (i + 1 < sc.length && !(sc[i]!.frame <= frame && sc[i + 1]!.frame > frame)) i++;
+      const a = sc[i]!, b = sc[Math.min(i + 1, sc.length - 1)]!;
+      const alpha = b.frame > a.frame ? (frame - a.frame) / (b.frame - a.frame) : 0;
+      const sx = a.x + (b.x - a.x) * alpha;
+      const sy = a.y + (b.y - a.y) * alpha;
+      const sz = a.z + (b.z - a.z) * alpha;
+      t.group.scale.set(sx, sz, sy);   // PT(x,y,z) → three(x,z,y)：轴序置换
+    }
   }
 }
 
@@ -128,6 +144,8 @@ export async function loadStaticSmd(
     root.add(objGroup);
     // 逐帧位移关键帧（`tmPos`）—— `frame` 是动画单位（160/帧），值就是 PT 空间平移
     const keys = ((obj as unknown as { tmPos?: Array<{ frame: number; x: number; y: number; z: number }> }).tmPos ?? [])
+      .map((k) => ({ frame: k.frame, x: k.x, y: k.y, z: k.z }));
+    const scaleKeys = ((obj as unknown as { tmScale?: Array<{ frame: number; x: number; y: number; z: number }> }).tmScale ?? [])
       .map((k) => ({ frame: k.frame, x: k.x, y: k.y, z: k.z }));
     // **对象自带的变换** —— 多块拼成的网格全靠它摆位。
     // ⚠ 此前这里只用裸顶点 ⇒ 所有对象叠在原点：`pt_4-1-25.smd` 是 12 块自成一体的尖刺
@@ -201,9 +219,10 @@ export async function loadStaticSmd(
       objGroup.add(mesh);
     }
     // 有位移轨道的对象登记轨道；初值取第 0 帧（原版起始就在远处，随后逐帧扫进来）
-    if (keys.length >= 1) {
-      tracks.push({ group: objGroup, keys });
-      applyStaticMeshTracks([{ group: objGroup, keys }], 0);
+    if (keys.length >= 1 || scaleKeys.length >= 1) {
+      const track: StaticMeshTrack = { group: objGroup, keys, scaleKeys };
+      tracks.push(track);
+      applyStaticMeshTracks([track], 0);   // 初值 = 第 0 帧
     }
   }
 
