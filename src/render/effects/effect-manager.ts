@@ -206,9 +206,16 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
     return handle;
   }
 
+  /** 已打过日志的 spec 名（同名只打一次）—— 拖尾那种"每帧 spawn"会刷爆控制台（实测卡顿） */
+  const loggedSpecs = new Set<string>();
+
   async function spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<QuarksPartHandle | null> {
-    console.log('[fx] 播代码内 spec「' + (system.name || 'inline') + '」：emitter '
-      + system.emitters.length + ' 个，跟随节点=' + !!opts.attach);
+    const specName = system.name || 'inline';
+    if (!loggedSpecs.has(specName)) {
+      loggedSpecs.add(specName);
+      console.log('[fx] 播代码内 spec「' + specName + '」：emitter '
+        + system.emitters.length + ' 个，跟随节点=' + !!opts.attach + '（同名后续 spawn 不再打印）');
+    }
     return spawnViaQuarks(system, opts, system.name || 'inline');
   }
 

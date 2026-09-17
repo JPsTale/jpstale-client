@@ -605,6 +605,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 真正的技能目标将来由服务端/技能系统给，那时换掉这一处即可。
    */
   let selfSkillAim: THREE.Object3D | null = null;
+  /**
+   * 瞄准**怪的身中**而不是脚底：`root.position` 在地面，而原版给特效定高度惯用 `pY + N*fONE`
+   * （如蘑菇 `pY + 24*fONE`；我方 `MONSTER_ATTACK_FX` 的 `height` 也是这一套）。
+   * ⚠ `sinEffect_MultiSpark` 自己用 `DesChar->pY` **原值**（无抬高）⇒ 抬高属**调用侧**的事，
+   *   所以放在这里而不是粒子层。数值不对就改这一个常量。
+   */
+  const TARGET_BODY_LIFT = 24;
   let selfAttackEventFrames: number[] = [];
   /** 待触发的「使用道具」粒子/音效（药水在 EAT 事件帧才放，见 playEatInternal） */
   let selfEatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null = null;
@@ -4986,7 +4993,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               // 原版 `if (DesChar)` 两处守卫都不成立 ⇒ 不收敛、不改瞄（不是"退而求其次"）
               // 瞄准点优先用**本次技能自己的**（见 `selfSkillAim` 的说明），
               // 其次才是自动攻击的当前目标；都没有就是原版的"无目标"路径
-              const targetPos = selfSkillAim?.position ?? monsters.get(selfAttackTargetId)?.root.position ?? null;
+              const aimRoot = selfSkillAim
+                ?? (selfAttackTargetId ? monsters.get(selfAttackTargetId)?.root ?? null : null);
+              // 怪 → 抬到身中；非怪（无目标）→ null（原版无目标路径）
+              const targetPos = aimRoot
+                ? { x: aimRoot.position.x, y: aimRoot.position.y + TARGET_BODY_LIFT, z: aimRoot.position.z }
+                : null;
               console.log('[WorldView][dbg] 技能事件帧：caster=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')'
                 + ' target=' + (targetPos ? `(${targetPos.x.toFixed(1)},${targetPos.y.toFixed(1)},${targetPos.z.toFixed(1)})` : 'null'));
               fireSkillEvent(selfSkillRow, skillFxCtx(), selfPos, targetPos);
