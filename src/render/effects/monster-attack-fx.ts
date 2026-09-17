@@ -401,26 +401,31 @@ export function pickMonsterFxAsset(def: MonsterAttackFxDef, variant = 0): string
  *   还是没渲染，永远查不出来（AGENTS #12）。实验室与游戏共用这条上报路径。
  */
 export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<boolean> | null {
-  // 射击怪：原版在这个事件帧设 `ShootingFlag`（而不是起粒子）⇒ 交给调用方发射，本函数不返回特效句柄
-  if (MONSTER_RANGED[ctx.effectId]) {
-    ctx.fireRanged?.();
-    return null;
-  }
   /**
    * **挥击音**（`CharPlaySound` 那套：按**怪物目录**取 `CHRMOTION_STATE_ATTACK` 的音频，
    * 如 `wav/effects/monster/d_pr/attack 1.wav`）。
    *
    * ⚠⚠ 它**与"这一招有没有登记特效"完全无关** —— 特效是我们核验出来的表，
    *   而挥击音是原版按怪物目录解析的。**任何"没特效就提前 return"的写法都会把它连带吞掉。**
-   *   实测两次踩到同一处：
+   *   实测**三次**踩到同一处：
    *     · 表里没有条目的怪（"多数纯物理怪原版就只有音效"）原来在 `!entry` 处 return ⇒ 静音
    *     · 我加的多技能 KeyCode 分派在"该键未登记"处 return ⇒ **D_PR 普攻静音**
    *       （用户报"攻击没声音了"；而 `d_pr/attack 1.wav` 确实在资产里）
-   *   ⇒ 故把它提到**分派之前**，由这里统一播；`fireDef` 里那套是"技能自己的音"（另一条路径）。
+   *     · 射击怪分支（`MONSTER_RANGED`，"设 `ShootingFlag`"）也在它**之前** return ⇒ **所有弓怪静音**
+   *       （用户 2026-09-17 实测"听不到攻击音效"）—— 故本函数**第一件事**就是把它定义出来，
+   *       任何 return 之前都先 `swingSound()`；`fireDef` 里那套是"技能自己的音"（另一条路径）。
    */
   const swingSound = (): void => {
     ctx.sfx?.playSoundByName(ctx.modelKey, 'CHRMOTION_STATE_ATTACK', ctx.pos, ctx.effectId);
   };
+
+  // 射击怪：原版在这个事件帧设 `ShootingFlag`（而不是起粒子）⇒ 交给调用方发射，本函数不返回特效句柄。
+  // ⚠ **音效照旧**：射不射箭与"播不播攻击音"是两条轴（音效 ∉ 特效分派）。
+  if (MONSTER_RANGED[ctx.effectId]) {
+    swingSound();
+    ctx.fireRanged?.();
+    return null;
+  }
 
   const entry = MONSTER_ATTACK_FX[ctx.effectId];
   if (!entry || !ctx.effects) {
