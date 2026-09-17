@@ -311,9 +311,9 @@ export interface WorldView {
   /** 地面物品消失（S2C_GroundItemDisappear，拾取/过期/被清） → 移除 */
   groundItemDisappear(groundItemId: number): void;
   /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
-  playSkillByIcon(iconFile: string, aim?: { x: number; y: number; z: number } | null): boolean;
+  playSkillByIcon(iconFile: string, aim?: THREE.Object3D | null): boolean;
   /** [调试/装备] 播放当前装备在指定拳的技能动画 */
-  playEquippedSkill(slot: 'left' | 'right', aim?: { x: number; y: number; z: number } | null): boolean;
+  playEquippedSkill(slot: 'left' | 'right', aim?: THREE.Object3D | null): boolean;
 }
 
 /**
@@ -596,10 +596,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 为什么不直接用 `selfAttackTargetId`：那个值是**自动攻击循环**在"跑到射程内起手"时赋的
    * （见下面的普攻分支），它不是"可保持的选中状态" —— 点一只怪只会**跑过去**，所以
    * "先选目标再施法"这条路在我们客户端并不存在（用户 2026-09-17 实测卡在这里）。
-   * 故调试入口从**自己的那次点击**取光标下的怪当目标（`playSkillByIcon(icon, aim)`）。
+   * 故调试入口改用**已有的 hover 目标**（`hoverTarget`，也就是你看到高亮的那只怪 ——
+   * "所见即所瞄"，不再自己挑一次；先前我用 `nameplateTargetAt ?? pickTargetAt` 又挑了一遍，
+   * 那是同一判定的第二份实现）。存**节点引用**而不是坐标：原版传的是 `desChar` 引用，
+   * 第 30 帧改瞄取的是它**当下**的位置（目标会动）。
    * 真正的技能目标将来由服务端/技能系统给，那时换掉这一处即可。
    */
-  let selfSkillAim: { x: number; y: number; z: number } | null = null;
+  let selfSkillAim: THREE.Object3D | null = null;
   let selfAttackEventFrames: number[] = [];
   /** 待触发的「使用道具」粒子/音效（药水在 EAT 事件帧才放，见 playEatInternal） */
   let selfEatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null = null;
@@ -1868,7 +1871,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 起手（技能动画开始）：记下这一行 + 播起手音（原版 `SkillPlaySound`，在 `BeginSkill` 那一刻） */
-  function beginSelfSkill(iconFile: string, aim: { x: number; y: number; z: number } | null = null): void {
+  function beginSelfSkill(iconFile: string, aim: THREE.Object3D | null = null): void {
     selfSkillEventFired = 0;
     selfSkillAim = aim;
     selfSkillRow = skillFxRowByIcon(iconFile);
@@ -1881,7 +1884,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * @param iconFile skillData iconFile（含 .bmp）；'skill_normal'=普攻动画
    * @returns 是否找到并播放
    */
-  function playSkillByIcon(iconFile: string, aim: { x: number; y: number; z: number } | null = null): boolean {
+  function playSkillByIcon(iconFile: string, aim: THREE.Object3D | null = null): boolean {
     if (!animState) return false;
     const norm = iconFile.replace(/\.bmp$/i, '');
     if (norm === 'skill_normal') {
@@ -1911,7 +1914,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 播放当前装备在指定拳的技能动画（左/右拳）。未装备/普通攻击 → 播普攻。 */
-  function playEquippedSkill(slot: 'left' | 'right', aim: { x: number; y: number; z: number } | null = null): boolean {
+  function playEquippedSkill(slot: 'left' | 'right', aim: THREE.Object3D | null = null): boolean {
     const snap = getGameSnapshot();
     const bind = snap.fistBindings[slot];
     const selfClass = CLASS_DIR[selfJobId] ?? 'fighter';
@@ -2056,17 +2059,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return true;
   }
 
+  /** 该节点是不是某只怪（按 `monsters` 的 root 身份判定 —— 比拿高亮颜色当类型判据稳） */
+  function isMonsterRoot(root: THREE.Object3D): boolean {
+    for (const m of monsters.values()) if (m.root === root) return true;
+    return false;
+  }
+
   function onMouseDown(e: MouseEvent): void {
     if (isInputBlocked()) return;   // 加载页/遮罩期间不接收世界点击（不把正确性押在 DOM 叠放上）
     // [调试] Alt/Shift+点击 → 原地播放左/右拳装备的技能动画（不移动、不选目标）
     if (SKILL_DEBUG && (e.altKey || e.shiftKey) && e.button === 0) {
       const slot = e.altKey ? 'left' : 'right';
       e.preventDefault();
-      // 瞄准 = **这次点击下的那只怪**（名牌优先，其次世界拾取）。
-      // 不依赖 `selfAttackTargetId`（那是自动攻击循环在射程内赋的值，见其声明处的说明）。
-      const tag = nameplateTargetAt(e.clientX, e.clientY) ?? pickTargetAt(e.clientX, e.clientY);
-      const aim = tag && tag.kind === 'monster'
-        ? (monsters.get(tag.id)?.root.position ?? null) : null;
+      // 瞄准 = **已有的 hover 目标**（你看到高亮的那只怪）—— 不自己再挑一次判据，
+      // 也不依赖 `selfAttackTargetId`（那是自动攻击循环在射程内才赋的值，见其声明处说明）。
+      const aim = hoverTarget && isMonsterRoot(hoverTarget.root) ? hoverTarget.root : null;
       if (!aim) console.log('[WorldView][dbg] Shift/Alt+点击：光标下没有怪 ⇒ 无目标施放（原版此情形不施放）');
       playEquippedSkill(slot, aim);
       return;
@@ -4969,7 +4976,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               // 原版 `if (DesChar)` 两处守卫都不成立 ⇒ 不收敛、不改瞄（不是"退而求其次"）
               // 瞄准点优先用**本次技能自己的**（见 `selfSkillAim` 的说明），
               // 其次才是自动攻击的当前目标；都没有就是原版的"无目标"路径
-              const targetPos = selfSkillAim ?? monsters.get(selfAttackTargetId)?.root.position ?? null;
+              const targetPos = selfSkillAim?.position ?? monsters.get(selfAttackTargetId)?.root.position ?? null;
               fireSkillEvent(selfSkillRow, skillFxCtx(), selfPos, targetPos);
             }
           }
