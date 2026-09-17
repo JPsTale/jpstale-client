@@ -2798,6 +2798,38 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     fireMonsterSkillCast(skillFxCtx(), actor.monsterEffectId, actor.root.position);
   }
 
+  /**
+   * **诊断入口：模拟"服务端下发怪物技能"**（临时 —— 服务端接上后删掉即可）。
+   *
+   * 这条链本该由服务端的状态驱动（`S2C_MonsterMove.animState = 0x150` + `animIndex`），
+   * 但服务端还没有技能态 ⇒ 用它先把客户端的**能力**验收掉（动作 → 事件帧武装 → 起手音/法阵
+   * → 事件帧特效），不必等服务端：
+   *
+   * ```js
+   * window.__ptMonsterSkill(16)        // 离自己最近的怪，播条目 #16
+   * window.__ptMonsterSkill(16, 12345) // 指定怪物 id
+   * ```
+   *
+   * 条目号从**怪物实验室**的控制台日志读（选怪 → 按技能按钮 → `技能 'O' → 条目 idx 12`），
+   * 或直接读模型的 `.inx`。
+   */
+  (window as unknown as { __ptMonsterSkill?: (i: number, id?: number) => void }).__ptMonsterSkill =
+    (animIndex: number, monsterId?: number) => {
+      let target: MonsterActor | null = null;
+      if (monsterId != null) target = monsters.get(monsterId) ?? null;
+      else {
+        let best = Infinity;
+        for (const m of monsters.values()) {
+          const dx = m.root.position.x - selfPos.x, dz = m.root.position.z - selfPos.z;
+          const d = dx * dx + dz * dz;
+          if (d < best) { best = d; target = m; }
+        }
+      }
+      if (!target) { console.log(`[skill] 没有可用的怪（monsterId=${monsterId ?? '未给'}）`); return; }
+      console.log(`[skill] 模拟服务端下发：${target.name}#${target.monsterId} → 技能条目 #${animIndex}`);
+      setRemoteMonsterAnim(target, CHRMOTION_STATE_SKILL, animIndex);
+    };
+
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number, animIndex = 0): void {
     // 尸体：服务端的移动/动画 token 一律不采信 —— 否则一条迟到的 S2C_MonsterMove（哪怕只是转身）
     // 就会把尸体触发回 STAND/WALK（死亡态本身挡住 triggerIdle 的守卫，但攻击/行走分支会绕过它）。
