@@ -102,6 +102,28 @@ export function multiSparkLateral(i: number, num: number): number {
 /** 奇数颗时最后一颗走的分支里的抬高量（源码算了但**没加回去** ⇒ 不产生位移，仅记录） */
 export const MULTI_SPARK_LAST_LIFT = 26;
 
+/**
+ * **玩家**施放 MultiSpark 时的颗数 —— 等级表 + 随机区间，**不是常数**。
+ *
+ * 出处（ex-machina，本机可读）：
+ * ```
+ * sinSkill_Info.cpp:294   int M_Spark_Num[10] = {4, 4, 4, 5, 5, 5, 6, 6, 7, 7};
+ * SkillSub.cpp:2480       cnt = M_Spark_Num[lpSkill->Point - 1];     // Point = 技能等级
+ * SkillSub.cpp:2481       cnt = GetRandomPos((cnt / 2) + 1, cnt);    // 再随机到 [cnt/2+1, cnt]
+ * sinSkill.cpp:3301       技能说明文本印的正是 "(cnt/2)+1 - cnt"      // 即"3-4 ~ 5-8"
+ * ```
+ * ⚠ 怪物侧**不走这张表**：`character.cpp` 的调用点直接写 5（本文件里由调用方给 `num`）。
+ */
+export const M_SPARK_NUM: readonly number[] = [4, 4, 4, 5, 5, 5, 6, 6, 7, 7];
+
+/** 按技能等级取本次颗数（`level` 1-based；越界按表内最近端处理并**由调用方记录**） */
+export function playerSparkCount(level: number, rnd: () => number = Math.random): number {
+  const i = Math.min(Math.max(level, 1), M_SPARK_NUM.length) - 1;
+  const cnt = M_SPARK_NUM[i]!;
+  const lo = Math.floor(cnt / 2) + 1;
+  return lo + Math.floor(rnd() * (cnt - lo + 1));
+}
+
 /** 发射时给的初速分母（:864-866 的 `/ 20`） */
 export const MULTI_SPARK_LAUNCH_DIV = 20;
 /** 第 2 段速度分母（:226-228）—— x/z 用 15、y 用 22 */

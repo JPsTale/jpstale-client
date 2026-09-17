@@ -15,6 +15,7 @@
 
 import skillFx from '../../game/data/skill-fx.json';
 import { runMultiSpark, type MultiSparkRunnerCtx } from './multi-spark-runner.js';
+import { playerSparkCount } from './multi-spark.js';
 import { runCastCircle } from './cast-circle-runner.js';
 
 /** 技能表的一行（`skill-fx.json` 的形状） */
@@ -52,19 +53,30 @@ export function skillFxRowByIcon(iconFile: string): SkillFxRow | null {
  * 参数写在这里而不是数据里：`num = 7` 是**原版玩家侧调用点的取值**（怪物侧是 5，
  * 走 `monster-attack-fx.ts` 那张表），两者是**不同调用点**而不是"同一特效的两个档位"。
  */
+export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
+  /** 技能等级（原版 `lpSkill->Point`）—— 颗数由它查表（`M_SPARK_NUM`） */
+  skillLevel?: number | null;
+  /** 音效播放（`sfx.play(path, {pos})`） */
+  playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
+}
+
 export const CODE_SKILL_FX: Record<string, (
-  ctx: MultiSparkRunnerCtx,
+  ctx: SkillFxFireCtx,
   caster: { x: number; y: number; z: number },
   /** `null` = 没有目标（原版 `sinEffect_MultiSpark(pChar, nullptr, …)` 的情形） */
   target: { x: number; y: number; z: number } | null,
 ) => void> = {
-  multispark: (ctx, caster, target) => { runMultiSpark(ctx, caster, target, 7); },
+  // 颗数 = **等级表 + 随机区间**（原版 `M_Spark_Num[Point-1]` → `GetRandomPos(cnt/2+1, cnt)`）。
+  // ⚠ 调用方给不出技能等级时按 1 级算，并**说明**（不静默）—— 1 级 = "3-4 颗"。
+  multispark: (ctx, caster, target) => {
+    const lv = ctx.skillLevel ?? 1;
+    if (ctx.skillLevel == null) ctx.log?.('    ⚠ 未提供技能等级 ⇒ 按 1 级取颗数（3-4 颗）');
+    const num = playerSparkCount(lv);
+    ctx.log?.(`    ✦ MultiSpark：${num} 颗（等级 ${lv}）`);
+    runMultiSpark(ctx, caster, target, num);
+  },
 };
 
-export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
-  /** 音效播放（`sfx.play(path, {pos})`） */
-  playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
-}
 
 /** 起手（技能动画开始那一刻）：原版 `SkillPlaySound(…)` + 起手法阵 */
 export function fireSkillCast(row: SkillFxRow | null, ctx: SkillFxFireCtx, pos: { x: number; y: number; z: number }): void {
