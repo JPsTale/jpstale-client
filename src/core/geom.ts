@@ -18,6 +18,18 @@
  */
 export const PT_ANGLE_FULL = 4096;
 
+/**
+ * PT 的定点 1.0 = **256**（`#define fONE 256`，出处 `ex-machina/src/game/Legacy/Engine/Graphics/smType.h:15`，
+ * 紧邻的 `#define FLOATNS 8` 是小数位数）。
+ *
+ * 一切"看起来是像素/无量纲的大数"（`Size.w = 4800 * 3`、`AddHeight = 1500`、`MoveSpeed.z = 256`、
+ * `7000` 的抬高…）都要除以它才是世界单位。**落顶点的地方才做这一次除法**：
+ *   · 面片（法阵光环）：`AssaUtil.cpp:827` `outVertex.x = outVertex.x / fONE + x`
+ *   · 广告板（火花等）：`smRend3d.cpp:162` `fx = tx / fONE`（`width` 直接加在定点 `tx` 上，:1155）
+ * 所以**不要**在别处再除一次、也不要自己发明除数（曾据 `4800 * 10` 编出 `÷2560`，是错的）。
+ */
+export const FONE = 256;
+
 /** PT 角度 → 弧度（先按掩码取模，与原版 `AngX &= ANGCLIP` 一致） */
 export function ptAngleToRad(ang: number): number {
   const a = ang & (PT_ANGLE_FULL - 1);

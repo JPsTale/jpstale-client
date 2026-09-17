@@ -27,8 +27,9 @@
  * 分量里可以再嵌 `random(a,b)`。另有引号字符串（纹理路径）。
  *
  * 已知精简（见阶段 3 说明）：
- *  - **多关键帧**：解析层现已**完整收集**（`PartEmitter.keyframes`，含中间帧与 `at <t> eventtimer`），
- *    但运行时（`render/effects/part-emitter.ts`）仍只取首尾（initial → final）做线性插值 —— 缺口在渲染侧，不在解析侧。
+ *  - **多关键帧**：解析层**完整收集**（`PartEmitter.keyframes`，含中间帧与 `at <t> eventtimer`），
+ *    渲染层也**已经消费**（`part-to-quarks.kfOf` → quarks 的 `Gradient`）——
+ *    该缺口在 §12 迁移到 quarks 时**关闭**（此前自研 emitter 只取首尾，故曾记为"渲染侧缺口"）。
  *    带 `fade so at` 的文件约占 1/3。
  *  - `ParticleTypes[4]` 表在 ex-machina 里**只有声明没有定义**（反编译缺失），
  *    故 TYPE_ONE..FOUR 的精确渲染模式无法查证，运行时按"朝向相机的广告牌 + 旋转"近似。
@@ -60,8 +61,9 @@ export interface PartKeyframe {
  * 按 `Step = (新值 − 当前值) / (下一帧时间 − 当前帧时间)` 线性推进
  * （ex-machina `HoNewParticle.cpp` 各 `HoNewParticleEvent_*::DoItToIt`）。
  * 此前本解析器只保留 `initial X` 与 `fade so final X` 两个端点，**中间帧被丢弃**，
- * 于是"多关键帧"在渲染侧无从实现（`render/effects/part-emitter.ts` 文件头亦自认此缺口）。
- * 转到粒子框架时，中间帧是必需的（框架的曲线发生器正是按 `[值, 时间]` 列表表达）。
+ * 于是当时"多关键帧"在渲染侧无从实现。
+ * 转到 quarks 后中间帧是必需的、也已被消费（框架的曲线发生器正是按 `[值, 时间]` 列表表达，
+ * 见 `part-to-quarks.kfOf`）—— 即该缺口在 §12 迁移时已关闭。
  */
 export type PartKeyframes = Record<string, PartKeyframe[]>;
 

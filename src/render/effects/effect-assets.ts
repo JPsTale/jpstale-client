@@ -107,7 +107,7 @@ async function loadEffectUncached(name: string, iniPath: string): Promise<Loaded
     const path = framePaths[f.imageIndex];
     let tex: THREE.DataTexture | null = null;
     if (path) {
-      tex = await fetchAndDecodeTexture('/res/' + path);
+      tex = await fetchAndDecodeTexture('/res/' + path, 1, { linear: true });   // 特效：原样进（见 fetchAndDecodeTexture 的说明）
       if (!tex) missing.push(path);
     } else {
       missing.push(`(无 ImageData 帧 #${f.imageIndex})`);

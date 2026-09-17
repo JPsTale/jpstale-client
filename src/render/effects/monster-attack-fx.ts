@@ -60,6 +60,34 @@ export interface MonsterAttackFxDef {
    */
   fly?: { speed: number };
   /**
+   * **多火花**（原版 `sinEffect_MultiSpark`）：一次发射 `num` 颗，横向散开后朝目标飞。
+   *
+   * ⚠ `num` 是**这个特效自己的发射数** —— 与技能表里那个 `Amount Sparks`（伤害机制数值，
+   *   随等级 3-4 ~ 5-8）**无关**：那是技能系统的事，特效层不该过问也没必要知道。
+   *   **想发 100 颗就把 `num` 写 100**，本字段就是"这个特效发几颗"的唯一出处。
+   *
+   * （原版怪物在 case 里传 5，那是它的取值，不是特效的限制。）
+   *
+   * 偏移公式（第 i 颗 `±(10 + 1 + i*12)`、奇数颗时最后一颗抬高 26）**不在这里** ——
+   * 那是机制常量，唯一出处是 `multi-spark.ts` 的 `multiSparkLateral` / `MULTI_SPARK_LAST_LIFT`
+   * （曾在本表里抄过一份 `base/step/lift`，属重复定义，已删）。
+   */
+  sparks?: {
+    /** 发射几颗（本特效自身的参数，对应原版调用点 `sinEffect_MultiSpark(..., 5)` 的那个 5） */
+    num: number;
+    /**
+     * 火花音（事件帧播）—— 原版 `SkillPlaySound(SKILL_SOUND_SKILL_MULTISPARK, …)`
+     *   = `wav/effects/skill/morion/multispark 1.wav`（`effectsnd.cpp:551`）。
+     */
+    sound?: string;
+  };
+  /**
+   * **起手音**（技能动画开始时播，不是事件帧）—— 原版 `character.cpp:14070`
+   *   `BeginSkill_Monster` 里的 `SkillPlaySound(SKILL_SOUND_SKILL_CASTING_MAGICIAN, …)`
+   *   = `wav/effects/skill/morion/casting_m.wav`（`effectsnd.cpp:537`）。
+   */
+  castSound?: string;
+  /**
    * 同一个 case 里原版还会起一盏**动态光**（`SetDynLight`）—— 有就一起起，别落下。
    * 参数原样照抄源码（0-255 颜色 / power / 每帧衰减 decPower）。
    */
@@ -77,8 +105,12 @@ export interface MonsterAttackFxDef {
  * ⚠ 但"表里没有"**不等于降级**：绝大多数纯物理攻击的怪本来就没有攻击特效
  * （原版 `switch` 里相当多的 case 只播音效）。所以要区分的是"核验过 = 无特效"
  * 与"还没核验"，实验室界面把这两种显示成不同状态，不去污染降级清单。
+ *
+ * ⚠ **值有两型**：单效果条目（`MonsterAttackFxDef`）与**多技能怪**（`MonsterSkillSet`）——
+ * 后者一个 `effectId` 下按动作 `KeyCode` 分派多招（原版 `switch (MotionInfo->KeyCode)`）。
+ * 用 `resolveMonsterFx(effectId, keyCode)` 取实际该放的那一条，**不要在调用方自己拆**。
  */
-export const MONSTER_ATTACK_FX: Record<number, MonsterAttackFxDef> = {
+export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
   // 0x10B0 = snCHAR_SOUND_MUSHROOM（蘑菇精）：向周围释放粉色的有毒孢子气体
   //   `NewSourcePT-2023/SrcGame/src/character.cpp:4277` `case snCHAR_SOUND_MUSHROOM:`
   //      → `StartEffect(pX, pY + (24 * fONE), pZ, EFFECT_GAS1);`（调用在 :4279）
@@ -129,11 +161,125 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterAttackFxDef> = {
     fly: { speed: 323 },
     note: 'character.cpp:4606 / hoAssaParticleEffect.cpp:5530-5539 / AssaParticle.cpp:7443,7474',
   },
+
+  // 0x1960 = snCHAR_SOUND_REVIVED_PRIESTESS（被复活的祭司 / 死亡祭司）—— **多技能怪**。
+  //
+  // ⚠⚠ **特效挂在动作的 `KeyCode` 上，不是挂在 effectId 上。**
+  //   原版 `smCHAR::EventSkill_Monster`（`character.cpp:11916` 起）是
+  //   `case snCHAR_SOUND_REVIVED_PRIESTESS: if (chrAttackTarget) switch (MotionInfo->KeyCode)`，
+  //   三个分支各是一招，各有各的**动作**与**事件帧**（动作表 `char/monster/d_pr/dpr.inx` 实测）：
+  //
+  //   | 条目 | KeyCode | 事件帧 | 原版调用 |
+  //   |---|---|---|---|
+  //   | idx 15 | `'I'` | 3200 | **普攻**（`EventAttack` 里**没有她** ⇒ 无特效） |
+  //   | **idx 16** | **`'O'`** | **3360** | `sinEffect_MultiSpark(this, chrAttackTarget, 5)` |
+  //   | idx 17 | `'H'` | 4640 / 7040 | `AssaParticle_VigorBall(this, chrAttackTarget)` |
+  //   | idx 18 | `'Z'` | 7200 | `SkillCelestialGlacialSpike(this)` |
+  //
+  //   **实测反例（我第一版就是这样错的）**：只看 effectId ⇒ 播着 idx 17（`'H'` = VigorBall）的
+  //   动作，却在它的 4640/7040 上放 **MultiSpark**。用户实测："技能动画和特效完全不匹配。"
+  //   ⇒ 派表按 keyCode 分派；**键没登记 = 那一招还没核验**（原版 switch 无 default ⇒ 什么都不做）。
+  //
+  // · 普攻无特效：全文件 `grep -n REVIVED_PRIESTESS character.cpp` 只有两处（14070 / 14903），
+  //   都在 `BeginSkill_Monster` / `EventSkill_Monster` 内；`EventAttack`（switch 4275~5321）
+  //   **既没有她的 case、也没有 default**。
+  // · 起手（`character.cpp:14070` `BeginSkill_Monster`）有**脚下法阵**，**所有技能共用**：
+  //   `sinEffect_StartMagic(&pos, 2)` → `MAAM2` 模型 + `maam2.tga` + `star05Q_03.bmp`。
+  0x1960: {
+    // 起手音：`effectsnd.cpp:537` `Casting_M.wav → SKILL_SOUND_SKILL_CASTING_MAGICIAN`
+    //   —— 跟在 `BeginSkill_Monster`（动画开始）上，**不是事件帧**
+    castSound: 'wav/effects/skill/morion/casting_m.wav',
+    castMagic: 2,                      // `sinEffect_StartMagic(&pos, 2)` 的 CharFlag
+    skillByKeyCode: {
+      O: {
+        asset: 'MultiSpark',           // 自建代码内 spec（`multi-spark.ts`）；原版是裸贴图 `m_spark06.tga`
+        height: 0,                     // 起点 = 怪物原点（源码用 `pChar->pX/pY/pZ`，无高度偏移）
+        // 5 = 原版**怪物 case 的取值**（`sinEffect_MultiSpark(..., 5)`），不是特效的限制：
+        // `num` 就是这个特效发几颗，改成 100 也完全没问题。
+        sparks: {
+          num: 5,
+          // `effectsnd.cpp:551` `{ "…\Morion\MultiSpark 1.wav", SKILL_SOUND_SKILL_MULTISPARK }`
+          sound: 'wav/effects/skill/morion/multispark 1.wav',
+        },
+        // ⚠ 这盏白光**不是"起手"** —— 它在 `sinEffect_MultiSpark` 的**发射**里
+        //   （`sinSkillEffect.cpp:813` `SetDynLight(pChar->pX, pChar->pY, pChar->pZ, 255,255,255,255,140,1)`）
+        //   ⇒ 属于 `'O'` 这一招，不属于宿主条目。（早先我记成"起手"是错的。）
+        dynLight: { r: 255, g: 255, b: 255, a: 255, power: 140, decPower: 1 },
+        note: "character.cpp:14903 case 'O' / sinSkillEffect.cpp:813 动态光,881 发射,244 驱动,1766 命中；动作 dpr.inx idx16 事件帧 3360",
+      },
+      // `'H'`（VigorBall / `hoAssaParticleEffect.cpp:4152`）与 `'Z'`（GlacialSpike /
+      // `HoNewEffectFunction.cpp:590` 的 Lua 脚本）**尚未提取资产** ⇒ **不登记**。
+      // 调用方拿到 `undefined` 就是"这一招还没核验"，不静默兜底成别的招。
+    },
+    note: 'character.cpp:14903 `switch (MotionInfo->KeyCode)`；动作表 dpr.inx idx16=\'O\' 事件帧3360 / idx17=\'H\' / idx18=\'Z\'',
+  },
 };
 
 /** 特效管理器的最小契约 —— 结构化类型，避免与本模块耦合到具体实现类。 */
 export interface FxSpawner {
   spawn(asset: string, opts: { pos: { x: number; y: number; z: number }; size?: number }): Promise<boolean>;
+}
+
+/**
+ * **多技能怪**：一个 `effectId` 下按动作的 `KeyCode` 分派多招。
+ *
+ * 原版 `smCHAR::EventSkill_Monster` 长这样（`character.cpp:11916` 起）：
+ * ```cpp
+ * case snCHAR_SOUND_REVIVED_PRIESTESS:
+ *   if (chrAttackTarget) {
+ *     switch (MotionInfo->KeyCode) {      // ← 一招一个 KeyCode
+ *       case 'O': sinEffect_MultiSpark(this, chrAttackTarget, 5); …   break;
+ *       case 'H': AssaParticle_VigorBall(this, chrAttackTarget); …    break;
+ *       case 'Z': SkillCelestialGlacialSpike(this); …                 break;
+ *     }
+ *   }
+ *   break;
+ * ```
+ * 所以"放哪一招"由**正在播的那条动作**决定 —— 动作表里 `KeyCode` 是 `smMOTIONINFO` 的字段
+ * （我们解析在 `char-parser.ts:58`，`offset + 164`，uint8），三招各有自己的**事件帧**。
+ */
+export interface MonsterSkillSet {
+  /** **起手音**（技能动画开始时播，不是事件帧）—— 原版 `BeginSkill_Monster` 里的 `SkillPlaySound` */
+  castSound?: string;
+  /** **起手法阵**：原版 `sinEffect_StartMagic(&pos, CharFlag)` 的 `CharFlag`（D_PR = 2） */
+  castMagic?: number;
+  /**
+   * 按动作 `KeyCode` 分派（键为**大写字母**；原版 `MotionInfo->KeyCode` 就是 ASCII）。
+   * **没登记的键 = 那一招还没核验** ⇒ 什么都不放（原版 switch 没有 default，本来也不放）。
+   */
+  skillByKeyCode: Record<string, MonsterAttackFxDef>;
+  note: string;
+}
+
+export type MonsterFxEntry = MonsterAttackFxDef | MonsterSkillSet;
+
+/** 多技能怪？—— 判据是 `skillByKeyCode` 存在（唯一判定处） */
+export function isSkillSet(e: MonsterFxEntry): e is MonsterSkillSet {
+  return (e as MonsterSkillSet).skillByKeyCode !== undefined;
+}
+
+/**
+ * 由 `effectId` + **动作的 KeyCode** 解出"这一帧该放哪一条"。
+ *
+ * **唯一实现**（AGENTS #15）：实验室的显示与实际播放必须走同一份判断，
+ * 否则"日志说 MultiSpark、画面里放的是别的"这种分叉会同时污染两边。
+ *
+ * @param keyCode 原版 `MotionInfo->KeyCode`（ASCII 码）；单效果怪忽略它
+ * @returns `null` = 这一招没登记（或该怪无核验条目）
+ */
+export function resolveMonsterFx(effectId: number, keyCode?: number | null): MonsterAttackFxDef | null {
+  const entry = MONSTER_ATTACK_FX[effectId];
+  if (!entry) return null;
+  if (!isSkillSet(entry)) return entry;
+  if (keyCode == null) return null;            // 多技能怪但不知道在播哪招 ⇒ 无法决定
+  return entry.skillByKeyCode[String.fromCharCode(keyCode).toUpperCase()] ?? null;
+}
+
+/** 取某条目的"起手"信息（多技能怪才有）—— 实验室/游戏用它决定起手音与法阵 */
+export function monsterCastOf(effectId: number): { castSound?: string; castMagic?: number } | null {
+  const entry = MONSTER_ATTACK_FX[effectId];
+  if (!entry || !isSkillSet(entry)) return null;
+  return { castSound: entry.castSound, castMagic: entry.castMagic };
 }
 
 /**
@@ -168,6 +314,14 @@ export const MONSTER_BOW_IDCODE = 17170688;
 
 /** 音效播放器的最小契约（`audio/sfx.ts` 的 `playSoundByName`）。 */
 export interface SfxPlayer {
+  /**
+   * 按**资产相对路径**播（不带 `/res/` 前缀）—— 技能音走这条。
+   *
+   * 为什么需要它：怪物的攻击/受击音走 `playSoundByName`（按 `wav/effects/monster/<dir>/` 解析），
+   * 而**技能音**在原版是 `effectsnd.cpp` 里的一张**逐条路径表**
+   * （如 `game\Audio\Effects\Skill\Morion\MultiSpark 1.wav`），没有"按怪物目录"的结构。
+   */
+  play?(path: string, opts?: { pos?: { x: number; y: number; z: number } }): void;
   playSoundByName(
     modelKey: string, motion: string,
     pos: { x: number; y: number; z: number },
@@ -180,6 +334,14 @@ export interface MonsterAttackEventCtx {
   modelKey: string;
   /** 服务端下发的 `monster_effect_id` */
   effectId: number;
+  /**
+   * **正在播的那条动作的 `KeyCode`**（ASCII 码，原版 `MotionInfo->KeyCode`）。
+   *
+   * 多技能怪**必须给**：同一个 `effectId` 下三招各挂各的特效，由这个键选
+   * （原版 `switch (MotionInfo->KeyCode)`）。不给 ⇒ 多技能怪无法决定放哪一招，上报后不放。
+   * 单效果怪忽略此字段。我们的动作表里有这个值：`char-parser.ts:58`（`smMOTIONINFO` offset+164）。
+   */
+  keyCode?: number | null;
   /** 怪物**世界坐标**（`root.position`）；特效按上面的 height / forward 偏移 */
   pos: { x: number; y: number; z: number };
   /**
@@ -205,6 +367,13 @@ export interface MonsterAttackEventCtx {
    * 且"从哪出手、打向谁"是调用方的场景知识（游戏里是 AOI 里的目标，实验室里是假人）。
    */
   fireRanged?: () => void;
+  /**
+   * 这只怪的这次攻击是**多火花**时，由调用方负责把它们放出来（见 `MonsterAttackFxDef.sparks`）。
+   *
+   * 只传 `spec`（含 `num` = 本特效发几颗）—— 调用方不需要也**不应该**再决定数量：
+   * 数量是特效的属性，不是调用方的选择。
+   */
+  fireSparks?: (spec: NonNullable<MonsterAttackFxDef['sparks']>) => void;
 }
 
 /**
@@ -231,14 +400,68 @@ export function pickMonsterFxAsset(def: MonsterAttackFxDef, variant = 0): string
  *   还是没渲染，永远查不出来（AGENTS #12）。实验室与游戏共用这条上报路径。
  */
 export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<boolean> | null {
-  ctx.sfx?.playSoundByName(ctx.modelKey, 'CHRMOTION_STATE_ATTACK', ctx.pos, ctx.effectId);
   // 射击怪：原版在这个事件帧设 `ShootingFlag`（而不是起粒子）⇒ 交给调用方发射，本函数不返回特效句柄
   if (MONSTER_RANGED[ctx.effectId]) {
     ctx.fireRanged?.();
     return null;
   }
-  const def = MONSTER_ATTACK_FX[ctx.effectId];
-  if (!def || !ctx.effects) return null;
+  /**
+   * **挥击音**（`CharPlaySound` 那套：按**怪物目录**取 `CHRMOTION_STATE_ATTACK` 的音频，
+   * 如 `wav/effects/monster/d_pr/attack 1.wav`）。
+   *
+   * ⚠⚠ 它**与"这一招有没有登记特效"完全无关** —— 特效是我们核验出来的表，
+   *   而挥击音是原版按怪物目录解析的。**任何"没特效就提前 return"的写法都会把它连带吞掉。**
+   *   实测两次踩到同一处：
+   *     · 表里没有条目的怪（"多数纯物理怪原版就只有音效"）原来在 `!entry` 处 return ⇒ 静音
+   *     · 我加的多技能 KeyCode 分派在"该键未登记"处 return ⇒ **D_PR 普攻静音**
+   *       （用户报"攻击没声音了"；而 `d_pr/attack 1.wav` 确实在资产里）
+   *   ⇒ 故把它提到**分派之前**，由这里统一播；`fireDef` 里那套是"技能自己的音"（另一条路径）。
+   */
+  const swingSound = (): void => {
+    ctx.sfx?.playSoundByName(ctx.modelKey, 'CHRMOTION_STATE_ATTACK', ctx.pos, ctx.effectId);
+  };
+
+  const entry = MONSTER_ATTACK_FX[ctx.effectId];
+  if (!entry || !ctx.effects) {
+    // 无核验条目 ≠ 无音效：纯物理怪原版就只有这一记挥击音
+    swingSound();
+    return null;
+  }
+  // **多技能怪**：由**正在播的那条动作的 KeyCode** 决定放哪一招
+  //（原版 `switch (MotionInfo->KeyCode)`）。缺 keyCode 或该键未登记都**不猜**：
+  //  前者是调用方没给（上报），后者是那一招还没核验（原版 switch 无 default ⇒ 本就不放特效）。
+  //  ⚠ 但**音效照旧**（上面那条）—— 把两者一起吞掉是我犯过的错。
+  if (isSkillSet(entry)) {
+    const key = ctx.keyCode == null ? null : String.fromCharCode(ctx.keyCode).toUpperCase();
+    const sub = key ? entry.skillByKeyCode[key] : undefined;
+    if (!sub) {
+      reportFallback('fx', key == null
+        ? `怪 #${ctx.effectId} 是多技能怪，但调用方没给动作 KeyCode ⇒ 无法决定放哪一招（本次不放特效，挥击音照旧）`
+        : `怪 #${ctx.effectId} 的动作 KeyCode '${key}' 未登记特效 ⇒ 这一招不放特效（原版 switch 无 default；挥击音照旧）`);
+      swingSound();
+      return null;
+    }
+    return fireDef(sub, ctx, ctx.effects);
+  }
+  return fireDef(entry, ctx, ctx.effects);
+}
+
+/** 单条效果的实际播放（音效 + 落点 + 动态光 + 起粒子）—— 条目解析之后的一切 */
+function fireDef(
+  def: MonsterAttackFxDef, ctx: MonsterAttackEventCtx, effects: FxSpawner,
+): Promise<boolean> | null {
+  // **多火花**：发射几颗是**本特效自己的属性**（`sparks.num`）—— 直接交给调用方，
+  // 本模块不解析、不裁剪、不让调用方再选（那是把技能机制混进特效层，层级错了）。
+  if (def.sparks) {
+    // **技能**：音效是**技能音**，不是普攻的挥击音 ——
+    // 原版技能走 `SkillPlaySound(SKILL_SOUND_*)`（`effectsnd.cpp` 的逐条路径表），
+    // 而挥击音那套是"按怪物目录取 `CHRMOTION_STATE_ATTACK`"，两者不同源。
+    if (def.sparks.sound) ctx.sfx?.play?.(def.sparks.sound, { pos: ctx.pos });
+    ctx.fireSparks?.(def.sparks);
+    return null;
+  }
+  // 非技能（普攻/法术类）：挥击音按怪物目录解析
+  ctx.sfx?.playSoundByName(ctx.modelKey, 'CHRMOTION_STATE_ATTACK', ctx.pos, ctx.effectId);
   // 落点 = 怪物原点 + 原版 `GetMoveLocation(...)` 算出的偏移。
   // **照抄参数、由等价函数算**（`core/geom.getMoveLocation`）—— 不做语义翻译：
   // 当初把 `GeoResult_*` 翻译成"前方 N 单位"，就漏掉了它来自上一行调用，于是粒子落在身上。
@@ -262,7 +485,7 @@ export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<bool
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
-  return Promise.resolve(ctx.effects.spawn(name, {
+  return Promise.resolve(effects.spawn(name, {
     pos: at,
     size: def.size,
   }))

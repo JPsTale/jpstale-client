@@ -10,14 +10,12 @@
  * 同一贴图的两个特效会互相改写混合模式；这里每个实例自带材质。
  */
 import * as THREE from 'three';
-import { loadEffect, type LoadedEffect, type EffectDiag } from './effect-assets.js';
-import { loadPart, loadPartFromSystem, type LoadedPart } from './part-assets.js';
-import type { PartHandle } from './part-emitter.js';
+import { loadEffect, type EffectDiag } from './effect-assets.js';
+import { loadPart, type LoadedPart } from './part-assets.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import { reportFallback } from '../../char/fallback-log.js';
-import { createPartRuntime, type PartRuntime } from './part-emitter.js';
-import type { EffectBlend } from '../../core/effect/anim-ini.js';
-import { EFFECT_HZ } from '../../core/effect/anim-ini.js';
+import { iniToQuarks } from './ini-to-quarks.js';
+import type { QuarksRuntime, QuarksPartHandle } from './quarks-runtime.js';
 
 /** INI 未提供 Size 段时的默认世界尺寸（角色高约 46 世界单位，取 32 与命中特效同量级） */
 const DEFAULT_SIZE = 32;
@@ -87,28 +85,6 @@ export interface SpawnOpts {
   burst?: BurstSpec;
 }
 
-interface Instance {
-  sprite: THREE.Sprite;
-  mat: THREE.SpriteMaterial;
-  eff: LoadedEffect;
-  /** 已播放秒数 */
-  t: number;
-  frameIdx: number;
-  size: number;
-  scale: number;
-  attach?: THREE.Object3D;
-  offset: THREE.Vector3;
-  tmp: THREE.Vector3;
-  /** 物理粒子（burst）：速度 / 重力 / 寿命 / 自转。`life <= 0` = 不是爆发粒子（按 INI 播完） */
-  vel: THREE.Vector3;
-  gravity: number;
-  life: number;
-  age: number;
-  /** 自转（度/秒）与累计角度（度）—— 叠在 INI 每帧的 angle 之上 */
-  spin: number;
-  spinDeg: number;
-}
-
 export interface EffectManager {
   /** 播放一个特效：先按 INI 广告牌解析，找不到再按 `.part` 粒子脚本解析 */
   spawn(name: string, opts: SpawnOpts): Promise<boolean>;
@@ -117,9 +93,12 @@ export interface EffectManager {
    * `opts.attach` 给出时粒子跟随该节点（飞行投射物），尾迹留在身后。
    * 返回**可停止的句柄**（飞行物到点要 `stop()`，否则粒子会堆在命中点上）——失败返回 null。
    */
-  spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<PartHandle | null>;
-  /** 每帧推进（`.part` 的朝向需要相机） */
-  update(dt: number, camera: THREE.Camera): void;
+  spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<QuarksPartHandle | null>;
+  /**
+   * 每帧推进。**只吃 dt** —— quarks 自己算朝向，不再需要相机
+   * （旧自研 emitter 的 `camera` 参数随它一起退役，见 §12 迁移）。
+   */
+  update(dt: number): void;
   clear(): void;
   stats(): { active: number; pending: number; loaded: number; parts: number };
   /** 最近一次 spawn 的解析结果（检查器诊断用） */
@@ -138,68 +117,18 @@ export interface EffectManager {
  *   Lamp  (2)：SRC_ALPHA / ONE            → 加法（我方资产 92/99 属此类）
  *   Shadow(3)：ZERO / SRC_COLOR           → result = dst·src
  */
-function applyBlend(mat: THREE.SpriteMaterial, b: EffectBlend): void {
-  switch (b) {
-    case 'lamp':
-      mat.blending = THREE.AdditiveBlending;
-      mat.blendSrc = THREE.SrcAlphaFactor;
-      mat.blendDst = THREE.OneFactor;
-      mat.blendSrcAlpha = THREE.SrcAlphaFactor;
-      mat.blendDstAlpha = THREE.OneFactor;
-      break;
-    case 'alpha':
-      mat.blending = THREE.NormalBlending;
-      break;
-    case 'color':
-      mat.blending = THREE.CustomBlending;
-      mat.blendEquation = THREE.AddEquation;
-      mat.blendSrc = THREE.SrcColorFactor;
-      mat.blendDst = THREE.OneMinusSrcColorFactor;
-      mat.blendSrcAlpha = THREE.SrcAlphaFactor;
-      mat.blendDstAlpha = THREE.OneMinusSrcAlphaFactor;
-      break;
-    case 'shadow':
-      mat.blending = THREE.CustomBlending;
-      mat.blendEquation = THREE.AddEquation;
-      mat.blendSrc = THREE.ZeroFactor;
-      mat.blendDst = THREE.SrcColorFactor;
-      mat.blendSrcAlpha = THREE.ZeroFactor;
-      mat.blendDstAlpha = THREE.SrcAlphaFactor;
-      break;
-  }
-}
-
-export function createEffectManager(scene: THREE.Scene): EffectManager {
-  const root = new THREE.Group();
-  root.name = 'effects';
-  scene.add(root);
-
-  const live: Instance[] = [];
-  const parts: PartRuntime = createPartRuntime(scene);
+/**
+ * 特效管理器 —— 现在**只负责"载入 + 派发"**：把 INI / `.part` / 代码内 spec 都交给 quarks 渲染。
+ *
+ * ⚠ 因此**不再需要 `scene`**：场景节点由 quarks 运行时自己管（旧的自研 emitter 与 INI 精灵
+ *   两套渲染器都已退役，见 §12 迁移）。这个签名变化本身就是"全用 quark"的证据。
+ */
+export function createEffectManager(quarks: QuarksRuntime | null = null): EffectManager {
+  const quarksFx: QuarksRuntime | null = quarks;
   let pending = 0;
   let loaded = 0;
   let partDiag: LoadedPart['diag'] | null = null;
   let diag: EffectDiag | null = null;
-
-  function frameSeconds(eff: LoadedEffect, i: number): number {
-    return Math.max(1, eff.frames[i]?.delay ?? 1) / EFFECT_HZ;
-  }
-
-  function applyFrame(inst: Instance): void {
-    const f = inst.eff.frames[inst.frameIdx];
-    if (!f) return;
-    if (f.tex && inst.mat.map !== f.tex) {
-      inst.mat.map = f.tex;
-      inst.mat.needsUpdate = true;
-    }
-    // Size 段缺失时不应用尺寸动画，用默认值
-    if (f.size !== null) inst.size = f.size;
-    const s = Math.max(0.5, inst.size * inst.scale);
-    inst.sprite.scale.set(s, s, 1);
-    inst.mat.opacity = Math.min(1, Math.max(0, f.alpha / 255));
-    // 旋转 = INI 每帧的角度 + 物理粒子的累计自转（原版 DirectionAngle 与 PutAngle 是两回事，相加）
-    inst.mat.rotation = ((f.angle ?? 0) + inst.spinDeg) * (Math.PI / 180);
-  }
 
   async function spawn(name: string, opts: SpawnOpts): Promise<boolean> {
     pending++;
@@ -211,54 +140,38 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
         if (!part) return false;
         loaded++;
         partDiag = part.diag;
-        // ⚠ 这一跳此前**没有**把 `attach` / `velocity` 传下去 —— 而**`.part` 文件的飞出物
-        //   走的正是这条**（不是 `spawnSystem` 那条，那条是"代码内 spec"）。
-        //   所以"调用方给了初速度、粒子却不飞"的根因就在这儿：参数在最后一跳被丢掉。
-        parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity, opts.rigidFollow);
-        return true;
+        // `.part` 文件 → **同样交给 quarks**（与代码内 spec 同一条路，见工厂处说明）
+        return (await spawnViaQuarks(part.system, opts, part.name)) !== null;
       }
       loaded++;
       diag = eff.diag;
       // 一帧贴图都没有 → 视为无法播放（避免生成不可见精灵）
       if (!eff.frames.some((f) => f.tex)) return false;
-
-      // 爆发：同一份 INI 复制 count 份，每份一个物理体（原版 30 个 HoPrimitiveBillboard）
-      const burst = opts.burst;
-      const n = burst ? Math.max(1, Math.round(burst.count)) : 1;
-      for (let i = 0; i < n; i++) {
-        const mat = new THREE.SpriteMaterial({
-          transparent: true,
-          depthWrite: false,
-          depthTest: true,
-          color: 0xffffff,
-        });
-        applyBlend(mat, eff.blend);
-        const sprite = new THREE.Sprite(mat);
-        root.add(sprite);
-
-        const inst: Instance = {
-          sprite, mat, eff, t: 0, frameIdx: 0,
-          size: eff.frames[0]?.size ?? opts.size ?? DEFAULT_SIZE,
-          scale: opts.scale ?? 1,
-          attach: opts.attach,
-          offset: new THREE.Vector3(opts.pos.x, opts.pos.y, opts.pos.z),
-          tmp: new THREE.Vector3(),
-          vel: new THREE.Vector3(), gravity: 0, life: 0, age: 0, spin: 0, spinDeg: 0,
-        };
-        if (burst) {
-          // 水平方向随机（原版 `ang = rand() % ANGLE_360`，x 用 cos、z 用 sin）
-          const a = Math.random() * Math.PI * 2;
-          inst.vel.set(Math.cos(a) * burst.speed, burst.speedY, Math.sin(a) * burst.speed);
-          inst.gravity = burst.gravity;
-          inst.life = burst.life.min + Math.random() * (burst.life.max - burst.life.min);
-          inst.spin = burst.spin;
-          // 自转的**初始相位**也随机，否则 30 颗同相起步（原版每颗 DirectionAngle 从 0 起，
-          // 但各自的步进是 destAngle/Live、且 Live 随机 ⇒ 天然错开；这里直接给随机初相，等价且更稳）
-          inst.spinDeg = Math.random() * 360;
-        }
-        applyFrame(inst);
-        live.push(inst);
+      // **INI 广告板 → quarks**（"全用 quark"的最后一条，见 `ini-to-quarks.ts`）：
+      // 每帧一个单粒子系统（各带自己的贴图/Delay/BlendValue/Size）—— 才能表达
+      // `returnparticle1.ini` 那种**不等长 Delay**（20,5,5,5,30）。
+      if (!quarksFx) {
+        reportFallback('fx', `INI 特效「${name}」要渲染，但 effect-manager 没拿到 QuarksRuntime`);
+        return false;
       }
+      if (opts.burst) {
+        // 原版这里是"同一份 INI 复制 count 份、每份一个物理体"（30 个 HoPrimitiveBillboard）。
+        // **现已无调用者**（药水改走 `quarksFx.playPotion`）⇒ 不静默兜底，明确上报。
+        reportFallback('fx', `INI 特效「${name}」传了 burst（物理粒子爆发），该模式随旧渲染器一并退役，未表达`);
+      }
+      const systems = iniToQuarks(eff, {
+        size: opts.size ?? eff.frames[0]?.size ?? DEFAULT_SIZE,
+        scale: opts.scale,
+      });
+      if (!systems.length) {
+        reportFallback('fx', `INI 特效「${name}」→ quarks 得到 0 个系统（帧贴图全缺？）`);
+        return false;
+      }
+      for (const ps of systems) {
+        ps.emitter.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
+      }
+      quarksFx.addSystems(systems, opts.attach ?? null);
+      return true;
       return true;
     } catch {
       return false;
@@ -267,79 +180,46 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
     }
   }
 
-  async function spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<PartHandle | null> {
-    const part = await loadPartFromSystem(system.name || 'inline', system);
-    console.log('[fx] 播代码内 spec「' + part.name + '」：emitter ' + part.diag.emitterCount
-      + ' 个，贴图 ' + JSON.stringify(part.diag.textures)
-      + (part.diag.missing.length ? ' ⚠ 缺失 ' + part.diag.missing.join(',') : '')
-      + '，跟随节点=' + !!opts.attach);
-    const handle = parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity, opts.rigidFollow);
-    partDiag = part.diag;
-    if (part.diag.missing.length) {
-      reportFallback('fx', `代码内 spec「${part.name}」贴图缺失：${part.diag.missing.join(', ')}`);
+  /**
+   * **代码内 spec → quarks**（唯一入口）。
+   *
+   * `pos` / `scale` / `attach` / `rigidFollow` / `velocity` 全部透传给 quarks（见
+   * `QuarksSpawnOpts` 的逐项说明）—— 语义与旧 `part-emitter` 一致，调用方无需改。
+   */
+  async function spawnViaQuarks(
+    system: PartSystem, opts: SpawnOpts, label: string,
+  ): Promise<QuarksPartHandle | null> {
+    if (!quarksFx) {
+      reportFallback('fx', `「${label}」要 quarks 渲染，但 effect-manager 没拿到 QuarksRuntime`);
+      return null;
     }
+    const handle = await quarksFx.spawnSystem(system, {
+      pos: opts.pos,
+      scale: opts.scale,
+      attach: opts.attach ?? null,
+      // `rigidFollow` = 粒子吃载体位移 ⇒ quarks 的"局部空间"（worldSpace = false）
+      follow: opts.rigidFollow === true,
+      velocity: opts.velocity,
+    });
+    partDiag = quarksFx.lastPartDiag();
+    if (!handle) reportFallback('fx', `「${label}」在 quarks 路起不来（见 quarks stats.missing）`);
     return handle;
   }
 
-  function update(dt: number, camera: THREE.Camera): void {
-    parts.update(dt, camera);
+  async function spawnSystem(system: PartSystem, opts: SpawnOpts): Promise<QuarksPartHandle | null> {
+    console.log('[fx] 播代码内 spec「' + (system.name || 'inline') + '」：emitter '
+      + system.emitters.length + ' 个，跟随节点=' + !!opts.attach);
+    return spawnViaQuarks(system, opts, system.name || 'inline');
+  }
 
-    for (let i = live.length - 1; i >= 0; i--) {
-      const inst = live[i]!;
-      inst.t += dt;
+  function update(dt: number): void {
+    quarksFx?.update(dt);        // 代码内 spec + `.part`
 
-      // 物理粒子（burst）：`vy += g·dt; pos += v·dt; 自转 += ω·dt`，寿命到就整颗移除。
-      // 原版是每帧直接加（`HoPrimitiveBillboard::Main` → `LocalX += DirectionVelocity.x`），
-      // 这里是每秒制，等价（换算见 BurstSpec）。
-      if (inst.life > 0) {
-        inst.age += dt;
-        if (inst.age >= inst.life) {
-          root.remove(inst.sprite);
-          inst.mat.dispose();
-          live.splice(i, 1);
-          continue;
-        }
-        inst.vel.y += inst.gravity * dt;
-        inst.offset.x += inst.vel.x * dt;
-        inst.offset.y += inst.vel.y * dt;
-        inst.offset.z += inst.vel.z * dt;
-        inst.spinDeg += inst.spin * dt;
-      }
-
-      // 推进帧（可跨多帧，保证低帧率下时长准确）
-      let guard = 0;
-      while (inst.frameIdx < inst.eff.frames.length - 1
-             && inst.t >= frameSeconds(inst.eff, inst.frameIdx)
-             && guard++ < 256) {
-        inst.t -= frameSeconds(inst.eff, inst.frameIdx);
-        inst.frameIdx++;
-        applyFrame(inst);
-      }
-      // 自转是逐帧累积的（上面 +dt），要每帧刷一次旋转，否则只在换帧时才动
-      if (inst.life > 0) applyFrame(inst);
-
-      // 位置：跟随目标或固定点
-      if (inst.attach) inst.attach.getWorldPosition(inst.tmp).add(inst.offset);
-      else inst.tmp.copy(inst.offset);
-      inst.sprite.position.copy(inst.tmp);
-
-      // 播完销毁
-      if (inst.frameIdx >= inst.eff.frames.length - 1
-          && inst.t >= frameSeconds(inst.eff, inst.frameIdx)) {
-        root.remove(inst.sprite);
-        inst.mat.dispose();          // 贴图是共享缓存，不 dispose
-        live.splice(i, 1);
-      }
-    }
+    // INI 广告板已改由 quarks 渲染（`ini-to-quarks.ts`），这里不再有逐帧精灵循环
   }
 
   function clear(): void {
-    for (const inst of live) {
-      root.remove(inst.sprite);
-      inst.mat.dispose();
-    }
-    live.length = 0;
-    parts.clear();
+    // quarks 那条不在 `clear()` 里强拆（它的系统按自身寿命回收；强拆会把在飞的粒子剪掉）
   }
 
   return {
@@ -347,7 +227,11 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
     spawnSystem,
     update,
     clear,
-    stats: () => ({ active: live.length, pending, loaded, parts: parts.stats().emitters }),
+    stats: () => ({
+      active: quarksFx?.stats().systems ?? 0, pending, loaded,
+      parts: 0,   // 自研 emitter 已退役（§12 迁移）；字段留着不改调用方
+      quarks: quarksFx?.stats().systems ?? 0,
+    }),
     lastDiag: () => diag,
     lastPart: () => partDiag,
   };

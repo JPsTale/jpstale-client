@@ -1214,10 +1214,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     scene.add(dir);
     dirLight = dir;
 
-    // 特效实例管理（INI 广告牌特效；depthWrite=false + 按 BlendType 混合）
-    effects = createEffectManager(scene);
-    // three.quarks 运行时（与 effects 并存：现阶段只接管药水与法术弹，其余仍走 INI/`.part`）
+    // three.quarks 运行时 —— **全场景唯一**：代码内 spec、`.part` 文件、药水、法术弹都归它
     quarksFx = createQuarksRuntime(scene);
+    // 特效实例管理（INI 广告牌特效；depthWrite=false + 按 BlendType 混合）
+    // ⚠ **必须把 quarksFx 注进去**：`spawnSystem`/`spawn` 的渲染都委托给它（"全用 quark"）。
+    // ⚠ 且它由 `effects.update` 统一推进 ⇒ **这里不要再 update 一次**（会 2 倍速）。
+    effects = createEffectManager(quarksFx);
     // ⚠ 顺序有讲究：投射物管理器**必须**在特效管理器之后建 —— 法术弹的粒子是挂到飞行节点上的
     // （`projectile.ts` 里 `fx.spawnSystem`），早建一步拿到的就是 `null` ⇒ 箭/标枪照常、法术弹静默没有特效
     // （2026-09-16 用户实测"看不到粒子特效"的根因）。
@@ -5225,8 +5227,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     sfx.update(selfPos);
     perfMark('音频更新');
     // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
-    if (effects && camera) effects.update(dt, camera);
-    if (quarksFx) quarksFx.update(dt);
+    // `effects.update` 内部会推进 quarksFx（唯一的推进者，见上面的说明）
+    if (effects && camera) effects.update(dt);
     perfMark('技能特效');
 
     // 小地图

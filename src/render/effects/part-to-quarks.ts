@@ -27,9 +27,9 @@ import * as THREE from 'three';
 import { ParticleSystem, RenderMode } from 'three.quarks';
 import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
-  SizeOverLife, ColorOverLife,
+  SizeOverLife, ColorOverLife, ApplyForce,
   Vector3 as QVec3,
-  type EmitterShape, type FunctionValueGenerator,
+  type Behavior, type EmitterShape, type FunctionValueGenerator,
 } from 'quarks.core';
 import {
   roll,
@@ -201,7 +201,29 @@ export function renderModeOf(particleType: number): RenderMode {
  * 靠 three 的 CustomBlending + blendSrc/blendDst 表达（因子表与我方 `part-emitter` 一致）。
  * 返回 undefined 表示"用默认"，由材质承担具体因子。
  */
+/**
+ * 混合表 —— **全项目唯一一份**（`part-to-quarks` 与 `ini-to-quarks` 共用；
+ * 此前 ini 那条手抄了一份，2026-09-17 合成此处）。
+ *
+ * ⚠ **`lamp` / `alpha` 额外打开 `USE_COLOR_AS_ALPHA`（用亮度当 alpha）** —— 这是**刻意的偏离**，
+ * 理由与依据：
+ *   · 原版 `SMMAT_BLEND_LAMP` = `SRC_ALPHA / ONE`，其语义是"**用 alpha 当光晕遮罩**"
+ *     （`Graphics/DeviceRenderState.cpp`，见 `plans/2026-09-11-audio-effects.md` §6）
+ *   · 但实测这些特效贴图的 **alpha 全是 255**（`light01.tga` / `m_spark06.tga`；
+ *     连 AGENTS 列的独立副本"11 职业私服客户端"也一致）⇒ **遮罩本来就不存在**
+ *   · 于是加法加的是**整块 RGB**，而 `m_spark06.tga` 的底噪均值 **45.9**（`maam2.tga` 67.0）
+ *     ⇒ 每一颗粒子都在暗背景上留下一块**方形亮斑**（用户实测："闪光看起来是方形的"）
+ *   · 用**亮度**当遮罩正好补回该混合式**本来要的东西**：亮心不变（255×1）、
+ *     底噪≈0（7×0.03）、边缘按亮度自然柔化 —— 观感与原版"有 alpha 遮罩时"一致
+ *   · `color` / `shadow` **不动**：那两种混合用的是 **RGB 因子**（`SRC_COLOR` 等），
+ *     本来就不依赖 alpha，背景天然被乘掉（`dust1` 走 `color`，一直正常）
+ *   ⇒ 想回到"严格按美术原始值相加"，删掉下面这两行 `defines` 即可。
+ */
 export function applyBlend(mat: THREE.Material, blend: PartEmitter['blend']): void {
+  // 需要"亮度当遮罩"的两种混合（见上）
+  if (blend === 'lamp' || blend === 'alpha') {
+    mat.defines = { ...(mat.defines ?? {}), USE_COLOR_AS_ALPHA: '' };
+  }
   switch (blend) {
     case 'lamp':
       mat.blending = THREE.AdditiveBlending;
@@ -295,13 +317,21 @@ export function convertPart(
     // 发射时长：PT 是"发够 numParticles 个"⇒ 时长 = 数量 / 速率（之后粒子继续存活）
     const emitDur = Math.max(0.05, em.numParticles / Math.max(1, em.emitRate));
 
-    const behaviors = [
+    const behaviors: Behavior[] = [
       new SizeOverLife(sizeFactor),
       new ColorOverLife(colorGen),
     ];
+    // **重力** —— 原版是逐帧 `vy += g`（我方 `part-emitter` 等价为 `vy += g·dt`，单位/秒²），
+    // 而 quarks 用恒定力 behavior 表达：`ApplyForce(方向, 量值)` 逐帧把 `方向×量值` 加进速度。
+    // 传原始向量 + 量值 1 即为**精确**的 g（不是近似）。
+    // 缺它则 BombParticle 的"先喷后落"变成"一直上飘"（那是它在原版里最显眼的特征）。
+    const g = em.gravity;
+    const gx = g ? midOf(g.x, 0) : 0, gy = g ? midOf(g.y, 0) : 0, gz = g ? midOf(g.z, 0) : 0;
+    if (gx || gy || gz) behaviors.push(new ApplyForce(new QVec3(gx, gy, gz), new ConstantValue(1)));
 
     const system = new ParticleSystem({
-      duration: emitDur,
+      // 有 delay 时发射窗口要覆盖到"延迟 + 一段"，否则 quarks 在 delay 之前就结束系统
+      duration: em.delay > 0 ? em.delay + emitDur : emitDur,
       looping: Math.max(1, Math.round(em.loops)) > 1,
       shape: new PartBoxEmitter(em.emitRadius, em.initialVelocity),
       startLife: numGen(em.lifetime, 1),
@@ -311,7 +341,20 @@ export function convertPart(
       // ⚠ `emitRate`/`numParticles`/`loops`/`delay` 在解析器里**已经是数字**（`buildEmitter` 已 roll），
       // 不是 `Num`（{k:'n'|'r'}）⇒ 不能过 `numGen`（那会造出 IntervalValue(undefined,undefined)，
       // genValue 返回 NaN，而 quarks 把它累积进 waitEmiting ⇒ 发射数 NaN ⇒ **一个粒子都不生成**，且不报错）
-      emissionOverTime: new ConstantValue(Math.max(1, em.emitRate)),
+      emissionOverTime: em.delay > 0 ? new ConstantValue(0) : new ConstantValue(Math.max(1, em.emitRate)),
+      // **发射延迟**（原版 `delay`：`sinEffectDefaultSet` 后隔若干帧才开始）——
+      // quarks 没有"延迟字段"，但有**带时间的一次性 burst**（`emissionBursts[].time`），
+      // 语义正好等价：到 `delay` 那一刻一次性发出 `numParticles` 个。
+      // ⚠ 我方所有用到 delay 的发射器都是 `numParticles = 1`（法阵的渐显/渐隐两段、Light5 的五帧），
+      //   故"一次性 burst"是**精确**映射；若日后有多颗粒子带 delay，那是"整批同帧发出"、
+      //   与"按 emitRate 铺开"不同 —— 届时要在 notes 里标注（不静默）。
+      emissionBursts: em.delay > 0
+        ? [{
+            time: em.delay,
+            count: new ConstantValue(Math.max(1, Math.round(em.numParticles))),
+            cycle: 1, interval: 0, probability: 1,
+          }]
+        : [],
       renderMode: renderModeOf(em.particleType),
       // Trail（PT 的 TYPE_FOUR）**必须**给 `startLength`：否则 quarks 在 `spawn` 的 Trail 分支
       // 直接读 `rendererEmitterSettings.startLength.startGen` → undefined 抛错（实测踩到）。
@@ -326,9 +369,11 @@ export function convertPart(
     });
     if (tex) system.texture = tex;
 
-    if (em.delay > 0) notes.push(`delay=${em.delay} 未映射（quarks 无发射延迟，暂靠时长近似）`);
-    if (em.gravity && (roll(em.gravity.x) || roll(em.gravity.y) || roll(em.gravity.z))) {
-      notes.push(`gravity=(${midOf(em.gravity.x)},${midOf(em.gravity.y)},${midOf(em.gravity.z)}) 未映射（需恒定力 behavior）`);
+    if (em.delay > 0 && em.numParticles > 1) {
+      notes.push(`delay=${em.delay} 配 ${em.numParticles} 颗粒子 ⇒ 按"整批同帧发出"映射（与按 emitRate 铺开不同）`);
+    }
+    if (g && (roll(g.x) || roll(g.y) || roll(g.z))) {
+      notes.push(`gravity 为区间 ⇒ 恒力取中值 (${gx},${gy},${gz})`);
     }
     if (em.lifetime && em.lifetime.k === 'r') notes.push('lifetime 为区间 ⇒ 关键帧时间按中值折算（见文件头条 1）');
 

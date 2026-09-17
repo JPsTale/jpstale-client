@@ -25,6 +25,7 @@ import {
 import { buildSheet, type RawImage } from '../../core/asset-cache.js';
 import { loadEffect } from './effect-assets.js';
 import { loadPartFromSystem, type LoadedPart } from './part-assets.js';
+import type { PartSystem } from '../../core/effect/part-script.js';
 import { convertPart } from './part-to-quarks.js';
 import { impShotSystem } from './imp-shot.js';
 import {
@@ -91,6 +92,45 @@ export interface QuarksStats {
   missing: string[];
 }
 
+/**
+ * 通用 spawn 的选项 —— 与旧 `effect-manager.SpawnOpts` 对齐（迁移期间语义不变）。
+ *
+ * ⚠ 两个跟"跟随"有关的字段是**互相排斥的两种语义**，别搞混：
+ *   · `attach` 非空       = emitter 挂到该节点下（飞行物用）——粒子在哪出生取决于 `follow`
+ *   · `follow: true`      = 粒子**随载体走**（quarks `worldSpace = false`）
+ *                           适合"单颗粒子本身就是那个飞行物"（MultiSpark 主火花、法术弹弹体）
+ *   · `follow` 缺省/false = 粒子**留在世界空间**（`worldSpace = true`）
+ *                           适合"尾迹留身后"（拖尾、法术弹的尾迹）
+ *   这个划分不是我们发明的：`attachMagic` 里 `ps.worldSpace = true` 的注释就是
+ *   "粒子留在世界空间 ⇒ 尾迹留在身后"（原版 `SetAttachPos` 那条链路的既有结论）。
+ */
+export interface QuarksSpawnOpts {
+  pos: { x: number; y: number; z: number };
+  /** 整体尺寸倍率（默认 1） */
+  scale?: number;
+  /** 载体节点：emitter 挂到它下面 */
+  attach?: THREE.Object3D | null;
+  /** 粒子是否随载体移动（见上） */
+  follow?: boolean;
+  /**
+   * **逐次覆盖初速**（世界单位/秒）—— 与旧 `part-emitter` 的 `SpawnOpts.velocity` 同义。
+   *
+   * 为什么要它：spec 里的 `initialVelocity` 是"这个特效自己的初速"，而有些效果（命中的 35 颗
+   * BombParticle）**每颗的初速不同**（各自径向 + 随机上飘）⇒ 只能由调用方逐颗给。
+   * 实现上是"复制一份 system、把各 emitter 的 `initialVelocity` 换掉再转换"，
+   * **不动缓存**（缓存只存贴图，转换每次做 —— 与药水路径每次新建材质同一做法）。
+   */
+  velocity?: { x: number; y: number; z: number };
+}
+
+/**
+ * 可停止的句柄 —— **全项目唯一一份**（旧自研 emitter 的 `PartHandle` 已随之退役，见 §12 迁移）。
+ */
+export interface QuarksPartHandle {
+  /** 停止发射（已在飞的粒子自然消亡）——飞行物到点调它，避免粒子堆在命中点 */
+  stop(): void;
+}
+
 export interface QuarksRuntime {
   /** 药水爆发（30 颗物理粒子 + 那记 120×120 闪光）。`kind` 决定用哪支——三种贴图不同 */
   playPotion(kind: PotionKind, pos: { x: number; y: number; z: number }): void;
@@ -99,9 +139,29 @@ export interface QuarksRuntime {
    * 返回"飞行到点"时要调的卸载函数；预载未完成时返回 null。
    */
   attachMagic(node: THREE.Object3D): (() => void) | null;
+  /**
+   * 直接登记一批**已建好的** quarks 系统（调用方自带贴图 ⇒ 不走 `loadPartFromSystem`）。
+   *
+   * 给 INI 广告板那条用：它的贴图是 `loadEffect` 解出来的（每帧一张），
+   * 而 `spawnSystem` 的路径是"从 `PartSystem` 的贴图路径现解码"——两条来源不同，故分开。
+   */
+  addSystems(systems: ParticleSystem[], parent?: THREE.Object3D | null): QuarksPartHandle;
+
+  /**
+   * **通用入口**：把一份 `PartSystem`（我们的中间表示）交给 quarks 渲染。
+   *
+   * 这是"全用 quark"的接缝：怪物特效、法阵、拖尾、命中三件套……都是 `PartSystem`，
+   * 经 `convertPart` 转成 quarks 的 `ParticleSystem`（每 emitter 一支），由 `track` 登记。
+   * 首次遇到某份 spec 会 `await` 载入（其后命中缓存）—— 与旧
+   * `effect-manager.spawnSystem` 的异步契约一致，故调用方可原样迁移。
+   */
+  spawnSystem(system: PartSystem, opts: QuarksSpawnOpts): Promise<QuarksPartHandle | null>;
+
   update(dt: number): void;
   dispose(): void;
   stats(): QuarksStats;
+  /** 最近一次 `spawnSystem` 载入的 spec 诊断（贴图路径/缺口）—— 供 `effect-manager` 回显 */
+  lastPartDiag(): LoadedPart['diag'] | null;
 }
 
 export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
@@ -181,6 +241,98 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
     magicSpec = await loadPartFromSystem('ImpShot', impShotSystem());
     if (!magicSpec) missing.push('ImpShot spec 未加载');
   })();
+
+  /**
+   * 载入过的 spec 缓存（`loadPartFromSystem` 各 emitter 一张贴图，解码不便宜）。
+   * 键 = `system.name`（代码内 spec 的名字是稳定的；无名则退化为 'inline'）。
+   */
+  const systemCache = new Map<string, LoadedPart | null>();
+  let lastLoadedDiag: LoadedPart['diag'] | null = null;
+
+  function addSystems(systems: ParticleSystem[], parent?: THREE.Object3D | null): QuarksPartHandle {
+    const host = parent ?? scene;
+    if (parent) scene.add(parent);     // 载体必须进场景（见 `spawnSystem` 的同一条说明）
+    for (const ps of systems) {
+      if (parent) {
+        track(ps, host);
+      } else {
+        track(ps);
+      }
+    }
+    return {
+      stop() {
+        for (const ps of systems) {
+          ps.endEmit();
+          const wp = new THREE.Vector3();
+          ps.emitter.getWorldPosition(wp);
+          if (ps.emitter.parent !== scene) {
+            scene.add(ps.emitter);
+            ps.emitter.position.copy(wp);
+          }
+        }
+      },
+    };
+  }
+
+  async function spawnSystem(
+    system: PartSystem, opts: QuarksSpawnOpts,
+  ): Promise<QuarksPartHandle | null> {
+    const key = system.name || 'inline';
+    if (!systemCache.has(key)) systemCache.set(key, await loadPartFromSystem(key, system));
+    const loaded = systemCache.get(key);
+    if (!loaded) { missing.push(`spawnSystem(${key}): spec 未加载`); return null; }
+    lastLoadedDiag = loaded.diag;
+    // 逐次覆盖初速：**只影响本次转换**，缓存（贴图）不动
+    let sysIn = loaded.system;
+    if (opts.velocity) {
+      const v = opts.velocity;
+      const n = (x: number) => ({ k: 'n' as const, v: x });
+      sysIn = {
+        ...sysIn,
+        emitters: sysIn.emitters.map((e) => ({
+          ...e, initialVelocity: { x: n(v.x), y: n(v.y), z: n(v.z) },
+        })),
+      };
+    }
+    const conv = convertPart(sysIn, loaded.textures);
+    if (!conv.length) { missing.push(`spawnSystem(${key}): spec → quarks 转换失败`); return null; }
+
+    const made: ParticleSystem[] = [];
+    for (const c of conv) {
+      const ps = c.system;
+      // 粒子是否随载体走（见 `QuarksSpawnOpts` 的说明）
+      ps.worldSpace = !opts.follow;
+      if (opts.scale && opts.scale !== 1) ps.emitter.scale.setScalar(opts.scale);
+      if (opts.attach) {
+        // ⚠ 载体**必须进场景**：quarks 在 spawn 时用 `emitter.matrixWorld` 定位粒子，
+        //   而 three 只对场景内的对象推进 world matrix（`attachMagic` 的既有教训）。
+        scene.add(opts.attach);
+        track(ps, opts.attach);
+      } else {
+        ps.emitter.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
+        track(ps);
+      }
+      made.push(ps);
+    }
+    // 转换里的缺口（贴图缺失 / delay 映射方式 / gravity 取中值…）**必须可见**（AGENTS #12）
+    for (const c of conv) if (c.notes.length) missing.push(`${key}/${c.emitterName}: ${c.notes.join('；')}`);
+
+    return {
+      stop() {
+        for (const ps of made) {
+          ps.endEmit();
+          // 从载体摘到场景（保持世界坐标）——与 `attachMagic` 的收尾同一套，
+          // 直接 deleteSystem 会把尾巴瞬间剪掉
+          const wp = new THREE.Vector3();
+          ps.emitter.getWorldPosition(wp);
+          if (ps.emitter.parent !== scene) {
+            scene.add(ps.emitter);
+            ps.emitter.position.copy(wp);
+          }
+        }
+      },
+    };
+  }
 
   /**
    * 登记一个系统。`parent` 是 emitter 的父节点 —— **默认 scene，但载体跟随场景必须传载体**：
@@ -280,6 +432,9 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
       };
     },
 
+    spawnSystem,
+    addSystems,
+
     update(dt) {
       batch.update(dt);
       // 播完的（发射结束且无存活粒子）→ 摘掉（quarks 的 system 不会自己离开场景）
@@ -299,6 +454,8 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
       live.length = 0;
       scene.remove(batch);
     },
+
+    lastPartDiag: () => lastLoadedDiag,
 
     stats: () => ({
       systems: live.length,

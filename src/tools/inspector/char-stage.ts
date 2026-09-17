@@ -17,6 +17,7 @@ import { loadCharTextures } from '../../render/char-texture-loader.js';
 import { loadWeaponModel, findBone, WEAPON_BONES, WeaponMount, offMountBoneOf } from '../../render/weapon-loader.js';
 import type { MountResult } from '../../render/weapon-loader.js';
 import { createEffectManager } from '../../render/effects/effect-manager.js';
+import { createQuarksRuntime } from '../../render/effects/quarks-runtime.js';
 import type { LoadedPart } from '../../render/effects/part-assets.js';
 import type { EffectDiag } from '../../render/effects/effect-assets.js';
 import { evalSkeleton, applyToBones, advanceAnimFrame } from '../../char/animation.js';
@@ -584,7 +585,8 @@ export function createCharStage(container: HTMLElement): CharStage {
 
   /* ─────────── 特效（INI 广告牌） ─────────── */
 
-  const effects = createEffectManager(scene);
+  // 渲染委托给 quarks（见 effect-manager 工厂处的说明）；推进也由 effects.update 统一做
+  const effects = createEffectManager(createQuarksRuntime(scene));
   let lastEffectDiag: EffectDiag | null = null;
   let lastPartDiag: LoadedPart['diag'] | null = null;
 
@@ -681,7 +683,7 @@ export function createCharStage(container: HTMLElement): CharStage {
     };
 
     // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
-    effects.update(dt, camera);
+    effects.update(dt);
 
     if (actor && curMotion) {
       if (!stage.paused) {

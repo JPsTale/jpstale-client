@@ -33,7 +33,9 @@ export function partScriptPaths(name: string): string[] {
   return [`effect/particle/script/${n}.part`, `game/scripts/particles/${n}.part`];
 }
 
-function normalizeTexturePath(raw: string): string {
+/** 把资产里写的贴图路径归一成 `/res/` 下的相对路径（反斜杠→斜杠、去前导斜杠、统一小写）。
+ *  **导出**给静态模型加载器（`static-fx.ts`）共用 —— 同一件事不写第二份。 */
+export function normalizeTexturePath(raw: string): string {
   return raw.replace(/\\+/g, '/').replace(/^\/+/, '').toLowerCase();
 }
 
@@ -72,7 +74,7 @@ export async function loadPartFromSystem(name: string, system: PartSystem): Prom
     if (!em.texture) { textures.push(null); paths.push(null); continue; }
     const p = normalizeTexturePath(em.texture);
     paths.push(p);
-    const tex = await fetchAndDecodeTexture('/res/' + p);
+    const tex = await fetchAndDecodeTexture('/res/' + p, 1, { linear: true });   // 特效：原样进（见 fetchAndDecodeTexture 的说明）
     if (!tex) missing.push(p);
     textures.push(tex);
   }
@@ -100,7 +102,7 @@ async function loadPartUncached(name: string): Promise<LoadedPart | null> {
       if (!em.texture) { textures.push(null); paths.push(null); continue; }
       const p = normalizeTexturePath(em.texture);
       paths.push(p);
-      const tex = await fetchAndDecodeTexture('/res/' + p);
+      const tex = await fetchAndDecodeTexture('/res/' + p, 1, { linear: true });   // 特效：原样进（见 fetchAndDecodeTexture 的说明）
       if (!tex) missing.push(p);
       textures.push(tex);
     }
