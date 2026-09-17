@@ -471,7 +471,8 @@ export function multiSparkWideLineSystem(): PartSystem {
       // 寿命 `rand()%20 + 50` 帧 ⇒ 逐粒子随机
       lifetime: { k: 'r' as const, a: W.lifeMinFrames / 60, b: W.lifeMaxFrames / 60 },
       emitRadius: vec(0, 0, 0),
-      initialVelocity: vec(0, 0, 0),        // ⚠ ①未表达：原版沿自身法线飞
+      // 沿自身面法线飞：MoveSpeed.z = 128（定点 0.5 单位/帧）⇒ 30 单位/秒；方向由 behavior 每帧取粒子朝向
+      initialVelocity: vec(0, 0, W.speedPerFrame * 60),
       gravity: vec(0, 0, 0),
       texture: MULTI_SPARK_TEX,            // `MatMultiSpark[6]` = m_spark06.tga
       initialSize: num(4),                 // `Size.x = 512` ⇒ 全宽 4

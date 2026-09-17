@@ -191,6 +191,35 @@ export class RandomOrientation implements RotationGenerator {
 /** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
 const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
 
+/**
+ * **沿自身面法线飞** —— 原版 `sinPublicEffectMove` 的 `SIN_EFFECT_WIDELINE` 分支：
+ * `GetMoveLocation(0, 0, MoveSpeed.z, Angle.x, Angle.y, 0)`，即"每帧用**当前**朝向重算位移"。
+ * 面片法线 = 局部 +z ⇒ 世界方向 = 四元数作用于 (0,0,1)（旋转矩阵第 3 列）。
+ *
+ * ⚠ 每帧都设（不是只设一次）：原版也逐帧从当前 `Angle` 算 ⇒ 日后加"面内自转"时方向会跟着转。
+ * ⚠ 读粒子自身的四元数 ⇒ 与 `RandomOrientation` 天然共享同一次随机，不需要额外管线。
+ * ⚠ 入参宽松：`Particle.rotation` 是 `number | Quaternion | undefined`（广告板存**标量**）
+ *   ⇒ 标量/缺失直接返回（本 behavior 只在 mode 5 挂）。
+ */
+export class OrientVelocityToNormal implements Behavior {
+  type = 'orientVelocityToNormal';
+  constructor(private speed: number) {}
+  initialize(): void { /* 首帧由 update 设定（rotation 可能尚未生成） */ }
+  update(particle: unknown): void {
+    const p = particle as { rotation?: unknown; velocity?: { x: number; y: number; z: number } };
+    const q = p.rotation as { x: number; y: number; z: number; w: number } | number | undefined;
+    if (!q || typeof q === 'number' || !p.velocity) return;
+    const { x, y, z, w } = q;
+    p.velocity.x = 2 * (x * z + w * y) * this.speed;
+    p.velocity.y = 2 * (y * z - w * x) * this.speed;
+    p.velocity.z = (1 - 2 * (x * x + y * y)) * this.speed;
+  }
+  frameUpdate(): void { /* 逐粒子在 update 里做 */ }
+  toJSON(): { type: string; speed: number } { return { type: this.type, speed: this.speed }; }
+  clone(): OrientVelocityToNormal { return new OrientVelocityToNormal(this.speed); }
+  reset(): void { /* 无状态 */ }
+}
+
 export class PartBoxEmitter implements EmitterShape {
   type = 'partBox';
   constructor(private radius: Vec3, private velocity: Vec3) {}
@@ -357,6 +386,12 @@ export function convertPart(
       new SizeOverLife(sizeFactor),
       new ColorOverLife(colorGen),
     ];
+    if (em.particleType === 5) {
+      // 沿自身面法线飞：速度 = spec 的 initialVelocity 长度（单位/秒）
+      const v = em.initialVelocity;
+      const sp = Math.hypot(midOf(v.x, 0), midOf(v.y, 0), midOf(v.z, 0));
+      if (sp > 0) behaviors.push(new OrientVelocityToNormal(sp));
+    }
     // **重力** —— 原版是逐帧 `vy += g`（我方 `part-emitter` 等价为 `vy += g·dt`，单位/秒²），
     // 而 quarks 用恒定力 behavior 表达：`ApplyForce(方向, 量值)` 逐帧把 `方向×量值` 加进速度。
     // 传原始向量 + 量值 1 即为**精确**的 g（不是近似）。
