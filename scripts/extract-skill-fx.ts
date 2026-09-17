@@ -274,6 +274,10 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
     const event = {
       fx: ov?.eventFx
         ? ov.eventFx.map((n) => {
+          // 手写条目**自带前缀**时原样保留（`ini:` / `part:` / **`code:`**）——
+          // `code:` 是"由代码组合、不是单个资产文件"的技能特效（见 render/effects/skill-fx-runner.ts）。
+          // 之前一律加 `part:` 前缀，把 `code:multispark` 写成了 `part:code:multispark`。
+          if (/^(ini|part|lua|luac|code):/i.test(n)) return n.toLowerCase();
           const hit = fx.find((t) => t.split(':')[1] === n);
           return hit ?? `part:${n}`;
         })

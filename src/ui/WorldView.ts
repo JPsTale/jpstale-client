@@ -31,6 +31,9 @@ import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
 import { fireMonsterAttackEvent } from '../render/effects/monster-attack-fx.js';
+import {
+  fireSkillCast, fireSkillEvent, skillFxRowByIcon, type SkillFxRow,
+} from '../render/effects/skill-fx-runner.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
@@ -580,6 +583,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 本次挥拳的命中帧跟踪：motion + 目标 + 事件帧（相对 startFrame×160，非零）+ 已触发段数
   let selfAttackMotion: MotionInfo | null = null;
   let selfAttackTargetId = 0;
+  /**
+   * 自机**当前正在放的技能**在 `skill-fx.json` 里的那一行（起手/事件帧的音与特效都从它取）。
+   * 原版是一条 `switch (skillIndex)`（`sinSkillEffect.cpp`），我们改由数据表驱动。
+   */
+  let selfSkillRow: SkillFxRow | null = null;
+  /** 本次技能已触发过几个事件帧（与怪物侧同一判据：`crossEventFrames`） */
+  let selfSkillEventFired = 0;
   let selfAttackEventFrames: number[] = [];
   /** 待触发的「使用道具」粒子/音效（药水在 EAT 事件帧才放，见 playEatInternal） */
   let selfEatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null = null;
@@ -1836,6 +1846,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (animSmb && bipInxInfo) motionList = buildMotionListShared(animSmb, bipInxInfo);
   }
 
+  /** 技能**特效层的上下文**（粒子装配器 + 场景 + 音效）—— 与 `monster-attack-fx` 同理，
+   *  粒子本身在 `multi-spark*.ts` 里，这里只提供"在哪、怎么出声"。 */
+  function skillFxCtx() {
+    return {
+      effects,
+      scene: scene!,
+      playSound: (path: string, pos: { x: number; y: number; z: number }) => { sfx.play(path, { pos }); },
+      log: (msg: string) => console.log('[skillfx]' + msg),
+    };
+  }
+
+  /** 起手（技能动画开始）：记下这一行 + 播起手音（原版 `SkillPlaySound`，在 `BeginSkill` 那一刻） */
+  function beginSelfSkill(iconFile: string): void {
+    selfSkillEventFired = 0;
+    selfSkillRow = skillFxRowByIcon(iconFile);
+    if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
+    fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
+  }
+
   /**
    * 播放技能动画（调试/装备触发）。
    * @param iconFile skillData iconFile（含 .bmp）；'skill_normal'=普攻动画
@@ -1853,14 +1882,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (idx != null) {
       // 指定技能：有专属 SKILL 动画则播专属；无则回退普攻（多数技能动作即普攻）
       const ok = animState.triggerSkill(idx);
-      if (ok) { console.log('[WorldView][dbg] 技能动画 #' + idx + ' ' + iconFile); return true; }
+      if (ok) {
+        console.log('[WorldView][dbg] 技能动画 #' + idx + ' ' + iconFile);
+        beginSelfSkill(iconFile);
+        return true;
+      }
       const fallback = animState.triggerAttack(true);
       console.log('[WorldView][dbg] 技能无专属动画→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
       return fallback;
     }
     // 无 saSkillData 条目（T5 等）：直接任意 SKILL 或普攻
     const ok = animState.triggerSkill(null);
-    if (ok) { console.log('[WorldView][dbg] 任意SKILL动画 ' + iconFile); return true; }
+    if (ok) { console.log('[WorldView][dbg] 任意SKILL动画 ' + iconFile); beginSelfSkill(iconFile); return true; }
     const fallback = animState.triggerAttack(true);
     console.log('[WorldView][dbg] 技能任意SKILL→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
     return fallback;
@@ -4903,6 +4936,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const step = selfPlayer.advance(motion, dt, selfAnimRate);
         // 命中帧检测（原版 exm character.cpp:2631）：compFrame 跨过 eventFrame[i] → 发该段 C2S_AttackHit
         // 用 step.raw（未回绕）判定，否则循环动作回绕后会漏判/重判
+        // **技能的事件帧**：玩家技能的音效 + 特效（原版 `EventSkill` 那一侧）。
+        // 判据与下面 ATTACK 分支**同一份**（`crossEventFrames`），只是状态是 SKILL。
+        if (curSt === animState.STATE.SKILL && selfSkillRow) {
+          const sm = animState.getCurrentMotion();
+          if (sm) {
+            const ef = Array.from(sm.eventFrame).filter((f) => f > 0);
+            // 无事件帧 → 原版兜底分支（`EventFrame[0] <= compFrame`）在**动作起点**触发一次
+            const frames = ef.length > 0 ? ef : [0];
+            const compFrame = step.raw - sm.startFrame * 160;
+            const crossed = crossEventFrames(frames, selfSkillEventFired, compFrame);
+            selfSkillEventFired = crossed.fired;
+            for (const _f of crossed.hit) {
+              // 目标 = 当前选中的怪（原版 `lpCharSelPlayer`）；**没有就传 null** ——
+              // 原版 `if (DesChar)` 两处守卫都不成立 ⇒ 不收敛、不改瞄（不是"退而求其次"）
+              const targetPos = monsters.get(selfAttackTargetId)?.root.position ?? null;
+              fireSkillEvent(selfSkillRow, skillFxCtx(), selfPos, targetPos);
+            }
+          }
+        }
         if (animState.getCurrentState() === animState.STATE.ATTACK && selfAttackMotion) {
           const compFrame = step.raw - selfAttackMotion.startFrame * 160;
           // 放箭：拉满弓那一下（首个事件帧前 RELEASE_LEAD_FRAMES 帧）—— 与射出去的命中音效同一时刻

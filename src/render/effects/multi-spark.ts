@@ -451,7 +451,12 @@ export interface MultiSparkHandle {
  * @param num    颗数（D_PR 的原版调用是 **5**）
  */
 export function createMultiSpark(
-  caster: Vec3, target: Vec3, num: number, deps: MultiSparkDeps,
+  /**
+   * `null` = **没有目标**（原版 `sinEffect_MultiSpark(pChar, nullptr, …)`：
+   * `if (cSinEffect2[Index].DesChar)` 两处守卫都不成立 ⇒ **不收敛、不改瞄**，
+   * 只剩发射时留下的 `MoveSpeed = (0,0,256)` = 沿世界 +z 每帧 1 单位；命中仍在第 44 帧触发）。
+   */
+  caster: Vec3, target: Vec3 | null, num: number, deps: MultiSparkDeps,
   /** 随机源（拖尾的尺寸/寿命/偏移方向）—— 跨客户端要同步"结果"时换成确定性种子，见模块头 */
   rnd: () => number = Math.random,
 ): MultiSparkHandle {
@@ -463,21 +468,18 @@ export function createMultiSpark(
   // ① **起点只有一个**（`sinEffectDefaultSet` :1081-1088）：施法者 + 抬高 7000 ⇒ 27.3
   const start: Vec3 = { x: caster.x, y: caster.y + MULTI_SPARK_RISE, z: caster.z };
   // ② 第 1 段的**汇合点** = 施法者 + (目标-施法者)/4，y 再 +7000（:861-863）
-  const d = {
-    x: (target.x - caster.x) / 4,
-    y: (target.y - caster.y) / 4,
-    z: (target.z - caster.z) / 4,
-  };
-  const conv: Vec3 = { x: caster.x + d.x, y: caster.y + d.y + MULTI_SPARK_RISE, z: caster.z + d.z };
-  // ③ **基础速度**：5 颗**相同**（起点与汇合点都不含偏移）
-  const baseV: Vec3 = {
-    x: (conv.x - start.x) / MULTI_SPARK_LAUNCH_DIV,
-    y: (conv.y - start.y) / MULTI_SPARK_LAUNCH_DIV,
-    z: (conv.z - start.z) / MULTI_SPARK_LAUNCH_DIV,
-  };
+  //    ⚠ 无目标时**整段不成立**（原版 `if (DesChar)` 守卫）⇒ 用发射时留下的 `MoveSpeed = (0,0,256)`
+  const baseV: Vec3 = target
+    ? {
+        x: ((caster.x + (target.x - caster.x) / 4) - start.x) / MULTI_SPARK_LAUNCH_DIV,
+        y: ((caster.y + (target.y - caster.y) / 4 + MULTI_SPARK_RISE) - start.y) / MULTI_SPARK_LAUNCH_DIV,
+        z: ((caster.z + (target.z - caster.z) / 4) - start.z) / MULTI_SPARK_LAUNCH_DIV,
+      }
+    : { x: 0, y: 0, z: 256 / FONE };      // 原版 `MoveSpeed.z = 256`（定点）⇒ 1 单位/帧
   // ④ 偏移 **只进速度**：`MoveSpeed = (汇合点 − (起点+偏移))/20 = 基础速度 − 偏移/20`
   //    偏移在世界空间里是"水平横向"（见 `multiSparkLateral` 的代数说明）
-  const angY = radToPtAngle(faceAngleOf(caster, target));
+  // 无目标时朝向角也**不设**（原版只在 `if (DesChar)` 里 `GetRadian3D`）⇒ 保持 0
+  const angY = target ? radToPtAngle(faceAngleOf(caster, target)) : 0;
   for (let i = 0; i < num; i++) {
     pos.push({ ...start });
     const off = getMoveLocation(multiSparkLateral(i, num), 0, 0, 0, angY, 0);
@@ -509,8 +511,8 @@ export function createMultiSpark(
           const offAngY = Math.floor(rnd() * 4096);
           const ov = getMoveLocation(0, 0, T.offset, offAngX, offAngY, 0);
           deps.spawnTrail({ x: p.x + ov.x, y: p.y + ov.y, z: p.z + ov.z }, trSize);
-          // ② 第 30 帧重算速度指向真目标
-          if (frame === MULTI_SPARK_REAIM_FRAME) {
+          // ② 第 30 帧重算速度指向真目标（无目标时原版的 `if (DesChar)` 守卫不成立 ⇒ 不改瞄）
+          if (target && frame === MULTI_SPARK_REAIM_FRAME) {
             vel[i] = {
               x: (target.x - p.x) / MULTI_SPARK_REAIM_DIV_XZ,
               y: (target.y - p.y) / MULTI_SPARK_REAIM_DIV_Y,
