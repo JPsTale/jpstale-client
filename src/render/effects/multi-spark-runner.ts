@@ -43,6 +43,30 @@ export interface MultiSparkRunnerCtx {
 const v3 = (p: { x: number; y: number; z: number }): Vec3 => ({ x: p.x, y: p.y, z: p.z });
 
 /**
+ * 在飞的多组 MultiSpark（原版是逐帧驱动每个实例：`Time++` 与 `ActionTime[0]`/`Max_Time` 比较）。
+ *
+ * ⚠ **必须有调用方每帧调 `updateMultiSparkRunners(dt)`** —— 否则火花只在创建时被摆一次位置、
+ * 之后不动（没有两段飞行、没有拖尾、没有命中）。实测教训：游戏侧一开始把 `runMultiSpark`
+ * 的返回句柄丢了，表现为"火花出现了但不朝目标飞"（用户 2026-09-17 报）。
+ */
+const live: MultiSparkHandle[] = [];
+let frameAcc = 0;
+
+/** 每帧调一次（内部把 dt 折成帧，余量留到下一帧 —— 与实验室、怪物侧同一套帧语义） */
+export function updateMultiSparkRunners(dt: number): void {
+  if (live.length === 0) return;
+  frameAcc += dt * 60;
+  const n = Math.floor(frameAcc);
+  if (n <= 0) return;
+  frameAcc -= n;
+  for (let i = live.length - 1; i >= 0; i--) {
+    const h = live[i]!;
+    h.update(n);
+    if (h.done) live.splice(i, 1);
+  }
+}
+
+/**
  * 放一次 MultiSpark：`num` 颗主火花（各挂一个载体）+ 每帧拖尾 + 命中三件套。
  * @param num 原版：**玩家 7**（`sinSkillEffect.cpp:139`）、**怪物 5**（`character.cpp`）
  */

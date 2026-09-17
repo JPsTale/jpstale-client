@@ -34,6 +34,8 @@ import { fireMonsterAttackEvent } from '../render/effects/monster-attack-fx.js';
 import {
   fireSkillCast, fireSkillEvent, skillFxRowByIcon, type SkillFxRow,
 } from '../render/effects/skill-fx-runner.js';
+import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
+import { updateCastCircleMeshes } from '../render/effects/cast-circle-runner.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
@@ -5307,6 +5309,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 特效逐帧推进（INI 帧时长以 70Hz 计；.part 需要相机做朝向）
     // `effects.update` 内部会推进 quarksFx（唯一的推进者，见上面的说明）
     if (effects && camera) effects.update(dt);
+    updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
+    updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     perfMark('技能特效');
 
     // 小地图
