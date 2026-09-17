@@ -152,9 +152,10 @@ export function unitBodyAnchorY(baseY: number, topY: number): number {
  * 故取"事件帧**前** LEAD 帧放箭、飞行正好用掉这 LEAD 帧的时间"：
  *   · 箭不再在动画第 0 帧就飞出去（用户 2026-09-16 实测："抬手拉弓时箭就飞了"）；
  *   · 到达时刻仍等于事件帧（用户上一轮的要求："同一时刻飞到目标位置"）。
- * 取 6 帧（≈0.2s @30fps）：足够看清箭飞出去，又落在"弓拉满"那一下附近。改这里即可调整观感。
+ * 取 **8 帧** —— 与原版一致：原版射击的可视飞行就是 8 帧（`ShootingFlag > 8 → FALSE`，
+ * `character.cpp:3909`）。用户 2026-09-17 裁定改用原版帧数（纯收益：到达时刻仍等于事件帧）。
  */
-export const RELEASE_LEAD_FRAMES = 6;
+export const RELEASE_LEAD_FRAMES = 8;
 
 /**
  * 放箭时刻（秒，从动作起始算起）=（首个事件帧 − 提前量）÷ 动画速率。
