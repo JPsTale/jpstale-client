@@ -2076,6 +2076,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 瞄准 = **已有的 hover 目标**（你看到高亮的那只怪）—— 不自己再挑一次判据，
       // 也不依赖 `selfAttackTargetId`（那是自动攻击循环在射程内才赋的值，见其声明处说明）。
       const aim = hoverTarget && isMonsterRoot(hoverTarget.root) ? hoverTarget.root : null;
+      // 诊断（用户要求）：把 hover 目标与解析结果都打出来 —— 一次定位，免得来回猜
+      const ht = hoverTarget?.root;
+      const aimId = aim ? [...monsters.entries()].find(([, m]) => m.root === aim)?.[0] : null;
+      console.log('[WorldView][dbg] 施法瞄准：hoverTarget='
+        + (ht ? `${ht.name || '(无名)'}@(${ht.position.x.toFixed(1)},${ht.position.y.toFixed(1)},${ht.position.z.toFixed(1)})` : 'null')
+        + ` isMonster=${ht ? isMonsterRoot(ht) : false}`
+        + ` ⇒ aim=${aim ? `monster#${aimId}` : 'null'}`
+        + ` selfPos=(${selfPos.x.toFixed(1)},${selfPos.y.toFixed(1)},${selfPos.z.toFixed(1)})`);
       if (!aim) console.log('[WorldView][dbg] Shift/Alt+点击：光标下没有怪 ⇒ 无目标施放（原版此情形不施放）');
       playEquippedSkill(slot, aim);
       return;
@@ -4979,6 +4987,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               // 瞄准点优先用**本次技能自己的**（见 `selfSkillAim` 的说明），
               // 其次才是自动攻击的当前目标；都没有就是原版的"无目标"路径
               const targetPos = selfSkillAim?.position ?? monsters.get(selfAttackTargetId)?.root.position ?? null;
+              console.log('[WorldView][dbg] 技能事件帧：caster=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')'
+                + ' target=' + (targetPos ? `(${targetPos.x.toFixed(1)},${targetPos.y.toFixed(1)},${targetPos.z.toFixed(1)})` : 'null'));
               fireSkillEvent(selfSkillRow, skillFxCtx(), selfPos, targetPos);
             }
           }
