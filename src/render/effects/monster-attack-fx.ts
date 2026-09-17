@@ -357,6 +357,16 @@ export interface MonsterAttackEventCtx {
    * 将来若要有服务端权威的随机，换成下发索引即可（字段与链路不动，同动画变体）。
    */
   variant?: number;
+  /**
+   * 本次事件帧的**音效桶** —— 原版 `CharPlaySound`（`effectsnd.cpp:1336`）用**正在播的那条动作**
+   * 的 `MotionInfo->State` 选桶，于是**技能动作播 `skill N.wav`、普攻播 `attack N.wav`**。
+   *
+   * 由调用方用 `sfx.eventFrameSoundState(motion.state)` 解析后传入（那一份是唯一实现，
+   * 本模块刻意不依赖 `audio/sfx.ts`，只认它的桶名字符串）。
+   *
+   * 传 null = 该动作态在原版 `snEffect[]` 里本就没有匹配（`CharPlaySound` 返回 FALSE）⇒ 不播 + 记降级。
+   */
+  motionSound: 'CHRMOTION_STATE_ATTACK' | 'CHRMOTION_STATE_SKILL' | null;
   effects: FxSpawner | null;
   sfx: SfxPlayer | null;
   /** 动态光池（原版 `SetDynLight`）。没传则跳过 —— 游戏与实验室传的是同一份实现 */
@@ -400,37 +410,46 @@ export function pickMonsterFxAsset(def: MonsterAttackFxDef, variant = 0): string
  *   "素材解析失败/没渲染出来"伪装成"特效正常播放"，于是"看不到粒子"到底是没数据、
  *   还是没渲染，永远查不出来（AGENTS #12）。实验室与游戏共用这条上报路径。
  */
-export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<boolean> | null {
-  /**
-   * **挥击音**（`CharPlaySound` 那套：按**怪物目录**取 `CHRMOTION_STATE_ATTACK` 的音频，
-   * 如 `wav/effects/monster/d_pr/attack 1.wav`）。
-   *
-   * ⚠⚠ 它**与"这一招有没有登记特效"完全无关** —— 特效是我们核验出来的表，
-   *   而挥击音是原版按怪物目录解析的。**任何"没特效就提前 return"的写法都会把它连带吞掉。**
-   *   实测**三次**踩到同一处：
-   *     · 表里没有条目的怪（"多数纯物理怪原版就只有音效"）原来在 `!entry` 处 return ⇒ 静音
-   *     · 我加的多技能 KeyCode 分派在"该键未登记"处 return ⇒ **D_PR 普攻静音**
-   *       （用户报"攻击没声音了"；而 `d_pr/attack 1.wav` 确实在资产里）
-   *     · 射击怪分支（`MONSTER_RANGED`，"设 `ShootingFlag`"）也在它**之前** return ⇒ **所有弓怪静音**
-   *       （用户 2026-09-17 实测"听不到攻击音效"）—— 故本函数**第一件事**就是把它定义出来，
-   *       任何 return 之前都先 `swingSound()`；`fireDef` 里那套是"技能自己的音"（另一条路径）。
-   */
-  const swingSound = (): void => {
-    ctx.sfx?.playSoundByName(ctx.modelKey, 'CHRMOTION_STATE_ATTACK', ctx.pos, ctx.effectId);
-  };
+/**
+ * **事件帧的动作音**（原版 `CharPlaySound`，`effectsnd.cpp:1336`）—— 游戏与实验室共用的唯一实现。
+ *
+ * ⚠⚠ 它**与"这一招有没有登记特效"完全无关** —— 特效是我们核验出来的表，而动作音是原版按
+ *   怪物目录 + **动作态**解析的。**任何"没特效就提前 return"的写法都会把它连带吞掉。**
+ *   实测**三次**踩到同一处：
+ *     · 表里没有条目的怪（多数纯物理怪原版就只有音效）原来在 `!entry` 处 return ⇒ 静音
+ *     · 多技能 KeyCode 分派在"该键未登记"处 return ⇒ **D_PR 普攻静音**
+ *       （用户报"攻击没声音了"；而 `d_pr/attack 1.wav` 确实在资产里）
+ *     · 射击怪分支（`MONSTER_RANGED`，"设 `ShootingFlag`"）也在它**之前** return ⇒ **所有弓怪静音**
+ *       （用户 2026-09-17 实测"听不到攻击音效"）
+ *   ⇒ 故 `fireMonsterAttackEvent` **第一件事**就是播它（在一切 return 之前）。
+ *
+ * 桶由 `ctx.motionSound` 给：技能动作 ⇒ `skill N.wav`、普攻 ⇒ `attack N.wav`
+ * （这条原先被写死成 ATTACK，Dark Guard 的技能因此在播普攻音 —— 用户 2026-09-17 报）。
+ * `fireDef` 里 `def.sparks.sound` 那套是"技能自己的音"（原版 `SkillPlaySound`，另一条路径）——
+ * 原版两者**都播**，不是二选一。
+ */
+function playMotionSound(ctx: MonsterAttackEventCtx): void {
+  if (!ctx.motionSound) {
+    // 原版这种情况也不播（`snEffect[]` 无匹配 ⇒ `CharPlaySound` 返回 FALSE），但要**说出来**（AGENTS #12）
+    reportFallback('sfx', `怪 #${ctx.effectId} 的事件帧动作态没有对应音效桶 ⇒ 本次不播音`);
+    return;
+  }
+  ctx.sfx?.playSoundByName(ctx.modelKey, ctx.motionSound, ctx.pos, ctx.effectId);
+}
 
+export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<boolean> | null {
   // 射击怪：原版在这个事件帧设 `ShootingFlag`（而不是起粒子）⇒ 交给调用方发射，本函数不返回特效句柄。
-  // ⚠ **音效照旧**：射不射箭与"播不播攻击音"是两条轴（音效 ∉ 特效分派）。
+  // ⚠ **音效照旧**：射不射箭与"播不播动作音"是两条轴（音效 ∉ 特效分派）。
   if (MONSTER_RANGED[ctx.effectId]) {
-    swingSound();
+    playMotionSound(ctx);
     ctx.fireRanged?.();
     return null;
   }
 
   const entry = MONSTER_ATTACK_FX[ctx.effectId];
   if (!entry || !ctx.effects) {
-    // 无核验条目 ≠ 无音效：纯物理怪原版就只有这一记挥击音
-    swingSound();
+    // 无核验条目 ≠ 无音效：纯物理怪原版就只有这一记动作音
+    playMotionSound(ctx);
     return null;
   }
   // **多技能怪**：由**正在播的那条动作的 KeyCode** 决定放哪一招
@@ -442,9 +461,9 @@ export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<bool
     const sub = key ? entry.skillByKeyCode[key] : undefined;
     if (!sub) {
       reportFallback('fx', key == null
-        ? `怪 #${ctx.effectId} 是多技能怪，但调用方没给动作 KeyCode ⇒ 无法决定放哪一招（本次不放特效，挥击音照旧）`
-        : `怪 #${ctx.effectId} 的动作 KeyCode '${key}' 未登记特效 ⇒ 这一招不放特效（原版 switch 无 default；挥击音照旧）`);
-      swingSound();
+        ? `怪 #${ctx.effectId} 是多技能怪，但调用方没给动作 KeyCode ⇒ 无法决定放哪一招（本次不放特效，动作音照旧）`
+        : `怪 #${ctx.effectId} 的动作 KeyCode '${key}' 未登记特效 ⇒ 这一招不放特效（原版 switch 无 default；动作音照旧）`);
+      playMotionSound(ctx);
       return null;
     }
     return fireDef(sub, ctx, ctx.effects);
@@ -466,8 +485,8 @@ function fireDef(
     ctx.fireSparks?.(def.sparks);
     return null;
   }
-  // 非技能（普攻/法术类）：挥击音按怪物目录解析
-  ctx.sfx?.playSoundByName(ctx.modelKey, 'CHRMOTION_STATE_ATTACK', ctx.pos, ctx.effectId);
+  // 非技能（普攻/法术类）：动作音按怪物目录 + **动作态**解析（技能动作 ⇒ `skill N.wav`）
+  playMotionSound(ctx);
   // 落点 = 怪物原点 + 原版 `GetMoveLocation(...)` 算出的偏移。
   // **照抄参数、由等价函数算**（`core/geom.getMoveLocation`）—— 不做语义翻译：
   // 当初把 `GeoResult_*` 翻译成"前方 N 单位"，就漏掉了它来自上一行调用，于是粒子落在身上。

@@ -23,6 +23,7 @@ import { fetchAsset } from '../core/asset-manager.js';
 import rawTables from './data/sfx-tables.json';
 import rawFolders from './data/sfx-folders.json';
 import { MONSTER_EFFECT_DIR } from './data/sound-effect-map';
+import { motionStateName } from '../char/char-format.js';
 
 /* ─────────── 数据表 ─────────── */
 
@@ -49,6 +50,33 @@ export type MotionState =
   | 'CHRMOTION_STATE_SKILL'
   | 'CHRMOTION_STATE_HAMMER'
   | 'CHRMOTION_STATE_WARP';
+
+/**
+ * **事件帧的音效桶** —— 由正在播的那条动作的**动作态**决定（原版 `CharPlaySound`，
+ * `effectsnd.cpp:1336`：`dwMotionCode = lpChar->MotionInfo->State`，再在 `snEffect[]` 里按
+ * (声音码, 动作态) 收集全部候选、`rand()` 取一个）。
+ *
+ * ⚠ 怪物侧调用点在**事件帧**里（`character.cpp:4236` `CharPlaySound(this)`），外面有守卫
+ *   `:4214`（`State != ATTACK && != SKILL` 直接 return）⇒ 只可能是这两种。
+ *   即：**技能动作播的是 `skill N.wav`，不是普攻的 `attack N.wav`** —— 我们原先一律写死 ATTACK，
+ *   Dark Guard 的技能因此播的是普攻音（用户 2026-09-17 报"技能音效被当作普通攻击音效"）。
+ *
+ * 其他动作态返回 null：原版此时 `snEffect[]` 无匹配 ⇒ `CharPlaySound` 返回 FALSE，**本来就不播**
+ * （调用方据此上报，不要拿别的桶顶替）。
+ */
+export function eventFrameSoundState(state: number): EventFrameSoundState | null {
+  switch (motionStateName(state)) {
+    case 'ATTACK': return 'CHRMOTION_STATE_ATTACK';
+    case 'SKILL': return 'CHRMOTION_STATE_SKILL';
+    default: return null;
+  }
+}
+
+/**
+ * 事件帧只可能是这两种音效桶（守卫见 `character.cpp:4214`）——
+ * 返回类型收在这里，调用方（`MonsterAttackEventCtx.motionSound`）就能照抄它。
+ */
+export type EventFrameSoundState = 'CHRMOTION_STATE_ATTACK' | 'CHRMOTION_STATE_SKILL';
 
 /** 声音码 → 目录列表（原版 snFindEffects，同码可指向多个目录，如 HEAVYGOBLIN 双登记） */
 const charDirsByCode = new Map<number, string[]>();

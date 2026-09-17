@@ -46,7 +46,7 @@ import { reportFallback } from '../char/fallback-log.js';
 import { semanticEntriesForJob } from '../char/semantic-anim.js';
 import { isSafeMap } from '../game/safeZones.js';
 import { getWeaponTypeFromIdCode, getHandType, getHandTypeFromIdCode } from '../char/weapon-type.js';
-import { sfx, weaponSoundCode, type HandType, type VoiceHandle } from '../audio/sfx.js';
+import { sfx, weaponSoundCode, eventFrameSoundState, type HandType, type VoiceHandle } from '../audio/sfx.js';
 import { playItemSound } from '../audio/item-sounds.js';
 import { USE_EFFECT_INI, useEffectKindOf, type UseEffectKind } from '../game/useEffect.js';
 import { predictSwitchAppearance } from '../game/weapon-set.js';
@@ -4186,6 +4186,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               pos: actor.root.position, facing: actor.root.rotation.y,
               // 动态光池（原版 `SetDynLight`）：此前游戏侧没建池 ⇒ 所有动态光无处落地
               effects, sfx, dynLights,
+              // 动作音的音效桶 = **正在播的那条动作的动作态**（原版 `CharPlaySound` 用 `MotionInfo->State`）
+              // ⇒ 技能动作播 `skill N.wav`、普攻播 `attack N.wav`（此前一律按普攻取，技能在播普攻音）
+              motionSound: eventFrameSoundState(motion.state),
               // **射击怪**（`MONSTER_RANGED`）：原版这个事件帧设 `ShootingFlag = TRUE` 并把武器码
               // 硬写成 `sinWS1`（弓）来复用玩家那套箭 ⇒ 这里同样交给 `spawnProjectile`。
               // · 目标 = **自机**（这三只射的就是玩家；`unitBodyAnchor` 已有 `selfPlayerId` 分支 ✓）
