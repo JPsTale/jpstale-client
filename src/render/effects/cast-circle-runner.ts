@@ -7,7 +7,7 @@
 
 import * as THREE from 'three';
 import {
-  castCircleSystems, castCircleFamily, CAST_LIFT, CAST_MESH_FADE,
+  castCircleSystems, castCircleFamily, CAST_LIFT, CAST_MESH_FADE, CAST_MESH_LIFE,
 } from './cast-circle.js';
 import { loadStaticSmd, applyStaticMeshTracks, type StaticMeshTrack } from './static-fx.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
@@ -50,15 +50,18 @@ export function fireMonsterSkillCast(
   }
 }
 
-/** 需要按包络淡入淡出的法阵本体（模块级：调用方只调 `updateCastCircleMeshes`） */
 /**
- * 法阵本体网格的**帧动画**参数（原版 `SetAssaEffect` 的 `AniMaxCount = 20` / 播一轮）：
- * 实测 `maam2.smd` 的 `tmScale` 正好 21 个关键帧排到 frame 3200（= 20 帧 × 160 ✓），
- * 值 `(1,1,z)` 的 z 从 1 涨到 9、且减速 ⇒ **法阵是"张开"出来的**，不是纯淡入淡出。
- *
- * `AniDelayTime = 4` 的含义未查明（帧间隔？起始延迟？）⇒ 先按 30fps 播完 20 帧（≈0.67s）。
+ * 法阵本体网格的**帧动画**参数 —— `AniMaxCount = 20` / `AniDelayTime = 4`（原版 `SetAssaEffect`
+ * 的两个参数）现在**都查清了**（`AssaEffect.h:275,360`）：
+ * ```cpp
+ * if(AniDelayTime && (Time % AniDelayTime) == 0) { AniCount++; ... }   // 每 4 帧推进 1 格
+ * Max_Time = AniMaxCount * AniDelayTime;                              // 总时长 20 × 4 = 80 帧
+ * ```
+ * ⇒ 动画是**每 4 帧推进一格**、整段 80 帧（本层按 **60fps** ⇒ 1.33s = 既有的 `CAST_MESH_LIFE`）。
+ * ⚠ 可见期只有 `CAST_MESH_FADE × 2` = 0.67s（原版渐显 20 + 渐隐 20 帧）⇒ 只看得到前 **10 格**
+ *   （`tmScale.z` 1 → 约 5）—— 这是原版包络决定的，不是我们截断。
+ * 我第一版按"每帧推进一格 / 30fps"播（0.67s 走完 20 格）✗ ⇒ 太快、看不出变化（用户实测）。
  */
-const CIRCLE_ANI_SEC = 20 / 30;
 const CIRCLE_ANI_MAX_FRAME = 20 * 160;
 const fading: Array<{
   group: THREE.Group; age: number; dispose: () => void; tracks?: StaticMeshTrack[];
@@ -78,7 +81,8 @@ export function updateCastCircleMeshes(dt: number): void {
     f.age += dt;
     // **帧动画**（原版 `smOBJ3D::TmAnimation`）：按 30fps 播完 `AniMaxCount` 帧 ⇒ 法阵"张开"
     if (f.tracks?.length) {
-      applyStaticMeshTracks(f.tracks, Math.min(f.age / CIRCLE_ANI_SEC, 1) * CIRCLE_ANI_MAX_FRAME);
+      // 每 4 帧推进一格 ⇒ 整段 = `CAST_MESH_LIFE`（= `AniMaxCount × AniDelayTime` / 60fps）
+      applyStaticMeshTracks(f.tracks, Math.min(f.age / CAST_MESH_LIFE, 1) * CIRCLE_ANI_MAX_FRAME);
     }
     const a = meshAlphaAt(f.age);
     f.group.traverse((o) => {

@@ -37,6 +37,7 @@ import { parseSmb } from '../../core/char-parser.js';
 import { normalizeTexturePath } from './part-assets.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
 import { getMoveLocation, FONE } from '../../core/geom.js';
+import { reportFallback } from '../../char/fallback-log.js';
 
 export interface StaticModelResult {
   group: THREE.Group;
@@ -95,7 +96,21 @@ export function applyStaticMeshTracks(tracks: StaticMeshTrack[], frame: number):
       const sx = a.x + (b.x - a.x) * alpha;
       const sy = a.y + (b.y - a.y) * alpha;
       const sz = a.z + (b.z - a.z) * alpha;
-      t.group.scale.set(sx, sz, sy);   // PT(x,y,z) → three(x,z,y)：轴序置换
+      // **我方读法（有意偏离，可一行回退）**：把这组关键帧的"增长"当作**对象平面内的径向放大**。
+      //
+      // 数据原样是 PT(x,y,z) → three(x,z,y)（轴序置换），但法阵 `maam2` 的实测形态是
+      // "躺在 PT x-y 平面的圆盘（x,y ∈ ±26、**厚度只有 1**）"，而它的关键帧只在 **z** 上增长
+      // （1 → 9）⇒ 照数据做就是"**变厚**"（一块饼变厚）——加上该网格 alpha 上限仅 ~27%
+      // （Lua 的 `EventFadeColor` 50/70/50），**实机几乎看不出来**（用户实测："看不到变动"）。
+      // 而"法阵张开"该是**径向扩张**，故这里把增长放到 three 的 (x, z)（= 圆盘所在平面）。
+      // 若确认原版就是变厚，把本行换回 `set(sx, sz, sy)` 即可。
+      const grow = sz;
+      // 本资产里 x/y 恒为 1；**别的资产若不是**，说明它的增长不在 z 上 ⇒ 当前读法不适用，必须可见（AGENTS #12）
+      if (Math.abs(sx - 1) > 1e-3 || Math.abs(sy - 1) > 1e-3) {
+        reportFallback('fx', `静态网格的缩放轨道 x/y 非 1（x=${sx.toFixed(2)}, y=${sy.toFixed(2)}）`
+          + ' ⇒ 当前按"z 为增长因子、径向放大"解释，该资产未必适用');
+      }
+      t.group.scale.set(grow, 1, grow);
     }
   }
 }
