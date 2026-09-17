@@ -12,7 +12,7 @@
 import * as THREE from 'three';
 import {
   createMultiSpark, multiSparkSystem, multiSparkTrailSystem, multiSparkLightSystems,
-  multiSparkBombSystem, MULTI_SPARK_BOMB, MULTI_SPARK_HIT_DYN_LIGHT, MULTI_SPARK_HIT,
+  multiSparkBombSystem, multiSparkWideLineSystem, MULTI_SPARK_BOMB, MULTI_SPARK_HIT_DYN_LIGHT, MULTI_SPARK_HIT,
   type MultiSparkHandle, type Vec3,
 } from './multi-spark.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
@@ -119,8 +119,10 @@ export function runMultiSpark(
           },
         });
       }
+      // WideLine：30 张 4×40 刚体长条卡片（三维随机朝向）
+      void ctx.effects!.spawnSystem(multiSparkWideLineSystem(), { pos });
       ctx.log?.(`    ✦ MultiSpark 命中 → 动态光 + Light5 ×5 + BombParticle ×${B.num}`
-        + `；⚠ 未表达：WideLine ×${MULTI_SPARK_HIT.wideLineMissing.count}（刚体细长网格）`);
+        + `；WideLine ×${MULTI_SPARK_HIT.wideLineMissing.count}`);
     },
     onEnd: () => {
       // 原版 `Time >= Max_Time` 释放实例；**不摘载体**（一摘，上面的粒子会瞬间消失）

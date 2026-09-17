@@ -29,7 +29,8 @@ import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
   SizeOverLife, ColorOverLife, ApplyForce,
   Vector3 as QVec3,
-  type Behavior, type EmitterShape, type FunctionValueGenerator,
+  type Behavior, type EmitterShape, type RotationGenerator,
+  type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
 } from 'quarks.core';
 import {
   roll,
@@ -159,6 +160,37 @@ function numKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t:
  * 速度 = `initial velocity` 三轴各自区间内均匀随机。
  * quarks 内置形状都不是这个语义（RectangleEmitter 是 2D 边框 + 径向速度），故自定义。
  */
+/**
+ * **世界朝向面片**的随机朝向发生器 —— 我们只用到它的"随机四元数"行为
+ * （原版 `sinPublicEffect.cpp:391-392`：`Angle.x = rand()%4096; Angle.y = rand()%4096` ⇒ 三维随机朝向）。
+ *
+ * ⚠ 用**自定义**而非内建 `RandomQuatGenerator`：一是只需"均匀随机朝向"这一个语义（Shoemake 法），
+ *   二是这样 `genValue` 的写入点在我们手里，日后"让速度与朝向共用同一次随机"时好接。
+ */
+export class RandomOrientation implements RotationGenerator {
+  type = 'rotation' as const;
+  startGen(): void { /* 无逐粒子预生成状态 */ }
+  genValue(_memory: GeneratorMemory, q: Quaternion): Quaternion {
+    // 均匀随机四元数（Shoemake）—— 原版 `Angle.x/y = rand()%4096` 两轴随机的等价物
+    const u1 = Math.random(), u2 = Math.random(), u3 = Math.random();
+    const r1 = Math.sqrt(1 - u1), r2 = Math.sqrt(u1);
+    const x = r1 * Math.sin(2 * Math.PI * u2);
+    const y = r1 * Math.cos(2 * Math.PI * u2);
+    const z = r2 * Math.sin(2 * Math.PI * u3);
+    const w = r2 * Math.cos(2 * Math.PI * u3);
+    // quarks 的 Quaternion 是类（字段 `_x..` + 访问器）⇒ 有 set() 就用它，否则按字段写
+    const anyQ = q as unknown as { set?: (a: number, b: number, c: number, d: number) => void; x: number; y: number; z: number; w: number };
+    if (typeof anyQ.set === 'function') anyQ.set(x, y, z, w);
+    else { anyQ.x = x; anyQ.y = y; anyQ.z = z; anyQ.w = w; }
+    return q;
+  }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): RotationGenerator { return new RandomOrientation(); }
+}
+
+/** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
+const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
+
 export class PartBoxEmitter implements EmitterShape {
   type = 'partBox';
   constructor(private radius: Vec3, private velocity: Vec3) {}
@@ -191,6 +223,10 @@ export function renderModeOf(particleType: number): RenderMode {
     case 2: return RenderMode.HorizontalBillBoard;
     case 3: return RenderMode.VerticalBillBoard;
     case 4: return RenderMode.Trail;
+    // **5 = 世界朝向面片**（我方扩展，不是 PT 的类型；原版这类效果走 `SIN_EFFECT_MESH` 网格子系统）
+    // 用 quarks 的 Mesh 模式：几何来自 `instancingGeometry`，朝向是**逐粒子的四元数**
+    //（`SpriteBatch.ts:60-64` 的 rotation 是 4 个 float；`local_particle_vert.glsl` 真的用它建旋转矩阵）
+    case 5: return RenderMode.Mesh;
     default: return RenderMode.BillBoard;
   }
 }
@@ -360,6 +396,9 @@ export function convertPart(
       // 直接读 `rendererEmitterSettings.startLength.startGen` → undefined 抛错（实测踩到）。
       // ⚠ 语义近似：PT 的 AddFaceTrace 没有"长度"这个字段，这里取 `sizeExt`（高）当拖尾长度 ——
       // 属我方决定，与 PT 参数不是一对一。
+      // Mesh 模式（我方扩展 = 世界朝向面片）：几何取单位平面 + 逐粒子随机四元数朝向
+      instancingGeometry: em.particleType === 5 ? ORIENTED_UNIT_QUAD : undefined,
+      startRotation: em.particleType === 5 ? new RandomOrientation() : undefined,
       rendererEmitterSettings: em.particleType === 4
         ? { startLength: numGen(em.initialSizeExt ?? em.initialSize, 20) }
         : undefined,

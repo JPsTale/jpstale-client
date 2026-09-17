@@ -70,7 +70,7 @@ export type PartKeyframes = Record<string, PartKeyframe[]>;
 export interface PartEmitter {
   name: string;
   blend: PartBlend;
-  /** TYPE_ONE..FOUR（见文件头说明：渲染模式为近似） */
+  /** TYPE_ONE..FOUR；**5 = 世界朝向面片**（我方扩展，PT 无此类型，原版走网格子系统） */
   particleType: number;
   numParticles: number;
   /** 每秒发射数 */

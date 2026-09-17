@@ -436,6 +436,60 @@ export const MULTI_SPARK_HIT = {
   },
 } as const;
 
+/* ───────────────── ④b 命中：WideLine（30 条刚体细长卡片） ───────────────── */
+
+/**
+ * `sinEffect_WideLine(pPosi, MatMultiSpark[6], 128, 30)`（`sinPublicEffect.cpp:379-402`）——
+ * **30 张 4 × 40 世界单位的长条卡片**（`sinCreateObject` 的四顶点在 `z=0` ⇒ 法线 = 局部 +z），
+ * **三维随机朝向**、`LAMP` 混合、`TwoSide`、寿命 `rand()%20+50` 帧。
+ *
+ * 实现要点：`particleType: 5`（世界朝向面片）⇒ quarks `RenderMode.Mesh`；
+ * 一个系统 30 颗粒子（随机朝向与随机寿命都是**逐粒子**的 ⇒ 与原版逐实例随机等价，且更省）。
+ *
+ * ⚠ 尚未表达（下一步，各自单列一变量以便验收）：
+ *   ① **速度 = 沿自身法线**（原版 `GetMoveLocation(0,0,128, Angle.x, Angle.y, 0)`，0.5 单位/帧）
+ *      —— 需要让"速度"与"朝向"共用同一次随机（否则卡片飞的方向和它的面不一致）
+ *   ② **面内自转**（`Angle.z += 16`/帧）—— `RotationOverLife` 在 Mesh 模式下改标量还是四元数尚未核实
+ *   ③ alpha 包络：原版前段**恒 255**、末 10 帧每帧 −10（现按线性 255→155 近似）
+ */
+export function multiSparkWideLineSystem(): PartSystem {
+  const num = (v: number) => ({ k: 'n' as const, v });
+  const vec = (x: number, y: number, z: number) => ({ x: num(x), y: num(y), z: num(z) });
+  const W = MULTI_SPARK_HIT.wideLineMissing;
+  return {
+    name: 'MultiSparkWideLine',
+    version: 1,
+    position: null,
+    emitters: [{
+      name: 'WideLine',
+      blend: 'lamp',
+      particleType: 5,                     // ★ 世界朝向面片（我方扩展）
+      numParticles: W.count,               // 30
+      emitRate: 60 * W.count,              // 一帧内发完
+      loops: 1,
+      delay: 0,
+      // 寿命 `rand()%20 + 50` 帧 ⇒ 逐粒子随机
+      lifetime: { k: 'r' as const, a: W.lifeMinFrames / 60, b: W.lifeMaxFrames / 60 },
+      emitRadius: vec(0, 0, 0),
+      initialVelocity: vec(0, 0, 0),        // ⚠ ①未表达：原版沿自身法线飞
+      gravity: vec(0, 0, 0),
+      texture: MULTI_SPARK_TEX,            // `MatMultiSpark[6]` = m_spark06.tga
+      initialSize: num(4),                 // `Size.x = 512` ⇒ 全宽 4
+      initialSizeExt: num(40),             // `Size.y = 40 * 128` ⇒ 全长 40
+      initialColor: { r: num(255), g: num(255), b: num(255), a: num(255) },
+      initialPartAngle: null,
+      initialLocalAngle: null,
+      finalColor: { r: num(255), g: num(255), b: num(255), a: num(155) },   // ③近似（见上）
+      finalSize: num(4),
+      finalSizeExt: num(40),
+      finalPartAngle: null,
+      finalLocalAngle: null,
+      finalVelocity: null,
+      keyframes: {},
+    }],
+  };
+}
+
 /* ───────────────── 逐帧驱动器 ───────────────── */
 
 export interface Vec3 { x: number; y: number; z: number }
