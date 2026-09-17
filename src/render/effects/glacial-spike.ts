@@ -35,7 +35,7 @@
  */
 import * as THREE from 'three';
 import type { PartEmitter, PartSystem, Num } from '../../core/effect/part-script.js';
-import { loadStaticSmd } from './static-fx.js';
+import { loadStaticSmd, applyStaticMeshTracks, type StaticMeshTrack } from './static-fx.js';
 import { getMoveLocation, radToPtAngle } from '../../core/geom.js';
 import type { SystemSpawner } from './multi-spark-runner.js';
 
@@ -144,8 +144,20 @@ export interface GlacialSpikeDeps {
 }
 
 /** 在淡出的网格（模块级：调用方只调 `updateGlacialSpikes`） */
-interface FadingMesh { group: THREE.Group; age: number; dispose: () => void }
+interface FadingMesh {
+  group: THREE.Group;
+  age: number;
+  dispose: () => void;
+  /** 逐帧位移轨道（原版 `GetPosFrame` 的对象级关键帧）—— 有就逐帧推进 */
+  tracks?: StaticMeshTrack[];
+}
 const fading: FadingMesh[] = [];
+
+/**
+ * 网格的总帧数（动画单位）= Lua 的 `InitMaxFrame(25)` × **160/帧**（与 `.inx` 同制式）
+ * = 4000 ✓ —— 实测 `pt_4-1-25.smd` 的关键帧正好排到 frame 4000（12 块冰扫到位并保持）✓。
+ */
+const MESH_MAX_FRAME = 25 * 160;
 
 /** 按 Lua 的 `EventFadeColor` 时间轴取 alpha（0..1） */
 function meshAlphaAt(t: number): number {
@@ -220,7 +232,7 @@ export function runGlacialSpike(
     r.group.rotation.y = yaw;
     r.group.scale.setScalar(scale * placements[0]!.s);
     deps.scene.add(r.group);
-    fading.push({ group: r.group, age: 0, dispose: r.dispose });
+    fading.push({ group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks });
     for (let i = 1; i < at.length; i++) {
       const c = r.group.clone(true);
       c.position.set(at[i]!.pos.x, at[i]!.pos.y, at[i]!.pos.z);
@@ -240,6 +252,11 @@ export function updateGlacialSpikes(dt: number): void {
   for (let i = fading.length - 1; i >= 0; i--) {
     const f = fading[i]!;
     f.age += dt;
+    // **逐帧位移动画**：帧号 = 寿命进度 × 总帧数（`InitMaxFrame(25)` ⇒ 0..4000）
+    // 原版 `smOBJ3D::TmAnimation` 每帧把 `GetPosFrame` 的插值写进矩阵平移行 —— 12 块冰由此扫到位
+    if (f.tracks?.length) {
+      applyStaticMeshTracks(f.tracks, Math.min(MESH_MAX_FRAME, (f.age / MESH_LIFE_SEC) * MESH_MAX_FRAME));
+    }
     const a = meshAlphaAt(f.age);
     f.group.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | undefined;

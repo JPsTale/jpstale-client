@@ -112,8 +112,31 @@ console.log('\n④ 网格的形状（信息项：它是一"簇"，不是多帧�
   console.log(`    objects = ${objs.length}，总顶点 = ${verts}`
     + `，各对象顶点数 = ${objs.slice(0, 10).map((o) => o.vertices.length).join('/')}`
     + `，无对象变换 = ${zeroTransform}，无帧数据 = ${noFrames}`);
-  ok(objs.length === 12 && zeroTransform && noFrames,
-    '网格 = 一簇（12 根尖刺，无摆放/无帧）⇒ "多簇晶体"只能是我们的决定（已给实验室旋钮）');
+  ok(objs.length === 12 && zeroTransform,
+    '网格 = 一簇（12 根尖刺；静态无对象变换 —— 但带 tmPos 位移关键帧，见 ⑤）');
+}
+
+console.log('\n⑤ 逐帧位移动画（原版 `GetPosFrame`：12 块冰扫到位）');
+{
+  const { parseSmb } = await import('../src/core/char-parser.js');
+  const { applyStaticMeshTracks } = await import('../src/render/effects/static-fx.js');
+  const THREE = await import('three');
+  const p = path.join(ASSET, 'effect/neweffect/res/object/pt_4-1-25.smd');
+  const b = fs.readFileSync(p);
+  const smd = parseSmb(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer);
+  // 按 `static-fx` 同一规则建轨道：每个对象一个 group，keys = tmPos
+  const tracks = smd.objects.flatMap((o) => {
+    const keys = ((o as unknown as { tmPos?: Array<{ frame: number; x: number; y: number; z: number }> }).tmPos ?? [])
+      .map((k) => ({ frame: k.frame, x: k.x, y: k.y, z: k.z }));
+    return keys.length ? [{ group: new THREE.Object3D(), keys }] : [];
+  });
+  ok(tracks.length > 0, `有 ${tracks.length} 个对象带位移轨道（tmPos，原版 GetPosFrame）`);
+  const y0 = tracks.map((t) => { applyStaticMeshTracks([t], 0); return t.group.position.y; });
+  const yEnd = tracks.map((t) => { applyStaticMeshTracks([t], 4000); return t.group.position.y; });
+  console.log(`    frame 0   → y = ${y0.map((v) => v.toFixed(0)).join(', ')}`);
+  console.log(`    frame 4000→ y = ${yEnd.map((v) => v.toFixed(0)).join(', ')}`);
+  ok(y0.every((v, i) => Math.abs(v - yEnd[i]!) > 20),
+    '每条轨道在 frame 0 与 4000 的位置显著不同 ⇒ 确实"扫进来"（不是静态）');
 }
 
 console.log(`\n${fail === 0 ? '全部通过' : `✗ ${fail} 项未通过`}`);

@@ -46,7 +46,44 @@ export interface StaticModelResult {
   textures: string[];
   /** 原版声明了序列帧、但本实现只能静态渲染时为 false */
   animated: boolean;
+  /**
+   * **逐帧位移动画**（原版 `smOBJ3D::TmAnimation` 的 `GetPosFrame`）—— 每个对象一条轨道。
+   *
+   * 关键帧的 `frame` 是**动画单位**（160/帧，与 `.inx` 同制式），值就是矩阵平移行
+   * （`GetPosFrame` 线性插值、**无除法**）。实测 `pt_4-1-25.smd`：12 块冰从远处/高处
+   * （frame 0）扫到最终位置（frame 320~1120）并保持到 4000 —— 这就是"召唤出一簇簇冰块"。
+   * 调用方按"当前帧"（= `InitMaxFrame` 对应的帧数 × 160）调 `applyStaticMeshTracks`。
+   */
+  tracks?: StaticMeshTrack[];
   dispose(): void;
+}
+
+/** 一个对象的逐帧位移轨道（`group` 会被逐帧设 position） */
+export interface StaticMeshTrack {
+  group: THREE.Object3D;
+  keys: Array<{ frame: number; x: number; y: number; z: number }>;
+}
+
+/**
+ * 按 `frame`（动画单位）推进一条轨道 —— **逐行照抄** `smOBJ3D::GetPosFrame`（`smObj3d.cpp:999`）：
+ * 线性插值、关键帧值直接当平移（PT 空间）用、再统一 Z-up → Y-up。
+ * 帧号早于首个关键帧时**不改位置**（原版直接 `return frame`，坐标系原样保留）。
+ */
+export function applyStaticMeshTracks(tracks: StaticMeshTrack[], frame: number): void {
+  for (const t of tracks) {
+    const k = t.keys;
+    if (!k.length || k[0]!.frame > frame) continue;
+    let i = 0;
+    while (i + 1 < k.length && !(k[i]!.frame <= frame && k[i + 1]!.frame > frame)) i++;
+    const a = k[i]!, b = k[Math.min(i + 1, k.length - 1)]!;
+    const ch = b.frame - a.frame;
+    const alpha = ch > 0 ? (frame - a.frame) / ch : 0;
+    const x = a.x + (b.x - a.x) * alpha;
+    const y = a.y + (b.y - a.y) * alpha;
+    const z = a.z + (b.z - a.z) * alpha;
+    const [px, py, pz] = toYup(x, y, z);
+    t.group.position.set(px, py, pz);
+  }
 }
 
 /** 顶点坐标：引擎 Z-up → three 的 Y-up（与 `skinned-builder` 的 `transformVertex` 同式） */
@@ -82,8 +119,18 @@ export async function loadStaticSmd(
 
   const root = new THREE.Group();
   root.name = 'static-fx:' + p;
+  /** 逐帧位移轨道（收集后交给调用方推进，见 `StaticModelResult.tracks`） */
+  const tracks: StaticMeshTrack[] = [];
 
   for (const obj of smd.objects) {
+    // 每个对象一个 Group：**旋转**烘进几何（静态），**位移**逐帧写进 Group.position
+    //（= 原版 `qmat` 的用法：`TmRotate` 做旋转、`GetPosFrame` 写 `_41.._43` 做平移）
+    const objGroup = new THREE.Group();
+    objGroup.name = obj.nodeName || 'obj';
+    root.add(objGroup);
+    // 逐帧位移关键帧（`tmPos`）—— `frame` 是动画单位（160/帧），值就是 PT 空间平移
+    const keys = ((obj as unknown as { tmPos?: Array<{ frame: number; x: number; y: number; z: number }> }).tmPos ?? [])
+      .map((k) => ({ frame: k.frame, x: k.x, y: k.y, z: k.z }));
     // **对象自带的变换** —— 多块拼成的网格全靠它摆位。
     // ⚠ 此前这里只用裸顶点 ⇒ 所有对象叠在原点：`pt_4-1-25.smd` 是 12 块自成一体的尖刺
     //   （名字叫 `Box01/Box11…Box21`），于是"冰块都在一个位置"（用户实测）。
@@ -153,7 +200,12 @@ export async function loadStaticSmd(
       });
       const mesh = new THREE.Mesh(geo, mat);
       mesh.frustumCulled = false;
-      root.add(mesh);
+      objGroup.add(mesh);
+    }
+    // 有位移轨道的对象登记轨道；初值取第 0 帧（原版起始就在远处，随后逐帧扫进来）
+    if (keys.length >= 1) {
+      tracks.push({ group: objGroup, keys });
+      applyStaticMeshTracks([{ group: objGroup, keys }], 0);
     }
   }
 
@@ -161,7 +213,9 @@ export async function loadStaticSmd(
   return {
     group: root,
     textures: usedTextures,
-    animated: false,
+    // 有逐帧位移轨道 ⇒ 调用方按帧推进（`applyStaticMeshTracks`）；网格本身仍是静态几何
+    animated: tracks.length > 0,
+    tracks,
     dispose() {
       root.traverse((o) => {
         const m = o as THREE.Mesh;
