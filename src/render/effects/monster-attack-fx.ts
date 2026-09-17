@@ -299,10 +299,11 @@ export function monsterCastOf(effectId: number): { castSound?: string; castMagic
  *
  * key = 服务端下发的 `monster_effect_id`。
  */
-export const MONSTER_RANGED: Record<number, { note: string }> = {
-  0x11C0: { note: 'SKELETONRANGE character.cpp:4379-4390（sinWS1；起点 pY+28）' },
-  0x1890: { note: 'DARKGUARD    character.cpp:4855-4866（sinWS1；起点 pY+38）' },
-  0x1910: { note: 'REVIVED_ARCHER character.cpp:5094-5105（sinWS1；起点 pY+38）' },
+export const MONSTER_RANGED: Record<number, { note: string; launchLift: number }> = {
+  // `launchLift` = 原版 `ShootingPosi.y = pY + N * fONE` 的 N（**逐怪不同**，与玩家的 34 也不同）
+  0x11C0: { note: 'SKELETONRANGE character.cpp:4379-4390（sinWS1；起点 pY+28）', launchLift: 28 },
+  0x1890: { note: 'DARKGUARD    character.cpp:4855-4866（sinWS1；起点 pY+38）', launchLift: 38 },
+  0x1910: { note: 'REVIVED_ARCHER character.cpp:5094-5105（sinWS1；起点 pY+38）', launchLift: 38 },
 };
 
 /**
