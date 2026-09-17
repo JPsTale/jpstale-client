@@ -99,6 +99,21 @@ interface EmitterInstance {
    * 显式持有对象（不是每帧传坐标）是为了让"这一发粒子属于哪个飞行物"一目了然。
    */
   follow: THREE.Object3D | null;
+  /**
+   * **刚体跟随**：`follow` 移动时**已生成的粒子一起平移**。
+   *
+   * 这就是原版 `SetAttachPos` 的语义（`HoNewParticle.h:1241`）：
+   * `if (attachPosFlag) part.WorldPos = 系统位置` —— 而粒子自身的运动在**独立的**
+   * `LocalPos` 里，两者分工。所以观感是"**一团**粒子被整体搬运"。
+   *
+   * 不给（false）时是"出生点固化"：新粒子在跟随点**当前**位置出生、**老粒子留在原地**
+   * ⇒ 形成**尾迹**（玩家施法弹需要这个观感）。
+   *
+   * 两种语义都有真实用途，故用开关而不是二选一。
+   */
+  rigid: boolean;
+  /** `rigid` 模式下上一帧的跟随点世界坐标（用来算位移增量） */
+  followPrev: [number, number, number] | null;
   /** 尺寸倍率 */
   scale: number;
   /** 每个粒子的状态 */
@@ -140,6 +155,9 @@ export interface PartRuntime {
     /** 覆盖初速度（世界单位/秒）—— 给**飞出物**用（原版 `AssaParticle_*Shot` 那类朝目标飞的弹）。
      *  不给则用 `.part` 自己声明的 `initialVelocity`（原地粒子通常就是 0）。 */
     velocity?: { x: number; y: number; z: number },
+    /** 刚体跟随：`follow` 移动时已生成的粒子**一起平移**（原版 `SetAttachPos` 的语义）。
+     *  不给则是"出生点固化" ⇒ 尾迹。见 `EmitterInstance.rigid`。 */
+    rigid?: boolean,
   ): PartHandle;
   update(dt: number, camera: THREE.Camera): void;
   clear(): void;
@@ -163,6 +181,8 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
     origin: [number, number, number], scale: number, follow: THREE.Object3D | null,
     /** 覆盖初速度（见 `spawn`）—— **深拷贝 em 后再改**，别污染缓存里的 `.part` 数据 */
     velocity?: { x: number; y: number; z: number },
+    /** 刚体跟随（见 `EmitterInstance.rigid`） */
+    rigid = false,
   ): EmitterInstance {
     if (velocity) {
       const fixed = (n: number) => ({ k: 'n', v: n }) as PartEmitter['initialVelocity']['x'];
@@ -197,7 +217,7 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
 
     // 系统级 position + 生成位置偏移（原版：粒子位置 = 生成原点 + emitRadius 滚动）
     return {
-      emitter: em, mesh, mat, geom, origin, scale, follow, n,
+      emitter: em, mesh, mat, geom, origin, scale, follow, rigid, followPrev: null, n,
       alive: new Uint8Array(n),
       age: new Float32Array(n), life: new Float32Array(n),
       pos: new Float32Array(n * 3), vel: new Float32Array(n * 3),
@@ -258,6 +278,7 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
     part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number,
     follow: THREE.Object3D | null = null,
     velocity: { x: number; y: number; z: number } | undefined = undefined,
+    rigid = false,
   ): PartHandle {
     const sysPos = part.system.position ? vecOf(part.system.position) : [0, 0, 0];
     const origin: [number, number, number] = [
@@ -273,7 +294,7 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
         + ' 发射率 ' + em.emitRate + '/s 寿命 ' + JSON.stringify(em.lifetime)
         + ' 贴图=' + (tex ? 'ok' : '⚠ null（解码失败）')
         + ' 跟随=' + (follow ? '有' : '无') + ' 原点 (' + origin.map((v) => v.toFixed(1)).join(',') + ')');
-      live.push(buildEmitter(em, tex, origin, scale, follow, velocity));
+      live.push(buildEmitter(em, tex, origin, scale, follow, velocity, rigid));
     }
     // 句柄只认这一次生成的那些 emitter（`stop` 后它们各自发完手上粒子即被移除）
     // ⚠ 空 emitters 时 `slice(-0)` 会取到**全部**，那会误停别人的发射器 ⇒ 单独处理
@@ -299,6 +320,26 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
           while (ei.emitAcc >= 1 && ei.spawned < ei.n) { ei.emitAcc -= 1; birth(ei); }
         } else if (ei.loopsLeft > 1) { ei.loopsLeft--; ei.spawned = 0; ei.delayLeft = Math.max(0, em.delay); }
         else ei.done = true;
+      }
+
+      // 刚体跟随：把跟随点这一帧的**位移**加到所有活动粒子上。
+      // = 原版 `SetAttachPos` 的语义（`part.WorldPos = 系统位置`，粒子自身运动在独立的
+      //   `LocalPos` 里）⇒ 整团被搬运。不走这一步就是"出生点固化"：老粒子留在原地成尾迹。
+      if (ei.rigid && ei.follow) {
+        ei.follow.getWorldPosition(followTmp);
+        const cur: [number, number, number] = [followTmp.x, followTmp.y, followTmp.z];
+        if (ei.followPrev) {
+          const dx = cur[0] - ei.followPrev[0];
+          const dy = cur[1] - ei.followPrev[1];
+          const dz = cur[2] - ei.followPrev[2];
+          if (dx !== 0 || dy !== 0 || dz !== 0) {
+            for (let i = 0; i < ei.spawned; i++) {
+              if (!ei.alive[i]) continue;
+              ei.pos[i * 3] += dx; ei.pos[i * 3 + 1] += dy; ei.pos[i * 3 + 2] += dz;
+            }
+          }
+        }
+        ei.followPrev = cur;
       }
 
       const posAttr = ei.geom.getAttribute('position') as THREE.BufferAttribute;

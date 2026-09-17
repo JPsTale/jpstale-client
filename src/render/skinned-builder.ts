@@ -142,7 +142,7 @@ interface CachedMeshPart {
   materialIndex: number;
 }
 /** smd 实例 → (网格名|材质索引) → 原料 */
-const meshPartCache = new WeakMap<SmbData, Map<string, CachedMeshPart>>();
+const meshPartCache = new WeakMap<SmbData, WeakMap<object, Map<number, CachedMeshPart>>>();
 
 export function buildSkinnedMesh(
   smd: SmbData,
@@ -176,18 +176,30 @@ export function buildSkinnedMesh(
   const meshes: THREE.SkinnedMesh[] = [];
   /** 顶点引用了骨架里不存在的骨名（→ 被兜底到根骨/首个绑定矩阵，表现为变形） */
   const unknownBones = new Map<string, number>();
+  /** 单位矩阵（行主序，16 元）—— 未知骨名的顶点用它预乘 ⇒ 顶点停在局部坐标、位置明显不对。
+   *  **这是有意为之的"明确失败"**：此前用"首个绑定矩阵"顶替，会把数据错画成"看起来正常"，
+   *  事后只能从画面反推（用户明确要求删掉这类兜底）。 */
+  const IDENTITY_ROW = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
   const texturesToLoad: { url: string; mat: THREE.MeshPhongMaterial; nodeName: string }[] = [];
-  // 原料缓存（见 CachedMeshPart 的说明）：同一个 smd 反复装配时复用 geometry/material
+  // 原料缓存（见 CachedMeshPart 的说明）：同一个 smd 反复装配时复用 geometry/material。
+  // ⚠ key 必须按【obj 实例】分层：`.smd` 里多个 obj 可以**同名**（本模型 6 个都叫 `pr_d`），
+  // 若按 `nodeName + 材质号` 做 key，不同 obj 的同号材质会互相命中缓存 → 复用错几何 → 
+  // 整段部件消失（用户实测：D_PR 缺胸口以下，实测顶点数与预期逐组对账差 159）。
   let partCache = meshPartCache.get(smd);
   if (!partCache) {
-    partCache = new Map();
+    partCache = new WeakMap();
     meshPartCache.set(smd, partCache);
   }
-
   const transformVertex = (rx: number, ry: number, rz: number) => rawMode ? [rx, ry, rz] : [rx, rz, -ry];
   const transformNormal = (fx: number, fy: number, fz: number) => rawMode ? [fx, fy, fz] : [fx, fz, -fy];
 
   for (const meshObj of meshObjs) {
+    // 本 obj 的分组缓存（按 obj 实例分层，见上方说明）
+    let objCache = partCache.get(meshObj);
+    if (!objCache) {
+      objCache = new Map();
+      partCache.set(meshObj, objCache);
+    }
     const objMats = smd.materials || [];
     const usedMatIdx = new Set<number>();
     for (const f of meshObj.faces) {
@@ -221,10 +233,11 @@ export function buildSkinnedMesh(
           const vidx = f.v[k];
           const v = meshObj.vertices[vidx];
           const name = meshObj.boneNames && meshObj.boneNames[vidx] ? meshObj.boneNames[vidx] : '';
-          // ⚠ 两处兜底都会造成"变形"：未知骨名 → 用**首个**绑定矩阵 + 绑到**根骨**。
-          // 只统计、不改变行为（改了会静默丢几何），但把名字报进 diag 便于一眼定位。
-          if (name && !bindWorldByName.has(name)) unknownBones.set(name, (unknownBones.get(name) ?? 0) + 1);
-          const m = bindWorldByName.has(name) ? bindWorldByName.get(name)! : bindWorldByName.values().next().value!;
+          // 未知骨名：**不兜底**（此前拿"首个绑定矩阵"顶替 —— 那会把"数据错"画成"看起来正常"）。
+          // 现在的行为是**明确的错**：单位阵预乘 ⇒ 顶点停在局部坐标 ⇒ 位置明显不对、看得见。
+          const known = bindWorldByName.has(name);
+          if (!known) unknownBones.set(name || '(空骨名)', (unknownBones.get(name || '(空骨名)') ?? 0) + 1);
+          const m = known ? bindWorldByName.get(name)! : IDENTITY_ROW;
 
           const lx = v.x, ly = v.y, lz = v.z;
           const rx = lx * m[0] + ly * m[4] + lz * m[8] + m[12];
@@ -244,9 +257,12 @@ export function buildSkinnedMesh(
             uvs.push(0, 0);
           }
 
-          const boneIdx = boneIndexByName.has(name) ? boneIndexByName.get(name)! : 0;
-          skinIndices.push(boneIdx, 0, 0, 0);
-          skinWeights.push(1, 0, 0, 0);
+          // 未知骨名 ⇒ **权重 0**：该顶点不被任何骨骼驱动（停在预乘后的位置）。
+          // 此前是"绑到 bones[0]"（= Bip01 Head）—— 那会把"骨名对不上"伪装成"绑上了某根骨"，
+          // 症状是部件被拉到头上还看不出原因（用户明确要求删掉这个兜底，只保留上报）。
+          const boneIdx = boneIndexByName.get(name);
+          skinIndices.push(boneIdx ?? 0, 0, 0, 0);
+          skinWeights.push(boneIdx === undefined ? 0 : 1, 0, 0, 0);
         }
         indices.push(triCount * 3, triCount * 3 + 1, triCount * 3 + 2);
         triCount++;
@@ -255,8 +271,9 @@ export function buildSkinnedMesh(
       if (triCount === 0) continue;
 
       // ① 先查"原料缓存"（geometry + material）：同一模型被多只怪复用时只建一次。
-      const partKey = meshObj.nodeName + '|' + matIdx;
-      let part = partCache.get(partKey);
+      //    key = 材质号即可 —— 缓存的层级已经按 obj 实例分开了（见上方 partCache 说明）
+      const partKey = matIdx;
+      let part = objCache.get(partKey);
       if (!part) {
         const geo = new THREE.BufferGeometry();
         geo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -282,7 +299,7 @@ export function buildSkinnedMesh(
           if (matData.texturePaths && matData.texturePaths.length > 0) url = matData.texturePaths[0];
         }
         part = { geometry: geo, material: mat, url, nodeName: meshObj.nodeName, materialIndex: matIdx };
-        partCache.set(partKey, part);
+        objCache.set(partKey, part);
       }
 
       // ② 贴图：`material.map` 已存在说明这个共享材质的贴图早加载过了 —— 不再重复交给调用方

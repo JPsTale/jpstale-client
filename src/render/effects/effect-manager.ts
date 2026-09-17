@@ -76,6 +76,13 @@ export interface SpawnOpts {
    * 所以飞出物要走这里，不要走 attach。
    */
   velocity?: { x: number; y: number; z: number };
+  /**
+   * **刚体跟随**：`attach` 移动时已生成的粒子**一起平移**（= 原版 `SetAttachPos` 的语义：
+   * `if (attachPosFlag) part.WorldPos = 系统位置`）。观感是"**一团**被整体搬运"。
+   *
+   * 不给则 `attach` 是"出生点固化" ⇒ 老粒子留在原地形成**尾迹**（玩家施法弹要这个观感）。
+   */
+  rigidFollow?: boolean;
   /** 物理粒子爆发：给出时复制 count 份并按原版物理运动（见 BurstSpec） */
   burst?: BurstSpec;
 }
@@ -207,7 +214,7 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
         // ⚠ 这一跳此前**没有**把 `attach` / `velocity` 传下去 —— 而**`.part` 文件的飞出物
         //   走的正是这条**（不是 `spawnSystem` 那条，那条是"代码内 spec"）。
         //   所以"调用方给了初速度、粒子却不飞"的根因就在这儿：参数在最后一跳被丢掉。
-        parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity);
+        parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity, opts.rigidFollow);
         return true;
       }
       loaded++;
@@ -266,7 +273,7 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
       + ' 个，贴图 ' + JSON.stringify(part.diag.textures)
       + (part.diag.missing.length ? ' ⚠ 缺失 ' + part.diag.missing.join(',') : '')
       + '，跟随节点=' + !!opts.attach);
-    const handle = parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity);
+    const handle = parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity, opts.rigidFollow);
     partDiag = part.diag;
     if (part.diag.missing.length) {
       reportFallback('fx', `代码内 spec「${part.name}」贴图缺失：${part.diag.missing.join(', ')}`);
