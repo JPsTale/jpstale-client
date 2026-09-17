@@ -70,13 +70,18 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
 export function fireSkillCast(row: SkillFxRow | null, ctx: SkillFxFireCtx, pos: { x: number; y: number; z: number }): void {
   if (!row) return;
   for (const s of row.cast.sfx) ctx.playSound?.(s, pos);
-  // **起手法阵**。⚠ 玩家侧没有可引用的原版出处：`sinEffect_StartMagic` 全树 25 个调用者
-  //   全在 `character.cpp`（怪物 BeginSkill，逐怪一个），玩家侧只剩一个**调试键**
-  //   （`sinAssaSkillEffect.cpp:13` `sinEffect_StartMagic(&Posi, 2, 1)`）——
-  //   而 ex-machina 恰恰缺玩家侧技能调度器（`skill-fx.json` 的注释亦记"调用点在反编译中丢失"）。
-  //   故取**两个证人一致的部分**：`CharFlag = 2`（那处调试键是玩家对象；且 D_PR 原型就是祭司、
-  //   用的是 2）⇒ 祭司家族 = MAAM2。`Type = 1`（大法阵）只有调试键那一个证人，按"来源如此"采。
-  runCastCircle(ctx, pos, { charFlag: 2, type: 1 });
+  // **起手法阵**。玩家侧没有可引用的原版出处（`sinEffect_StartMagic` 全树 25 个调用者全在
+  //   `character.cpp` 的怪物 BeginSkill 里；玩家侧只剩一个**调试键**
+  //   `sinAssaSkillEffect.cpp:13` `sinEffect_StartMagic(&Posi, 2, 1)`，而 ex-machina 缺玩家侧
+  //   技能调度器 —— `skill-fx.json` 的注释亦记"调用点在反编译中丢失"）。
+  // 取值依据（按证据强弱）：
+  //   · `CharFlag = 2`：**两个证人一致**（调试键是玩家对象；D_PR 原型即祭司、用的就是 2）✓
+  //   · `Type = 0`：**祭司的强证人**是 D_PR（同 CharFlag、走默认 Type=0 ⇒ 56.25/72.66，
+  //     正好贴合 52 单位的法阵盘面）；而 `Type = 1` 只在那处**调试键**里出现（187.5/242 = 盘面
+  //     的 3.6 倍，观感上光环远在纹样之外 ⇒ 更像开发者试大号的开关，不是玩家取值）。
+  //     我起初按调试键取了 1，用户实测"这个法阵怎么这么大" ⇒ 改回 0。
+  //     `Type=1` 那条分支留在 `castCircleFamily` 里（源码确实有），需要时可传参启用。
+  runCastCircle(ctx, pos, { charFlag: 2, type: 0 });
 }
 
 /** 事件帧：原版 `EventSkill` 那一刻 —— 播技能音 + 起特效 */
