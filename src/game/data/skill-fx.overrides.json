@@ -11,6 +11,7 @@
       "事件帧时播放的音效"
     ],
     "animIndex": "覆盖动画索引；null 表示明确无专属动画",
+    "fx": "顶层的特效引用（数组；显式给 [] 即清空自动派生结果 —— event.fx 已由 code: 接管时用它消掉假告警）",
     "note": "依据说明"
   },
   "skills": {
@@ -40,6 +41,7 @@
       "note": "**跟踪弹**（两颗，左右 ±45°）—— 必须走代码：原版 `character.cpp:16338 case SKILL_PLAY_VIGOR_BALL → AssaParticle_VigorBall`，与怪物 D_PR 的 `'H'`（`:14912`）是**同一个函数**，靠「主 SetPos 拖尾 + 附加 SetAttachPos 贴体 + 每帧朝目标加速」组合出来（AssaParticle.cpp:5465 Main）。自动派生的 part:skill3priestessvigorball1/2 只是那两个粒子系统本身，原地播不出飞行（且玩家技能这条链此前没有 part: 加载器，等于什么都没播）。共用实现在 CODE_SKILL_FX.vigorball（spec 见 FX_VIGOR_BALL）。"
     },
     "Glacial Spike": {
+      "fx": [],
       "eventFx": [
         "code:glacialspike"
       ],

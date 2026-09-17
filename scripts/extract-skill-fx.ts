@@ -134,6 +134,13 @@ interface FxOverride {
   castSfx?: string[];
   /** 事件帧特效（覆盖匹配结果） */
   eventFx?: string[];
+  /**
+   * **顶层**特效引用（覆盖自动派生结果；显式给 `[]` 即清空）。
+   *
+   * 用途：当 `eventFx` 已由 `code:` 接管时，自动派生的 `lua:`/`part:` 引用会变成
+   * "每次遍历都报一次不播"的**假告警**（`fireSkillEvent` 遍历顶层 `fx` + `event.fx`）。
+   */
+  fx?: string[];
   /** 事件帧音效 */
   eventSfx?: string[];
   /** 动画索引覆盖（skill-mapping 缺失或不对时手填；null 表示明确"无专属动画"） */
@@ -257,7 +264,9 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
     //   (a) MainWindow.LoadScript(...)      —— 已捕获（Lua 家族）
     //   (b) AssaParticle_* / Skill* 等具名函数 —— 实现在 AssaParticle.cpp 等，**尚未跟踪**
     const codeFx = (codeRow?.effects ?? []).filter((t) => !IGNORE_FX.some((ig) => t.toLowerCase().includes(ig)));
-    const fx = ABSENT_IN_CLIENT.has(classDir) ? [] : (codeFx.length ? codeFx : fxRaw);
+    const ov = overridesBySkill[s.name];
+    // 顶层特效引用：覆盖表可显式给（含 `[]` 清空）——见 `FxOverride.fx` 的说明
+    const fx = ov?.fx ?? (ABSENT_IN_CLIENT.has(classDir) ? [] : (codeFx.length ? codeFx : fxRaw));
 
     let confidence: Row['confidence'];
     if (ABSENT_IN_CLIENT.has(classDir)) confidence = 'n/a';
@@ -268,7 +277,6 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
     else confidence = 'none';
 
     // 起手/事件帧拆分：默认"特效在事件帧、第一个音效在起手"，人工基准优先
-    const ov = overridesBySkill[s.name];
     const cast = { sfx: ov?.castSfx ?? (sfx.length >= 2 ? [sfx[0]!] : []) };
     const eventSfx = ov?.eventSfx ?? (sfx.length >= 2 ? sfx.slice(1) : sfx);
     const event = {

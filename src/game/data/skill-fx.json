@@ -3900,9 +3900,7 @@
    "classDir": "priestess",
    "icon": "mp60 g_spike.bmp",
    "name": "Glacial Spike",
-   "fx": [
-    "lua:skillcelestialglacialspike"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/morion/casting_p.wav",
     "wav/effects/skill/morion/glacialspike 01.wav",
