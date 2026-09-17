@@ -96,8 +96,17 @@ const SYSTEMS: ReadonlyArray<SystemDef> = [
 const num = (v: number): Num => ({ k: 'n', v });
 const rng = (a: number, b: number): Num => ({ k: 'r', a, b });
 
-/** 一条 Lua `ParticleSystem` → 我们的 `PartSystem`（单个 emitter）。`scale` 供实验室调参（默认 1） */
-function partOf(s: SystemDef, scale = 1): PartSystem {
+/**
+ * 一条 Lua `ParticleSystem` → 我们的 `PartSystem`（单个 emitter）。
+ *
+ * ⚠ **名字必须逐条唯一**：`quarks-runtime.spawnSystem` 用 `system.name` 作 `systemCache` 的键
+ * （`quarks-runtime.ts:280`）—— 五条同名 ⇒ 只有第一条被真正建出来，其余四条命中缓存拿到**同一份 spec**
+ * ⇒ 尺寸/时序全塌到第一条上（用户实测："三个冰块同时出现、而且在同一位置"）。故带下标。
+ *
+ * @param scale 诊断用的整体缩放（默认 1）
+ * @param index 本条在 `SYSTEMS` 里的下标（唯一名用）
+ */
+function partOf(s: SystemDef, index: number, scale = 1): PartSystem {
   const sz = (v: number) => num(v * scale);
   const e: PartEmitter = {
     name: '', blend: 'lamp', particleType: 1,       // 面朝向：Lua 没写 ⇒ 默认朝相机的广告板
@@ -123,7 +132,7 @@ function partOf(s: SystemDef, scale = 1): PartSystem {
     finalPartAngle: null, finalLocalAngle: null, finalVelocity: null,
     keyframes: {},
   };
-  return { name: 'GlacialSpike', version: 1, position: null, emitters: [e] };
+  return { name: `GlacialSpike#${index}`, version: 1, position: null, emitters: [e] };
 }
 
 export interface GlacialSpikeDeps {
@@ -177,9 +186,10 @@ export function runGlacialSpike(
     return { x: caster.x + off.x, y: caster.y + off.y, z: caster.z + off.z };
   };
 
-  for (const s of SYSTEMS) {
+  for (let i = 0; i < SYSTEMS.length; i++) {
+    const s = SYSTEMS[i]!;
     const at = worldOf(s.at.x + PARENT.x, s.at.y + PARENT.y, s.at.forward + PARENT.forward);
-    void deps.effects.spawnSystem(partOf(s, scale), { pos: at });
+    void deps.effects.spawnSystem(partOf(s, i, scale), { pos: at });
     deps.log?.(`  ❄ 冰枪粒子：size ${(s.size[0] * scale).toFixed(0)}×${(s.size[1] * scale).toFixed(0)}`
       + `（${s.count} 颗）→ 前方 ${((s.at.forward + PARENT.forward) * scale).toFixed(0)}　${s.line}`);
   }

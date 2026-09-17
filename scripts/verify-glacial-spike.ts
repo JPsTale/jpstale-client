@@ -67,13 +67,15 @@ for (const deg of [0, 90]) {
     `蓝光 = ${light ? (light as number[]).slice(3).join(',') : '未设'}（应含 b=100 / power=700）`);
 }
 
-console.log('\n①b 网格与"越远越大"（按尺寸排）');
+console.log('\n①b 网格与"越远越大"（按尺寸排）+ 名字唯一性');
 {
   const sizes: number[] = [];
+  const names: string[] = [];
   const { runGlacialSpike } = await import('../src/render/effects/glacial-spike.js');
   runGlacialSpike(
     {
-      effects: { spawnSystem: (s: { emitters: Array<{ initialSize?: { v: number } }> }) => {
+      effects: { spawnSystem: (s: { name: string; emitters: Array<{ initialSize?: { v: number } }> }) => {
+        names.push(s.name);
         sizes.push(s.emitters[0]?.initialSize?.v ?? 0); return null; } },
       scene: { add: () => {} }, dynLights: null, log: () => {},
     } as never,
@@ -81,6 +83,11 @@ console.log('\n①b 网格与"越远越大"（按尺寸排）');
   );
   const big = sizes.filter((s) => s >= 40);
   ok(big.join(',') === '40,50,60', `大冰块尺寸 = ${big.join(',')}（应 40,50,60 ⇒ 越远越大）`);
+  // ⚠ **名字必须逐条唯一**：`quarks-runtime.spawnSystem` 用 `system.name` 作 systemCache 的键 ——
+  //    同名时只有第一条被建出来、其余命中缓存拿到同一份 spec
+  //    （用户实测："三个冰块同时出现、而且在同一位置"就是它）。
+  ok(new Set(names).size === names.length,
+    `5 条 spec 名字互不相同（实际：${names.join(', ')}）`);
 }
 
 console.log('\n③ 资产');
