@@ -82,7 +82,7 @@ export function runMultiSpark(
     return null;
   }
   const nodes: THREE.Object3D[] = [];
-  return createMultiSpark(v3(caster), target ? v3(target) : null, num, {
+  const handle = createMultiSpark(v3(caster), target ? v3(target) : null, num, {
     moveMain: (i, pos) => {
       let node = nodes[i];
       if (!node) {
@@ -127,4 +127,8 @@ export function runMultiSpark(
       ctx.log?.('    ✦ MultiSpark 45 帧走完（第 30 帧改瞄、第 44 帧命中）');
     },
   });
+  // ★ **必须登记**，否则 `updateMultiSparkRunners` 无事可做、火花只在创建时被摆一次位置
+  //   （实测踩到：这行当时漏了 —— 表现为"火花出现了但不飞、也没有命中"）
+  live.push(handle);
+  return handle;
 }
