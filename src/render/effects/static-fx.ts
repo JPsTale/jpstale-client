@@ -84,16 +84,28 @@ export async function loadStaticSmd(
   root.name = 'static-fx:' + p;
 
   for (const obj of smd.objects) {
-    // **对象自带的局部变换**（每个 `obj` 都有自己的 `posi` / `angle`）—— 多块拼成的网格全靠它摆位。
-    // ⚠ 此前这里只用裸顶点 ⇒ 所有对象叠在原点：`pt_4-1-25.smd` 是 **12 块冰**，
-    //   于是"冰块都在一个位置"（用户实测）。角色模型没露过这个问题，是因为它们靠**骨骼绑定矩阵**摆位。
-    // 单位：顶点在解析时已 ÷256，`posi` 也是定点 ⇒ 同样 ÷256；`angle` 是 PT 角制式（4096）直接可用。
-    // 旋转顺序用 `getMoveLocation`（PT 的 Z→X→Y 同一套），再统一 Z-up → Y-up。
+    // **对象自带的变换** —— 多块拼成的网格全靠它摆位。
+    // ⚠ 此前这里只用裸顶点 ⇒ 所有对象叠在原点：`pt_4-1-25.smd` 是 12 块自成一体的尖刺
+    //   （名字叫 `Box01/Box11…Box21`），于是"冰块都在一个位置"（用户实测）。
+    //   角色模型没露过这个问题，是因为它们靠**骨骼绑定矩阵**摆位。
+    //
+    // 实测（2026-09-18，逐对象打印）：
+    //   · `posi` / `angle` 全 0、`tmFrameCnt` = 0 ⇒ 静态网格、无关键帧；
+    //   · **`tmRotate` 是有效旋转**（`{m:[16]}`，3×3 以 256 定标 + 末位 256）⇒ **各块朝向不同**；
+    //   · `tm` 里含平移，但那份数值的定标（÷256 还是 ÷256²）**我无法从数据判定** ⇒ **只应用旋转**，
+    //     平移留空（否则会凭猜测把整簇挪到几百单位外）。
+    //   `mWorld` / `tmResult` / `mLocal` 全是未初始化噪声（绑定流程没跑），不可用。
     const op = obj.posi ?? { x: 0, y: 0, z: 0 };
     const oa = obj.angle ?? { x: 0, y: 0, z: 0 };
+    const tm = (obj.tmRotate as unknown as { m?: number[] } | undefined)?.m;
+    const rot = tm && tm.length === 16
+      ? new THREE.Matrix4().fromArray(tm.map((v) => v / 256))
+      : null;
     const put = (vx: number, vy: number, vz: number): [number, number, number] => {
       const r = getMoveLocation(vx, vy, vz, oa.x, oa.y, oa.z);
-      return toYup(r.x + op.x / FONE, r.y + op.y / FONE, r.z + op.z / FONE);
+      // 对象自身的旋转（`tmRotate`，PT 空间里先转，再统一 Z-up → Y-up）
+      const v = rot ? new THREE.Vector3(r.x, r.y, r.z).applyMatrix4(rot) : r;
+      return toYup(v.x + op.x / FONE, v.y + op.y / FONE, v.z + op.z / FONE);
     };
     // 顶点按**面**展开（UV 是逐面的，同 `buildSkinnedMesh` 的做法）
     let tri = 0;
