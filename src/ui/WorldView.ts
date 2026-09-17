@@ -1811,17 +1811,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       return;
     }
-    // 起点骨：武器挂着就用武器骨（父节点即骨）；**空手时退到右手武器骨 `Bip weapon01`**
-    // —— 法师/祭司/萨满**空手普攻也施法**（用户实测），没有武器骨就发不出来。
-    // 这与原版 `GetAttackPoint()`（`character.cpp:283` 取 `HvRightHand.ObjBip`）是同一个位置，
-    // 不是"降级"：手骨本来就是空手施法的出手点。
-    const bone = mount?.group?.parent
-      ?? findBone(root, WEAPON_BONES.RIGHT_HAND)
-      ?? findBone(root, WEAPON_BONES.LEFT_HAND);
-    if (!bone) {
-      console.log('[projectile] 跳过：找不到出手骨（武器骨/右手/左手都没有）');
-      return;
-    }
     // 落点 = **命中特效（白光 NormalHit1）打的那一点**（目标身体中部）——
     // 不是脚下的 root.position（用户实测"箭的目标位置与视觉不符"就是这个）
     const to = unitBodyAnchor(targetId) ?? attackTargetPos(targetId);
@@ -1829,12 +1818,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       console.log('[projectile] 跳过：目标 ' + targetId + ' 不在场内（拿不到落点）');
       return;
     }
-    const from = bone.getWorldPosition(new THREE.Vector3());
-    // 原版出手点 = 武器骨 + **沿武器伸出方向偏移「半个武器长度」**：
-    // `GetAttackPoint`（exm `character.cpp:301`）取 `tz = ChrTool->SizeMax / 2` 沿武器骨的局部 Z 偏移，
-    // 而 `SizeMax` 是装武器时从 mesh 量的（`:1413-1424`，遍历子网格取 maxY）。
-    // 方向这里取"骨 → 武器组包围盒中心"（即武器伸出方向），长度取 `weaponSizeMax`——
-    // 与原版同义，且不依赖"模型以 Y 为长轴"的建模约定（我方做过 Z-up→Y-up 转换）。
+    // ★ **出手点 = 纯几何量**（用户 2026-09-17 裁定，台账 §20.4）：
+    //   原版射击系统给的是 `ShootingPosi = (pX, pY + 34 * fONE, pZ)`（`character.cpp:3752`）
+    //   ⇒ 射手世界坐标 + **34 世界单位**竖直。**不再用骨骼定位**：骨骼名是模型相关的
+    //   （换角色/换怪可能就是错的骨、甚至没有那根骨 —— 本项目已多次栽在"押资产命名"上）。
+    //   附带收益：不再有"找不到出手骨就发不出来"的分支。
+    const from = root.getWorldPosition(new THREE.Vector3());
+    from.y += 34;
+    // 沿武器伸出方向再偏移「半个武器长度」：原版 `GetAttackPoint`（exm `character.cpp:301`）
+    // 取 `tz = ChrTool->SizeMax / 2` 沿武器偏移，`SizeMax` 从 mesh 量（`:1413-1424`）。
+    // 方向取"出手点 → 武器组包围盒中心"（= 武器伸出方向）——**只用 mesh，不看骨骼名** ✓
+    //（起点已改为几何量，见上；本偏移属原版 `GetAttackPoint` 的机制，与"骨骼定位"无关）
     {
       const wg = mount?.group;
       const sizeMax = wg ? weaponSizeMax(wg) : 0;
@@ -1845,7 +1839,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     // 飞行时长 = "放箭 → 事件帧"那段动画时间（于是到达时刻 = 事件帧）；取不到事件帧则按弹速兜底
     const flightTime = releaseFlightTime(eventFrame, rate);
-    console.log('[projectile] 发射 kind=' + choice.kind + ' 从 ' + bone.name
+    console.log('[projectile] 发射 kind=' + choice.kind + ' 从 脚上+34'
       + ' (' + from.x.toFixed(1) + ',' + from.y.toFixed(1) + ',' + from.z.toFixed(1) + ')'
       + ' → 目标 ' + targetId + ' (' + to.x.toFixed(1) + ',' + to.y.toFixed(1) + ',' + to.z.toFixed(1) + ')'
       + ' 飞行=' + (flightTime !== undefined ? flightTime.toFixed(3) + 's' : '按弹速')
