@@ -89,6 +89,15 @@ export interface EffectManager {
   /** 播放一个特效：先按 INI 广告牌解析，找不到再按 `.part` 粒子脚本解析 */
   spawn(name: string, opts: SpawnOpts): Promise<boolean>;
   /**
+   * 同 `spawn`，但返回**可停止句柄**（原版 `SetStop` → `FadeStop`：停发，已在飞的粒子自然消亡）。
+   *
+   * 飞出物到点必须停发，否则粒子会一直堆在命中点 —— 原版 `AssaParticle.cpp` 的 VigorBall 到点就是
+   * 一对 `SetStop(ParticleID)` / `SetFastStop(ParticleIDExt1)`。只覆盖 `.part` 那条路：
+   * 飞出物用的都是 `.part`；名字若其实是 INI 广告牌则返回 null **并上报**
+   * （那条路是一次性播完的形态，没有句柄可给）。
+   */
+  spawnStoppable(name: string, opts: SpawnOpts): Promise<QuarksPartHandle | null>;
+  /**
    * 播放一份**代码内 spec**（没有数据文件的那类原版特效，如法杖普攻弹 `MONSTER_IMP_SHOT1`）。
    * `opts.attach` 给出时粒子跟随该节点（飞行投射物），尾迹留在身后。
    * 返回**可停止的句柄**（飞行物到点要 `stop()`，否则粒子会堆在命中点上）——失败返回 null。
@@ -181,6 +190,29 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
   }
 
   /**
+   * `.part` 专用：**拿到可停止句柄**（复用 `spawn` 同一份解析与转换，不写第二份）。
+   *
+   * 见接口处的说明：飞出物到点要 `stop()`（原版 `SetStop`/`FadeStop`）。
+   */
+  async function spawnStoppable(
+    name: string, opts: SpawnOpts,
+  ): Promise<QuarksPartHandle | null> {
+    pending++;
+    try {
+      const part = await loadPart(name);
+      if (!part) {
+        reportFallback('fx', `「${name}」要可停止句柄，但它不是 .part 资产（INI 广告牌那条路没有句柄）`);
+        return null;
+      }
+      loaded++;
+      partDiag = part.diag;
+      return await spawnViaQuarks(part.system, opts, part.name);
+    } finally {
+      pending--;
+    }
+  }
+
+  /**
    * **代码内 spec → quarks**（唯一入口）。
    *
    * `pos` / `scale` / `attach` / `rigidFollow` / `velocity` 全部透传给 quarks（见
@@ -231,6 +263,7 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
 
   return {
     spawn,
+    spawnStoppable,
     spawnSystem,
     update,
     clear,

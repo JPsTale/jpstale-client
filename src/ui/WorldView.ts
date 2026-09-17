@@ -4205,7 +4205,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
                 }
                 runMonsterFly(
                   {
-                    spawn: (a, o) => fxMgr.spawn(a, o),
+                    // `spawnStoppable`：到点要 `stop()`（原版 `SetStop`），否则粒子堆在命中点
+                    spawn: (a, o) => fxMgr.spawnStoppable(a, o),
                     addToScene: (o) => scn.add(o),
                     dynLight: dynLights,
                   },

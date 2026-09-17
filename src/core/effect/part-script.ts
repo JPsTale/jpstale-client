@@ -201,6 +201,27 @@ function numOf(v: PartValue | undefined): Num | null {
 function vecOf(v: PartValue | undefined): Vec3 | null {
   return v && v.k === 'vec' ? v.v : null;
 }
+
+/**
+ * 取"角度/朝向"这类字段 —— **两种写法都要吃**（资产里两种都有）：
+ *
+ *   `initial partAngle  = xyz(0,0,random(0,360))`   ← 向量写法
+ *   `initial partAngleZ = random(0,360)`            ← 单轴标量写法（归一后键是 `initial partanglez`）
+ *
+ * ⚠ 此前只查向量写法 ⇒ **标量写法被静默丢弃**（VigorBall 三个脚本全是这一种）：
+ *   每个粒子的初始朝向都一样、也没有"朝向随时间变"的终点值 ⇒
+ *   看上去像"所有粒子一个样、不动"（用户实测："飞行过程中的粒子似乎没有序列帧动画"）。
+ *   与 `parseValue` 里那次"裸标识符整行丢弃"是同一类错误：**没匹配上就当没写**。
+ */
+function axisVecOf(kv: Map<string, PartValue>, base: string): Vec3 | null {
+  const v = vecOf(kv.get(base));
+  const ax = numOf(kv.get(base + 'x'));
+  const ay = numOf(kv.get(base + 'y'));
+  const az = numOf(kv.get(base + 'z'));
+  if (!v && !ax && !ay && !az) return null;
+  const zero: Num = { k: 'n', v: 0 };
+  return { x: ax ?? v?.x ?? zero, y: ay ?? v?.y ?? zero, z: az ?? v?.z ?? zero };
+}
 function colOf(v: PartValue | undefined): Rgba | null {
   return v && v.k === 'color' ? v.v : null;
 }
@@ -292,13 +313,13 @@ function buildEmitter(kv: Map<string, PartValue>): PartEmitter {
     initialSize: numOf(g('initial size')),
     initialSizeExt: numOf(g('initial sizeext')),
     initialColor: colOf(g('initial color')),
-    initialPartAngle: vecOf(g('initial partangle')),
-    initialLocalAngle: vecOf(g('initial localangle')),
+    initialPartAngle: axisVecOf(kv, 'initial partangle'),
+    initialLocalAngle: axisVecOf(kv, 'initial localangle'),
     finalColor: colOf(g('fade so final color')),
     finalSize: numOf(g('fade so final size')),
     finalSizeExt: numOf(g('fade so final sizeext')),
-    finalPartAngle: vecOf(g('fade so final partangle')),
-    finalLocalAngle: vecOf(g('fade so final localangle')),
+    finalPartAngle: axisVecOf(kv, 'fade so final partangle'),
+    finalLocalAngle: axisVecOf(kv, 'fade so final localangle'),
     finalVelocity: vecOf(g('fade so final velocity')),
     keyframes,
   };

@@ -112,10 +112,22 @@ export interface MonsterFlySpec {
   /**
    * **附加**粒子系统（原版 `AssaParticle_VigorBall`：`hoAssaParticleEffect.cpp:4181`
    * `ParticleIDExt1 = g_NewParticleMgr.Start("Skill3PriestessVigorBall2", pos)`）——
-   * 主粒子用本条的 `asset`（原版 `SetPos` 逐帧覆盖 ⇒ 整团搬运），附加的同样挂到载体上
-   * （原版 `SetAttachPos`）。
+   * 与主粒子**同时在飞**（不是"多候选挑一个"，那才是 `asset` 数组的语义）。
    */
-  systems?: Array<{ asset: string }>;
+  systems?: Array<{
+    asset: string;
+    /**
+     * 该系统是否**整团跟随**载体 —— 照抄原版的两种调用（别一刀切）：
+     * `SetAttachPos` ⇒ `true`（粒子随载体平移）；`SetPos` ⇒ `false`（只移发射点，
+     * 已发射的**粒子留在原地** ⇒ 拖尾）。缺省 `false`。
+     */
+    follow?: boolean;
+  }>;
+  /**
+   * **主粒子**是否整团跟随载体（原版对主系统的那一次调用）：`SetAttachPos` ⇒ `true`、
+   * `SetPos` ⇒ `false`（拖尾）。缺省 `false`（拖尾是更常见的设计，但**每个条目都显式写**）。
+   */
+  follow?: boolean;
   /** **直线**模式：世界单位/秒（原版 `AssaParticle.cpp:7474` 每帧 `step = 5*fONE + 100` ⇒ ≈323/秒） */
   speed?: number;
   /**
@@ -215,6 +227,8 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
     //   （≈5.39 世界单位/帧）⇒ 60fps 下约 323/秒。终点 = 目标 `pY + 24*fONE`。
     fly: {
       speed: 323,
+      // 原版 `AssaRunicGuardianShot::Main`（`AssaParticle.cpp:7516`）用 `SetAttachPos` ⇒ 整团搬运
+      follow: true,
       hit: { dynLight: { r: 255, g: 150, b: 50, a: 255, power: 200, decPower: 2 } },
     },
     note: 'character.cpp:4606 / hoAssaParticleEffect.cpp:5530-5539 / AssaParticle.cpp:7443,7474,7495',
@@ -273,7 +287,11 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
         sound: ['wav/effects/skill/morion/vigorball 1.wav',
           'wav/effects/skill/morion/vigorball 2.wav'],
         fly: {
-          systems: [{ asset: 'Skill3PriestessVigorBall2' }],
+          // 跟随语义照抄原版那两次调用（`AssaParticle.cpp:5510-5520` 的 Main）：
+          //   主 `SetPos` ⇒ 只移发射点、已发射的**粒子留在原地 = 拖尾**；
+          //   附加 `SetAttachPos` ⇒ 整团搬运（贴体光晕）。
+          follow: false,
+          systems: [{ asset: 'Skill3PriestessVigorBall2', follow: true }],
           lift: 5000 / FONE,                  // ≈19.5 世界单位
           yawOffsetDeg: 45,
           mirrorByMotionEvent: true,          // 两个事件帧各一颗，左右各一（`MotionEvent == 1` 取负）

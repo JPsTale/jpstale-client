@@ -27,7 +27,7 @@ import * as THREE from 'three';
 import { ParticleSystem, RenderMode } from 'three.quarks';
 import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
-  SizeOverLife, ColorOverLife, ApplyForce,
+  SizeOverLife, ColorOverLife, ApplyForce, RotationOverLife,
   Vector3 as QVec3,
   type Behavior, type EmitterShape, type RotationGenerator,
   type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
@@ -186,6 +186,47 @@ export class RandomOrientation implements RotationGenerator {
   }
   toJSON(): { type: string } { return { type: this.type }; }
   clone(): RotationGenerator { return new RandomOrientation(); }
+}
+
+/**
+ * **初始面内旋转**：`.part` 的 `initial partAngleZ`（**度**，可 `random(a,b)`）→ 广告板的标量弧度。
+ *
+ * 为什么必须是 Behavior：广告板的朝向存在 `particle.rotation`（**number**，见 quarks
+ * `RotationOverLife.update` 的 `typeof particle.rotation === 'number'` 判据），
+ * 而 quarks **没有** `startRotation` 这个字段（`quarks.core` 的导出表里查不到 ——
+ * 我们表里那个 `startRotation` 一直是**死参数**，写进去从不生效）。
+ * Behavior 的 `initialize(particle)` 由 `three.quarks:1061` 在出生时调用 ⇒ 初值写在这里。
+ *
+ * ⚠ x/y 分量表达不了（要给广告板加倾斜，quarks 的 billboard 没这个自由度）⇒ `convertPart` 里上报。
+ */
+export class PtInitialRotation implements Behavior {
+  type = 'PtInitialRotation';
+  constructor(private degZ: Num) {}
+  initialize(p: { rotation?: unknown }): void {
+    if (typeof p.rotation === 'number') p.rotation = (roll(this.degZ) * Math.PI) / 180;
+  }
+  update(): void { /* 只写初值 */ }
+  frameUpdate(): void { /* 无 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): PtInitialRotation { return new PtInitialRotation(this.degZ); }
+  reset(): void { /* 无状态 */ }
+}
+
+/** Mesh（TYPE_FIVE）模式的初始随机朝向 —— 同上，`startRotation` 不生效 ⇒ 用 Behavior 写四元数 */
+export class MeshRandomOrientation implements Behavior {
+  type = 'MeshRandomOrientation';
+  private g = new RandomOrientation();
+  initialize(p: { rotation?: unknown }): void {
+    const q = p.rotation;
+    if (q && typeof q === 'object') {
+      this.g.genValue(null as unknown as GeneratorMemory, q as Quaternion);
+    }
+  }
+  update(): void { /* 只写初值 */ }
+  frameUpdate(): void { /* 无 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): MeshRandomOrientation { return new MeshRandomOrientation(); }
+  reset(): void { /* 无状态 */ }
 }
 
 /** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
@@ -421,6 +462,30 @@ export function convertPart(
     const gx = g ? midOf(g.x, 0) : 0, gy = g ? midOf(g.y, 0) : 0, gz = g ? midOf(g.z, 0) : 0;
     if (gx || gy || gz) behaviors.push(new ApplyForce(new QVec3(gx, gy, gz), new ConstantValue(1)));
 
+    // **面内旋转**（`.part` 的 `partAngleZ`，度）：初值 + 自转。
+    // 此前**整块被丢掉** ⇒ 每个粒子朝向一样、看着像静止贴片（用户实测："粒子似乎没有序列帧动画"）。
+    if (em.particleType === 5) {
+      behaviors.push(new MeshRandomOrientation());
+    } else {
+      const a0 = em.initialPartAngle;
+      const a1 = em.finalPartAngle;
+      if (a0 && (roll(a0.x) !== 0 || roll(a0.y) !== 0)) {
+        notes.push('partAngle 的 x/y 分量非零 ⇒ 广告板只有面内旋转（z 分量）被表达，x/y 未表达');
+      }
+      const z0 = a0?.z ?? null, z1 = a1?.z ?? null;
+      if (z0) behaviors.push(new PtInitialRotation(z0));
+      if (z1) {
+        // 原版是"朝向沿寿命**线性**变"，而 quarks 只有 `RotationOverLife`（**角速度**）
+        // ⇒ 用 Δ角/寿命 折算成匀速自转，等价于那个线性插值
+        const life = Math.max(0.05, midOf(em.lifetime, 1));
+        const omega = ((midOf(z1) - midOf(z0 ?? { k: 'n', v: 0 })) * Math.PI) / 180 / life;
+        if (Math.abs(omega) > 1e-3) {
+          behaviors.push(new RotationOverLife(new ConstantValue(omega)));
+          notes.push(`partAngleZ 的起止不同 ⇒ 按 Δ/寿命 折算匀速自转 ${((omega * 180) / Math.PI).toFixed(1)}°/s`);
+        }
+      }
+    }
+
     const system = new ParticleSystem({
       // 有 delay 时发射窗口要覆盖到"延迟 + 一段"，否则 quarks 在 delay 之前就结束系统
       duration: em.delay > 0 ? em.delay + emitDur : emitDur,
@@ -454,7 +519,8 @@ export function convertPart(
       // 属我方决定，与 PT 参数不是一对一。
       // Mesh 模式（我方扩展 = 世界朝向面片）：几何取单位平面 + 逐粒子随机四元数朝向
       instancingGeometry: em.particleType === 5 ? ORIENTED_UNIT_QUAD : undefined,
-      startRotation: em.particleType === 5 ? new RandomOrientation() : undefined,
+      // ⚠ `startRotation` **不是 quarks 的字段**（导出表里没有 ⇒ 死参数，从不生效）：
+      // 朝向改由 behaviors 里的 `MeshRandomOrientation` / `PtInitialRotation` 写（见下）
       rendererEmitterSettings: em.particleType === 4
         ? { startLength: numGen(em.initialSizeExt ?? em.initialSize, 20) }
         : undefined,

@@ -21,22 +21,34 @@
  * ⚠ 积分按**帧**推进（`dt*60` 折帧，余量留到下一帧）：原版的加速度/阻尼/上限全是"每帧"的量，
  *   按 dt 直接积分会让 120Hz 与 60Hz 飞出不同的轨迹（MultiSpark 那份同理）。
  *
- * ⚠ 载体节点在**到达后延时摘除**：原版到点走 `SetStop`/`SetFastStop`（不再发射、已有粒子播完
- *   自己消亡）。我们加载的 `.part` 没有停止句柄（`spawn` 只回 `Promise<boolean>`），
- *   所以既不能立刻摘（粒子会瞬间全灭，命中那一下就没有了）、也不能永不摘（节点泄漏）。
- *   延时值 `RETIRE_FRAMES` 是**我方资源管理决定**，不是原版数值。
+ * ⚠ 到点**必须停发**（原版 `SetStop`/`SetFastStop` → `FadeStop`）：用 `EffectManager.spawnStoppable`
+ *   拿句柄；少了这一刀，粒子会在命中点一直堆（用户实测"飞到目标位置后不消失"）。
+ *   载体节点随后再留 `RETIRE_FRAMES` 帧才摘（停发后粒子按自己的寿命消亡，留时间给它们播完；
+ *   该时长是**我方资源管理决定**，不是原版数值）。
+ *
+ * ⚠ 跟随语义**逐系统**取值（原版两种调用，别一刀切）：
+ *   `SetAttachPos` = 整团搬运（`follow: true`）/ `SetPos` = 只移发射点 ⇒ 粒子留在原地 = **拖尾**
+ *   （`follow: false`）。VigorBall 就是"主系统拖尾 + 附加系统贴体"的组合。
  */
 import * as THREE from 'three';
 import { getMoveLocation, radToPtAngle } from '../../core/geom.js';
 import type { MonsterFlySpec } from './monster-attack-fx.js';
 
+/** 可停止句柄的最小契约（`QuarksPartHandle`）—— 到点停发 = 原版 `SetStop`/`FadeStop` */
+export interface FlyHandle { stop(): void }
+
 export interface FlyDeps {
-  /** 起粒子（`EffectManager.spawn`）—— 名字即 `.part`/INI 资产名 */
+  /**
+   * 起粒子 —— 名字即 `.part` 资产名。
+   *
+   * ⚠ 必须用 `EffectManager.spawnStoppable`（**不是** `spawn`）：飞出物到点要停发，
+   *   否则粒子会在命中点一直堆（原版那一对 `SetStop`/`SetFastStop`）。
+   */
   spawn: (asset: string, opts: {
     pos: { x: number; y: number; z: number };
     attach?: THREE.Object3D;
     rigidFollow?: boolean;
-  }) => void | Promise<boolean>;
+  }) => FlyHandle | null | Promise<FlyHandle | null>;
   /** 载体节点要进场景（three 只对场景内的对象推进世界矩阵） */
   addToScene: (o: THREE.Object3D) => void;
   /** 到达时的动态光（原版 `SetDynLight`）。没传则跳过 */
@@ -56,8 +68,13 @@ export interface FlyLaunch {
   motionEvent?: number;
 }
 
-/** 到达后载体保留多少帧再摘（我方资源管理决定，见文件头） */
-const RETIRE_FRAMES = 240;
+/**
+ * 到达（已 `stop()`）后载体再留多少帧才摘。
+ *
+ * 停发后剩下的粒子按自己的寿命消亡（VigorBall 脚本里最长 0.5~1.0 s）⇒ 留 2 秒足够它们播完；
+ * 再长就是白占场景（节点泄漏）。**这是我方资源管理决定，不是原版数值**。
+ */
+const RETIRE_FRAMES = 120;
 
 /**
  * 发射偏航偏移（弧度）—— **唯一实现**。
@@ -84,8 +101,22 @@ interface LiveFly {
   asset: string;
   frames: number;
   done: boolean;
+  /** 已停发（到点或已到达）—— 迟到的句柄要按这个补一刀 */
+  stopped: boolean;
+  /** 各粒子系统的句柄（到点 `stop()`） */
+  handles: FlyHandle[];
   retire: number;
   deps: FlyDeps;
+}
+
+/** 起一个粒子系统并**收好句柄** —— 句柄可能比飞行还晚到（`.part` 载入是异步的），故按 `stopped` 补刀 */
+function take(l: LiveFly, asset: string, follow: boolean): void {
+  const h = l.deps.spawn(asset, { pos: l.pos, attach: l.node, rigidFollow: follow });
+  void Promise.resolve(h).then((handle) => {
+    if (!handle) return;
+    if (l.stopped) handle.stop();
+    else l.handles.push(handle);
+  });
 }
 
 const live: LiveFly[] = [];
@@ -118,17 +149,17 @@ export function runMonsterFly(
     pos: node.position.clone(),
     lastTarget: new THREE.Vector3(),
     target: launch.target,
-    fly, asset, frames: 0, done: false, retire: RETIRE_FRAMES, deps,
+    fly, asset, frames: 0, done: false, stopped: false, handles: [], retire: RETIRE_FRAMES, deps,
   };
   const t0 = launch.target();
   if (t0) l.lastTarget.set(t0.x, t0.y, t0.z);
   live.push(l);
 
-  // 主粒子：`rigidFollow` ⇒ 整团被搬运（原版 `SetPos`）；附加系统同挂（原版 `SetAttachPos`）
-  void deps.spawn(asset, { pos: launch.pos, attach: node, rigidFollow: true });
-  for (const s of fly.systems ?? []) {
-    void deps.spawn(s.asset, { pos: launch.pos, attach: node, rigidFollow: true });
-  }
+  // 跟随语义**逐个系统照抄原版**（不是一刀切）：
+  //   `SetAttachPos` ⇒ `follow: true`（整团被搬运 —— 如 RunicGuardian、VigorBall 的附加系统）
+  //   `SetPos`      ⇒ `follow: false`（只移发射点，**粒子留在原地 = 拖尾** —— VigorBall 的主系统）
+  take(l, asset, fly.follow === true);
+  for (const s of fly.systems ?? []) take(l, s.asset, s.follow === true);
   deps.log?.(`  ✈ 飞出物 ${asset}${fly.systems?.length ? ` +${fly.systems.length}` : ''} 起飞（`
     + `${fly.homing ? '跟踪' : '直线'}`
     + `${fly.yawOffsetDeg ? `，偏航 ${((flyYawOffsetRad(fly, motionEvent) * 180) / Math.PI).toFixed(0)}°` : ''}）`
@@ -186,9 +217,15 @@ function stepFly(l: LiveFly): void {
 
 function arrive(l: LiveFly, dist: number): void {
   l.done = true;
+  l.stopped = true;
+  // **停发**（原版到点那一对 `SetStop`/`SetFastStop` → `FadeStop`：不再发射，已在飞的粒子自行消亡）。
+  // 少了这一刀，粒子会在命中点一直堆 —— 用户实测"飞到目标位置后不消失"就是这个。
+  const n = l.handles.length;
+  for (const h of l.handles) h.stop();
+  l.handles.length = 0;
   const hit = l.fly.hit;
-  l.deps.log?.(`    ✈ 飞出物 ${l.asset} 到达（距目标 ${dist.toFixed(1)} 单位）`
-    + `${hit?.asset ? ` → 命中 ${hit.asset}` : ''}${hit?.dynLight ? ' + 动态光' : ''}`);
+  l.deps.log?.(`    ✈ 飞出物 ${l.asset} 到达（距目标 ${dist.toFixed(1)} 单位）→ 停发 ${n} 个系统`
+    + `${hit?.asset ? `，命中 ${hit.asset}` : ''}${hit?.dynLight ? ' + 动态光' : ''}`);
   if (hit?.asset) void l.deps.spawn(hit.asset, { pos: l.pos });
   if (hit?.dynLight) {
     const d = hit.dynLight;
