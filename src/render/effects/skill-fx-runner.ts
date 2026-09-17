@@ -15,6 +15,7 @@
 
 import skillFx from '../../game/data/skill-fx.json';
 import { runMultiSpark, type MultiSparkRunnerCtx } from './multi-spark-runner.js';
+import { runCastCircle } from './cast-circle-runner.js';
 
 /** 技能表的一行（`skill-fx.json` 的形状） */
 export interface SkillFxRow {
@@ -69,9 +70,13 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
 export function fireSkillCast(row: SkillFxRow | null, ctx: SkillFxFireCtx, pos: { x: number; y: number; z: number }): void {
   if (!row) return;
   for (const s of row.cast.sfx) ctx.playSound?.(s, pos);
-  // ⚠ 起手法阵尚未接：玩家侧的 `CharFlag`/`Type` 我只在源码里见到**调试键**那一处
-  //   （`sinAssaSkillEffect.cpp:13`，`sinEffect_StartMagic(&Posi, 2, 1)` ⇒ Type=1 = 大法阵
-  //   4800*10/6200*10），不足以当定论，故先不接并记在此（不静默）。
+  // **起手法阵**。⚠ 玩家侧没有可引用的原版出处：`sinEffect_StartMagic` 全树 25 个调用者
+  //   全在 `character.cpp`（怪物 BeginSkill，逐怪一个），玩家侧只剩一个**调试键**
+  //   （`sinAssaSkillEffect.cpp:13` `sinEffect_StartMagic(&Posi, 2, 1)`）——
+  //   而 ex-machina 恰恰缺玩家侧技能调度器（`skill-fx.json` 的注释亦记"调用点在反编译中丢失"）。
+  //   故取**两个证人一致的部分**：`CharFlag = 2`（那处调试键是玩家对象；且 D_PR 原型就是祭司、
+  //   用的是 2）⇒ 祭司家族 = MAAM2。`Type = 1`（大法阵）只有调试键那一个证人，按"来源如此"采。
+  runCastCircle(ctx, pos, { charFlag: 2, type: 1 });
 }
 
 /** 事件帧：原版 `EventSkill` 那一刻 —— 播技能音 + 起特效 */

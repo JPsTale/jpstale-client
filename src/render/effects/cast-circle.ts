@@ -44,17 +44,58 @@
 import type { PartSystem } from '../../core/effect/part-script.js';
 import { FONE } from '../../core/geom.js';
 
-/** 两张光环的贴图（`image/sinimage/assaeffect/startmagic/p/` 下） */
-export const CAST_CIRCLE_TEX = 'image\\sinimage\\assaeffect\\startmagic\\p\\maam2.tga';
-export const CAST_RING_TEX = 'image\\sinimage\\assaeffect\\startmagic\\p\\star05q_03.bmp';
+/**
+ * 两个**家族**（原版 `sinEffect_StartMagic` 的 `CharFlag`）与两个**量级**（`Type`）。
+ *
+ * ```
+ * CharFlag == 1 → MAAM1.ASE + mama.dds  + star05C_03.dds
+ * CharFlag == 2 → MAAM2.ASE + maam2.dds + star05Q_03.dds    ← 祭司
+ * Type != 0     → 恒用 MAAM2 家族，但 Size.w 是 4800*10 / 6200*10（大一圈）
+ * Type == 0     → 按 CharFlag（CharFlag=1 时 5300*3 / 6200*3）
+ * ```
+ * 出处：`sinSkillEffect.cpp:1697-1743`（ex-machina，本机可读）。
+ */
+export interface CastCircleFamily {
+  /** 法阵本体（静态 `.smd`；原版 `MAAM{1,2}.ASE`） */
+  mesh: string;
+  circleTex: string;
+  ringTex: string;
+  /** `Size.w` 的**原始实参**（`4800 * 3` 这种）——除以 `FONE` 才是世界单位 */
+  circleW: number;
+  ringW: number;
+}
+export function castCircleFamily(charFlag: 1 | 2, type: 0 | 1): CastCircleFamily {
+  if (type !== 0 || charFlag === 2) {
+    const big = type !== 0;
+    return {
+      mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam2.smd',
+      circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\maam2.tga',
+      ringTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\star05q_03.bmp',
+      circleW: big ? 4800 * 10 : 4800 * 3,
+      ringW: big ? 6200 * 10 : 6200 * 3,
+    };
+  }
+  return {
+    mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam1.smd',
+    circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\mama.tga',
+    ringTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\star05c_03.bmp',
+    circleW: 5300 * 3,
+    ringW: 6200 * 3,
+  };
+}
+
+/** 两张光环的贴图（D_PR 用的那一族：`CharFlag = 2`） */
+export const CAST_CIRCLE_TEX = castCircleFamily(2, 0).circleTex;
+export const CAST_RING_TEX = castCircleFamily(2, 0).ringTex;
 
 /** 抬高（原版 `AddHeight = 1500`，`AssaEffect.cpp:371` `Posi.y += AddHeight`） */
 export const CAST_LIFT = 1500 / FONE;      // ≈ 5.86
 
 /** 内圈光环全宽（`Size.w = 4800 * 3`，`sinSkillEffect.cpp:1737`） */
+/** 内圈光环全宽（D_PR：`Size.w = 4800 * 3`） */
 export const CAST_CIRCLE_SIZE = (4800 * 3) / FONE;   // = 56.25
 
-/** 外圈星环全宽（`Size.w = 6200 * 3`，`sinSkillEffect.cpp:1741`） */
+/** 外圈星环全宽（D_PR：`Size.w = 6200 * 3`） */
 export const CAST_RING_SIZE = (6200 * 3) / FONE;     // = 72.66
 
 /**
@@ -180,11 +221,12 @@ function circleSystem(name: string, texture: string, size: number, alpha: number
 }
 
 /** 两张光环（内圈 `maam2.tga` + 外圈 `star05Q_03.bmp`）—— 调用方逐张 spawn，位置都抬高 `CAST_LIFT` */
-export function castCircleSystems(): PartSystem[] {
+export function castCircleSystems(charFlag: 1 | 2 = 2, type: 0 | 1 = 0): PartSystem[] {
+  const f = castCircleFamily(charFlag, type);
   return [
-    // 内圈 `maam2.tga`：无 `MaxAlphaAmount`（按 255 算步长，实际峰值 240）
-    circleSystem('CastCircle', CAST_CIRCLE_TEX, CAST_CIRCLE_SIZE, 0),
-    // 外圈 `star05Q_03.bmp`：`MaxAlphaAmount = 120`（峰值即 120）
-    circleSystem('CastRing', CAST_RING_TEX, CAST_RING_SIZE, RING_ALPHA),
+    // 内圈：无 `MaxAlphaAmount`（按 255 算步长，实际峰值 240）
+    circleSystem('CastCircle', f.circleTex, f.circleW / FONE, 0),
+    // 外圈：`MaxAlphaAmount = 120`（峰值即 120）
+    circleSystem('CastRing', f.ringTex, f.ringW / FONE, RING_ALPHA),
   ];
 }
