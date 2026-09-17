@@ -103,6 +103,15 @@ export interface PartSystem {
   version: number;
   position: Vec3 | null;
   emitters: PartEmitter[];
+  /**
+   * **没被任何字段消费**的键（诊断用）。
+   *
+   * `.part` 是原版自研的一套源语（解释器在 `HoBaram/HoNewParticle.cpp`，关键字表见那里的
+   * tokenizer）——本解析器只覆盖了其中一部分。没被读到的键此前是**静默丢弃**的
+   * （`initial partAngleZ` 就是这么丢了很久，表现为"所有粒子朝向一样、看着不动"）。
+   * 现在把它们记下来，由 `scripts/scan-part-coverage.ts` 汇总，让缺口可见（AGENTS #12）。
+   */
+  unhandled?: string[];
 }
 
 /* ─────────── 值解析 ─────────── */
@@ -213,11 +222,12 @@ function vecOf(v: PartValue | undefined): Vec3 | null {
  *   看上去像"所有粒子一个样、不动"（用户实测："飞行过程中的粒子似乎没有序列帧动画"）。
  *   与 `parseValue` 里那次"裸标识符整行丢弃"是同一类错误：**没匹配上就当没写**。
  */
-function axisVecOf(kv: Map<string, PartValue>, base: string): Vec3 | null {
-  const v = vecOf(kv.get(base));
-  const ax = numOf(kv.get(base + 'x'));
-  const ay = numOf(kv.get(base + 'y'));
-  const az = numOf(kv.get(base + 'z'));
+function axisVecOf(kv: Map<string, PartValue>, base: string, used?: Set<string>): Vec3 | null {
+  const at = (k: string) => { used?.add(k); return kv.get(k); };
+  const v = vecOf(at(base));
+  const ax = numOf(at(base + 'x'));
+  const ay = numOf(at(base + 'y'));
+  const az = numOf(at(base + 'z'));
   if (!v && !ax && !ay && !az) return null;
   const zero: Num = { k: 'n', v: 0 };
   return { x: ax ?? v?.x ?? zero, y: ay ?? v?.y ?? zero, z: az ?? v?.z ?? zero };
@@ -234,6 +244,14 @@ export function parsePart(text: string): PartSystem {
   const sys: PartSystem = { name: '', version: 1, position: null, emitters: [] };
   /** 当前 emitter 的键值对（键已小写、压缩空格） */
   let kv: Map<string, PartValue> | null = null;
+  /** 收尾当前 emitter 块：把**没被任何字段消费**的键记到 `sys.unhandled`（诊断用，见该字段说明） */
+  const pushEmitter = (): void => {
+    if (!kv) return;
+    const used = new Set<string>();
+    sys.emitters.push(buildEmitter(kv, used));
+    for (const k of kv.keys()) if (!used.has(k)) (sys.unhandled ??= []).push(k);
+    kv = null;
+  };
 
   // ⚠ 资产里有**紧凑写法**：一行挤多条语句（`alas_keep.part` 全文 2186 字节只占 ~10 行）。
   // 旧的"逐行 + 行首锚定"解析会把同一行里的 `eventsequence` 与后续键值对**整批丢掉**
@@ -270,14 +288,22 @@ export function parsePart(text: string): PartSystem {
     }
     // 块结束：把当前 emitter 收尾
     if (line.startsWith('}')) {
-      if (kv) { sys.emitters.push(buildEmitter(kv)); kv = null; }
+      if (kv) { pushEmitter(); }
       continue;
     }
     // 键 = 值：一行可能有多对（紧凑写法）
     KV_RE.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = KV_RE.exec(line)) !== null) {
-      const key = m[1]!.trim().toLowerCase().replace(/\s+/g, ' ');
+      const rawKey = m[1]!.trim().toLowerCase().replace(/\s+/g, ' ');
+      // ⚠ **续行形式**：资产里 `fade so at <t> X = …` 之后的行常常只写 `at <t> X = …`
+      //   （`classupweapon2.part:15-16` 的 `at 0.1 size = random(3,5)` 就是）。
+      //   依据：原版 tokenizer 是**有状态**的 —— `HoNewParticle.h:1574` 的
+      //   `KeywordFade / KeywordSo / KeywordAt / KeywordInitial / KeywordFinal` 是一组模式词，
+      //   `fade so` 进入 FADE 模式后，后续 `at` 都在该模式下解析。
+      //   此前我们要求每个键都带 `fade so ` 前缀 ⇒ 这些键全部落进 `unhandled` 被**静默丢弃**
+      //   （实测 150/445 个 .part 受影响，时间轴上的 size/velocity/angle 全丢了）。
+      const key = /^at\s/.test(rawKey) ? 'fade so ' + rawKey : rawKey;
       const val = parseValue(m[2]!);
       if (!val) continue;
       if (kv) { if (!kv.has(key)) kv.set(key, val); }         // emitter 内：同名取第一次
@@ -285,13 +311,14 @@ export function parsePart(text: string): PartSystem {
     }
   }
   // 容错：最后一块没写 } 也要收
-  if (kv) sys.emitters.push(buildEmitter(kv));
+  if (kv) pushEmitter();
   return sys;
 }
 
-function buildEmitter(kv: Map<string, PartValue>): PartEmitter {
-  const g = (k: string) => kv.get(k);
-  const keyframes = collectKeyframes(kv);
+function buildEmitter(kv: Map<string, PartValue>, used: Set<string>): PartEmitter {
+  // 每次取值都登记 ⇒ `unhandled` 由差集算出，**不需要维护第二份键表**（那样迟早漂移）
+  const g = (k: string) => { used.add(k); return kv.get(k); };
+  const keyframes = collectKeyframes(kv, used);
   return {
     name: strOf(g('__name')) ?? '',
     blend: toBlend(strOf(g('sourceblendmode')) ?? 'BLEND_LAMP'),
@@ -313,24 +340,25 @@ function buildEmitter(kv: Map<string, PartValue>): PartEmitter {
     initialSize: numOf(g('initial size')),
     initialSizeExt: numOf(g('initial sizeext')),
     initialColor: colOf(g('initial color')),
-    initialPartAngle: axisVecOf(kv, 'initial partangle'),
-    initialLocalAngle: axisVecOf(kv, 'initial localangle'),
+    initialPartAngle: axisVecOf(kv, 'initial partangle', used),
+    initialLocalAngle: axisVecOf(kv, 'initial localangle', used),
     finalColor: colOf(g('fade so final color')),
     finalSize: numOf(g('fade so final size')),
     finalSizeExt: numOf(g('fade so final sizeext')),
-    finalPartAngle: axisVecOf(kv, 'fade so final partangle'),
-    finalLocalAngle: axisVecOf(kv, 'fade so final localangle'),
+    finalPartAngle: axisVecOf(kv, 'fade so final partangle', used),
+    finalLocalAngle: axisVecOf(kv, 'fade so final localangle', used),
     finalVelocity: vecOf(g('fade so final velocity')),
     keyframes,
   };
 }
 
 /** 收集 `fade so at <t> <属性>` 形式的中间关键帧（同属性按时间升序） */
-function collectKeyframes(kv: Map<string, PartValue>): PartKeyframes {
+function collectKeyframes(kv: Map<string, PartValue>, used?: Set<string>): PartKeyframes {
   const out: PartKeyframes = {};
   for (const [key, value] of kv) {
     const m = /^fade so at\s+(-?[\d.]+)\s+(.+)$/.exec(key);
     if (!m) continue;
+    used?.add(key);
     const time = Number(m[1]);
     if (!Number.isFinite(time)) continue;
     const prop = m[2]!.trim();

@@ -8,6 +8,7 @@ import type * as THREE from 'three';
 import { cachedFetch } from '../../core/asset-cache.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
 import { parsePart, type PartSystem } from '../../core/effect/part-script.js';
+import { reportFallback } from '../../char/fallback-log.js';
 
 export interface LoadedPart {
   name: string;
@@ -67,6 +68,20 @@ export function loadPart(name: string): Promise<LoadedPart | null> {
  * 与脚本路径**必须共用这一份实现**（否则又是第二套加载逻辑）。
  */
 export async function loadPartFromSystem(name: string, system: PartSystem): Promise<LoadedPart> {
+  // **翻译缺口要可见**（AGENTS #12）—— `.part` 是原版自研的源语，我们的"解析 → 转换"只覆盖一部分，
+  // 而此前两层都是**静默丢弃**（"粒子看着不动"就来自这里）：
+  //   · `system.unhandled`：解析器没消费的键（源语未覆盖）
+  //   · 未应用的时间轴：转换器只做 size / sizeext / color（见 `part-to-quarks.ts` 的 `numKfOf`/`kfOf`）
+  for (const k of system.unhandled ?? []) {
+    reportFallback('part', `「${name}」的键「${k}」没有翻译（源语未覆盖）`);
+  }
+  for (const em of system.emitters) {
+    for (const p of Object.keys(em.keyframes ?? {})) {
+      if (p !== 'size' && p !== 'sizeext' && p !== 'color') {
+        reportFallback('part', `「${name}」的时间轴「${p}」未应用（转换器只做 size/sizeext/color）`);
+      }
+    }
+  }
   const textures: Array<THREE.DataTexture | null> = [];
   const paths: Array<string | null> = [];
   const missing: string[] = [];
