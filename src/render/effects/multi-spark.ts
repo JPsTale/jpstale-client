@@ -486,7 +486,21 @@ export function multiSparkWideLineSystem(): PartSystem {
       finalPartAngle: null,
       finalLocalAngle: null,
       finalVelocity: null,
-      keyframes: {},
+      // alpha 包络 = 原版"前段**恒 255**、末 10 帧每帧 −10"（`AlphaTime = Max_Time−10`、`AlphaAmount = 10`）
+      // ⇒ 一个**保持点** + finalColor(155)：停靠点 (0,255) → (0.826,255) → (1,155)
+      //（`time` 单位秒，转换器按寿命归一化后线性插值 ✓）
+      keyframes: {
+        color: [{
+          time: 0.826,
+          value: {
+            k: 'color',
+            v: {
+              r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 },
+              b: { k: 'n', v: 255 }, a: { k: 'n', v: 255 },
+            },
+          },
+        }],
+      },
     }],
   };
 }

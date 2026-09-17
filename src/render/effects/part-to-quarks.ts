@@ -192,27 +192,48 @@ export class RandomOrientation implements RotationGenerator {
 const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
 
 /**
- * **沿自身面法线飞** —— 原版 `sinPublicEffectMove` 的 `SIN_EFFECT_WIDELINE` 分支：
- * `GetMoveLocation(0, 0, MoveSpeed.z, Angle.x, Angle.y, 0)`，即"每帧用**当前**朝向重算位移"。
- * 面片法线 = 局部 +z ⇒ 世界方向 = 四元数作用于 (0,0,1)（旋转矩阵第 3 列）。
+ * **世界朝向面片的运动**（原版 `sinPublicEffectMove` 的 `SIN_EFFECT_WIDELINE` 分支，1:1）：
+ *   · **沿自身面法线飞**：`GetMoveLocation(0, 0, MoveSpeed.z, Angle.x, Angle.y, 0)`
+ *     ⇒ 法线 = 局部 +z ⇒ 世界方向 = 四元数作用于 (0,0,1)（旋转矩阵第 3 列）
+ *   · **面内自转**：`Angle.z += 16`/帧 —— 原版累加的是 `Angle` 的 **z 分量**，而复合序 Z 在先
+ *     ⇒ 语义是"绕**局部 z**（= 卡片法线）转" ⇒ 这里用**四元数右乘** Δq(轴=(0,0,1), 16 单位/帧)
+ *     （右乘 = 绕局部轴 ✓；16/4096 圈/帧 ⇒ 1.472 rad/s @60fps）
  *
- * ⚠ 每帧都设（不是只设一次）：原版也逐帧从当前 `Angle` 算 ⇒ 日后加"面内自转"时方向会跟着转。
+ * ⚠ 每帧都设（原版也逐帧从当前 `Angle` 算）⇒ 飞行方向会跟着自转一起转（与源码同构）。
  * ⚠ 读粒子自身的四元数 ⇒ 与 `RandomOrientation` 天然共享同一次随机，不需要额外管线。
- * ⚠ 入参宽松：`Particle.rotation` 是 `number | Quaternion | undefined`（广告板存**标量**）
- *   ⇒ 标量/缺失直接返回（本 behavior 只在 mode 5 挂）。
+ * ⚠ 入参宽松：`Particle.rotation` 是 `number | Quaternion | undefined`（广告板存**标量**）⇒ 标量/缺失直接返回。
+ * ⚠ 不用 quarks 的 `RotationOverLife`：它在 Mesh 模式下动的是标量还是四元数未核实（源码只读到签名）。
  */
 export class OrientVelocityToNormal implements Behavior {
   type = 'orientVelocityToNormal';
+  /** 面内自转角速度：原版 `Angle.z += 16` 单位/帧（4096 = 一圈）⇒ 16/4096×2π×60 ≈ 1.472 rad/s */
+  private static readonly SPIN_RAD_PER_SEC = (16 / 4096) * Math.PI * 2 * 60;
   constructor(private speed: number) {}
   initialize(): void { /* 首帧由 update 设定（rotation 可能尚未生成） */ }
-  update(particle: unknown): void {
-    const p = particle as { rotation?: unknown; velocity?: { x: number; y: number; z: number } };
+  update(particle: unknown, delta: number): void {
+    const p = particle as {
+      rotation?: unknown;
+      velocity?: { x: number; y: number; z: number };
+    };
     const q = p.rotation as { x: number; y: number; z: number; w: number } | number | undefined;
     if (!q || typeof q === 'number' || !p.velocity) return;
+
+    // ① 面内自转：绕**局部 +z** 右乘（Δq = (0, 0, sin(θ/2), cos(θ/2))）
+    const half = (OrientVelocityToNormal.SPIN_RAD_PER_SEC * (delta || 0)) / 2;
+    const sZ = Math.sin(half), cZ = Math.cos(half);
     const { x, y, z, w } = q;
-    p.velocity.x = 2 * (x * z + w * y) * this.speed;
-    p.velocity.y = 2 * (y * z - w * x) * this.speed;
-    p.velocity.z = (1 - 2 * (x * x + y * y)) * this.speed;
+    const nx = x * cZ + y * sZ;
+    const ny = -x * sZ + y * cZ;
+    const nz = w * sZ + z * cZ;
+    const nw = w * cZ - z * sZ;
+    const anyQ = q as unknown as { set?: (a: number, b: number, c: number, d: number) => void };
+    if (typeof anyQ.set === 'function') anyQ.set(nx, ny, nz, nw);
+    else { q.x = nx; q.y = ny; q.z = nz; q.w = nw; }
+
+    // ② 沿（自转后的）面法线飞
+    p.velocity.x = 2 * (nx * nz + nw * ny) * this.speed;
+    p.velocity.y = 2 * (ny * nz - nw * nx) * this.speed;
+    p.velocity.z = (1 - 2 * (nx * nx + ny * ny)) * this.speed;
   }
   frameUpdate(): void { /* 逐粒子在 update 里做 */ }
   toJSON(): { type: string; speed: number } { return { type: this.type, speed: this.speed }; }
