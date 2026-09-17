@@ -144,6 +144,14 @@ export const CODE_SKILL_FX: Record<string, (
   // ⇒ 共用 `glacial-spike.ts`（那里面是从 NewEffect Lua 移植的参数与寿命/alpha 语义）。
   // 它是**朝向前方**的地面效果（近身 → 前方 100，越远越大），只依赖 `casterYaw`，不需要目标。
   glacialspike: (ctx, caster) => {
+    // **只在第 1 个事件帧放一次** —— 原版玩家侧就是 `if (point && MotionEvent == 1)`
+    //（`character.cpp:16997`；怪物侧那个 `case 'Z'` **没有**这条守卫）。
+    // ⚠ 判据用 `> 1` 而不是 `!== 1`：动作**没有事件帧**时调用方按原版兜底在起点触发，
+    //   那时 `motionEvent` 会是 0 —— 用 `!== 1` 会把它**静默吞掉**（AGENTS #12 禁止的那类）。
+    if (ctx.motionEvent != null && ctx.motionEvent > 1) {
+      ctx.log?.(`    ⏭ Glacial Spike：本招原版只在第 1 个事件帧触发（当前第 ${ctx.motionEvent} 个）`);
+      return;
+    }
     if (ctx.casterYaw == null) {
       ctx.log?.('  ⚠ Glacial Spike：没给 casterYaw ⇒ 只会朝 +z 放（应传角色朝向）');
     }
