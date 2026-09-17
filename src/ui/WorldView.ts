@@ -30,7 +30,7 @@ import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
-import { fireMonsterAttackEvent } from '../render/effects/monster-attack-fx.js';
+import { fireMonsterAttackEvent, MONSTER_RANGED, MONSTER_BOW_IDCODE } from '../render/effects/monster-attack-fx.js';
 import {
   fireSkillCast, fireSkillEvent, skillFxRowByIcon, type SkillFxRow,
 } from '../render/effects/skill-fx-runner.js';
@@ -4186,6 +4186,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               pos: actor.root.position, facing: actor.root.rotation.y,
               // 动态光池（原版 `SetDynLight`）：此前游戏侧没建池 ⇒ 所有动态光无处落地
               effects, sfx, dynLights,
+              // **射击怪**（`MONSTER_RANGED`）：原版这个事件帧设 `ShootingFlag = TRUE` 并把武器码
+              // 硬写成 `sinWS1`（弓）来复用玩家那套箭 ⇒ 这里同样交给 `spawnProjectile`。
+              // · 目标 = **自机**（这三只射的就是玩家；`unitBodyAnchor` 已有 `selfPlayerId` 分支 ✓）
+              // · 武器码 = `MONSTER_BOW_IDCODE`（怪没有武器数据，原版硬写弓 ✓）
+              // · 不传 mount（怪手里拿的不是弓）；出手抬高取本怪的 `launchLift`（28/38，逐怪不同 ✓）
+              // · eventFrame 不传 ⇒ 用按弹速飞行（怪物没有玩家那套"放箭提前量"设计）
+              fireRanged: () => spawnProjectile(
+                null, actor.root, MONSTER_BOW_IDCODE, null, null,
+                selfPlayerId, undefined, 1, () => null,
+                MONSTER_RANGED[actor.monsterEffectId]?.launchLift ?? 34,
+              ),
             });
           }
           actor.lastCompFrame = compFrame;
