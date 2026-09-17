@@ -137,6 +137,9 @@ export interface PartRuntime {
   spawn(
     part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number,
     follow?: THREE.Object3D | null,
+    /** 覆盖初速度（世界单位/秒）—— 给**飞出物**用（原版 `AssaParticle_*Shot` 那类朝目标飞的弹）。
+     *  不给则用 `.part` 自己声明的 `initialVelocity`（原地粒子通常就是 0）。 */
+    velocity?: { x: number; y: number; z: number },
   ): PartHandle;
   update(dt: number, camera: THREE.Camera): void;
   clear(): void;
@@ -158,7 +161,13 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
   function buildEmitter(
     em: PartEmitter, tex: THREE.DataTexture | null,
     origin: [number, number, number], scale: number, follow: THREE.Object3D | null,
+    /** 覆盖初速度（见 `spawn`）—— **深拷贝 em 后再改**，别污染缓存里的 `.part` 数据 */
+    velocity?: { x: number; y: number; z: number },
   ): EmitterInstance {
+    if (velocity) {
+      const fixed = (n: number) => ({ k: 'n', v: n }) as PartEmitter['initialVelocity']['x'];
+      em = { ...em, initialVelocity: { x: fixed(velocity.x), y: fixed(velocity.y), z: fixed(velocity.z) } };
+    }
     const n = Math.max(1, Math.min(2048, Math.round(em.numParticles)));
     const geom = new THREE.BufferGeometry();
     const verts = new Float32Array(n * 4 * 3);
@@ -248,6 +257,7 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
   function spawn(
     part: LoadedPart, pos: { x: number; y: number; z: number }, scale: number,
     follow: THREE.Object3D | null = null,
+    velocity: { x: number; y: number; z: number } | undefined = undefined,
   ): PartHandle {
     const sysPos = part.system.position ? vecOf(part.system.position) : [0, 0, 0];
     const origin: [number, number, number] = [
@@ -263,7 +273,7 @@ export function createPartRuntime(scene: THREE.Scene): PartRuntime {
         + ' 发射率 ' + em.emitRate + '/s 寿命 ' + JSON.stringify(em.lifetime)
         + ' 贴图=' + (tex ? 'ok' : '⚠ null（解码失败）')
         + ' 跟随=' + (follow ? '有' : '无') + ' 原点 (' + origin.map((v) => v.toFixed(1)).join(',') + ')');
-      live.push(buildEmitter(em, tex, origin, scale, follow));
+      live.push(buildEmitter(em, tex, origin, scale, follow, velocity));
     }
     // 句柄只认这一次生成的那些 emitter（`stop` 后它们各自发完手上粒子即被移除）
     // ⚠ 空 emitters 时 `slice(-0)` 会取到**全部**，那会误停别人的发射器 ⇒ 单独处理

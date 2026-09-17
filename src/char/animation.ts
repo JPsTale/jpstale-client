@@ -392,3 +392,37 @@ export function advanceAnimFrame(
   if (motion.repeat) return { frame: start + ((raw - start) % len), raw, ended: false };
   return { frame: end, raw, ended: true };
 }
+
+/**
+ * 本帧**跨过了哪些事件帧** —— 攻击/技能事件帧判定的**唯一实现**。
+ *
+ * 原版 `EventAttack()` 每帧被调（`character.cpp:5837`，紧跟 `frame += FrameStep`），内部比对
+ * `EventFrame[0..3]`，**每个跨过的事件帧都触发一次**（`:4173-4183`）。
+ *
+ * ⚠ 为什么必须收敛成一处：这段判定此前在仓库里有**三份**（玩家自机 / 怪物 / 怪物实验室），
+ * 而且已经漂移了 —— 玩家侧遍历全部事件帧，怪物侧只认第一个，于是"连续打三拳的怪
+ * （HULK 的事件帧 `[1280,3040,4800]`）只播一次粒子"（用户 2026-09-17 实测发现）。
+ * 两边各自演化，正是 AGENTS #15 描述的失效方式。
+ *
+ * **怎么算**归这里，**跨过之后做什么**（播音效 / 起特效 / 发 `C2S_AttackHit`）归各调用方。
+ *
+ * @param frames    本动作的全部**非零**事件帧（升序）
+ * @param fired     已触发到第几个
+ * @param compFrame 当前 compFrame —— **必须是未回绕的 `raw`**（`AnimStep.raw`）；
+ *                  用回绕后的 `frame` 会在动画循环处误判。
+ * @returns 本次跨过的事件帧（可能 0 个，也可能多个）与新的触发计数
+ */
+export function crossEventFrames(
+  frames: readonly number[],
+  fired: number,
+  compFrame: number,
+): { hit: number[]; fired: number } {
+  const hit: number[] = [];
+  let i = fired;
+  // 用 while 而非 if：一帧内跨过多个事件帧时（低帧率 / 高速率）不能漏
+  while (i < frames.length && compFrame >= frames[i]!) {
+    hit.push(frames[i]!);
+    i++;
+  }
+  return { hit, fired: i };
+}

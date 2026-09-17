@@ -66,7 +66,11 @@ function idbSet(url: string, buf: ArrayBuffer): Promise<void> {
       const tx = db.transaction(STORE, 'readwrite');
       tx.objectStore(STORE).put(buf, url);
       tx.oncomplete = () => resolve();
-      tx.onerror = () => resolve();
+      // 写入失败不静默（AGENTS #12：降级必须可见）：失败只落到内存+网络，下次命中过再说
+      tx.onerror = (e) => {
+        const err = (e.target as IDBRequest | null)?.error;
+        console.warn(`[asset] IDB 写入失败（配额/隐私模式?）→ ${url}${err ? `: ${err.name}` : ''}`);
+      };
       tx.onabort = () => resolve();
     } catch {
       resolve();

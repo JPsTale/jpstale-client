@@ -67,6 +67,15 @@ export interface SpawnOpts {
   size?: number;
   /** 跟随目标（如骨骼 Object3D）；给出后用其世界坐标 + offset */
   attach?: THREE.Object3D;
+  /**
+   * 覆盖初速度（世界单位/秒）—— 给**飞出物**用（原版 `AssaParticle_*Shot` 那类朝目标飞的弹）。
+   *
+   * 与 `attach` 的区别：`attach` 是"外部每帧推一个节点、粒子挂上去"，而本项是
+   * **让粒子自己按这个速度飞**（`.part` 路径下即覆盖 emitter 的 `initialVelocity`）。
+   * ⚠ `.part` 路径此前**没有实现 `attach` 跟随**（只有 INI 广告牌那条路有），
+   * 所以飞出物要走这里，不要走 attach。
+   */
+  velocity?: { x: number; y: number; z: number };
   /** 物理粒子爆发：给出时复制 count 份并按原版物理运动（见 BurstSpec） */
   burst?: BurstSpec;
 }
@@ -254,7 +263,7 @@ export function createEffectManager(scene: THREE.Scene): EffectManager {
       + ' 个，贴图 ' + JSON.stringify(part.diag.textures)
       + (part.diag.missing.length ? ' ⚠ 缺失 ' + part.diag.missing.join(',') : '')
       + '，跟随节点=' + !!opts.attach);
-    const handle = parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null);
+    const handle = parts.spawn(part, opts.pos, opts.scale ?? 1, opts.attach ?? null, opts.velocity);
     partDiag = part.diag;
     if (part.diag.missing.length) {
       reportFallback('fx', `代码内 spec「${part.name}」贴图缺失：${part.diag.missing.join(', ')}`);

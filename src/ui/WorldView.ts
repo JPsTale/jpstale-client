@@ -28,7 +28,9 @@ import { mapLightProfile } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
+import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
+import { fireMonsterAttackEvent } from '../render/effects/monster-attack-fx.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
@@ -48,7 +50,7 @@ import { createQuarksRuntime } from '../render/effects/quarks-runtime.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_STATE_DEAD } from '../char/char-format.js';
-import { advanceAnimFrame } from '../char/animation.js';
+import { advanceAnimFrame, crossEventFrames } from '../char/animation.js';
 import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
 import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, MAGIC_JOBS, type ProjectileManager } from '../render/projectile.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
@@ -1743,7 +1745,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    *   捕获当时的 `null` 会让 miss 判定永远拿不到 → 静默退化成"永远算命中"。
    */
   function spawnProjectile(
-    mount: WeaponMount, root: THREE.Object3D, idcode: number, dorpItem: string | null | undefined,
+    mount: WeaponMount | null, root: THREE.Object3D, idcode: number, dorpItem: string | null | undefined,
     jobId: number | null | undefined,
     targetId: number, eventFrame: number | undefined, rate: number,
     planOf: () => Map<number, { missed: boolean; critical: boolean }> | null,
@@ -1768,7 +1770,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // —— 法师/祭司/萨满**空手普攻也施法**（用户实测），没有武器骨就发不出来。
     // 这与原版 `GetAttackPoint()`（`character.cpp:283` 取 `HvRightHand.ObjBip`）是同一个位置，
     // 不是"降级"：手骨本来就是空手施法的出手点。
-    const bone = mount.group?.parent
+    const bone = mount?.group?.parent
       ?? findBone(root, WEAPON_BONES.RIGHT_HAND)
       ?? findBone(root, WEAPON_BONES.LEFT_HAND);
     if (!bone) {
@@ -1789,7 +1791,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 方向这里取"骨 → 武器组包围盒中心"（即武器伸出方向），长度取 `weaponSizeMax`——
     // 与原版同义，且不依赖"模型以 Y 为长轴"的建模约定（我方做过 Z-up→Y-up 转换）。
     {
-      const wg = mount.group;
+      const wg = mount?.group;
       const sizeMax = wg ? weaponSizeMax(wg) : 0;
       if (wg && sizeMax > 0) {
         const dir = new THREE.Box3().setFromObject(wg).getCenter(new THREE.Vector3()).sub(from);
@@ -2400,7 +2402,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (wlen < 1e-6) return null;
     // 5. 朝向 = atan2(正弦, 余弦)（/pt/maps/：angle = atan2(sin, cos)，对应 world 方向）
     //   world 方向 (wx,wz) → 引擎角度语义：sin 对 x、cos 对 z
-    return Math.atan2(wx / wlen, wz / wlen);
+    //   （走共享内核 `faceAngleFromDir`：这是"方向 → 朝向角"这一约定的唯一实现）
+    return faceAngleFromDir(wx / wlen, wz / wlen);
   }
 
   // ===== 远端玩家（Phase 2/3：S2C_PlayerAppear/Move/Disappear → 独立克隆演员）=====
@@ -2653,8 +2656,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     subActive: boolean;
     /** 上一条应用的**服务端选定条目索引**（去重键的一部分；同一刀内服务端会重发同一条） */
     lastAnimIndex: number;
-    /** 怪物攻击事件帧：进入 ATTACK 时从当前 motion 取 eventFrame[0]，渲染循环交叉检测后播音 */
-    attackSoundFrame: number | null;
+    /**
+     * 本刀**全部**事件帧（进入 ATTACK 时从当前 motion 取，只留非零项）。
+     *
+     * 原版 `EventAttack()` **每帧**被调（`character.cpp:5837`，紧跟 `frame += FrameStep`），
+     * 内部比对 `EventFrame[0..3]`，**每个跨过的事件帧都触发一次**（`:4173-4183`）。
+     * 所以"连续打三拳"的条目（如 HULK `[1280,3040,4800]`）要播**三次**粒子和音效。
+     * ⚠ 此前只存 `eventFrame[0]` ⇒ 三拳只播一次（用户 2026-09-17 实测发现）。
+     */
+    attackEventFrames: number[];
+    /** 本刀已触发到第几个事件帧（对应原版的 `MotionEvent` 计数） */
+    attackFired: number;
     /** 上一帧的 compFrame（用于事件帧交叉检测） */
     lastCompFrame: number;
   }
@@ -2679,15 +2691,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * —— 服务端可能选的是别的变体（条目不同、事件帧也不同）。
    * 该条目没有事件帧 → **不播**并上报（原版 `EventFrame[0]` 为 0 时同样不播，AGENTS #12 不静默）。
    */
+  // 攻击特效派发表 + "事件帧 → 音效 + 特效"的编排**不在这里**：已抽到
+  // `render/effects/monster-attack-fx.ts`（`MONSTER_ATTACK_FX` / `fireMonsterAttackEvent`），
+  // 游戏与怪物实验室共用同一份。这里只负责"什么时候到事件帧"。
+
+
   function armMonsterAttackSound(actor: MonsterActor): void {
     const ef = actor.animState.getCurrentMotion()?.eventFrame;
-    if (ef && ef[0] && ef[0] > 0) {
-      actor.attackSoundFrame = ef[0];
-      actor.lastCompFrame = 0;   // 重置，让首帧也能检测到交叉
-    } else {
-      reportFallback('sfx', `怪物 ${actor.name}#${actor.monsterId} 的攻击条目没有事件帧 → 挥击音不播`);
-      actor.attackSoundFrame = null;
-    }
+    const frames = ef ? Array.from(ef).filter((f) => f > 0) : [];
+    // **没有事件帧 ≠ 不播**：原版 `EventAttack` 有一条兜底分支
+    //   `(MotionEvent == 0 && MotionInfo->EventFrame[0] <= compFrame)`（`character.cpp:4183`）——
+    //   `EventFrame[0]` 为 0 时它也成立，于是**动作一开始就触发一次**。
+    //   （Runic Guardian 两条 ATTACK 都没有事件帧，而它的攻击特效在原版确实会播。）
+    //   故空表视为"在第 0 帧触发一次"。
+    actor.attackEventFrames = frames.length > 0 ? frames : [0];
+    actor.attackFired = 0;
+    actor.lastCompFrame = 0;   // 重置，让首帧也能检测到交叉
   }
 
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number, animIndex = 0): void {
@@ -2698,8 +2717,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 与玩家 `anim_index` 同一条链路：服务端决定播哪一条，客户端不自己选
     // （见 docs/chars/语义化动画系统.md —— 服务端持有动画数据、选变体、下发 ID）。
     // 去重键含 `animIndex`：同一刀内服务端会因位置变化重发同一条 ⇒ 必须挡住，否则动画每帧从头播。
+    // ⚠ 攻击包的重复判定：**只认"这一刀是否还在播"**，不要比 (state, index) 是否相等 ——
+    // 同一只怪相邻两刀选到**同一条变体**是常态（服务端每刀强制重发 `lastBroadcastAnim=-1`，
+    // 而 `animIndex` 相同），只比 (state,index) 会把第二刀整刀吞掉
+    // ⇒ 观感"怪物靠近后攻击动画只播一次"（用户 2026-09-17 实测）。
+    // 两条路径（服务端选定条目 / 本地回退）共用这一条守卫（同一个判定只写一处）。
+    if (animState === ANIM_ATTACK && actor.animState.getCurrentState() === actor.animState.STATE.ATTACK) {
+      return;
+    }
     if (animIndex > 0) {
-      if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex) return;
       const picked = actor.motionList.find((m) => m.index === animIndex) ?? null;
       if (picked && actor.animState.playMotion(picked)) {
         actor.lastAnimState = animState;
@@ -2710,16 +2736,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       reportFallback('anim', `怪物 ${actor.name}#${actor.monsterId} 服务端选定的条目 #${animIndex} `
         + `在本地动作表里不存在（模型 ${actor.modelKey}）→ 回退本地匹配（两端动画数据可能不同代）`);
     }
-    const isAttack = animState === ANIM_ATTACK;
-    if (isAttack) {
-      // 服务端每刀重发 ANIM_ATTACK（lastBroadcastAnim 强制 -1）。若上一刀攻击动画
-      // 仍未播完（状态机还在 ATTACK）则忽略重复包；播完回 STAND 后允许再次重播。
-      // 重复包直接丢 —— **不打印**：服务端每刀重发，一次战斗能刷出几万行（用户 2026-09-16）。
-      if (actor.lastAnimState === ANIM_ATTACK &&
-          actor.animState.getCurrentState() !== actor.animState.STATE.STAND) {
-        return;
-      }
-    } else if (animState === actor.lastAnimState) {
+    // 攻击包的重复判定已上移到函数开头（两条路径共用，见那里的说明）。
+    if (animState !== ANIM_ATTACK && animState === actor.lastAnimState) {
       return;
     }
     actor.lastAnimState = animState;
@@ -2836,7 +2854,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           sub: result.sub,
           subActive: false,
           lastAnimIndex: 0,
-          attackSoundFrame: null,
+          attackEventFrames: [],
+          attackFired: 0,
           lastCompFrame: 0,
         };
         monsters.set(mid, actorObj);
@@ -3495,9 +3514,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     const mon = monsters.get(targetId);
     if (mon) {
-      const dx = mon.root.position.x - actor.root.position.x;
-      const dz = mon.root.position.z - actor.root.position.z;
-      actor.faceAngle = Math.atan2(dx, dz);
+      // 朝向 = 由两点求水平角（唯一实现 `core/geom.faceAngleOf`）——
+      // 本文件原有 4 处同式内联 `Math.atan2(dx, dz)`，属 AGENTS #15 的"同一判定出现第二份"
+      actor.faceAngle = faceAngleOf(actor.root.position, mon.root.position);
     }
   }
 
@@ -4077,16 +4096,25 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (!deadFrozen) {
           // 播放速率由服务端给（`attackspeed` 档位换算，客户端没这个数据）——
           // 与"服务端等动画播完的时长"同源，两边时间才对得上。
-          actor.animFrame = advanceAnimFrame(actor.animFrame, motion, dt, actor.animRate).frame;
-          // 攻击音效：等 compFrame 跨过事件帧再播（原版 character.cpp:2687-2689）
-          if (actor.attackSoundFrame != null) {
-            const compFrame = actor.animFrame - motion.startFrame * 160;
-            if (actor.lastCompFrame < actor.attackSoundFrame && compFrame >= actor.attackSoundFrame) {
-              sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_ATTACK', actor.root.position, actor.monsterEffectId);
-              actor.attackSoundFrame = null;
-            }
+          // `raw` = **未回绕**的帧位置 —— 事件帧交叉检测必须用它（`frame` 在循环处会回绕）
+          const animStep = advanceAnimFrame(actor.animFrame, motion, dt, actor.animRate);
+          actor.animFrame = animStep.frame;
+          // 攻击音效/特效：**每个事件帧各触发一次**（原版每帧比对 `EventFrame[0..3]`）。
+          // 用 `while` 而非 `if`：一帧内跨过多个事件帧时（低帧率 / 高 animRate）不能漏。
+          const compFrame = animStep.raw - motion.startFrame * 160;
+          // 跨过了哪些事件帧 —— 判定本身是**共享实现**（`char/animation.crossEventFrames`），
+          // 玩家侧 / 怪物 / 怪物实验室三处不再各写一遍（AGENTS #15）
+          const crossed = crossEventFrames(actor.attackEventFrames, actor.attackFired, compFrame);
+          actor.attackFired = crossed.fired;
+          for (const _frame of crossed.hit) {
+            // 与原版同源：同一个事件帧里既播音效也起特效（共用实现见 monster-attack-fx.ts）
+            fireMonsterAttackEvent({
+              modelKey: actor.modelKey, effectId: actor.monsterEffectId,
+              pos: actor.root.position, facing: actor.root.rotation.y,
+              effects, sfx,
+            });
           }
-          actor.lastCompFrame = actor.animFrame - motion.startFrame * 160;
+          actor.lastCompFrame = compFrame;
           const endFrame = motion.endFrame * 160;
           const startFrame = motion.startFrame * 160;
           if (actor.animFrame >= endFrame) {
@@ -4969,13 +4997,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const dz = tp.z - selfPos.z;
         const d = Math.hypot(dx, dz);
         lastChaseDist = d;   // 记下来：到位时 moveTarget 已被清空，那时再算就取不到了
+        // 朝向角只算一次（这段里原本三处各写了一遍 `Math.atan2(dx, dz)` —— 同一个判定）
+        const face = faceAngleOf(selfPos, tp);
         if (moveTarget.kind === 'monster') {
           // 怪物目标：攻击距离内 → 停步进入攻击循环（不移动）；超出 → 持续 Chase
           if (d <= selfAttackRange()) {
             monsterEngaged = true;
-            selfAngle = Math.atan2(dx, dz);
+            selfAngle = face;
           } else {
-            targetFace = Math.atan2(dx, dz);
+            targetFace = face;
           }
         } else {
           // 交互类目标（掉落物 / NPC / 其他玩家）：和怪物一样停在环上，
@@ -4988,7 +5018,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (d <= INTERACT_RANGE + stepNow) {
             targetReached = true;
           } else {
-            targetFace = Math.atan2(dx, dz);
+            targetFace = face;
           }
         }
       }

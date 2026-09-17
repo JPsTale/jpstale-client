@@ -272,7 +272,12 @@ function buildEmitter(kv: Map<string, PartValue>): PartEmitter {
   return {
     name: strOf(g('__name')) ?? '',
     blend: toBlend(strOf(g('sourceblendmode')) ?? 'BLEND_LAMP'),
-    particleType: toParticleType(strOf(g('particletype')) ?? 'TYPE_TWO'),
+    // 未声明时的默认 = `TYPE_ONE`（朝相机的广告牌）。
+    // 依据：`HoNewParticle.cpp:1925` 构造时 `ParticleType = TYPE_ONE;`
+    //   —— 这就是".part 里没写 PARTICLETYPE"时原版实际走的值。
+    // ⚠ 曾默认成 `TYPE_TWO`（水平 XZ 面）⇒ 所有未声明类型的粒子被**拍平**：
+    //   `hulkhit1.part` 正是如此，表现为"粒子面朝上、视线拉平后变成薄薄一片"（用户实测发现）。
+    particleType: toParticleType(strOf(g('particletype')) ?? 'TYPE_ONE'),
     numParticles: numOf(g('numparticles')) ? roll(numOf(g('numparticles'))!) : 1,
     emitRate: numOf(g('emitrate')) ? roll(numOf(g('emitrate'))!) : 1,
     loops: numOf(g('loops')) ? roll(numOf(g('loops'))!) : 1,
