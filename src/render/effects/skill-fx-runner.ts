@@ -17,6 +17,9 @@ import skillFx from '../../game/data/skill-fx.json';
 import { runMultiSpark, type MultiSparkRunnerCtx } from './multi-spark-runner.js';
 import { playerSparkCount } from './multi-spark.js';
 import { runCastCircle } from './cast-circle-runner.js';
+import { runMonsterFly, type FlyDeps } from './monster-fly-runner.js';
+import { FX_VIGOR_BALL, pickMonsterFxAsset } from './monster-attack-fx.js';
+import { reportFallback } from '../../char/fallback-log.js';
 
 /** 技能表的一行（`skill-fx.json` 的形状） */
 export interface SkillFxRow {
@@ -58,6 +61,25 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
   skillLevel?: number | null;
   /** 音效播放（`sfx.play(path, {pos})`） */
   playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
+  /**
+   * 按**资产名**起粒子并拿可停止句柄 = `EffectManager.spawnStoppable`（飞出物要用）。
+   *
+   * 与 `effects.spawnSystem`（内存里的 `PartSystem`）不是一回事：这条是"按名字加载 `.part`"。
+   * 缺它时 Vigor Ball 这类飞出物技能**不播并上报**（不静默退化成原地爆一坨）。
+   */
+  spawnAsset?: FlyDeps['spawn'];
+  /**
+   * 本条动作的**第几个事件帧**（1 起，= 原版 `MotionEvent`）。
+   * 有的技能按它分左右（Vigor Ball：第 1 个事件帧 −45°、其后 +45°）—— 不给会**上报**。
+   */
+  motionEvent?: number | null;
+  /** 施法者朝向（弧度，原版 `Angle.y`）—— 定向特效的基准；不给会**上报** */
+  casterYaw?: number | null;
+  /**
+   * 目标**每帧现取**（目标会走动；定点飞行会落在它身后 —— 箭那次的教训）。
+   * 只给 `target`（快照）时用它兜底并**上报**。
+   */
+  targetGetter?: () => { x: number; y: number; z: number } | null;
 }
 
 export const CODE_SKILL_FX: Record<string, (
@@ -74,6 +96,42 @@ export const CODE_SKILL_FX: Record<string, (
     const num = playerSparkCount(lv);
     ctx.log?.(`    ✦ MultiSpark：${num} 颗（等级 ${lv}）`);
     runMultiSpark(ctx, caster, target, num);
+  },
+  // **Vigor Ball**（`SKILL_PLAY_VIGOR_BALL`，祭司 `mp40 v_ball.bmp`）——
+  // 与怪物 D_PR 的 `'H'` **同一招、同一个原版函数**（`character.cpp:16338` 玩家 / `:14912` 怪物
+  // 都调 `AssaParticle_VigorBall`）⇒ **共用 spec**（`FX_VIGOR_BALL`）与共用驱动（`monster-fly-runner`）。
+  vigorball: (ctx, caster, target) => {
+    const fly = FX_VIGOR_BALL.fly;
+    if (!fly) { ctx.log?.('  ✗ Vigor Ball：spec 里没写 fly（配置错误）'); return; }
+    if (!ctx.spawnAsset) {
+      // 不静默退化成"原地爆一坨"——那会让人以为技能做完了
+      ctx.log?.('  ✗ Vigor Ball：ctx 没给 spawnAsset（= EffectManager.spawnStoppable）⇒ 不播');
+      return;
+    }
+    if (ctx.motionEvent == null) {
+      ctx.log?.('  ⚠ Vigor Ball：没给 motionEvent ⇒ 两颗球都按第 1 个事件帧出（原版第 1 帧 −45°、其后 +45°）');
+    }
+    if (ctx.casterYaw == null) ctx.log?.('  ⚠ Vigor Ball：没给 casterYaw ⇒ 出手方向按 0（跟踪弹会自己修正）');
+    // 目标：优先**每帧现取**；只有快照时用它兜底并说明（飞行最长 100 帧，目标走动时不跟随会看得见）
+    if (!ctx.targetGetter && target) {
+      ctx.log?.('  ⚠ Vigor Ball：只给了目标快照 ⇒ 目标走动时飞行终点不跟随（应传 targetGetter）');
+    }
+    const getTarget = ctx.targetGetter ?? (target ? () => target : () => null);
+    runMonsterFly(
+      {
+        spawn: ctx.spawnAsset,
+        addToScene: (o) => ctx.scene.add(o),
+        dynLight: ctx.dynLights,
+        log: ctx.log,
+      },
+      pickMonsterFxAsset(FX_VIGOR_BALL, 0), fly,
+      {
+        pos: { x: caster.x, y: caster.y + (fly.lift ?? 0), z: caster.z },
+        yaw: ctx.casterYaw ?? 0,
+        target: getTarget,
+        motionEvent: ctx.motionEvent ?? 1,
+      },
+    );
   },
 };
 
@@ -106,7 +164,15 @@ export function fireSkillEvent(
   for (const s of row.event.sfx) ctx.playSound?.(s, caster);
   let fired = false;
   for (const ref of [...(row.fx ?? []), ...(row.event.fx ?? [])]) {
-    if (!ref.startsWith('code:')) continue;      // ini:/part: 走既有入口（`effects.spawn`）
+    if (!ref.startsWith('code:')) {
+      // ⚠ 这条**不会**被播放：玩家技能这条链只实现了 `code:`（`CODE_SKILL_FX`）。
+      //   `ini:` / `part:` / `lua:` 各自需要加载器（`.part` 能加载，但"放哪儿、跟不跟随、何时停"
+      //   是每个技能自己的事，不能一概 `effects.spawn` 到脚下）。
+      //   此前这里是**静默** `continue` ⇒ 祭司的 Resurrection / Extinction / Glacial Spike 等
+      //   "声明了特效却什么都没播、也没人报警"（AGENTS #12）。
+      reportFallback('skillfx', `技能「${row.name}」的特效引用「${ref}」没有可用加载器（只实现了 code:）⇒ 本次不播`);
+      continue;
+    }
     const fn = CODE_SKILL_FX[ref.slice(5)];
     if (fn) { fn(ctx, caster, target); fired = true; }
     else ctx.log?.(`  ✗ 技能「${row.name}」的 code 特效「${ref}」未注册`);

@@ -32,6 +32,12 @@
         "code:multispark"
       ],
       "note": "MultiSpark 不是单个 .part/.ini，而是代码组合（5 颗主火花+每帧拖尾+命中三件套）⇒ 用 code: 前缀指向 render/effects/skill-fx-runner.ts 的注册表。原版：sinSkill.h:85 SKILL_MULTISPARK=GROUP_PRIESTESS|CHANGE_JOB1|SKILL_3；玩家侧 sinSkillEffect.cpp:139 传 7 颗（怪物侧 5 颗，走 monster-attack-fx.ts）"
+    },
+    "Vigor Ball": {
+      "eventFx": [
+        "code:vigorball"
+      ],
+      "note": "**跟踪弹**（两颗，左右 ±45°）—— 必须走代码：原版 `character.cpp:16338 case SKILL_PLAY_VIGOR_BALL → AssaParticle_VigorBall`，与怪物 D_PR 的 `'H'`（`:14912`）是**同一个函数**，靠「主 SetPos 拖尾 + 附加 SetAttachPos 贴体 + 每帧朝目标加速」组合出来（AssaParticle.cpp:5465 Main）。自动派生的 part:skill3priestessvigorball1/2 只是那两个粒子系统本身，原地播不出飞行（且玩家技能这条链此前没有 part: 加载器，等于什么都没播）。共用实现在 CODE_SKILL_FX.vigorball（spec 见 FX_VIGOR_BALL）。"
     }
   }
 }

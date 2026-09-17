@@ -32,7 +32,8 @@ import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
 import { fireMonsterAttackEvent, MONSTER_RANGED, MONSTER_BOW_IDCODE } from '../render/effects/monster-attack-fx.js';
 import {
-  fireSkillCast, fireSkillEvent, skillFxRowByIcon, type SkillFxRow,
+  fireSkillCast, fireSkillEvent, skillFxRowByIcon, skillFxRowByAnimIndex,
+  type SkillFxRow, type SkillFxFireCtx,
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
@@ -1878,13 +1879,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 技能**特效层的上下文**（粒子装配器 + 场景 + 音效）—— 与 `monster-attack-fx` 同理，
    *  粒子本身在 `multi-spark*.ts` 里，这里只提供"在哪、怎么出声"。 */
-  function skillFxCtx() {
+  function skillFxCtx(): SkillFxFireCtx {
+    // 飞出物（Vigor Ball 那类）要"按名字起粒子 + 拿可停止句柄" ⇒ `spawnStoppable`（不是 `spawn`）。
+    // 捕获成 const：闭包里读可能为 null 的外层变量会丢空值收窄（TS18047，本项目踩过多次）。
+    const fx = effects;
     return {
       effects,
       scene: scene!,
       dynLights,
-      playSound: (path: string, pos: { x: number; y: number; z: number }) => { sfx.play(path, { pos }); },
-      log: (msg: string) => console.log('[skillfx]' + msg),
+      playSound: (path, pos) => { sfx.play(path, { pos }); },
+      log: (msg) => console.log('[skillfx]' + msg),
+      spawnAsset: fx ? (a, o) => fx.spawnStoppable(a, o) : undefined,
     };
   }
 
@@ -1896,6 +1901,32 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
     fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
   }
+
+  /**
+   * **诊断入口：直接放某个玩家技能**（临时 —— 与 `window.__ptMonsterSkill` 一对）。
+   *
+   * 走的是**与真实施法同一条路**（`beginSelfSkill` + 播那条技能动作），只绕开
+   * "服务端是否允许 / 角色是否学过这一招"：
+   *
+   * ```js
+   * window.__ptSelfSkill(131)            // 动画条目 #131（祭司 Vigor Ball）
+   * window.__ptSelfSkill('mp40 v_ball')  // 也可以给图标名（`skill-fx.json` 的 icon，可省 .bmp）
+   * ```
+   *
+   * 条目号 / 图标名都在 `src/game/data/skill-fx.json` 里（`animIndex` / `icon`）。
+   */
+  (window as unknown as { __ptSelfSkill?: (k: number | string) => void }).__ptSelfSkill = (key) => {
+    if (!animState) { console.log('[skill] 世界未就绪（还没有动作状态机）'); return; }
+    const row = typeof key === 'number' ? skillFxRowByAnimIndex(key) : skillFxRowByIcon(String(key));
+    if (!row) { console.log(`[skill] 技能表里没有 animIndex/icon = ${String(key)}`); return; }
+    if (row.animIndex == null) { console.log(`[skill] 「${row.name}」没有动画条目 ⇒ 放不了`); return; }
+    const m = motionList.find((x) => x.index === row.animIndex) ?? null;
+    if (!m) { console.log(`[skill] 角色动作表里没有条目 #${row.animIndex}（该模型的动画表里没有这一条？）`); return; }
+    console.log(`[skill] 直接放技能「${row.name}」（条目 #${row.animIndex}，图标 ${row.icon}）`);
+    beginSelfSkill(row.icon);
+    // 直接播这一条（`selfPlayer` 是**播放器**，不持动作表；动作表与状态机在 `motionList` / `animState`）
+    animState.playMotion(m);
+  };
 
   /**
    * 播放技能动画（调试/装备触发）。
@@ -5104,15 +5135,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               // 原版 `if (DesChar)` 两处守卫都不成立 ⇒ 不收敛、不改瞄（不是"退而求其次"）
               // 瞄准点优先用**本次技能自己的**（见 `selfSkillAim` 的说明），
               // 其次才是自动攻击的当前目标；都没有就是原版的"无目标"路径
-              const aimRoot = selfSkillAim
-                ?? (selfAttackTargetId ? monsters.get(selfAttackTargetId)?.root ?? null : null);
-              // 怪 → 抬到身中；非怪（无目标）→ null（原版无目标路径）
-              const targetPos = aimRoot
-                ? { x: aimRoot.position.x, y: aimRoot.position.y + TARGET_BODY_LIFT, z: aimRoot.position.z }
-                : null;
+              // 瞄准点写成**函数**：快照（给不需要跟目标的那类）与 `targetGetter`（给飞出物那类 ——
+              // 飞行最长 100 帧，目标走动时不跟随会落在它身后）共用同一条规则，不写两份。
+              const aimTargetOf = (): { x: number; y: number; z: number } | null => {
+                const aimRoot = selfSkillAim
+                  ?? (selfAttackTargetId ? monsters.get(selfAttackTargetId)?.root ?? null : null);
+                // 怪 → 抬到身中；非怪（无目标）→ null（原版无目标路径）
+                return aimRoot
+                  ? { x: aimRoot.position.x, y: aimRoot.position.y + TARGET_BODY_LIFT, z: aimRoot.position.z }
+                  : null;
+              };
+              const targetPos = aimTargetOf();
               console.log('[WorldView][dbg] 技能事件帧：caster=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')'
                 + ' target=' + (targetPos ? `(${targetPos.x.toFixed(1)},${targetPos.y.toFixed(1)},${targetPos.z.toFixed(1)})` : 'null'));
-              fireSkillEvent(selfSkillRow, skillFxCtx(), selfPos, targetPos);
+              fireSkillEvent(selfSkillRow, {
+                ...skillFxCtx(),
+                // 本条动作的第几个事件帧（1 起）—— Vigor Ball 靠它分左右（第 1 帧 −45°、其后 +45°）
+                motionEvent: motionEventIndexOf(sm.eventFrame, _f),
+                // 出手朝向 = 角色朝向（原版 `Angle.y`）
+                casterYaw: selfAngle,
+                // 目标**每帧现取**（飞出物最长飞 100 帧，目标走动时要跟着）
+                targetGetter: aimTargetOf,
+              }, selfPos, targetPos);
             }
           }
         }

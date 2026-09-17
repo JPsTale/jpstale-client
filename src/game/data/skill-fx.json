@@ -3798,8 +3798,7 @@
    },
    "event": {
     "fx": [
-     "part:skill3priestessvigorball1",
-     "part:skill3priestessvigorball2"
+     "code:vigorball"
     ],
     "sfx": [
      "wav/effects/skill/morion/vigorball 1.wav"

@@ -163,6 +163,44 @@ export interface MonsterFlySpec {
 }
 
 /**
+ * **Vigor Ball**（祭司技能）—— 玩家与怪物**同一招**。
+ *
+ * 原版两边调的是**同一个函数**（`AssaParticle_VigorBall`，`hoAssaParticleEffect.cpp:4152`）：
+ *   · 怪物（D_PR `'H'`）：`character.cpp:14912` `case 'H': AssaParticle_VigorBall(this, chrAttackTarget);`
+ *   · 玩家（`SKILL_PLAY_VIGOR_BALL`）：`character.cpp:16338` 同一个 `AssaParticle_VigorBall`
+ *     （玩家侧另加服务端伤害 `dm_SendTransDamage`，`MotionEvent < 3` 那几帧；音效两边都是
+ *     `switch (rand() % 2)` 选 `SKILL_VIGOR_BALL1/2`）
+ * ⇒ **spec 只写一份**：怪物派表（下面的 `'H'`）与 `CODE_SKILL_FX.vigorball`（`skill-fx-runner.ts`）共用。
+ */
+export const FX_VIGOR_BALL: MonsterAttackFxDef = {
+  asset: 'Skill3PriestessVigorBall1',   // 主粒子（`AssaParticle.cpp:5597` Start("…VigorBall1")）
+  height: 0,                            // 起点抬高走 `fly.lift`（原版 `curPos.y = pY + 5000`）
+  // ⚠ 同目录另有 2 号系统（`AssaParticle.cpp:5598` `Start("…VigorBall2")`），**两个同时在飞**
+  //   ⇒ 用 `systems` 附加，**不是**把 asset 写成数组（数组的语义是"多候选、挑一个"）
+  sound: ['wav/effects/skill/morion/vigorball 1.wav',
+    'wav/effects/skill/morion/vigorball 2.wav'],
+  fly: {
+    // 跟随语义照抄原版那两次调用（`AssaParticle.cpp:5510-5520` 的 Main）：
+    //   主 `SetPos` ⇒ 只移发射点、已发射的**粒子留在原地 = 拖尾**；
+    //   附加 `SetAttachPos` ⇒ 整团搬运（贴体光晕）。
+    follow: false,
+    systems: [{ asset: 'Skill3PriestessVigorBall2', follow: true }],
+    lift: 5000 / FONE,                  // ≈19.5 世界单位
+    yawOffsetDeg: 45,
+    mirrorByMotionEvent: true,          // 两个事件帧各一颗，左右各一（`MotionEvent == 1` 取负）
+    initialSpeedPerFrame: 6,            // 侧偏量 3*fONE 的中值 × 2（`GeoResult * 2`）⇒ 6/帧
+    homing: {
+      arriveDist: 15, arriveFrames: 100, dampDist: 100, damp: 0.85,
+      maxSpeedPerFrame: 10, softClamp: 0.9,
+    },
+    hit: { asset: 'Skill3PriestessVigorBallHit1' },
+  },
+  note: "character.cpp:14912(怪物 case 'H') / :16338(玩家 SKILL_PLAY_VIGOR_BALL) / "
+    + 'hoAssaParticleEffect.cpp:4152-4200 / AssaParticle.cpp:5465(Main),5551(Start),5597-5598; '
+    + 'dpr.inx idx17 事件帧 4640+7040',
+};
+
+/**
  * 派发表：键 = 服务端下发的 `monster_effect_id`（= 原版 `dwCharSoundCode` / `EMonsterEffectID`）。
  *
  * ⚠ **只放核验过的条目**，每条注明出处。表里没有 = 未核验，**不猜**：
@@ -277,33 +315,8 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
         dynLight: { r: 255, g: 255, b: 255, a: 255, power: 140, decPower: 1 },
         note: "character.cpp:14903 case 'O' / sinSkillEffect.cpp:813 动态光,881 发射,244 驱动,1766 命中；动作 dpr.inx idx16 事件帧 3360",
       },
-      H: {
-        // 原版 `character.cpp:14912` `case 'H': AssaParticle_VigorBall(this, chrAttackTarget);`
-        //   + `switch (rand() % 2)` 播 `SKILL_VIGOR_BALL1/2`（`effectsnd.cpp:682-683`）
-        asset: 'Skill3PriestessVigorBall1',   // 主粒子（`AssaParticle.cpp:5597` Start("…VigorBall1")）
-        height: 0,                            // 起点抬高走 `fly.lift`（原版 `curPos.y = pY + 5000`）
-        // ⚠ 同目录另有 2 号系统（`AssaParticle.cpp:5598` `Start("…VigorBall2")`），**两个同时在飞**
-        //   ⇒ 用 `systems` 附加，**不是**把 asset 写成数组（数组的语义是"多候选、挑一个"）
-        sound: ['wav/effects/skill/morion/vigorball 1.wav',
-          'wav/effects/skill/morion/vigorball 2.wav'],
-        fly: {
-          // 跟随语义照抄原版那两次调用（`AssaParticle.cpp:5510-5520` 的 Main）：
-          //   主 `SetPos` ⇒ 只移发射点、已发射的**粒子留在原地 = 拖尾**；
-          //   附加 `SetAttachPos` ⇒ 整团搬运（贴体光晕）。
-          follow: false,
-          systems: [{ asset: 'Skill3PriestessVigorBall2', follow: true }],
-          lift: 5000 / FONE,                  // ≈19.5 世界单位
-          yawOffsetDeg: 45,
-          mirrorByMotionEvent: true,          // 两个事件帧各一颗，左右各一（`MotionEvent == 1` 取负）
-          initialSpeedPerFrame: 6,            // 侧偏量 3*fONE 的中值 × 2（`GeoResult * 2`）⇒ 6/帧
-          homing: {
-            arriveDist: 15, arriveFrames: 100, dampDist: 100, damp: 0.85,
-            maxSpeedPerFrame: 10, softClamp: 0.9,
-          },
-          hit: { asset: 'Skill3PriestessVigorBallHit1' },
-        },
-        note: "character.cpp:14912 case 'H' / hoAssaParticleEffect.cpp:4152-4200 / AssaParticle.cpp:5465(Main),5551(Start),5597-5598; dpr.inx idx17 事件帧 4640+7040",
-      },
+      // 祭司的 Vigor Ball —— 与**玩家技能** `SKILL_PLAY_VIGOR_BALL` 同一招（共用 spec 见上）
+      H: FX_VIGOR_BALL,
       // `'Z'`（GlacialSpike / `HoNewEffectFunction.cpp:590` 的 Lua 脚本）**尚未提取** ⇒ **不登记**。
       // 调用方拿到 `undefined` 就是"这一招还没核验"，不静默兜底成别的招。
     },

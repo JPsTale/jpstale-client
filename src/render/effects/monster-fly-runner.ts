@@ -51,9 +51,9 @@ export interface FlyDeps {
   }) => FlyHandle | null | Promise<FlyHandle | null>;
   /** 载体节点要进场景（three 只对场景内的对象推进世界矩阵） */
   addToScene: (o: THREE.Object3D) => void;
-  /** 到达时的动态光（原版 `SetDynLight`）。没传则跳过 */
+  /** 到达时的动态光（原版 `SetDynLight`）。没传则跳过。返回 `void`/`boolean` 都收（两套契约都传进来过） */
   dynLight?: { set(x: number, y: number, z: number, r: number, g: number, b: number,
-                   a: number, power: number, decPower: number): boolean } | null;
+                   a: number, power: number, decPower: number): void | boolean } | null;
   log?: (s: string) => void;
 }
 
