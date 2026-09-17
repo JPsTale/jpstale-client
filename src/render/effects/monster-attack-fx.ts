@@ -343,8 +343,10 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
       },
       // 祭司的 Vigor Ball —— 与**玩家技能** `SKILL_PLAY_VIGOR_BALL` 同一招（共用 spec 见上）
       H: FX_VIGOR_BALL,
-      // `'Z'`（GlacialSpike / `HoNewEffectFunction.cpp:590` 的 Lua 脚本）**尚未提取** ⇒ **不登记**。
-      // 调用方拿到 `undefined` 就是"这一招还没核验"，不静默兜底成别的招。
+      // 祭司的 Glacial Spike（冰枪）—— 与**玩家技能** `SKILL_PLAY_GLACIAL_SPIKE` 同一招：
+      // 原版两边都调 `SkillCelestialGlacialSpike`（NewEffect 的 Lua）⇒ 走代码内组合
+      // （`code: 'glacialspike'`，实现在 `glacial-spike.ts`），见 `FX_GLACIAL_SPIKE`
+      Z: FX_GLACIAL_SPIKE,
     },
     note: 'character.cpp:14903 `switch (MotionInfo->KeyCode)`；动作表 dpr.inx idx16=\'O\' 事件帧3360 / idx17=\'H\' / idx18=\'Z\'',
   },
