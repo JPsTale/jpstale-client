@@ -1,0 +1,58 @@
+/* ============================================================
+ * JPsTale 设计 token —— 前置流程（登录/选服/选角）统一入口
+ * 定稿依据：2026-09-17 UI 评审 + 用户确认的视觉方向。
+ * 屏幕内其余面板（HUD/背包/世界）暂不迁移，用 token 时逐个替换硬编码色。
+ * 颜色值已按对比度要求核对（正文色 #ece8e0 在 #151b23 上 ≥ 10.5:1）。
+ * ============================================================ */
+
+:root {
+  /* 底层背景 */
+  --jp-bg-base: #0b0f14;      /* 页面/app 背景 */
+  --jp-bg-panel: #151b23;     /* 面板 */
+  --jp-bg-elev: #1c2430;      /* 浮层/卡面 */
+  --jp-bg-hover: #232d3b;     /* hover 底色 */
+  --jp-bg-input: #10141b;     /* 输入框写到底层 */
+
+  /* 边框与分割 */
+  --jp-border: rgba(255, 255, 255, 0.08);
+  --jp-border-strong: rgba(255, 255, 255, 0.16);
+  --jp-border-focus: #d9a441;
+
+  /* 文本 */
+  --jp-text: #ece8e0;
+  --jp-text-dim: #a8a49a;     /* 次级说明 */
+  --jp-text-faint: #6f6b61;   /* 占位/禁用 */
+  --jp-text-strong: #ffffff;
+
+  /* 语义色 */
+  --jp-brand: #d9a441;        /* 主金：CTA/选中/焦点 */
+  --jp-ok: #5aa86b;
+  --jp-warn: #d97706;
+  --jp-danger: #d64545;
+
+  /* 字号（正文 14px、标题 16/18、主标题 20） */
+  --jp-font-size-s: 12px;
+  --jp-font-size: 14px;
+  --jp-font-size-m: 16px;
+  --jp-font-size-l: 18px;
+  --jp-font-size-xl: 20px;
+
+  /* 间距（4 进制） */
+  --jp-space-1: 4px;
+  --jp-space-2: 8px;
+  --jp-space-3: 12px;
+  --jp-space-4: 16px;
+  --jp-space-5: 20px;
+  --jp-space-6: 24px;
+
+  /* 圆角 */
+  --jp-radius-s: 3px;
+  --jp-radius: 5px;
+  --jp-radius-l: 8px;
+}
+
+/* 通用：把脚标/占位字压到可以让位与输入的灰色，减去"看不清"的灰段 */
+.jp-theme textarea:disabled,
+.jp-theme input:disabled {
+  color: var(--jp-text-faint);
+}

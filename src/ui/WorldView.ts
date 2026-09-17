@@ -2542,21 +2542,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function setRemoteAnim(actor: RemoteActor, animState: number, animIndex = 0, animClip = '',
                          useSeq = 0, useItemIdcode = 0): void {
-    // 对方复活了（anim_state 不再是死亡）→ **必须先解除死亡态**：
-    // DEAD 属于"不可被站姿同步打断"的状态，不清掉它，后面所有 triggerIdle 都会被守卫拦下，
-    // 远端会永远躺在原地。
+
     if (animState !== ANIM_DEAD && actor.animState.getCurrentState() === actor.animState.STATE.DEAD) {
       actor.animState.resurrect();
     }
-    // 两者都要看：同一个状态里也可能换变体（例：站着换武器 → 站姿条目变，anim_state 不变）
-    // useSeq 也进去重键：使用道具广播的 (anim_state, anim_index) 在站着连喝两瓶时完全相同，
-    // 只看前两项会把第二次整个吞掉（原版旁观者每次都播）。
+
     if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex
         && useSeq === actor.lastUseSeq) return;
     actor.lastAnimState = animState;
     actor.lastAnimIndex = animIndex;
     actor.lastUseSeq = useSeq;
-    // 指定条目优先：状态机只负责"该播什么状态"，具体是哪一条由对方客户端说了算
     if (animIndex > 0) {
       const picked = actor.motionList.find((m) => m.index === animIndex) ?? null;
       if (picked && actor.animState.playMotion(picked)) {
@@ -2568,13 +2563,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (animState === ANIM_RUN) actor.animState.triggerRun();
     else if (animState === ANIM_WALK) actor.animState.triggerWalk();
-    // 掉落三态：失败就失败（状态机内部会 `reportFallback` 说明"该模型没有这个条目"），
-    // **不拿 idle 顶上** —— 顶上会把"缺数据"伪装成"正常播放"（AGENTS #12/#53）。
     else if (animState === ANIM_FALLDOWN) actor.animState.triggerFallDown();
     else if (animState === ANIM_FALLSTAND) actor.animState.triggerFallStand();
     else if (animState === ANIM_FALLDAMAGE) actor.animState.triggerFallDamage();
-    // 别人使用道具：服务端 `broadcastUseItem` 广播的就是这个状态 + 道具 idcode。
-    // 表现与自机**同一条规则**：药水在 EAT 事件帧放（下面 updateRemotes 里判定），以太核心立即放。
     else if (animState === ANIM_EAT) {
       if (actor.animState.triggerEat()) {
         const kind = useEffectKindOf(useItemIdcode);
@@ -2586,8 +2577,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     }
-    // 其余（服务端说 STAND，或本版还没认识的状态值）→ 站。
-    // 这是**忠实照做**，不是 fallback：服务端说"站着"，客户端就站着。
     else actor.animState.triggerIdle();
   }
 

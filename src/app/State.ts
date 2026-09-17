@@ -24,7 +24,7 @@ const VALID: Record<string, string[]> = {
   [AppScreen.BOOT]:          [AppScreen.LOGIN],
   [AppScreen.LOGIN]:         [AppScreen.SERVER_SELECT],
   [AppScreen.SERVER_SELECT]: [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
-  [AppScreen.CHAR_SELECT]:   [AppScreen.WORLD, AppScreen.CHAR_CREATE, AppScreen.LOGIN],
+  [AppScreen.CHAR_SELECT]:   [AppScreen.WORLD, AppScreen.CHAR_CREATE, AppScreen.SERVER_SELECT, AppScreen.LOGIN],
   [AppScreen.CHAR_CREATE]:   [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
   [AppScreen.WORLD]:         [AppScreen.CHAR_SELECT, AppScreen.LOGIN],
 };

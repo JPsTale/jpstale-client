@@ -4,18 +4,23 @@
       "title": "Login",
       "username": "Account",
       "password": "Password",
-      "submit": "Login"
+      "submit": "Login",
+      "connecting": "Connecting...",
+      "failed": "Login failed"
     },
     "server": {
       "title": "Select Server",
       "online": "● Online",
-      "offline": "○ Offline"
+      "offline": "○ Offline",
+      "empty": "No servers available",
+      "logout": "Back to Login"
     },
-    "charSel": {
-      "title": "Character Select",
-      "create": "Create",
+"charSel": {
+      "title": "Select Character",
+      "create": "Create Character",
       "enter": "Enter Game",
-      "logout": "Switch Account",
+      "logout": "Log Out",
+      "backToServers": "Back to Servers",
       "level": "Lv.{level}",
       "location": "{map}"
     },
@@ -195,7 +200,22 @@
     "11": "Teleport hack",
     "12": "Invincible hack",
     "13": "Invalid name",
-    "14": "Name already exists"
+    "14": "Name already exists",
+    "web": {
+      "loginFailed": "Incorrect account or password",
+      "accountDisabled": "This account is banned or disabled",
+      "oldPasswordWrong": "Current password is incorrect",
+      "passwordUnchanged": "New password must differ from the current one",
+      "notLogin": "Not logged in, or your session has expired",
+      "noPermission": "You do not have permission to do that",
+      "paramError": "Invalid request parameters",
+      "userNotFound": "User not found",
+      "mapNotFound": "Map not found",
+      "accountExists": "That account name is already taken",
+      "emailExists": "That email is already registered",
+      "notInClan": "Character is not in a clan",
+      "clanNameTaken": "That clan name is already taken"
+    }
   },
   "skills": {
     "pt": "Skill Pts",
@@ -469,7 +489,8 @@
     "backToLogin": "Back to Login",
     "autoLogin": "Auto signing in...",
     "disconnecting": "Disconnecting...",
-    "logoutReason": "Connection lost, please log in again"
+    "logoutReason": "Connection lost, please log in again",
+    "connFailed": "Cannot reach server, please check your network"
   },
   "shop": {
     "kind": {

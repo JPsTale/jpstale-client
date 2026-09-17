@@ -1,5 +1,6 @@
 import { encodeClient, decodeServer, debugLog, ping } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
+import { reportFallback } from '../char/fallback-log.js';
 
 type ProtoHandler = (msg: jpt.base.ServerMessage) => void;
 type JsonHandler = (type: string, data: Record<string, unknown>) => void;
@@ -178,8 +179,22 @@ function _connect(): void {
   ws.onerror = (e) => { console.error('[net] error', e); };
 }
 
+function connStateLabel(): string {
+  if (!ws) return 'closed';
+  return ws.readyState === WebSocket.CONNECTING ? 'connecting' : ws.readyState === WebSocket.OPEN ? 'open' : 'closed';
+}
+
+/** 断线/未连接时丢包：写入降级清单（检查器可见，AGENTS #12），避免"发了没发"无从分辨。 */
+function dropReport(kind: string, detail: string): void {
+  reportFallback('net-drop', `[${connStateLabel()}] ${kind} 丢弃：${detail}`);
+}
+
 export function send(msg: jpt.base.ClientMessage.$Properties): void {
-  if (ws?.readyState !== WebSocket.OPEN) { console.warn('[net] not connected'); return; }
+  if (ws?.readyState !== WebSocket.OPEN) {
+    const name = msg?.payload ? String(msg.payload) : '?';
+    dropReport('C2S', `type=${name}`);
+    return;
+  }
   ws.send(encodeClient(msg));
 }
 
@@ -215,7 +230,10 @@ function stopHeartbeat(): void {
 }
 
 export function sendJson(type: string, payload?: Record<string, unknown>): void {
-  if (ws?.readyState !== WebSocket.OPEN) { console.warn('[net] not connected'); return; }
+  if (ws?.readyState !== WebSocket.OPEN) {
+    dropReport('JSON', `type=${type}`);
+    return;
+  }
   ws.send(JSON.stringify({ type, ...payload }));
 }
 

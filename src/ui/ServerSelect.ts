@@ -3,7 +3,7 @@ import { t } from '../i18n/index.js';
 export interface ServerInfo { id: number; name: string; ip: string; port: number; online: boolean; }
 
 export interface ServerSelect {
-  show(servers: ServerInfo[], onSelect: (serverId: number) => void): void;
+  show(servers: ServerInfo[], onSelect: (serverId: number) => void, onLogout: () => void): void;
   hide(): void;
   destroy(): void;
 }
@@ -15,18 +15,30 @@ export function createServerSelect(container: HTMLElement): ServerSelect {
   container.appendChild(el);
 
   return {
-    show(servers, onSelect) {
+    show(servers, onSelect, onLogout) {
       el.innerHTML = `<h2>${t('gui.server.title')}</h2>`;
-      const list = document.createElement('div');
-      list.style.cssText = 'display:flex;flex-direction:column;gap:8px';
-      for (const s of servers) {
-        const row = document.createElement('div');
-        row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(15,15,24,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:4px;cursor:pointer;min-width:300px;backdrop-filter:blur(2px)';
-        row.innerHTML = `<span style="flex:1">${s.name}</span><span style="color:${s.online ? '#8f8' : '#f88'}">${s.online ? t('gui.server.online') : t('gui.server.offline')}</span>`;
-        row.onclick = () => onSelect(s.id);
-        list.appendChild(row);
+      if (servers.length === 0) {
+        el.appendChild(Object.assign(document.createElement('div'), {
+          textContent: t('gui.server.empty'),
+          style: 'color:var(--jp-text-dim,#a8a49a);padding:16px;',
+        }));
+      } else {
+        const list = document.createElement('div');
+        list.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+        for (const s of servers) {
+          const row = document.createElement('div');
+          row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:8px 16px;background:rgba(15,15,24,0.55);border:1px solid rgba(255,255,255,0.08);border-radius:4px;cursor:pointer;min-width:300px;backdrop-filter:blur(2px)';
+          row.innerHTML = `<span style="flex:1">${s.name}</span><span style="color:${s.online ? '#8f8' : '#f88'}">${s.online ? t('gui.server.online') : t('gui.server.offline')}</span>`;
+          row.onclick = () => onSelect(s.id);
+          list.appendChild(row);
+        }
+        el.appendChild(list);
       }
-      el.appendChild(list);
+      const logout = document.createElement('div');
+      logout.textContent = t('gui.server.logout');
+      logout.style.cssText = 'margin-top:8px;padding:6px 14px;border:1px solid rgba(255,255,255,0.35);border-radius:3px;cursor:pointer;opacity:0.85;';
+      logout.onclick = onLogout;
+      el.appendChild(logout);
       el.style.display = 'flex';
     },
     hide() { el.style.display = 'none'; },
