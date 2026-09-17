@@ -730,7 +730,13 @@ export class MapRenderer {
           + ' float _dlev = (_z - uFogRange.x) / (uFogRange.y - uFogRange.x);'
           + ' if (_dlev > 1.0) _dlev = 1.0; diffuseColor.rgb *= 1.0 - _dlev; } }',
         );
-        // 动态光：加在**顶点色相乘之前**（原版 `AddLight` 是加进顶点色、再乘贴图 ⇒ 与 `<color_fragment>` 同序）
+        // 动态光：varying 必须在**两个阶段都声明**（GLSL ES 1.0 要求一致声明；只在顶点段声明
+        // 会让片元段报 `'vDynLight' : undeclared identifier` ⇒ 材质编译失败 ⇒ 地图整个不渲染 —— 实测踩到）
+        shader.fragmentShader = shader.fragmentShader.replace(
+          '#include <common>',
+          '#include <common>\nvarying vec3 vDynLight;',
+        );
+        // 加在**顶点色相乘之前**（原版 `AddLight` 是加进顶点色、再乘贴图 ⇒ 与 `<color_fragment>` 同序）
         shader.fragmentShader = shader.fragmentShader.replace(
           '#include <color_fragment>',
           'diffuseColor.rgb += vDynLight;\n#include <color_fragment>',
