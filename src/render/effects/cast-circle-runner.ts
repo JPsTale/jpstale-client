@@ -12,11 +12,42 @@ import {
 import { loadStaticSmd } from './static-fx.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import type { SystemSpawner } from './multi-spark-runner.js';
+import { monsterCastOf } from './monster-attack-fx.js';
 
 export interface CastCircleCtx {
   effects: SystemSpawner | null;
   scene: THREE.Scene;
   log?: (msg: string) => void;
+}
+
+/** 怪物技能起手的依赖 = 法阵那一套 + 能放起手音 */
+export interface MonsterCastDeps extends CastCircleCtx {
+  playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
+}
+
+/**
+ * **怪物技能起手**（原版 `BeginSkill_Monster`，`character.cpp:14070`）：起手音 + 起手法阵。
+ *
+ * **唯一实现** —— 游戏（`WorldView`）与怪物实验室共用。此前只有实验室有这一环
+ * （`monsterCastOf` 全仓只在实验室被调用）⇒ 游戏里怪物放技能**没有起手音、也没有法阵**；
+ * 更严重的是游戏侧连"技能动作的事件帧"都没武装（`armMonster…` 只对 ATTACK 调）⇒
+ * 技能特效本身也不会触发（用户 2026-09-18："能把它也接入 client 吗"）。
+ *
+ * 一个 `effectId` 下**所有技能共用**一套起手（取宿主条目的 `castSound` / `castMagic`）——
+ * 与"这一次放的是哪一招"无关，故不需要 KeyCode。
+ */
+export function fireMonsterSkillCast(
+  deps: MonsterCastDeps, effectId: number, pos: { x: number; y: number; z: number },
+): void {
+  const cast = monsterCastOf(effectId);
+  if (!cast) return;
+  if (cast.castSound) deps.playSound?.(cast.castSound, pos);
+  if (cast.castMagic != null) {
+    // `castMagic` = 原版 `sinEffect_StartMagic` 的 CharFlag：1 = MAAM1 / 2 = MAAM2（缺省按 2）
+    runCastCircle(deps, pos, { charFlag: cast.castMagic === 1 ? 1 : 2, type: 0 });
+  } else {
+    deps.log?.('  （该怪登记了技能但没写 castMagic ⇒ 不起法阵）');
+  }
 }
 
 /** 需要按包络淡入淡出的法阵本体（模块级：调用方只调 `updateCastCircleMeshes`） */

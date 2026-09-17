@@ -20,6 +20,14 @@ export const CHRMOTION_EXT = 10;
  */
 export const CHRMOTION_STATE_DEAD = 0x0120;
 
+/**
+ * 技能动作态（原版 `character.h` 的 `CHRMOTION_STATE_SKILL`）。
+ *
+ * 与 DEAD 同理收敛：这个值此前在 `WorldView` 里是写死的 `0x0150`，而现在**多处**要按它分支
+ * （怪物技能的事件帧武装、起手法阵/起手音、音效桶选择）⇒ 只留这一份定义。
+ */
+export const CHRMOTION_STATE_SKILL = 0x0150;
+
 export const CHRMOTION_STATE: Record<number, string> = {
   0x00: 'NONE',
   0x40: 'STAND',

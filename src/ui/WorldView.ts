@@ -36,7 +36,7 @@ import {
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
-import { updateCastCircleMeshes } from '../render/effects/cast-circle-runner.js';
+import { updateCastCircleMeshes, fireMonsterSkillCast } from '../render/effects/cast-circle-runner.js';
 import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
@@ -56,7 +56,7 @@ import { createEffectManager } from '../render/effects/effect-manager.js';
 import { createQuarksRuntime } from '../render/effects/quarks-runtime.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
-import { CHRMOTION_STATE_DEAD } from '../char/char-format.js';
+import { CHRMOTION_STATE_DEAD, CHRMOTION_STATE_SKILL } from '../char/char-format.js';
 import { advanceAnimFrame, crossEventFrames, motionEventIndexOf } from '../char/animation.js';
 import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
 import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, MAGIC_JOBS, type ProjectileManager } from '../render/projectile.js';
@@ -2770,7 +2770,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 游戏与怪物实验室共用同一份。这里只负责"什么时候到事件帧"。
 
 
-  function armMonsterAttackSound(actor: MonsterActor): void {
+  function armMonsterMotionEvents(actor: MonsterActor): void {
     const ef = actor.animState.getCurrentMotion()?.eventFrame;
     const frames = ef ? Array.from(ef).filter((f) => f > 0) : [];
     // **没有事件帧 ≠ 不播**：原版 `EventAttack` 有一条兜底分支
@@ -2781,6 +2781,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     actor.attackEventFrames = frames.length > 0 ? frames : [0];
     actor.attackFired = 0;
     actor.lastCompFrame = 0;   // 重置，让首帧也能检测到交叉
+  }
+
+  /**
+   * **技能动作开始**：武装事件帧 + 起手（音 + 法阵）。
+   *
+   * 原版这两件事都在 `BeginSkill_Monster`（`character.cpp:14070`）：`SkillPlaySound(CASTING_*)`
+   * 与 `sinEffect_StartMagic(&pos, CharFlag)`，且**所有技能共用**一套（取宿主条目的登记值）。
+   *
+   * ⚠ 此前游戏侧**只有 ATTACK 会武装事件帧** ⇒ 怪物放技能时事件帧用的还是上一刀普攻那一套
+   * ⇒ **技能特效在游戏里根本不会触发**（实验室里正常，因为实验室自己管武装）。
+   */
+  function beginMonsterSkill(actor: MonsterActor): void {
+    armMonsterMotionEvents(actor);
+    // 起手音 + 起手法阵：**共用实现**（`cast-circle-runner.fireMonsterSkillCast`，实验室同一份）
+    fireMonsterSkillCast(skillFxCtx(), actor.monsterEffectId, actor.root.position);
   }
 
   function setRemoteMonsterAnim(actor: MonsterActor, animState: number, animIndex = 0): void {
@@ -2796,7 +2811,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 而 `animIndex` 相同），只比 (state,index) 会把第二刀整刀吞掉
     // ⇒ 观感"怪物靠近后攻击动画只播一次"（用户 2026-09-17 实测）。
     // 两条路径（服务端选定条目 / 本地回退）共用这一条守卫（同一个判定只写一处）。
-    if (animState === ANIM_ATTACK && actor.animState.getCurrentState() === actor.animState.STATE.ATTACK) {
+    // ⚠ **技能与普攻同规**：只认"这一刀/这一招是否还在播"，不要比 (state,index) 是否相等 ——
+    //   相邻两刀（或连续两次同一技能）选到**同一条变体**是常态，只比 (state,index) 会把第二次整刀吞掉。
+    if ((animState === ANIM_ATTACK && actor.animState.getCurrentState() === actor.animState.STATE.ATTACK)
+      || (animState === CHRMOTION_STATE_SKILL
+        && actor.animState.getCurrentState() === actor.animState.STATE.SKILL)) {
       return;
     }
     if (animIndex > 0) {
@@ -2804,14 +2823,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (picked && actor.animState.playMotion(picked)) {
         actor.lastAnimState = animState;
         actor.lastAnimIndex = animIndex;
-        if (animState === ANIM_ATTACK) armMonsterAttackSound(actor);
+        if (animState === ANIM_ATTACK) armMonsterMotionEvents(actor);
+        else if (animState === CHRMOTION_STATE_SKILL) beginMonsterSkill(actor);
         return;
       }
       reportFallback('anim', `怪物 ${actor.name}#${actor.monsterId} 服务端选定的条目 #${animIndex} `
         + `在本地动作表里不存在（模型 ${actor.modelKey}）→ 回退本地匹配（两端动画数据可能不同代）`);
     }
     // 攻击包的重复判定已上移到函数开头（两条路径共用，见那里的说明）。
-    if (animState !== ANIM_ATTACK && animState === actor.lastAnimState) {
+    // 技能与普攻一样**不看 (state === lastAnimState)** —— 连续两次同一技能是合法的（见上面的守卫）
+    if (animState !== ANIM_ATTACK && animState !== CHRMOTION_STATE_SKILL
+      && animState === actor.lastAnimState) {
       return;
     }
     actor.lastAnimState = animState;
@@ -2821,15 +2843,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (animState === ANIM_RUN) actor.animState.triggerRun();
     else if (animState === ANIM_WALK) actor.animState.triggerWalk();
     else if (animState === ANIM_ATTACK) {
-      if (actor.animState.triggerAttack(true)) armMonsterAttackSound(actor);
+      if (actor.animState.triggerAttack(true)) armMonsterMotionEvents(actor);
     }
     else if (animState === 0x0110) { // DAMAGE
       actor.animState.triggerDamage();
       sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_DAMAGE', actor.root.position, actor.monsterEffectId);
       console.log(`[MonsterAnim] ${actor.name}#${actor.monsterId} DAMAGE`);
     }
-    else if (animState === 0x0150) { // SKILL
-      actor.animState.triggerSkill();
+    else if (animState === CHRMOTION_STATE_SKILL) {
+      // 技能音（动作态桶 = SKILL ⇒ `skill N.wav`）；起手音与法阵在 `beginMonsterSkill` 里
+      if (actor.animState.triggerSkill()) beginMonsterSkill(actor);
       sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_SKILL', actor.root.position, actor.monsterEffectId);
     }
     else {
