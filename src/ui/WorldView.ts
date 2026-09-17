@@ -311,9 +311,9 @@ export interface WorldView {
   /** 地面物品消失（S2C_GroundItemDisappear，拾取/过期/被清） → 移除 */
   groundItemDisappear(groundItemId: number): void;
   /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
-  playSkillByIcon(iconFile: string): boolean;
+  playSkillByIcon(iconFile: string, aim?: { x: number; y: number; z: number } | null): boolean;
   /** [调试/装备] 播放当前装备在指定拳的技能动画 */
-  playEquippedSkill(slot: 'left' | 'right'): boolean;
+  playEquippedSkill(slot: 'left' | 'right', aim?: { x: number; y: number; z: number } | null): boolean;
 }
 
 /**
@@ -590,6 +590,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfSkillRow: SkillFxRow | null = null;
   /** 本次技能已触发过几个事件帧（与怪物侧同一判据：`crossEventFrames`） */
   let selfSkillEventFired = 0;
+  /**
+   * 本次技能的**瞄准点**（世界坐标）。
+   *
+   * 为什么不直接用 `selfAttackTargetId`：那个值是**自动攻击循环**在"跑到射程内起手"时赋的
+   * （见下面的普攻分支），它不是"可保持的选中状态" —— 点一只怪只会**跑过去**，所以
+   * "先选目标再施法"这条路在我们客户端并不存在（用户 2026-09-17 实测卡在这里）。
+   * 故调试入口从**自己的那次点击**取光标下的怪当目标（`playSkillByIcon(icon, aim)`）。
+   * 真正的技能目标将来由服务端/技能系统给，那时换掉这一处即可。
+   */
+  let selfSkillAim: { x: number; y: number; z: number } | null = null;
   let selfAttackEventFrames: number[] = [];
   /** 待触发的「使用道具」粒子/音效（药水在 EAT 事件帧才放，见 playEatInternal） */
   let selfEatEffect: { kind: UseEffectKind; motion: MotionInfo; fired: boolean } | null = null;
@@ -1858,8 +1868,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 起手（技能动画开始）：记下这一行 + 播起手音（原版 `SkillPlaySound`，在 `BeginSkill` 那一刻） */
-  function beginSelfSkill(iconFile: string): void {
+  function beginSelfSkill(iconFile: string, aim: { x: number; y: number; z: number } | null = null): void {
     selfSkillEventFired = 0;
+    selfSkillAim = aim;
     selfSkillRow = skillFxRowByIcon(iconFile);
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
     fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
@@ -1870,7 +1881,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * @param iconFile skillData iconFile（含 .bmp）；'skill_normal'=普攻动画
    * @returns 是否找到并播放
    */
-  function playSkillByIcon(iconFile: string): boolean {
+  function playSkillByIcon(iconFile: string, aim: { x: number; y: number; z: number } | null = null): boolean {
     if (!animState) return false;
     const norm = iconFile.replace(/\.bmp$/i, '');
     if (norm === 'skill_normal') {
@@ -1884,7 +1895,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const ok = animState.triggerSkill(idx);
       if (ok) {
         console.log('[WorldView][dbg] 技能动画 #' + idx + ' ' + iconFile);
-        beginSelfSkill(iconFile);
+        beginSelfSkill(iconFile, aim);
         return true;
       }
       const fallback = animState.triggerAttack(true);
@@ -1893,21 +1904,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     // 无 saSkillData 条目（T5 等）：直接任意 SKILL 或普攻
     const ok = animState.triggerSkill(null);
-    if (ok) { console.log('[WorldView][dbg] 任意SKILL动画 ' + iconFile); beginSelfSkill(iconFile); return true; }
+    if (ok) { console.log('[WorldView][dbg] 任意SKILL动画 ' + iconFile); beginSelfSkill(iconFile, aim); return true; }
     const fallback = animState.triggerAttack(true);
     console.log('[WorldView][dbg] 技能任意SKILL→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
     return fallback;
   }
 
   /** 播放当前装备在指定拳的技能动画（左/右拳）。未装备/普通攻击 → 播普攻。 */
-  function playEquippedSkill(slot: 'left' | 'right'): boolean {
+  function playEquippedSkill(slot: 'left' | 'right', aim: { x: number; y: number; z: number } | null = null): boolean {
     const snap = getGameSnapshot();
     const bind = snap.fistBindings[slot];
     const selfClass = CLASS_DIR[selfJobId] ?? 'fighter';
     if (!bind || bind.classDir !== selfClass) {
-      return playSkillByIcon('skill_normal');
+      return playSkillByIcon('skill_normal', aim);
     }
-    return playSkillByIcon(bind.iconFile + '.bmp');
+    return playSkillByIcon(bind.iconFile + '.bmp', aim);
   }
 
   // 相机跟随角色（/pt/maps/ updateDummy 同款，Winmain.cpp 卫星相机）
@@ -2051,7 +2062,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (SKILL_DEBUG && (e.altKey || e.shiftKey) && e.button === 0) {
       const slot = e.altKey ? 'left' : 'right';
       e.preventDefault();
-      playEquippedSkill(slot);
+      // 瞄准 = **这次点击下的那只怪**（名牌优先，其次世界拾取）。
+      // 不依赖 `selfAttackTargetId`（那是自动攻击循环在射程内赋的值，见其声明处的说明）。
+      const tag = nameplateTargetAt(e.clientX, e.clientY) ?? pickTargetAt(e.clientX, e.clientY);
+      const aim = tag && tag.kind === 'monster'
+        ? (monsters.get(tag.id)?.root.position ?? null) : null;
+      if (!aim) console.log('[WorldView][dbg] Shift/Alt+点击：光标下没有怪 ⇒ 无目标施放（原版此情形不施放）');
+      playEquippedSkill(slot, aim);
       return;
     }
     if (e.button === 0) {
@@ -4950,7 +4967,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             for (const _f of crossed.hit) {
               // 目标 = 当前选中的怪（原版 `lpCharSelPlayer`）；**没有就传 null** ——
               // 原版 `if (DesChar)` 两处守卫都不成立 ⇒ 不收敛、不改瞄（不是"退而求其次"）
-              const targetPos = monsters.get(selfAttackTargetId)?.root.position ?? null;
+              // 瞄准点优先用**本次技能自己的**（见 `selfSkillAim` 的说明），
+              // 其次才是自动攻击的当前目标；都没有就是原版的"无目标"路径
+              const targetPos = selfSkillAim ?? monsters.get(selfAttackTargetId)?.root.position ?? null;
               fireSkillEvent(selfSkillRow, skillFxCtx(), selfPos, targetPos);
             }
           }
