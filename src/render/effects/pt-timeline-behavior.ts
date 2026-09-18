@@ -33,16 +33,6 @@ export function setTimelineCamera(cam: THREE.Camera | null): void { camRef = cam
 
 const DEG = Math.PI / 180;
 
-/**
- * **我方扩展**（非原版）：把 `localangle*` 也施加到 TYPE_ONE/TWO/THREE 的朝向上。
- *
- * 原版 `LocalAngle` **只被 TYPE_FOUR 拖尾用**（`AddFaceTrace`），ONE/TWO/THREE 用的是 `PartAngle`
- * —— 我们此前给广告板做过"局部旋转"，那是发明。默认关（= 按原版）；开则保留那个观感
- * （用户在实验室肉眼比对后决定）。
- */
-let localAngleSpin = false;
-export function setLocalAngleSpin(on: boolean): void { localAngleSpin = on; }
-export function isLocalAngleSpin(): boolean { return localAngleSpin; }
 
 export interface PtParticleLike {
   age?: number;
@@ -151,7 +141,6 @@ export class PtTimeline implements Behavior {
       const [rx, ry, rz] = st.val.partAngle as [number, number, number];
       this.eulerToQuat(q, rx, ry, rz);
       q.multiply(this.axisQuat(new THREE.Vector3(1, 0, 0), -Math.PI / 2));
-      if (localAngleSpin) this.applyLocal(q, st);
       return;
     }
     if (this.particleType === 3 && cam) {
@@ -166,7 +155,6 @@ export class PtTimeline implements Behavior {
       const sy = px * tmpUp.x + py * tmpUp.y + pz * tmpUp.z;
       const theta = Math.atan2(sy, sx) - Math.PI / 2;    // 轴的屏幕角（Y 轴 → 0 表示竖直）
       q.copy(cam.quaternion).multiply(this.axisQuat(new THREE.Vector3(0, 0, 1), theta));
-      if (localAngleSpin) this.applyLocal(q, st);
       return;
     }
     if (this.particleType === 5) {
@@ -183,14 +171,6 @@ export class PtTimeline implements Behavior {
     const [rx, ry, rz] = st.val.partAngle as [number, number, number];
     this.eulerToQuat(q, rx, ry, rz);
     if (cam) q.premultiply(cam.quaternion);
-    if (localAngleSpin) this.applyLocal(q, st);
-  }
-
-  /** 开关打开时：在既有朝向上再叠一层 `LocalAngle`（我方扩展，非原版语义） */
-  private applyLocal(q: THREE.Quaternion, st: PtState): void {
-    const [lx, ly, lz] = st.val.localAngle as [number, number, number];
-    if (!lx && !ly && !lz) return;
-    q.multiply(this.eulerQuat([lx, ly, lz]));
   }
 
   private eulerQuat([rx, ry, rz]: [number, number, number]): THREE.Quaternion {
