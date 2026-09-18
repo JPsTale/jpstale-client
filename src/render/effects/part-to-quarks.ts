@@ -235,6 +235,8 @@ export const APPLIED_KEYFRAME_PROPS = [
   'size', 'sizeext', 'color', 'velocity',
   'partanglez', 'partanglex', 'partangley',
   'localanglez', 'localanglex', 'localangley',
+  // 全轴写法（`partangle = XYZ(...)`）：与单轴事件合并成同一条轨（见 `angleTrackOf.fieldTrack`）
+  'partangle', 'localangle',
 ] as const;
 
 /** 由 emitter 的 keyframes 取某属性的**向量**关键帧（时间已归一化为寿命比例） */
@@ -589,14 +591,35 @@ export function needs3DRotation(em: PartEmitter): boolean {
 export function angleTrackOf(em: PartEmitter, axis: 'x' | 'y' | 'z', lifeSec: number): Array<{ t: number; v: number }> {
   const pick = (v: Vec3 | null | undefined): Num | undefined =>
     (!v ? undefined : axis === 'x' ? v.x : axis === 'y' ? v.y : v.z);
-  const kfOf = (name: string, anchor: Num): Array<{ t: number; v: number }> =>
-    numKfOf(em, name, lifeSec, anchor).map((k) => ({ t: k.t, v: midOf(k.v, 0) }));
   const ZERO: Num = { k: 'n', v: 0 };      // 原版 `HoNewParticle()` 构造：各角度初值 0
+  /**
+   * 一个角度**字段**（`PartAngle` 或 `LocalAngle`）在某一轴上的轨。
+   *
+   * 字段有**两种事件写法**，都要收（原版是两个事件类，都写同一个 `part` 字段）：
+   *   · 全轴 `partangle = XYZ(...)`（`HoNewParticleEvent_PartAngle` —— 一次写 x&y&z）
+   *   · 单轴 `partanglez = …`（`HoNewParticleEvent_PartAngleZ` —— 只写 z）
+   * 合并规则 = **按时间排序后后者覆盖**（原版就是"事件到点写字段"），不是相加。
+   */
+  const fieldTrack = (field: 'partangle' | 'localangle', anchor: Num): Array<{ t: number; v: number }> => {
+    const evts = [
+      ...(em.keyframes[field] ?? [])
+        .map((k) => ({ t: Math.min(1, k.time / lifeSec), v: k.value, fade: k.fade })),
+      ...(em.keyframes[field + axis] ?? [])
+        .map((k) => ({ t: Math.min(1, k.time / lifeSec), v: k.value, fade: k.fade })),
+    ].sort((x, y) => x.t - y.t);
+    const nums = evts.map((e) => {
+      if (e.v.k === 'num') return { t: e.t, v: e.v.v, fade: e.fade };
+      if (e.v.k === 'vec') return { t: e.t, v: pick(e.v.v) ?? ZERO, fade: e.fade };
+      return null;
+    }).filter((x): x is { t: number; v: Num; fade: boolean } => x !== null);
+    return withSteps(nums, anchor, STEP_EPS_SEC / lifeSec)
+      .map((k) => ({ t: k.t, v: midOf(k.v, 0) }));   // ⚠ 角度轨仍取区间中点（未逐粒子掷，见 §缺口清单）
+  };
   const ends = (v: Num | undefined, at: number): { t: number; v: number } | null =>
     (v == null ? null : { t: at, v: midOf(v, 0) });
-  const part = withEnds(kfOf('partangle' + axis, pick(em.initialPartAngle) ?? ZERO),
+  const part = withEnds(fieldTrack('partangle', pick(em.initialPartAngle) ?? ZERO),
     ends(pick(em.initialPartAngle), 0), ends(pick(em.finalPartAngle), 1));
-  const local = withEnds(kfOf('localangle' + axis, pick(em.initialLocalAngle) ?? ZERO),
+  const local = withEnds(fieldTrack('localangle', pick(em.initialLocalAngle) ?? ZERO),
     ends(pick(em.initialLocalAngle), 0), ends(pick(em.finalLocalAngle), 1));
   const num = (k: Array<{ t: number; v: unknown }>): Array<{ t: number; v: number }> =>
     k.map((x) => ({ t: x.t, v: midOf(x.v as Num, 0) }));
