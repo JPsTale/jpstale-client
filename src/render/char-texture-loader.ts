@@ -54,11 +54,19 @@ export async function fetchAndDecodeTexture(
     if (!decoded) throw new Error('纹理解码失败: ' + url);   // 下面 catch 成 null（保持原签名）
     // **特效贴图：把"亮度"烘进 alpha**（`opts.linear` = 特效那条路）—— 遮罩来自**贴图本身**，
     // 与粒子颜色无关 ⇒ 任意色相都能出光（蓝/青/紫都不会被抠掉），且没有阈值、没有方框。
-    // ⚠ **只在贴图本来没有 alpha 通道时才烘**（`hasAlpha === false`，多为 24 位 BMP）——
-    //   有真 alpha 的 TGA 必须原样保留（覆盖它会毁掉美术的遮罩）。
-    //   背景色（黑/底噪）⇒ 亮度≈0 ⇒ alpha≈0 ⇒ 天然不参与加法 ✓（这正是原版 BLEND_LAMP 想要的效果，
-    //   而原版靠"整块 RGB 相加"会带出底噪方框）。
-    if (opts.linear && decoded.hasAlpha === false) {
+    // ⚠ 烘的条件：**没有 alpha 通道**（多为 24 位 BMP）**或 alpha 通道退化（恒为不透明）**。
+    //   后一条是 2026-09-18 实测补的：`m_spark06.tga`（MultiSpark 的爆闪）**有** alpha 通道
+    //   但 min=max=mean=255（68.7% 像素是黑底）、alpha 与亮度平均差 214 ⇒ 遮罩等于不存在，
+    //   加色混合下整块矩形都参与 ⇒ 用户实测"爆闪是一大片方形"。
+    //   ⇒ 判据改为"**alpha 通道能不能当遮罩用**"，不能就烘亮度（真遮罩的 TGA 不动）。
+    let alphaUseful = decoded.hasAlpha === true;
+    if (opts.linear && alphaUseful) {
+      const px = decoded.pixels;
+      let allOpaque = true;
+      for (let i = 3; i < px.length; i += 4) if (px[i]! !== 255) { allOpaque = false; break; }
+      alphaUseful = !allOpaque;
+    }
+    if (opts.linear && !alphaUseful) {
       const px = decoded.pixels;
       for (let i = 0; i < px.length; i += 4) {
         // Rec.601 亮度（0.299/0.587/0.114），整数近似避免逐像素浮点
