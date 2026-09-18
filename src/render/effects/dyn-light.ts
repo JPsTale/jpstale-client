@@ -28,6 +28,13 @@ import { reportFallback } from '../../char/fallback-log.js';
 export const DYN_LIGHT_MAX = 80;
 
 /**
+ * **真实 `THREE.PointLight` 的盏数**（恒定，与池容量 `DYN_LIGHT_MAX` 是两件事）。
+ * 理由见 `createDynLightPool` 注释：three 把灯数编进 shader 源码，且展开后**灭灯也照跑计算**
+ * ⇒ 灯数既不能变、也不能多。8 = 够覆盖"角色/怪物周围最近的几盏"；更远的光仍照在地面上（数据面注入）。
+ */
+const DYN_LIGHT_LIVE = 8;
+
+/**
  * 原版强度 → three 物理光强的标定常数。
  * ⚠ **推断值**（`AddDynamicLight` 未读）：原版 `A=255` 时 `a == Power`，
  * 而 three（r155+）用坎德拉 + 平方反比，同样的数看不出效果，故乘一个标定系数。
@@ -77,48 +84,84 @@ export interface DynLightPool extends DynLightSink {
 }
 
 /**
- * 建一个动态光池。**预创建** `DYN_LIGHT_MAX` 盏灯（three 里增删光源会触发材质重编译，
- * 预建 + 开关 `visible` 才是稳的做法）。
+ * 建一个动态光池。**真实 `PointLight` 只建 `DYN_LIGHT_LIVE` 盏**，全部常驻 `visible = true`；
+ * 池容量仍是 `DYN_LIGHT_MAX`（那是**数据面的槽数**，与真实灯数是两件事）。
+ *
+ * ⚠ 真实灯数**必须恒定**：`NUM_POINT_LIGHTS` 是**编译期常量** —— three 把它文本替换进 shader
+ *   源码（`three.module.js:19451`），循环还被 `#pragma unroll_loop_start` **展开成重复源码**
+ *   （GLSL ES 1.0 的数组长度/循环上界必须常量表达式）。⇒ 亮着几盏就编一份 program：0..80 盏 =
+ *   最多 81 份 shader，每见到一个新灯数就同步 `compileShader + linkProgram`。
+ *     实测（CC 连点十几次后 `renderer.info.programs` 9 → 112，伴随 300~1600ms 的 `3D提交` 尖峰）。
+ *
+ * ⚠ 但**不能**靠"常驻 80 盏 + 灭灯只置 `intensity = 0`"来恒定灯数：展开后**没有分支可跳过**。
+ *   `lights_fragment_begin`（`three.module.js:13896`）展开出 80 段 `getPointLightInfo + RE_Direct`，
+ *   而 `RE_Direct_BlinnPhong`（`:13890`）里**没有** `directLight.visible` 判断（那个 `visible` 只用在
+ *   阴影那一行）⇒ 灭灯只是把 `color` 乘 0，`normalize/length/pow/dot/BRDF` **全部照跑**。
+ *   即 80 盏 = 每个 Phong 片元每帧 80 次完整光照（无战斗时原本是 0 次）。
+ * ⇒ 真实灯恒定 `DYN_LIGHT_LIVE` 盏，每帧只喂**最亮的 8 盏**（见 `applyLive`）。
+ *   地面**不受影响** —— 它吃 `DynLightData` 那套顶点注入（全部 80 盏）。
  */
 export function createDynLightPool(scene: THREE.Scene): DynLightPool {
   const lights: THREE.PointLight[] = [];
-  for (let i = 0; i < DYN_LIGHT_MAX; i++) {
+  for (let i = 0; i < DYN_LIGHT_LIVE; i++) {
     // decay=2 是 three 默认（平方反比）；原版公式未读，见文件头 ⚠
     const l = new THREE.PointLight(0xffffff, 0, 64, 2);
-    l.visible = false;
+    l.visible = true;
     l.name = `dyn-light-${i}`;
     scene.add(l);
     lights.push(l);
   }
-  /** 每个槽的当前 Power（0 = 空槽）；`base` 存原始颜色，供每帧按 Power 重算 */
+  /** 每个槽的当前 Power（0 = 空槽）；`base` 存原始颜色、`pos` 存世界坐标，供每帧按 Power 重算 */
   const power = new Float64Array(DYN_LIGHT_MAX);
   const dec = new Float64Array(DYN_LIGHT_MAX);
   const base = new Float64Array(DYN_LIGHT_MAX * 4);
+  // ⚠ 位置**必须自己按槽存**：真实灯只有 DYN_LIGHT_LIVE 盏，槽↔灯不再一一对应（见 `applyLive`）
+  const pos = new Float64Array(DYN_LIGHT_MAX * 3);
+  /** `applyLive` 选出的"最亮的前 N 槽"（预分配，热路径零分配） */
+  const top = new Int32Array(DYN_LIGHT_LIVE);
 
   /** 着色器数据面（每帧末压紧；见 `DynLightData`） */
   const posRange = new Float32Array(DYN_LIGHT_MAX * 4);
   const colAlpha = new Float32Array(DYN_LIGHT_MAX * 4);
   let dataCount = 0;
 
+  /** Range = (Power>>1)*fONE，下限 64（世界单位）—— 与原版 `Apply()` 一致（**唯一定义**，`applyLive` 与 `packData` 共用） */
+  function rangeOf(p: number): number { return Math.max(64, p >> 1); }
+
   /**
-   * 按当前 Power 重算颜色/强度/半径（原版 `Apply()` 每帧都这么做）。
-   * ⚠ `three` 的 PointLight 那两支（`intensity`/`distance`）**保留**，供仍走 three 灯的对象
-   *   （角色/怪物=Phong、实验室地面）用；**数据面**才是自写注入要吃的（台账 §18.4 的迁移分阶段）。
+   * 把**最亮的 `DYN_LIGHT_LIVE` 盏**写进真实 `PointLight`（只有角色/怪物=Phong 吃这份）。
+   * 灯数恒定不变（见 `createDynLightPool` 注释：一变就重编 shader），灭的只置 `intensity = 0`
+   * —— **不碰 `visible`**（`visible=false` 会让灯从 three 列表消失 = 灯数变化）。
+   *
+   * 代价（有意偏离原版）：角色/怪物只被**最近的 8 盏**照亮，更远的光只在地面上有表现。
+   * 地面走 `DynLightData`（全部 80 盏），不受此限。
    */
-  function apply(i: number): void {
-    const l = lights[i]!;
-    const p = power[i]!;
-    if (p <= 0) {
-      l.visible = false;
-      l.intensity = 0;
-      return;
+  function applyLive(): void {
+    for (let k = 0; k < DYN_LIGHT_LIVE; k++) top[k] = -1;
+    // 取 top-N：插入排序，O(80×8)，热路径零分配
+    for (let i = 0; i < DYN_LIGHT_MAX; i++) {
+      const p = power[i]!;
+      if (p <= 0) continue;
+      for (let k = 0; k < DYN_LIGHT_LIVE; k++) {
+        const t = top[k]!;
+        if (t < 0 || p > power[t]!) {
+          for (let j = DYN_LIGHT_LIVE - 1; j > k; j--) top[j] = top[j - 1]!;
+          top[k] = i;
+          break;
+        }
+      }
     }
-    const k = p / 255;
-    l.color.setRGB((base[i * 4]! * k) / 255, (base[i * 4 + 1]! * k) / 255, (base[i * 4 + 2]! * k) / 255);
-    l.intensity = ((p * base[i * 4 + 3]!) / 255 / 255) * DYN_LIGHT_INTENSITY_SCALE;
-    // Range = (Power>>1)*fONE，下限 64（世界单位）—— 与原版 `Apply()` 一致
-    l.distance = Math.max(64, p >> 1);
-    l.visible = true;
+    for (let k = 0; k < DYN_LIGHT_LIVE; k++) {
+      const l = lights[k]!;
+      const i = top[k]!;
+      if (i < 0) { l.intensity = 0; continue; }   // 熄灭 —— 不关 visible（灯数必须恒定）
+      const p = power[i]!;
+      const kf = p / 255;
+      l.position.set(pos[i * 3]!, pos[i * 3 + 1]!, pos[i * 3 + 2]!);
+      l.color.setRGB((base[i * 4]! * kf) / 255, (base[i * 4 + 1]! * kf) / 255, (base[i * 4 + 2]! * kf) / 255);
+      l.intensity = ((p * base[i * 4 + 3]!) / 255 / 255) * DYN_LIGHT_INTENSITY_SCALE;
+      l.distance = rangeOf(p);
+    }
   }
 
   /** 每帧末把**点亮的光**压紧写进数据面（着色器靠 `count` 定界，见 `DynLightData`） */
@@ -127,10 +170,9 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
     for (let i = 0; i < DYN_LIGHT_MAX; i++) {
       const p = power[i]!;
       if (p <= 0) continue;
-      const l = lights[i]!;
       const o = n * 4;
-      posRange[o] = l.position.x; posRange[o + 1] = l.position.y; posRange[o + 2] = l.position.z;
-      posRange[o + 3] = l.distance;                       // R（世界单位）
+      posRange[o] = pos[i * 3]!; posRange[o + 1] = pos[i * 3 + 1]!; posRange[o + 2] = pos[i * 3 + 2]!;
+      posRange[o + 3] = rangeOf(p);                       // R（世界单位）
       const k = p / 255;
       colAlpha[o] = (base[i * 4]! * k) / 255;
       colAlpha[o + 1] = (base[i * 4 + 1]! * k) / 255;
@@ -160,12 +202,11 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
         reportFallback('fx', `动态光池已满（${DYN_LIGHT_MAX} 盏，原版 scLIGHT_MAX）→ 这一盏被丢弃`);
         return false;
       }
-      const l = lights[slot]!;
       base[slot * 4] = r; base[slot * 4 + 1] = g; base[slot * 4 + 2] = b; base[slot * 4 + 3] = a;
+      pos[slot * 3] = x; pos[slot * 3 + 1] = y; pos[slot * 3 + 2] = z;
       power[slot] = p;
       dec[slot] = decPower;
-      l.position.set(x, y, z);
-      apply(slot);
+      applyLive();
       packData();
       return true;
     },
@@ -178,8 +219,8 @@ export function createDynLightPool(scene: THREE.Scene): DynLightPool {
         if (power[i]! <= 0) continue;
         power[i]! -= dec[i]! * steps;
         if (power[i]! <= 0) power[i] = 0;
-        apply(i);
       }
+      applyLive();
       packData();
     },
 

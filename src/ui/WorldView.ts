@@ -520,7 +520,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let dirLight: THREE.DirectionalLight | null = null; // 平行光（供角色等受光材质，强度随昼夜压暗）
   let effects: ReturnType<typeof createEffectManager> | null = null; // INI 广告牌特效
   /**
-   * 动态光池（原版 `SetDynLight`）—— **80 槽 PointLight**，实验室与游戏同一份实现。
+   * 动态光池（原版 `SetDynLight`）—— **80 槽数据面 + 8 盏常驻 PointLight**，实验室与游戏同一份实现
+   * （真实灯为什么不建 80 盏，见 `effects/dyn-light.ts` 头注释）。
    *
    * ⚠ 此前游戏侧**没有建它**，所以所有 `SetDynLight` 都无处落地（用户实测："动态光对怪物没起作用"，
    * 不是错觉）。也注意：**地图用的是 `MeshBasicMaterial`（不受光）**，所以地图不会吃到动态光 ——
