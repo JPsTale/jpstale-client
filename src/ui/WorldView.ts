@@ -5230,14 +5230,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               // 其次才是自动攻击的当前目标；都没有就是原版的"无目标"路径
               // 瞄准点写成**函数**：快照（给不需要跟目标的那类）与 `targetGetter`（给飞出物那类 ——
               // 飞行最长 100 帧，目标走动时不跟随会落在它身后）共用同一条规则，不写两份。
-              const aimTargetOf = (): { x: number; y: number; z: number } | null => {
-                const aimRoot = selfSkillAim
-                  ?? (selfAttackTargetId ? monsters.get(selfAttackTargetId)?.root ?? null : null);
+              // ⚠ **目标在"发射这一刻"定死（引用快照）**：闭包里**只读它的位置**（目标走动仍跟随），
+              //   不再读 `selfAttackTargetId` —— 否则中途换目标会让**还在半空**的飞出物改道。
+              //   用户实测：祭司的 VigorBall 飞在半路时切换目标，法球会拐向新目标 ✗。
+              //   （实验室那份是同一处修法：`const tgt = points[a.targetIdx]` 快照 —— 两边语义一致 ✓）
+              const aimRootAtCast = selfSkillAim
+                ?? (selfAttackTargetId ? monsters.get(selfAttackTargetId)?.root ?? null : null);
+              const aimTargetOf = (): { x: number; y: number; z: number } | null =>
                 // 怪 → 抬到身中；非怪（无目标）→ null（原版无目标路径）
-                return aimRoot
-                  ? { x: aimRoot.position.x, y: aimRoot.position.y + TARGET_BODY_LIFT, z: aimRoot.position.z }
-                  : null;
-              };
+                (aimRootAtCast
+                  ? { x: aimRootAtCast.position.x, y: aimRootAtCast.position.y + TARGET_BODY_LIFT, z: aimRootAtCast.position.z }
+                  : null);
               const targetPos = aimTargetOf();
               console.log('[WorldView][dbg] 技能事件帧：caster=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')'
                 + ' target=' + (targetPos ? `(${targetPos.x.toFixed(1)},${targetPos.y.toFixed(1)},${targetPos.z.toFixed(1)})` : 'null'));
