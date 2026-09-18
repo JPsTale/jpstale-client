@@ -1,4 +1,12 @@
 /**
+ * ⚠ **当前不接入运行时**（用户 2026-09-18 定调）：它是**自持生命周期**的状态机
+ * （自己推进 position/velocity/size/color/rotation），等于在 quarks 里塞第二套粒子系统
+ * ⇒ 必然与 quarks 抢字段（实测连栽三次：世界原点、拖尾塌陷、长条方向固定）。
+ * **保留原因**：它的算术是照 C++ 逐行搬运并用 `verify-pt-timeline` 的**手算期望值**钉住的，
+ * 是"语义正确"的参照；`eventtimer`/阶跃重瞄准/逐粒子掷这些**必须补**的语义都在这里，
+ * 下一步按 **quarks 插件形态**（`FunctionValueGenerator` / `Behavior`，逐粒子状态放
+ * `particle.memory`）重写，而不是继续用这套自持生命周期。
+ *
  * PT 粒子状态机（**`.part` 与 Lua 共用**）—— 纯逻辑，不碰 three/quarks。
  *
  * 逐行搬运自 C++（`NewSourcePT-2023/SrcGame/src/HoBaram/`）：
