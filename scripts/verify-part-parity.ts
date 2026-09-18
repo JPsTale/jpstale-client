@@ -19,11 +19,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 import * as THREE from 'three';
 import { parsePart } from '../src/core/effect/part-script.js';
-import { convertPart } from '../src/render/effects/part-to-quarks.js';
+import { convertPart, setBillboardCamera } from '../src/render/effects/part-to-quarks.js';
+
+/** 固定假相机：`PtCameraFacingSpin` 等行为要用它算基底（否则它们早退 ⇒ 朝向采不到） */
+const fakeCam = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+fakeCam.position.set(0, 10, -20);
+fakeCam.lookAt(0, 0, 0);
+fakeCam.updateMatrixWorld(true);
+setBillboardCamera(fakeCam);
 
 const BASELINE = path.resolve('src/render/effects/part-frames.baseline.json');
 const CAPTURE = process.argv.includes('--capture');
 const ONLY = process.argv.find((a) => a.startsWith('--only='))?.slice(7);
+
+/**
+ * **已登记的差异**（"改动必须显式登记"这一条的落地）：与基线不一致、但**有据可依**的条目。
+ * key = `资产#发射器下标`；`why` 必须写清依据（源码行 / 用户判定），否则不许进这张表。
+ */
+const ALLOW_DIFF: Array<{ key: string; emitter: string; why: string }> = [];
 const DT = 1 / 70;
 const FRAMES = 70;
 const SAMPLE_EVERY = 14;
@@ -83,11 +96,20 @@ function captureAsset(name: string): unknown {
     const samples: number[][] = [];
     for (let f = 0; f <= FRAMES; f++) {
       if (f % SAMPLE_EVERY === 0) {
+        // ⚠ **朝向也要采**（2026-09-18 教训：`localAngle` 收窄那条改动只影响 rotation，
+        //   旧采样只有 size/color/position ⇒ 闸门看不见它 ⇒ 等于没闸门）
+        const rot = p.rotation as { x?: number; y?: number; z?: number; w?: number } | number;
+        const rotSample = typeof rot === 'number'
+          ? [r3(rot)]
+          : (rot && typeof rot.x === 'number'
+            ? [r3(rot.x), r3(rot.y!), r3(rot.z!), r3(rot.w!)]
+            : [0]);
         samples.push([
           f,
           r3(p.size.x), r3(p.size.y),
           r3(p.color.x), r3(p.color.y), r3(p.color.z), r3(p.color.w),
           r3(p.position.x), r3(p.position.y), r3(p.position.z),
+          ...rotSample,
         ]);
       }
       for (const b of ps.behaviors) b.update?.(p, DT);
@@ -129,24 +151,35 @@ if (CAPTURE) {
   const base = JSON.parse(fs.readFileSync(BASELINE, 'utf8')) as { assets: Record<string, unknown> };
   const bad: string[] = [];
   const throwLog: string[] = [];
+  const allowed: string[] = [];
   let checked = 0;
+  /** 逐**发射器**比对（比资产级细：一个资产里只有个别发射器该变时，别把整个资产放过） */
   for (const a of assets) {
-    const want = base.assets[a];
-    if (want === undefined) continue;
-    const got = captureAsset(a) as Array<{ emitter?: string; err?: string }> | null;
-    if (Array.isArray(got)) {
-      for (const g of got) if (g?.err) throwLog.push(`${a} / ${g.emitter}: ${g.err.split(String.fromCharCode(10))[0]}`);
+    const want = base.assets[a] as Array<{ emitter?: string; err?: string; samples?: number[][] }> | null;
+    if (want === undefined || want === null) continue;
+    const got = captureAsset(a) as Array<{ emitter?: string; err?: string; samples?: number[][] }> | null;
+    if (!Array.isArray(got)) { checked++; bad.push(a); continue; }
+    for (let i = 0; i < Math.max(want.length, got.length); i++) {
+      const w = want[i], g = got[i];
+      if (g?.err) throwLog.push(`${a} / ${g.emitter}: ${g.err.split(String.fromCharCode(10))[0]}`);
+      if (JSON.stringify(w) === JSON.stringify(g)) continue;
+      const key = `${a}#${i}`;
+      const hit = ALLOW_DIFF.find((d) => d.key === key && d.emitter === (g?.emitter ?? w?.emitter));
+      if (hit) allowed.push(`${key} ${hit.emitter} —— ${hit.why}`);
+      else { checked++; bad.push(`${a}#${i} ${g?.emitter ?? w?.emitter ?? '?'}`); }
     }
-    if (JSON.stringify(want) !== JSON.stringify(got)) {
-      checked++;
-      bad.push(a);
-    }
+  }
+  if (allowed.length) {
+    console.log(`已登记放行的差异 ${allowed.length} 条：`);
+    for (const t of allowed.slice(0, 6)) console.log('   ' + t);
+    if (allowed.length > 6) console.log(`   … 另 ${allowed.length - 6} 条`);
   }
   if (throwLog.length) {
     console.log(`⚠ 新实现在驱动时抛错 ${throwLog.length} 处（前 5）：`);
     for (const t of throwLog.slice(0, 5)) console.log('   ' + t);
   }
   console.log(`比对 ${assets.length} 个资产（基线 ${Object.keys(base.assets).length} 个）：`
-    + `${checked === 0 ? '✓ 全部逐帧吻合' : `✗ ${bad.length} 个不一致：${bad.slice(0, 20).join('、')}`}`);
+    + `${checked === 0 ? '✓ 全部逐帧吻合（或按登记放行）' : `✗ ${bad.length} 处不一致：${bad.slice(0, 12).join('、')}`}`
+    + `${allowed.length ? `；登记放行 ${allowed.length} 处` : ''}`);
   process.exit(bad.length === 0 ? 0 : 1);
 }
