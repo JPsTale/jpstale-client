@@ -154,11 +154,30 @@ try {
   }
 } catch { /* 技能表读不到就跳过 */ }
 
+// ③ **原版源码索引**（`scripts/extract-monster-particles.ts` 生成）：把没被上面两张表覆盖的资产
+//    也接上使用者 —— 这是"未应用属性"能点出样本的关键（例如 localangle → Chaos Cara Queen_SOD）
+try {
+  const idx = JSON.parse(fs.readFileSync('src/game/data/monster-particles.generated.json', 'utf8')) as {
+    rows: Array<{ asset: string; file: string; line: number; func: string; monsterName: string | null; monsterCase: string | null; skillCase: string | null }>;
+  };
+  for (const r of idx.rows) {
+    const who = r.monsterName
+      ? `怪: ${r.monsterName}`
+      : (r.monsterCase ? `怪（${r.monsterCase.replace(/^snCHAR_SOUND_/, '')}）` : null);
+    // ⚠ 没有 case 的行**不能丢**（曾经丢了 ⇒ 整张表变空、成了静默漏报 ✗）：
+    //   给"加载点"（源码函数 + file:line）当路标 —— 依然能让人顺着去看
+    const label = [who, r.skillCase].filter(Boolean).join(' / ')
+      || `源码 ${r.func ?? '?'}(${r.file}:${r.line})`;
+    addUser(r.asset, label);
+  }
+} catch { /* 索引还没生成 ⇒ 跳过（先跑 npx tsx scripts/extract-monster-particles.ts） */ }
+
+
 console.log('\n三类"使用者"反查（怪 / 技能）：');
 console.log(`  已知使用者关系的 .part：${users.size} 个`);
 const withUsers = propsSorted.filter(([p]) => !APPLIED.has(p));
 for (const [p] of withUsers.slice(0, 6)) {
-  const hit = filesOf.get(p) ? [...filesOf.get(p)!] : [];
+  const hit = props.get(p) ? [...props.get(p)!.files] : [];
   console.log(`\n  **未应用属性「${p}」** —— 用到它的文件里，能反查到使用者的：`);
   let shown = 0;
   for (const f of hit) {
