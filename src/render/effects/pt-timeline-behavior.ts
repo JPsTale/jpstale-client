@@ -22,7 +22,6 @@ import {
   createState, stepFrame, quadSize, type PtState, type PtTimelineCfg,
 } from '../../core/effect/pt-timeline.js';
 
-const REF_UP = new THREE.Vector3(0, 1, 0);
 const tmpDir = new THREE.Vector3();
 const tmpRight = new THREE.Vector3();
 const tmpUp = new THREE.Vector3();
@@ -60,7 +59,6 @@ export class PtTimeline implements Behavior {
   /** `worldSpace = true`（= 非 `follow`，默认）：位置是**世界坐标**且在出生时冻结（尾迹语义） */
   private worldSpace = true;
   /** 每粒子的姿态（TYPE_TWO/THREE 需要按位置/相机算，逐帧写） */
-  private m = new THREE.Matrix4();
   private tmpWorld = new THREE.Vector3();
 
   constructor(
@@ -158,13 +156,8 @@ export class PtTimeline implements Behavior {
       return;
     }
     if (this.particleType === 5) {
-      // 我方扩展：面片法线对齐速度方向
-      const [dx, dy, dz] = st.val.dir as [number, number, number];
-      tmpDir.set(dx, dy, dz);
-      if (tmpDir.lengthSq() > 1e-9) {
-        this.m.lookAt(tmpDir.normalize(), new THREE.Vector3(0, 0, 0), REF_UP);
-        q.setFromRotationMatrix(this.m);
-      } else q.copy(cam ? cam.quaternion : new THREE.Quaternion());
+      // **我方扩展**：朝向交给 `MeshRandomOrientation` + `OrientVelocityToNormal`（那是它的既有规格，
+      // 见转换层）——本行为**不碰** rotation，避免两边抢占同一个字段。
       return;
     }
     // TYPE_ONE（与 TYPE_FOUR 的兜底）：相机空间 + PartAngle 做 Rx·Ry·Rz（照抄 `AddFace2DBillBoard`）

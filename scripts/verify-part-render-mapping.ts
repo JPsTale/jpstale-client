@@ -12,6 +12,7 @@
 import * as THREE from 'three';
 import { createState, type PtTimelineCfg } from '../src/core/effect/pt-timeline.js';
 import { PtTimeline, setTimelineCamera } from '../src/render/effects/pt-timeline-behavior.js';
+import { convertPart } from '../src/render/effects/part-to-quarks.js';
 
 const DT = 1 / 70;
 let fails = 0;
@@ -105,8 +106,25 @@ console.log('TYPE_FOUR / FIVE');
   // TYPE_FOUR 走 quarks Trail（模式由转换层决定），这里只验"不写四元数"不炸
   const b = bbox(quadCorners(4, [4, 20]));
   ok('TYPE_FOUR 不参与四元数朝向（交给 Trail）', b.length() > 0, `bbox=${b.toArray()}`);
-  const n5 = normalOf(5, [0, 0, 0]);
-  ok('TYPE_FIVE（我方扩展）无速度时回落到相机朝向', n5.dot(toCam) > 0.99, `n·cam=${n5.dot(toCam).toFixed(3)}`);
+  // TYPE_FIVE = **我方扩展**（原版无此类型）⇒ 规格 = 旧实现的两个行为，时间轴**不碰**朝向。
+  // 断言放在**转换层**（行为是否挂上），而不是"时间轴写了什么朝向"（那是我一度发明的东西）。
+  {
+    const sys5 = convertPart({
+      name: 't5', version: 1, position: null,
+      emitters: [{
+        name: 'e', blend: 'lamp', particleType: 5, numParticles: 1, emitRate: 1, loops: 1, delay: 0,
+        lifetime: { k: 'n', v: 1 }, emitRadius: { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } },
+        gravity: null, texture: null, initialSize: { k: 'n', v: 4 }, initialSizeExt: { k: 'n', v: 20 },
+        initialColor: null, initialPartAngle: null, initialLocalAngle: null, initialVelocity: { x: { k: 'n', v: 3 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } },
+        finalColor: null, finalSize: null, finalSizeExt: null, finalPartAngle: null, finalLocalAngle: null, finalVelocity: null,
+        keyframes: {},
+      } as never],
+    } as never, []);
+    const names = (sys5[0]?.system as unknown as { behaviors: Array<{ constructor: { name: string } }> })
+      .behaviors.map((b) => b.constructor.name);
+    ok('TYPE_FIVE 挂上 MeshRandomOrientation（随机初朝向）', names.includes('MeshRandomOrientation'), names.join(','));
+    ok('TYPE_FIVE 挂上 OrientVelocityToNormal（法线对齐速度 + 面内自转）', names.includes('OrientVelocityToNormal'), names.join(','));
+  }
 }
 
 console.log(fails === 0

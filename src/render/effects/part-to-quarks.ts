@@ -49,6 +49,12 @@ function numGen(n: Num | null | undefined, fallback = 0): ConstantValue | Interv
   return n.k === 'n' ? new ConstantValue(n.v) : new IntervalValue(n.a, n.b);
 }
 
+/** 取一个 Num 的代表值（区间取中值）—— 旧行为与注释共用（曾随曲线机制一起删掉，这里按需补回） */
+function midOf(n: Num | null | undefined, fallback = 0): number {
+  if (!n) return fallback;
+  return n.k === 'n' ? n.v : (n.a + n.b) / 2;
+}
+
 /** 白色常量：startColor 传白，颜色轨道全部由 ColorOverLife 的 Gradient 承担（文件头条 3） */
 function whiteColor(): Gradient {
   return new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]);
@@ -121,31 +127,22 @@ export function setBillboardCamera(cam: THREE.Camera | null): void {
  * （不用累加 ⇒ 不受帧率/掉帧影响）。
  */
 
-/** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
-const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
+export class MeshRandomOrientation implements Behavior {
+  type = 'MeshRandomOrientation';
+  private g = new RandomOrientation();
+  initialize(p: { rotation?: unknown }): void {
+    const q = p.rotation;
+    if (q && typeof q === 'object') {
+      this.g.genValue(null as unknown as GeneratorMemory, q as Quaternion);
+    }
+  }
+  update(): void { /* 只写初值 */ }
+  frameUpdate(): void { /* 无 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): MeshRandomOrientation { return new MeshRandomOrientation(); }
+  reset(): void { /* 无状态 */ }
+}
 
-/** `.part` 的属性名 → 事件槽（唯一出处；`redcolor` 这类单通道属性在此落到对应分量） */
-const PT_SLOT_OF_PROP: Record<string, PtSlot> = {
-  size: 'size', sizeext: 'sizeExt', eventtimer: 'eventTimer',
-  color: 'color', redcolor: 'colorR', greencolor: 'colorG', bluecolor: 'colorB', alpha: 'colorA',
-  velocity: 'dir', velocityx: 'dirX', velocityy: 'dirY', velocityz: 'dirZ',
-  partangle: 'partAngle', partanglex: 'partAngleX', partangley: 'partAngleY', partanglez: 'partAngleZ',
-  localangle: 'localAngle', localanglex: 'localAngleX', localangley: 'localAngleY', localanglez: 'localAngleZ',
-};
-
-/**
- * **世界朝向面片的运动**（原版 `sinPublicEffectMove` 的 `SIN_EFFECT_WIDELINE` 分支，1:1）：
- *   · **沿自身面法线飞**：`GetMoveLocation(0, 0, MoveSpeed.z, Angle.x, Angle.y, 0)`
- *     ⇒ 法线 = 局部 +z ⇒ 世界方向 = 四元数作用于 (0,0,1)（旋转矩阵第 3 列）
- *   · **面内自转**：`Angle.z += 16`/帧 —— 原版累加的是 `Angle` 的 **z 分量**，而复合序 Z 在先
- *     ⇒ 语义是"绕**局部 z**（= 卡片法线）转" ⇒ 这里用**四元数右乘** Δq(轴=(0,0,1), 16 单位/帧)
- *     （右乘 = 绕局部轴 ✓；16/4096 圈/帧 ⇒ 1.472 rad/s @60fps）
- *
- * ⚠ 每帧都设（原版也逐帧从当前 `Angle` 算）⇒ 飞行方向会跟着自转一起转（与源码同构）。
- * ⚠ 读粒子自身的四元数 ⇒ 与 `RandomOrientation` 天然共享同一次随机，不需要额外管线。
- * ⚠ 入参宽松：`Particle.rotation` 是 `number | Quaternion | undefined`（广告板存**标量**）⇒ 标量/缺失直接返回。
- * ⚠ 不用 quarks 的 `RotationOverLife`：它在 Mesh 模式下动的是标量还是四元数未核实（源码只读到签名）。
- */
 export class OrientVelocityToNormal implements Behavior {
   type = 'orientVelocityToNormal';
   /** 面内自转角速度：原版 `Angle.z += 16` 单位/帧（4096 = 一圈）⇒ 16/4096×2π×60 ≈ 1.472 rad/s */
@@ -182,6 +179,32 @@ export class OrientVelocityToNormal implements Behavior {
   clone(): OrientVelocityToNormal { return new OrientVelocityToNormal(this.speed); }
   reset(): void { /* 无状态 */ }
 }
+
+/** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
+const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
+
+/** `.part` 的属性名 → 事件槽（唯一出处；`redcolor` 这类单通道属性在此落到对应分量） */
+const PT_SLOT_OF_PROP: Record<string, PtSlot> = {
+  size: 'size', sizeext: 'sizeExt', eventtimer: 'eventTimer',
+  color: 'color', redcolor: 'colorR', greencolor: 'colorG', bluecolor: 'colorB', alpha: 'colorA',
+  velocity: 'dir', velocityx: 'dirX', velocityy: 'dirY', velocityz: 'dirZ',
+  partangle: 'partAngle', partanglex: 'partAngleX', partangley: 'partAngleY', partanglez: 'partAngleZ',
+  localangle: 'localAngle', localanglex: 'localAngleX', localangley: 'localAngleY', localanglez: 'localAngleZ',
+};
+
+/**
+ * **世界朝向面片的运动**（原版 `sinPublicEffectMove` 的 `SIN_EFFECT_WIDELINE` 分支，1:1）：
+ *   · **沿自身面法线飞**：`GetMoveLocation(0, 0, MoveSpeed.z, Angle.x, Angle.y, 0)`
+ *     ⇒ 法线 = 局部 +z ⇒ 世界方向 = 四元数作用于 (0,0,1)（旋转矩阵第 3 列）
+ *   · **面内自转**：`Angle.z += 16`/帧 —— 原版累加的是 `Angle` 的 **z 分量**，而复合序 Z 在先
+ *     ⇒ 语义是"绕**局部 z**（= 卡片法线）转" ⇒ 这里用**四元数右乘** Δq(轴=(0,0,1), 16 单位/帧)
+ *     （右乘 = 绕局部轴 ✓；16/4096 圈/帧 ⇒ 1.472 rad/s @60fps）
+ *
+ * ⚠ 每帧都设（原版也逐帧从当前 `Angle` 算）⇒ 飞行方向会跟着自转一起转（与源码同构）。
+ * ⚠ 读粒子自身的四元数 ⇒ 与 `RandomOrientation` 天然共享同一次随机，不需要额外管线。
+ * ⚠ 入参宽松：`Particle.rotation` 是 `number | Quaternion | undefined`（广告板存**标量**）⇒ 标量/缺失直接返回。
+ * ⚠ 不用 quarks 的 `RotationOverLife`：它在 Mesh 模式下动的是标量还是四元数未核实（源码只读到签名）。
+ */
 
 /* ─────────── 面朝向 / 混合 ─────────── */
 
@@ -404,7 +427,16 @@ export function convertPart(
     if (em.particleType === 4) {
       notes.push('TYPE_FOUR 拖尾走 quarks Trail（位置历史条带）近似：横截面朝向本应用 LocalAngle，未表达');
     }
-    if (em.particleType === 5) notes.push('TYPE_FIVE 是我方扩展（原版无此类型）：面片法线对齐速度方向');
+    if (em.particleType === 5) {
+      // TYPE_FIVE = **我方扩展**（原版无此类型）⇒ 规格就是**旧实现的这两个行为**（照搬，不另立一套）：
+      //   · `MeshRandomOrientation`：逐粒子随机初朝向（原版 `sinPublicEffect.cpp:391-392` 两轴随机角）
+      //   · `OrientVelocityToNormal`：面法线对齐速度 + 面内自转（原版 `Angle.z += 16`/帧）
+      // 用户实测：换实现后丢了这两个 ⇒ "长条状旋转散开的面片没按之前行为运行"、爆闪露出方形贴图。
+      behaviors.push(new MeshRandomOrientation());
+      const v5 = em.initialVelocity;
+      const sp5 = v5 ? Math.hypot(midOf(v5.x, 0), midOf(v5.y, 0), midOf(v5.z, 0)) : 0;
+      if (sp5 > 0) behaviors.push(new OrientVelocityToNormal(sp5));
+    }
 
     const system = new ParticleSystem({
       // 有 delay 时发射窗口要覆盖到"延迟 + 一段"，否则 quarks 在 delay 之前就结束系统
