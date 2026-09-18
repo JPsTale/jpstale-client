@@ -497,7 +497,10 @@ export function renderModeOf(particleType: number): RenderMode {
  * 混合表 —— **全项目唯一一份**（`part-to-quarks` 与 `ini-to-quarks` 共用；
  * 此前 ini 那条手抄了一份，2026-09-17 合成此处）。
  *
- * ⚠ **`lamp` / `alpha` 额外打开 `USE_COLOR_AS_ALPHA`（用亮度当 alpha）** —— 这是**刻意的偏离**，
+ * ⚠ **遮罩来自贴图**（2026-09-18 起）：解码特效贴图时把**亮度烘进 alpha**
+ * （`char-texture-loader.fetchAndDecodeTexture`，仅对"本来没有 alpha 通道"的贴图）——
+ * 与粒子颜色无关 ⇒ 任意色相都能出光；不再使用 `USE_COLOR_AS_ALPHA`（那条取颜色红通道会抠掉蓝/青）。
+ * 下面是当初那条偏离的理由留存（历史）：
  * 理由与依据：
  *   · 原版 `SMMAT_BLEND_LAMP` = `SRC_ALPHA / ONE`，其语义是"**用 alpha 当光晕遮罩**"
  *     （`Graphics/DeviceRenderState.cpp`，见 `plans/2026-09-11-audio-effects.md` §6）
@@ -512,10 +515,11 @@ export function renderModeOf(particleType: number): RenderMode {
  *   ⇒ 想回到"严格按美术原始值相加"，删掉下面这两行 `defines` 即可。
  */
 export function applyBlend(mat: THREE.Material, blend: PartEmitter['blend']): void {
-  // 需要"亮度当遮罩"的两种混合（见上）
-  if (blend === 'lamp' || blend === 'alpha' || blend === 'addcolor') {
-    mat.defines = { ...(mat.defines ?? {}), USE_COLOR_AS_ALPHA: '' };
-  }
+  // ⚠ **`USE_COLOR_AS_ALPHA` 已不再使用**（2026-09-18）：那条 hack 取的是 `diffuseColor.r`
+  //   ⇒ 红通道低的颜色（蓝/青/紫）会被整片抠掉，而红通道高的又会把贴图底噪加成方框。
+  //   现改为**在贴图解码时把亮度烘进 alpha**（`char-texture-loader.fetchAndDecodeTexture`，
+  //   仅对"本来没有 alpha 通道"的特效贴图）⇒ 遮罩来自贴图本身、与颜色无关、无阈值、无方框。
+  //   混合因子照旧（`SRC_ALPHA/ONE` 等），alpha 由贴图给出。
   switch (blend) {
     case 'lamp':
     case 'addcolor':   // 原版第 3 种混合（`HoNewParticle.cpp:689` 的 6 模式表）；
@@ -540,8 +544,9 @@ export function applyBlend(mat: THREE.Material, blend: PartEmitter['blend']): vo
       //   直接参与运算，画面上就是**一整块方框**（用户实测：陨石"淡蓝色正方形（中间是蓝色）"）。
       //   浏览器里做过 A/B：跳过该发射器 ⇒ 方框消失（只剩 lamp 的柔和光团）；
       //   按原因子 ⇒ 方框可见；改成普通透明混合 ⇒ 变成黑方框。
-      //   ⇒ 用**亮度当遮罩**（与 lamp 同一把钥匙）+ 普通透明混合，观感回到"有遮罩时"的样子。
-      mat.defines = { ...(mat.defines ?? {}), USE_COLOR_AS_ALPHA: '' };
+      //   ⇒ 用**遮罩 + 普通透明混合**，观感回到"有遮罩时"的样子。
+      //   遮罩现在来自**贴图本身**（解码时把亮度烘进 alpha，见 `char-texture-loader`）——
+      //   不再需要 `USE_COLOR_AS_ALPHA`（那条取的是颜色红通道，会把蓝/青系整片抠掉）。
       mat.blending = THREE.NormalBlending;
       break;
   }
@@ -597,14 +602,6 @@ export function convertPart(
     //     代价是这些粒子会带回"贴图底噪的整块方框" —— **那正是原版的样子**（忠实优先）。
     //   更好的修法（待做）：把遮罩从"颜色的红通道"改成"**贴图的亮度**"（在贴图解码时烘一次），
     //     这样任意色相都能出光、且没有底噪方框。
-    const cr = em.initialColor ? roll(em.initialColor.r) : 255;
-    if ((em.blend === 'lamp' || em.blend === 'addcolor') && cr < 64) {
-      const d = { ...(material.defines ?? {}) } as Record<string, unknown>;
-      delete d['USE_COLOR_AS_ALPHA'];
-      material.defines = d;
-      notes.push(`颜色红通道=${cr}（蓝/青系）⇒ 不套"亮度当遮罩"（该遮罩取红通道会把这类颜色整片抠掉），`
-        + '回到真实 alpha；代价是可能带上贴图底噪方框（原版同此）');
-    }
     // `BLEND_ADDCOLOR`：原版 6 种混合里的第 3 种（`HoNewParticle.cpp:689`），我们按 lamp 的加法走，
     // 但**因子未核实** ⇒ 必须留痕（现有资产里没有任何文件用它；这条是为将来/别的私服副本兜住"不静默"）
     if (em.blend === 'addcolor') {

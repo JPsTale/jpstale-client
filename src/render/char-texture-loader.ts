@@ -52,6 +52,19 @@ export async function fetchAndDecodeTexture(
   return loadParsedAsset(url, 'texture:char', async (buf) => {
     const decoded = await decodeTextureAsync(buf);
     if (!decoded) throw new Error('纹理解码失败: ' + url);   // 下面 catch 成 null（保持原签名）
+    // **特效贴图：把"亮度"烘进 alpha**（`opts.linear` = 特效那条路）—— 遮罩来自**贴图本身**，
+    // 与粒子颜色无关 ⇒ 任意色相都能出光（蓝/青/紫都不会被抠掉），且没有阈值、没有方框。
+    // ⚠ **只在贴图本来没有 alpha 通道时才烘**（`hasAlpha === false`，多为 24 位 BMP）——
+    //   有真 alpha 的 TGA 必须原样保留（覆盖它会毁掉美术的遮罩）。
+    //   背景色（黑/底噪）⇒ 亮度≈0 ⇒ alpha≈0 ⇒ 天然不参与加法 ✓（这正是原版 BLEND_LAMP 想要的效果，
+    //   而原版靠"整块 RGB 相加"会带出底噪方框）。
+    if (opts.linear && decoded.hasAlpha === false) {
+      const px = decoded.pixels;
+      for (let i = 0; i < px.length; i += 4) {
+        // Rec.601 亮度（0.299/0.587/0.114），整数近似避免逐像素浮点
+        px[i + 3] = (px[i]! * 77 + px[i + 1]! * 150 + px[i + 2]! * 29) >> 8;
+      }
+    }
     const tex = new THREE.DataTexture(
       new Uint8Array(decoded.pixels), decoded.width, decoded.height, THREE.RGBAFormat,
     );
