@@ -89,6 +89,8 @@ const fading: Array<{
   group: THREE.Group; age: number; dispose: () => void; tracks?: StaticMeshTrack[];
   /** 本份网格的包络参数（法阵与怪物 ASE 网格各用各的，见 `spawnAssaMesh`） */
   fadeSec: number; lifeSec: number; aniMaxFrame: number;
+  /** 参数缺失已报过（每份只报一次） */
+  badParams?: boolean;
 }> = [];
 
 /** 本体的可见系数（原版 `cASSAMESH::Main`：前 `CAST_MESH_FADE` 秒渐显，随后同速率渐隐） */
@@ -115,6 +117,9 @@ export function spawnAssaMesh(
 ): void {
   const lifeSec = Math.max(0.05, (opts.aniMaxCount * opts.aniDelayTime) / 60);
   const aniMaxFrame = opts.aniMaxCount * 160;      // 动画单位 = 每帧 160
+  // ⏳ **加载前打点**：卡住时日志会停在这行之后 ⇒ 一眼看出是"加载/解析"这一步（此前只有成功/失败行，
+  // 卡住时什么也看不到 ✗ —— 用户实测 CC 普攻卡死，我就卡在这一步上无从判断）
+  ctx.log?.(`  ⏳ 开始加载 ASE 网格 ${opts.mesh}（AniMaxCount=${opts.aniMaxCount} / AniDelayTime=${opts.aniDelayTime}）`);
   void loadStaticSmd(opts.mesh).then((r) => {
     if (!r) { ctx.log?.(`  ✗ ASE 网格 ${opts.mesh} 加载失败`); return; }
     r.group.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
@@ -139,8 +144,18 @@ export function updateCastCircleMeshes(dt: number): void {
     f.age += dt;
     // **帧动画**（原版 `smOBJ3D::TmAnimation`）：按 30fps 播完 `AniMaxCount` 帧 ⇒ 法阵"张开"
     if (f.tracks?.length) {
-      // 每 `AniDelayTime` 帧推进一格 ⇒ 整段 = `AniMaxCount × AniDelayTime` / 60fps = `lifeSec`
-      applyStaticMeshTracks(f.tracks, Math.min(f.age / f.lifeSec, 1) * f.aniMaxFrame);
+      // ⚠ **守卫**：`lifeSec`/`aniMaxFrame` 一旦缺失 ⇒ `age/undefined` = NaN ⇒ `applyStaticMeshTracks(NaN)`
+      //   会把 NaN 写进 position/scale（污染 three 的矩阵与包围球）。这里先判、**每份只报一次**，然后跳过
+      //   帧动画（网格照常显示，只是不动）—— 不静默，也不把 NaN 喂下去。
+      if (!f.badParams && (!Number.isFinite(f.lifeSec) || !Number.isFinite(f.aniMaxFrame))) {
+        f.badParams = true;
+        reportFallback('fx', `静态网格的帧动画参数缺失（lifeSec=${String(f.lifeSec)} aniMaxFrame=${String(f.aniMaxFrame)}）`
+          + '⇒ 本次跳过帧动画（不把 NaN 喂给 applyStaticMeshTracks），只做淡入淡出');
+      }
+      if (!f.badParams) {
+        // 每 `AniDelayTime` 帧推进一格 ⇒ 整段 = `AniMaxCount × AniDelayTime` / 60fps = `lifeSec`
+        applyStaticMeshTracks(f.tracks, Math.min(f.age / f.lifeSec, 1) * f.aniMaxFrame);
+      }
     }
     const a = meshAlphaAt(f.age, f.fadeSec);
     f.group.traverse((o) => {
