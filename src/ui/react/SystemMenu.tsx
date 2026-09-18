@@ -53,6 +53,17 @@ function VideoPage({ settings }: { settings: SystemMenuSettings }) {
           ))}
         </div>
       </div>
+      {/* 屏幕震动（原版 `WaveCameraMode`）：很多玩家不喜欢震动 ⇒ 全局可关，关掉后完全不触发 */}
+      <div className="jp-men-row">
+        <span className="jp-men-key-label">{t('menu.shake')}</span>
+        <div className="jp-men-opts">
+          <input
+            type="checkbox"
+            checked={prefs.shake}
+            onChange={(e) => apply({ ...prefs, shake: e.target.checked })}
+          />
+        </div>
+      </div>
       {/* 怪物显示预算：怪多时按距离/数量裁剪并每秒轮换。关掉 = 全部显示（旧行为）。 */}
       <div className="jp-men-row">
         <span className="jp-men-key-label">{t('menu.monsterBudget')}</span>

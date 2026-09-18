@@ -80,6 +80,7 @@ import { getGameSnapshot } from '../app/gameStore.js';
 import { frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, report as perfReport } from '../app/profiler.js';
 import { pickVisibleMonsters, VIS_TIERS, type VisibilityCandidate, type VisibilityResult } from '../render/monster-visibility.js';
 import { loadDisplayPrefs, type DisplayPrefs } from './display-prefs.js';
+import { updateWaveCamera, setWaveCameraEnabled } from '../render/wave-camera.js';
 
 /** idcode → classItem（4=单手 / 6=双手），武器音效选码用（原版 WeaponPlaySound 的 HandType） */
 const ITEM_CLASS_BY_CODE = new Map<number, number>(ITEM_DEFS.map((d) => [d.code, d.class]));
@@ -2065,7 +2066,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     const pitchRad = cam.viewAnx;
     const yawRad = cam.any;
-    const d = cam.viewDist;
+    // 屏幕震动：原版把 `WaveCameraFactor` 叠加到 `ViewDist` 上（`Main.cpp:1742`）——
+    // 这里同一处叠加，**每帧只调一次**（`updateWaveCamera` 会推进状态）
+    const d = cam.viewDist + updateWaveCamera();
     camera.position.set(
       selfPos.x - d * Math.sin(yawRad) * Math.cos(pitchRad),
       selfPos.y + d * Math.sin(pitchRad),
@@ -4248,10 +4251,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let visRecomputeAt = 0;
   let visResult: VisibilityResult = { visible: null, hidden: 0, tier: null, cap: Infinity, capped: false };
   let displayPrefs = loadDisplayPrefs();
+  setWaveCameraEnabled(displayPrefs.shake);   // 屏幕震动的全局开关（持久化在画面设置里）
 
   /** 偏好变更入口（系统设置里改完立即生效，不用重进游戏） */
   function setDisplayPrefs(p: DisplayPrefs): void {
     displayPrefs = p;
+    // 屏幕震动是全局开关（原版 `WaveCameraMode`）：改完**立刻**生效，关掉时正在震的那次也停
+    setWaveCameraEnabled(p.shake);
     visRecomputeAt = 0; // 下一次 updateMonsters 立刻重算
   }
 

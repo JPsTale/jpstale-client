@@ -237,6 +237,12 @@ export interface MonsterFlySpec {
     dynLight?: { r: number; g: number; b: number; a: number; power: number; decPower: number };
     /** **命中音**（原版 `esPlaySound(21, 400-距离/10)`；`AssaParticle.cpp:9832`） */
     sound?: string;
+    /**
+     * **命中时的屏幕震动** —— 原版 `EffectWaveCamera((maxDist - 距离) / div, delay)`，
+     * 距离 = 爆点与本地玩家的世界单位距离（`AssaParticle.cpp:9824`）。
+     * 这里是原样搬参数，由 `render/wave-camera.ts` 算（那块是唯一实现，含全局开关）。
+     */
+    shake?: { maxDist: number; div: number; delay: number };
   };
 }
 
@@ -493,6 +499,8 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
             dynLight: { r: 100, g: 200, b: 255, a: 255, power: 250, decPower: 2 },
             // 命中音 `:9832` `esPlaySound(21, …)` = `esSoundWav[21]` = `meteo 2.wav`
             sound: 'wav/effects/menu/event/meteo 2.wav',
+            // `:9824` `EffectWaveCamera((500 - 距离)/15, 2)` —— 屏幕震动（参数原样搬）
+            shake: { maxDist: 500, div: 15, delay: 2 },
           },
         },
         // `ChaosKaraMeteo(&pChar->Posi)`（`:1384`）里的 4 次 `ParkAssaParticle_ChaosKaraTerrainFire`：
@@ -503,7 +511,6 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
           { dx: 10000 / 256, delayFrames: 60 },
           { dx: -10000 / 256, delayFrames: 90 },
         ],
-        unhandled: ['命中时的 `EffectWaveCamera((500-距离)/15, 2)`（屏幕震动）未接'],
         note: 'character.cpp:13985-13992 / hoAssaParticleEffect.cpp:1436,1380-1395 / AssaParticle.cpp:9908-9960',
       },
     },

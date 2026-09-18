@@ -33,6 +33,7 @@
 import * as THREE from 'three';
 import { getMoveLocation, radToPtAngle } from '../../core/geom.js';
 import type { MonsterFlySpec } from './monster-attack-fx.js';
+import { waveCamera } from '../wave-camera.js';
 
 /** 可停止句柄的最小契约（`QuarksPartHandle`）—— 到点停发 = 原版 `SetStop`/`FadeStop` */
 export interface FlyHandle { stop(): void }
@@ -274,6 +275,12 @@ function arrive(l: LiveFly, dist: number): void {
     l.deps.dynLight?.set(l.pos.x, l.pos.y, l.pos.z, d.r, d.g, d.b, d.a, d.power, d.decPower);
   }
   if (hit?.sound) l.deps.sound?.(hit.sound, l.pos);
+  // **屏幕震动**（原版 `EffectWaveCamera((maxDist - 距离)/div, delay)`，距离 = 命中点与本机）
+  if (hit?.shake) {
+    const amp = Math.trunc((hit.shake.maxDist - dist) / hit.shake.div);
+    waveCamera(amp, hit.shake.delay);
+    l.deps.log?.(`    ✈ 屏幕震动：幅度 ${amp}（( ${hit.shake.maxDist} - ${dist.toFixed(0)} ) / ${hit.shake.div}），延迟 ${hit.shake.delay}`);
+  }
 }
 
 /** 切图/销毁世界时清干净（否则残留节点会跟着新世界） */

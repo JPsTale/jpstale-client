@@ -19,9 +19,14 @@ export interface DisplayPrefs {
   monsterBudget: boolean;
   /** 显示距离档 */
   range: DisplayRangeKey;
+  /**
+   * **屏幕震动**（原版 `WaveCameraMode`，见 `render/wave-camera.ts`）——默认开。
+   * 很多玩家不喜欢震动，故做成可关的全局开关；关掉后**完全不触发**（不是调小）。
+   */
+  shake: boolean;
 }
 
-export const DISPLAY_PREFS_DEFAULT: DisplayPrefs = { monsterBudget: true, range: 'mid' };
+export const DISPLAY_PREFS_DEFAULT: DisplayPrefs = { monsterBudget: true, range: 'mid', shake: true };
 
 function bool(v: unknown, dflt: boolean): boolean {
   return typeof v === 'boolean' ? v : dflt;
@@ -36,6 +41,7 @@ export function loadDisplayPrefs(): DisplayPrefs {
     return {
       monsterBudget: bool(raw.monsterBudget, DISPLAY_PREFS_DEFAULT.monsterBudget),
       range,
+      shake: bool(raw.shake, DISPLAY_PREFS_DEFAULT.shake),
     };
   } catch {
     return { ...DISPLAY_PREFS_DEFAULT };
