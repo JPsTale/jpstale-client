@@ -107,13 +107,9 @@ export function applyStaticMeshTracks(tracks: StaticMeshTrack[], frame: number):
       //   是我把"厚度"当成实心饼，没想到"贴地薄片 ×N = 竖起来发光"。
       t.group.scale.set(sx, sz, sy);
       // 增长不在 z 上时（别的资产）本读法未必适用 —— 必须可见（AGENTS #12）
-      // ⚠ **每轨道只报一次**：这条在 `applyStaticMeshTracks`（逐帧调）里 ⇒ 不设标记就每帧报一次、刷屏
-      //（用户 2026-09-18 实测：日志被它刷满）。不同资产 x/y 是否非 1 不同 ⇒ 按轨道记，别全局合一。
-      if (!t.axisWarned && (Math.abs(sx - 1) > 1e-3 || Math.abs(sy - 1) > 1e-3)) {
-        t.axisWarned = true;
-        reportFallback('fx', `静态网格的缩放轨道 x/y 非 1（x=${sx.toFixed(2)}, y=${sy.toFixed(2)}）`
-          + ' ⇒ 增长可能不在 PT 的 z（= three 的 y）上，本模块按 z 当"向上"解释（每条轨道只报一次）');
-      }
+      // ⚠ 缩放按 **PT 的 z（= three 的 y）** 解释（轴序置换）；x/y 非 1 的资产本读法未必适用 ——
+      //   这是**读法说明**，不是"缺功能"，故**不再上报**（用户 2026-09-18：它是噪报）。
+
     }
   }
 }
