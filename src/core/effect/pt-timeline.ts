@@ -87,6 +87,12 @@ export interface PtState {
   eventTimer: number;
   /** 位置（原版 `LocalPos`，发射器局部空间；创建时 = 发射半径盒内一点） */
   pos: number[];
+  /**
+   * **出生时的世界坐标**（原版 `WorldPos`）——由渲染侧在创建时捕获（quarks 把发射器世界坐标
+   * 烘进出生位置）。原版**只在 `attachPosFlag` 时逐帧更新**它（`HoNewParticle.h:1232`）
+   * ⇒ 默认"冻在出生点"：发射器飞走、老粒子留在原地 ⇒ **尾迹**（陨石拖尾就是这个）。
+   */
+  base: number[];
   /** 当前值（每组 `PT_ARITY` 个分量） */
   val: Record<PtGroup, number[]>;
   /** 每分量步长（原版 `XxxStep`） */
@@ -117,6 +123,7 @@ export function createState(cfg: PtTimelineCfg, rand: Rand): PtState {
     life: roll(cfg.lifetime, rand),
     eventTimer: 0,
     pos: [roll(cfg.emitRadius.x, rand), roll(cfg.emitRadius.y, rand), roll(cfg.emitRadius.z, rand)],
+    base: [0, 0, 0],
     val: defaultValues(),
     step: { size: [0], sizeExt: [0], color: [0, 0, 0, 0], dir: [0, 0, 0], partAngle: [0, 0, 0], localAngle: [0, 0, 0] },
     cursor: 0,
