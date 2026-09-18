@@ -1945,6 +1945,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function playSkillByIcon(iconFile: string, aim: THREE.Object3D | null = null): boolean {
     if (!animState) return false;
     // **施法前**的"必须有目标"门（用户 2026-09-18 定）：**向无目标施法要拦住**（不是放出去再乱飞）。
+    // ⚠ **这是客户端预校验，不是权威判定** —— 权威判定属服务端技能系统（"能不能施法"与攻击命中同源，
+    //   见 `CombatService.handleUseSkill`；服务端目前没有技能系统，只在做粒子特效）。
+    //   预校验的用途只是"别无谓地白播动画"；技能系统上来后由服务端说了算，这里最多留作提前提示。
     // 出手之后则相反：那颗弹按"发射时快照"继续飞（目标死了飞向它最后的位置，见 `aimFallback`）。
     // ⚠ 判据目前只覆盖**跟踪弹出物**（`code === 'vigorball'`）—— 技能表还没有"是否需目标"这一列，
     //   等它补出来再统一（先只拦会出问题的那一类，不猜别的技能）。
