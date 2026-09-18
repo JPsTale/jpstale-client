@@ -56,6 +56,14 @@ export interface FlyDeps {
                    a: number, power: number, decPower: number): void | boolean } | null;
   /** 音效（**起飞**与**命中**各一条，见 `MonsterFlySpec.sound` / `.hit.sound`）；没传则跳过 */
   sound?: (path: string, pos: { x: number; y: number; z: number }) => void;
+  /**
+   * **按资产名停发**（`QuarksRuntime.stopAsset`）—— 到点时与句柄**两条都调**。
+   *
+   * 为什么需要第二条：CC 陨石实测"落地后粒子永远不消失"，而句柄那条路**打在别的对象上**
+   * （页面上核对：可见系统的停发标记始终是"从未"，但批次/`live`/`made` 里都是同一批对象）。
+   * 不静默 —— 命中数会写进日志。
+   */
+  stopAsset?: (asset: string) => number;
   log?: (s: string) => void;
 }
 
@@ -260,8 +268,10 @@ function arrive(l: LiveFly, dist: number): void {
   const n = l.handles.length;
   for (const h of l.handles) h.stop();
   l.handles.length = 0;
+  // **第二条保险**：按资产名再停一次（句柄那条路实测会打在别的对象上，见 `FlyDeps.stopAsset`）
+  const byName = l.deps.stopAsset?.(l.asset) ?? 0;
   const hit = l.fly.hit;
-  l.deps.log?.(`    ✈ 飞出物 ${l.asset} 到达（距目标 ${dist.toFixed(1)} 单位）→ 停发 ${n} 个系统`
+  l.deps.log?.(`    ✈ 飞出物 ${l.asset} 到达（距目标 ${dist.toFixed(1)} 单位）→ 停发 ${n} 个句柄 / ${byName} 个系统`
     + `${hit?.asset ? `，命中 ${hit.asset}` : ''}${hit?.dynLight ? ' + 动态光' : ''}`);
   if (hit?.asset) void l.deps.spawn(hit.asset, { pos: l.pos });
   if (hit?.dynLight) {

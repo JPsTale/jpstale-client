@@ -2906,6 +2906,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             addToScene: (o) => scn.add(o),
             dynLight: dynLights,
             sound: (p, at) => sfx.play(p, { pos: at }),
+            // 第二条保险：按资产名停发（句柄那条路实测会打在别的对象上）
+            stopAsset: (a) => fxMgr.stopAsset(a),
           },
           asset, fly,
           {

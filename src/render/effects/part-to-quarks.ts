@@ -562,8 +562,14 @@ export function convertPart(
       ? colorToGradient(colorStops)
       : colorToGradient([{ t: 0, c: em.initialColor ?? { r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 }, b: { k: 'n', v: 255 }, a: { k: 'n', v: 255 } } }, { t: 1, c: em.finalColor ?? em.initialColor ?? { r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 }, b: { k: 'n', v: 255 }, a: { k: 'n', v: 0 } } }]);
 
-    // 发射时长：PT 是"发够 numParticles 个"⇒ 时长 = 数量 / 速率（之后粒子继续存活）
-    const emitDur = Math.max(0.05, em.numParticles / Math.max(1, em.emitRate));
+    // 发射时长：PT 是"发够 `Loops × numParticles` 个"⇒ 时长 = 预算 / 速率（之后粒子继续存活）。
+    // ⚠ **`Loops` 是总粒子预算，不是"循环次数"**（`HoNewParticle.h:942`：
+    //   `if (Loops > 0 && TotalParticleLives + numNewParts > Loops * NumParticles) … SetRunning(false)`）。
+    //   我一度把它映射成 quarks 的 `looping: true`（无限重复）⇒ 凡是**没有句柄去 stop** 的那些
+    //   （普攻/技能/命中这类 `effects.spawn` 出来的）就**永远发下去**（用户实测"落地后粒子永远不消失"）。
+    const budget = em.loops > 0 ? em.loops * em.numParticles : 0;
+    const emitDur = Math.max(0.05,
+      (budget > 0 ? budget : em.numParticles) / Math.max(1, em.emitRate));
 
     const behaviors: Behavior[] = [
       new SizeOverLife(sizeFactor),
@@ -636,7 +642,8 @@ export function convertPart(
     const system = new ParticleSystem({
       // 有 delay 时发射窗口要覆盖到"延迟 + 一段"，否则 quarks 在 delay 之前就结束系统
       duration: em.delay > 0 ? em.delay + emitDur : emitDur,
-      looping: Math.max(1, Math.round(em.loops)) > 1,
+      // **不循环**（原版 `Loops` 是总预算，见 `emitDur` 处；系统到时长自己停）
+      looping: false,
       shape: new PartBoxEmitter(em.emitRadius, em.initialVelocity),
       startLife: numGen(em.lifetime, 1),
       startSize: sizeGen,
