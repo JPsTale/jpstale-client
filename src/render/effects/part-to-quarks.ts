@@ -24,204 +24,34 @@ import * as THREE from 'three';
 // ⚠ 导出面很窄：`three.quarks` 只导出 16 个名字（ParticleSystem / RenderMode / 各 Batch / QuarksUtil…），
 // **值发生器与 behaviors 一律在 `quarks.core`**（three.quarks 内部同样 import 自它 ⇒ 同一份类实例）。
 // 且 `ContinuousLinearFunction` 是内部类、不公开 —— 线性多关键帧见下面的 LinearTrack。
-import { ParticleSystem, RenderMode } from 'three.quarks';
+import { ParticleSystem, RenderMode, PointEmitter } from 'three.quarks';
+import { buildEvents, slotOf, type PtEvent, type PtSlot } from '../../core/effect/pt-timeline.js';
+import { PtTimeline, setTimelineCamera } from './pt-timeline-behavior.js';
 import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
-  SizeOverLife, ColorOverLife, ApplyForce, RotationOverLife,
-  Vector3 as QVec3, Quaternion as QQuat,
-  type Behavior, type EmitterShape, type RotationGenerator,
-  type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
+  Vector3 as QVec3,
+  type Behavior, type RotationGenerator, type GeneratorMemory, type Quaternion,
 } from 'quarks.core';
+import type { Num } from '../../core/effect/pt-value.js';
 import { reportFallback } from '../../char/fallback-log.js';
 import {
-  roll,
-  type PartEmitter, type PartSystem, type Num, type Rgba, type Vec3,
+  type PartEmitter, type PartSystem, type Rgba, type Vec3,
 } from '../../core/effect/part-script.js';
 
 /* ─────────── PT 的属性轨道（线性多关键帧） ─────────── */
 
-/**
- * PT 的属性轨道：**相邻关键帧之间线性插值**（原版 `HoNewParticleEvent_*::DoItToIt` 的 Step 机制）。
- *
- * 为什么自己实现：quarks 公开的数值发生器只有 Constant / Interval / Bezier 系，
- * 而 PT 的语义就是**线性**关键帧。用贝塞尔去凑直线是绕路，直接实现 `FunctionValueGenerator`
- * 接口（4 个方法）语义更准。时间单位是归一化的寿命比例（见文件头条 1）。
- */
-class LinearTrack implements FunctionValueGenerator {
-  type = 'function' as const;
-  /** 每个键在 `particle.memory` 里占的槽位（`startGen` 时分配，见那里的说明） */
-  private slots: number[] | null = null;
-
-  /** `hold: true` = 该键沿用**上一个键**掷出的值（阶跃前的停靠点，见 `withSteps`） */
-  constructor(private readonly keys: Array<{ t: number; v: Num; hold?: boolean }>) {}
-
-  /**
-   * **逐粒子**掷一次区间值 —— 原版每个事件触发时取 `GetRandomNumInRange()`，是逐粒子的
-   * （`HoNewParticleEvent_*::DoItToIt`）。用 quarks 的 `particle.memory` 存：每个键一个槽，
-   * 槽位下标对同一条轨的所有粒子一致（同一条轨的 `startGen` 按同一顺序被调用）——
-   * 与框架自带的 `IntervalValue` 是同一套办法（`IntervalValue.startGen`）。
-   */
-  startGen(memory: unknown[]): void {
-    const slots: number[] = [];
-    this.keys.forEach((k, i) => {
-      // 保持键沿用上一个键的掷值（`memory.push(memory[上一个槽])`）—— 见 `withSteps`
-      if (k.hold && i > 0) memory.push(memory[slots[i - 1]!]);
-      else memory.push(k.v.k === 'n' ? k.v.v : k.v.a + Math.random() * (k.v.b - k.v.a));
-      slots.push(memory.length - 1);
-    });
-    this.slots = slots;
-  }
-
-  genValue(memory: unknown[], t = 0): number {
-    const ks = this.keys;
-    if (ks.length === 0) return 0;
-    /** 第 i 个键的值（已掷过就取掷出的） */
-    const val = (i: number): number => {
-      const slot = this.slots?.[i];
-      const v = ks[i]!.v;
-      // 没经过 startGen（不该发生）时退回区间中点 —— 退回 0 会让粒子凭空消失，更糟
-      if (slot == null) return v.k === 'n' ? v.v : (v.a + v.b) / 2;
-      return memory[slot] as number;
-    };
-    const tAt = (i: number): number => ks[i]!.t;
-    if (t <= tAt(0)) return val(0);
-    for (let i = 1; i < ks.length; i++) {
-      if (t <= tAt(i)) {
-        const span = tAt(i) - tAt(i - 1);
-        return span <= 0 ? val(i) : val(i - 1) + (val(i) - val(i - 1)) * ((t - tAt(i - 1)) / span);
-      }
-    }
-    return val(ks.length - 1);
-  }
-
-  toJSON(): { type: 'function'; keys: Array<{ t: number; v: Num }> } {
-    return { type: 'function', keys: this.keys };
-  }
-
-  clone(): LinearTrack { return new LinearTrack(this.keys.map((k) => ({ ...k }))); }
-}
-
 /* ─────────── 值映射 ─────────── */
 
 /** PT 的标量（定值或区间）→ quarks 的值发生器 */
-/** `Num` 整体除以一个数（区间则两端都除）—— 用于把尺寸折算成相对初值的倍率 */
-function divNum(n: Num, by: number): Num {
-  return n.k === 'n' ? { k: 'n', v: n.v / by } : { k: 'r', a: n.a / by, b: n.b / by };
-}
 
 function numGen(n: Num | null | undefined, fallback = 0): ConstantValue | IntervalValue {
   if (!n) return new ConstantValue(fallback);
   return n.k === 'n' ? new ConstantValue(n.v) : new IntervalValue(n.a, n.b);
 }
 
-/** 取一个 Num 的代表值（用于把区间折叠成单点，如归一化时间基准） */
-function midOf(n: Num | null | undefined, fallback = 0): number {
-  if (!n) return fallback;
-  return n.k === 'n' ? n.v : (n.a + n.b) / 2;
-}
-
-/** PT 的 rgba（各分量可区间）→ quarks 的 Gradient（颜色 + 独立 alpha 两条轨道） */
-function colorToGradient(stops: Array<{ t: number; c: Rgba }>): Gradient {
-  const colors: Array<[QVec3, number]> = [];
-  const alphas: Array<[number, number]> = [];
-  for (const s of stops) {
-    // PT 的颜色分量是 0..255，quarks 的 Vector4/Gradient 一律 0..1
-    colors.push([new QVec3(midOf(s.c.r) / 255, midOf(s.c.g) / 255, midOf(s.c.b) / 255), s.t]);
-    alphas.push([midOf(s.c.a, 255) / 255, s.t]);
-  }
-  return new Gradient(colors, alphas);
-}
-
-/**
- * PT 的"绝对值轨道" → quarks 的**尺寸倍率轨道**。
- *
- * ⚠ 语义差异（实测项之一）：quarks 的 `SizeOverLife` 是**乘法**
- * （`particle.size = startSize × factor(t)`），而 PT 的 `fade so final size` 是**绝对值**。
- * 折法：整体除以 `track(0)` ⇒ `factor(0)=1`、`factor(1)=final/init`，
- * 而出生值仍由 `startSize` 承担（保留 PT 的区间随机）。
- * `initial size` 是**定值**时两者完全等价；是**区间随机**时，每个粒子的终点会按自己的初值等比缩放
- * （PT 是全部落到同一绝对值）。要精确复刻需自定义 behavior —— quarks 的 `Particle.startSize`
- * 是可见的，所以那是可行的，只是不再是"现成能力"。
- */
-function factorTrack(
-  init: Num | null | undefined,
-  kfs: Array<{ t: number; v: Num; hold?: boolean }>,
-  final: Num | null | undefined,
-): ConstantValue | IntervalValue | LinearTrack {
-  const v0 = midOf(init, 1) || 1;
-  const keys: Array<{ t: number; v: Num; hold?: boolean }> = [{ t: 0, v: { k: 'n', v: 1 } }];
-  // 值原样带过去（含区间）：区间由 `LinearTrack` **逐粒子**掷一次，别在这里压成中点
-  for (const k of kfs) if (k.t > 0 && k.t < 1) keys.push({ t: k.t, v: divNum(k.v, v0), hold: k.hold });
-  if (final) keys.push({ t: 1, v: divNum(final, v0) });
-  if (keys.length === 1) return new ConstantValue(1);   // 无终点也无中间帧 ⇒ 尺寸恒定
-  return new LinearTrack(keys);
-}
-
 /** 白色常量：startColor 传白，颜色轨道全部由 ColorOverLife 的 Gradient 承担（文件头条 3） */
 function whiteColor(): Gradient {
   return new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]);
-}
-
-/**
- * 一次**阶跃**的宽度 = 原版一个 tick（`timeDelta = 1.f/70.f`，`MainEffect` HoEffect.cpp:12795）。
- * 见 `withSteps`：阶跃在曲线里要占一小段宽度，取一帧最贴近原版（原版也是在帧边界上生效）。
- */
-const STEP_EPS_SEC = 1 / 70;
-
-/** 原版 `HoNewParticle()` 构造里的默认值（资产省略 `initial X` 时，阶跃的起点就是它） */
-const ONE: Num = { k: 'n', v: 1 };
-const WHITE_RGBA: Rgba = { r: { k: 'n', v: 1 }, g: { k: 'n', v: 1 }, b: { k: 'n', v: 1 }, a: { k: 'n', v: 1 } };
-const ZERO_VEC: Vec3 = { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } };
-
-/**
- * 事件链 → 曲线键帧，**保留"阶跃"语义**。
- *
- * 原版两类事件（`HoNewParticle.cpp` 各 `HoNewParticleEvent_*::DoItToIt`）：
- *   · 非 fade（裸 `at <t> X`）＝ `if (!IsFade()) part.X = …` —— 到点**直接赋值**；
- *   · fade（`fade so at <t> X`）＝ 算 Step 线性推进 —— 曲线上的一个点。
- * quarks 的曲线只能在相邻键之间插值，故阶跃要写成"t 处保持旧值 + t+ε 处给新值"。
- *
- * @param anchor 阶跃前的值（＝ `initial X`；资产没写时用原版粒子构造函数的默认值，见各调用点的说明）
- */
-function withSteps<T>(
-  events: Array<{ t: number; v: T; fade: boolean }>, anchor: T, eps: number,
-): Array<{ t: number; v: T; hold?: boolean }> {
-  const out: Array<{ t: number; v: T; hold?: boolean }> = [];
-  let cur = anchor;
-  for (const e of events) {
-    if (e.fade) {
-      out.push({ t: e.t, v: e.v });
-    } else {
-      // `hold: true` = "这个键只是把上一个值保持到 t"（阶跃前的停靠点）——
-      // 区间值必须**沿用上一个键掷出的数**，否则保持键会自己再掷一次 ⇒ 段内出现假斜坡。
-      out.push({ t: e.t, v: cur, hold: true });
-      out.push({ t: Math.min(1, e.t + eps), v: e.v });
-    }
-    cur = e.v;
-  }
-  return out;
-}
-
-/** 由 emitter 的 keyframes 取某属性的**带时间**关键帧（时间已折算为比例；非 fade 事件展开成阶跃） */
-function kfOf(
-  em: PartEmitter, prop: string, lifetimeSec: number, anchor: Rgba,
-): Array<{ t: number; c: Rgba }> {
-  const kfs = em.keyframes[prop];
-  if (!kfs) return [];
-  const events = kfs.filter((k) => k.value.k === 'color')
-    .map((k) => ({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v as Rgba, fade: k.fade }));
-  return withSteps(events, anchor, STEP_EPS_SEC / lifetimeSec).map((k) => ({ t: k.t, c: k.v }));
-}
-
-/** 由 emitter 的 keyframes 取某属性的数值关键帧（时间已归一化为寿命比例） */
-function numKfOf(
-  em: PartEmitter, prop: string, lifetimeSec: number, anchor: Num,
-): Array<{ t: number; v: Num; hold?: boolean }> {
-  const kfs = em.keyframes[prop];
-  if (!kfs) return [];
-  const events = kfs.filter((k) => k.value.k === 'num')
-    .map((k) => ({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v as Num, fade: k.fade }));
-  return withSteps(events, anchor, STEP_EPS_SEC / lifetimeSec);
 }
 
 /**
@@ -235,31 +65,11 @@ export const APPLIED_KEYFRAME_PROPS = [
   'size', 'sizeext', 'color', 'velocity',
   'partanglez', 'partanglex', 'partangley',
   'localanglez', 'localanglex', 'localangley',
-  // 全轴写法（`partangle = XYZ(...)`）：与单轴事件合并成同一条轨（见 `angleTrackOf.fieldTrack`）
   'partangle', 'localangle',
+  // 时间轴层接上后新增（2026-09-18）：单通道颜色、逐轴速度、事件时钟
+  'redcolor', 'greencolor', 'bluecolor', 'alpha',
+  'velocityx', 'velocityy', 'velocityz', 'eventtimer',
 ] as const;
-
-/** 由 emitter 的 keyframes 取某属性的**向量**关键帧（时间已归一化为寿命比例） */
-function vecKfOf(
-  em: PartEmitter, prop: string, lifetimeSec: number, anchor: Vec3,
-): Array<{ t: number; v: Vec3 }> {
-  const kfs = em.keyframes[prop];
-  if (!kfs) return [];
-  const events = kfs.filter((k) => k.value.k === 'vec')
-    .map((k) => ({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v as Vec3, fade: k.fade }));
-  return withSteps(events, anchor, STEP_EPS_SEC / lifetimeSec);
-}
-
-/** 给一组关键帧补上端点（初值 t=0 / 终点 t=1），按 t 排序；同一 t 保留最后一个（后写覆盖先写） */
-function withEnds<K extends { t: number }>(keys: K[], head: K | null, tail: K | null): K[] {
-  const all = [...(head ? [head] : []), ...keys, ...(tail ? [tail] : [])].sort((a, b) => a.t - b.t);
-  const out: K[] = [];
-  for (const k of all) {
-    if (out.length && Math.abs(out[out.length - 1]!.t - k.t) < 1e-6) out[out.length - 1] = k;
-    else out.push(k);
-  }
-  return out;
-}
 
 /* ─────────── PT 语义的盒形发射器（缺口可补的证明，约 30 行） ─────────── */
 
@@ -296,125 +106,10 @@ export class RandomOrientation implements RotationGenerator {
   clone(): RotationGenerator { return new RandomOrientation(); }
 }
 
-/**
- * **初始面内旋转**：`.part` 的 `initial partAngleZ`（**度**，可 `random(a,b)`）→ 广告板的标量弧度。
- *
- * 为什么必须是 Behavior：广告板的朝向存在 `particle.rotation`（**number**，见 quarks
- * `RotationOverLife.update` 的 `typeof particle.rotation === 'number'` 判据），
- * 而 quarks **没有** `startRotation` 这个字段（`quarks.core` 的导出表里查不到 ——
- * 我们表里那个 `startRotation` 一直是**死参数**，写进去从不生效）。
- * Behavior 的 `initialize(particle)` 由 `three.quarks:1061` 在出生时调用 ⇒ 初值写在这里。
- *
- * ⚠ x/y 分量表达不了（要给广告板加倾斜，quarks 的 billboard 没这个自由度）⇒ `convertPart` 里上报。
- */
-export class PtInitialRotation implements Behavior {
-  type = 'PtInitialRotation';
-  constructor(private degZ: Num) {}
-  initialize(p: { rotation?: unknown }): void {
-    if (typeof p.rotation === 'number') p.rotation = (roll(this.degZ) * Math.PI) / 180;
-  }
-  update(): void { /* 只写初值 */ }
-  frameUpdate(): void { /* 无 */ }
-  toJSON(): { type: string } { return { type: this.type }; }
-  clone(): PtInitialRotation { return new PtInitialRotation(this.degZ); }
-  reset(): void { /* 无状态 */ }
-}
-
-/** 线性采样一组"随时间"的向量键（t 为寿命比例） */
-function sampleVec(keys: Array<{ t: number; v: Vec3 }>, t: number): { x: number; y: number; z: number } | null {
-  if (keys.length === 0) return null;
-  const at = (v: Vec3) => ({ x: midOf(v.x, 0), y: midOf(v.y, 0), z: midOf(v.z, 0) });
-  if (t <= keys[0]!.t) return at(keys[0]!.v);
-  const last = keys[keys.length - 1]!;
-  if (t >= last.t) return at(last.v);
-  for (let i = 0; i + 1 < keys.length; i++) {
-    const a = keys[i]!, b = keys[i + 1]!;
-    if (t >= a.t && t <= b.t) {
-      const k = (t - a.t) / Math.max(1e-6, b.t - a.t);
-      const pa = at(a.v), pb = at(b.v);
-      return { x: pa.x + (pb.x - pa.x) * k, y: pa.y + (pb.y - pa.y) * k, z: pa.z + (pb.z - pa.z) * k };
-    }
-  }
-  return at(last.v);
-}
-
-/**
- * **速度随时间变化**（`.part` 的 `fade so at <t> velocity = XYZ(...)`）—— 逐帧**覆盖** `particle.velocity`。
- *
- * 实测：49 个 `.part` 带这条轨道，其中 **22 个与初速不同** ⇒ 不应用就是看得出的差异（此前未应用 ✗）。
- * quarks 的位置推进用的是 `velocity × speedModifier` ⇒ 这里直接给绝对速度、把 `speedModifier` 归 1。
- */
-export class VelocityTrack implements Behavior {
-  type = 'VelocityTrack';
-  constructor(private keys: Array<{ t: number; v: Vec3 }>) {}
-  initialize(p: { speedModifier?: number }): void { p.speedModifier = 1; }
-  update(p: {
-    age?: number; life?: number; speedModifier?: number;
-    velocity?: { set(x: number, y: number, z: number): void };
-  }): void {
-    const v = sampleVec(this.keys, (p.age ?? 0) / Math.max(1e-6, p.life ?? 1));
-    if (!v) return;
-    p.velocity?.set(v.x, v.y, v.z);
-    p.speedModifier = 1;
-  }
-  frameUpdate(): void { /* 无 */ }
-  toJSON(): { type: string } { return { type: this.type }; }
-  clone(): VelocityTrack { return new VelocityTrack(this.keys); }
-  reset(): void { /* 无状态 */ }
-}
-
-/**
- * **面内自转随时间变化**（`.part` 的 `fade so at <t> partAngleZ = <度>`）——
- * 逐帧写 `particle.rotation`（**弧度**；广告板的 rotation 是标量，见 `PtInitialRotation` 的说明）。
- * x/y 分量是"出平面倾斜"，广告板表达不了 ⇒ 由 `convertPart` 上报（AGENTS #12）。
- */
-export class PtRotationTrack implements Behavior {
-  type = 'PtRotationTrack';
-  constructor(private keys: Array<{ t: number; v: number }>) {}
-  initialize(): void { /* 逐帧在 update 里写 */ }
-  update(p: { age?: number; life?: number; rotation?: unknown }): void {
-    if (typeof p.rotation !== 'number' || this.keys.length === 0) return;
-    const t = (p.age ?? 0) / Math.max(1e-6, p.life ?? 1);
-    const k = this.keys;
-    let deg: number;
-    if (t <= k[0]!.t) deg = k[0]!.v;
-    else if (t >= k[k.length - 1]!.t) deg = k[k.length - 1]!.v;
-    else {
-      let i = 0;
-      while (i + 1 < k.length && !(t >= k[i]!.t && t <= k[i + 1]!.t)) i++;
-      const a = k[i]!, b = k[Math.min(i + 1, k.length - 1)]!;
-      const f = (t - a.t) / Math.max(1e-6, b.t - a.t);
-      deg = a.v + (b.v - a.v) * f;
-    }
-    p.rotation = (deg * Math.PI) / 180;
-  }
-  frameUpdate(): void { /* 无 */ }
-  toJSON(): { type: string } { return { type: this.type }; }
-  clone(): PtRotationTrack { return new PtRotationTrack(this.keys); }
-  reset(): void { /* 无状态 */ }
-}
-
-/** Mesh（TYPE_FIVE）模式的初始随机朝向 —— 同上，`startRotation` 不生效 ⇒ 用 Behavior 写四元数 */
-export class MeshRandomOrientation implements Behavior {
-  type = 'MeshRandomOrientation';
-  private g = new RandomOrientation();
-  initialize(p: { rotation?: unknown }): void {
-    const q = p.rotation;
-    if (q && typeof q === 'object') {
-      this.g.genValue(null as unknown as GeneratorMemory, q as Quaternion);
-    }
-  }
-  update(): void { /* 只写初值 */ }
-  frameUpdate(): void { /* 无 */ }
-  toJSON(): { type: string } { return { type: this.type }; }
-  clone(): MeshRandomOrientation { return new MeshRandomOrientation(); }
-  reset(): void { /* 无状态 */ }
-}
-
 /** "面向相机"用的相机引用 —— 由渲染侧注册一次（`WorldView` / 实验室各一次）；粒子朝向要用它 */
-let billboardCam: THREE.Camera | null = null;
-/** 注册"面向相机"的相机（唯一入口；传 null 可注销）。只在建好相机后调一次。 */
-export function setBillboardCamera(cam: THREE.Camera | null): void { billboardCam = cam; }
+export function setBillboardCamera(cam: THREE.Camera | null): void {
+  setTimelineCamera(cam);          // 时间轴行为的朝向要用相机（TYPE_ONE / TYPE_THREE）
+}
 
 /**
  * **面向相机的基底 + 局部 Y 自转**（`localangleY` 的忠实形态）—— Mesh 模式粒子专用。
@@ -425,66 +120,21 @@ export function setBillboardCamera(cam: THREE.Camera | null): void { billboardCa
  * 这里每帧显式写：`q = 相机朝向 × Rot(局部 +Y, θ(t))`，θ 由 `初值 + 角速度 × age` **现算**
  * （不用累加 ⇒ 不受帧率/掉帧影响）。
  */
-const AXIS_X = new QVec3(1, 0, 0);
-const AXIS_Y = new QVec3(0, 1, 0);
-const AXIS_Z = new QVec3(0, 0, 1);
-
-/** 角度轨（t = 寿命比例，v = 度）—— 与 `PtRotationTrack` 同一套采样语义 */
-type DegTrack = Array<{ t: number; v: number }>;
-
-/** 采样角度轨（与 `PtRotationTrack` 相同的线性插值；空轨 ⇒ 0） */
-function sampleDeg(keys: DegTrack, t: number): number {
-  if (!keys.length) return 0;
-  if (t <= keys[0]!.t) return keys[0]!.v;
-  const last = keys[keys.length - 1]!;
-  if (t >= last.t) return last.v;
-  let i = 0;
-  while (i + 1 < keys.length && !(t >= keys[i]!.t && t <= keys[i + 1]!.t)) i++;
-  const a = keys[i]!, b = keys[Math.min(i + 1, keys.length - 1)]!;
-  const f = (t - a.t) / Math.max(1e-6, b.t - a.t);
-  return a.v + (b.v - a.v) * f;
-}
-
-/**
- * **面向相机的基底 + 局部三轴旋转**（`partanglex/y/z` 与 `localanglex/y/z` 的忠实形态）。
- *
- * 为什么必须自带基底：quarks 的 Mesh 是**世界朝向**面片，直接切过去会在某些机位侧立看不见
- * （用户实测）；原版这些粒子是 **billboard**（永远面向相机）+ `LocalAngle/PartAngle` 在相机朝向上再倾斜 ✓。
- * 每帧写 `q = 相机朝向 × Ry(y) × Rx(x) × Rz(z)`；角度取自**关键帧轨**（初值/中间/终值全在内），
- * 与 `PtRotationTrack` 同一套线性采样 ✓。
- */
-export class PtCameraFacingSpin implements Behavior {
-  type = 'PtCameraFacingSpin';
-  private tmp = new QQuat();
-  constructor(private tracks: { x?: DegTrack; y?: DegTrack; z?: DegTrack }) {}
-  initialize(): void { /* 无状态（逐帧现算，不累加） */ }
-  update(p: { age?: number; life?: number; rotation?: unknown }): void {
-    const q = p.rotation;
-    if (!billboardCam || !(q instanceof QQuat)) return;
-    const cq = billboardCam.quaternion;
-    (q as unknown as { set(x: number, y: number, z: number, w: number): void })
-      .set(cq.x, cq.y, cq.z, cq.w);                       // 基底 = 相机朝向 ⇒ 面片正对相机
-    const t = (p.age ?? 0) / Math.max(1e-6, p.life ?? 1);
-    const mul = (axis: QVec3, deg: number): void => {
-      if (!deg) return;
-      this.tmp.setFromAxisAngle(axis, (deg * Math.PI) / 180);
-      (q as unknown as { multiply(q2: unknown): void }).multiply(this.tmp);
-    };
-    // 旋绕顺序**照抄原版** `AddFace2DBillBoard(face, inAngle)`（HoNewParticle.cpp:2870+）：
-    //   `outMatrix = Rx · Ry · Rz`（先 `Mult(out, Rx, Ry)` 再 `Mult(out, out, Rz)`）
-    // 四元数 `q * qx * qy * qz` 作用于向量 = Rx·Ry·Rz·v ⇒ 顺序等价（先绕 Z、再 Y、再 X）。
-    mul(AXIS_X, sampleDeg(this.tracks.x ?? [], t));
-    mul(AXIS_Y, sampleDeg(this.tracks.y ?? [], t));
-    mul(AXIS_Z, sampleDeg(this.tracks.z ?? [], t));
-  }
-  frameUpdate(): void { /* 无 */ }
-  toJSON(): { type: string } { return { type: this.type }; }
-  clone(): PtCameraFacingSpin { return new PtCameraFacingSpin(this.tracks); }
-  reset(): void { /* 无状态 */ }
-}
 
 /** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
 const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
+
+/** TYPE_TWO 的几何：**世界 XZ 平面**上的四边形（`AddFace2dPlane` 的顶点是 `(±w, 0, ±h)`） */
+const HORIZONTAL_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1).rotateX(-Math.PI / 2);
+
+/** `.part` 的属性名 → 事件槽（唯一出处；`redcolor` 这类单通道属性在此落到对应分量） */
+const PT_SLOT_OF_PROP: Record<string, PtSlot> = {
+  size: 'size', sizeext: 'sizeExt', eventtimer: 'eventTimer',
+  color: 'color', redcolor: 'colorR', greencolor: 'colorG', bluecolor: 'colorB', alpha: 'colorA',
+  velocity: 'dir', velocityx: 'dirX', velocityy: 'dirY', velocityz: 'dirZ',
+  partangle: 'partAngle', partanglex: 'partAngleX', partangley: 'partAngleY', partanglez: 'partAngleZ',
+  localangle: 'localAngle', localanglex: 'localAngleX', localangley: 'localAngleY', localanglez: 'localAngleZ',
+};
 
 /**
  * **世界朝向面片的运动**（原版 `sinPublicEffectMove` 的 `SIN_EFFECT_WIDELINE` 分支，1:1）：
@@ -536,22 +186,6 @@ export class OrientVelocityToNormal implements Behavior {
   reset(): void { /* 无状态 */ }
 }
 
-export class PartBoxEmitter implements EmitterShape {
-  type = 'partBox';
-  constructor(private radius: Vec3, private velocity: Vec3) {}
-  initialize(p: { position: QVec3; velocity: QVec3 }): void {
-    p.position.x = roll(this.radius.x);
-    p.position.y = roll(this.radius.y);
-    p.position.z = roll(this.radius.z);
-    p.velocity.x = roll(this.velocity.x);
-    p.velocity.y = roll(this.velocity.y);
-    p.velocity.z = roll(this.velocity.z);
-  }
-  update(): void { /* 盒是静态的，无需推进 */ }
-  toJSON(): { type: string } { return { type: this.type }; }
-  clone(): PartBoxEmitter { return new PartBoxEmitter(this.radius, this.velocity); }
-}
-
 /* ─────────── 面朝向 / 混合 ─────────── */
 
 /**
@@ -573,66 +207,6 @@ export class PartBoxEmitter implements EmitterShape {
  *   Mesh 模式下 quarks 自己把 `startRotation` 设成 `AxisAngleGenerator`（`ParticleSystem.ts:656`）
  *   ⇒ 逐粒子旋转值就是四元数 ⇒ 能表达。
  */
-/**
- * 该发射器是否需要**3D 局部旋转**（`partanglex/y` 或 `localanglex/y` 有非零值）——
- * 需要就必须走 Mesh 模式（广告板只有面内 z，表达不了倾斜），见 `PtCameraFacingSpin`。
- */
-export function needs3DRotation(em: PartEmitter): boolean {
-  for (const ax of ['x', 'y'] as const) {
-    const t = angleTrackOf(em, ax, Math.max(0.05, midOf(em.lifetime, 1)));
-    if (t.some((k) => Math.abs(k.v) > 1e-3)) return true;
-  }
-  return false;
-}
-
-/**
- * 取某轴的**局部旋转角度轨**（`partangle*` 与 `localangle*` **合并**；t = 寿命比例、v = 度）。
- *
- * 两族在 `.part` 里是两条独立声明（原版分别是 `PartAngle` 与 `LocalAngle`），
- * 我们按"同轴相加"合成一条 —— 骨架与 `partanglez` 的既有读法一致（初值 + 关键帧 + 终值）。
- */
-export function angleTrackOf(em: PartEmitter, axis: 'x' | 'y' | 'z', lifeSec: number): Array<{ t: number; v: number }> {
-  const pick = (v: Vec3 | null | undefined): Num | undefined =>
-    (!v ? undefined : axis === 'x' ? v.x : axis === 'y' ? v.y : v.z);
-  const ZERO: Num = { k: 'n', v: 0 };      // 原版 `HoNewParticle()` 构造：各角度初值 0
-  /**
-   * 一个角度**字段**（`PartAngle` 或 `LocalAngle`）在某一轴上的轨。
-   *
-   * 字段有**两种事件写法**，都要收（原版是两个事件类，都写同一个 `part` 字段）：
-   *   · 全轴 `partangle = XYZ(...)`（`HoNewParticleEvent_PartAngle` —— 一次写 x&y&z）
-   *   · 单轴 `partanglez = …`（`HoNewParticleEvent_PartAngleZ` —— 只写 z）
-   * 合并规则 = **按时间排序后后者覆盖**（原版就是"事件到点写字段"），不是相加。
-   */
-  const fieldTrack = (field: 'partangle' | 'localangle', anchor: Num): Array<{ t: number; v: number }> => {
-    const evts = [
-      ...(em.keyframes[field] ?? [])
-        .map((k) => ({ t: Math.min(1, k.time / lifeSec), v: k.value, fade: k.fade })),
-      ...(em.keyframes[field + axis] ?? [])
-        .map((k) => ({ t: Math.min(1, k.time / lifeSec), v: k.value, fade: k.fade })),
-    ].sort((x, y) => x.t - y.t);
-    const nums = evts.map((e) => {
-      if (e.v.k === 'num') return { t: e.t, v: e.v.v, fade: e.fade };
-      if (e.v.k === 'vec') return { t: e.t, v: pick(e.v.v) ?? ZERO, fade: e.fade };
-      return null;
-    }).filter((x): x is { t: number; v: Num; fade: boolean } => x !== null);
-    return withSteps(nums, anchor, STEP_EPS_SEC / lifeSec)
-      .map((k) => ({ t: k.t, v: midOf(k.v, 0) }));   // ⚠ 角度轨仍取区间中点（未逐粒子掷，见 §缺口清单）
-  };
-  const ends = (v: Num | undefined, at: number): { t: number; v: number } | null =>
-    (v == null ? null : { t: at, v: midOf(v, 0) });
-  const part = withEnds(fieldTrack('partangle', pick(em.initialPartAngle) ?? ZERO),
-    ends(pick(em.initialPartAngle), 0), ends(pick(em.finalPartAngle), 1));
-  const local = withEnds(fieldTrack('localangle', pick(em.initialLocalAngle) ?? ZERO),
-    ends(pick(em.initialLocalAngle), 0), ends(pick(em.finalLocalAngle), 1));
-  const num = (k: Array<{ t: number; v: unknown }>): Array<{ t: number; v: number }> =>
-    k.map((x) => ({ t: x.t, v: midOf(x.v as Num, 0) }));
-  const a = num(part);
-  const b = num(local);
-  if (!a.length) return b;
-  if (!b.length) return a;
-  const ts = [...new Set([...a.map((k) => k.t), ...b.map((k) => k.t)])].sort((x, y) => x - y);
-  return ts.map((t) => ({ t, v: sampleDeg(a, t) + sampleDeg(b, t) }));
-}
 
 export function renderModeOf(particleType: number): RenderMode {
   switch (particleType) {
@@ -743,17 +317,14 @@ export function convertPart(
   for (let i = 0; i < count; i++) {
     const em = sys.emitters[i]!;
     const notes: string[] = [];
-    /** 该发射器是否要"绕局部 Y 自转"（决定渲染模式，见 `hasLocalAngle`） */
-    const need3D = needs3DRotation(em);
-    const lifeSec = midOf(em.lifetime, 1) || 1;
     const tex = textures[i] ?? null;
     if (em.texture && !tex) notes.push(`贴图未加载：${em.texture}`);
     if (!em.texture) notes.push('该发射器无 texture 键');
 
     // 材质只承担混合；贴图走 ParticleSystem.texture
     const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: true });
-    // Mesh（世界朝向面片 / 相机朝向基底）要**双面**：我们显式写的基底里，面片可能以背面朝相机
-    if (need3D) material.side = THREE.DoubleSide;
+    // Mesh 一律**双面**：朝向由 `PtTimeline` 逐帧写四元数，某些机位会以背面朝相机
+    material.side = THREE.DoubleSide;
     applyBlend(material, em.blend);
     // ⚠ **"亮度当遮罩"（`USE_COLOR_AS_ALPHA`）取的是 `diffuseColor.r`（红通道）** ⇒
     //   **蓝/青粒子（红≈0）会被整片抠掉**（红色则安然 —— 实测：CC 吸血技能"只剩红色面片"）。
@@ -769,42 +340,42 @@ export function convertPart(
       notes.push('混合 BLEND_ADDCOLOR：按 lamp 的加法处理（该模式的 D3D 因子本模块未核实）');
     }
 
-    // 尺寸：PT 的 size = 宽、sizeExt = 高（两维独立）
-    // ⚠ `sizeExt` **缺失时取 size**（PT/我方 `part-emitter` 的既有规则：`s1 = sizeExt ? roll(sizeExt) : s0`）。
-    // 此前我默认给 1 ⇒ 只有宽没有高的粒子被压成 `16×1` 的细条，观感是"只剩一条淡拖尾"（用户实测法球）。
-    // startSize = 出生值（保留区间随机）；SizeOverLife = 倍率轨道（语义见 factorTrack）
-    const sizeGen = new Vector3Function(
-      numGen(em.initialSize, 1),
-      numGen(em.initialSizeExt ?? em.initialSize, 1),
-      new ConstantValue(1),
-    );
-    const sizeFactor = new Vector3Function(
-      // anchor = 阶跃前的尺寸：资产没写 `initial size` 时用原版粒子构造的默认 1（`HoNewParticle()` 的 `Size = 1.0f`）
-      factorTrack(em.initialSize, numKfOf(em, 'size', lifeSec, em.initialSize ?? ONE), em.finalSize),
-      factorTrack(
-        em.initialSizeExt ?? em.initialSize,
-        numKfOf(em, 'sizeext', lifeSec, em.initialSizeExt ?? em.initialSize ?? ONE),
-        em.finalSizeExt ?? em.finalSize,
-      ),
-      new ConstantValue(1),
-    );
-
-    // 颜色：整条轨道交给 Gradient（startColor 传白，见文件头条 3）
-    // ⚠ 颜色轨目前**不支持逐粒子掷区间**（`Gradient` 是按 t 求值的）：区间值按中点取。
-    //   实测语料里颜色事件全是定值（0 个区间），故先不为此扩框架；真出现区间时这里会说出来。
-    if ((em.keyframes['color'] ?? []).some((k) => k.value.k === 'color'
-      && [k.value.v.r, k.value.v.g, k.value.v.b, k.value.v.a].some((c) => c.k === 'r'))) {
-      notes.push('color 轨含区间值 ⇒ 按**中点**取（未逐粒子掷；原版每个事件是逐粒子随机的）');
+    // ── 事件表：照 PT 的三种时间规格建成事件（`initial X` = t=0、`final X` = t=**寿命上限**、`at <t>` 中间）──
+    // 槽的对应见 `pt-timeline.slotOf`；fade 链由 `buildEvents` 按"同槽向后找第一条 fade"串好
+    // （= 装载期的 `SortEvents` + `CreateFadeLists`）。规格见 docs/PT粒子系统-规格说明书.md §B4/B5。
+    const lifeMax = em.lifetime.k === 'n' ? em.lifetime.v : em.lifetime.b;   // 原版 `FinalTime = Lifetime.Max`
+    const rawEvents: PtEvent[] = [];
+    const addEvent = (time: number, slot: PtSlot, fade: boolean, value: Num[]): void => {
+      rawEvents.push({ time, slot, fade, value, next: -1 });
+    };
+    const n1 = (n: Num): Num[] => [n];
+    const v3 = (v: Vec3): Num[] => [v.x, v.y, v.z];
+    const c4 = (c: Rgba): Num[] => [c.r, c.g, c.b, c.a];
+    if (em.initialSize) addEvent(0, 'size', false, n1(em.initialSize));
+    if (em.finalSize) addEvent(lifeMax, 'size', true, n1(em.finalSize));
+    if (em.initialSizeExt) addEvent(0, 'sizeExt', false, n1(em.initialSizeExt));
+    if (em.finalSizeExt) addEvent(lifeMax, 'sizeExt', true, n1(em.finalSizeExt));
+    if (em.initialColor) addEvent(0, 'color', false, c4(em.initialColor));
+    if (em.finalColor) addEvent(lifeMax, 'color', true, c4(em.finalColor));
+    if (em.initialVelocity) addEvent(0, 'dir', false, v3(em.initialVelocity));
+    if (em.finalVelocity) addEvent(lifeMax, 'dir', true, v3(em.finalVelocity));
+    if (em.initialPartAngle) addEvent(0, 'partAngle', false, v3(em.initialPartAngle));
+    if (em.finalPartAngle) addEvent(lifeMax, 'partAngle', true, v3(em.finalPartAngle));
+    if (em.initialLocalAngle) addEvent(0, 'localAngle', false, v3(em.initialLocalAngle));
+    if (em.finalLocalAngle) addEvent(lifeMax, 'localAngle', true, v3(em.finalLocalAngle));
+    for (const [prop, list] of Object.entries(em.keyframes)) {
+      const slot = PT_SLOT_OF_PROP[prop];
+      if (!slot) { reportFallback('part', `「${em.name}」的时间轴「${prop}」没有事件槽 ⇒ 未应用`); continue; }
+      const comp = slotOf(slot).comp;
+      for (const k of list) {
+        const v = k.value;
+        const wide = v.k === 'num' ? n1(v.v) : v.k === 'vec' ? v3(v.v) : v.k === 'color' ? c4(v.v) : null;
+        if (!wide) continue;
+        // 整组槽带全部分量；单分量槽（`redcolor`/`velocityx`/`partanglez`…）只带那一个
+        addEvent(k.time, slot, k.fade, comp < 0 ? wide : [wide[comp]!]);
+      }
     }
-    const colorStops = [
-      ...(em.initialColor ? [{ t: 0, c: em.initialColor }] : []),
-      // anchor = 阶跃前的颜色；缺省 (1,1,1,1) = 原版 `HoNewParticle()` 构造的默认色（我们 startColor 也传白）
-      ...kfOf(em, 'color', lifeSec, em.initialColor ?? WHITE_RGBA),
-      ...(em.finalColor ? [{ t: 1, c: em.finalColor }] : []),
-    ];
-    const colorGen = colorStops.length >= 2
-      ? colorToGradient(colorStops)
-      : colorToGradient([{ t: 0, c: em.initialColor ?? { r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 }, b: { k: 'n', v: 255 }, a: { k: 'n', v: 255 } } }, { t: 1, c: em.finalColor ?? em.initialColor ?? { r: { k: 'n', v: 255 }, g: { k: 'n', v: 255 }, b: { k: 'n', v: 255 }, a: { k: 'n', v: 0 } } }]);
+    const ptEvents = buildEvents(rawEvents);
 
     // 发射时长：PT 是"发够 `Loops × numParticles` 个"⇒ 时长 = 预算 / 速率（之后粒子继续存活）。
     // ⚠ **`Loops` 是总粒子预算，不是"循环次数"**（`HoNewParticle.h:942`：
@@ -816,104 +387,34 @@ export function convertPart(
       (budget > 0 ? budget : em.numParticles) / Math.max(1, em.emitRate));
 
     const behaviors: Behavior[] = [
-      new SizeOverLife(sizeFactor),
-      new ColorOverLife(colorGen),
+      new PtTimeline({
+        lifetime: em.lifetime,
+        emitRadius: em.emitRadius,
+        gravity: em.gravity ?? { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } },
+        events: ptEvents,
+      }, em.particleType),
     ];
-    if (em.particleType === 5) {
-      // 沿自身面法线飞：速度 = spec 的 initialVelocity 长度（单位/秒）
-      const v = em.initialVelocity;
-      const sp = Math.hypot(midOf(v.x, 0), midOf(v.y, 0), midOf(v.z, 0));
-      if (sp > 0) behaviors.push(new OrientVelocityToNormal(sp));
+    // 如实记：`LocalAngle` 原版**只被 TYPE_FOUR 拖尾使用**（`AddFaceTrace`），ONE/TWO/THREE 用 `PartAngle`
+    if (em.particleType !== 4 && (em.initialLocalAngle || em.finalLocalAngle
+      || Object.keys(em.keyframes).some((k) => k.startsWith('localangle')))) {
+      notes.push('写了 localangle*，但原版 LocalAngle **只喂 TYPE_FOUR**（ONE/TWO/THREE 用 PartAngle）'
+        + ' ⇒ 按原版忽略（我方此前对 billboard 做的"局部旋转"是发明）');
     }
-    // **重力** —— 原版是逐帧 `vy += g`（我方 `part-emitter` 等价为 `vy += g·dt`，单位/秒²），
-    // 而 quarks 用恒定力 behavior 表达：`ApplyForce(方向, 量值)` 逐帧把 `方向×量值` 加进速度。
-    // 传原始向量 + 量值 1 即为**精确**的 g（不是近似）。
-    // 缺它则 BombParticle 的"先喷后落"变成"一直上飘"（那是它在原版里最显眼的特征）。
-    const g = em.gravity;
-    const gx = g ? midOf(g.x, 0) : 0, gy = g ? midOf(g.y, 0) : 0, gz = g ? midOf(g.z, 0) : 0;
-    if (gx || gy || gz) behaviors.push(new ApplyForce(new QVec3(gx, gy, gz), new ConstantValue(1)));
-
-    // **速度轨**（`fade so at <t> velocity = XYZ(...)`）：逐帧覆盖 `velocity`。
-    // 实测 49 个文件带它、其中 **22 个与初速不同** ⇒ 此前未应用是看得出的差异。
-    // anchor = 阶跃前的速度：缺省 0（原版构造里 `Dir` 为 0）
-    const velKf = vecKfOf(em, 'velocity', lifeSec, em.initialVelocity ?? ZERO_VEC);
-    // 同上：速度轨的区间也只取中点（语料里 velocity 事件全是定值，0 个区间）
-    if (velKf.some((k) => [k.v.x, k.v.y, k.v.z].some((c) => c.k === 'r'))) {
-      notes.push('velocity 轨含区间值 ⇒ 按**中点**取（未逐粒子掷）');
+    if (em.particleType === 4) {
+      notes.push('TYPE_FOUR 拖尾走 quarks Trail（位置历史条带）近似：横截面朝向本应用 LocalAngle，未表达');
     }
-    if (velKf.length) {
-      behaviors.push(new VelocityTrack(velKf));
-      notes.push(`速度轨 ${velKf.length} 个关键帧（逐帧覆盖 velocity，speedModifier 归 1）`);
-    }
-    // 逐轴的 `velocityX/Z`（标量）表达不了 —— 必须可见，不静默
-    for (const p of ['velocityx', 'velocityy', 'velocityz']) {
-      if (em.keyframes[p]?.length) {
-        reportFallback('part', `时间轴「${p}」（逐轴速度）未应用 —— 只支持向量的 velocity 轨`);
-      }
-    }
-
-    // **面内旋转**（`.part` 的 `partAngleZ`，度）：初值 + 随时间变化。
-    // 此前**整块被丢掉** ⇒ 每个粒子朝向一样、看着像静止贴片（用户实测："粒子似乎没有序列动画特征"）。
-    if (em.particleType === 5) {
-      behaviors.push(new MeshRandomOrientation());
-    } else {
-      const a0 = em.initialPartAngle;
-      const a1 = em.finalPartAngle;
-      if (a0 && (roll(a0.x) !== 0 || roll(a0.y) !== 0)) {
-        notes.push('partAngle 的 x/y 分量非零 ⇒ 广告板只有面内旋转（z 分量）被表达，x/y 未表达');
-      }
-      const z0 = a0?.z ?? null, z1 = a1?.z ?? null;
-      const zKf = numKfOf(em, 'partanglez', lifeSec, z0 ?? { k: 'n', v: 0 });
-      if (zKf.length) {
-        // **有随时间的角度轨** ⇒ 直接用轨道驱动（含端点 = `initial partanglez` / `fade so final partanglez`）
-        const keys = withEnds(
-          zKf.map((k) => ({ t: k.t, v: midOf(k.v, 0) })),
-          z0 ? { t: 0, v: midOf(z0, 0) } : null,
-          z1 ? { t: 1, v: midOf(z1, 0) } : null,
-        );
-        behaviors.push(new PtRotationTrack(keys));
-        notes.push(`面内自转轨 ${keys.length} 个关键帧（partAngleZ，度→弧度，逐帧写 rotation）`);
-      } else {
-        if (z0) behaviors.push(new PtInitialRotation(z0));
-        if (z1) {
-          // 原版是"朝向沿寿命**线性**变"，而 quarks 只有 `RotationOverLife`（**角速度**）
-          // ⇒ 用 Δ角/寿命 折算成匀速自转，等价于那个线性插值
-          const life = Math.max(0.05, midOf(em.lifetime, 1));
-          const omega = ((midOf(z1) - midOf(z0 ?? { k: 'n', v: 0 })) * Math.PI) / 180 / life;
-          if (Math.abs(omega) > 1e-3) {
-            behaviors.push(new RotationOverLife(new ConstantValue(omega)));
-            notes.push(`partAngleZ 的起止不同 ⇒ 按 Δ/寿命 折算匀速自转 ${((omega * 180) / Math.PI).toFixed(1)}°/s`);
-          }
-        }
-      }
-    }
-
-    // **3D 局部旋转**（`partanglex/y` + `localanglex/y` 合并成一条角度轨）——
-    // 必须走 Mesh + **自带相机朝向基底**（quarks 的 Mesh 是世界朝向 ⇒ 直接用会侧立看不见）
-    if (need3D) {
-      const life = Math.max(0.05, midOf(em.lifetime, 1));
-      const tracks = {
-        x: angleTrackOf(em, 'x', life),
-        y: angleTrackOf(em, 'y', life),
-        z: angleTrackOf(em, 'z', life),
-      };
-      behaviors.push(new PtCameraFacingSpin(tracks));
-      const sum = (k?: Array<{ t: number; v: number }>): string =>
-        (k && k.length ? `${Math.min(...k.map((a) => a.v)).toFixed(0)}~${Math.max(...k.map((a) => a.v)).toFixed(0)}°` : '—');
-      notes.push(`3D 局部旋转（partangle/localangle 合并）：x ${sum(tracks.x)} / y ${sum(tracks.y)} / z ${sum(tracks.z)}`
-        + '；该发射器因此改用 Mesh 模式（广告板只有面内 z）');
-    }
+    if (em.particleType === 5) notes.push('TYPE_FIVE 是我方扩展（原版无此类型）：面片法线对齐速度方向');
 
     const system = new ParticleSystem({
       // 有 delay 时发射窗口要覆盖到"延迟 + 一段"，否则 quarks 在 delay 之前就结束系统
       duration: em.delay > 0 ? em.delay + emitDur : emitDur,
       // **不循环**（原版 `Loops` 是总预算，见 `emitDur` 处；系统到时长自己停）
       looping: false,
-      shape: new PartBoxEmitter(em.emitRadius, em.initialVelocity),
-      startLife: numGen(em.lifetime, 1),
-      startSize: sizeGen,
-      startColor: whiteColor(),
-      startSpeed: new ConstantValue(1),   // 速度已由 PartBoxEmitter 写入，这里不叠加
+      shape: new PointEmitter(),          // 出生位置由 PtTimeline 按 `emitradius` 盒掷（照 `CreateNewParticle`）
+      startLife: numGen(em.lifetime, 1),  // 逐粒子掷；`PtTimeline.initialize` 会用状态里那一掷覆盖（同分布）
+      startSize: new Vector3Function(new ConstantValue(1), new ConstantValue(1), new ConstantValue(1)),
+      startColor: whiteColor(),           // 颜色由 PtTimeline 逐帧写（白是乘法单位元）
+      startSpeed: new ConstantValue(0),   // 位置由状态机积分（`LocalPos += Dir·dt`）
       // ⚠ `emitRate`/`numParticles`/`loops`/`delay` 在解析器里**已经是数字**（`buildEmitter` 已 roll），
       // 不是 `Num`（{k:'n'|'r'}）⇒ 不能过 `numGen`（那会造出 IntervalValue(undefined,undefined)，
       // genValue 返回 NaN，而 quarks 把它累积进 waitEmiting ⇒ 发射数 NaN ⇒ **一个粒子都不生成**，且不报错）
@@ -931,13 +432,16 @@ export function convertPart(
             cycle: 1, interval: 0, probability: 1,
           }]
         : [],
-      renderMode: need3D ? RenderMode.Mesh : renderModeOf(em.particleType),
+      // 1/2/3/5 走 Mesh（朝向由 PtTimeline 逐帧写四元数）；4 走 Trail（位置历史条带）
+      renderMode: em.particleType === 4 ? RenderMode.Trail : RenderMode.Mesh,
       // Trail（PT 的 TYPE_FOUR）**必须**给 `startLength`：否则 quarks 在 `spawn` 的 Trail 分支
       // 直接读 `rendererEmitterSettings.startLength.startGen` → undefined 抛错（实测踩到）。
       // ⚠ 语义近似：PT 的 AddFaceTrace 没有"长度"这个字段，这里取 `sizeExt`（高）当拖尾长度 ——
       // 属我方决定，与 PT 参数不是一对一。
       // Mesh 模式（我方扩展 = 世界朝向面片）：几何取单位平面 + 逐粒子随机四元数朝向
-      instancingGeometry: em.particleType === 5 || need3D ? ORIENTED_UNIT_QUAD : undefined,
+      // TWO 是**世界 XZ 面**（`AddFace2dPlane`），几何用水平四边形；其余用 XY 面片
+      instancingGeometry: em.particleType === 4 ? undefined
+        : em.particleType === 2 ? HORIZONTAL_UNIT_QUAD : ORIENTED_UNIT_QUAD,
       // ⚠ `startRotation` **不是 quarks 的字段**（导出表里没有 ⇒ 死参数，从不生效）：
       // 朝向改由 behaviors 里的 `MeshRandomOrientation` / `PtInitialRotation` 写（见下）
       rendererEmitterSettings: em.particleType === 4
@@ -952,10 +456,9 @@ export function convertPart(
     if (em.delay > 0 && em.numParticles > 1) {
       notes.push(`delay=${em.delay} 配 ${em.numParticles} 颗粒子 ⇒ 按"整批同帧发出"映射（与按 emitRate 铺开不同）`);
     }
-    if (g && (roll(g.x) || roll(g.y) || roll(g.z))) {
-      notes.push(`gravity 为区间 ⇒ 恒力取中值 (${gx},${gy},${gz})`);
+    if (em.gravity && [em.gravity.x, em.gravity.y, em.gravity.z].some((c) => c.k === 'r')) {
+      notes.push('gravity 是区间 ⇒ 按原版**逐粒子逐帧重掷**（不是恒定加速度）');
     }
-    if (em.lifetime && em.lifetime.k === 'r') notes.push('lifetime 为区间 ⇒ 关键帧时间按中值折算（见文件头条 1）');
 
     out.push({ system, emitterName: em.name, notes });
   }
