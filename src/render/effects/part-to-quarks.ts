@@ -589,6 +589,22 @@ export function convertPart(
     // Mesh（世界朝向面片 / 相机朝向基底）要**双面**：我们显式写的基底里，面片可能以背面朝相机
     if (needLocalY) material.side = THREE.DoubleSide;
     applyBlend(material, em.blend);
+    // ⚠ **"亮度当遮罩"（`USE_COLOR_AS_ALPHA`）取的是 `diffuseColor.r`（红通道）** ⇒
+    //   **蓝/青粒子（红≈0）会被整片抠掉**（红色则安然 —— 实测：CC 吸血技能"只剩红色面片"）。
+    //   而原版 `BLEND_LAMP`（`SRC_ALPHA/ONE`，贴图 24 位、alpha 恒 1）是**整块 RGB 相加** ——
+    //   用户实证：魔法师"魔法转生命"那招**会飘出蓝色粒子** ⇒ 蓝必须能出光。
+    //   ⇒ 红通道极低的颜色**不套这个遮罩**，回落到真实 alpha（= 颜色/贴图 alpha）：
+    //     代价是这些粒子会带回"贴图底噪的整块方框" —— **那正是原版的样子**（忠实优先）。
+    //   更好的修法（待做）：把遮罩从"颜色的红通道"改成"**贴图的亮度**"（在贴图解码时烘一次），
+    //     这样任意色相都能出光、且没有底噪方框。
+    const cr = em.initialColor ? roll(em.initialColor.r) : 255;
+    if ((em.blend === 'lamp' || em.blend === 'addcolor') && cr < 64) {
+      const d = { ...(material.defines ?? {}) } as Record<string, unknown>;
+      delete d['USE_COLOR_AS_ALPHA'];
+      material.defines = d;
+      notes.push(`颜色红通道=${cr}（蓝/青系）⇒ 不套"亮度当遮罩"（该遮罩取红通道会把这类颜色整片抠掉），`
+        + '回到真实 alpha；代价是可能带上贴图底噪方框（原版同此）');
+    }
     // `BLEND_ADDCOLOR`：原版 6 种混合里的第 3 种（`HoNewParticle.cpp:689`），我们按 lamp 的加法走，
     // 但**因子未核实** ⇒ 必须留痕（现有资产里没有任何文件用它；这条是为将来/别的私服副本兜住"不静默"）
     if (em.blend === 'addcolor') {
