@@ -75,6 +75,15 @@ export interface SpawnOpts {
    */
   velocity?: { x: number; y: number; z: number };
   /**
+   * **延迟多少秒才开始发射** —— 原版 `g_NewParticleMgr.Start(name, pos, startDelay)`
+   * （`HoNewParticleMgr.h:86`）的第三个参数，**不是缩放**！
+   *
+   * ⚠ 我一度把它当成"整体缩放"：CC 的 `Start("ChaosKaraSkillUser", pos, 0.1f)` 被我写成
+   * `scale: 0.1` ⇒ 粒子小到看不见（用户实测"目标看不到任何被吸血的表现"）。
+   * 判据：`HoNewParticleMgr.cpp:213` 把它逐发射器转发给 `emitter.Start(startDelay)`。
+   */
+  delaySec?: number;
+  /**
    * **刚体跟随**：`attach` 移动时已生成的粒子**一起平移**（= 原版 `SetAttachPos` 的语义：
    * `if (attachPosFlag) part.WorldPos = 系统位置`）。观感是"**一团**被整体搬运"。
    *
@@ -140,6 +149,15 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
   let diag: EffectDiag | null = null;
 
   async function spawn(name: string, opts: SpawnOpts): Promise<boolean> {
+    // **延迟发射**（原版 `Start(..., startDelay)`）：等到了再起系统。
+    // 用挂钟而不是帧计数：原版这一步就是 `StartDelayTime` 计时，且这里不涉及位移积分。
+    if (opts.delaySec && opts.delaySec > 0) {
+      const d = opts.delaySec;
+      return new Promise<boolean>((resolve) => {
+        setTimeout(() => { void spawn(name, { ...opts, delaySec: undefined }).then(resolve); },
+          d * 1000);
+      });
+    }
     pending++;
     try {
       const eff = await loadEffect(name);

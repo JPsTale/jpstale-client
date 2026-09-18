@@ -262,7 +262,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
     return {
       stop() {
         for (const ps of systems) {
-          ps.endEmit();
+          stopEmit(ps);
           const wp = new THREE.Vector3();
           ps.emitter.getWorldPosition(wp);
           if (ps.emitter.parent !== scene) {
@@ -319,10 +319,10 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
 
     return {
       stop() {
+        for (const ps of made) stopEmit(ps);
+        // 从载体摘到场景（保持世界坐标）——与 `attachMagic` 的收尾同一套，
+        // 直接 deleteSystem 会把尾巴瞬间剪掉
         for (const ps of made) {
-          ps.endEmit();
-          // 从载体摘到场景（保持世界坐标）——与 `attachMagic` 的收尾同一套，
-          // 直接 deleteSystem 会把尾巴瞬间剪掉
           const wp = new THREE.Vector3();
           ps.emitter.getWorldPosition(wp);
           if (ps.emitter.parent !== scene) {
@@ -332,6 +332,21 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
         }
       },
     };
+  }
+
+  /**
+   * **真正停发** —— `stop()` 与 `attachMagic` 的收尾都走这里（**唯一实现**）。
+   *
+   * ⚠ `ps.endEmit()` **不停止发射**：它只置一个标志（`three.quarks/src/ParticleSystem.ts:920`），
+   *   而 `emit()` 的循环分支只在那标志下设防（`:1068`）——`looping = true` 的系统每帧照发。
+   *   我们的 `.part` 转换把 `loops > 1` 映射成 `looping`（`part-to-quarks.ts:632`），
+   *   而 CC 陨石的 `loops` 是 **100 / 200** ⇒ `stop()` 之后粒子照旧源源不断（用户实测"落地后不消失"）。
+   *   ⇒ 这里把**发射源清零**（定时发射 + 爆发都清），已生成的粒子仍按自己的寿命消亡（尾巴保留）。
+   */
+  function stopEmit(ps: ParticleSystem): void {
+    ps.endEmit();
+    ps.emissionOverTime = new ConstantValue(0);
+    ps.emissionBursts = [];
   }
 
   /**
@@ -423,7 +438,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
         // 到点：**停发射**并把 emitter 从载体摘到场景（保持世界坐标），
         // 让已在飞的粒子自然飞完再回收 —— 与旧 `PartHandle.stop()` 的语义一致。
         // 若在这里直接 `deleteSystem`，尾巴会被瞬间剪掉。
-        ps.endEmit();
+        stopEmit(ps);
         const wp = new THREE.Vector3();
         ps.emitter.getWorldPosition(wp);
         scene.add(ps.emitter);

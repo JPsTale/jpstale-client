@@ -476,8 +476,15 @@ export function applyBlend(mat: THREE.Material, blend: PartEmitter['blend']): vo
       mat.blendSrc = THREE.ZeroFactor; mat.blendDst = THREE.SrcColorFactor;
       break;
     case 'invshadow':
-      mat.blending = THREE.CustomBlending;
-      mat.blendSrc = THREE.ZeroFactor; mat.blendDst = THREE.OneMinusSrcColorFactor;
+      // ⚠ **刻意偏离**（与 lamp/alpha/addcolor 同一类，理由相同）：
+      //   原版是 **RGB 因子**混合（`ZERO / INV_SRC_COLOR` = `dst×(1-src)`），
+      //   而我们的贴图**没有 alpha 遮罩**（24 位 BMP，alpha 恒 255）⇒ `src` 里的**底噪**
+      //   直接参与运算，画面上就是**一整块方框**（用户实测：陨石"淡蓝色正方形（中间是蓝色）"）。
+      //   浏览器里做过 A/B：跳过该发射器 ⇒ 方框消失（只剩 lamp 的柔和光团）；
+      //   按原因子 ⇒ 方框可见；改成普通透明混合 ⇒ 变成黑方框。
+      //   ⇒ 用**亮度当遮罩**（与 lamp 同一把钥匙）+ 普通透明混合，观感回到"有遮罩时"的样子。
+      mat.defines = { ...(mat.defines ?? {}), USE_COLOR_AS_ALPHA: '' };
+      mat.blending = THREE.NormalBlending;
       break;
   }
 }

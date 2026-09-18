@@ -83,7 +83,7 @@ export interface MonsterAttackFxDef {
    * 与 `asset` 数组的区别：数组是**多候选（挑一个）**，这里几个是**同时放**。
    * `height` 是**世界单位**（原版 `pY + N * fONE` 的 N）—— 原版写的是裸数（没乘 fONE）时要折算。
    */
-  parts?: Array<{ asset: string; height: number; scale?: number }>;
+  parts?: Array<{ asset: string; height: number; scale?: number; delaySec?: number }>;
   /**
    * **落点基准**：缺省 `'caster'` = 以**怪物自己**为原点（原版 `pX/pY/pZ`）；
    * `'target'` = 以**被打的那个单位**为原点（原版 `pDest->pX/pY/pZ`）。
@@ -100,7 +100,7 @@ export interface MonsterAttackFxDef {
    *
    * 例：CC 技能给 220 单位内的玩家各挂 `ChaosKaraSkillUser`（scale 0.1）—— 那一招的"吸血"落点。
    */
-  onUnitsInRange?: { range: number; asset: string; height: number; scale?: number };
+  onUnitsInRange?: { range: number; asset: string; height: number; scale?: number; delaySec?: number };
   /**
    * **同一颗"天降物"一次放几颗** —— 配合 `fly.fromTargetSky`（起点在目标上空）。
    * 每颗自己的落点偏移与**延迟帧**（原版 `ParkAssaChaosKaraMeteo` 一次 4 颗：
@@ -447,8 +447,10 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
       //   → `ParkAssaParticle_Normal1_1(pChar)`，里面写的是 `pDest->pX/pY/pZ`（我第一版按怪物身上登记过）
       anchor: 'target',
       height: 500 / 256,               // `:1337` `charPos.y = pDest->pY + 500`（裸数，未乘 fONE）
-      // `:1349` 同一个 case 里第二个系统（`charPos.y += 1000` ⇒ pY + 1500），第三个参数 = 整体缩放
-      parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, scale: 0.3 }],
+      // `:1349` 同一个 case 里第二个系统（`charPos.y += 1000` ⇒ pY + 1500），第三个参数 = **延迟 0.3s**
+      //   ⚠ `Start(name, pos, X)` 的 X 是 `startDelay`（`HoNewParticleMgr.h:86`）**不是缩放** ——
+      //     我第一版写成 `scale: 0.3`；同理 `ChaosKaraSkillUser` 的 0.1 也是延迟
+      parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, delaySec: 0.3 }],
       unhandled: [
         '同帧还起一个 ASE 网格 `chao_glacial`（`hoAssaParticleEffect.cpp:1341` '
         + '`SetAssaEffect(0, "chao_glacial.ASE", …)`，AniMaxCount=25 / AniDelayTime=2）—— 静态网格那条路未接',
@@ -463,8 +465,9 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
         height: 2500 / 256,            // `:1356` `posi.y = pChar->pY + 2500`（裸数）
         // **"群体吸血"就是这一段**：`character.cpp:13998` 随后调
         // `SkillPlay_Monster_Effect(this, SKILL_PLAY_CHAOSCARA_VAMP, 220)` ——
-        // 扫 220 单位内的**玩家**，每人各挂一份 `ChaosKaraSkillUser`（@ 该玩家 pY+2500，scale 0.1）
-        onUnitsInRange: { range: 220, asset: 'ChaosKaraSkillUser', height: 2500 / 256, scale: 0.1 },
+        // 扫 220 单位内的**玩家**，每人各挂一份 `ChaosKaraSkillUser`
+        //（@ 该玩家 pY+2500；`:1374` `Start(name, posi, 0.1f)` 的 0.1 是**延迟 0.1s**，不是缩放）
+        onUnitsInRange: { range: 220, asset: 'ChaosKaraSkillUser', height: 2500 / 256, delaySec: 0.1 },
         note: 'character.cpp:13996-13998 / hoAssaParticleEffect.cpp:1447,1353,1367；范围效果 netplay.cpp:12685',
       },
       // `'J'` = `ParkAssaParticle_ChaosKara2` → `ChaosKaraMeteo`（`:1436`→`:1384`）：
@@ -980,7 +983,8 @@ function fireDef(
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
   // **同帧的其余系统**（`def.parts`）：各自的高度/缩放，落点与主系统一致
   const spawnOne = (asset: string, at: { x: number; y: number; z: number },
-                    opts: { size?: number; scale?: number }, tag: string): Promise<boolean> =>
+                    opts: { size?: number; scale?: number; delaySec?: number },
+                    tag: string): Promise<boolean> =>
     Promise.resolve(effects.spawn(asset, { pos: at, ...opts }))
       .then((ok) => {
         if (!ok) reportFallback('fx', `怪物攻击特效 ${tag} 起不来（effects.spawn 返回 false）`);
@@ -993,7 +997,7 @@ function fireDef(
   const tasks = [spawnOne(name, at, { size: def.size }, label)];
   for (const p of def.parts ?? []) {
     tasks.push(spawnOne(p.asset, { x: base.x, y: base.y + p.height, z: base.z },
-      { scale: p.scale }, `${p.asset}（同帧第二系统，出处 ${def.note}）`));
+      { scale: p.scale, delaySec: p.delaySec }, `${p.asset}（同帧第二系统，出处 ${def.note}）`));
   }
   // **范围内每个玩家各一份**（原版 `SkillPlay_Monster_Effect`，范围用世界单位、平方比较）
   const area = def.onUnitsInRange;
@@ -1005,7 +1009,8 @@ function fireDef(
     } else {
       for (const u of units) {
         tasks.push(spawnOne(area.asset, { x: u.x, y: u.y + area.height, z: u.z },
-          { scale: area.scale }, `${area.asset}（范围 ${area.range} 内的单位，出处 ${def.note}）`));
+          { scale: area.scale, delaySec: area.delaySec },
+          `${area.asset}（范围 ${area.range} 内的单位，出处 ${def.note}）`));
       }
     }
   }
