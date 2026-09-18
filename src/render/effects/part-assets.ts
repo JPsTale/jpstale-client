@@ -18,7 +18,6 @@ import type * as THREE from 'three';
 import { cachedFetch } from '../../core/asset-cache.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
 import { parsePart, type PartSystem } from '../../core/effect/part-script.js';
-import { reportFallback } from '../../char/fallback-log.js';
 import { APPLIED_KEYFRAME_PROPS } from './part-to-quarks.js';
 
 /** 清单里的一条资产（名字 + 精确路径）—— 定义在 `effect-registry`，这里只要形状 */
@@ -66,23 +65,83 @@ async function fetchText(url: string): Promise<string | null> {
 }
 
 /**
- * **翻译缺口要可见**（AGENTS #12）—— `.part` 是原版自研的源语，我们的"解析 → 转换"只覆盖一部分，
- * 而此前两层都是**静默丢弃**（"粒子看着不动"就来自这里）：
- *   · `system.unhandled`：解析器没消费的键（源语未覆盖）
- *   · 未应用的时间轴：清单**只有一份**（`part-to-quarks.APPLIED_KEYFRAME_PROPS`，AGENTS #15）
+ * `.part` 源语的**翻译缺口** —— **去重收集**，预载结束时打一张表（用户 2026-09-18 定调）。
+ *
+ * `.part` 是原版自研的源语，我们的"解析 → 转换"只覆盖一部分（此前两层都是**静默丢弃**的，
+ * "粒子看着不动"就来自这里）。两类缺口：
+ *   · `system.unhandled`：**解析器没消费的键**（源语未覆盖）
+ *   · **未应用的时间轴**：解析收得到、转换只应用了一部分（清单**只有一份**：
+ *     `part-to-quarks.APPLIED_KEYFRAME_PROPS`，AGENTS #15）
+ *
+ * 它**不是**运行期降级（不是"这一招放不出来"），而是**我们还没翻译的源语** ——
+ * 属于**后续开发的参考清单**。两条判据决定了它的形态：
+ *   · 按资产逐条 `reportFallback` 会把控制台刷成一片（预载 445 个脚本时尤其），
+ *     而那 445 行里其实只有几种键；**去重之后它是一张很短的表**（实测：键 2 + 轨道 3）。
+ *   · 它要**看得到全貌**：预载正好把每个脚本都解析了一遍 ⇒ 统计天然完整，
+ *     由 `printPartGapSummary()` 在预载结束时打一次（与离线扫描器
+ *     `scripts/scan-part-coverage.ts` 同源同义 —— 那份给"不启动引擎"时用）。
  */
-export function reportPartGaps(name: string, system: PartSystem): void {
-  for (const k of system.unhandled ?? []) {
-    reportFallback('part', `「${name}」的键「${k}」没有翻译（源语未覆盖）`);
+const gapKeys = new Map<string, Set<string>>();      // 源语未覆盖的键 → 用到它的脚本
+const gapTracks = new Map<string, Set<string>>();    // 解析了但没应用的时间轴 → 用到它的脚本
+/** 预载那张表已经打过了（之后再冒出来的缺口要当行打出来，别静默丢） */
+let gapSummaryPrinted = false;
+const gapPrinted = new Set<string>();
+
+function gapAdd(map: Map<string, Set<string>>, key: string, name: string, kind: string): void {
+  const set = map.get(key) ?? map.set(key, new Set()).get(key)!;
+  const isNew = !set.has(name);
+  set.add(name);
+  if (!isNew) return;
+  // 预载之后才遇到的（只有**代码内 spec** 会这样：它们不在清单里、不参与预载）
+  if (gapSummaryPrinted && !gapPrinted.has(kind + key)) {
+    gapPrinted.add(kind + key);
+    console.log(`[fx] .part 新缺口（预载后才遇到）：${kind}「${key}」—— 来自 ${name}`);
   }
+}
+
+/** 收集一个脚本的翻译缺口（**不是**降级上报，见上面的说明） */
+export function collectPartGaps(name: string, system: PartSystem): void {
+  for (const k of system.unhandled ?? []) gapAdd(gapKeys, k, name, '键');
   const applied: readonly string[] = APPLIED_KEYFRAME_PROPS;
   for (const em of system.emitters) {
     for (const p of Object.keys(em.keyframes ?? {})) {
-      if (!applied.includes(p)) {
-        reportFallback('part', `「${name}」的时间轴「${p}」未应用（已应用的只有 ${applied.join('/')}）`);
-      }
+      if (!applied.includes(p)) gapAdd(gapTracks, p, name, '时间轴');
     }
   }
+}
+
+/** 缺口计数（预载回执里带一句，便于在实验室面板上一眼看到） */
+export function partGapCounts(): { keys: number; tracks: number; scripts: number } {
+  const scripts = new Set<string>();
+  for (const s of gapKeys.values()) for (const n of s) scripts.add(n);
+  for (const s of gapTracks.values()) for (const n of s) scripts.add(n);
+  return { keys: gapKeys.size, tracks: gapTracks.size, scripts: scripts.size };
+}
+
+/**
+ * **预载结束后打一次**：把去重后的缺口列成"后续开发参考"（短表，不是每资产一行的噪声）。
+ * 排序：用到的脚本多 → 少（多的那些最值得先翻译）。
+ */
+export function printPartGapSummary(): void {
+  gapSummaryPrinted = true;
+  const counts = partGapCounts();
+  const applied = `已应用的时间轴：${APPLIED_KEYFRAME_PROPS.join(' / ')}`;
+  if (counts.keys === 0 && counts.tracks === 0) {
+    console.log(`[fx] .part 翻译缺口：无（源语全部已翻译）。${applied}`);
+    return;
+  }
+  const rows = (map: Map<string, Set<string>>): string[] =>
+    [...map.entries()]
+      .sort((a, b) => b[1].size - a[1].size || a[0].localeCompare(b[0]))
+      .map(([k, set]) => `       ${k.padEnd(28)} ${String(set.size).padStart(4)} 个脚本   `
+        + `例：${[...set].sort()[0]}`);
+  console.log(`[fx] .part 翻译缺口（**后续开发参考**，不是运行期降级；与 npm run scan-part 同源）：`
+    + `${counts.keys} 种键 + ${counts.tracks} 种时间轴，涉及 ${counts.scripts} 个脚本`);
+  if (counts.keys) console.log(`     源语未覆盖的键：\n${rows(gapKeys).join('\n')}`);
+  if (counts.tracks) console.log(`     解析了但没应用的时间轴：\n${rows(gapTracks).join('\n')}`);
+  console.log(`     ${applied}`);
+  for (const k of gapKeys.keys()) gapPrinted.add('键' + k);
+  for (const k of gapTracks.keys()) gapPrinted.add('时间轴' + k);
 }
 
 /* ─────────── ① 解析（启动预载做这一段） ─────────── */
@@ -109,10 +168,9 @@ async function parsePartUncached(ref: PartRef): Promise<PartParseOutcome> {
   if (system.emitters.length === 0) {
     return { fail: `解析出 0 个发射器（脚本损坏？或该路径返回的是 SPA 兜底 HTML）：${ref.path}` };
   }
-  // ⚠ **翻译缺口不在这里报**：解析是**启动预载**走的路（全部 445 个脚本），
-  //   在这里报会把控制台刷成一片"未应用"（用户实测），而其中绝大多数我们根本没用过。
-  //   缺口的**运行时**上报在 `decodePartTextures`（第一次真的要用它才解码 ⇒ 那时才报，每次会话一次）；
-  //   全局覆盖率清点走离线扫描器 `npm run` → `scripts/scan-part-coverage.ts`。
+  // **翻译缺口在这一步收集**（去重，不逐条喊）：预载会解析全部 445 个脚本 ⇒ 统计完整，
+  //   由 `printPartGapSummary()` 在预载结束时打一张"后续开发参考"的表（见 `collectPartGaps` 的说明）。
+  collectPartGaps(ref.name, system);
   const paths = system.emitters.map((em) => (em.texture ? normalizeTexturePath(em.texture) : null));
   return {
     name: ref.name,
@@ -143,9 +201,6 @@ export function decodePartTextures(parsed: ParsedPart): Promise<LoadedPart> {
 }
 
 async function decodeUncached(parsed: ParsedPart): Promise<LoadedPart> {
-  // **翻译缺口在这里报**（每个资产一次，`decodePartTextures` 的缓存保证）——
-  // 与"启动预载"分开：预载只解析，缺口要等**真的要用这个资产**时才说（见 `parsePartUncached` 的说明）。
-  reportPartGaps(parsed.name, parsed.system);
   const textures: Array<THREE.DataTexture | null> = [];
   const missing: string[] = [];
   for (const p of parsed.texturePaths) {
@@ -168,8 +223,9 @@ async function decodeUncached(parsed: ParsedPart): Promise<LoadedPart> {
  * @param name 调用方的**唯一标签**（quarks-runtime 传 `opts.label`）—— 同时当贴图缓存的键
  */
 export async function loadPartFromSystem(name: string, system: PartSystem): Promise<LoadedPart> {
+  collectPartGaps(name, system);
   const paths = system.emitters.map((em) => (em.texture ? normalizeTexturePath(em.texture) : null));
-  // 缺口上报在 `decodePartTextures` 里（唯一一处）—— 别在这里再报一遍
+  // 代码内 spec 不参与预载 ⇒ 它的缺口只有走到这里才被看到（收集器会当行打出来，见 `gapAdd`）
   return decodePartTextures({
     name,
     path: `sys:${name}`,

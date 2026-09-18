@@ -24,7 +24,7 @@ import {
   type EffectParseOutcome, type EffectRef, type LoadedEffect,
 } from './effect-assets.js';
 import {
-  parsePartAtPath, decodePartTextures,
+  parsePartAtPath, decodePartTextures, printPartGapSummary, partGapCounts,
   type PartParseOutcome, type PartRef, type LoadedPart,
 } from './part-assets.js';
 import { lookupEffect, entriesOf, EFFECT_FAMILIES, type EffectEntry, type EffectFamily } from './effect-names.js';
@@ -127,6 +127,8 @@ export interface PreloadReport {
   families: Record<string, [number, number]>;
   /** 失败的条目（名字 + 原因）—— 已逐条上报，这里只是回执 */
   failed: Array<{ name: string; path: string; why: string }>;
+  /** `.part` 翻译缺口（去重后）：几**种**键/时间轴、涉及几个脚本 —— 全表已打到控制台 */
+  gaps: { keys: number; tracks: number; scripts: number };
   ms: number;
 }
 
@@ -186,7 +188,10 @@ async function runPreload(): Promise<PreloadReport> {
   await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, jobs.length) }, worker));
 
   const ms = Math.round(performance.now() - t0);
-  const report: PreloadReport = { families, failed, ms };
+  // 预载把每个脚本都解析了一遍 ⇒ 这时报缺口才是**完整的一张表**（去重后很短，
+  // 不是"每资产一行"的噪声）。它是**后续开发参考**，不是运行期降级（用户 2026-09-18 定调）。
+  printPartGapSummary();
+  const report: PreloadReport = { families, failed, gaps: partGapCounts(), ms };
   lastReport = report;
   const parts = Object.entries(families)
     .filter(([, [, total]]) => total > 0)
