@@ -28,6 +28,7 @@ import { ParticleSystem, RenderMode } from 'three.quarks';
 import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
   SizeOverLife, ColorOverLife, ApplyForce, RotationOverLife,
+  Rotation3DOverLife, AxisAngleGenerator,
   Vector3 as QVec3,
   type Behavior, type EmitterShape, type RotationGenerator,
   type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
@@ -415,6 +416,23 @@ export class PartBoxEmitter implements EmitterShape {
  *   THREE 竖直条带   → VerticalBillBoard
  *   FOUR  拖尾       → Trail
  */
+/**
+ * 该发射器是否需要**局部轴自转**（`.part` 的 `localangle*`，如 `initial localangleY` /
+ * `fade so final localangleY`）—— 样本：`chaoskaraskill.part`（CC 技能，`final localAngleY = random(100,200)`）。
+ *
+ * ⚠ **这一支必须走 Mesh 模式**，因为"绕局部 Y 轴转"是 3D 姿态：
+ *   · 广告板的顶点着色器只吃**标量**面内角（`three.quarks/src/shaders/particle_vert.glsl.ts:33-38`）；
+ *   · 而 quarks 的 `Rotation3DOverLife` 只在 `particle.rotation` 是**四元数**时生效
+ *     （`quarks.core/src/behaviors/Rotation3DOverLife.ts:22-31`）。
+ *   Mesh 模式下 quarks 自己把 `startRotation` 设成 `AxisAngleGenerator`（`ParticleSystem.ts:656`）
+ *   ⇒ 逐粒子旋转值就是四元数 ⇒ 能表达。
+ */
+export function hasLocalAngle(em: PartEmitter): boolean {
+  const y0 = em.initialLocalAngle?.y;
+  const y1 = em.finalLocalAngle?.y;
+  return (y0 != null && roll(y0) !== 0) || (y1 != null && roll(y1) !== 0);
+}
+
 export function renderModeOf(particleType: number): RenderMode {
   switch (particleType) {
     case 1: return RenderMode.BillBoard;
@@ -519,6 +537,8 @@ export function convertPart(
   for (let i = 0; i < count; i++) {
     const em = sys.emitters[i]!;
     const notes: string[] = [];
+    /** 该发射器是否要"绕局部 Y 自转"（决定渲染模式，见 `hasLocalAngle`） */
+    const needLocalY = hasLocalAngle(em);
     const lifeSec = midOf(em.lifetime, 1) || 1;
     const tex = textures[i] ?? null;
     if (em.texture && !tex) notes.push(`贴图未加载：${em.texture}`);
@@ -639,6 +659,32 @@ export function convertPart(
       }
     }
 
+    // **局部轴自转**（`.part` 的 `localangleY`）：绕**局部 Y 轴**按寿命线性转（原版 `LocalAngleY`）。
+    // 逐颗粒子的终值可以随机（样本 `chaoskaraskill.part` 是 `random(100,200)`）⇒ 用 `IntervalValue`
+    // 给**角速度**（rad/s）逐颗粒子取值；初值若非 0 表示"起始就已转过一个角度"——那部分**未表达**（见 notes）。
+    if (needLocalY) {
+      const life = Math.max(0.05, midOf(em.lifetime, 1));
+      const y0 = midOf(em.initialLocalAngle?.y, 0);
+      const y1 = em.finalLocalAngle?.y;
+      const radPerSec = (deg: number) => (deg * Math.PI) / 180 / life;
+      const speed = y1 == null
+        ? new ConstantValue(0)
+        : y1.k === 'n'
+          ? new ConstantValue(radPerSec(y1.v - y0))
+          : new IntervalValue(radPerSec(y1.a - y0), radPerSec(y1.b - y0));
+      behaviors.push(new Rotation3DOverLife(new AxisAngleGenerator(new QVec3(0, 1, 0), speed)));
+      notes.push(`localangleY：绕局部 Y 轴按寿命自转（${y1 == null ? '终值缺省 ⇒ 0'
+        : y1.k === 'n' ? `${(y1.v - y0)}°/寿命` : `${y1.a - y0}~${y1.b - y0}°/寿命`}）`
+        + '；该发射器因此改用 Mesh 模式（广告板表达不了 3D 姿态）');
+      if (y0 !== 0) notes.push(`localangleY 初值 ${y0}° ≠ 0 ⇒ 起始角度未表达（只表达了角速度）`);
+      const x0 = em.initialLocalAngle?.x, x1 = em.finalLocalAngle?.x;
+      const z0 = em.initialLocalAngle?.z, z1 = em.finalLocalAngle?.z;
+      if ((x0 != null && roll(x0) !== 0) || (x1 != null && roll(x1) !== 0)
+        || (z0 != null && roll(z0) !== 0) || (z1 != null && roll(z1) !== 0)) {
+        notes.push('localangle 的 x/z 分量非零 ⇒ 未表达（只做了 Y）');
+      }
+    }
+
     const system = new ParticleSystem({
       // 有 delay 时发射窗口要覆盖到"延迟 + 一段"，否则 quarks 在 delay 之前就结束系统
       duration: em.delay > 0 ? em.delay + emitDur : emitDur,
@@ -666,13 +712,13 @@ export function convertPart(
             cycle: 1, interval: 0, probability: 1,
           }]
         : [],
-      renderMode: renderModeOf(em.particleType),
+      renderMode: needLocalY ? RenderMode.Mesh : renderModeOf(em.particleType),
       // Trail（PT 的 TYPE_FOUR）**必须**给 `startLength`：否则 quarks 在 `spawn` 的 Trail 分支
       // 直接读 `rendererEmitterSettings.startLength.startGen` → undefined 抛错（实测踩到）。
       // ⚠ 语义近似：PT 的 AddFaceTrace 没有"长度"这个字段，这里取 `sizeExt`（高）当拖尾长度 ——
       // 属我方决定，与 PT 参数不是一对一。
       // Mesh 模式（我方扩展 = 世界朝向面片）：几何取单位平面 + 逐粒子随机四元数朝向
-      instancingGeometry: em.particleType === 5 ? ORIENTED_UNIT_QUAD : undefined,
+      instancingGeometry: em.particleType === 5 || needLocalY ? ORIENTED_UNIT_QUAD : undefined,
       // ⚠ `startRotation` **不是 quarks 的字段**（导出表里没有 ⇒ 死参数，从不生效）：
       // 朝向改由 behaviors 里的 `MeshRandomOrientation` / `PtInitialRotation` 写（见下）
       rendererEmitterSettings: em.particleType === 4
