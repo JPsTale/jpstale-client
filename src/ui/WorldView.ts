@@ -1944,6 +1944,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function playSkillByIcon(iconFile: string, aim: THREE.Object3D | null = null): boolean {
     if (!animState) return false;
+    // **施法前**的"必须有目标"门（用户 2026-09-18 定）：**向无目标施法要拦住**（不是放出去再乱飞）。
+    // 出手之后则相反：那颗弹按"发射时快照"继续飞（目标死了飞向它最后的位置，见 `aimFallback`）。
+    // ⚠ 判据目前只覆盖**跟踪弹出物**（`code === 'vigorball'`）—— 技能表还没有"是否需目标"这一列，
+    //   等它补出来再统一（先只拦会出问题的那一类，不猜别的技能）。
+    {
+      const norm0 = iconFile.replace(/\.bmp$/i, '');
+      const row0 = skillFxRowByIcon(norm0 + '.bmp');
+      const needsTarget = row0?.code === 'vigorball';
+      if (needsTarget && !aim && !selfAttackTargetId) {
+        console.log(`[WorldView][dbg] 「${row0?.name ?? iconFile}」需要目标 ⇒ 未施法（没有选中任何目标）`);
+        return false;
+      }
+    }
     const norm = iconFile.replace(/\.bmp$/i, '');
     if (norm === 'skill_normal') {
       const ok = animState.triggerAttack(true);
