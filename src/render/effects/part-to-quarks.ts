@@ -29,7 +29,7 @@ import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
   SizeOverLife, ColorOverLife, ApplyForce, RotationOverLife,
   Vector3 as QVec3, Quaternion as QQuat,
-  type Behavior, type EmitterShape, type RotationGenerator, type ValueGenerator,
+  type Behavior, type EmitterShape, type RotationGenerator,
   type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
 } from 'quarks.core';
 import { reportFallback } from '../../char/fallback-log.js';
@@ -161,7 +161,11 @@ function numKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t:
  * （`part-assets.loadPartFromSystem`）都读这里 —— 别再各自抄一份（AGENTS #15）。
  * 加新轨道时两件事一起做：在 `convertPart` 里实现 + 把属性名加进来。
  */
-export const APPLIED_KEYFRAME_PROPS = ['size', 'sizeext', 'color', 'velocity', 'partanglez'] as const;
+export const APPLIED_KEYFRAME_PROPS = [
+  'size', 'sizeext', 'color', 'velocity',
+  'partanglez', 'partanglex', 'partangley',
+  'localanglez', 'localanglex', 'localangley',
+] as const;
 
 /** 由 emitter 的 keyframes 取某属性的**向量**关键帧（时间已归一化为寿命比例） */
 function vecKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; v: Vec3 }> {
@@ -350,30 +354,58 @@ export function setBillboardCamera(cam: THREE.Camera | null): void { billboardCa
  * 这里每帧显式写：`q = 相机朝向 × Rot(局部 +Y, θ(t))`，θ 由 `初值 + 角速度 × age` **现算**
  * （不用累加 ⇒ 不受帧率/掉帧影响）。
  */
-const LOCAL_Y = new QVec3(0, 1, 0);
+const AXIS_X = new QVec3(1, 0, 0);
+const AXIS_Y = new QVec3(0, 1, 0);
+const AXIS_Z = new QVec3(0, 0, 1);
 
+/** 角度轨（t = 寿命比例，v = 度）—— 与 `PtRotationTrack` 同一套采样语义 */
+type DegTrack = Array<{ t: number; v: number }>;
+
+/** 采样角度轨（与 `PtRotationTrack` 相同的线性插值；空轨 ⇒ 0） */
+function sampleDeg(keys: DegTrack, t: number): number {
+  if (!keys.length) return 0;
+  if (t <= keys[0]!.t) return keys[0]!.v;
+  const last = keys[keys.length - 1]!;
+  if (t >= last.t) return last.v;
+  let i = 0;
+  while (i + 1 < keys.length && !(t >= keys[i]!.t && t <= keys[i + 1]!.t)) i++;
+  const a = keys[i]!, b = keys[Math.min(i + 1, keys.length - 1)]!;
+  const f = (t - a.t) / Math.max(1e-6, b.t - a.t);
+  return a.v + (b.v - a.v) * f;
+}
+
+/**
+ * **面向相机的基底 + 局部三轴旋转**（`partanglex/y/z` 与 `localanglex/y/z` 的忠实形态）。
+ *
+ * 为什么必须自带基底：quarks 的 Mesh 是**世界朝向**面片，直接切过去会在某些机位侧立看不见
+ * （用户实测）；原版这些粒子是 **billboard**（永远面向相机）+ `LocalAngle/PartAngle` 在相机朝向上再倾斜 ✓。
+ * 每帧写 `q = 相机朝向 × Ry(y) × Rx(x) × Rz(z)`；角度取自**关键帧轨**（初值/中间/终值全在内），
+ * 与 `PtRotationTrack` 同一套线性采样 ✓。
+ */
 export class PtCameraFacingSpin implements Behavior {
   type = 'PtCameraFacingSpin';
   private tmp = new QQuat();
-  constructor(private deg0: number, private speed: ValueGenerator | FunctionValueGenerator) {}
-  initialize(p: { memory: GeneratorMemory; rotation?: unknown }): void {
-    if (p.rotation && typeof p.rotation === 'object') this.speed.startGen(p.memory);
-  }
-  update(p: { memory: GeneratorMemory; age?: number; life?: number; rotation?: unknown }): void {
+  constructor(private tracks: { x?: DegTrack; y?: DegTrack; z?: DegTrack }) {}
+  initialize(): void { /* 无状态（逐帧现算，不累加） */ }
+  update(p: { age?: number; life?: number; rotation?: unknown }): void {
     const q = p.rotation;
     if (!billboardCam || !(q instanceof QQuat)) return;
     const cq = billboardCam.quaternion;
     (q as unknown as { set(x: number, y: number, z: number, w: number): void })
       .set(cq.x, cq.y, cq.z, cq.w);                       // 基底 = 相机朝向 ⇒ 面片正对相机
-    if (!this.speed) return;
     const t = (p.age ?? 0) / Math.max(1e-6, p.life ?? 1);
-    const deg = this.deg0 + (this.speed as { genValue(m: GeneratorMemory, t: number): number }).genValue(p.memory, t);
-    this.tmp.setFromAxisAngle(LOCAL_Y, (deg * Math.PI) / 180);
-    (q as unknown as { multiply(q2: unknown): void }).multiply(this.tmp);   // 再绕**局部 +Y** 自转
+    const mul = (axis: QVec3, deg: number): void => {
+      if (!deg) return;
+      this.tmp.setFromAxisAngle(axis, (deg * Math.PI) / 180);
+      (q as unknown as { multiply(q2: unknown): void }).multiply(this.tmp);
+    };
+    mul(AXIS_Y, sampleDeg(this.tracks.y ?? [], t));
+    mul(AXIS_X, sampleDeg(this.tracks.x ?? [], t));
+    mul(AXIS_Z, sampleDeg(this.tracks.z ?? [], t));
   }
   frameUpdate(): void { /* 无 */ }
   toJSON(): { type: string } { return { type: this.type }; }
-  clone(): PtCameraFacingSpin { return new PtCameraFacingSpin(this.deg0, this.speed); }
+  clone(): PtCameraFacingSpin { return new PtCameraFacingSpin(this.tracks); }
   reset(): void { /* 无状态 */ }
 }
 
@@ -467,10 +499,41 @@ export class PartBoxEmitter implements EmitterShape {
  *   Mesh 模式下 quarks 自己把 `startRotation` 设成 `AxisAngleGenerator`（`ParticleSystem.ts:656`）
  *   ⇒ 逐粒子旋转值就是四元数 ⇒ 能表达。
  */
-export function hasLocalAngle(em: PartEmitter): boolean {
-  const y0 = em.initialLocalAngle?.y;
-  const y1 = em.finalLocalAngle?.y;
-  return (y0 != null && roll(y0) !== 0) || (y1 != null && roll(y1) !== 0);
+/**
+ * 该发射器是否需要**3D 局部旋转**（`partanglex/y` 或 `localanglex/y` 有非零值）——
+ * 需要就必须走 Mesh 模式（广告板只有面内 z，表达不了倾斜），见 `PtCameraFacingSpin`。
+ */
+export function needs3DRotation(em: PartEmitter): boolean {
+  for (const ax of ['x', 'y'] as const) {
+    const t = angleTrackOf(em, ax, Math.max(0.05, midOf(em.lifetime, 1)));
+    if (t.some((k) => Math.abs(k.v) > 1e-3)) return true;
+  }
+  return false;
+}
+
+/**
+ * 取某轴的**局部旋转角度轨**（`partangle*` 与 `localangle*` **合并**；t = 寿命比例、v = 度）。
+ *
+ * 两族在 `.part` 里是两条独立声明（原版分别是 `PartAngle` 与 `LocalAngle`），
+ * 我们按"同轴相加"合成一条 —— 骨架与 `partanglez` 的既有读法一致（初值 + 关键帧 + 终值）。
+ */
+export function angleTrackOf(em: PartEmitter, axis: 'x' | 'y' | 'z', lifeSec: number): Array<{ t: number; v: number }> {
+  const pick = (v: Vec3 | null | undefined): Num | undefined =>
+    (!v ? undefined : axis === 'x' ? v.x : axis === 'y' ? v.y : v.z);
+  const kfOf = (name: string): Array<{ t: number; v: number }> =>
+    numKfOf(em, name, lifeSec).map((k) => ({ t: k.t, v: midOf(k.v, 0) }));
+  const ends = (v: Num | undefined, at: number): { t: number; v: number } | null =>
+    (v == null ? null : { t: at, v: midOf(v, 0) });
+  const part = withEnds(kfOf('partangle' + axis), ends(pick(em.initialPartAngle), 0), ends(pick(em.finalPartAngle), 1));
+  const local = withEnds(kfOf('localangle' + axis), ends(pick(em.initialLocalAngle), 0), ends(pick(em.finalLocalAngle), 1));
+  const num = (k: Array<{ t: number; v: unknown }>): Array<{ t: number; v: number }> =>
+    k.map((x) => ({ t: x.t, v: midOf(x.v as Num, 0) }));
+  const a = num(part);
+  const b = num(local);
+  if (!a.length) return b;
+  if (!b.length) return a;
+  const ts = [...new Set([...a.map((k) => k.t), ...b.map((k) => k.t)])].sort((x, y) => x - y);
+  return ts.map((t) => ({ t, v: sampleDeg(a, t) + sampleDeg(b, t) }));
 }
 
 export function renderModeOf(particleType: number): RenderMode {
@@ -583,7 +646,7 @@ export function convertPart(
     const em = sys.emitters[i]!;
     const notes: string[] = [];
     /** 该发射器是否要"绕局部 Y 自转"（决定渲染模式，见 `hasLocalAngle`） */
-    const needLocalY = hasLocalAngle(em);
+    const need3D = needs3DRotation(em);
     const lifeSec = midOf(em.lifetime, 1) || 1;
     const tex = textures[i] ?? null;
     if (em.texture && !tex) notes.push(`贴图未加载：${em.texture}`);
@@ -592,7 +655,7 @@ export function convertPart(
     // 材质只承担混合；贴图走 ParticleSystem.texture
     const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: true });
     // Mesh（世界朝向面片 / 相机朝向基底）要**双面**：我们显式写的基底里，面片可能以背面朝相机
-    if (needLocalY) material.side = THREE.DoubleSide;
+    if (need3D) material.side = THREE.DoubleSide;
     applyBlend(material, em.blend);
     // ⚠ **"亮度当遮罩"（`USE_COLOR_AS_ALPHA`）取的是 `diffuseColor.r`（红通道）** ⇒
     //   **蓝/青粒子（红≈0）会被整片抠掉**（红色则安然 —— 实测：CC 吸血技能"只剩红色面片"）。
@@ -714,31 +777,20 @@ export function convertPart(
       }
     }
 
-    // **局部轴自转**（`.part` 的 `localangleY`）：绕**局部 Y 轴**按寿命线性转（原版 `LocalAngleY`）。
-    // 逐颗粒子的终值可以随机（样本 `chaoskaraskill.part` 是 `random(100,200)`）⇒ 用 `IntervalValue`
-    // 给**角速度**（rad/s）逐颗粒子取值；初值若非 0 表示"起始就已转过一个角度"——那部分**未表达**（见 notes）。
-    if (needLocalY) {
+    // **3D 局部旋转**（`partanglex/y` + `localanglex/y` 合并成一条角度轨）——
+    // 必须走 Mesh + **自带相机朝向基底**（quarks 的 Mesh 是世界朝向 ⇒ 直接用会侧立看不见）
+    if (need3D) {
       const life = Math.max(0.05, midOf(em.lifetime, 1));
-      const y0 = midOf(em.initialLocalAngle?.y, 0);
-      const y1 = em.finalLocalAngle?.y;
-      const radPerSec = (deg: number) => (deg * Math.PI) / 180 / life;
-      const speed = y1 == null
-        ? new ConstantValue(0)
-        : y1.k === 'n'
-          ? new ConstantValue(radPerSec(y1.v - y0))
-          : new IntervalValue(radPerSec(y1.a - y0), radPerSec(y1.b - y0));
-      // ⚠ 用**自带相机朝向基底**的行为（quarks 的 Mesh 是世界朝向 ⇒ 直接用会侧立看不见）
-      behaviors.push(new PtCameraFacingSpin(y0, speed));
-      notes.push(`localangleY：绕局部 Y 轴按寿命自转（${y1 == null ? '终值缺省 ⇒ 0'
-        : y1.k === 'n' ? `${(y1.v - y0)}°/寿命` : `${y1.a - y0}~${y1.b - y0}°/寿命`}）`
-        + '；该发射器因此改用 Mesh 模式（广告板表达不了 3D 姿态）');
-      if (y0 !== 0) notes.push(`localangleY 初值 ${y0}° ≠ 0 ⇒ 起始角度未表达（只表达了角速度）`);
-      const x0 = em.initialLocalAngle?.x, x1 = em.finalLocalAngle?.x;
-      const z0 = em.initialLocalAngle?.z, z1 = em.finalLocalAngle?.z;
-      if ((x0 != null && roll(x0) !== 0) || (x1 != null && roll(x1) !== 0)
-        || (z0 != null && roll(z0) !== 0) || (z1 != null && roll(z1) !== 0)) {
-        notes.push('localangle 的 x/z 分量非零 ⇒ 未表达（只做了 Y）');
-      }
+      const tracks = {
+        x: angleTrackOf(em, 'x', life),
+        y: angleTrackOf(em, 'y', life),
+        z: angleTrackOf(em, 'z', life),
+      };
+      behaviors.push(new PtCameraFacingSpin(tracks));
+      const sum = (k?: Array<{ t: number; v: number }>): string =>
+        (k && k.length ? `${Math.min(...k.map((a) => a.v)).toFixed(0)}~${Math.max(...k.map((a) => a.v)).toFixed(0)}°` : '—');
+      notes.push(`3D 局部旋转（partangle/localangle 合并）：x ${sum(tracks.x)} / y ${sum(tracks.y)} / z ${sum(tracks.z)}`
+        + '；该发射器因此改用 Mesh 模式（广告板只有面内 z）');
     }
 
     const system = new ParticleSystem({
@@ -768,13 +820,13 @@ export function convertPart(
             cycle: 1, interval: 0, probability: 1,
           }]
         : [],
-      renderMode: needLocalY ? RenderMode.Mesh : renderModeOf(em.particleType),
+      renderMode: need3D ? RenderMode.Mesh : renderModeOf(em.particleType),
       // Trail（PT 的 TYPE_FOUR）**必须**给 `startLength`：否则 quarks 在 `spawn` 的 Trail 分支
       // 直接读 `rendererEmitterSettings.startLength.startGen` → undefined 抛错（实测踩到）。
       // ⚠ 语义近似：PT 的 AddFaceTrace 没有"长度"这个字段，这里取 `sizeExt`（高）当拖尾长度 ——
       // 属我方决定，与 PT 参数不是一对一。
       // Mesh 模式（我方扩展 = 世界朝向面片）：几何取单位平面 + 逐粒子随机四元数朝向
-      instancingGeometry: em.particleType === 5 || needLocalY ? ORIENTED_UNIT_QUAD : undefined,
+      instancingGeometry: em.particleType === 5 || need3D ? ORIENTED_UNIT_QUAD : undefined,
       // ⚠ `startRotation` **不是 quarks 的字段**（导出表里没有 ⇒ 死参数，从不生效）：
       // 朝向改由 behaviors 里的 `MeshRandomOrientation` / `PtInitialRotation` 写（见下）
       rendererEmitterSettings: em.particleType === 4
