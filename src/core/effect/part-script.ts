@@ -46,7 +46,7 @@ export type PartValue =
   | { k: 'color'; v: Rgba }
   | { k: 'str'; v: string };
 
-export type PartBlend = 'lamp' | 'alpha' | 'color' | 'shadow' | 'invshadow';
+export type PartBlend = 'lamp' | 'alpha' | 'color' | 'shadow' | 'invshadow' | 'addcolor';
 
 /** 一个带时间戳的关键帧。`time` 单位是**秒**（原版 `fade so at <t> <属性>` 的 t，实测最大到 12） */
 export interface PartKeyframe {
@@ -189,6 +189,12 @@ function toBlend(raw: string): PartBlend {
   if (s === 'BLEND_COLOR' || s === 'BLEND_COLORO') return 'color'; // COLORO 是资产里的拼写错误
   if (s === 'BLEND_ALPHA') return 'alpha';
   if (s === 'BLEND_SHADOW') return 'shadow';
+  // 原版共 **6 种**混合（`HoNewParticle.cpp:689` 的 `BlendingModes[6]`）：
+  //   ALPHA / COLOR / **ADDCOLOR** / SHADOW / LAMP / INVSHADOW
+  // ⚠ `BLEND_ADDCOLOR` 此前会**静默**落进下面的默认分支（当成 lamp）✗ ——
+  //   它们在 D3D 里是两种不同的因子组合（`LAMP` = `SRC_ALPHA/ONE`，`ADDCOLOR` 的因子本模块**未核实**）
+  //   ⇒ 这里显式映射到同一个结果，但**留痕**：调用方（`part-to-quarks`）会把它写进 notes 上报。
+  if (s === 'BLEND_ADDCOLOR') return 'addcolor';
   return 'lamp';
 }
 

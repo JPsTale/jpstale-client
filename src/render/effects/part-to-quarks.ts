@@ -455,11 +455,13 @@ export function renderModeOf(particleType: number): RenderMode {
  */
 export function applyBlend(mat: THREE.Material, blend: PartEmitter['blend']): void {
   // 需要"亮度当遮罩"的两种混合（见上）
-  if (blend === 'lamp' || blend === 'alpha') {
+  if (blend === 'lamp' || blend === 'alpha' || blend === 'addcolor') {
     mat.defines = { ...(mat.defines ?? {}), USE_COLOR_AS_ALPHA: '' };
   }
   switch (blend) {
     case 'lamp':
+    case 'addcolor':   // 原版第 3 种混合（`HoNewParticle.cpp:689` 的 6 模式表）；
+      // 因子组合本模块**未核实** ⇒ 先按 lamp 的加法走（与 lamp 同路，但**不静默**：见 convertPart 的 notes）
       mat.blending = THREE.AdditiveBlending;
       break;
     case 'alpha':
@@ -518,6 +520,11 @@ export function convertPart(
     // 材质只承担混合；贴图走 ParticleSystem.texture
     const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: true });
     applyBlend(material, em.blend);
+    // `BLEND_ADDCOLOR`：原版 6 种混合里的第 3 种（`HoNewParticle.cpp:689`），我们按 lamp 的加法走，
+    // 但**因子未核实** ⇒ 必须留痕（现有资产里没有任何文件用它；这条是为将来/别的私服副本兜住"不静默"）
+    if (em.blend === 'addcolor') {
+      notes.push('混合 BLEND_ADDCOLOR：按 lamp 的加法处理（该模式的 D3D 因子本模块未核实）');
+    }
 
     // 尺寸：PT 的 size = 宽、sizeExt = 高（两维独立）
     // ⚠ `sizeExt` **缺失时取 size**（PT/我方 `part-emitter` 的既有规则：`s1 = sizeExt ? roll(sizeExt) : s0`）。
