@@ -35,10 +35,10 @@
  *    故 TYPE_ONE..FOUR 的精确渲染模式无法查证，运行时按"朝向相机的广告牌 + 旋转"近似。
  */
 
-/** 一个可取值：定值或区间（`random(a,b)` 在生成每个粒子时滚动一次） */
-export type Num = { k: 'n'; v: number } | { k: 'r'; a: number; b: number };
-export type Vec3 = { x: Num; y: Num; z: Num };
-export type Rgba = { r: Num; g: Num; b: Num; a: Num };
+import type { Num, Vec3, Rgba } from './pt-value.js';
+
+/** 值类型已抽到 `pt-value.ts`（与 Lua 前端、共享时间轴层公用一份，AGENTS #15） */
+export type { Num, Vec3, Rgba } from './pt-value.js';
 
 export type PartValue =
   | { k: 'num'; v: Num }
