@@ -163,6 +163,8 @@ export interface QuarksRuntime {
    * `effect-manager.spawnSystem` 的异步契约一致，故调用方可原样迁移。
    */
   spawnSystem(system: PartSystem, opts: QuarksSpawnOpts): Promise<QuarksPartHandle | null>;
+  /** 【临时诊断】生成三段耗时累加（load / convert / track）+ 次数；读取后清零。定位完删除 */
+  spawnProfile(): { load: number; convert: number; track: number; count: number; last: number };
 
   update(dt: number): void;
   dispose(): void;
@@ -281,9 +283,13 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
     };
   }
 
+  // 【临时诊断】"生成"热点分段计时 —— 定位完删除（`spawnProfile()` 读它）
+  const prof = { load: 0, convert: 0, track: 0, count: 0, last: 0 };
+
   async function spawnSystem(
     system: PartSystem, opts: QuarksSpawnOpts,
   ): Promise<QuarksPartHandle | null> {
+    const tA = performance.now();
     // ⚠ **缓存键必须用资产名（label），不能用 `system.name`** —— 那是 `.part` 头里的
     // `particlesystem "FireJet"`，一大批资产都叫 FireJet：CC 的陨石与命中特效同叫 FireJet
     // ⇒ 命中特效会**复用陨石的 spec**（rate 20/100、150s 长寿命），于是"落地后粒子永远不消失"
@@ -291,6 +297,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
     const key = opts.label || system.name || 'inline';
     if (!systemCache.has(key)) systemCache.set(key, await loadPartFromSystem(key, system));
     const loaded = systemCache.get(key);
+    const tB = performance.now(); prof.load += tB - tA;
     if (!loaded) { missing.push(`spawnSystem(${key}): spec 未加载`); return null; }
     lastLoadedDiag = loaded.diag;
     // 逐次覆盖初速：**只影响本次转换**，缓存（贴图）不动
@@ -306,6 +313,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
       };
     }
     const conv = convertPart(sysIn, loaded.textures);
+    const tC = performance.now(); prof.convert += tC - tB;
     if (!conv.length) { missing.push(`spawnSystem(${key}): spec → quarks 转换失败`); return null; }
 
     const made: ParticleSystem[] = [];
@@ -325,6 +333,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
       }
       made.push(ps);
     }
+    prof.track += performance.now() - tC; prof.count++; prof.last = performance.now() - tA;
     // 转换里的缺口（贴图缺失 / delay 映射方式 / gravity 取中值…）**必须可见**（AGENTS #12）
     for (const c of conv) if (c.notes.length) missing.push(`${key}/${c.emitterName}: ${c.notes.join('；')}`);
 
@@ -456,6 +465,12 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
 
     spawnSystem,
     addSystems,
+    /** 【临时诊断】取"生成"三段耗时（毫秒，累计）+ 次数；读取后清零 */
+    spawnProfile() {
+      const snap = { ...prof };
+      prof.load = 0; prof.convert = 0; prof.track = 0; prof.count = 0; prof.last = 0;
+      return snap;
+    },
 
     update(dt) {
       batch.update(dt);

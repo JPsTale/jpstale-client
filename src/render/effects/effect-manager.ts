@@ -106,6 +106,8 @@ export interface EffectManager {
    * （那条路是一次性播完的形态，没有句柄可给）。
    */
   spawnStoppable(name: string, opts: SpawnOpts): Promise<QuarksPartHandle | null>;
+  /** 【临时诊断】透传 `QuarksRuntime.spawnProfile`（定位"生成"热点；定位完删除） */
+  spawnProfile(): { load: number; convert: number; track: number; count: number; last: number } | null;
   /**
    * 播放一份**代码内 spec**（没有数据文件的那类原版特效，如法杖普攻弹 `MONSTER_IMP_SHOT1`）。
    * `opts.attach` 给出时粒子跟随该节点（飞行投射物），尾迹留在身后。
@@ -284,6 +286,7 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
   return {
     spawn,
     spawnStoppable,
+    spawnProfile: () => quarksFx?.spawnProfile?.() ?? null,
     spawnSystem,
     update,
     clear,
