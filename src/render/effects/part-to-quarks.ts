@@ -32,6 +32,7 @@ import {
   type Behavior, type EmitterShape, type RotationGenerator,
   type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
 } from 'quarks.core';
+import { reportFallback } from '../../char/fallback-log.js';
 import {
   roll,
   type PartEmitter, type PartSystem, type Num, type Rgba, type Vec3,
@@ -153,6 +154,38 @@ function numKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t:
   return out;
 }
 
+/**
+ * **已应用的时间轴属性**（`fade so at <t> <属性>` 里我们真的落到 quarks 的那些）。
+ *
+ * ⚠ **唯一出处**：扫描器（`scripts/scan-part-coverage.ts`）与加载器的"未应用即上报"
+ * （`part-assets.loadPartFromSystem`）都读这里 —— 别再各自抄一份（AGENTS #15）。
+ * 加新轨道时两件事一起做：在 `convertPart` 里实现 + 把属性名加进来。
+ */
+export const APPLIED_KEYFRAME_PROPS = ['size', 'sizeext', 'color', 'velocity', 'partanglez'] as const;
+
+/** 由 emitter 的 keyframes 取某属性的**向量**关键帧（时间已归一化为寿命比例） */
+function vecKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; v: Vec3 }> {
+  const kfs = em.keyframes[prop];
+  if (!kfs) return [];
+  const out: Array<{ t: number; v: Vec3 }> = [];
+  for (const k of kfs) {
+    if (k.value.k !== 'vec') continue;
+    out.push({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v });
+  }
+  return out;
+}
+
+/** 给一组关键帧补上端点（初值 t=0 / 终点 t=1），按 t 排序；同一 t 保留最后一个（后写覆盖先写） */
+function withEnds<K extends { t: number }>(keys: K[], head: K | null, tail: K | null): K[] {
+  const all = [...(head ? [head] : []), ...keys, ...(tail ? [tail] : [])].sort((a, b) => a.t - b.t);
+  const out: K[] = [];
+  for (const k of all) {
+    if (out.length && Math.abs(out[out.length - 1]!.t - k.t) < 1e-6) out[out.length - 1] = k;
+    else out.push(k);
+  }
+  return out;
+}
+
 /* ─────────── PT 语义的盒形发射器（缺口可补的证明，约 30 行） ─────────── */
 
 /**
@@ -209,6 +242,80 @@ export class PtInitialRotation implements Behavior {
   frameUpdate(): void { /* 无 */ }
   toJSON(): { type: string } { return { type: this.type }; }
   clone(): PtInitialRotation { return new PtInitialRotation(this.degZ); }
+  reset(): void { /* 无状态 */ }
+}
+
+/** 线性采样一组"随时间"的向量键（t 为寿命比例） */
+function sampleVec(keys: Array<{ t: number; v: Vec3 }>, t: number): { x: number; y: number; z: number } | null {
+  if (keys.length === 0) return null;
+  const at = (v: Vec3) => ({ x: midOf(v.x, 0), y: midOf(v.y, 0), z: midOf(v.z, 0) });
+  if (t <= keys[0]!.t) return at(keys[0]!.v);
+  const last = keys[keys.length - 1]!;
+  if (t >= last.t) return at(last.v);
+  for (let i = 0; i + 1 < keys.length; i++) {
+    const a = keys[i]!, b = keys[i + 1]!;
+    if (t >= a.t && t <= b.t) {
+      const k = (t - a.t) / Math.max(1e-6, b.t - a.t);
+      const pa = at(a.v), pb = at(b.v);
+      return { x: pa.x + (pb.x - pa.x) * k, y: pa.y + (pb.y - pa.y) * k, z: pa.z + (pb.z - pa.z) * k };
+    }
+  }
+  return at(last.v);
+}
+
+/**
+ * **速度随时间变化**（`.part` 的 `fade so at <t> velocity = XYZ(...)`）—— 逐帧**覆盖** `particle.velocity`。
+ *
+ * 实测：49 个 `.part` 带这条轨道，其中 **22 个与初速不同** ⇒ 不应用就是看得出的差异（此前未应用 ✗）。
+ * quarks 的位置推进用的是 `velocity × speedModifier` ⇒ 这里直接给绝对速度、把 `speedModifier` 归 1。
+ */
+export class VelocityTrack implements Behavior {
+  type = 'VelocityTrack';
+  constructor(private keys: Array<{ t: number; v: Vec3 }>) {}
+  initialize(p: { speedModifier?: number }): void { p.speedModifier = 1; }
+  update(p: {
+    age?: number; life?: number; speedModifier?: number;
+    velocity?: { set(x: number, y: number, z: number): void };
+  }): void {
+    const v = sampleVec(this.keys, (p.age ?? 0) / Math.max(1e-6, p.life ?? 1));
+    if (!v) return;
+    p.velocity?.set(v.x, v.y, v.z);
+    p.speedModifier = 1;
+  }
+  frameUpdate(): void { /* 无 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): VelocityTrack { return new VelocityTrack(this.keys); }
+  reset(): void { /* 无状态 */ }
+}
+
+/**
+ * **面内自转随时间变化**（`.part` 的 `fade so at <t> partAngleZ = <度>`）——
+ * 逐帧写 `particle.rotation`（**弧度**；广告板的 rotation 是标量，见 `PtInitialRotation` 的说明）。
+ * x/y 分量是"出平面倾斜"，广告板表达不了 ⇒ 由 `convertPart` 上报（AGENTS #12）。
+ */
+export class PtRotationTrack implements Behavior {
+  type = 'PtRotationTrack';
+  constructor(private keys: Array<{ t: number; v: number }>) {}
+  initialize(): void { /* 逐帧在 update 里写 */ }
+  update(p: { age?: number; life?: number; rotation?: unknown }): void {
+    if (typeof p.rotation !== 'number' || this.keys.length === 0) return;
+    const t = (p.age ?? 0) / Math.max(1e-6, p.life ?? 1);
+    const k = this.keys;
+    let deg: number;
+    if (t <= k[0]!.t) deg = k[0]!.v;
+    else if (t >= k[k.length - 1]!.t) deg = k[k.length - 1]!.v;
+    else {
+      let i = 0;
+      while (i + 1 < k.length && !(t >= k[i]!.t && t <= k[i + 1]!.t)) i++;
+      const a = k[i]!, b = k[Math.min(i + 1, k.length - 1)]!;
+      const f = (t - a.t) / Math.max(1e-6, b.t - a.t);
+      deg = a.v + (b.v - a.v) * f;
+    }
+    p.rotation = (deg * Math.PI) / 180;
+  }
+  frameUpdate(): void { /* 无 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): PtRotationTrack { return new PtRotationTrack(this.keys); }
   reset(): void { /* 无状态 */ }
 }
 
@@ -462,8 +569,22 @@ export function convertPart(
     const gx = g ? midOf(g.x, 0) : 0, gy = g ? midOf(g.y, 0) : 0, gz = g ? midOf(g.z, 0) : 0;
     if (gx || gy || gz) behaviors.push(new ApplyForce(new QVec3(gx, gy, gz), new ConstantValue(1)));
 
-    // **面内旋转**（`.part` 的 `partAngleZ`，度）：初值 + 自转。
-    // 此前**整块被丢掉** ⇒ 每个粒子朝向一样、看着像静止贴片（用户实测："粒子似乎没有序列帧动画"）。
+    // **速度轨**（`fade so at <t> velocity = XYZ(...)`）：逐帧覆盖 `velocity`。
+    // 实测 49 个文件带它、其中 **22 个与初速不同** ⇒ 此前未应用是看得出的差异。
+    const velKf = vecKfOf(em, 'velocity', lifeSec);
+    if (velKf.length) {
+      behaviors.push(new VelocityTrack(velKf));
+      notes.push(`速度轨 ${velKf.length} 个关键帧（逐帧覆盖 velocity，speedModifier 归 1）`);
+    }
+    // 逐轴的 `velocityX/Z`（标量）表达不了 —— 必须可见，不静默
+    for (const p of ['velocityx', 'velocityy', 'velocityz']) {
+      if (em.keyframes[p]?.length) {
+        reportFallback('part', `时间轴「${p}」（逐轴速度）未应用 —— 只支持向量的 velocity 轨`);
+      }
+    }
+
+    // **面内旋转**（`.part` 的 `partAngleZ`，度）：初值 + 随时间变化。
+    // 此前**整块被丢掉** ⇒ 每个粒子朝向一样、看着像静止贴片（用户实测："粒子似乎没有序列动画特征"）。
     if (em.particleType === 5) {
       behaviors.push(new MeshRandomOrientation());
     } else {
@@ -473,15 +594,27 @@ export function convertPart(
         notes.push('partAngle 的 x/y 分量非零 ⇒ 广告板只有面内旋转（z 分量）被表达，x/y 未表达');
       }
       const z0 = a0?.z ?? null, z1 = a1?.z ?? null;
-      if (z0) behaviors.push(new PtInitialRotation(z0));
-      if (z1) {
-        // 原版是"朝向沿寿命**线性**变"，而 quarks 只有 `RotationOverLife`（**角速度**）
-        // ⇒ 用 Δ角/寿命 折算成匀速自转，等价于那个线性插值
-        const life = Math.max(0.05, midOf(em.lifetime, 1));
-        const omega = ((midOf(z1) - midOf(z0 ?? { k: 'n', v: 0 })) * Math.PI) / 180 / life;
-        if (Math.abs(omega) > 1e-3) {
-          behaviors.push(new RotationOverLife(new ConstantValue(omega)));
-          notes.push(`partAngleZ 的起止不同 ⇒ 按 Δ/寿命 折算匀速自转 ${((omega * 180) / Math.PI).toFixed(1)}°/s`);
+      const zKf = numKfOf(em, 'partanglez', lifeSec);
+      if (zKf.length) {
+        // **有随时间的角度轨** ⇒ 直接用轨道驱动（含端点 = `initial partanglez` / `fade so final partanglez`）
+        const keys = withEnds(
+          zKf.map((k) => ({ t: k.t, v: midOf(k.v, 0) })),
+          z0 ? { t: 0, v: midOf(z0, 0) } : null,
+          z1 ? { t: 1, v: midOf(z1, 0) } : null,
+        );
+        behaviors.push(new PtRotationTrack(keys));
+        notes.push(`面内自转轨 ${keys.length} 个关键帧（partAngleZ，度→弧度，逐帧写 rotation）`);
+      } else {
+        if (z0) behaviors.push(new PtInitialRotation(z0));
+        if (z1) {
+          // 原版是"朝向沿寿命**线性**变"，而 quarks 只有 `RotationOverLife`（**角速度**）
+          // ⇒ 用 Δ角/寿命 折算成匀速自转，等价于那个线性插值
+          const life = Math.max(0.05, midOf(em.lifetime, 1));
+          const omega = ((midOf(z1) - midOf(z0 ?? { k: 'n', v: 0 })) * Math.PI) / 180 / life;
+          if (Math.abs(omega) > 1e-3) {
+            behaviors.push(new RotationOverLife(new ConstantValue(omega)));
+            notes.push(`partAngleZ 的起止不同 ⇒ 按 Δ/寿命 折算匀速自转 ${((omega * 180) / Math.PI).toFixed(1)}°/s`);
+          }
         }
       }
     }

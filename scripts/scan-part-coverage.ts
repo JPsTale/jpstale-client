@@ -58,3 +58,35 @@ for (const r of rows) {
   console.log(`  ${String(r.files).padStart(5)}  ${String(r.uses).padStart(7)}  ${r.key.padEnd(40)} ${r.sample}`);
 }
 if (rows.length === 0) console.log('  （无 —— 全部键都被翻译）');
+
+// ── 第二张表：**时间轴属性**（`fade so at <t> <prop>`）── 解析器收得到，但转换器只应用了一部分
+//
+// ⚠ 这里的"已应用"清单必须与 `part-to-quarks.ts` 里的 `numKfOf/kfOf` 调用一致
+//   （运行时还有一道兜底：`part-assets.loadPartFromSystem` 会把未应用的轨道走 `reportFallback` 报出来）
+// 已应用清单**只有一份**（导出自 `part-to-quarks.ts`）；这里直接用，别再抄
+const { APPLIED_KEYFRAME_PROPS } = await import('../src/render/effects/part-to-quarks.js');
+const APPLIED = new Set<string>(APPLIED_KEYFRAME_PROPS);
+const props = new Map<string, { uses: number; files: Set<string> }>();
+for (const root of ROOTS) {
+  const dir = path.join(ASSET, root);
+  if (!fs.existsSync(dir)) continue;
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.toLowerCase().endsWith('.part')) continue;
+    const sys = parsePart(fs.readFileSync(path.join(dir, f), 'utf8'));
+    for (const em of sys.emitters) {
+      for (const p of Object.keys(em.keyframes ?? {})) {
+        const e = props.get(p) ?? { uses: 0, files: new Set<string>() };
+        e.uses++;
+        e.files.add(f);
+        props.set(p, e);
+      }
+    }
+  }
+}
+const propsSorted = [...props.entries()].sort((a, b) => b[1].files.size - a[1].files.size);
+console.log(`\n时间轴属性（\`fade so at <t> <属性>\`）共 ${propsSorted.length} 种：\n`);
+console.log('  文件数  出现次数  属性                   转换器已应用？');
+for (const [p, e] of propsSorted) {
+  console.log(`  ${String(e.files.size).padStart(5)}  ${String(e.uses).padStart(7)}  ${p.padEnd(20)} ${APPLIED.has(p) ? '✓' : '✗ **未应用**'}`);
+}
+

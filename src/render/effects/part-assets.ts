@@ -9,6 +9,7 @@ import { cachedFetch } from '../../core/asset-cache.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
 import { parsePart, type PartSystem } from '../../core/effect/part-script.js';
 import { reportFallback } from '../../char/fallback-log.js';
+import { APPLIED_KEYFRAME_PROPS } from './part-to-quarks.js';
 
 export interface LoadedPart {
   name: string;
@@ -71,14 +72,15 @@ export async function loadPartFromSystem(name: string, system: PartSystem): Prom
   // **翻译缺口要可见**（AGENTS #12）—— `.part` 是原版自研的源语，我们的"解析 → 转换"只覆盖一部分，
   // 而此前两层都是**静默丢弃**（"粒子看着不动"就来自这里）：
   //   · `system.unhandled`：解析器没消费的键（源语未覆盖）
-  //   · 未应用的时间轴：转换器只做 size / sizeext / color（见 `part-to-quarks.ts` 的 `numKfOf`/`kfOf`）
+  //   · 未应用的时间轴：清单**只有一份**（`part-to-quarks.APPLIED_KEYFRAME_PROPS`，AGENTS #15）
   for (const k of system.unhandled ?? []) {
     reportFallback('part', `「${name}」的键「${k}」没有翻译（源语未覆盖）`);
   }
+  const applied: readonly string[] = APPLIED_KEYFRAME_PROPS;
   for (const em of system.emitters) {
     for (const p of Object.keys(em.keyframes ?? {})) {
-      if (p !== 'size' && p !== 'sizeext' && p !== 'color') {
-        reportFallback('part', `「${name}」的时间轴「${p}」未应用（转换器只做 size/sizeext/color）`);
+      if (!applied.includes(p)) {
+        reportFallback('part', `「${name}」的时间轴「${p}」未应用（已应用的只有 ${applied.join('/')}）`);
       }
     }
   }
