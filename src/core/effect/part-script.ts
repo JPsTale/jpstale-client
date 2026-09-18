@@ -48,10 +48,20 @@ export type PartValue =
 
 export type PartBlend = 'lamp' | 'alpha' | 'color' | 'shadow' | 'invshadow' | 'addcolor';
 
-/** 一个带时间戳的关键帧。`time` 单位是**秒**（原版 `fade so at <t> <属性>` 的 t，实测最大到 12） */
+/** 一个带时间戳的关键帧。`time` 单位是**秒**（原版 `at <t> <属性>` 的 t，实测最大到 12） */
 export interface PartKeyframe {
   time: number;
   value: PartValue;
+  /**
+   * 原版 `IsFade`（`HoNewParticle.cpp:978 ProcessTime`）：
+   *   `true`  —— 写法是 `fade so at <t> <属性>`：**线性过渡**到该值（各 `DoItToIt` 里算 Step）；
+   *   `false` —— 写法是裸 `at <t> <属性>`：**到点直接赋值**（`if (!IsFade()) part.X = …`）＝**阶跃**。
+   *
+   * ⚠ 它**每个事件独立**：`ProcessTime` 里先看有没有 `fade`→`so`，没有就 `IsFade = false`，
+   * 状态**不跨行继承**。我一度按"tokenizer 有状态、裸 at 是上一行 fade so 的续行"处理
+   * （把裸 `at` 补成 `fade so at`）—— 依据是错的，于是 606 个阶跃事件被当成了渐变。
+   */
+  fade: boolean;
 }
 
 /**
@@ -302,14 +312,9 @@ export function parsePart(text: string): PartSystem {
     let m: RegExpExecArray | null;
     while ((m = KV_RE.exec(line)) !== null) {
       const rawKey = m[1]!.trim().toLowerCase().replace(/\s+/g, ' ');
-      // ⚠ **续行形式**：资产里 `fade so at <t> X = …` 之后的行常常只写 `at <t> X = …`
-      //   （`classupweapon2.part:15-16` 的 `at 0.1 size = random(3,5)` 就是）。
-      //   依据：原版 tokenizer 是**有状态**的 —— `HoNewParticle.h:1574` 的
-      //   `KeywordFade / KeywordSo / KeywordAt / KeywordInitial / KeywordFinal` 是一组模式词，
-      //   `fade so` 进入 FADE 模式后，后续 `at` 都在该模式下解析。
-      //   此前我们要求每个键都带 `fade so ` 前缀 ⇒ 这些键全部落进 `unhandled` 被**静默丢弃**
-      //   （实测 150/445 个 .part 受影响，时间轴上的 size/velocity/angle 全丢了）。
-      const key = /^at\s/.test(rawKey) ? 'fade so ' + rawKey : rawKey;
+      // 键名**原样保留**（不再把裸 `at` 补成 `fade so at`）：两者在原版是两类事件 ——
+      // `fade so at <t> X`（渐变）vs `at <t> X`（到点赋值/阶跃），见 `PartKeyframe.fade`。
+      const key = rawKey;
       const val = parseValue(m[2]!);
       if (!val) continue;
       if (kv) { if (!kv.has(key)) kv.set(key, val); }         // emitter 内：同名取第一次
@@ -358,17 +363,22 @@ function buildEmitter(kv: Map<string, PartValue>, used: Set<string>): PartEmitte
   };
 }
 
-/** 收集 `fade so at <t> <属性>` 形式的中间关键帧（同属性按时间升序） */
+/**
+ * 收集中间关键帧（同属性按时间升序）—— 两种写法都收，`fade` 标志区分：
+ *   `fade so at <t> <属性> = v` → 渐变目标；`at <t> <属性> = v` → 到点赋值（阶跃）。
+ * 其他写法（`fade so <属性>`、`at <属性>`、裸 `final <属性>`）在原版是**报错**或未用到的形态，
+ * 这里**不收** ⇒ 它们会落进 `unhandled`（可见），而不是被猜成某种语义。
+ */
 function collectKeyframes(kv: Map<string, PartValue>, used?: Set<string>): PartKeyframes {
   const out: PartKeyframes = {};
   for (const [key, value] of kv) {
-    const m = /^fade so at\s+(-?[\d.]+)\s+(.+)$/.exec(key);
+    const m = /^(fade so )?at\s+(-?[\d.]+)\s+(.+)$/.exec(key);
     if (!m) continue;
     used?.add(key);
-    const time = Number(m[1]);
+    const time = Number(m[2]);
     if (!Number.isFinite(time)) continue;
-    const prop = m[2]!.trim();
-    (out[prop] ??= []).push({ time, value });
+    const prop = m[3]!.trim();
+    (out[prop] ??= []).push({ time, value, fade: m[1] !== undefined });
   }
   for (const list of Object.values(out)) list.sort((a, b) => a.time - b.time);
   return out;

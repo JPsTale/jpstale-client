@@ -130,28 +130,64 @@ function whiteColor(): Gradient {
   return new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]);
 }
 
-/** 由 emitter 的 keyframes 取某属性的**带时间**关键帧（时间已折算为比例） */
-function kfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; c: Rgba }> {
-  const out: Array<{ t: number; c: Rgba }> = [];
-  const kfs = em.keyframes[prop];
-  if (!kfs) return out;
-  for (const k of kfs) {
-    if (k.value.k !== 'color') continue;
-    out.push({ t: Math.min(1, k.time / lifetimeSec), c: k.value.v });
+/**
+ * 一次**阶跃**的宽度 = 原版一个 tick（`timeDelta = 1.f/70.f`，`MainEffect` HoEffect.cpp:12795）。
+ * 见 `withSteps`：阶跃在曲线里要占一小段宽度，取一帧最贴近原版（原版也是在帧边界上生效）。
+ */
+const STEP_EPS_SEC = 1 / 70;
+
+/** 原版 `HoNewParticle()` 构造里的默认值（资产省略 `initial X` 时，阶跃的起点就是它） */
+const ONE: Num = { k: 'n', v: 1 };
+const WHITE_RGBA: Rgba = { r: { k: 'n', v: 1 }, g: { k: 'n', v: 1 }, b: { k: 'n', v: 1 }, a: { k: 'n', v: 1 } };
+const ZERO_VEC: Vec3 = { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } };
+
+/**
+ * 事件链 → 曲线键帧，**保留"阶跃"语义**。
+ *
+ * 原版两类事件（`HoNewParticle.cpp` 各 `HoNewParticleEvent_*::DoItToIt`）：
+ *   · 非 fade（裸 `at <t> X`）＝ `if (!IsFade()) part.X = …` —— 到点**直接赋值**；
+ *   · fade（`fade so at <t> X`）＝ 算 Step 线性推进 —— 曲线上的一个点。
+ * quarks 的曲线只能在相邻键之间插值，故阶跃要写成"t 处保持旧值 + t+ε 处给新值"。
+ *
+ * @param anchor 阶跃前的值（＝ `initial X`；资产没写时用原版粒子构造函数的默认值，见各调用点的说明）
+ */
+function withSteps<T>(
+  events: Array<{ t: number; v: T; fade: boolean }>, anchor: T, eps: number,
+): Array<{ t: number; v: T }> {
+  const out: Array<{ t: number; v: T }> = [];
+  let cur = anchor;
+  for (const e of events) {
+    if (e.fade) {
+      out.push({ t: e.t, v: e.v });
+    } else {
+      out.push({ t: e.t, v: cur });
+      out.push({ t: Math.min(1, e.t + eps), v: e.v });
+    }
+    cur = e.v;
   }
   return out;
 }
 
-/** 由 emitter 的 keyframes 取某属性的数值关键帧（时间已归一化为寿命比例） */
-function numKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; v: Num }> {
+/** 由 emitter 的 keyframes 取某属性的**带时间**关键帧（时间已折算为比例；非 fade 事件展开成阶跃） */
+function kfOf(
+  em: PartEmitter, prop: string, lifetimeSec: number, anchor: Rgba,
+): Array<{ t: number; c: Rgba }> {
   const kfs = em.keyframes[prop];
   if (!kfs) return [];
-  const out: Array<{ t: number; v: Num }> = [];
-  for (const k of kfs) {
-    if (k.value.k !== 'num') continue;
-    out.push({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v });
-  }
-  return out;
+  const events = kfs.filter((k) => k.value.k === 'color')
+    .map((k) => ({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v as Rgba, fade: k.fade }));
+  return withSteps(events, anchor, STEP_EPS_SEC / lifetimeSec).map((k) => ({ t: k.t, c: k.v }));
+}
+
+/** 由 emitter 的 keyframes 取某属性的数值关键帧（时间已归一化为寿命比例） */
+function numKfOf(
+  em: PartEmitter, prop: string, lifetimeSec: number, anchor: Num,
+): Array<{ t: number; v: Num }> {
+  const kfs = em.keyframes[prop];
+  if (!kfs) return [];
+  const events = kfs.filter((k) => k.value.k === 'num')
+    .map((k) => ({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v as Num, fade: k.fade }));
+  return withSteps(events, anchor, STEP_EPS_SEC / lifetimeSec);
 }
 
 /**
@@ -168,15 +204,14 @@ export const APPLIED_KEYFRAME_PROPS = [
 ] as const;
 
 /** 由 emitter 的 keyframes 取某属性的**向量**关键帧（时间已归一化为寿命比例） */
-function vecKfOf(em: PartEmitter, prop: string, lifetimeSec: number): Array<{ t: number; v: Vec3 }> {
+function vecKfOf(
+  em: PartEmitter, prop: string, lifetimeSec: number, anchor: Vec3,
+): Array<{ t: number; v: Vec3 }> {
   const kfs = em.keyframes[prop];
   if (!kfs) return [];
-  const out: Array<{ t: number; v: Vec3 }> = [];
-  for (const k of kfs) {
-    if (k.value.k !== 'vec') continue;
-    out.push({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v });
-  }
-  return out;
+  const events = kfs.filter((k) => k.value.k === 'vec')
+    .map((k) => ({ t: Math.min(1, k.time / lifetimeSec), v: k.value.v as Vec3, fade: k.fade }));
+  return withSteps(events, anchor, STEP_EPS_SEC / lifetimeSec);
 }
 
 /** 给一组关键帧补上端点（初值 t=0 / 终点 t=1），按 t 排序；同一 t 保留最后一个（后写覆盖先写） */
@@ -520,12 +555,15 @@ export function needs3DRotation(em: PartEmitter): boolean {
 export function angleTrackOf(em: PartEmitter, axis: 'x' | 'y' | 'z', lifeSec: number): Array<{ t: number; v: number }> {
   const pick = (v: Vec3 | null | undefined): Num | undefined =>
     (!v ? undefined : axis === 'x' ? v.x : axis === 'y' ? v.y : v.z);
-  const kfOf = (name: string): Array<{ t: number; v: number }> =>
-    numKfOf(em, name, lifeSec).map((k) => ({ t: k.t, v: midOf(k.v, 0) }));
+  const kfOf = (name: string, anchor: Num): Array<{ t: number; v: number }> =>
+    numKfOf(em, name, lifeSec, anchor).map((k) => ({ t: k.t, v: midOf(k.v, 0) }));
+  const ZERO: Num = { k: 'n', v: 0 };      // 原版 `HoNewParticle()` 构造：各角度初值 0
   const ends = (v: Num | undefined, at: number): { t: number; v: number } | null =>
     (v == null ? null : { t: at, v: midOf(v, 0) });
-  const part = withEnds(kfOf('partangle' + axis), ends(pick(em.initialPartAngle), 0), ends(pick(em.finalPartAngle), 1));
-  const local = withEnds(kfOf('localangle' + axis), ends(pick(em.initialLocalAngle), 0), ends(pick(em.finalLocalAngle), 1));
+  const part = withEnds(kfOf('partangle' + axis, pick(em.initialPartAngle) ?? ZERO),
+    ends(pick(em.initialPartAngle), 0), ends(pick(em.finalPartAngle), 1));
+  const local = withEnds(kfOf('localangle' + axis, pick(em.initialLocalAngle) ?? ZERO),
+    ends(pick(em.initialLocalAngle), 0), ends(pick(em.finalLocalAngle), 1));
   const num = (k: Array<{ t: number; v: unknown }>): Array<{ t: number; v: number }> =>
     k.map((x) => ({ t: x.t, v: midOf(x.v as Num, 0) }));
   const a = num(part);
@@ -681,10 +719,11 @@ export function convertPart(
       new ConstantValue(1),
     );
     const sizeFactor = new Vector3Function(
-      factorTrack(em.initialSize, numKfOf(em, 'size', lifeSec), em.finalSize),
+      // anchor = 阶跃前的尺寸：资产没写 `initial size` 时用原版粒子构造的默认 1（`HoNewParticle()` 的 `Size = 1.0f`）
+      factorTrack(em.initialSize, numKfOf(em, 'size', lifeSec, em.initialSize ?? ONE), em.finalSize),
       factorTrack(
         em.initialSizeExt ?? em.initialSize,
-        numKfOf(em, 'sizeext', lifeSec),
+        numKfOf(em, 'sizeext', lifeSec, em.initialSizeExt ?? em.initialSize ?? ONE),
         em.finalSizeExt ?? em.finalSize,
       ),
       new ConstantValue(1),
@@ -693,7 +732,8 @@ export function convertPart(
     // 颜色：整条轨道交给 Gradient（startColor 传白，见文件头条 3）
     const colorStops = [
       ...(em.initialColor ? [{ t: 0, c: em.initialColor }] : []),
-      ...kfOf(em, 'color', lifeSec),
+      // anchor = 阶跃前的颜色；缺省 (1,1,1,1) = 原版 `HoNewParticle()` 构造的默认色（我们 startColor 也传白）
+      ...kfOf(em, 'color', lifeSec, em.initialColor ?? WHITE_RGBA),
       ...(em.finalColor ? [{ t: 1, c: em.finalColor }] : []),
     ];
     const colorGen = colorStops.length >= 2
@@ -729,7 +769,8 @@ export function convertPart(
 
     // **速度轨**（`fade so at <t> velocity = XYZ(...)`）：逐帧覆盖 `velocity`。
     // 实测 49 个文件带它、其中 **22 个与初速不同** ⇒ 此前未应用是看得出的差异。
-    const velKf = vecKfOf(em, 'velocity', lifeSec);
+    // anchor = 阶跃前的速度：缺省 0（原版构造里 `Dir` 为 0）
+    const velKf = vecKfOf(em, 'velocity', lifeSec, em.initialVelocity ?? ZERO_VEC);
     if (velKf.length) {
       behaviors.push(new VelocityTrack(velKf));
       notes.push(`速度轨 ${velKf.length} 个关键帧（逐帧覆盖 velocity，speedModifier 归 1）`);
@@ -752,7 +793,7 @@ export function convertPart(
         notes.push('partAngle 的 x/y 分量非零 ⇒ 广告板只有面内旋转（z 分量）被表达，x/y 未表达');
       }
       const z0 = a0?.z ?? null, z1 = a1?.z ?? null;
-      const zKf = numKfOf(em, 'partanglez', lifeSec);
+      const zKf = numKfOf(em, 'partanglez', lifeSec, z0 ?? { k: 'n', v: 0 });
       if (zKf.length) {
         // **有随时间的角度轨** ⇒ 直接用轨道驱动（含端点 = `initial partanglez` / `fade so final partanglez`）
         const keys = withEnds(

@@ -491,6 +491,9 @@ export function multiSparkWideLineSystem(): PartSystem {
       //（`time` 单位秒，转换器按寿命归一化后线性插值 ✓）
       keyframes: {
         color: [{
+          // `fade: true` = 原版 `fade so at <t>`（渐变目标）：这里 0.826 处与起点同值 ⇒ 前段是**平的**，
+          // 与原文"前段恒 255、末 10 帧每帧 −10 直接跳"相比，末段被我们写成 0.826→1.0 的斜坡（既有近似）。
+          fade: true,
           time: 0.826,
           value: {
             k: 'color',
