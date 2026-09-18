@@ -290,8 +290,12 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
   async function spawnSystem(
     system: PartSystem, opts: QuarksSpawnOpts,
   ): Promise<QuarksPartHandle | null> {
-    const key = system.name || 'inline';
-    const tag = opts.label || key;      // 停发匹配用（见 `QuarksSpawnOpts.label`）
+    // ⚠ **缓存键必须用资产名（label），不能用 `system.name`** —— 那是 `.part` 头里的
+    // `particlesystem "FireJet"`，一大批资产都叫 FireJet：CC 的陨石与命中特效同叫 FireJet
+    // ⇒ 命中特效会**复用陨石的 spec**（rate 20/100、150s 长寿命），于是"落地后粒子永远不消失"
+    // （页面里核对过：可见系统的 tag=ChaosKaraMeteoHit 而 rate 是陨石的 20/100）。
+    const key = opts.label || system.name || 'inline';
+    const tag = key;                    // 停发匹配用（见 `QuarksSpawnOpts.label`）
     if (!systemCache.has(key)) systemCache.set(key, await loadPartFromSystem(key, system));
     const loaded = systemCache.get(key);
     if (!loaded) { missing.push(`spawnSystem(${key}): spec 未加载`); return null; }
