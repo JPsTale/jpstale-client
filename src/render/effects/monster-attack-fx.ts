@@ -469,7 +469,6 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
       //     我第一版写成 `scale: 0.3`；同理 `ChaosKaraSkillUser` 的 0.1 也是延迟
       parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, delaySec: 0.3 }],
       // `:1341` `SetAssaEffect(0, "chao_glacial.ASE", 0, &charPos, 0, 0)` + `AniMaxCount=25 / AniDelayTime=2`
-      // （配合 `[fxdbg]` 断点排查"挂上就卡"到底卡在哪一步 —— 定位完删掉断点）
       mesh: {
         path: 'effect/assaeffect/chaoskara/chao_glacial.smd',
         aniMaxCount: 25, aniDelayTime: 2,

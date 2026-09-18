@@ -120,8 +120,6 @@ export function spawnAssaMesh(
   const aniMaxFrame = opts.aniMaxCount * 160;      // 动画单位 = 每帧 160
   // ⏳ **加载前打点**：卡住时日志会停在这行之后 ⇒ 一眼看出是"加载/解析"这一步（此前只有成功/失败行，
   // 卡住时什么也看不到 ✗ —— 用户实测 CC 普攻卡死，我就卡在这一步上无从判断）
-  // ⚠ 同时进**控制台**：卡死排查时用户贴的是 console，面板里的行看不到（2026-09-18 踩过）
-  // 定位完连同 [fxdbg] 一起删。
   ctx.log?.(`  ⏳ 开始加载 ASE 网格 ${opts.mesh}（AniMaxCount=${opts.aniMaxCount} / AniDelayTime=${opts.aniDelayTime}）`);
   void loadStaticSmd(opts.mesh).then((r) => {
     if (!r) { ctx.log?.(`  ✗ ASE 网格 ${opts.mesh} 加载失败`); return; }
