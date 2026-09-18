@@ -87,13 +87,49 @@ export function fireMonsterSkillCast(
 const CIRCLE_ANI_MAX_FRAME = 20 * 160;
 const fading: Array<{
   group: THREE.Group; age: number; dispose: () => void; tracks?: StaticMeshTrack[];
+  /** 本份网格的包络参数（法阵与怪物 ASE 网格各用各的，见 `spawnAssaMesh`） */
+  fadeSec: number; lifeSec: number; aniMaxFrame: number;
 }> = [];
 
 /** 本体的可见系数（原版 `cASSAMESH::Main`：前 `CAST_MESH_FADE` 秒渐显，随后同速率渐隐） */
-function meshAlphaAt(t: number): number {
+function meshAlphaAt(t: number, fadeSec: number = CAST_MESH_FADE): number {
   if (t <= 0) return 0;
-  if (t < CAST_MESH_FADE) return t / CAST_MESH_FADE;
-  return Math.max(0, 1 - (t - CAST_MESH_FADE) / CAST_MESH_FADE);
+  if (t < fadeSec) return t / fadeSec;
+  return Math.max(0, 1 - (t - fadeSec) / fadeSec);
+}
+
+/**
+ * **放一个 ASE/静态网格特效**（原版 `SetAssaEffect(...)` 那一族）—— **唯一实现**：
+ * 起手法阵（`runCastCircle`）与怪物特效表里的 `mesh` 字段都走它。
+ *
+ * 原版两个参数（`AniMaxCount` / `AniDelayTime`）决定帧动画：**每 `AniDelayTime` 帧推进一格**、
+ * 整段 `AniMaxCount × AniDelayTime` 帧（`AssaEffect.h:275,360`）；可见期由 `cASSAMESH::Main`
+ * 的渐显/渐隐包络决定（= `CAST_MESH_FADE` 两侧，与法阵同一套，故共用常量）。
+ *
+ * @param mesh 资产路径（`.smd`，相对 `VITE_ASSET_ROOT`）—— 原版写的是 `.ASE`（同族资产，见各方 notes）
+ */
+export function spawnAssaMesh(
+  ctx: { scene: THREE.Scene; log?: (msg: string) => void },
+  opts: { mesh: string; pos: { x: number; y: number; z: number };
+          aniMaxCount: number; aniDelayTime: number; scale?: number; note?: string },
+): void {
+  const lifeSec = Math.max(0.05, (opts.aniMaxCount * opts.aniDelayTime) / 60);
+  const aniMaxFrame = opts.aniMaxCount * 160;      // 动画单位 = 每帧 160
+  void loadStaticSmd(opts.mesh).then((r) => {
+    if (!r) { ctx.log?.(`  ✗ ASE 网格 ${opts.mesh} 加载失败`); return; }
+    r.group.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
+    if (opts.scale && opts.scale !== 1) r.group.scale.setScalar(opts.scale);
+    ctx.scene.add(r.group);
+    fading.push({
+      group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks,
+      fadeSec: CAST_MESH_FADE, lifeSec, aniMaxFrame,
+    });
+    const nTracks = r.tracks?.length ?? 0;
+    ctx.log?.(`  🧊 ASE 网格 ${opts.mesh.split('/').pop()}：${r.group.children.length} 个网格，`
+      + `帧动画 ${nTracks} 条轨道 / ${opts.aniMaxCount} 帧（AniDelayTime=${opts.aniDelayTime}）`
+      + `${nTracks === 0 ? '（⚠ 没有轨道 ⇒ 只会淡入淡出）' : `，${lifeSec.toFixed(2)}s 播完`}`
+      + `${opts.note ? `　[${opts.note}]` : ''}`);
+  });
 }
 
 /** 每帧调一次：推进法阵本体的包络（光环由 quarks 自己管寿命，不在这里） */
@@ -103,15 +139,15 @@ export function updateCastCircleMeshes(dt: number): void {
     f.age += dt;
     // **帧动画**（原版 `smOBJ3D::TmAnimation`）：按 30fps 播完 `AniMaxCount` 帧 ⇒ 法阵"张开"
     if (f.tracks?.length) {
-      // 每 4 帧推进一格 ⇒ 整段 = `CAST_MESH_LIFE`（= `AniMaxCount × AniDelayTime` / 60fps）
-      applyStaticMeshTracks(f.tracks, Math.min(f.age / CAST_MESH_LIFE, 1) * CIRCLE_ANI_MAX_FRAME);
+      // 每 `AniDelayTime` 帧推进一格 ⇒ 整段 = `AniMaxCount × AniDelayTime` / 60fps = `lifeSec`
+      applyStaticMeshTracks(f.tracks, Math.min(f.age / f.lifeSec, 1) * f.aniMaxFrame);
     }
-    const a = meshAlphaAt(f.age);
+    const a = meshAlphaAt(f.age, f.fadeSec);
     f.group.traverse((o) => {
       const m = (o as THREE.Mesh).material as THREE.Material | undefined;
       if (m && 'opacity' in m) (m as THREE.MeshPhongMaterial).opacity = a;
     });
-    if (f.age >= CAST_MESH_FADE * 2) {     // 可见期走完就收（之后原版也只是全透明的僵尸）
+    if (f.age >= f.fadeSec * 2) {          // 可见期走完就收（之后原版也只是全透明的僵尸）
       f.group.removeFromParent();
       f.dispose();
       fading.splice(i, 1);
@@ -139,7 +175,10 @@ export function runCastCircle(
     if (!r) { ctx.log?.(`  ✗ 法阵模型 ${fam.mesh} 加载失败`); return; }
     r.group.position.set(at.x, at.y, at.z);
     ctx.scene.add(r.group);
-    fading.push({ group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks });
+    fading.push({
+      group: r.group, age: 0, dispose: r.dispose, tracks: r.tracks,
+      fadeSec: CAST_MESH_FADE, lifeSec: CAST_MESH_LIFE, aniMaxFrame: CIRCLE_ANI_MAX_FRAME,
+    });
     // 帧动画的状态**必须回显**：这是"页面是不是旧副本 / 轨道有没有读到"的唯一自证点
     //（用户实测过"实验室好了、游戏里没有"——那次是页面加载早于提交）
     const nTracks = r.tracks?.length ?? 0;

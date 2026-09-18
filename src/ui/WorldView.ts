@@ -39,7 +39,7 @@ import {
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
-import { updateCastCircleMeshes, fireMonsterSkillCast } from '../render/effects/cast-circle-runner.js';
+import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
 import { updateGlacialSpikes } from '../render/effects/glacial-spike.js';
 import { CODE_SKILL_FX } from '../render/effects/skill-fx-runner.js';
 import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
@@ -2897,6 +2897,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     fireCode: (code: string, target: { x: number; y: number; z: number } | null) => void;
     fireFly: (asset: string, fly: MonsterFlySpec, ev: number) => void;
     fireRanged: () => void;
+    fireMesh: (spec: { path: string; aniMaxCount: number; aniDelayTime: number; scale?: number; note: string },
+               at: { x: number; y: number; z: number }) => void;
   } {
     // 闭包里别读外层可能为 null 的变量（TS18047：收窄不进闭包）—— 先取出来
     const flyOrigin = actor.root.position;
@@ -2948,6 +2950,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // · 武器码 = `MONSTER_BOW_IDCODE`（怪没有武器数据，原版硬写弓 ✓）
       // · 不传 mount（怪手里拿的不是弓）；出手抬高取本怪的 `launchLift`（28/38，逐怪不同 ✓）
       // · eventFrame 不传 ⇒ 用按弹速飞行（怪物没有玩家那套"放箭提前量"设计）
+      // **ASE 静态网格**（原版 `SetAssaEffect`）：与起手法阵**同一份实现**
+      fireMesh: (spec, at) => spawnAssaMesh({ scene: scn ?? scene!, log: (m) => console.log('[fx]' + m) },
+        { mesh: spec.path, pos: at, aniMaxCount: spec.aniMaxCount, aniDelayTime: spec.aniDelayTime,
+          scale: spec.scale, note: spec.note }),
       fireRanged: () => spawnProjectile(
         null, actor.root, MONSTER_BOW_IDCODE, null, null,
         selfPlayerId, undefined, 1, () => null,

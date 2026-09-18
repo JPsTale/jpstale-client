@@ -85,6 +85,14 @@ export interface MonsterAttackFxDef {
    */
   parts?: Array<{ asset: string; height: number; scale?: number; delaySec?: number }>;
   /**
+   * **同帧的 ASE/静态网格**（原版 `SetAssaEffect(0, "xxx.ASE", …)` 那一族，如 CC 普攻的
+   * `chao_glacial`）—— 由调用方转交 `cast-circle-runner.spawnAssaMesh`（**唯一实现**，
+   * 与起手法阵共用：帧动画 = 每 `aniDelayTime` 帧推进一格、整段 `aniMaxCount × aniDelayTime` 帧）。
+   *
+   * `path` 是本仓资产路径（原版写 `.ASE`，同族资产见 note）。
+   */
+  mesh?: { path: string; aniMaxCount: number; aniDelayTime: number; scale?: number; note: string };
+  /**
    * **落点基准**：缺省 `'caster'` = 以**怪物自己**为原点（原版 `pX/pY/pZ`）；
    * `'target'` = 以**被打的那个单位**为原点（原版 `pDest->pX/pY/pZ`）。
    *
@@ -457,10 +465,12 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
       //   ⚠ `Start(name, pos, X)` 的 X 是 `startDelay`（`HoNewParticleMgr.h:86`）**不是缩放** ——
       //     我第一版写成 `scale: 0.3`；同理 `ChaosKaraSkillUser` 的 0.1 也是延迟
       parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, delaySec: 0.3 }],
-      unhandled: [
-        '同帧还起一个 ASE 网格 `chao_glacial`（`hoAssaParticleEffect.cpp:1341` '
-        + '`SetAssaEffect(0, "chao_glacial.ASE", …)`，AniMaxCount=25 / AniDelayTime=2）—— 静态网格那条路未接',
-      ],
+      // `:1341` `SetAssaEffect(0, "chao_glacial.ASE", 0, &charPos, 0, 0)` + `AniMaxCount=25 / AniDelayTime=2`
+      mesh: {
+        path: 'effect/assaeffect/chaoskara/chao_glacial.smd',
+        aniMaxCount: 25, aniDelayTime: 2,
+        note: '原版资产名 chao_glacial.ASE（hoAssaParticleEffect.cpp:1341）',
+      },
       note: 'character.cpp:4679-4685 / hoAssaParticleEffect.cpp:1332-1350（事件帧，chaoscara.inx idx12 事件帧 800）',
     },
     skillByKeyCode: {
@@ -762,6 +772,12 @@ export interface MonsterAttackEventCtx {
    */
   unitsInRange?: (range: number) => Array<{ x: number; y: number; z: number }>;
   /**
+   * **起一个 ASE/静态网格**（`def.mesh`）—— 由调用方转交 `cast-circle-runner.spawnAssaMesh`
+   * （要碰 three，本模块不执行；与起手法阵同一份实现）。
+   */
+  fireMesh?: (spec: NonNullable<MonsterAttackFxDef['mesh']>,
+              at: { x: number; y: number; z: number }) => void;
+  /**
    * **飞出物**（`MonsterAttackFxDef.fly`）交给调用方放出 —— 与 `fireSparks` 同理由：
    * 驱动要碰 three（载体节点 + 粒子跟随），而"目标是谁、站在哪"是调用方的场景知识。
    * 调用方应转交 `monster-fly-runner.runMonsterFly`（**唯一驱动**，游戏与实验室同一份）。
@@ -985,6 +1001,11 @@ function fireDef(
   if (def.dynLight) {
     const d = def.dynLight;
     ctx.dynLights?.set(at.x, at.y, at.z, d.r, d.g, d.b, d.a, d.power, d.decPower);
+  }
+  // **同帧的 ASE 网格**（原版 `SetAssaEffect("xxx.ASE", …)`）：与粒子同源、同帧起
+  if (def.mesh) {
+    if (ctx.fireMesh) ctx.fireMesh(def.mesh, at);
+    else reportFallback('fx', `怪 #${ctx.effectId} 的 ASE 网格 ${def.mesh.path} 没起：调用方没给 fireMesh`);
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
