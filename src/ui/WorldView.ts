@@ -33,6 +33,7 @@ import { loadMonsterModel } from '../render/monster-loader.js';
 import {
   fireMonsterAttackEvent, MONSTER_RANGED, MONSTER_BOW_IDCODE, type MonsterFlySpec,
 } from '../render/effects/monster-attack-fx.js';
+import { dmgFxGet, bounceScale, popArc, dirFromTo, easeOutCubic } from '../render/dmg-fx.js';
 import {
   fireSkillCast, fireSkillEvent, skillFxRowByIcon, skillFxRowByAnimIndex,
   type SkillFxRow, type SkillFxFireCtx,
@@ -278,7 +279,8 @@ export interface WorldView {
    */
   spawnEffectOnUnit(targetId: number, name: string): void;
   /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
-  showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void;
+  /** attackerId：攻击者玩家 id（可选 —— 给到的话飘字沿 "被攻击者 → 攻击者" 方向漂移） */
+  showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean, attackerId?: number): void;
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string, useSeq?: number, useItemIdcode?: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
@@ -3934,6 +3936,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     wx: number;
     wy: number;
     wz: number;
+    /** 屏幕空间方向（攻击者在被攻击者的哪一侧）；null 时保持原版垂直上飘 */
+    dir: { x: number; y: number } | null;
+    crit: boolean;
   }
   const floaters: DmgFloater[] = [];
   const _floaterWp = new THREE.Vector3();
@@ -4004,7 +4009,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.restore();
   }
 
-  function showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean): void {
+  function showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean, attackerId?: number): void {
     let k = kind;
     if (!k) {
       if (id === selfPlayerId) k = 'self';
@@ -4017,7 +4022,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       : k === 'monster'
         ? FLOATER_PX_MONSTER
         : FLOATER_PX_SELF;
-    const font = `700 ${px}px Verdana, "Microsoft YaHei", sans-serif`;
+    const font = `italic 700 ${px}px Verdana, "Microsoft YaHei", sans-serif`;
     // 记下生成瞬间的世界坐标：实体随后消失（怪被击杀）时飘字仍有锚点可用，能飘完再消失。
     let wx = 0, wy = 0, wz = 0;
     if (k === 'self' && charGroup) {
@@ -4030,8 +4035,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const r = remotes.get(id);
       if (r) { wx = r.root.position.x; wy = r.root.position.y + r.topY; wz = r.root.position.z; }
     }
+    // 生成时算出漂移方向（此时双端都在场；目标随后可能消失，方向按这个瞬间定格）。
+    // 攻击者是玩家（自机 / 远端）才有方向；怪打玩家（无 attack）保持原版垂直上飘。
+    let dir: { x: number; y: number } | null = null;
+    if (attackerId) {
+      const t = worldToScreen(wx, wy, wz);
+      let awx = 0, awy = 0, awz = 0, aok = false;
+      if (attackerId === selfPlayerId) {
+        if (charGroup && charGroup.visible) {
+          charGroup.getWorldPosition(_floaterWp);
+          awx = _floaterWp.x; awy = _floaterWp.y + selfTopY; awz = _floaterWp.z; aok = true;
+        }
+      } else {
+        const a = remotes.get(attackerId);
+        if (a && a.root.visible) { awx = a.root.position.x; awy = a.root.position.y + a.topY; awz = a.root.position.z; aok = true; }
+      }
+      if (aok && t) {
+        const a = worldToScreen(awx, awy, awz);
+        if (a) dir = dirFromTo(a.x, a.y, t.x, t.y);   // 攻击者 → 受击者，朝向 = 击退方向
+      }
+    }
     while (floaters.length >= 64) floaters.shift(); // 防爆上限
-    floaters.push({ kind: k, id, text, color, font, px, born: performance.now(), life: 1000, wx, wy, wz });
+    floaters.push({ kind: k, id, text, color, font, px, born: performance.now(), life: 1000, wx, wy, wz, dir, crit });
   }
 
   /** 每帧绘制名牌 + 血条（在 3D 画面渲染完成后调用；Canvas overlay 压制 DOM/React） */
@@ -4132,10 +4157,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
     }
 
-    // 伤害/躲闪飘字：头顶起点上飘 48px 并在 1s 内线性淡出（对齐原版 SHOW_DMG 动画）
+    // 伤害/躲闪飘字：起点在头顶，1s 内线性淡出（对齐原版 SHOW_DMG 动画）；
+    // 打击感 = 初始弹跳（前 bounceMs 内 S 倍 → 略回收 <1 → 回 1）+ 暴击金闪 + 沿"攻击者 → 受击者"方向漂移。
     // 目标是活体 → 每帧跟它的头顶；实体已消失（怪被击杀）→ 用生成时记下的固定世界坐标，
     // 让这一条**飘完再消失**（用户 2026-09-14：击杀瞬间伤害数字/miss 字样不该闪掉）。
     if (floaters.length) {
+      const cfg = dmgFxGet();
       const keep: DmgFloater[] = [];
       for (const f of floaters) {
         const el = now - f.born;
@@ -4145,16 +4172,38 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         const pt = 'root' in a ? anchorToScreen(a.root, a.topY) : worldToScreen(a.fx, a.fy, a.fz);
         if (!pt) continue;
         const t = el / f.life;
-        const fy = pt.y - 10 - t * 48;
+        const s = f.crit
+          ? bounceScale(now, f.born, cfg.scaleCrit, cfg.bounceMs)
+          : bounceScale(now, f.born, cfg.scaleNormal, cfg.bounceMs);
+        // 垂直 = "弹起 → 加速掉落"的弧线（popArc，落在头顶之下）；有攻击者方向再叠加横向漂移
+        const bobY = popArc(t, cfg.upPeak, cfg.dropDepth);
+        let x = pt.x;
+        if (f.dir) {
+          const drift = easeOutCubic(t) * (f.crit ? cfg.driftCrit : cfg.driftNormal);
+          x = pt.x + f.dir.x * drift;
+        }
+        const y = pt.y - 10 - bobY;
         ctx.globalAlpha = Math.max(0, 1 - t);
         ctx.font = f.font;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.strokeStyle = 'rgba(0,0,0,0.9)';
-        ctx.lineWidth = Math.max(4, Math.round(f.px * 0.19));   // 与字号等比，大字不被细描边糊住
-        ctx.strokeText(f.text, pt.x, fy);
+        if (s !== 1) {   // 弹跳只在出生段发生；s===1 时省掉整组变换
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.scale(s, s);
+          ctx.translate(-x, -y);
+        }
+        // 右下角软阴影（替代黑描边，用户 2026-09-18）：偏移/模糊随字号等比，便于大字在亮背景上分离
+        ctx.shadowColor = 'rgba(0,0,0,0.4)';
+        ctx.shadowOffsetX = f.px * 0.09;
+        ctx.shadowOffsetY = f.px * 0.11;
+        ctx.shadowBlur = f.px * 0.07;
         ctx.fillStyle = f.color;
-        ctx.fillText(f.text, pt.x, fy);
+        ctx.fillText(f.text, x, y);
+        ctx.shadowColor = 'transparent';   // 清掉 canvas 阴影状态，避免污染同画布后续绘制
+        if (s !== 1) ctx.restore();
+        ctx.globalAlpha = 1;
+        if (s !== 1) ctx.restore();
         ctx.globalAlpha = 1;
         keep.push(f);
       }

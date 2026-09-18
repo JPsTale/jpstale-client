@@ -35,8 +35,10 @@ import type { PotionSlotView } from './ui/Hud.js';
 import { initCursor } from './ui/cursor.js';
 import { installDevLogPanel } from './ui/DevLogPanel.js';
 import { installPerfPanel, togglePerfPanel } from './ui/PerfPanel.js';
+import { installDmgFxPanel, toggleDmgFxPanel } from './ui/DmgFxPanel.js';
 import { loadDisplayPrefs, saveDisplayPrefs } from './ui/display-prefs.js';
 import { report as perfReport, formatReport as perfText, frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, buildExport as perfBuildExport } from './app/profiler.js';
+import { dmgFxGet as dmgFxGetFn, dmgFxSet, dmgFxReset } from './render/dmg-fx.js';
 import { isStackable } from './game/itemClass.js';
 import { requestSplit } from './app/splitStore.js';
 import { appendChatMessage, appendSystemMessage, setChatInputOpen, setChatVisible, takePendingSentOn, getChatSnapshot, Ch } from './app/chatStore.js';
@@ -226,6 +228,8 @@ initCursor();
 installDevLogPanel();
 // 性能剖析面板（Ctrl+Shift+P）：掉帧时看"这一帧的时间花在哪一段"，不必去用 devtools 的 profiler
 installPerfPanel();
+// 伤害数字打击感调节面板（Ctrl+Shift+U）：实时调弹跳/漂移/金闪，不用改代码一遍遍重试
+installDmgFxPanel();
 
 // ===== 屏蔽浏览器右键菜单 =====
 // 原版没有浏览器菜单，而右键要用来"使用道具"（已实现）与"使用技能"（待做）。
@@ -269,6 +273,7 @@ console.info('[ui] react panels layer ready — dev: window.__pt.ui.show/hide');
 // 性能剖析（Ctrl+Shift+P 开关面板）：window.__pt.perf.report() 取一份分段报告；
 // frameStart/mark/frameEnd/setCounter 是采样原语，供 console 里手动造一段测量用
 // （也是自动化验证的入口 —— 面板读的必须是**同一个** profiler 实例，这几个引用即凭证）。
+// 伤害数字打击感调节（Ctrl+Shift+U）：window.__pt.dmgFx.get()/set()/reset() 与面板同源。
 declare global {
   interface Window {
     __pt: {
@@ -282,6 +287,12 @@ declare global {
         frameEnd: typeof perfFrameEnd;
         setCounter: typeof perfSetCounter;
         export: typeof perfBuildExport;
+      };
+      dmgFx: {
+        get: () => ReturnType<typeof dmgFxGetFn>;
+        set: typeof dmgFxSet;
+        reset: typeof dmgFxReset;
+        toggle: typeof toggleDmgFxPanel;
       };
     };
   }
@@ -297,6 +308,12 @@ window.__pt = {
     frameEnd: perfFrameEnd,
     setCounter: perfSetCounter,
     export: perfBuildExport,
+  },
+  dmgFx: {
+    get: dmgFxGetFn,
+    set: dmgFxSet,
+    reset: dmgFxReset,
+    toggle: toggleDmgFxPanel,
   },
 };
 
@@ -954,11 +971,11 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const targetId = Number(ar.targetId ?? 0);
       if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
       if (ar.missed) {
-        worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false);
+        worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false, attackerId);
         if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(true, false, Number(ar.hitIndex ?? 0));
       } else {
         const crit = !!ar.isCritical;
-        worldView.showFloater('monster', targetId, String(ar.damage || 0), crit ? '#ff9d4d' : '#ffd166', crit);
+        worldView.showFloater('monster', targetId, String(ar.damage || 0), crit ? '#ffd166' : '#ffffff', crit, attackerId);
         worldView.applyMonsterHit(targetId, ar.damage || 0);
         // 命中特效（原版 EFFECT_NORMAL_HIT1）；暴击追加 CriticalHit1 + Light1
         worldView.spawnEffectOnUnit(targetId, 'NormalHit1');
