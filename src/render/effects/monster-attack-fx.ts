@@ -310,6 +310,9 @@ export const FX_GLACIAL_SPIKE: MonsterAttackFxDef = {
     + '（Lua: Effect/NewEffect/SkillCelestialGlacialSpike.lua）',
 };
 
+/** 已上报过的 `unhandled` 条目（`effectId:文本`）—— 缺口清单**一次会话报一次**，不逐次刷屏 */
+const reportedUnhandled = new Set<string>();
+
 /**
  * 派发表：键 = 服务端下发的 `monster_effect_id`（= 原版 `dwCharSoundCode` / `EMonsterEffectID`）。
  *
@@ -934,8 +937,13 @@ function fireDef(
   const skillSound = pickMonsterSound(def, ctx.variant);
   if (skillSound) ctx.sfx?.play?.(skillSound, { pos: ctx.pos });
 
-  // **原版还有、我们还没做的部分** —— 逐条上报（AGENTS #12：少一块必须看得见）
+  // **原版还有、我们还没做的部分** —— 逐条上报（AGENTS #12：少一块必须看得见）。
+  // ⚠ **同一条只在本次会话报一次**：这是"缺口清单"，不是运行期事件 —— 每次攻击都打会把控制台淹掉
+  //（用户实测：连点后 console 里同一条带几百层 rAF 异步栈的消息刷屏 ✗）。清单本身仍保留每条 ✓。
   for (const u of def.unhandled ?? []) {
+    const key = `${ctx.effectId}:${u}`;
+    if (reportedUnhandled.has(key)) continue;
+    reportedUnhandled.add(key);
     reportFallback('fx', `怪 #${ctx.effectId} 的 ${pickMonsterFxAsset(def, ctx.variant)}：${u}`);
   }
 
