@@ -1020,7 +1020,8 @@ function fireDef(
   fxdbg(`fireDef 开始：asset=${pickMonsterFxAsset(def, ctx.variant)} parts=${def.parts?.length ?? 0} fly=${!!def.fly} code=${def.code ?? '-'} mesh=${def.mesh ? def.mesh.path : '-'}`);
   // **同帧的 ASE 网格**（原版 `SetAssaEffect("xxx.ASE", …)`）：与粒子同源、同帧起
   if (def.mesh) {
-    if (ctx.fireMesh) ctx.fireMesh(def.mesh, at);
+    fxdbg(`进入 mesh 分支：回调存在=${!!ctx.fireMesh}`);
+    if (ctx.fireMesh) { fxdbg('调用 ctx.fireMesh …'); ctx.fireMesh(def.mesh, at); fxdbg('ctx.fireMesh 返回'); }
     else reportFallback('fx', `怪 #${ctx.effectId} 的 ASE 网格 ${def.mesh.path} 没起：调用方没给 fireMesh`);
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
