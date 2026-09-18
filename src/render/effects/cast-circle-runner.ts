@@ -111,6 +111,9 @@ function meshAlphaAt(t: number, fadeSec: number = CAST_MESH_FADE): number {
  *
  * @param mesh 资产路径（`.smd`，相对 `VITE_ASSET_ROOT`）—— 原版写的是 `.ASE`（同族资产，见各方 notes）
  */
+/** 【临时诊断】已打过点的网格（同一份只打一次，免得每次攻击都刷控制台）；定位完删 */
+const meshDbgSeen = new Set<string>();
+
 export function spawnAssaMesh(
   ctx: { scene: THREE.Scene; log?: (msg: string) => void },
   opts: { mesh: string; pos: { x: number; y: number; z: number };
@@ -122,10 +125,13 @@ export function spawnAssaMesh(
   // 卡住时什么也看不到 ✗ —— 用户实测 CC 普攻卡死，我就卡在这一步上无从判断）
   // ⚠ 同时进**控制台**：卡死排查时用户贴的是 console，面板里的行看不到（2026-09-18 踩过）
   // 定位完连同 [fxdbg] 一起删。
-  console.log(`[fxdbg] ⏳ 开始加载 ASE 网格 ${opts.mesh}（AniMaxCount=${opts.aniMaxCount} / AniDelayTime=${opts.aniDelayTime}）`);
+  if (!meshDbgSeen.has(opts.mesh)) {
+    meshDbgSeen.add(opts.mesh);
+    console.log(`【fxdbg】⏳ 开始加载 ASE 网格 ${opts.mesh}（AniMaxCount=${opts.aniMaxCount} / AniDelayTime=${opts.aniDelayTime}）`);
+  }
   ctx.log?.(`  ⏳ 开始加载 ASE 网格 ${opts.mesh}（AniMaxCount=${opts.aniMaxCount} / AniDelayTime=${opts.aniDelayTime}）`);
   void loadStaticSmd(opts.mesh).then((r) => {
-    console.log(`[fxdbg] ✅ loadStaticSmd 返回：${r ? `网格 ${r.group.children.length} 个 / 轨道 ${r.tracks?.length ?? 0} 条` : 'null（失败）'}`);
+    console.log('【fxdbg】✅ loadStaticSmd 返回：' + (r ? `网格 ${r.group.children.length} 个 / 轨道 ${r.tracks?.length ?? 0} 条` : 'null（失败）'));
     if (!r) { ctx.log?.(`  ✗ ASE 网格 ${opts.mesh} 加载失败`); return; }
     r.group.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
     if (opts.scale && opts.scale !== 1) r.group.scale.setScalar(opts.scale);
