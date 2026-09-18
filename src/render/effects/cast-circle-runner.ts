@@ -13,7 +13,9 @@ import { loadStaticSmd, applyStaticMeshTracks, type StaticMeshTrack } from './st
 import type { PartSystem } from '../../core/effect/part-script.js';
 import type { SystemSpawner } from './multi-spark-runner.js';
 import type { DynLightSink } from './dyn-light.js';
-import { monsterCastOf, fireMonsterCastFx, type FxSpawner, type SfxPlayer } from './monster-attack-fx.js';
+import {
+  monsterCastOf, fireMonsterCastFx, type FxSpawner, type SfxPlayer, type MonsterAttackEventCtx,
+} from './monster-attack-fx.js';
 
 export interface CastCircleCtx {
   effects: SystemSpawner | null;
@@ -28,6 +30,13 @@ export interface MonsterCastDeps extends CastCircleCtx {
   fx?: FxSpawner | null;
   sfx?: SfxPlayer | null;
   dynLights?: DynLightSink | null;
+  /**
+   * 起手特效的**其余上下文**（目标/范围/飞出物等回调）—— 类型就是事件帧那一份
+   * （`MonsterAttackEventCtx`），因为"起手那一招"什么都能用得上（CC 的陨石是飞出物）。
+   *
+   * 由调用方传 `{ ...monsterTargeting(pos), ...monsterFxCallbacks(actor, 1) }` —— 与事件帧**同一份**。
+   */
+  cast?: Partial<MonsterAttackEventCtx>;
 }
 
 /**
@@ -47,8 +56,10 @@ export function fireMonsterSkillCast(
   keyCode?: number | null,
 ): void {
   // ① 起手特效（原版各 case 里那句 `ParkAssaParticle_*`；只有 `timing: 'cast'` 的条目会放）
-  void fireMonsterCastFx(effectId, keyCode, pos, deps.fx ?? null,
-    { sfx: deps.sfx ?? null, dynLights: deps.dynLights ?? null, log: deps.log });
+  void fireMonsterCastFx(effectId, keyCode, pos, deps.fx ?? null, {
+    ...deps.cast,
+    sfx: deps.sfx ?? null, dynLights: deps.dynLights ?? null, log: deps.log,
+  });
   // ② 起手音 + 起手法阵（原版同一支里的 `SkillPlaySound` + `sinEffect_StartMagic`）
   const cast = monsterCastOf(effectId);
   if (!cast) return;

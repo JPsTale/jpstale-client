@@ -54,6 +54,8 @@ export interface FlyDeps {
   /** 到达时的动态光（原版 `SetDynLight`）。没传则跳过。返回 `void`/`boolean` 都收（两套契约都传进来过） */
   dynLight?: { set(x: number, y: number, z: number, r: number, g: number, b: number,
                    a: number, power: number, decPower: number): void | boolean } | null;
+  /** 音效（**起飞**与**命中**各一条，见 `MonsterFlySpec.sound` / `.hit.sound`）；没传则跳过 */
+  sound?: (path: string, pos: { x: number; y: number; z: number }) => void;
   log?: (s: string) => void;
 }
 
@@ -100,6 +102,8 @@ interface LiveFly {
   fly: MonsterFlySpec;
   asset: string;
   frames: number;
+  /** 还没开始飞（原版 `Delay`：连粒子都不生成，`Pos` 也不动） */
+  delay: number;
   done: boolean;
   /** 已停发（到点或已到达）—— 迟到的句柄要按这个补一刀 */
   stopped: boolean;
@@ -140,7 +144,16 @@ export function runMonsterFly(
     : { x: 0, y: 0, z: 0 };
 
   const node = new THREE.Object3D();
-  node.position.set(launch.pos.x, launch.pos.y, launch.pos.z);
+  const t0 = launch.target();
+  // 起点：默认调用方给的（射手身上 + `lift`）；**`fromTargetSky`** 时改由"目标上空"算
+  // （原版 `ParkAssaChaosKaraMeteo::Start`：`curPos = destPos + (0, 130000, 50000)`，world 轴）
+  const sky = fly.fromTargetSky;
+  if (sky && t0) {
+    const d = destOf(t0, fly);
+    node.position.set(d.x, d.y + sky.up, d.z + sky.back);
+  } else {
+    node.position.set(launch.pos.x, launch.pos.y, launch.pos.z);
+  }
   deps.addToScene(node);
 
   const l: LiveFly = {
@@ -149,21 +162,39 @@ export function runMonsterFly(
     pos: node.position.clone(),
     lastTarget: new THREE.Vector3(),
     target: launch.target,
-    fly, asset, frames: 0, done: false, stopped: false, handles: [], retire: RETIRE_FRAMES, deps,
+    fly, asset, frames: 0, delay: fly.delayFrames ?? 0,
+    done: false, stopped: false, handles: [], retire: RETIRE_FRAMES, deps,
   };
-  const t0 = launch.target();
   if (t0) l.lastTarget.set(t0.x, t0.y, t0.z);
   live.push(l);
 
+  deps.log?.(`  ✈ 飞出物 ${asset}${fly.systems?.length ? ` +${fly.systems.length}` : ''} 起飞（`
+    + `${fly.homing ? '跟踪' : '直线'}`
+    + `${fly.fromTargetSky ? '，起点=目标上空' : ''}`
+    + `${fly.delayFrames ? `，延迟 ${fly.delayFrames} 帧` : ''}`
+    + `${fly.yawOffsetDeg ? `，偏航 ${((flyYawOffsetRad(fly, motionEvent) * 180) / Math.PI).toFixed(0)}°` : ''}）`
+    + `　起点 (${node.position.x.toFixed(1)}, ${node.position.y.toFixed(1)}, ${node.position.z.toFixed(1)})`);
+
+  // **延迟**：原版先 `Delay--` 到 0 才 `Start`（这期间连粒子都没有、`Pos` 也不动）
+  // ⇒ 这里也等到延迟结束再挂粒子（提前 `take()` 会让它在天上挂着不动）
+  if (l.delay > 0) return;
+  takeAll(l);
+}
+
+/** 挂上主系统与附加系统 —— 延迟结束时才调（唯一一处；起飞音也在这里，与"真的起粒子"同一时刻） */
+function takeAll(l: LiveFly): void {
   // 跟随语义**逐个系统照抄原版**（不是一刀切）：
   //   `SetAttachPos` ⇒ `follow: true`（整团被搬运 —— 如 RunicGuardian、VigorBall 的附加系统）
   //   `SetPos`      ⇒ `follow: false`（只移发射点，**粒子留在原地 = 拖尾** —— VigorBall 的主系统）
-  take(l, asset, fly.follow === true);
-  for (const s of fly.systems ?? []) take(l, s.asset, s.follow === true);
-  deps.log?.(`  ✈ 飞出物 ${asset}${fly.systems?.length ? ` +${fly.systems.length}` : ''} 起飞（`
-    + `${fly.homing ? '跟踪' : '直线'}`
-    + `${fly.yawOffsetDeg ? `，偏航 ${((flyYawOffsetRad(fly, motionEvent) * 180) / Math.PI).toFixed(0)}°` : ''}）`
-    + `　起点 (${launch.pos.x.toFixed(1)}, ${launch.pos.y.toFixed(1)}, ${launch.pos.z.toFixed(1)})`);
+  take(l, l.asset, l.fly.follow === true);
+  for (const s of l.fly.systems ?? []) take(l, s.asset, s.follow === true);
+  if (l.fly.sound) l.deps.sound?.(l.fly.sound, l.node.position);   // 起飞音（原版 `esPlaySound(20)`）
+}
+
+/** 落点 = 目标 + `targetOffset`（原版 `attackPos = destPos + (0,0,±10000)`） */
+function destOf(t: { x: number; y: number; z: number }, fly: MonsterFlySpec): THREE.Vector3 {
+  const o = fly.targetOffset;
+  return new THREE.Vector3(t.x + (o?.x ?? 0), t.y + (o?.y ?? 0), t.z + (o?.z ?? 0));
 }
 
 /** 每帧推进（由主循环调用；漏了它 = 飞出物停在起点不动，与 MultiSpark 那次同源） */
@@ -185,9 +216,15 @@ export function updateMonsterFlies(dt: number): void {
 }
 
 function stepFly(l: LiveFly): void {
+  // **延迟期**：原版 `Delay--` 到 0 才 `Start`，且 `Pos` 在此期间不动（`Main` 的移动块由 `ParticleID != -1` 把守）
+  if (l.delay > 0) {
+    if (--l.delay === 0) takeAll(l);
+    return;
+  }
   const t = l.target();
   if (t) l.lastTarget.set(t.x, t.y, t.z);
-  const dest = l.lastTarget;
+  // 落点 = 目标 + `targetOffset`（每帧现算：目标会走动，原版也是拿 `destPos` 现算）
+  const dest = l.fly.targetOffset ? destOf(l.lastTarget, l.fly) : l.lastTarget;
   l.frames++;
 
   const dx = dest.x - l.pos.x, dy = dest.y - l.pos.y, dz = dest.z - l.pos.z;
@@ -205,7 +242,7 @@ function stepFly(l: LiveFly): void {
   } else {
     // 直线：原版每帧整体搬运固定步长（`AssaParticle.cpp:7474`），与距离无关
     const step = (l.fly.speed ?? 0) / 60;
-    if (dist < 25 || l.frames > 60) { arrive(l, dist); return; }
+    if (dist < (l.fly.arriveDist ?? 25) || l.frames > (l.fly.maxFrames ?? 60)) { arrive(l, dist); return; }
     if (dist > 1e-6) {
       l.vel.set((dx / dist) * step, (dy / dist) * step, (dz / dist) * step);
     }
@@ -231,6 +268,7 @@ function arrive(l: LiveFly, dist: number): void {
     const d = hit.dynLight;
     l.deps.dynLight?.set(l.pos.x, l.pos.y, l.pos.z, d.r, d.g, d.b, d.a, d.power, d.decPower);
   }
+  if (hit?.sound) l.deps.sound?.(hit.sound, l.pos);
 }
 
 /** 切图/销毁世界时清干净（否则残留节点会跟着新世界） */

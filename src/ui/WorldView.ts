@@ -30,7 +30,9 @@ import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
-import { fireMonsterAttackEvent, MONSTER_RANGED, MONSTER_BOW_IDCODE } from '../render/effects/monster-attack-fx.js';
+import {
+  fireMonsterAttackEvent, MONSTER_RANGED, MONSTER_BOW_IDCODE, type MonsterFlySpec,
+} from '../render/effects/monster-attack-fx.js';
 import {
   fireSkillCast, fireSkillEvent, skillFxRowByIcon, skillFxRowByAnimIndex,
   type SkillFxRow, type SkillFxFireCtx,
@@ -2825,12 +2827,119 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * ⚠ 此前游戏侧**只有 ATTACK 会武装事件帧** ⇒ 怪物放技能时事件帧用的还是上一刀普攻那一套
    * ⇒ **技能特效在游戏里根本不会触发**（实验室里正常，因为实验室自己管武装）。
    */
+  /**
+   * 怪物技能的**"打谁"信息** —— `anchor: 'target'` 要的"目标脚下"，以及范围内有哪些玩家。
+   *
+   * **唯一实现**（AGENTS #15）：事件帧（`fireMonsterAttackEvent`）与起手（`fireMonsterSkillCast`）
+   * 两处都要给，各写一份必然漂移。
+   *
+   * 原版目标就是**玩家**（"这几招打的就是玩家"，与 `aim` 同一条约定）；
+   * 范围效果 `SkillPlay_Monster_Effect` 扫的是 `lpCurPlayer` + `chrOtherPlayer[]`，**不含怪物**。
+   */
+  function monsterTargeting(caster: THREE.Vector3): {
+    targetBase: { x: number; y: number; z: number };
+    unitsInRange: (range: number) => Array<{ x: number; y: number; z: number }>;
+  } {
+    const feet = { x: selfPos.x, y: selfPos.y, z: selfPos.z };
+    const d2 = (p: { x: number; y: number; z: number }): number =>
+      (p.x - caster.x) ** 2 + (p.y - caster.y) ** 2 + (p.z - caster.z) ** 2;
+    return {
+      targetBase: feet,
+      unitsInRange: (range) => {
+        const r2 = range * range;
+        const out: Array<{ x: number; y: number; z: number }> = [];
+        if (d2(feet) < r2) out.push(feet);
+        for (const r of remotes.values()) {
+          const p = r.root.position;
+          if (d2(p) < r2) out.push({ x: p.x, y: p.y, z: p.z });
+        }
+        return out;
+      },
+    };
+  }
+
+  /**
+   * 怪物特效的回调集合（代码内特效 / 飞出物 / 放箭）—— 事件帧与**起手**共用**一份**。
+   *
+   * 为什么必须共用：CC 的陨石是**起手**放的飞出物（`timing:'cast'` + `fly`），而这三个回调
+   * 原先只写在事件帧的 ctx 里 ⇒ 起手路径拿不到 `fireFly`，陨石一颗都不会飞（AGENTS #15）。
+   * 谁在哪个阶段放由条目的 `timing` 决定，回调本身不分阶段。
+   *
+   * @param motionEvent 第几个事件帧（1 起）—— 起手阶段没有事件帧，传 1
+   */
+  function monsterFxCallbacks(actor: MonsterActor, motionEvent: number): {
+    fireCode: (code: string, target: { x: number; y: number; z: number } | null) => void;
+    fireFly: (asset: string, fly: MonsterFlySpec, ev: number) => void;
+    fireRanged: () => void;
+  } {
+    // 闭包里别读外层可能为 null 的变量（TS18047：收窄不进闭包）—— 先取出来
+    const flyOrigin = actor.root.position;
+    const flyYaw = actor.root.rotation.y;
+    const fxMgr = effects;
+    const scn = scene;
+    return {
+      // **代码内组合特效**（`def.code`，如 Glacial Spike）：转交**与玩家技能同一个注册表**
+      // ⇒ 同一招在怪物侧与玩家侧是同一份实现（AGENTS #15）
+      fireCode: (code, target) => {
+        const fn = CODE_SKILL_FX[code];
+        if (!fn) { console.log(`[skillfx] ✗ 代码特效「${code}」未注册`); return; }
+        fn({
+          ...skillFxCtx(),
+          motionEvent,
+          casterYaw: flyYaw,
+          targetGetter: () => unitBodyAnchor(selfPlayerId),
+        }, flyOrigin, target);
+      },
+      // **飞出物**（`def.fly`，原版 `AssaParticle_*`）：驱动是**共用实现**
+      // （`monster-fly-runner.ts`）—— 此前只有实验室实现 ⇒ 游戏里这类特效根本不飞。
+      // 目标 = **自机**（与射击怪的箭同一条：这几招打的就是玩家）
+      fireFly: (asset, fly, ev) => {
+        // 世界未就绪（与 `spawnProjectile` 同款处理：跳过并**说出来**，不静默）
+        if (!fxMgr || !scn) {
+          console.log('[fly] 跳过：特效管理器/场景未就绪 mgr=' + !!fxMgr + ' scene=' + !!scn);
+          return;
+        }
+        runMonsterFly(
+          {
+            // `spawnStoppable`：到点要 `stop()`（原版 `SetStop`），否则粒子堆在命中点
+            spawn: (a, o) => fxMgr.spawnStoppable(a, o),
+            addToScene: (o) => scn.add(o),
+            dynLight: dynLights,
+            sound: (p, at) => sfx.play(p, { pos: at }),
+          },
+          asset, fly,
+          {
+            pos: { x: flyOrigin.x, y: flyOrigin.y + (fly.lift ?? 0), z: flyOrigin.z },
+            yaw: flyYaw,
+            target: () => unitBodyAnchor(selfPlayerId),
+            motionEvent: ev,
+          },
+        );
+      },
+      // **射击怪**（`MONSTER_RANGED`）：原版这个事件帧设 `ShootingFlag = TRUE` 并把武器码
+      // 硬写成 `sinWS1`（弓）来复用玩家那套箭 ⇒ 这里同样交给 `spawnProjectile`。
+      // · 目标 = **自机**（这三只射的就是玩家；`unitBodyAnchor` 已有 `selfPlayerId` 分支 ✓）
+      // · 武器码 = `MONSTER_BOW_IDCODE`（怪没有武器数据，原版硬写弓 ✓）
+      // · 不传 mount（怪手里拿的不是弓）；出手抬高取本怪的 `launchLift`（28/38，逐怪不同 ✓）
+      // · eventFrame 不传 ⇒ 用按弹速飞行（怪物没有玩家那套"放箭提前量"设计）
+      fireRanged: () => spawnProjectile(
+        null, actor.root, MONSTER_BOW_IDCODE, null, null,
+        selfPlayerId, undefined, 1, () => null,
+        MONSTER_RANGED[actor.monsterEffectId]?.launchLift ?? 34,
+      ),
+    };
+  }
+
   function beginMonsterSkill(actor: MonsterActor): void {
     armMonsterMotionEvents(actor);
     // 起手音 + 起手法阵 + 起手特效：**共用实现**（`cast-circle-runner.fireMonsterSkillCast`，实验室同一份）。
     // KeyCode 取自**正在起手的那条动作**（原版按它分招：CC 的 `'J'` 与 else 是两招，特效也不同）
-    fireMonsterSkillCast({ ...skillFxCtx(), fx: effects }, actor.monsterEffectId, actor.root.position,
-      actor.animState.getCurrentMotion()?.keyCode);
+    fireMonsterSkillCast({
+      ...skillFxCtx(), fx: effects, ...monsterTargeting(actor.root.position),
+      // 起手那一招也可能是飞出物（CC 的陨石就是）⇒ 与事件帧**同一份回调**
+      ...monsterFxCallbacks(actor, 1),
+    }, actor.monsterEffectId, actor.root.position,
+    actor.animState.getCurrentMotion()?.keyCode);
   }
 
   /**
@@ -4271,11 +4380,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           const crossed = crossEventFrames(actor.attackEventFrames, actor.attackFired, compFrame);
           actor.attackFired = crossed.fired;
           for (const evFrame of crossed.hit) {
-            // 闭包里别读外层可能为 null 的变量（TS18047：收窄不进闭包）—— 先取出来
-            const flyOrigin = actor.root.position;
-            const flyYaw = actor.root.rotation.y;
-            const fxMgr = effects;
-            const scn = scene;
             // 与原版同源：同一个事件帧里既播音效也起特效（共用实现见 monster-attack-fx.ts）
             fireMonsterAttackEvent({
               modelKey: actor.modelKey, effectId: actor.monsterEffectId,
@@ -4289,57 +4393,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               motionEvent: motionEventIndexOf(motion.eventFrame, evFrame),
               // 这一招的目标（身体中部）—— 目前只被 `code` 类特效用（如 Glacial Spike 用不到）
               aim: unitBodyAnchor(selfPlayerId),
-              // **代码内组合特效**（`def.code`，如 Glacial Spike）：转交**与玩家技能同一个注册表**
-              // ⇒ 同一招在怪物侧与玩家侧是同一份实现（AGENTS #15）
-              fireCode: (code, target) => {
-                const fn = CODE_SKILL_FX[code];
-                if (!fn) { console.log(`[skillfx] ✗ 代码特效「${code}」未注册`); return; }
-                fn({
-                  ...skillFxCtx(),
-                  motionEvent: motionEventIndexOf(motion.eventFrame, evFrame),
-                  casterYaw: flyYaw,
-                  targetGetter: () => unitBodyAnchor(selfPlayerId),
-                }, flyOrigin, target);
-              },
-              // **飞出物**（`def.fly`，原版 `AssaParticle_*`）：驱动是**共用实现**
-              // （`monster-fly-runner.ts`）—— 此前只有实验室实现 ⇒ 游戏里这类特效根本不飞。
-              // 目标 = **自机**（与射击怪的箭同一条：这几招打的就是玩家）
-              fireFly: (asset, fly, motionEvent) => {
-                // 世界未就绪（与 `spawnProjectile` 同款处理：跳过并**说出来**，不静默）
-                if (!fxMgr || !scn) {
-                  console.log('[fly] 跳过：特效管理器/场景未就绪 mgr=' + !!fxMgr + ' scene=' + !!scn);
-                  return;
-                }
-                runMonsterFly(
-                  {
-                    // `spawnStoppable`：到点要 `stop()`（原版 `SetStop`），否则粒子堆在命中点
-                    spawn: (a, o) => fxMgr.spawnStoppable(a, o),
-                    addToScene: (o) => scn.add(o),
-                    dynLight: dynLights,
-                  },
-                  asset, fly,
-                  {
-                    pos: { x: flyOrigin.x, y: flyOrigin.y + (fly.lift ?? 0), z: flyOrigin.z },
-                    yaw: flyYaw,
-                    target: () => unitBodyAnchor(selfPlayerId),
-                    motionEvent,
-                  },
-                );
-              },
+              ...monsterTargeting(actor.root.position),
+              // 代码内特效 / 飞出物 / 放箭 —— **与起手共用同一份**（见 `monsterFxCallbacks`）
+              ...monsterFxCallbacks(actor, motionEventIndexOf(motion.eventFrame, evFrame)),
               // 动作音的音效桶 = **正在播的那条动作的动作态**（原版 `CharPlaySound` 用 `MotionInfo->State`）
               // ⇒ 技能动作播 `skill N.wav`、普攻播 `attack N.wav`（此前一律按普攻取，技能在播普攻音）
               motionSound: eventFrameSoundState(motion.state),
-              // **射击怪**（`MONSTER_RANGED`）：原版这个事件帧设 `ShootingFlag = TRUE` 并把武器码
-              // 硬写成 `sinWS1`（弓）来复用玩家那套箭 ⇒ 这里同样交给 `spawnProjectile`。
-              // · 目标 = **自机**（这三只射的就是玩家；`unitBodyAnchor` 已有 `selfPlayerId` 分支 ✓）
-              // · 武器码 = `MONSTER_BOW_IDCODE`（怪没有武器数据，原版硬写弓 ✓）
-              // · 不传 mount（怪手里拿的不是弓）；出手抬高取本怪的 `launchLift`（28/38，逐怪不同 ✓）
-              // · eventFrame 不传 ⇒ 用按弹速飞行（怪物没有玩家那套"放箭提前量"设计）
-              fireRanged: () => spawnProjectile(
-                null, actor.root, MONSTER_BOW_IDCODE, null, null,
-                selfPlayerId, undefined, 1, () => null,
-                MONSTER_RANGED[actor.monsterEffectId]?.launchLift ?? 34,
-              ),
             });
           }
           actor.lastCompFrame = compFrame;

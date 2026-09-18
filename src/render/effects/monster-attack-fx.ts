@@ -85,6 +85,31 @@ export interface MonsterAttackFxDef {
    */
   parts?: Array<{ asset: string; height: number; scale?: number }>;
   /**
+   * **落点基准**：缺省 `'caster'` = 以**怪物自己**为原点（原版 `pX/pY/pZ`）；
+   * `'target'` = 以**被打的那个单位**为原点（原版 `pDest->pX/pY/pZ`）。
+   *
+   * ⚠ 这个字段是踩出来的：CC 普攻在 `ParkAssaParticle_ChaosKara1(chrAttackTarget)` 里传的是
+   * **目标**，我却按"怪物身上"登记了 ⇒ 粒子长在自己脚下而不是被打的人身上（用户 2026-09-18 实测）。
+   * 判据：看那个 case 把**谁**传给了 `ParkAssaParticle_*` —— 传 `chrAttackTarget` 就是目标。
+   */
+  anchor?: 'caster' | 'target';
+  /**
+   * **范围内的单位各挂一份**（原版 `SkillPlay_Monster_Effect(char, code, range)`，`netplay.cpp:12685`）——
+   * 它不是音效（那个 code 参数在函数体里根本没被用到）：扫**所有玩家**，距离小于 `range` 的
+   * （**世界单位**、平方比较）各起一份粒子 @ 该单位 `pY + height`。
+   *
+   * 例：CC 技能给 220 单位内的玩家各挂 `ChaosKaraSkillUser`（scale 0.1）—— 那一招的"吸血"落点。
+   */
+  onUnitsInRange?: { range: number; asset: string; height: number; scale?: number };
+  /**
+   * **同一颗"天降物"一次放几颗** —— 配合 `fly.fromTargetSky`（起点在目标上空）。
+   * 每颗自己的落点偏移与**延迟帧**（原版 `ParkAssaChaosKaraMeteo` 一次 4 颗：
+   * `dz ±10000` / `dx ±10000`，延迟 0/30/60/90；`AssaParticle.cpp:9908`）。
+   *
+   * ⚠ 延迟是"**连粒子都不生成**"（原版 `Delay` 递减到 0 才 `Start`，且 `Pos` 在此期间不动）。
+   */
+  skyDrops?: Array<{ dx?: number; dz?: number; delayFrames: number }>;
+  /**
    * **什么时候放**：缺省 `'event'` = 事件帧（原版 `EventAttack` / `EventSkill_Monster`）；
    * `'cast'` = 技能**起手**那一刻（原版 `BeginSkill_Monster`）。
    *
@@ -179,6 +204,27 @@ export interface MonsterFlySpec {
   };
   /** 起点抬高（世界单位；原版 `curPos.y = pY + 5000` ⇒ 5000/256 ≈ 19.5） */
   lift?: number;
+  /**
+   * **起点在目标上空**（世界单位）—— 原版 `ParkAssaChaosKaraMeteo::Start`：
+   * `curPos = destPos + (0, 130000, 50000)`（⇒ 上 507.8、后 195.3，**world 轴、不随怪物朝向转**）。
+   * 给了它 ⇒ 调用方给的那个起点（射手身上 + `lift`）只作"取不到目标"时的兜底。
+   */
+  fromTargetSky?: { up: number; back: number };
+  /** **落点**相对目标的偏移（世界单位）—— 原版 `attackPos = destPos + (0, 0, ±10000)` */
+  targetOffset?: { x?: number; y?: number; z?: number };
+  /** 延迟多少帧才**生成粒子**并开始移动（原版 `Delay`；期间 `Pos` 不动） */
+  delayFrames?: number;
+  /** 直线模式的最长帧数（原版这里 `TimeCount = 700`；缺省 60 —— `AssaParticle.cpp:7492`） */
+  maxFrames?: number;
+  /**
+   * 直线模式的**到达距离**（世界单位；缺省 25 —— `AssaParticle.cpp:7492` 的 `length < 25`）。
+   *
+   * ⚠ 天降那类要**落到地面**的把这里写小：原版是"撞地判定"（`mapY > Pos.y`）⇒ 等价于
+   * "到达落点"，用缺省 25 会**停在离地二十几单位处**（我实测到了：y=22.5 就停了）。
+   */
+  arriveDist?: number;
+  /** **起飞音**（原版 `esPlaySound(20, 音量=400-距离/100)`；`AssaParticle.cpp:9960`） */
+  sound?: string;
   /** 初速（世界单位/**帧**，方向 = 射手朝向 ± `yawOffsetDeg`）—— 原版 `GeoResult * 2` */
   initialSpeedPerFrame?: number;
   /** 发射偏航偏移（度） */
@@ -189,6 +235,8 @@ export interface MonsterFlySpec {
   hit?: {
     asset?: string;
     dynLight?: { r: number; g: number; b: number; a: number; power: number; decPower: number };
+    /** **命中音**（原版 `esPlaySound(21, 400-距离/10)`；`AssaParticle.cpp:9832`） */
+    sound?: string;
   };
 }
 
@@ -395,6 +443,9 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
     // 普攻（`EventAttack`，与技能是**两个函数**，故分开放）
     attack: {
       asset: 'ChaosKaraNormal1_1',
+      // ⚠ 落点 = **被打的那个单位**，不是自己：`ParkAssaParticle_ChaosKara1(chrAttackTarget)`
+      //   → `ParkAssaParticle_Normal1_1(pChar)`，里面写的是 `pDest->pX/pY/pZ`（我第一版按怪物身上登记过）
+      anchor: 'target',
       height: 500 / 256,               // `:1337` `charPos.y = pDest->pY + 500`（裸数，未乘 fONE）
       // `:1349` 同一个 case 里第二个系统（`charPos.y += 1000` ⇒ pY + 1500），第三个参数 = 整体缩放
       parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, scale: 0.3 }],
@@ -410,15 +461,50 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
         timing: 'cast',
         asset: 'ChaosKaraSkill',
         height: 2500 / 256,            // `:1356` `posi.y = pChar->pY + 2500`（裸数）
-        unhandled: [
-          '`SkillPlay_Monster_Effect(this, …, 220)` 的范围部分未接：220 单位内的每个玩家各一份 '
-          + '`ChaosKaraSkillUser`（@ 该玩家 pY+2500，scale 0.1；`hoAssaParticleEffect.cpp:1367`）',
-        ],
-        note: 'character.cpp:13996-13998 / hoAssaParticleEffect.cpp:1447,1353；动作 chaoscara.inx idx14（state=0x150，无 KeyCode，事件帧 3200）',
+        // **"群体吸血"就是这一段**：`character.cpp:13998` 随后调
+        // `SkillPlay_Monster_Effect(this, SKILL_PLAY_CHAOSCARA_VAMP, 220)` ——
+        // 扫 220 单位内的**玩家**，每人各挂一份 `ChaosKaraSkillUser`（@ 该玩家 pY+2500，scale 0.1）
+        onUnitsInRange: { range: 220, asset: 'ChaosKaraSkillUser', height: 2500 / 256, scale: 0.1 },
+        note: 'character.cpp:13996-13998 / hoAssaParticleEffect.cpp:1447,1353,1367；范围效果 netplay.cpp:12685',
       },
-      // 'J'（`ParkAssaParticle_ChaosKara2` = 4 颗天降陨石）**故意不登记** —— 见到"未登记"即未实现
+      // `'J'` = `ParkAssaParticle_ChaosKara2` → `ChaosKaraMeteo`（`:1436`→`:1384`）：
+      // **4 颗陨石从目标上空砸下**，落点/延迟各不相同，到地出 `ChaosKaraMeteoHit` + 蓝白动态光
+      J: {
+        timing: 'cast',
+        asset: 'ChaosKaraMeteo',
+        height: 0,                     // 起点在目标上空，不走 caster 高度
+        fly: {
+          speed: 480,                  // `AssaParticle.cpp:9929` `Velocity = 方向 * 8`（世界单位/帧 ⇒ 480/秒）
+          maxFrames: 700,              // `:9945` `TimeCount = 70 * 10`（超时才停；正常是撞地）
+          // 原版撞地即停（`:9958` `mapY > Pos.y`）⇒ 到达距离取小值，别停在半空（缺省 25 会停在离地 25 处）
+          arriveDist: 4,
+          follow: false,               // `:9927` `SetPos`（只移发射点 ⇒ 粒子留尾）
+          // `:9908` `curPos = destPos + (0, 130000, 50000)`（world 轴）：上 507.8 / 后 195.3
+          fromTargetSky: { up: 130000 / 256, back: 50000 / 256 },
+          // 起飞音 `:9960` `esPlaySound(20, 400 - 距离/100)` = `esSoundWav[20]` =
+          // `game\Audio\Effects\Menu\Event\meteo 1.wav`（`effectsnd.cpp:394`，资产在位）
+          sound: 'wav/effects/menu/event/meteo 1.wav',
+          hit: {
+            asset: 'ChaosKaraMeteoHit',      // `:9834` `Start("ChaosKaraMeteoHit", hitPos)`
+            // `:9833` `SetDynLight(hit, 100,200,255,255,250,2)` —— 蓝白、每帧衰减 2
+            dynLight: { r: 100, g: 200, b: 255, a: 255, power: 250, decPower: 2 },
+            // 命中音 `:9832` `esPlaySound(21, …)` = `esSoundWav[21]` = `meteo 2.wav`
+            sound: 'wav/effects/menu/event/meteo 2.wav',
+          },
+        },
+        // `ChaosKaraMeteo(&pChar->Posi)`（`:1384`）里的 4 次 `ParkAssaParticle_ChaosKaraTerrainFire`：
+        // `attackPos = destPos + (0,0,±10000)` / `(±10000,0,0)`，延迟 0 / 30 / 60 / 90 帧
+        skyDrops: [
+          { dz: 10000 / 256, delayFrames: 0 },
+          { dz: -10000 / 256, delayFrames: 30 },
+          { dx: 10000 / 256, delayFrames: 60 },
+          { dx: -10000 / 256, delayFrames: 90 },
+        ],
+        unhandled: ['命中时的 `EffectWaveCamera((500-距离)/15, 2)`（屏幕震动）未接'],
+        note: 'character.cpp:13985-13992 / hoAssaParticleEffect.cpp:1436,1380-1395 / AssaParticle.cpp:9908-9960',
+      },
     },
-    note: '技能 character.cpp:13985-14003（起手）；普攻 character.cpp:4679-4685（事件帧）',
+    note: '技能 character.cpp:13985-14003（起手）；普攻 character.cpp:4679-4685（事件帧，落点=被打的单位）',
   },
 };
 
@@ -654,6 +740,18 @@ export interface MonsterAttackEventCtx {
    */
   aim?: { x: number; y: number; z: number } | null;
   /**
+   * 被打的那个**单位脚下**（原版 `pDest->pX/pY/pZ`）—— `anchor: 'target'` 的条目以它为原点。
+   *
+   * 与 `aim` 的分工：`aim` 是**身体中部**（飞出物/代码特效瞄的点），这里是**脚下**
+   * （原版那些 `pDest->pY + 500` 的写法都是相对脚下）。缺了会**上报**并按怪物自己算。
+   */
+  targetBase?: { x: number; y: number; z: number } | null;
+  /**
+   * **范围内有哪些玩家**（`onUnitsInRange` 用）—— 只列玩家，由调用方给（它才知道场上有谁）。
+   * 原版 `SkillPlay_Monster_Effect` 扫的是 `lpCurPlayer` + `chrOtherPlayer[]`，**不含怪物**。
+   */
+  unitsInRange?: (range: number) => Array<{ x: number; y: number; z: number }>;
+  /**
    * **飞出物**（`MonsterAttackFxDef.fly`）交给调用方放出 —— 与 `fireSparks` 同理由：
    * 驱动要碰 three（载体节点 + 粒子跟随），而"目标是谁、站在哪"是调用方的场景知识。
    * 调用方应转交 `monster-fly-runner.runMonsterFly`（**唯一驱动**，游戏与实验室同一份）。
@@ -776,7 +874,7 @@ export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<bool
 export function fireMonsterCastFx(
   effectId: number, keyCode: number | null | undefined, pos: { x: number; y: number; z: number },
   effects: FxSpawner | null,
-  extras?: { sfx?: SfxPlayer | null; dynLights?: DynLightSink | null; log?: (m: string) => void },
+  extras?: Partial<MonsterAttackEventCtx> & { log?: (m: string) => void },
 ): Promise<boolean> | null {
   const def = resolveMonsterFx(effectId, keyCode, 'cast');
   if (!def) return null;
@@ -785,8 +883,11 @@ export function fireMonsterCastFx(
     return null;
   }
   extras?.log?.(`  ✦ 起手特效 ${pickMonsterFxAsset(def)}（effectId=0x${effectId.toString(16).toUpperCase()}，出处 ${def.note}）`);
+  // 固定的几项放在最后（调用方不能覆盖 effectId/pos/阶段）
   return fireDef(def, {
-    modelKey: '', effectId, pos, motionKind: 'skill', motionSound: null, effects,
+    modelKey: '',
+    ...extras,
+    effectId, pos, effects, motionKind: 'skill', motionSound: null,
     sfx: extras?.sfx ?? null, dynLights: extras?.dynLights ?? null,
   }, effects);
 }
@@ -809,19 +910,41 @@ function fireDef(
   // **代码内组合特效**（`def.code`，如 Glacial Spike）：交给调用方转交 `CODE_SKILL_FX`
   // —— 与玩家技能**同一个注册表**，于是两边同一招只需要一份实现。
   if (def.code) {
-    ctx.fireCode?.(def.code, ctx.aim ?? null);
+    // 回调缺失一律**上报**：一句 `?.()` 会把"这一招根本没放"伪装成"放过了"（AGENTS #12）
+    if (ctx.fireCode) ctx.fireCode(def.code, ctx.aim ?? null);
+    else reportFallback('fx', `怪 #${ctx.effectId} 的代码特效「${def.code}」没放：调用方没给 fireCode`);
     return null;
   }
   // **多火花**：发射几颗是**本特效自己的属性**（`sparks.num`）—— 直接交给调用方，
   // 本模块不解析、不裁剪、不让调用方再选（那是把技能机制混进特效层，层级错了）。
   if (def.sparks) {
-    ctx.fireSparks?.(def.sparks);
+    if (ctx.fireSparks) ctx.fireSparks(def.sparks);
+    else reportFallback('fx', `怪 #${ctx.effectId} 的多火花没放：调用方没给 fireSparks`);
     return null;
   }
   // **飞出物**（原版 `AssaParticle_*`，如 VigorBall）：驱动在 `monster-fly-runner.ts`
   // —— 游戏与实验室**共用同一份**（此前只有实验室实现 ⇒ 游戏里根本不飞）
   if (def.fly) {
-    ctx.fireFly?.(pickMonsterFxAsset(def, ctx.variant), def.fly, ctx.motionEvent ?? 1);
+    const flyAsset = pickMonsterFxAsset(def, ctx.variant);
+    const ev = ctx.motionEvent ?? 1;
+    if (!ctx.fireFly) {
+      reportFallback('fx', `怪 #${ctx.effectId} 的飞出物 ${flyAsset} 没放：调用方没给 fireFly`);
+      return null;
+    }
+    // **天降多颗**（`skyDrops`）：每颗是同一个 `fly`，只是落点偏移与**延迟帧**不同
+    //（原版 `ChaosKaraMeteo` 一次 4 颗）。逐颗派生一份 spec 交给同一个驱动，不另写一套。
+    const drops = def.skyDrops;
+    if (drops?.length) {
+      for (const d of drops) {
+        ctx.fireFly(flyAsset, {
+          ...def.fly,
+          targetOffset: { x: d.dx ?? 0, z: d.dz ?? 0 },
+          delayFrames: d.delayFrames,
+        }, ev);
+      }
+      return null;
+    }
+    ctx.fireFly(flyAsset, def.fly, ev);
     return null;
   }
   // 落点 = 怪物原点 + 原版 `GetMoveLocation(...)` 算出的偏移。
@@ -833,11 +956,19 @@ function fireDef(
     // 绕 Y 的角 = 怪物朝向（原版 `Angle.y`）；调用方给的是弧度，这里换成 PT 制式
     off = getMoveLocation(m.x, m.y, m.z, m.angX ?? 0, radToPtAngle(ctx.facing ?? 0), m.angZ ?? 0);
   }
+  // **落点基准**：`anchor: 'target'` 的条目以**被打的那个单位**为原点（原版 `pDest->pX/pY/pZ`）
+  // —— CC 普攻就是这样，我第一版按"怪物身上"登记，粒子于是长在自己脚下（用户实测）。
+  let base = { x: ctx.pos.x, y: ctx.pos.y, z: ctx.pos.z };
+  if (def.anchor === 'target') {
+    if (ctx.targetBase) base = ctx.targetBase;
+    else reportFallback('fx', `怪 #${ctx.effectId} 的 ${pickMonsterFxAsset(def, ctx.variant)} `
+      + '以**目标**为落点，但调用方没给 targetBase ⇒ 本次按怪物自己算（位置会偏）');
+  }
   const at = {
-    x: ctx.pos.x + off.x,
+    x: base.x + off.x,
     // `height` 为 'geoY' 时用偏移结果的 y（原版 `pY + GeoResult_Y` 那种写法）
-    y: ctx.pos.y + (def.height === 'geoY' ? off.y : def.height),
-    z: ctx.pos.z + off.z,
+    y: base.y + (def.height === 'geoY' ? off.y : def.height),
+    z: base.z + off.z,
   };
   // 原版在同一个 case 里**先 SetDynLight 再起粒子**（`HoEffect.cpp:11723` 是 case 的第一行），
   // 两件事同源 ⇒ 这里也一起做，且用**同一个落点**。
@@ -847,7 +978,7 @@ function fireDef(
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
-  // **同帧的其余系统**（`def.parts`）：各自的高度/缩放，落点不动（原版它们也都写 `pX/pZ`）
+  // **同帧的其余系统**（`def.parts`）：各自的高度/缩放，落点与主系统一致
   const spawnOne = (asset: string, at: { x: number; y: number; z: number },
                     opts: { size?: number; scale?: number }, tag: string): Promise<boolean> =>
     Promise.resolve(effects.spawn(asset, { pos: at, ...opts }))
@@ -861,8 +992,22 @@ function fireDef(
       });
   const tasks = [spawnOne(name, at, { size: def.size }, label)];
   for (const p of def.parts ?? []) {
-    tasks.push(spawnOne(p.asset, { x: ctx.pos.x, y: ctx.pos.y + p.height, z: ctx.pos.z },
+    tasks.push(spawnOne(p.asset, { x: base.x, y: base.y + p.height, z: base.z },
       { scale: p.scale }, `${p.asset}（同帧第二系统，出处 ${def.note}）`));
+  }
+  // **范围内每个玩家各一份**（原版 `SkillPlay_Monster_Effect`，范围用世界单位、平方比较）
+  const area = def.onUnitsInRange;
+  if (area) {
+    const units = ctx.unitsInRange?.(area.range);
+    if (!units) {
+      reportFallback('fx', `怪 #${ctx.effectId} 的 ${label} 有一段范围效果`
+        + `（${area.range} 单位内的玩家各挂 ${area.asset}），但调用方没给 unitsInRange ⇒ 这一段没放`);
+    } else {
+      for (const u of units) {
+        tasks.push(spawnOne(area.asset, { x: u.x, y: u.y + area.height, z: u.z },
+          { scale: area.scale }, `${area.asset}（范围 ${area.range} 内的单位，出处 ${def.note}）`));
+      }
+    }
   }
   // 全部起完再回一个结果：任一个起不来都算 false（降级已在上面逐条上报）
   return tasks.length === 1 ? tasks[0]! : Promise.all(tasks).then((rs) => rs.every(Boolean));
