@@ -470,8 +470,11 @@ export class PtCameraFacingSpin implements Behavior {
       this.tmp.setFromAxisAngle(axis, (deg * Math.PI) / 180);
       (q as unknown as { multiply(q2: unknown): void }).multiply(this.tmp);
     };
-    mul(AXIS_Y, sampleDeg(this.tracks.y ?? [], t));
+    // 旋绕顺序**照抄原版** `AddFace2DBillBoard(face, inAngle)`（HoNewParticle.cpp:2870+）：
+    //   `outMatrix = Rx · Ry · Rz`（先 `Mult(out, Rx, Ry)` 再 `Mult(out, out, Rz)`）
+    // 四元数 `q * qx * qy * qz` 作用于向量 = Rx·Ry·Rz·v ⇒ 顺序等价（先绕 Z、再 Y、再 X）。
     mul(AXIS_X, sampleDeg(this.tracks.x ?? [], t));
+    mul(AXIS_Y, sampleDeg(this.tracks.y ?? [], t));
     mul(AXIS_Z, sampleDeg(this.tracks.z ?? [], t));
   }
   frameUpdate(): void { /* 无 */ }
