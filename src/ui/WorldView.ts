@@ -2827,8 +2827,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function beginMonsterSkill(actor: MonsterActor): void {
     armMonsterMotionEvents(actor);
-    // 起手音 + 起手法阵：**共用实现**（`cast-circle-runner.fireMonsterSkillCast`，实验室同一份）
-    fireMonsterSkillCast(skillFxCtx(), actor.monsterEffectId, actor.root.position);
+    // 起手音 + 起手法阵 + 起手特效：**共用实现**（`cast-circle-runner.fireMonsterSkillCast`，实验室同一份）。
+    // KeyCode 取自**正在起手的那条动作**（原版按它分招：CC 的 `'J'` 与 else 是两招，特效也不同）
+    fireMonsterSkillCast({ ...skillFxCtx(), fx: effects }, actor.monsterEffectId, actor.root.position,
+      actor.animState.getCurrentMotion()?.keyCode);
   }
 
   /**
@@ -4278,6 +4280,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             fireMonsterAttackEvent({
               modelKey: actor.modelKey, effectId: actor.monsterEffectId,
               pos: actor.root.position, facing: actor.root.rotation.y,
+              // **普攻还是技能**（原版是两个函数）+ 动作的 KeyCode：多技能怪靠这两个选招式/选普攻那一套
+              motionKind: motion.state === ANIM_ATTACK ? 'attack' : 'skill',
+              keyCode: motion.keyCode,
               // 动态光池（原版 `SetDynLight`）：此前游戏侧没建池 ⇒ 所有动态光无处落地
               effects, sfx, dynLights,
               // 本条动作的第几个事件帧（原版 `MotionEvent`）—— 有的飞出物靠它分左右（VigorBall）

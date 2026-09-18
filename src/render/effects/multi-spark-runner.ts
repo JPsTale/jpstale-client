@@ -27,9 +27,10 @@ export interface SystemSpawner {
   }): Promise<unknown> | null;
 }
 
-export interface DynLightSink {
-  set(x: number, y: number, z: number, r: number, g: number, b: number, a: number, power: number, decPower: number): void;
-}
+// `DynLightSink` **只有一份定义**（`dyn-light.ts`）—— 这里曾经又写了一个签名不同的副本
+// （`set` 返回 `void`），于是"传 dynLights"在类型上互相不兼容（AGENTS #15：同一判定只留一份）。
+import type { DynLightSink } from './dyn-light.js';
+export type { DynLightSink };
 
 export interface MultiSparkRunnerCtx {
   effects: SystemSpawner | null;

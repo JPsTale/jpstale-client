@@ -77,6 +77,28 @@ export interface MonsterAttackFxDef {
     num: number;
   };
   /**
+   * **同帧的另外几个粒子系统** —— 原版一个 case 里常连着 `Start` 好几个 `.part`，
+   * 各有各的高度/缩放（CC 普攻：两个系统 + 一个网格，见 `0x1670`）。
+   *
+   * 与 `asset` 数组的区别：数组是**多候选（挑一个）**，这里几个是**同时放**。
+   * `height` 是**世界单位**（原版 `pY + N * fONE` 的 N）—— 原版写的是裸数（没乘 fONE）时要折算。
+   */
+  parts?: Array<{ asset: string; height: number; scale?: number }>;
+  /**
+   * **什么时候放**：缺省 `'event'` = 事件帧（原版 `EventAttack` / `EventSkill_Monster`）；
+   * `'cast'` = 技能**起手**那一刻（原版 `BeginSkill_Monster`）。
+   *
+   * 两种都有实例：CC 的技能在起手（`character.cpp:13985`）、普攻在事件帧（`:4679`）。
+   * 由 `resolveMonsterFx(effectId, keyCode, phase)` 过滤，**不要在调用方自己判**。
+   */
+  timing?: 'event' | 'cast';
+  /**
+   * **这一招原版还有、我们还没做的部分** —— 播放时逐条 `reportFallback`
+   * （同 kind+detail 合并计数，不会刷屏）。写在数据里而不是注释里：
+   * 注释只有读代码的人看得到，而"少了一块"必须能被看见（AGENTS #12）。填"缺什么 + 源码行号"。
+   */
+  unhandled?: string[];
+  /**
    * **技能音**（事件帧播）—— 原版 `SkillPlaySound(SKILL_SOUND_*)`，如
    * `wav/effects/skill/morion/vigorball 1.wav`（`effectsnd.cpp:682`）。
    *
@@ -350,6 +372,54 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
     },
     note: 'character.cpp:14903 `switch (MotionInfo->KeyCode)`；动作表 dpr.inx idx16=\'O\' 事件帧3360 / idx17=\'H\' / idx18=\'Z\'',
   },
+
+  // 0x1670 = snCHAR_SOUND_CHAOSCARA（混沌卡拉 / CC）—— **普攻在事件帧、技能在起手**，两种时机都占
+  //
+  // · 普攻：`character.cpp:4679-4685` `case snCHAR_SOUND_CHAOSCARA:` → `ParkAssaParticle_ChaosKara1(chrAttackTarget)`
+  //     → `hoAssaParticleEffect.cpp:1426` → `ParkAssaParticle_Normal1_1`（`:1332`）：
+  //       ① `ChaosKaraNormal1_1` @ `pY + 500`（源码写的是**裸数、没乘 fONE** ⇒ 500/256 ≈ 1.95 世界单位）
+  //       ② `SetAssaEffect(0, "chao_glacial.ASE", …)`（`AniMaxCount = 25` / `AniDelayTime = 2`）
+  //       ③ `ChaosKaraNormal1_2` @ `pY + 1500`，`Start(name, pos, 0.3f)` ⇒ **scale 0.3**
+  //     ①③ 同帧同点（无 GetMoveLocation）⇒ 两个系统一起放，用 `parts`；② 还没接，见 `unhandled`
+  //
+  // · 技能：`character.cpp:13985-14003` 在 **`BeginSkill_Monster`（起手那一刻）**，不在事件帧：
+  //     `KeyCode == 'J'` → `ParkAssaParticle_ChaosKara2`（`:1436`）→ `ChaosKaraMeteo`（`:1384`）：
+  //        4 颗陨石从天上砸向目标四周（`AssaParticle.cpp:9908` `ParkAssaChaosKaraMeteo`，8 单位/帧、延迟 0/30/60/90）
+  //        ⇒ **未实现**，故 'J' 键**不登记**（实验室/日志会明确说"该招未登记"，不会拿别招顶上）
+  //     else（动作**没有** KeyCode ⇒ 派表键 `''`）→ `ParkAssaParticle_ChaosKaraSkill_Monster`（`:1447`）
+  //        → `ChaosKaraSkill` @ `pY + 2500`；紧接着
+  //        `SkillPlay_Monster_Effect(this, SKILL_PLAY_CHAOSCARA_VAMP, 220)` —— **那不是音效，是范围效果**
+  //        （`netplay.cpp:12685`，第 2 个参数在函数体里根本没被用到）：给 220 单位内的**玩家**各挂一份
+  //        `ChaosKaraSkillUser`（@ 该玩家 `pY + 2500`，scale 0.1）⇒ 我们这侧未接，见 `unhandled`
+  0x1670: {
+    // 普攻（`EventAttack`，与技能是**两个函数**，故分开放）
+    attack: {
+      asset: 'ChaosKaraNormal1_1',
+      height: 500 / 256,               // `:1337` `charPos.y = pDest->pY + 500`（裸数，未乘 fONE）
+      // `:1349` 同一个 case 里第二个系统（`charPos.y += 1000` ⇒ pY + 1500），第三个参数 = 整体缩放
+      parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, scale: 0.3 }],
+      unhandled: [
+        '同帧还起一个 ASE 网格 `chao_glacial`（`hoAssaParticleEffect.cpp:1341` '
+        + '`SetAssaEffect(0, "chao_glacial.ASE", …)`，AniMaxCount=25 / AniDelayTime=2）—— 静态网格那条路未接',
+      ],
+      note: 'character.cpp:4679-4685 / hoAssaParticleEffect.cpp:1332-1350（事件帧，chaoscara.inx idx12 事件帧 800）',
+    },
+    skillByKeyCode: {
+      // 原版 else 分支（动作无 KeyCode）——与 'J' 那颗陨石同一层，故时机是**起手**
+      '': {
+        timing: 'cast',
+        asset: 'ChaosKaraSkill',
+        height: 2500 / 256,            // `:1356` `posi.y = pChar->pY + 2500`（裸数）
+        unhandled: [
+          '`SkillPlay_Monster_Effect(this, …, 220)` 的范围部分未接：220 单位内的每个玩家各一份 '
+          + '`ChaosKaraSkillUser`（@ 该玩家 pY+2500，scale 0.1；`hoAssaParticleEffect.cpp:1367`）',
+        ],
+        note: 'character.cpp:13996-13998 / hoAssaParticleEffect.cpp:1447,1353；动作 chaoscara.inx idx14（state=0x150，无 KeyCode，事件帧 3200）',
+      },
+      // 'J'（`ParkAssaParticle_ChaosKara2` = 4 颗天降陨石）**故意不登记** —— 见到"未登记"即未实现
+    },
+    note: '技能 character.cpp:13985-14003（起手）；普攻 character.cpp:4679-4685（事件帧）',
+  },
 };
 
 /** 特效管理器的最小契约 —— 结构化类型，避免与本模块耦合到具体实现类。 */
@@ -381,8 +451,20 @@ export interface MonsterSkillSet {
   /** **起手法阵**：原版 `sinEffect_StartMagic(&pos, CharFlag)` 的 `CharFlag`（D_PR = 2） */
   castMagic?: number;
   /**
+   * **普攻**的特效 —— 原版普攻与技能是**两个不同的函数**（`EventAttack` / `EventSkill_Monster`），
+   * 各有各的 case；一只怪两样都有时必须分开登记，否则"这一帧是普攻还是技能"根本分不出来
+   * （CC 就是：普攻两个粒子系统、技能另两套）。
+   *
+   * `timing` 在它身上无意义 —— 普攻恒在事件帧（`EventAttack`）。
+   */
+  attack?: MonsterAttackFxDef;
+  /**
    * 按动作 `KeyCode` 分派（键为**大写字母**；原版 `MotionInfo->KeyCode` 就是 ASCII）。
    * **没登记的键 = 那一招还没核验** ⇒ 什么都不放（原版 switch 没有 default，本来也不放）。
+   *
+   * 键 `''`（空串）= 原版那条分支的 `else` —— 动作**没有** KeyCode 时走的兜底
+   * （CC 的技能就是这么分的：`KeyCode == 'J'` 一颗招、其余走 else，见 `0x1670`）。
+   * 原版 else 分支只该在确实读到了 `else` 时才登记，别拿它当"什么都能放"的通配。
    */
   skillByKeyCode: Record<string, MonsterAttackFxDef>;
   note: string;
@@ -395,21 +477,48 @@ export function isSkillSet(e: MonsterFxEntry): e is MonsterSkillSet {
   return (e as MonsterSkillSet).skillByKeyCode !== undefined;
 }
 
+/** `KeyCode` → 派表键：0 = 动作没有 KeyCode ⇒ `''`（原版走 `else` 分支的情形） */
+function keyOf(keyCode: number): string {
+  return keyCode === 0 ? '' : String.fromCharCode(keyCode).toUpperCase();
+}
+
+/** 阶段：`'event'` = 事件帧（`EventAttack`/`EventSkill_Monster`）／`'cast'` = 技能起手（`BeginSkill_Monster`） */
+export type FxPhase = 'event' | 'cast';
+
 /**
- * 由 `effectId` + **动作的 KeyCode** 解出"这一帧该放哪一条"。
+ * 正在播的那条动作是**普攻**还是**技能** —— 原版这是**两个不同的函数**
+ * （`EventAttack` / `EventSkill_Monster`，各有一套 case），**光看 KeyCode 分不出来**
+ * （两边的动作都可能没有 KeyCode）。所以调用方必须说清，别让我们猜。
+ */
+export type MotionKind = 'attack' | 'skill';
+
+/**
+ * 由 `effectId` + **动作的 KeyCode** + **阶段**（+ 普攻/技能）解出"这一刻该放哪一条"。
  *
  * **唯一实现**（AGENTS #15）：实验室的显示与实际播放必须走同一份判断，
  * 否则"日志说 MultiSpark、画面里放的是别的"这种分叉会同时污染两边。
  *
- * @param keyCode 原版 `MotionInfo->KeyCode`（ASCII 码）；单效果怪忽略它
- * @returns `null` = 这一招没登记（或该怪无核验条目）
+ * @param keyCode 原版 `MotionInfo->KeyCode`（ASCII 码；0 = 没有 ⇒ 查 `''` 键）；普攻忽略它
+ * @param phase 缺省 `'event'`；`timing` 与阶段不符 ⇒ `null`（那一刻本来就不该放，不是"没核验"）
+ * @param kind 缺省按阶段推：起手一定是技能，事件帧按普攻打（**技能动作必须显式传 `'skill'`**）
+ * @returns `null` = 这一刻没有该放的东西（或该怪无核验条目）
  */
-export function resolveMonsterFx(effectId: number, keyCode?: number | null): MonsterAttackFxDef | null {
+export function resolveMonsterFx(
+  effectId: number, keyCode?: number | null, phase: FxPhase = 'event',
+  kind: MotionKind = phase === 'cast' ? 'skill' : 'attack',
+): MonsterAttackFxDef | null {
   const entry = MONSTER_ATTACK_FX[effectId];
   if (!entry) return null;
-  if (!isSkillSet(entry)) return entry;
+  if (!isSkillSet(entry)) return (entry.timing ?? 'event') === phase ? entry : null;
+  if (kind === 'attack') {
+    // 普攻走**另一个函数**（`EventAttack`），它的 case 不看 KeyCode —— 只在 `attack` 上找
+    const a = entry.attack;
+    return a && (a.timing ?? 'event') === phase ? a : null;
+  }
   if (keyCode == null) return null;            // 多技能怪但不知道在播哪招 ⇒ 无法决定
-  return entry.skillByKeyCode[String.fromCharCode(keyCode).toUpperCase()] ?? null;
+  const sub = entry.skillByKeyCode[keyOf(keyCode)];
+  if (!sub) return null;                       // 未登记（原版 switch 无 default）/ 无 `''` 兜底
+  return (sub.timing ?? 'event') === phase ? sub : null;
 }
 
 /** 取某条目的"起手"信息（多技能怪才有）—— 实验室/游戏用它决定起手音与法阵 */
@@ -480,6 +589,14 @@ export interface MonsterAttackEventCtx {
    * 单效果怪忽略此字段。我们的动作表里有这个值：`char-parser.ts:58`（`smMOTIONINFO` offset+164）。
    */
   keyCode?: number | null;
+  /**
+   * **这一帧是普攻还是技能** —— 原版是两个不同的函数（`EventAttack` / `EventSkill_Monster`），
+   * 一只怪两样都有特效时（CC）靠它分开取。由调用方按**正在播的动作的 state** 给：
+   * `CHRMOTION_STATE_ATTACK` ⇒ `'attack'`、`CHRMOTION_STATE_SKILL` ⇒ `'skill'`。
+   *
+   * ⚠ 必填：缺了它多技能怪只能猜（而"猜错"的表现是**默默放了另一招的特效**）。
+   */
+  motionKind: MotionKind;
   /** 怪物**世界坐标**（`root.position`）；特效按上面的 height / forward 偏移 */
   pos: { x: number; y: number; z: number };
   /**
@@ -613,10 +730,12 @@ function playMotionSound(ctx: MonsterAttackEventCtx): void {
 }
 
 export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<boolean> | null {
+  // **第一件事就是动作音**（在一切 return 之前）—— 见 `playMotionSound` 上那三条踩坑记录。
+  // 以前它在每个分支里各写一次，正是"新加一条分支就漏一处"的来源；现在只有这一句。
+  playMotionSound(ctx);
+
   // 射击怪：原版在这个事件帧设 `ShootingFlag`（而不是起粒子）⇒ 交给调用方发射，本函数不返回特效句柄。
-  // ⚠ **音效照旧**：射不射箭与"播不播动作音"是两条轴（音效 ∉ 特效分派）。
   if (MONSTER_RANGED[ctx.effectId]) {
-    playMotionSound(ctx);
     ctx.fireRanged?.();
     return null;
   }
@@ -624,39 +743,68 @@ export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<bool
   const entry = MONSTER_ATTACK_FX[ctx.effectId];
   if (!entry || !ctx.effects) {
     // 无核验条目 ≠ 无音效：纯物理怪原版就只有这一记动作音
-    playMotionSound(ctx);
     return null;
   }
   // **多技能怪**：由**正在播的那条动作的 KeyCode** 决定放哪一招
   //（原版 `switch (MotionInfo->KeyCode)`）。缺 keyCode 或该键未登记都**不猜**：
   //  前者是调用方没给（上报），后者是那一招还没核验（原版 switch 无 default ⇒ 本就不放特效）。
-  //  ⚠ 但**音效照旧**（上面那条）—— 把两者一起吞掉是我犯过的错。
   if (isSkillSet(entry)) {
-    const key = ctx.keyCode == null ? null : String.fromCharCode(ctx.keyCode).toUpperCase();
-    const sub = key ? entry.skillByKeyCode[key] : undefined;
+    const sub = resolveMonsterFx(ctx.effectId, ctx.keyCode, 'event', ctx.motionKind);
     if (!sub) {
-      reportFallback('fx', key == null
-        ? `怪 #${ctx.effectId} 是多技能怪，但调用方没给动作 KeyCode ⇒ 无法决定放哪一招（本次不放特效，动作音照旧）`
-        : `怪 #${ctx.effectId} 的动作 KeyCode '${key}' 未登记特效 ⇒ 这一招不放特效（原版 switch 无 default；动作音照旧）`);
-      playMotionSound(ctx);
+      const keyTxt = ctx.keyCode == null ? '未给' : `'${keyOf(ctx.keyCode) || '(无 KeyCode → else 分支)'}'`;
+      reportFallback('fx', `怪 #${ctx.effectId} 的`
+        + `${ctx.motionKind === 'attack' ? '普攻' : `技能（KeyCode ${keyTxt}）`}`
+        + `未登记特效 ⇒ 不放特效（原版 switch 无 default；动作音照旧）`);
       return null;
     }
+    // 这一招的特效在**起手**放（`timing: 'cast'`）⇒ 事件帧本来就没事做，**不报降级**
+    if ((sub.timing ?? 'event') !== 'event') return null;
     return fireDef(sub, ctx, ctx.effects);
   }
-  return fireDef(entry, ctx, ctx.effects);
+  return (entry.timing ?? 'event') === 'event' ? fireDef(entry, ctx, ctx.effects) : null;
 }
 
-/** 单条效果的实际播放（音效 + 落点 + 动态光 + 起粒子）—— 条目解析之后的一切 */
+/**
+ * **起手阶段的特效**（`MonsterAttackFxDef.timing = 'cast'`，原版 `BeginSkill_Monster` 里那一句
+ * `ParkAssaParticle_*`）—— 与事件帧**共用 `fireDef`**（AGENTS #15：只此一份）。
+ *
+ * 由 `cast-circle-runner.fireMonsterSkillCast` 调用 —— 于是游戏与实验室都走同一条路。
+ * 起手没有"动作音"这回事（那是事件帧的 `CharPlaySound`），故不传 `motionSound`。
+ *
+ * @param keyCode 正在起手的那条技能的 KeyCode（0/缺省 = 查 `''` 键，即原版 else 分支）
+ */
+export function fireMonsterCastFx(
+  effectId: number, keyCode: number | null | undefined, pos: { x: number; y: number; z: number },
+  effects: FxSpawner | null,
+  extras?: { sfx?: SfxPlayer | null; dynLights?: DynLightSink | null; log?: (m: string) => void },
+): Promise<boolean> | null {
+  const def = resolveMonsterFx(effectId, keyCode, 'cast');
+  if (!def) return null;
+  if (!effects) {
+    reportFallback('fx', `怪 #${effectId} 的起手特效 ${def.asset} 起不来：未接渲染器`);
+    return null;
+  }
+  extras?.log?.(`  ✦ 起手特效 ${pickMonsterFxAsset(def)}（effectId=0x${effectId.toString(16).toUpperCase()}，出处 ${def.note}）`);
+  return fireDef(def, {
+    modelKey: '', effectId, pos, motionKind: 'skill', motionSound: null, effects,
+    sfx: extras?.sfx ?? null, dynLights: extras?.dynLights ?? null,
+  }, effects);
+}
+
+/** 单条效果的实际播放（技能音 + 落点 + 动态光 + 起粒子）—— 条目解析之后的一切 */
 function fireDef(
   def: MonsterAttackFxDef, ctx: MonsterAttackEventCtx, effects: FxSpawner,
 ): Promise<boolean> | null {
-  // **两条音效都播，不是二选一**（原版 `character.cpp:14903` 那一支里 `sinEffect_XXX(...)` 与
-  // `SkillPlaySound(...)` 各一句；通用动作音另有 `CharPlaySound`，见 `:4236`）：
-  //   ① 动作音 = 按**动作态**取桶（技能动作 ⇒ `skill N.wav`，普攻 ⇒ `attack N.wav`）
-  //   ② 技能音 = 这一招自己的音（`def.sound`，如 `VigorBall 1/2`）
-  playMotionSound(ctx);
+  // 技能音 = 这一招自己的音（`def.sound`，如 `VigorBall 1/2`；原版 `SkillPlaySound`）。
+  // ⚠ **动作音不在这里** —— 它由 `fireMonsterAttackEvent` 在一切分支之前播（见那里的说明）：
+  //   起手阶段没有动作音，而事件帧的每个分支都要有 ⇒ 放在这里就会逼出"每个分支各写一次"。
   const skillSound = pickMonsterSound(def, ctx.variant);
   if (skillSound) ctx.sfx?.play?.(skillSound, { pos: ctx.pos });
+
+  // **原版还有、我们还没做的部分** —— 逐条上报（AGENTS #12：少一块必须看得见）
+  for (const u of def.unhandled ?? []) {
+    reportFallback('fx', `怪 #${ctx.effectId} 的 ${pickMonsterFxAsset(def, ctx.variant)}：${u}`);
+  }
 
   // **代码内组合特效**（`def.code`，如 Glacial Spike）：交给调用方转交 `CODE_SKILL_FX`
   // —— 与玩家技能**同一个注册表**，于是两边同一招只需要一份实现。
@@ -699,16 +847,23 @@ function fireDef(
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
-  return Promise.resolve(effects.spawn(name, {
-    pos: at,
-    size: def.size,
-  }))
-    .then((ok) => {
-      if (!ok) reportFallback('fx', `怪物攻击特效 ${label} 起不来（effects.spawn 返回 false）`);
-      return ok;
-    })
-    .catch((e: unknown) => {
-      reportFallback('fx', `怪物攻击特效 ${label} 抛错：${String(e)}`);
-      return false;
-    });
+  // **同帧的其余系统**（`def.parts`）：各自的高度/缩放，落点不动（原版它们也都写 `pX/pZ`）
+  const spawnOne = (asset: string, at: { x: number; y: number; z: number },
+                    opts: { size?: number; scale?: number }, tag: string): Promise<boolean> =>
+    Promise.resolve(effects.spawn(asset, { pos: at, ...opts }))
+      .then((ok) => {
+        if (!ok) reportFallback('fx', `怪物攻击特效 ${tag} 起不来（effects.spawn 返回 false）`);
+        return ok;
+      })
+      .catch((e: unknown) => {
+        reportFallback('fx', `怪物攻击特效 ${tag} 抛错：${String(e)}`);
+        return false;
+      });
+  const tasks = [spawnOne(name, at, { size: def.size }, label)];
+  for (const p of def.parts ?? []) {
+    tasks.push(spawnOne(p.asset, { x: ctx.pos.x, y: ctx.pos.y + p.height, z: ctx.pos.z },
+      { scale: p.scale }, `${p.asset}（同帧第二系统，出处 ${def.note}）`));
+  }
+  // 全部起完再回一个结果：任一个起不来都算 false（降级已在上面逐条上报）
+  return tasks.length === 1 ? tasks[0]! : Promise.all(tasks).then((rs) => rs.every(Boolean));
 }

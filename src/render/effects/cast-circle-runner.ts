@@ -12,7 +12,8 @@ import {
 import { loadStaticSmd, applyStaticMeshTracks, type StaticMeshTrack } from './static-fx.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import type { SystemSpawner } from './multi-spark-runner.js';
-import { monsterCastOf } from './monster-attack-fx.js';
+import type { DynLightSink } from './dyn-light.js';
+import { monsterCastOf, fireMonsterCastFx, type FxSpawner, type SfxPlayer } from './monster-attack-fx.js';
 
 export interface CastCircleCtx {
   effects: SystemSpawner | null;
@@ -20,25 +21,35 @@ export interface CastCircleCtx {
   log?: (msg: string) => void;
 }
 
-/** 怪物技能起手的依赖 = 法阵那一套 + 能放起手音 */
+/** 怪物技能起手的依赖 = 法阵那一套 + 起手特效（按资产名起 `.part`）+ 起手音 / 动态光 */
 export interface MonsterCastDeps extends CastCircleCtx {
   playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
+  /** 起手**特效**用的装配器（`EffectManager.spawn`）—— 游戏/实验室传同一个 effects 管理器 */
+  fx?: FxSpawner | null;
+  sfx?: SfxPlayer | null;
+  dynLights?: DynLightSink | null;
 }
 
 /**
- * **怪物技能起手**（原版 `BeginSkill_Monster`，`character.cpp:14070`）：起手音 + 起手法阵。
+ * **怪物技能起手**（原版 `BeginSkill_Monster`，`character.cpp:14070`）：起手特效 + 起手音 + 起手法阵。
  *
  * **唯一实现** —— 游戏（`WorldView`）与怪物实验室共用。此前只有实验室有这一环
  * （`monsterCastOf` 全仓只在实验室被调用）⇒ 游戏里怪物放技能**没有起手音、也没有法阵**；
  * 更严重的是游戏侧连"技能动作的事件帧"都没武装（`armMonster…` 只对 ATTACK 调）⇒
  * 技能特效本身也不会触发（用户 2026-09-18："能把它也接入 client 吗"）。
  *
- * 一个 `effectId` 下**所有技能共用**一套起手（取宿主条目的 `castSound` / `castMagic`）——
- * 与"这一次放的是哪一招"无关，故不需要 KeyCode。
+ * 起手音/法阵是**所有技能共用**一套（取宿主条目的 `castSound` / `castMagic`）；
+ * 但**起手特效不共用** —— CC 就按 `KeyCode` 分（`'J'` 一颗陨石、`else` 一记近身），
+ * 故 `keyCode` 必须传进来，由 `resolveMonsterFx(..., 'cast')` 那**唯一一处**判。
  */
 export function fireMonsterSkillCast(
   deps: MonsterCastDeps, effectId: number, pos: { x: number; y: number; z: number },
+  keyCode?: number | null,
 ): void {
+  // ① 起手特效（原版各 case 里那句 `ParkAssaParticle_*`；只有 `timing: 'cast'` 的条目会放）
+  void fireMonsterCastFx(effectId, keyCode, pos, deps.fx ?? null,
+    { sfx: deps.sfx ?? null, dynLights: deps.dynLights ?? null, log: deps.log });
+  // ② 起手音 + 起手法阵（原版同一支里的 `SkillPlaySound` + `sinEffect_StartMagic`）
   const cast = monsterCastOf(effectId);
   if (!cast) return;
   if (cast.castSound) deps.playSound?.(cast.castSound, pos);
