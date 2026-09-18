@@ -146,9 +146,11 @@ export class PtTimeline implements Behavior {
     const cam = camRef;
 
     if (this.particleType === 2) {
-      // 世界空间 XZ 面：只吃 PartAngle（发射器 Angle 我方恒 0）
+      // 世界空间 XZ 面（`AddFace2dPlane` 的顶点是 `(±w, 0, ±h)`）：几何是 XY 面片 ⇒
+      // **先绕 X 转 -90° 把它放平到 XZ**，再叠 `PartAngle`（发射器 Angle 我方恒 0）
       const [rx, ry, rz] = st.val.partAngle as [number, number, number];
       this.eulerToQuat(q, rx, ry, rz);
+      q.multiply(this.axisQuat(new THREE.Vector3(1, 0, 0), -Math.PI / 2));
       if (localAngleSpin) this.applyLocal(q, st);
       return;
     }

@@ -124,9 +124,6 @@ export function setBillboardCamera(cam: THREE.Camera | null): void {
 /** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
 const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
 
-/** TYPE_TWO 的几何：**世界 XZ 平面**上的四边形（`AddFace2dPlane` 的顶点是 `(±w, 0, ±h)`） */
-const HORIZONTAL_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1).rotateX(-Math.PI / 2);
-
 /** `.part` 的属性名 → 事件槽（唯一出处；`redcolor` 这类单通道属性在此落到对应分量） */
 const PT_SLOT_OF_PROP: Record<string, PtSlot> = {
   size: 'size', sizeext: 'sizeExt', eventtimer: 'eventTimer',
@@ -443,9 +440,10 @@ export function convertPart(
       // ⚠ 语义近似：PT 的 AddFaceTrace 没有"长度"这个字段，这里取 `sizeExt`（高）当拖尾长度 ——
       // 属我方决定，与 PT 参数不是一对一。
       // Mesh 模式（我方扩展 = 世界朝向面片）：几何取单位平面 + 逐粒子随机四元数朝向
-      // TWO 是**世界 XZ 面**（`AddFace2dPlane`），几何用水平四边形；其余用 XY 面片
-      instancingGeometry: em.particleType === 4 ? undefined
-        : em.particleType === 2 ? HORIZONTAL_UNIT_QUAD : ORIENTED_UNIT_QUAD,
+      // 几何**一律** XY 单位面片（`size` 是按 x/y 缩放的）：
+      // ⚠ 曾给 TYPE_TWO 单独做"XZ 平面几何" ⇒ 它只被 x 缩放、深度恒为 1 ⇒ 观感是**一条窄线条**
+      //   （用户实测 D_PR 三招的法阵"只显示 smd、贴图成了一条线"）。"水平"要由**朝向**表达。
+      instancingGeometry: em.particleType === 4 ? undefined : ORIENTED_UNIT_QUAD,
       // ⚠ `startRotation` **不是 quarks 的字段**（导出表里没有 ⇒ 死参数，从不生效）：
       // 朝向改由 behaviors 里的 `MeshRandomOrientation` / `PtInitialRotation` 写（见下）
       rendererEmitterSettings: em.particleType === 4
