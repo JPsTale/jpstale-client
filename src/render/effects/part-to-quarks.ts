@@ -428,10 +428,10 @@ export class PartBoxEmitter implements EmitterShape {
  *   ⇒ 逐粒子旋转值就是四元数 ⇒ 能表达。
  */
 export function hasLocalAngle(em: PartEmitter): boolean {
-  // **A/B 诊断开关**（实验室抽屉里的复选框 / 控制台 `__ptNoLocalAngle = true`）：
-  // 该特性会把发射器从广告板改成世界朝向面片，属**可见变化** ⇒ 需要一个能现场来回翻的开关，
-  // 让肉眼在"同一只怪、同一招"下对比（截图比转动中的特效不可靠）。**下次生成生效**（转换在 spawn 时做）。
-  if ((globalThis as { __ptNoLocalAngle?: boolean }).__ptNoLocalAngle === true) return false;
+  // ⚠ 已知代价（用户 2026-09-18 已看过对比并认可）：quarks 的 Mesh 是**世界朝向**面片，
+  //   **不面向相机**（原版这些粒子是 billboard，`localangle` 是在相机朝向上再倾斜）⇒
+  //   切过来之后这些粒子的观感会变（侧立时更细更暗）。若日后觉得需要"既面向相机又绕局部 Y 转"，
+  //   做法是在 Mesh 路径上逐帧写入**面向相机的基底四元数**再乘本自转（本次没做）。
   const y0 = em.initialLocalAngle?.y;
   const y1 = em.finalLocalAngle?.y;
   return (y0 != null && roll(y0) !== 0) || (y1 != null && roll(y1) !== 0);
