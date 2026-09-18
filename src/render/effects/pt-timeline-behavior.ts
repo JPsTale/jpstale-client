@@ -80,6 +80,11 @@ export class PtTimeline implements Behavior {
     this.states.set(p as object, st);
     p.life = st.life;                    // 寿命 = 逐粒子掷（`CreateNewParticle`）
     this.writePos(p, st);                // 出生点 = 发射器世界坐标 + 发射半径盒内一点
+    if (this.particleType === 5) {
+      // 我方扩展：**速度由 `OrientVelocityToNormal` 按各自的面法线给**（⇒ 30 张卡朝 30 个随机方向），
+      // 这里不能写 velocity（写了就被覆盖掉，用户实测"长条总是朝一个固定方向运动"）
+      return;
+    }
     p.velocity.set(0, 0, 0);             // 位置由状态机积分（`LocalPos += Dir·dt`），不走 quarks 的积分
     this.write(p, st, 0, true);
   }
@@ -89,6 +94,12 @@ export class PtTimeline implements Behavior {
     const st = this.states.get(p as object);
     if (!st) return;
     stepFrame(this.cfg, st, delta, Math.random);   // 时钟 → 各 Step → 重力（逐粒子逐帧重掷）→ 事件
+    if (this.particleType === 5) {
+      // 位置积分 / 速度 / 朝向**全部**交给 quarks 与 `MeshRandomOrientation` + `OrientVelocityToNormal`：
+      // 本行为只负责尺寸与颜色（旧实现也是这么分工的）
+      this.write(p, st, delta, false);
+      return;
+    }
     this.writePos(p, st);
     p.velocity.set(0, 0, 0);
     this.write(p, st, delta, false);
