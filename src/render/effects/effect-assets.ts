@@ -115,13 +115,23 @@ async function parseEffectUncached(ref: EffectRef): Promise<EffectParseOutcome> 
   // ImageData：DataFile 是 basename（如 Hit1.ini），我方资产是小写
   let framePaths: string[] = [];
   let imageIni: string | null = null;
+  /** ImageData 这一层**为什么没有帧**（进 diag，播放时"一帧贴图都没解出来"会把它一并显示） */
+  let imgFail = 'ini 里没有 DataFile 段';
   if (anim.dataFile) {
     const imgPath = IMG_DIR + anim.dataFile.toLowerCase();
     imageIni = imgPath;
     const imgText = await fetchText('/res/' + imgPath);
-    if (imgText) {
+    if (imgText === null) {
+      // ⚠ 这是**资产自带**的坏链（我方 client 里正好 3 个：groundpike / round2 / skillroarlinepartice1，
+      //   见 `scripts/verify-fx-names.ts` 的已知清单），不是我们拼错路径 —— 说清楚是哪一个。
+      imgFail = `ImageData「${imgPath}」取不到（404）`;
+    } else {
       const img = parseImageData(imgText);
-      if (img) framePaths = resolveImageFrames(img);
+      if (!img) imgFail = `ImageData「${imgPath}」解析不出来`;
+      else {
+        framePaths = resolveImageFrames(img);
+        if (!framePaths.length) imgFail = `ImageData「${imgPath}」→ 0 张帧图（Name/Count 段？）`;
+      }
     }
   }
 
@@ -130,9 +140,9 @@ async function parseEffectUncached(ref: EffectRef): Promise<EffectParseOutcome> 
   let durationSteps = 0;
   for (const f of anim.frames) {
     const path = framePaths[f.imageIndex] ?? null;
-    // 贴图**缺失**在这里只记账（真正解码时才知道能不能解出来）；
+    // 帧图**缺失**就在这里记账（真正解码时才知道贴图能不能解出来）；
     // 整份特效"一帧都解不出贴图"由调用方判（`effect-manager.spawn` 的 guard）
-    if (!path) missing.push(imageIni ? `(ImageData 里没有第 ${f.imageIndex} 帧)` : '(没有 DataFile 段)');
+    if (!path) missing.push(framePaths.length ? `(ImageData 里没有第 ${f.imageIndex} 帧)` : imgFail);
     frameSpecs.push({ path, delay: f.delay, alpha: f.alpha, size: f.size, angle: f.angle });
     durationSteps += f.delay;
   }

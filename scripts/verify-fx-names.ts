@@ -22,6 +22,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { lookupEffect, effectCounts } from '../src/render/effects/effect-names.js';
 import { MONSTER_ATTACK_FX, isSkillSet, type MonsterAttackFxDef } from '../src/render/effects/monster-attack-fx.js';
+import { parseAnimationData } from '../src/core/effect/anim-ini.js';
 
 const ASSET = path.resolve(process.argv[2] ?? process.env.PT_ASSET_ROOT ?? 'E:/JPsTale/client');
 
@@ -123,11 +124,49 @@ for (const m of meshes) {
   }
 }
 
+/* ④ INI → ImageData 的链**能不能走通**（资产自带的坏链，不是我们拼错路径）
+ *
+ * 用真解析器读 `effect/animationdata/*.ini` 的 DataFile，再看 `effect/imagedata/<小写名>.ini` 在不在。
+ * 我方 client 现在**正好 3 个**坏链（详见下面的 KNOWN_BROKEN_IMAGEDATA）；数量对不上就报错 ——
+ * 多了说明资产包换了、少了说明有人补了资产，两种都该有人看一眼。
+ * 这 3 个的效果**放不出帧**，会在播放时由 `effect-manager.spawn` 明确报「一帧贴图都没解出来」。 */
+const KNOWN_BROKEN_IMAGEDATA: Record<string, string> = {
+  groundpike: 'DataFile=GroundPike.ini 不在 imagedata（该 ini 实体在 effect/objanimationdata/groundpike/，属另一族）',
+  round2: 'DataFile=Round2.ini 不在 imagedata（imagedata/round2/ 只有贴图、没有那份 ini）',
+  skillroarlineparticle1: 'DataFile=SkillRoarLinePartice1.ini 是**资产里的拼写错误**（同目录有正确拼写 SkillRoarLineParticle1.ini）',
+};
+const animDir = path.join(ASSET, 'effect/animationdata');
+const imgHave = new Set(
+  fs.existsSync(path.join(ASSET, 'effect/imagedata'))
+    ? fs.readdirSync(path.join(ASSET, 'effect/imagedata')).map((f) => f.toLowerCase())
+    : [],
+);
+const brokenImg: string[] = [];
+if (fs.existsSync(animDir)) {
+  for (const f of fs.readdirSync(animDir).filter((x) => x.toLowerCase().endsWith('.ini'))) {
+    const anim = parseAnimationData(fs.readFileSync(path.join(animDir, f), 'utf8'));
+    if (!anim.dataFile) continue;
+    if (!imgHave.has(anim.dataFile.toLowerCase())) brokenImg.push(f.replace(/\.ini$/i, '').toLowerCase());
+  }
+}
+brokenImg.sort();
+const known = Object.keys(KNOWN_BROKEN_IMAGEDATA).sort();
+const newBroken = brokenImg.filter((n) => !(n in KNOWN_BROKEN_IMAGEDATA));
+const healed = known.filter((n) => !brokenImg.includes(n));
+for (const n of newBroken) {
+  misses.push({ where: 'INI→ImageData', name: n, why: '新出现的坏链（DataFile 在 imagedata 找不到）—— 复核资产，别让它静默变成"没帧"' });
+}
+for (const n of healed) {
+  misses.push({ where: 'INI→ImageData', name: n, why: `已不在坏链清单里（资产被补上了？）—— 请把 KNOWN_BROKEN_IMAGEDATA 里这条删掉` });
+}
+
 const counts = effectCounts();
 console.log(`资产根 ${ASSET}`);
 console.log(`清单：${Object.entries(counts).map(([k, v]) => `${k} ${v}`).join('、')}`
   + `；扫了 ${scannedFiles} 个源文件`);
 console.log(`引用点：特效名 ${refs.length} 条、网格 ${meshes.length} 条`);
+console.log(`INI→ImageData 链：坏链 ${brokenImg.length} 个（已知 ${known.length} 个）`
+  + (brokenImg.length ? `：${brokenImg.join('、')}` : ''));
 if (misses.length === 0) {
   console.log('✓ 全部可解 —— 运行时的"不在清单里"不会因为拼写或清单过期而发生');
   process.exit(0);
