@@ -49,35 +49,66 @@ import {
  */
 class LinearTrack implements FunctionValueGenerator {
   type = 'function' as const;
-  constructor(private readonly keys: Array<[number, number]>) {}   // [时间 0..1, 值]
+  /** 每个键在 `particle.memory` 里占的槽位（`startGen` 时分配，见那里的说明） */
+  private slots: number[] | null = null;
 
-  startGen(): void { /* 无内部状态 */ }
+  /** `hold: true` = 该键沿用**上一个键**掷出的值（阶跃前的停靠点，见 `withSteps`） */
+  constructor(private readonly keys: Array<{ t: number; v: Num; hold?: boolean }>) {}
 
-  genValue(_memory: unknown, t = 0): number {
-    const ks = this.keys;
-    if (ks.length === 0) return 0;
-    if (t <= ks[0]![0]) return ks[0]![1];
-    for (let i = 1; i < ks.length; i++) {
-      const [t1, v1] = ks[i]!;
-      if (t <= t1) {
-        const [t0, v0] = ks[i - 1]!;
-        const span = t1 - t0;
-        return span <= 0 ? v1 : v0 + (v1 - v0) * ((t - t0) / span);
-      }
-    }
-    return ks[ks.length - 1]![1];
+  /**
+   * **逐粒子**掷一次区间值 —— 原版每个事件触发时取 `GetRandomNumInRange()`，是逐粒子的
+   * （`HoNewParticleEvent_*::DoItToIt`）。用 quarks 的 `particle.memory` 存：每个键一个槽，
+   * 槽位下标对同一条轨的所有粒子一致（同一条轨的 `startGen` 按同一顺序被调用）——
+   * 与框架自带的 `IntervalValue` 是同一套办法（`IntervalValue.startGen`）。
+   */
+  startGen(memory: unknown[]): void {
+    const slots: number[] = [];
+    this.keys.forEach((k, i) => {
+      // 保持键沿用上一个键的掷值（`memory.push(memory[上一个槽])`）—— 见 `withSteps`
+      if (k.hold && i > 0) memory.push(memory[slots[i - 1]!]);
+      else memory.push(k.v.k === 'n' ? k.v.v : k.v.a + Math.random() * (k.v.b - k.v.a));
+      slots.push(memory.length - 1);
+    });
+    this.slots = slots;
   }
 
-  toJSON(): { type: 'function'; keys: Array<[number, number]> } {
+  genValue(memory: unknown[], t = 0): number {
+    const ks = this.keys;
+    if (ks.length === 0) return 0;
+    /** 第 i 个键的值（已掷过就取掷出的） */
+    const val = (i: number): number => {
+      const slot = this.slots?.[i];
+      const v = ks[i]!.v;
+      // 没经过 startGen（不该发生）时退回区间中点 —— 退回 0 会让粒子凭空消失，更糟
+      if (slot == null) return v.k === 'n' ? v.v : (v.a + v.b) / 2;
+      return memory[slot] as number;
+    };
+    const tAt = (i: number): number => ks[i]!.t;
+    if (t <= tAt(0)) return val(0);
+    for (let i = 1; i < ks.length; i++) {
+      if (t <= tAt(i)) {
+        const span = tAt(i) - tAt(i - 1);
+        return span <= 0 ? val(i) : val(i - 1) + (val(i) - val(i - 1)) * ((t - tAt(i - 1)) / span);
+      }
+    }
+    return val(ks.length - 1);
+  }
+
+  toJSON(): { type: 'function'; keys: Array<{ t: number; v: Num }> } {
     return { type: 'function', keys: this.keys };
   }
 
-  clone(): LinearTrack { return new LinearTrack(this.keys.map((k) => [k[0], k[1]] as [number, number])); }
+  clone(): LinearTrack { return new LinearTrack(this.keys.map((k) => ({ ...k }))); }
 }
 
 /* ─────────── 值映射 ─────────── */
 
 /** PT 的标量（定值或区间）→ quarks 的值发生器 */
+/** `Num` 整体除以一个数（区间则两端都除）—— 用于把尺寸折算成相对初值的倍率 */
+function divNum(n: Num, by: number): Num {
+  return n.k === 'n' ? { k: 'n', v: n.v / by } : { k: 'r', a: n.a / by, b: n.b / by };
+}
+
 function numGen(n: Num | null | undefined, fallback = 0): ConstantValue | IntervalValue {
   if (!n) return new ConstantValue(fallback);
   return n.k === 'n' ? new ConstantValue(n.v) : new IntervalValue(n.a, n.b);
@@ -114,13 +145,14 @@ function colorToGradient(stops: Array<{ t: number; c: Rgba }>): Gradient {
  */
 function factorTrack(
   init: Num | null | undefined,
-  kfs: Array<{ t: number; v: Num }>,
+  kfs: Array<{ t: number; v: Num; hold?: boolean }>,
   final: Num | null | undefined,
 ): ConstantValue | IntervalValue | LinearTrack {
   const v0 = midOf(init, 1) || 1;
-  const keys: Array<[number, number]> = [[0, 1]];
-  for (const k of kfs) if (k.t > 0 && k.t < 1) keys.push([k.t, midOf(k.v) / v0]);
-  if (final) keys.push([1, midOf(final) / v0]);
+  const keys: Array<{ t: number; v: Num; hold?: boolean }> = [{ t: 0, v: { k: 'n', v: 1 } }];
+  // 值原样带过去（含区间）：区间由 `LinearTrack` **逐粒子**掷一次，别在这里压成中点
+  for (const k of kfs) if (k.t > 0 && k.t < 1) keys.push({ t: k.t, v: divNum(k.v, v0), hold: k.hold });
+  if (final) keys.push({ t: 1, v: divNum(final, v0) });
   if (keys.length === 1) return new ConstantValue(1);   // 无终点也无中间帧 ⇒ 尺寸恒定
   return new LinearTrack(keys);
 }
@@ -153,14 +185,16 @@ const ZERO_VEC: Vec3 = { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', 
  */
 function withSteps<T>(
   events: Array<{ t: number; v: T; fade: boolean }>, anchor: T, eps: number,
-): Array<{ t: number; v: T }> {
-  const out: Array<{ t: number; v: T }> = [];
+): Array<{ t: number; v: T; hold?: boolean }> {
+  const out: Array<{ t: number; v: T; hold?: boolean }> = [];
   let cur = anchor;
   for (const e of events) {
     if (e.fade) {
       out.push({ t: e.t, v: e.v });
     } else {
-      out.push({ t: e.t, v: cur });
+      // `hold: true` = "这个键只是把上一个值保持到 t"（阶跃前的停靠点）——
+      // 区间值必须**沿用上一个键掷出的数**，否则保持键会自己再掷一次 ⇒ 段内出现假斜坡。
+      out.push({ t: e.t, v: cur, hold: true });
       out.push({ t: Math.min(1, e.t + eps), v: e.v });
     }
     cur = e.v;
@@ -182,7 +216,7 @@ function kfOf(
 /** 由 emitter 的 keyframes 取某属性的数值关键帧（时间已归一化为寿命比例） */
 function numKfOf(
   em: PartEmitter, prop: string, lifetimeSec: number, anchor: Num,
-): Array<{ t: number; v: Num }> {
+): Array<{ t: number; v: Num; hold?: boolean }> {
   const kfs = em.keyframes[prop];
   if (!kfs) return [];
   const events = kfs.filter((k) => k.value.k === 'num')
@@ -730,6 +764,12 @@ export function convertPart(
     );
 
     // 颜色：整条轨道交给 Gradient（startColor 传白，见文件头条 3）
+    // ⚠ 颜色轨目前**不支持逐粒子掷区间**（`Gradient` 是按 t 求值的）：区间值按中点取。
+    //   实测语料里颜色事件全是定值（0 个区间），故先不为此扩框架；真出现区间时这里会说出来。
+    if ((em.keyframes['color'] ?? []).some((k) => k.value.k === 'color'
+      && [k.value.v.r, k.value.v.g, k.value.v.b, k.value.v.a].some((c) => c.k === 'r'))) {
+      notes.push('color 轨含区间值 ⇒ 按**中点**取（未逐粒子掷；原版每个事件是逐粒子随机的）');
+    }
     const colorStops = [
       ...(em.initialColor ? [{ t: 0, c: em.initialColor }] : []),
       // anchor = 阶跃前的颜色；缺省 (1,1,1,1) = 原版 `HoNewParticle()` 构造的默认色（我们 startColor 也传白）
@@ -771,6 +811,10 @@ export function convertPart(
     // 实测 49 个文件带它、其中 **22 个与初速不同** ⇒ 此前未应用是看得出的差异。
     // anchor = 阶跃前的速度：缺省 0（原版构造里 `Dir` 为 0）
     const velKf = vecKfOf(em, 'velocity', lifeSec, em.initialVelocity ?? ZERO_VEC);
+    // 同上：速度轨的区间也只取中点（语料里 velocity 事件全是定值，0 个区间）
+    if (velKf.some((k) => [k.v.x, k.v.y, k.v.z].some((c) => c.k === 'r'))) {
+      notes.push('velocity 轨含区间值 ⇒ 按**中点**取（未逐粒子掷）');
+    }
     if (velKf.length) {
       behaviors.push(new VelocityTrack(velKf));
       notes.push(`速度轨 ${velKf.length} 个关键帧（逐帧覆盖 velocity，speedModifier 归 1）`);
