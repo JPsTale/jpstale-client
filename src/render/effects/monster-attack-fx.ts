@@ -858,20 +858,7 @@ function playMotionSound(ctx: MonsterAttackEventCtx): void {
   ctx.sfx?.playSoundByName(ctx.modelKey, ctx.motionSound, ctx.pos, ctx.effectId);
 }
 
-/**
- * 【临时】卡死排查用的控制台断点（定位完删）。
- * ⚠ **同一行只打一次**：否则每次攻击都打一串，Chrome 会给每条附上几百层 rAF 异步栈 ⇒ 控制台被刷爆
- *（用户 2026-09-18 明确要求干掉）。诊断需要的"执行顺序"第一次就完整给出 ✓。
- */
-const fxdbgSeen = new Set<string>();
-const fxdbg = (m: string): void => {
-  if (fxdbgSeen.has(m)) return;
-  fxdbgSeen.add(m);
-  console.log(`[fxdbg] ${m}`);
-};
-
 export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<boolean> | null {
-  fxdbg('enter effectId=0x' + ctx.effectId.toString(16) + ' key=' + (ctx.keyCode ?? '-') + ' kind=' + ctx.motionKind);
   // **第一件事就是动作音**（在一切 return 之前）—— 见 `playMotionSound` 上那三条踩坑记录。
   // 以前它在每个分支里各写一次，正是"新加一条分支就漏一处"的来源；现在只有这一句。
   playMotionSound(ctx);
@@ -1013,7 +1000,6 @@ function fireDef(
     else reportFallback('fx', `怪 #${ctx.effectId} 的 ${pickMonsterFxAsset(def, ctx.variant)} `
       + '以**目标**为落点，但调用方没给 targetBase ⇒ 本次按怪物自己算（位置会偏）');
   }
-  fxdbg('落点算完，准备起粒子');
   const at = {
     x: base.x + off.x,
     // `height` 为 'geoY' 时用偏移结果的 y（原版 `pY + GeoResult_Y` 那种写法）
@@ -1026,18 +1012,13 @@ function fireDef(
     const d = def.dynLight;
     ctx.dynLights?.set(at.x, at.y, at.z, d.r, d.g, d.b, d.a, d.power, d.decPower);
   }
-  fxdbg('fireDef 开始：asset=' + pickMonsterFxAsset(def, ctx.variant) + ' parts=' + (def.parts?.length ?? 0)
-    + ' fly=' + !!def.fly + ' code=' + (def.code ?? '-') + ' mesh=' + (def.mesh ? def.mesh.path : '-'));
-  // ↑ 去掉模板字符串：同一只怪的这条内容固定 ⇒ 去重后只打一次 ✓
   // **同帧的 ASE 网格**（原版 `SetAssaEffect("xxx.ASE", …)`）：与粒子同源、同帧起
   if (def.mesh) {
-    fxdbg('进入 mesh 分支：回调存在=' + !!ctx.fireMesh);
-    if (ctx.fireMesh) { fxdbg('调用 ctx.fireMesh …'); ctx.fireMesh(def.mesh, at); fxdbg('ctx.fireMesh 返回'); }
+    if (ctx.fireMesh) ctx.fireMesh(def.mesh, at);
     else reportFallback('fx', `怪 #${ctx.effectId} 的 ASE 网格 ${def.mesh.path} 没起：调用方没给 fireMesh`);
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
-  fxdbg('主系统 spawn 已发起');
   // **同帧的其余系统**（`def.parts`）：各自的高度/缩放，落点与主系统一致
   const spawnOne = (asset: string, at: { x: number; y: number; z: number },
                     opts: { size?: number; scale?: number; delaySec?: number },

@@ -59,6 +59,8 @@ export interface StaticModelResult {
 
 /** 一个对象的逐帧轨道（`group` 会被逐帧设 position / scale） */
 export interface StaticMeshTrack {
+  /** 该轨道的"轴向非 1"告警是否已上报过（**每轨道一次**，否则每帧都报 ⇒ 刷屏） */
+  axisWarned?: boolean;
   group: THREE.Object3D;
   /** 位移关键帧（原版 `GetPosFrame`）：帧号 160/帧，值即 PT 空间平移 */
   keys: Array<{ frame: number; x: number; y: number; z: number }>;
@@ -105,9 +107,12 @@ export function applyStaticMeshTracks(tracks: StaticMeshTrack[], frame: number):
       //   是我把"厚度"当成实心饼，没想到"贴地薄片 ×N = 竖起来发光"。
       t.group.scale.set(sx, sz, sy);
       // 增长不在 z 上时（别的资产）本读法未必适用 —— 必须可见（AGENTS #12）
-      if (Math.abs(sx - 1) > 1e-3 || Math.abs(sy - 1) > 1e-3) {
+      // ⚠ **每轨道只报一次**：这条在 `applyStaticMeshTracks`（逐帧调）里 ⇒ 不设标记就每帧报一次、刷屏
+      //（用户 2026-09-18 实测：日志被它刷满）。不同资产 x/y 是否非 1 不同 ⇒ 按轨道记，别全局合一。
+      if (!t.axisWarned && (Math.abs(sx - 1) > 1e-3 || Math.abs(sy - 1) > 1e-3)) {
+        t.axisWarned = true;
         reportFallback('fx', `静态网格的缩放轨道 x/y 非 1（x=${sx.toFixed(2)}, y=${sy.toFixed(2)}）`
-          + ' ⇒ 增长可能不在 PT 的 z（= three 的 y）上，本模块按 z 当"向上"解释');
+          + ' ⇒ 增长可能不在 PT 的 z（= three 的 y）上，本模块按 z 当"向上"解释（每条轨道只报一次）');
       }
     }
   }
@@ -122,27 +127,19 @@ const toYup = (x: number, y: number, z: number): [number, number, number] => [x,
  * @param smdPath 资产相对路径（如 `image\sinimage\assaeffect\startmagic\maam2.smd`）
  * @param opts.scale 整体缩放（原版 `SetAssaEffect` 的尺寸由资产自身决定，这里留个口子）
  */
-/** 【临时诊断】已打过点的静态网格路径（定位完删） */
-const smdDbgSeen = new Set<string>();
-
 export async function loadStaticSmd(
   smdPath: string,
   opts: { scale?: number } = {},
 ): Promise<StaticModelResult | null> {
   const p = normalizeTexturePath(smdPath);
-  // 【临时诊断】同一份文件只打一次（定位完删）
-  const dbgOnce = !smdDbgSeen.has(p);
-  if (dbgOnce) smdDbgSeen.add(p);
   const res = await fetch('/res/' + p);
-  if (dbgOnce) console.log(`【fxdbg】static-fx: fetch ${p} → ok=${res.ok}`);
   if (!res.ok) return null;
   const smd = parseSmb(await res.arrayBuffer());
   // ⚠ **逐对象建网格**这段是按 `smd.objects` 循环的 —— 文件若不兼容/畸形，读出的对象数可能是
   //   天文数字 ⇒ 循环把主线程钉死（无日志、无报错，表现为"卡住"）。这里**先报数、再设上限**：
   //   超限就上报并放弃（AGENTS #12：宁可显式失败，也不静默卡死）。
-  if (dbgOnce) console.log(`【fxdbg】static-fx: parseSmb 完成 objects=${smd.objects?.length} materials=${smd.materials?.length ?? 0}`);
   if (!smd.objects || smd.objects.length > 512) {
-    console.log(`[fxdbg] static-fx: 对象数异常（${smd.objects?.length}）⇒ 放弃该网格（不冒卡死的风险）`);
+    console.log(`[static-fx] 对象数异常（${smd.objects?.length}）⇒ 放弃该网格（不冒卡死的风险）`);
     reportFallback('fx', `静态网格 ${p} 的对象数异常（${smd.objects?.length} 个）⇒ 放弃加载`
       + '（防"畸形文件把主线程钉死"；见 static-fx.loadStaticSmd 的守卫）');
     return null;
@@ -166,10 +163,9 @@ export async function loadStaticSmd(
   /** 逐帧位移轨道（收集后交给调用方推进，见 `StaticModelResult.tracks`） */
   const tracks: StaticMeshTrack[] = [];
 
-  // 【临时诊断】已打过点的文件（定位完删）
   let objIdx = 0;
   for (const obj of smd.objects) {
-    if (dbgOnce && ++objIdx % 64 === 0) console.log(`【fxdbg】static-fx: 建网格 ${objIdx}/${smd.objects.length}`);
+    objIdx++;
     // 每个对象一个 Group：**旋转**烘进几何（静态），**位移**逐帧写进 Group.position
     //（= 原版 `qmat` 的用法：`TmRotate` 做旋转、`GetPosFrame` 写 `_41.._43` 做平移）
     const objGroup = new THREE.Group();
@@ -260,6 +256,7 @@ export async function loadStaticSmd(
   }
 
   if (opts.scale && opts.scale !== 1) root.scale.setScalar(opts.scale);
+  console.log(`[static-fx] ${p} 完成：对象 ${objIdx} 个、轨道 ${tracks.length} 条、贴图 ${usedTextures.length} 张`);
   return {
     group: root,
     textures: usedTextures,
@@ -267,7 +264,7 @@ export async function loadStaticSmd(
     animated: tracks.length > 0,
     tracks,
     // eslint-disable-next-line no-console
-    ...(dbgOnce ? (console.log(`【fxdbg】static-fx: ${p} 完成，对象 ${objIdx} 个、轨道 ${tracks.length} 条、贴图 ${usedTextures.length} 张`), {}) : {}),
+
     dispose() {
       root.traverse((o) => {
         const m = o as THREE.Mesh;
