@@ -135,6 +135,8 @@ export const CODE_SKILL_FX: Record<string, (
         pos: { x: caster.x, y: caster.y + (fly.lift ?? 0), z: caster.z },
         yaw: ctx.casterYaw ?? 0,
         target: getTarget,
+        // 目标"一开始就取不到"（或发射瞬间已死）时的兜底落点 —— 用调用方给的快照
+        aimFallback: target ?? null,
         motionEvent: ctx.motionEvent ?? 1,
       },
     );

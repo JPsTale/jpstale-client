@@ -69,6 +69,15 @@ export interface FlyLaunch {
   target: () => { x: number; y: number; z: number } | null;
   /** 本条动作的第几个事件帧（1 起，= 原版 `MotionEvent`）；驱 ±偏航镜像 */
   motionEvent?: number;
+  /**
+   * **兜底落点**（目标"一开始就取不到"时用）。
+   *
+   * 规则（用户 2026-09-18 定）：**目标死亡/消失 ⇒ 飞向它最后的位置**。
+   * 飞行途中取不到 ⇒ 沿用 `lastTarget`（上一次成功取到的位置）✓ 已有；
+   * 但**第一帧就取不到**时 `lastTarget` 还是 (0,0,0) ⇒ 会飞向世界原点 ✗ —— 用这个补上
+   * （调用方给的多是"发射那一刻记下的落点"，正是"最后位置"）。
+   */
+  aimFallback?: { x: number; y: number; z: number } | null;
 }
 
 /**
@@ -167,6 +176,7 @@ export function runMonsterFly(
     done: false, stopped: false, handles: [], retire: RETIRE_FRAMES, deps,
   };
   if (t0) l.lastTarget.set(t0.x, t0.y, t0.z);
+  else if (launch.aimFallback) l.lastTarget.set(launch.aimFallback.x, launch.aimFallback.y, launch.aimFallback.z);
   live.push(l);
 
   deps.log?.(`  ✈ 飞出物 ${asset}${fly.systems?.length ? ` +${fly.systems.length}` : ''} 起飞（`
