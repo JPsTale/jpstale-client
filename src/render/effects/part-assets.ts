@@ -1,18 +1,16 @@
 /**
  * `.part` 粒子资产加载 —— **按精确路径**读脚本 + 解码贴图，带缓存与诊断。
  *
- * **两段式**（用户 2026-09-18 定调）：
- *   ① `parsePartAtPath` —— 读脚本文本 + 解析成 IR（便宜）⇒ **启动预载只做这一段**
- *   ② `decodePartTextures` —— 逐张贴图解码（贵）⇒ 真的要用到才做（贴图本身在
+ * **两段式**：
+ *   ① `parsePartAtPath` 读脚本 + 解析成 IR（便宜）⇒ 启动预载只做这一段
+ *   ② `decodePartTextures` 逐张贴图解码（贵）⇒ 第一次用到才做（贴图本身在
  *      `char-texture-loader` 里已按路径全局缓存）
- * 于是"启动时把粒子都加载好、运行时不探测"与"启动时不解码几百张贴图"两件事同时成立。
  *
- * **路径只从注册表的清单来**（`effect-registry.lookupEffect`）。此前是"两个脚本目录各试一遍"
- * —— 那是我们发明的探测：原版是按名查**内存注册表**（启动时按硬编码清单预载，
- * `HoNewParticleMgr.cpp:220` → `FindScript`），见 `scripts/scan-effect-names.ts` 的说明。
+ * 路径**只从注册表的清单来**（`effect-registry.lookupEffect`）—— 原版也是按名查内存注册表
+ * （`HoNewParticleMgr.cpp:220` → `FindScript`），不探测目录。
  *
- * **失败一律带原因**（`{ fail }` / 抛错），由 `effect-registry` 统一上报 ——
- * 旧版的 `catch(() => null)` 会把"资产缺失/清单过期"伪装成"本来就没有这个名字"（AGENTS #12）。
+ * 失败一律带原因（`{ fail }`），由 `effect-registry` 上报；`catch(() => null)` 会把
+ * "资产缺失/清单过期"伪装成"本来就没有这个名字"（AGENTS #12）。
  */
 import type * as THREE from 'three';
 import { cachedFetch } from '../../core/asset-cache.js';
@@ -65,21 +63,13 @@ async function fetchText(url: string): Promise<string | null> {
 }
 
 /**
- * `.part` 源语的**翻译缺口** —— **去重收集**，预载结束时打一张表（用户 2026-09-18 定调）。
- *
- * `.part` 是原版自研的源语，我们的"解析 → 转换"只覆盖一部分（此前两层都是**静默丢弃**的，
- * "粒子看着不动"就来自这里）。两类缺口：
- *   · `system.unhandled`：**解析器没消费的键**（源语未覆盖）
- *   · **未应用的时间轴**：解析收得到、转换只应用了一部分（清单**只有一份**：
- *     `part-to-quarks.APPLIED_KEYFRAME_PROPS`，AGENTS #15）
- *
- * 它**不是**运行期降级（不是"这一招放不出来"），而是**我们还没翻译的源语** ——
- * 属于**后续开发的参考清单**。两条判据决定了它的形态：
- *   · 按资产逐条 `reportFallback` 会把控制台刷成一片（预载 445 个脚本时尤其），
- *     而那 445 行里其实只有几种键；**去重之后它是一张很短的表**（实测：键 2 + 轨道 3）。
- *   · 它要**看得到全貌**：预载正好把每个脚本都解析了一遍 ⇒ 统计天然完整，
- *     由 `printPartGapSummary()` 在预载结束时打一次（与离线扫描器
- *     `scripts/scan-part-coverage.ts` 同源同义 —— 那份给"不启动引擎"时用）。
+ * `.part` 源语的**翻译缺口** —— 去重收集，预载结束时打一张表（后续开发参考，不是运行期降级：
+ * 逐资产 `reportFallback` 是 445 行噪声，去重后只有几种键）。两类缺口：
+ *   · `system.unhandled`：解析器没消费的键（源语未覆盖）
+ *   · 未应用的时间轴：转换只应用了一部分，清单只有一份
+ *     （`part-to-quarks.APPLIED_KEYFRAME_PROPS`，AGENTS #15）
+ * 预载每次都完整解析一遍全部脚本 ⇒ 这张表天然是全貌。与离线扫描器
+ * `scripts/scan-part-coverage.ts` 同源同义（那份给不启动引擎的场合用）。
  */
 const gapKeys = new Map<string, Set<string>>();      // 源语未覆盖的键 → 用到它的脚本
 const gapTracks = new Map<string, Set<string>>();    // 解析了但没应用的时间轴 → 用到它的脚本

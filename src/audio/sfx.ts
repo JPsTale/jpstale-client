@@ -443,8 +443,7 @@ function playDir(dir: string | null, motion: MotionState, pos: ListenerPos): voi
     return;
   }
   const bucket = folderManifest[dir]?.[motion];
-  // 目录里**确实没有**这一桶（如 chaoscara 没有 `skill N.wav`）⇒ 该动作本就静音，是忠实的；
-  // 但"每次施法都喊一遍"没有信息量 ⇒ 走同一原因的**只喊一次**通道（同 `reportBlocked` 的其余用途）。
+  // 资产里确实没有这一桶（如 chaoscara 没有 `skill N.wav`）⇒ 该动作本就静音；但别每次施法都喊一遍
   if (!bucket || bucket.length === 0) {
     reportBlocked(`bucket:${dir}:${motion}`, `playDir: dir=${dir}, motion=${motion} → 资产里没有这一桶`);
     return;

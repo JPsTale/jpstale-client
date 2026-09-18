@@ -1,23 +1,20 @@
 /**
  * 特效资产**注册表** —— 「名字 → 精确路径」的唯一入口（同步查表）+ 启动预载。
  *
- * 为什么这样（用户 2026-09-18 定调）：**原版从不探测文件系统** —— 启动时按硬编码清单预载
- * 脚本（`HoEffect.cpp:12030+` 一连 307 条 `LoadScript("Effect\\Particle\\Script\\X.part")`），
- * 运行时 `g_NewParticleMgr.Start("ChaosKaraSkill", …)` 只在内存注册表里查名字
- * （`HoNewParticleMgr.cpp:220` → `FindScript`，定义在 `:26`）。
- * 我们过去是"先试 `effect/animationdata/<名>.ini`，404 了再试 `.part`"，
- * 于是**每次 spawn 都白打一次 404**（用户实测控制台一堆 `GET /res/effect/animationdata/*.ini 404`）。
+ * 依据：原版不探测文件系统 —— 启动时按硬编码清单预载脚本（`HoEffect.cpp:12030+` 共 307 条
+ * `LoadScript("Effect\\Particle\\Script\\X.part")`），运行时 `g_NewParticleMgr.Start(name)` 只在
+ * 内存注册表里查名字（`HoNewParticleMgr.cpp:220` → `FindScript`，定义在 `:26`）。
+ * 我们过去按名字试两个目录（ini 404 了再退 `.part`），每次 spawn 白打一次 404。
  *
- * 现在：
- *   ① 清单 `effect-names.generated.json`（`npm run fx-names` 生成）**随包进来** ⇒ `lookupEffect`
- *      同步返回精确路径，**不可能 404**，也没有"两族试哪家"的歧义（四族名字实测交集 0）。
- *   ② `preloadEffects()` 启动时按清单把 ini/part **解析**一遍（只读文本，**不解码贴图** ——
- *      那一步留给第一次真的要用到时，见两个 loaders 的两段式说明）。
- *   ③ 家族 → 入口的分派**只在这一张表里**（`PARSE` / `LOAD`）：Lua 前端落地时在这里加一行，
- *      预载、运行时播放、将来的烘焙取资产三处同时生效（用户要求的"一致的运行时接口"）。
+ * 三条约束：
+ *   ① 清单 `effect-names.generated.json`（`npm run fx-names` 生成）随包进来 ⇒ `lookupEffect` 同步、
+ *      无 I/O、不会 404（四族名字交集实测为 0，故名字本身就能定家族）。
+ *   ② `preloadEffects()` 只**解析**（读文本），解码贴图留给第一次用到时（见两个 loaders 的分段说明）。
+ *   ③ 家族 → 入口的分派只有 `PARSE` / `LOAD` 两张表；新家族（Lua）在这里加一行，
+ *      预载、播放、将来的烘焙三处同时生效。
  *
- * 未知名字与解析失败**一律上报**（`reportFallback`）—— 旧版 `catch(() => null)` 会把
- * "资产缺失/清单过期"伪装成"本来就没有这个名字"（AGENTS #12）。
+ * 未知名字与解析失败一律上报（`reportFallback`）：旧版 `catch(() => null)` 会把"资产缺失/
+ * 清单过期"伪装成"本来就没有这个名字"（AGENTS #12）。
  */
 import {
   parseEffectAtPath, decodeEffectFrames,
@@ -85,7 +82,7 @@ export async function loadPartByRef(ref: PartRef): Promise<LoadedPart | null> {
 /** 名字 → 加载好的 INI 特效（给已经确定是 INI 的调用方，如 `quarks-runtime` 的药水/Light1） */
 export async function loadEffectByName(name: string): Promise<LoadedEffect | null> {
   const entry = lookupEffect(name);
-  if (!entry) { reportFallback('fx', `INI 特效「${name}」不在清单里（npm run fx-names 未收录？）`); return null; }
+  if (!entry) { reportFallback('fx', `INI 特效「${name}」不在清单里（重跑 npm run fx-names）`); return null; }
   if (entry.family !== 'ini') {
     reportFallback('fx', `「${name}」不是 INI 特效，而是 ${entry.family}（${entry.path}）`);
     return null;
@@ -96,7 +93,7 @@ export async function loadEffectByName(name: string): Promise<LoadedEffect | nul
 /** 名字 → 加载好的 `.part`（同上，给确定是 `.part` 的调用方） */
 export async function loadPartByName(name: string): Promise<LoadedPart | null> {
   const entry = lookupEffect(name);
-  if (!entry) { reportFallback('fx', `.part 资产「${name}」不在清单里（npm run fx-names 未收录？）`); return null; }
+  if (!entry) { reportFallback('fx', `.part 资产「${name}」不在清单里（重跑 npm run fx-names）`); return null; }
   if (entry.family !== 'part') {
     reportFallback('fx', `「${name}」不是 .part 资产，而是 ${entry.family}（${entry.path}）`);
     return null;
@@ -112,7 +109,7 @@ export type LoadedAny =
 /** 条目 → 加载好的资产（家族分派在 `LOAD` 表里；不可播的家族上报原因后返回 null） */
 export async function loadByEntry(entry: EffectEntry): Promise<LoadedAny | null> {
   const why = familyUnavailable(entry.family);
-  if (why) { reportFallback('fx', `特效「${entry.name}」（${entry.path}）：${why}，本次不放`); return null; }
+  if (why) { reportFallback('fx', `特效「${entry.name}」（${entry.path}）${why} ⇒ 不放`); return null; }
   const out = await LOAD[entry.family]!(entry);
   if (!out) return null;                       // 失败原因已在 loadXByRef 里上报
   return entry.family === 'ini'
@@ -129,10 +126,7 @@ export interface PreloadReport {
   failed: Array<{ name: string; path: string; why: string }>;
   /** `.part` 翻译缺口（去重后）：几**种**键/时间轴、涉及几个脚本 —— 全表已打到控制台 */
   gaps: { keys: number; tracks: number; scripts: number };
-  /**
-   * 解析成功、但**一张帧图都拿不到**的特效（如 ImageData 断链）—— 与 `failed` 是两回事：
-   * `failed` 是"解析不出来"，这里是"解析出来了却放不出东西"。**不藏**，写进回执（用户 2026-09-18）。
-   */
+  /** 解析成功但一张帧图都拿不到的特效（如 ImageData 断链）—— 与 `failed`（解析不出来）分开报 */
   noFrames: string[];
   ms: number;
 }
@@ -144,11 +138,9 @@ let lastReport: PreloadReport | null = null;
 const PRELOAD_CONCURRENCY = 12;
 
 /**
- * **启动时调一次**：按清单把能播的两族（ini / part）解析进缓存。
- *
- * 多处启动点（游戏 / 两个 lab / 检查器）都调它也没关系 —— 只跑一次，后来者拿到同一个 Promise。
- * 只做"解析"不做"解码贴图"：608 份资产全解贴图是几百 MB 与数秒，而原版也不是开局就解完
- * （`.part` 的贴图是 `Start` 时进纹理管理器的）。
+ * **启动时调一次**：按清单把能播的两族（ini / part）解析进缓存 —— 只解析，不解码贴图
+ * （608 份全解是几百 MB 与数秒；原版 `.part` 的贴图也是 `Start` 时才进纹理管理器）。
+ * 只跑一次，多处启动点拿到同一个 Promise。
  */
 export function preloadEffects(): Promise<PreloadReport> {
   if (!preloadJob) preloadJob = runPreload();
@@ -164,8 +156,7 @@ async function runPreload(): Promise<PreloadReport> {
   const t0 = performance.now();
   const jobs: Array<{ entry: EffectEntry; run: () => Promise<EffectParseOutcome | PartParseOutcome> }> = [];
   const families: Record<string, [number, number]> = {};
-  // 只预载**能播**的家族（有解析器的那两族）。lua/luac 现在没有解析器，预载它们只是白拿字节 ——
-  // 而且**不进回执**：写成 `lua 0/42` 会被误读成"42 个失败"，其实根本没去读（前端落地后自会进回执）。
+  // 只预载有解析器的家族（lua/luac 还没有 ⇒ 白拿字节，且 `0/42` 会被误读成"42 个失败"）
   for (const family of EFFECT_FAMILIES) {
     const run = PARSE[family];
     if (!run) continue;
@@ -188,8 +179,7 @@ async function runPreload(): Promise<PreloadReport> {
         reportRefFailure(job.entry, out.fail);
       } else {
         families[job.entry.family]![0]++;
-        // 帧图一张都没有（`frameSpecs` 里全是 null 路径）⇒ 这份特效放不出东西。
-        // 已由 `parseEffectAtPath` 逐条上报，这里只是计数，好让回执自己说出来（别让它看起来"全绿"）
+        // 帧图全无 ⇒ 放不出东西（已由 parseEffectAtPath 逐条上报，这里只计数给回执）
         if ('frameSpecs' in out && out.frameSpecs.length > 0 && out.frameSpecs.every((f) => !f.path)) {
           noFrames.push(job.entry.name);
         }
@@ -199,8 +189,7 @@ async function runPreload(): Promise<PreloadReport> {
   await Promise.all(Array.from({ length: Math.min(PRELOAD_CONCURRENCY, jobs.length) }, worker));
 
   const ms = Math.round(performance.now() - t0);
-  // 预载把每个脚本都解析了一遍 ⇒ 这时报缺口才是**完整的一张表**（去重后很短，
-  // 不是"每资产一行"的噪声）。它是**后续开发参考**，不是运行期降级（用户 2026-09-18 定调）。
+  // 预载解析过全部脚本 ⇒ 此刻的缺口统计才完整（去重后的短表，不是每资产一行）
   printPartGapSummary();
   const report: PreloadReport = { families, failed, gaps: partGapCounts(), noFrames, ms };
   lastReport = report;

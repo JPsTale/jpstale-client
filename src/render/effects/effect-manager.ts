@@ -167,18 +167,13 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
     }
     pending++;
     try {
-      // **名字 → 清单条目**（同步、纯本地查表，见 `effect-registry`）：家族由名字决定，
-      // 不再"先试 animationdata 的 .ini、404 了再退 .part" —— 那是我们发明的探测，
-      // 原版是按名查内存注册表，而且每个 `.part` 资产都会白打一次 404（用户实测控制台刷屏）。
-      const entry = lookupEffect(name);
+      const entry = lookupEffect(name);       // 名字 → 条目（家族由名字定，见 effect-registry）
       if (!entry) {
-        reportFallback('fx', `特效「${name}」不在清单里（ini/part/lua/luac 都没有这个名字；`
-          + '资产增减后要重跑 `npm run fx-names`）⇒ 不放');
+        reportFallback('fx', `特效「${name}」不在清单里（重跑 npm run fx-names）⇒ 不放`);
         return false;
       }
-      // 家族分派与"这个家族还播不了"的上报都在注册表里（**唯一一处**）
-      const asset = await loadByEntry(entry);
-      if (!asset) return false;                    // 失败原因已由注册表上报
+      const asset = await loadByEntry(entry);    // 家族分派与失败上报都在注册表里
+      if (!asset) return false;
       if (asset.family === 'part') {
         loaded++;
         partDiag = asset.part.diag;
@@ -241,8 +236,7 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
       const entry = lookupEffect(name);
       if (!entry || entry.family !== 'part') {
         reportFallback('fx', `「${name}」要可停止句柄，但它`
-          + (entry ? `是 ${entry.family} 资产（${entry.path}）` : '不在特效清单里')
-          + '（INI 广告牌那条路是一次性播完的形态，没有句柄可给）');
+          + (entry ? `是 ${entry.family} 资产「${entry.path}」` : '不在清单里'));
         return null;
       }
       const part = await loadPartByRef(entry);
