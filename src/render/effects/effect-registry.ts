@@ -129,6 +129,11 @@ export interface PreloadReport {
   failed: Array<{ name: string; path: string; why: string }>;
   /** `.part` 翻译缺口（去重后）：几**种**键/时间轴、涉及几个脚本 —— 全表已打到控制台 */
   gaps: { keys: number; tracks: number; scripts: number };
+  /**
+   * 解析成功、但**一张帧图都拿不到**的特效（如 ImageData 断链）—— 与 `failed` 是两回事：
+   * `failed` 是"解析不出来"，这里是"解析出来了却放不出东西"。**不藏**，写进回执（用户 2026-09-18）。
+   */
+  noFrames: string[];
   ms: number;
 }
 
@@ -170,6 +175,7 @@ async function runPreload(): Promise<PreloadReport> {
   }
 
   const failed: PreloadReport['failed'] = [];
+  const noFrames: string[] = [];
   let next = 0;
   const worker = async (): Promise<void> => {
     for (;;) {
@@ -182,6 +188,11 @@ async function runPreload(): Promise<PreloadReport> {
         reportRefFailure(job.entry, out.fail);
       } else {
         families[job.entry.family]![0]++;
+        // 帧图一张都没有（`frameSpecs` 里全是 null 路径）⇒ 这份特效放不出东西。
+        // 已由 `parseEffectAtPath` 逐条上报，这里只是计数，好让回执自己说出来（别让它看起来"全绿"）
+        if ('frameSpecs' in out && out.frameSpecs.length > 0 && out.frameSpecs.every((f) => !f.path)) {
+          noFrames.push(job.entry.name);
+        }
       }
     }
   };
@@ -191,13 +202,16 @@ async function runPreload(): Promise<PreloadReport> {
   // 预载把每个脚本都解析了一遍 ⇒ 这时报缺口才是**完整的一张表**（去重后很短，
   // 不是"每资产一行"的噪声）。它是**后续开发参考**，不是运行期降级（用户 2026-09-18 定调）。
   printPartGapSummary();
-  const report: PreloadReport = { families, failed, gaps: partGapCounts(), ms };
+  const report: PreloadReport = { families, failed, gaps: partGapCounts(), noFrames, ms };
   lastReport = report;
   const parts = Object.entries(families)
     .filter(([, [, total]]) => total > 0)
     .map(([f, [ok, total]]) => `${f} ${ok}/${total}`);
   console.log(`[fx] 预载完成：${parts.join('、')}`
     + (failed.length ? `，**失败 ${failed.length}**（见降级清单）` : '')
-    + `，用时 ${ms}ms`);
+    + `，用时 ${ms}ms`
+    + (noFrames.length
+      ? `｜⚠ ${noFrames.length} 份特效**一张帧图都拿不到**（ImageData 链断，已逐条上报）：${noFrames.join('、')}`
+      : ''));
   return report;
 }

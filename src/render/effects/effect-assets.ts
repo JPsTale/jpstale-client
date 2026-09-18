@@ -16,6 +16,7 @@
  */
 import type * as THREE from 'three';
 import { cachedFetch } from '../../core/asset-cache.js';
+import { reportFallback } from '../../char/fallback-log.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
 import {
   parseAnimationData, parseImageData, resolveImageFrames, EFFECT_HZ,
@@ -122,8 +123,10 @@ async function parseEffectUncached(ref: EffectRef): Promise<EffectParseOutcome> 
     imageIni = imgPath;
     const imgText = await fetchText('/res/' + imgPath);
     if (imgText === null) {
-      // ⚠ 这是**资产自带**的坏链（我方 client 里正好 3 个：groundpike / round2 / skillroarlinepartice1，
-      //   见 `scripts/verify-fx-names.ts` 的已知清单），不是我们拼错路径 —— 说清楚是哪一个。
+      // **资产自带的坏链**（`DataFile` 指向一份不存在的 ImageData）—— 我方 client 实测 3 个：
+      // groundpike / round2 / skillroarlinepartice1（清单与成因见 `scripts/verify-fx-names.ts`）。
+      // ⚠ **不藏**：请求照发（404 就是它的信号），这里再把它作为**缺陷**点名报一次 ——
+      //   "某份特效一帧都放不出来"必须能看见，而不是只在被用到时才浮现（用户 2026-09-18）。
       imgFail = `ImageData「${imgPath}」取不到（404）`;
     } else {
       const img = parseImageData(imgText);
@@ -132,6 +135,11 @@ async function parseEffectUncached(ref: EffectRef): Promise<EffectParseOutcome> 
         framePaths = resolveImageFrames(img);
         if (!framePaths.length) imgFail = `ImageData「${imgPath}」→ 0 张帧图（Name/Count 段？）`;
       }
+    }
+    // 帧一张都拿不到 ⇒ 这份特效**放不出任何东西**：当场报出来（同资产只报一次，reportFallback 自带去重）
+    if (!framePaths.length) {
+      reportFallback('fx', `效果「${ref.name}」的 ImageData 链断了：${imgFail} ⇒ 这份特效一帧都放不出来`
+        + '（资产自带的问题，非我们拼错路径；同类清单见 scripts/verify-fx-names.ts）');
     }
   }
 
