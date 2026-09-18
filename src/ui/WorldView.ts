@@ -81,6 +81,7 @@ import { frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEn
 import { pickVisibleMonsters, VIS_TIERS, type VisibilityCandidate, type VisibilityResult } from '../render/monster-visibility.js';
 import { loadDisplayPrefs, type DisplayPrefs } from './display-prefs.js';
 import { updateWaveCamera, setWaveCameraEnabled } from '../render/wave-camera.js';
+import { setBillboardCamera } from '../render/effects/part-to-quarks.js';
 
 /** idcode → classItem（4=单手 / 6=双手），武器音效选码用（原版 WeaponPlaySound 的 HandType） */
 const ITEM_CLASS_BY_CODE = new Map<number, number>(ITEM_DEFS.map((d) => [d.code, d.class]));
@@ -1238,6 +1239,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     } catch { /* 非浏览器环境忽略 */ }
     scene.background = new THREE.Color(0x111122);
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
+      // 粒子“面向相机”的基底要用它（PtCameraFacingSpin = localangleY 的忠实形态）
+      setBillboardCamera(camera);
     // 官方后处理管线：RenderPass(主场景) → OutlinePass(hover 发光描边) → OutputPass(色彩空间输出)
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));

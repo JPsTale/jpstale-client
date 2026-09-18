@@ -28,9 +28,8 @@ import { ParticleSystem, RenderMode } from 'three.quarks';
 import {
   ConstantValue, IntervalValue, Gradient, Vector3Function,
   SizeOverLife, ColorOverLife, ApplyForce, RotationOverLife,
-  Rotation3DOverLife, AxisAngleGenerator,
-  Vector3 as QVec3,
-  type Behavior, type EmitterShape, type RotationGenerator,
+  Vector3 as QVec3, Quaternion as QQuat,
+  type Behavior, type EmitterShape, type RotationGenerator, type ValueGenerator,
   type GeneratorMemory, type Quaternion, type FunctionValueGenerator,
 } from 'quarks.core';
 import { reportFallback } from '../../char/fallback-log.js';
@@ -337,6 +336,47 @@ export class MeshRandomOrientation implements Behavior {
   reset(): void { /* 无状态 */ }
 }
 
+/** "面向相机"用的相机引用 —— 由渲染侧注册一次（`WorldView` / 实验室各一次）；粒子朝向要用它 */
+let billboardCam: THREE.Camera | null = null;
+/** 注册"面向相机"的相机（唯一入口；传 null 可注销）。只在建好相机后调一次。 */
+export function setBillboardCamera(cam: THREE.Camera | null): void { billboardCam = cam; }
+
+/**
+ * **面向相机的基底 + 局部 Y 自转**（`localangleY` 的忠实形态）—— Mesh 模式粒子专用。
+ *
+ * 为什么需要它：quarks 的 Mesh 是**世界朝向**面片（朝向只由逐粒子四元数决定）⇒
+ * 直接切过去会在一些机位**侧立看不见**（用户实测："怎么看不到对应的粒子了"）。
+ * 而原版这些粒子是 **billboard**（永远面向相机）+ `localangle` 在相机朝向上再倾斜 ⇒
+ * 这里每帧显式写：`q = 相机朝向 × Rot(局部 +Y, θ(t))`，θ 由 `初值 + 角速度 × age` **现算**
+ * （不用累加 ⇒ 不受帧率/掉帧影响）。
+ */
+const LOCAL_Y = new QVec3(0, 1, 0);
+
+export class PtCameraFacingSpin implements Behavior {
+  type = 'PtCameraFacingSpin';
+  private tmp = new QQuat();
+  constructor(private deg0: number, private speed: ValueGenerator | FunctionValueGenerator) {}
+  initialize(p: { memory: GeneratorMemory; rotation?: unknown }): void {
+    if (p.rotation && typeof p.rotation === 'object') this.speed.startGen(p.memory);
+  }
+  update(p: { memory: GeneratorMemory; age?: number; life?: number; rotation?: unknown }): void {
+    const q = p.rotation;
+    if (!billboardCam || !(q instanceof QQuat)) return;
+    const cq = billboardCam.quaternion;
+    (q as unknown as { set(x: number, y: number, z: number, w: number): void })
+      .set(cq.x, cq.y, cq.z, cq.w);                       // 基底 = 相机朝向 ⇒ 面片正对相机
+    if (!this.speed) return;
+    const t = (p.age ?? 0) / Math.max(1e-6, p.life ?? 1);
+    const deg = this.deg0 + (this.speed as { genValue(m: GeneratorMemory, t: number): number }).genValue(p.memory, t);
+    this.tmp.setFromAxisAngle(LOCAL_Y, (deg * Math.PI) / 180);
+    (q as unknown as { multiply(q2: unknown): void }).multiply(this.tmp);   // 再绕**局部 +Y** 自转
+  }
+  frameUpdate(): void { /* 无 */ }
+  toJSON(): { type: string } { return { type: this.type }; }
+  clone(): PtCameraFacingSpin { return new PtCameraFacingSpin(this.deg0, this.speed); }
+  reset(): void { /* 无状态 */ }
+}
+
 /** 单向面片的几何：单位平面在**局部 XY**（法线 = 局部 +z），尺寸由粒子 `size` 缩放 ⇒ 与原版 `sinCreateObject` 同构 */
 const ORIENTED_UNIT_QUAD = new THREE.PlaneGeometry(1, 1, 1, 1);
 
@@ -427,21 +467,7 @@ export class PartBoxEmitter implements EmitterShape {
  *   Mesh 模式下 quarks 自己把 `startRotation` 设成 `AxisAngleGenerator`（`ParticleSystem.ts:656`）
  *   ⇒ 逐粒子旋转值就是四元数 ⇒ 能表达。
  */
-export function hasLocalAngle(_em: PartEmitter): boolean {
-  // ⚠ **暂时按住（2026-09-18 用户实测）**：切到 Mesh 后这些粒子**侧对相机、看不见** ——
-  //   quarks 的 Mesh 是**世界朝向**面片，而原版这些粒子是 **billboard + 局部倾斜**。
-  //   要同时满足"面向相机"和"绕局部 Y 转"，必须在 Mesh 路径上**逐帧写入相机朝向的基底四元数**
-  //   再乘本自转（原版的真实形态）—— 那块还没做 ⇒ 现在先返回 false，保持"粒子看得见"的旧观感。
-  //   恢复条件：`PtCameraFacing` 之类的基底写完并验证过（见本仓 git 历史里 1bc5b17 的实现）。
-  return false;
-}
-
-/** 真实的判定（`hasLocalAngle` 恢复启用时用它）—— 资产声明了非零 `localangleY` */
-export function declaresLocalAngleY(em: PartEmitter): boolean {
-  // ⚠ 已知代价（用户 2026-09-18 已看过对比并认可）：quarks 的 Mesh 是**世界朝向**面片，
-  //   **不面向相机**（原版这些粒子是 billboard，`localangle` 是在相机朝向上再倾斜）⇒
-  //   切过来之后这些粒子的观感会变（侧立时更细更暗）。若日后觉得需要"既面向相机又绕局部 Y 转"，
-  //   做法是在 Mesh 路径上逐帧写入**面向相机的基底四元数**再乘本自转（本次没做）。
+export function hasLocalAngle(em: PartEmitter): boolean {
   const y0 = em.initialLocalAngle?.y;
   const y1 = em.finalLocalAngle?.y;
   return (y0 != null && roll(y0) !== 0) || (y1 != null && roll(y1) !== 0);
@@ -560,6 +586,8 @@ export function convertPart(
 
     // 材质只承担混合；贴图走 ParticleSystem.texture
     const material = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: true });
+    // Mesh（世界朝向面片 / 相机朝向基底）要**双面**：我们显式写的基底里，面片可能以背面朝相机
+    if (needLocalY) material.side = THREE.DoubleSide;
     applyBlend(material, em.blend);
     // `BLEND_ADDCOLOR`：原版 6 种混合里的第 3 种（`HoNewParticle.cpp:689`），我们按 lamp 的加法走，
     // 但**因子未核实** ⇒ 必须留痕（现有资产里没有任何文件用它；这条是为将来/别的私服副本兜住"不静默"）
@@ -686,7 +714,8 @@ export function convertPart(
         : y1.k === 'n'
           ? new ConstantValue(radPerSec(y1.v - y0))
           : new IntervalValue(radPerSec(y1.a - y0), radPerSec(y1.b - y0));
-      behaviors.push(new Rotation3DOverLife(new AxisAngleGenerator(new QVec3(0, 1, 0), speed)));
+      // ⚠ 用**自带相机朝向基底**的行为（quarks 的 Mesh 是世界朝向 ⇒ 直接用会侧立看不见）
+      behaviors.push(new PtCameraFacingSpin(y0, speed));
       notes.push(`localangleY：绕局部 Y 轴按寿命自转（${y1 == null ? '终值缺省 ⇒ 0'
         : y1.k === 'n' ? `${(y1.v - y0)}°/寿命` : `${y1.a - y0}~${y1.b - y0}°/寿命`}）`
         + '；该发射器因此改用 Mesh 模式（广告板表达不了 3D 姿态）');
