@@ -122,9 +122,10 @@ export interface QuarksSpawnOpts {
    */
   velocity?: { x: number; y: number; z: number };
   /**
-   * **资产名/标签**（`.part` 的文件名，由 `effect-manager.spawnViaQuarks` 传）——
-   * 只用于**按名停发**（`stopAsset`）。⚠ 不能用 `system.name`：那是 `.part` 头里的
-   * `particlesystem "FireJet"`，一大批资产都叫 FireJet（CC 陨石就是），按它停会误伤。
+   * **资产名**（`.part` 的文件名，由 `effect-manager.spawnViaQuarks` 传）—— 用作 spec 的**缓存键**。
+   * ⚠ 不能用 `system.name`：那是 `.part` 头里的 `particlesystem "FireJet"`，一大批资产都叫 FireJet
+   * （CC 的陨石与命中特效就是）⇒ 撞名会让后一支复用前一支的 spec（实测：命中挂着陨石的
+   * 150s 长发射器 ⇒ 永不消失）。
    */
   label?: string;
 }
@@ -162,13 +163,6 @@ export interface QuarksRuntime {
    * `effect-manager.spawnSystem` 的异步契约一致，故调用方可原样迁移。
    */
   spawnSystem(system: PartSystem, opts: QuarksSpawnOpts): Promise<QuarksPartHandle | null>;
-  /**
-   * **按资产名停发**（在 `live` 里扫）—— 与句柄那条路并行的一道保险。
-   *
-   * 实测 CC 陨石"落地后永远不消失"时，句柄那一路**打在别的对象上**（页面上核对：可见系统的
-   * `__stoppedAt` 始终是"从未"）。两条都调，谁生效都行；返回被停的系统数（0 = 没找到）。
-   */
-  stopAsset(asset: string): number;
 
   update(dt: number): void;
   dispose(): void;
@@ -295,7 +289,6 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
     // ⇒ 命中特效会**复用陨石的 spec**（rate 20/100、150s 长寿命），于是"落地后粒子永远不消失"
     // （页面里核对过：可见系统的 tag=ChaosKaraMeteoHit 而 rate 是陨石的 20/100）。
     const key = opts.label || system.name || 'inline';
-    const tag = key;                    // 停发匹配用（见 `QuarksSpawnOpts.label`）
     if (!systemCache.has(key)) systemCache.set(key, await loadPartFromSystem(key, system));
     const loaded = systemCache.get(key);
     if (!loaded) { missing.push(`spawnSystem(${key}): spec 未加载`); return null; }
@@ -325,10 +318,10 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
         // ⚠ 载体**必须进场景**：quarks 在 spawn 时用 `emitter.matrixWorld` 定位粒子，
         //   而 three 只对场景内的对象推进 world matrix（`attachMagic` 的既有教训）。
         scene.add(opts.attach);
-        track(ps, opts.attach, tag);
+        track(ps, opts.attach);
       } else {
         ps.emitter.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
-        track(ps, scene, tag);
+        track(ps, scene);
       }
       made.push(ps);
     }
@@ -353,48 +346,25 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
   }
 
   /**
-   * **真正停发** —— `stop()` 与 `attachMagic` 的收尾都走这里（**唯一实现**）。
+   * **停发** —— `stop()` 与 `attachMagic` 的收尾都走这里（**唯一实现**）。
    *
-   * ⚠ `ps.endEmit()` **不停止发射**：它只置一个标志（`three.quarks/src/ParticleSystem.ts:920`），
-   *   而 `emit()` 的循环分支只在那标志下设防（`:1068`）——`looping = true` 的系统每帧照发。
-   *   我们的 `.part` 转换把 `loops > 1` 映射成 `looping`（`part-to-quarks.ts:632`），
-   *   而 CC 陨石的 `loops` 是 **100 / 200** ⇒ `stop()` 之后粒子照旧源源不断（用户实测"落地后不消失"）。
-   *   ⇒ 这里把**发射源清零**（定时发射 + 爆发都清），已生成的粒子仍按自己的寿命消亡（尾巴保留）。
+   * 只需 `endEmit()`：quarks 的 `emit()` 里有 `if (!this.emitEnded)` 把守发射累加
+   * （`three.quarks/src/ParticleSystem.ts:1106`）⇒ 置上标志就不再生成新粒子；
+   * 已在飞的粒子按各自寿命消亡（尾巴保留）。
    */
   function stopEmit(ps: ParticleSystem): void {
-    // 【临时诊断】给被停发的系统打标记，便于在页面里核对"停的是不是屏幕上那一批"
-    (ps as unknown as { __stoppedAt?: number }).__stoppedAt = Date.now();
     ps.endEmit();
-    ps.emissionOverTime = new ConstantValue(0);
-    ps.emissionBursts = [];
   }
 
   /**
    * 登记一个系统。`parent` 是 emitter 的父节点 —— **默认 scene，但载体跟随场景必须传载体**：
    * `scene.add()` 会把 emitter 从载体节点上摘下来，"跟随飞行物"就废了。
    */
-  function track(ps: ParticleSystem, parent: THREE.Object3D = scene, asset = ''): ParticleSystem {
+  function track(ps: ParticleSystem, parent: THREE.Object3D = scene): ParticleSystem {
     parent.add(ps.emitter);
     batch.addSystem(ps);
-    (ps as unknown as { __asset?: string }).__asset = asset;
     live.push(ps);
     return ps;
-  }
-
-  /**
-   * **按资产名停发** —— 句柄之外的兜底路径（**唯一实现**在 `stopEmit`）。
-   *
-   * 存在的理由：实测 CC 陨石"落地后粒子永远不消失"，而 `stop()` 那条路**打在别的对象上**
-   * （页面上核对：可见系统的 `__stoppedAt` 一直是"从未"，但 `made`/`live`/批次里都是同一批对象）。
-   * 与其继续猜句柄为什么不生效，不如让"停发"有一条**按资产名扫 `live`** 的路 ——
-   * 两条都调，谁生效都行。
-   */
-  function stopAsset(asset: string): number {
-    let n = 0;
-    for (const ps of live) {
-      if ((ps as unknown as { __asset?: string }).__asset === asset) { stopEmit(ps); n++; }
-    }
-    return n;
   }
 
   /** 药水那记闪光（原版 `StartBillRectPrimitive(..., 120, 120, "Light1.ini")`） */
@@ -486,8 +456,6 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
 
     spawnSystem,
     addSystems,
-    /** 按资产名停发（见 `stopAsset` 的说明）—— 返回被停的系统数 */
-    stopAsset,
 
     update(dt) {
       batch.update(dt);

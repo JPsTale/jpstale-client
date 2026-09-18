@@ -107,11 +107,6 @@ export interface EffectManager {
    */
   spawnStoppable(name: string, opts: SpawnOpts): Promise<QuarksPartHandle | null>;
   /**
-   * **按资产名停发**（透传 `QuarksRuntime.stopAsset`）—— 与句柄并行的第二条保险。
-   * 见 `monster-fly-runner.FlyDeps.stopAsset` 的说明（CC 陨石"落地后永不消失"时的定位）。
-   */
-  stopAsset(name: string): number;
-  /**
    * 播放一份**代码内 spec**（没有数据文件的那类原版特效，如法杖普攻弹 `MONSTER_IMP_SHOT1`）。
    * `opts.attach` 给出时粒子跟随该节点（飞行投射物），尾迹留在身后。
    * 返回**可停止的句柄**（飞行物到点要 `stop()`，否则粒子会堆在命中点上）——失败返回 null。
@@ -217,10 +212,6 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
    *
    * 见接口处的说明：飞出物到点要 `stop()`（原版 `SetStop`/`FadeStop`）。
    */
-  function stopAsset(name: string): number {
-    return quarksFx?.stopAsset(name) ?? 0;
-  }
-
   async function spawnStoppable(
     name: string, opts: SpawnOpts,
   ): Promise<QuarksPartHandle | null> {
@@ -293,7 +284,6 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
   return {
     spawn,
     spawnStoppable,
-    stopAsset,
     spawnSystem,
     update,
     clear,
