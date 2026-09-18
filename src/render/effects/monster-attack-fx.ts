@@ -468,14 +468,16 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
       //   ⚠ `Start(name, pos, X)` 的 X 是 `startDelay`（`HoNewParticleMgr.h:86`）**不是缩放** ——
       //     我第一版写成 `scale: 0.3`；同理 `ChaosKaraSkillUser` 的 0.1 也是延迟
       parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, delaySec: 0.3 }],
-      // `:1341` `SetAssaEffect(0, "chao_glacial.ASE", 0, &charPos, 0, 0)` + `AniMaxCount=25 / AniDelayTime=2`
-      // ⚠ 首次接上时用户实测"点击攻击直接卡住"；为定位它，`spawnAssaMesh` 已加**加载前打点**
-      //   （`⏳ 开始加载 …`）与逐份参数守卫 —— 卡住时日志会停在哪一步一目了然（见那边的注释）。
-      mesh: {
-        path: 'effect/assaeffect/chaoskara/chao_glacial.smd',
-        aniMaxCount: 25, aniDelayTime: 2,
-        note: '原版资产名 chao_glacial.ASE（hoAssaParticleEffect.cpp:1341）',
-      },
+      // ⚠ `:1341` 的 `SetAssaEffect(0, "chao_glacial.ASE", …)`（AniMaxCount=25 / AniDelayTime=2）
+      //   **暂不挂**：两次"挂上就卡"都在**事件帧之前**就卡死 —— 我加的 `⏳ 开始加载 ASE 网格 …`
+      //   与 `🧊 ASE 网格 …` **一条都没打印**（2026-09-18 日志面板实证）⇒ 网格代码根本没跑到，
+      //   所以"卡住"与网格的因果**尚未成立**（先前归因于网格是我的误判）。
+      //   诊断手段已就位（`spawnAssaMesh` 的加载前打点 + `updateCastCircleMeshes` 的 NaN 守卫），
+      //   待"事件帧之前为什么卡"查清后再挂回。
+      unhandled: [
+        '同帧还起一个 ASE 网格 `chao_glacial`（`hoAssaParticleEffect.cpp:1341`）—— 代码已就位但**暂不挂**：'
+        + '挂上时实测卡死，且卡点在**事件帧之前**（网格代码未执行）⇒ 因果待查，见源码注释',
+      ],
       note: 'character.cpp:4679-4685 / hoAssaParticleEffect.cpp:1332-1350（事件帧，chaoscara.inx idx12 事件帧 800）',
     },
     skillByKeyCode: {
