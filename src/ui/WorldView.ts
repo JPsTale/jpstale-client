@@ -2066,9 +2066,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     const pitchRad = cam.viewAnx;
     const yawRad = cam.any;
-    // 屏幕震动：原版把 `WaveCameraFactor` 叠加到 `ViewDist` 上（`Main.cpp:1742`）——
-    // 这里同一处叠加，**每帧只调一次**（`updateWaveCamera` 会推进状态）
-    const d = cam.viewDist + updateWaveCamera();
+    // 屏幕震动：原版 `ViewDist += WaveCameraFactor`（`Main.cpp:1742`）——**只在那帧叠加、值留到后续帧**，
+    // 再由相机自己的平滑（上面那句 `viewDist += (dist - viewDist)*k`）把它拉回基准
+    // ⇒ 观感是"震一下、然后缓缓归位"，**不是**每帧弹回去（用户 2026-09-18 指出）。
+    // ⚠ 必须叠进 `cam.viewDist` 本体（叠到临时变量上 = 每帧归零 = 抽帧式的"被拉回去"）。
+    cam.viewDist += updateWaveCamera();
+    const d = cam.viewDist;
     camera.position.set(
       selfPos.x - d * Math.sin(yawRad) * Math.cos(pitchRad),
       selfPos.y + d * Math.sin(pitchRad),
