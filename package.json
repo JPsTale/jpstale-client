@@ -26,7 +26,8 @@
     "potions": "tsx scripts/extract-potion-effects.ts",
     "bake-maps": "tsx scripts/bake-maps.ts",
     "map-levels": "npx tsx scripts/extract-map-levels.ts",
-    "monster-anim": "tsx scripts/extract-monster-anim.ts"
+    "monster-anim": "tsx scripts/extract-monster-anim.ts",
+  "fx-names": "tsx scripts/scan-effect-names.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

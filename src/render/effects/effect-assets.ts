@@ -1,5 +1,5 @@
 /**
- * 特效资产加载 —— 把 `<name>.ini` 这条 INI 链解析成可直接播放的帧序列。
+ * 特效资产加载 —— 把 INI 这条链解析成可直接播放的帧序列（**按精确路径**取）。
  *
  * 链路（原版 HoEffect 的 StartBillRect 走的路径）：
  *   effect/animationdata/<Name>.ini          逐帧：图号/时长/透明度/尺寸/角度 + BlendType
@@ -8,6 +8,11 @@
  *               └─ effect/imagedata/x/shock01.tga …（1-based 序号插在扩展名前）
  *
  * 纹理加载用角色纹理那条链（flipY=true + sRGB），与精灵的 UV 朝向一致。
+ *
+ * **两段式**（与 `part-assets.ts` 同一套约定，用户 2026-09-18 定调）：
+ *   ① `parseEffectAtPath` —— 读 ini + ImageData ini 的**文本**并解析（便宜）⇒ 启动预载只做这一段
+ *   ② `decodeEffectFrames` —— 逐帧解码贴图（贵）⇒ 真的要用到才做
+ * 路径**只从注册表的清单来**（`effect-registry.lookupEffect`），不再自己拼名字去猜目录。
  */
 import type * as THREE from 'three';
 import { cachedFetch } from '../../core/asset-cache.js';
@@ -17,9 +22,12 @@ import {
   type EffectBlend,
 } from '../../core/effect/anim-ini.js';
 
-const ANIM_DIR = 'effect/animationdata/';
 const IMG_DIR = 'effect/imagedata/';
 
+/** 清单里的一条资产（名字 + 精确路径）—— 定义在 `effect-registry`，这里只要形状 */
+export interface EffectRef { name: string; path: string }
+
+/** 一帧的贴图与播放参数（`tex` 为 null = 该帧贴图没解出来） */
 export interface EffectFrameTex {
   tex: THREE.DataTexture | null;
   /** 该帧持续的 70Hz 步数 */
@@ -29,6 +37,15 @@ export interface EffectFrameTex {
   /** 世界尺寸（Size）；该 INI 未提供 Size 段时为 null */
   size: number | null;
   /** 旋转角（度）；未提供时为 null */
+  angle: number | null;
+}
+
+/** 解析出来的一帧（**贴图还没解**，只有一个路径） */
+export interface EffectFrameSpec {
+  path: string | null;
+  delay: number;
+  alpha: number;
+  size: number | null;
   angle: number | null;
 }
 
@@ -42,13 +59,22 @@ export interface EffectDiag {
   missing: string[];
 }
 
-export interface LoadedEffect {
+/** 解析好的 INI 特效（**还没解码贴图**）—— 启动预载就停在这一步 */
+export interface ParsedEffect {
   name: string;
+  path: string;
   blend: EffectBlend;
-  frames: EffectFrameTex[];
+  frameSpecs: EffectFrameSpec[];
   /** 总时长（秒；Delay 以 70Hz 计） */
   duration: number;
   diag: EffectDiag;
+}
+
+/** 解析失败（带原因）—— 调用方必须上报，别丢 */
+export type EffectParseOutcome = ParsedEffect | { fail: string };
+
+export interface LoadedEffect extends ParsedEffect {
+  frames: EffectFrameTex[];
 }
 
 async function fetchText(url: string): Promise<string | null> {
@@ -60,32 +86,31 @@ async function fetchText(url: string): Promise<string | null> {
   }
 }
 
-/** 归一化特效名 → `effect/animationdata/<小写名>.ini` */
-export function effectIniPath(name: string): string {
-  const base = name.replace(/\\/g, '/').split('/').pop() ?? name;
-  const noExt = base.replace(/\.ini$/i, '').toLowerCase();
-  return `${ANIM_DIR}${noExt}.ini`;
-}
+/* ─────────── ① 解析（启动预载做这一段） ─────────── */
 
-const cache = new Map<string, Promise<LoadedEffect | null>>();
+const parseCache = new Map<string, Promise<EffectParseOutcome>>();
 
-/** 加载并缓存一个特效（失败返回 null，不抛） */
-export function loadEffect(name: string): Promise<LoadedEffect | null> {
-  const key = effectIniPath(name);
-  const hit = cache.get(key);
+/** 按**精确路径**解析一个 INI 特效（不含贴图解码）。失败**带原因返回**，不抛。 */
+export function parseEffectAtPath(ref: EffectRef): Promise<EffectParseOutcome> {
+  const hit = parseCache.get(ref.path);
   if (hit) return hit;
-  const job = loadEffectUncached(name, key).catch(() => null);
-  cache.set(key, job);
+  const job = parseEffectUncached(ref).catch((e: unknown) => ({ fail: String(e) }));
+  parseCache.set(ref.path, job);
   return job;
 }
 
-async function loadEffectUncached(name: string, iniPath: string): Promise<LoadedEffect | null> {
-  const text = await fetchText('/res/' + iniPath);
-  if (text === null) return null;
+async function parseEffectUncached(ref: EffectRef): Promise<EffectParseOutcome> {
+  const text = await fetchText('/res/' + ref.path);
+  if (text === null) {
+    return { fail: `ini 取不到（404？清单可能比资产旧 ⇒ 重跑 npm run fx-names）：${ref.path}` };
+  }
   const anim = parseAnimationData(text);
-  // 关键：资源不存在时 dev server 会落到 SPA 兜底返回 200 + HTML（不是 404），
-  // 于是会解析出"0 帧"的空对象。必须把它当作"不存在"，否则调用方永远不会退到 `.part`。
-  if (anim.frames.length === 0) return null;
+  // 0 帧 = 这不是一份可播的 INI。旧版把这里当"文件不存在 ⇒ 去试 .part"，于是
+  // **dev server 的 SPA 兜底（200 + HTML）也会走到这里**；现在路径是清单给的精确路径，
+  // 出现 0 帧就只能是资产本身的问题 —— 说出来（AGENTS #12），别当"没有这个名字"。
+  if (anim.frames.length === 0) {
+    return { fail: `解析出 0 帧（ini 损坏？或该路径返回的是 SPA 兜底 HTML）：${ref.path}` };
+  }
 
   // ImageData：DataFile 是 basename（如 Hit1.ini），我方资产是小写
   let framePaths: string[] = [];
@@ -101,29 +126,53 @@ async function loadEffectUncached(name: string, iniPath: string): Promise<Loaded
   }
 
   const missing: string[] = [];
-  const frames: EffectFrameTex[] = [];
+  const frameSpecs: EffectFrameSpec[] = [];
   let durationSteps = 0;
   for (const f of anim.frames) {
-    const path = framePaths[f.imageIndex];
-    let tex: THREE.DataTexture | null = null;
-    if (path) {
-      tex = await fetchAndDecodeTexture('/res/' + path, 1, { linear: true });   // 特效：原样进（见 fetchAndDecodeTexture 的说明）
-      if (!tex) missing.push(path);
-    } else {
-      missing.push(`(无 ImageData 帧 #${f.imageIndex})`);
-    }
-    frames.push({ tex, delay: f.delay, alpha: f.alpha, size: f.size, angle: f.angle });
+    const path = framePaths[f.imageIndex] ?? null;
+    // 贴图**缺失**在这里只记账（真正解码时才知道能不能解出来）；
+    // 整份特效"一帧都解不出贴图"由调用方判（`effect-manager.spawn` 的 guard）
+    if (!path) missing.push(imageIni ? `(ImageData 里没有第 ${f.imageIndex} 帧)` : '(没有 DataFile 段)');
+    frameSpecs.push({ path, delay: f.delay, alpha: f.alpha, size: f.size, angle: f.angle });
     durationSteps += f.delay;
   }
 
   return {
-    name,
+    name: ref.name,
+    path: ref.path,
     blend: anim.blend,
-    frames,
+    frameSpecs,
     duration: durationSteps / EFFECT_HZ,
     diag: {
-      animationIni: iniPath, imageIni, blend: anim.blend, hasSize: anim.hasSize,
+      animationIni: ref.path, imageIni, blend: anim.blend, hasSize: anim.hasSize,
       framePaths, missing,
     },
   };
+}
+
+/* ─────────── ② 解码贴图（用到才做） ─────────── */
+
+const texCache = new Map<string, Promise<LoadedEffect>>();
+
+/** 逐帧解码贴图（**唯一实现**）。贴图本身在 `char-texture-loader` 里已按路径全局缓存。 */
+export function decodeEffectFrames(parsed: ParsedEffect): Promise<LoadedEffect> {
+  const hit = texCache.get(parsed.path);
+  if (hit) return hit;
+  const job = decodeUncached(parsed);
+  texCache.set(parsed.path, job);
+  return job;
+}
+
+async function decodeUncached(parsed: ParsedEffect): Promise<LoadedEffect> {
+  const missing = [...parsed.diag.missing];
+  const frames: EffectFrameTex[] = [];
+  for (const f of parsed.frameSpecs) {
+    let tex: THREE.DataTexture | null = null;
+    if (f.path) {
+      tex = await fetchAndDecodeTexture('/res/' + f.path, 1, { linear: true });   // 特效：原样进（见 fetchAndDecodeTexture 的说明）
+      if (!tex) missing.push(f.path);
+    }
+    frames.push({ tex, delay: f.delay, alpha: f.alpha, size: f.size, angle: f.angle });
+  }
+  return { ...parsed, frames, diag: { ...parsed.diag, missing } };
 }

@@ -23,7 +23,7 @@ import {
   type FunctionValueGenerator, type EmitterShape,
 } from 'quarks.core';
 import { buildSheet, type RawImage } from '../../core/asset-cache.js';
-import { loadEffect } from './effect-assets.js';
+import { loadEffectByName } from './effect-registry.js';
 import { loadPartFromSystem, type LoadedPart } from './part-assets.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import { convertPart } from './part-to-quarks.js';
@@ -193,7 +193,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
     // 三种药水各加载一套（贴图不同 ⇒ 颜色不同）
     for (const kind of Object.keys(POTION_INI) as PotionKind[]) {
       const ini = POTION_INI[kind];
-      const eff = await loadEffect(ini);
+      const eff = await loadEffectByName(ini);
       // 帧动画：原版是 4 张独立贴图 ⇒ 拼成 sprite sheet 交给 quarks 的帧动画
       const raw = (eff?.frames ?? [])
         .map((f) => f.tex?.image as RawImage | undefined)
@@ -225,7 +225,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
   // 药水贴图慢或失败 ⇒ 后面的 `magicSpec` **永不就绪** ⇒ **法师/祭司攻击完全没粒子**（用户实测）。
   // 教训：预载之间没有任何先后依赖，就不该排成队列。
   void (async () => {
-    const light = await loadEffect('Light1');
+    const light = await loadEffectByName('Light1');
     lightTex = light?.frames[0]?.tex ?? null;
     lightLife = Math.max(0.1, light?.duration ?? 0.3);
     if (!lightTex) missing.push('Light1 贴图未加载');

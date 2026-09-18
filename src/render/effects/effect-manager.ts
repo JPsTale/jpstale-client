@@ -10,11 +10,12 @@
  * 同一贴图的两个特效会互相改写混合模式；这里每个实例自带材质。
  */
 import * as THREE from 'three';
-import { loadEffect, type EffectDiag } from './effect-assets.js';
-import { loadPart, type LoadedPart } from './part-assets.js';
+import type { EffectDiag } from './effect-assets.js';
+import type { LoadedPart } from './part-assets.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import { reportFallback } from '../../char/fallback-log.js';
 import { iniToQuarks } from './ini-to-quarks.js';
+import { lookupEffect, loadByEntry, loadPartByRef, preloadEffects } from './effect-registry.js';
 import type { QuarksRuntime, QuarksPartHandle } from './quarks-runtime.js';
 
 /** INI 未提供 Size 段时的默认世界尺寸（角色高约 46 世界单位，取 32 与命中特效同量级） */
@@ -145,6 +146,10 @@ export interface EffectManager {
  */
 export function createEffectManager(quarks: QuarksRuntime | null = null): EffectManager {
   const quarksFx: QuarksRuntime | null = quarks;
+  // **启动预载**（原版同款：启动时按清单把脚本读进来，运行时只按名取，见 `effect-registry`）。
+  // 放在这里是有意的 —— 建 manager 就是特效系统的启动点，游戏 / 两个 lab / 检查器都从这里过，
+  // 于是"新加一个入口忘了预载"不可能发生；注册表内部只跑一次，重复调无副作用。
+  void preloadEffects();
   let pending = 0;
   let loaded = 0;
   let partDiag: LoadedPart['diag'] | null = null;
@@ -162,20 +167,33 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
     }
     pending++;
     try {
-      const eff = await loadEffect(name);
-      if (!eff) {
-        // 退到 `.part` 粒子脚本（两个家族同名互不冲突：INI 在 animationdata，脚本在 particle/script）
-        const part = await loadPart(name);
-        if (!part) return false;
-        loaded++;
-        partDiag = part.diag;
-        // `.part` 文件 → **同样交给 quarks**（与代码内 spec 同一条路，见工厂处说明）
-        return (await spawnViaQuarks(part.system, opts, part.name)) !== null;
+      // **名字 → 清单条目**（同步、纯本地查表，见 `effect-registry`）：家族由名字决定，
+      // 不再"先试 animationdata 的 .ini、404 了再退 .part" —— 那是我们发明的探测，
+      // 原版是按名查内存注册表，而且每个 `.part` 资产都会白打一次 404（用户实测控制台刷屏）。
+      const entry = lookupEffect(name);
+      if (!entry) {
+        reportFallback('fx', `特效「${name}」不在清单里（ini/part/lua/luac 都没有这个名字；`
+          + '资产增减后要重跑 `npm run fx-names`）⇒ 不放');
+        return false;
       }
+      // 家族分派与"这个家族还播不了"的上报都在注册表里（**唯一一处**）
+      const asset = await loadByEntry(entry);
+      if (!asset) return false;                    // 失败原因已由注册表上报
+      if (asset.family === 'part') {
+        loaded++;
+        partDiag = asset.part.diag;
+        // `.part` 文件 → **同样交给 quarks**（与代码内 spec 同一条路，见工厂处说明）
+        return (await spawnViaQuarks(asset.part.system, opts, asset.part.name)) !== null;
+      }
+      const eff = asset.effect;
       loaded++;
       diag = eff.diag;
-      // 一帧贴图都没有 → 视为无法播放（避免生成不可见精灵）
-      if (!eff.frames.some((f) => f.tex)) return false;
+      // 一帧贴图都没有 → 视为无法播放（避免生成不可见精灵）——**要说出原因**（AGENTS #12）
+      if (!eff.frames.some((f) => f.tex)) {
+        reportFallback('fx', `INI 特效「${name}」一帧贴图都没解出来`
+          + `（${eff.diag.animationIni}，缺 ${eff.diag.missing.join('、') || '原因未知'}）⇒ 不放`);
+        return false;
+      }
       // **INI 广告板 → quarks**（"全用 quark"的最后一条，见 `ini-to-quarks.ts`）：
       // 每帧一个单粒子系统（各带自己的贴图/Delay/BlendValue/Size）—— 才能表达
       // `returnparticle1.ini` 那种**不等长 Delay**（20,5,5,5,30）。
@@ -201,8 +219,9 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
       }
       quarksFx.addSystems(systems, opts.attach ?? null);
       return true;
-      return true;
-    } catch {
+    } catch (e) {
+      // 旧版是 `catch { return false }`（静默）—— 抛错与"资产不存在"必须能分辨
+      reportFallback('fx', `特效「${name}」播放时抛错：${String(e)}`);
       return false;
     } finally {
       pending--;
@@ -219,11 +238,15 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
   ): Promise<QuarksPartHandle | null> {
     pending++;
     try {
-      const part = await loadPart(name);
-      if (!part) {
-        reportFallback('fx', `「${name}」要可停止句柄，但它不是 .part 资产（INI 广告牌那条路没有句柄）`);
+      const entry = lookupEffect(name);
+      if (!entry || entry.family !== 'part') {
+        reportFallback('fx', `「${name}」要可停止句柄，但它`
+          + (entry ? `是 ${entry.family} 资产（${entry.path}）` : '不在特效清单里')
+          + '（INI 广告牌那条路是一次性播完的形态，没有句柄可给）');
         return null;
       }
+      const part = await loadPartByRef(entry);
+      if (!part) return null;                      // 失败原因已由注册表上报
       loaded++;
       partDiag = part.diag;
       return await spawnViaQuarks(part.system, opts, part.name);
