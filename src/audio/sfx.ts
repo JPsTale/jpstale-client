@@ -407,9 +407,11 @@ function resolveDir(key: string, monsterEffectId?: number): string | null {
     if (base) {
       const dir = dirByBase.get(base) ?? null;
       if (dir) return dir;
-      console.warn(`[SFX] resolveDir: effectId=0x${monsterEffectId.toString(16)} base=${base} → NOT in folderManifest`);
+      reportBlocked(`resolvedir:${base}`,
+        `resolveDir: effectId=0x${monsterEffectId.toString(16)} base=${base} → NOT in folderManifest`);
     } else {
-      console.warn(`[SFX] resolveDir: effectId=0x${monsterEffectId.toString(16)} → 无映射，请补 MONSTER_EFFECT_DIR`);
+      reportBlocked(`resolveid:${monsterEffectId}`,
+        `resolveDir: effectId=0x${monsterEffectId.toString(16)} → 无映射，请补 MONSTER_EFFECT_DIR`);
     }
     return null;
   }
@@ -437,12 +439,14 @@ const JOB_SOUND_DIR: Record<number, string> = {
 /** 在指定音效目录下按动作态取一个文件播放 */
 function playDir(dir: string | null, motion: MotionState, pos: ListenerPos): void {
   if (!dir) {
-    console.warn(`[SFX] playDir: dir=null, motion=${motion}`);
+    reportBlocked(`dirnull:${motion}`, `playDir: dir=null, motion=${motion}`);   // 原因已由 resolveDir 报过
     return;
   }
   const bucket = folderManifest[dir]?.[motion];
+  // 目录里**确实没有**这一桶（如 chaoscara 没有 `skill N.wav`）⇒ 该动作本就静音，是忠实的；
+  // 但"每次施法都喊一遍"没有信息量 ⇒ 走同一原因的**只喊一次**通道（同 `reportBlocked` 的其余用途）。
   if (!bucket || bucket.length === 0) {
-    console.warn(`[SFX] playDir: dir=${dir}, motion=${motion} → no files in manifest`);
+    reportBlocked(`bucket:${dir}:${motion}`, `playDir: dir=${dir}, motion=${motion} → 资产里没有这一桶`);
     return;
   }
   const file = pick(bucket.map((f) => `${dir}/${f}`));

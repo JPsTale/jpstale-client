@@ -879,6 +879,11 @@ export function fireMonsterAttackEvent(ctx: MonsterAttackEventCtx): Promise<bool
   if (isSkillSet(entry)) {
     const sub = resolveMonsterFx(ctx.effectId, ctx.keyCode, 'event', ctx.motionKind);
     if (!sub) {
+      // **"起手放的招"不是"未登记"**（我报错过，用户实测撞上）：`resolveMonsterFx` 是**按阶段过滤**的，
+      // 所以 `timing: 'cast'` 的条目在事件帧这里必然拿到 null —— 而它登记了、也确实放了
+      //（起手那一刻由 `fireMonsterCastFx` 放，日志里同时能看到它起的资产）。
+      // 判据：同一条在 **cast 阶段**解得出东西 ⇒ 事件帧本来就没事做，静默返回（与下面那条同一规则）。
+      if (resolveMonsterFx(ctx.effectId, ctx.keyCode, 'cast', ctx.motionKind)) return null;
       const keyTxt = ctx.keyCode == null ? '未给' : `'${keyOf(ctx.keyCode) || '(无 KeyCode → else 分支)'}'`;
       reportFallback('fx', `怪 #${ctx.effectId} 的`
         + `${ctx.motionKind === 'attack' ? '普攻' : `技能（KeyCode ${keyTxt}）`}`
