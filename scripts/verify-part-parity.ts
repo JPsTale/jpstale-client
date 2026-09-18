@@ -64,7 +64,8 @@ function captureAsset(name: string): unknown {
   const file = path.join('E:/JPsTale/client/effect/particle/script', `${name}.part`);
   if (!fs.existsSync(file)) return null;
   const conv = convertPart(parsePart(fs.readFileSync(file, 'utf8')), []);
-  return conv.map((c) => {
+  return conv.map((c, ei) => {
+    try {
     const ps = c.system as unknown as {
       behaviors: Array<{ initialize?: (p: unknown, s?: unknown) => void; update?: (p: unknown, d: number) => void }>;
       shape?: { initialize?: (p: unknown) => void };
@@ -94,6 +95,10 @@ function captureAsset(name: string): unknown {
       p.age += DT;
     }
     return { emitter: c.emitterName, samples };
+    } catch (e) {
+      // **不许静默**：某个发射器在驱动时报错也记进基线/比对结果（否则"崩了"看起来像"没差异"）
+      return { emitter: c.emitterName + `#THROW`, samples: [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], err: String(e), ei };
+    }
   });
 }
 
@@ -123,15 +128,23 @@ if (CAPTURE) {
 } else {
   const base = JSON.parse(fs.readFileSync(BASELINE, 'utf8')) as { assets: Record<string, unknown> };
   const bad: string[] = [];
+  const throwLog: string[] = [];
   let checked = 0;
   for (const a of assets) {
     const want = base.assets[a];
     if (want === undefined) continue;
-    const got = captureAsset(a);
+    const got = captureAsset(a) as Array<{ emitter?: string; err?: string }> | null;
+    if (Array.isArray(got)) {
+      for (const g of got) if (g?.err) throwLog.push(`${a} / ${g.emitter}: ${g.err.split(String.fromCharCode(10))[0]}`);
+    }
     if (JSON.stringify(want) !== JSON.stringify(got)) {
       checked++;
       bad.push(a);
     }
+  }
+  if (throwLog.length) {
+    console.log(`⚠ 新实现在驱动时抛错 ${throwLog.length} 处（前 5）：`);
+    for (const t of throwLog.slice(0, 5)) console.log('   ' + t);
   }
   console.log(`比对 ${assets.length} 个资产（基线 ${Object.keys(base.assets).length} 个）：`
     + `${checked === 0 ? '✓ 全部逐帧吻合' : `✗ ${bad.length} 个不一致：${bad.slice(0, 20).join('、')}`}`);

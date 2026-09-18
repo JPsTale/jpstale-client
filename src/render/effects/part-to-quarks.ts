@@ -371,8 +371,12 @@ export function convertPart(
         const v = k.value;
         const wide = v.k === 'num' ? n1(v.v) : v.k === 'vec' ? v3(v.v) : v.k === 'color' ? c4(v.v) : null;
         if (!wide) continue;
-        // 整组槽带全部分量；单分量槽（`redcolor`/`velocityx`/`partanglez`…）只带那一个
-        addEvent(k.time, slot, k.fade, comp < 0 ? wide : [wide[comp]!]);
+        // 整组槽带全部分量；单分量槽只带**它的那一个**载荷：
+        //   · 值是标量（`k.value.k === 'num'`）⇒ 载荷就在 `wide[0]`（**不能按分量下标取** ——
+        //     曾经 `partanglez = 5` 这种取到 `wide[2]` = undefined ⇒ 时间轴 `roll(undefined)` 崩）
+        //   · 值是向量/颜色 ⇒ 按分量下标取
+        addEvent(k.time, slot, k.fade,
+          comp < 0 ? wide : (v.k === 'num' ? [wide[0]!] : [wide[comp]!]));
       }
     }
     const ptEvents = buildEvents(rawEvents);
