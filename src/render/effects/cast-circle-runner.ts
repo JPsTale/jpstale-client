@@ -10,6 +10,7 @@ import {
   castCircleSystems, castCircleFamily, CAST_LIFT, CAST_MESH_FADE, CAST_MESH_LIFE,
 } from './cast-circle.js';
 import { loadStaticSmd, applyStaticMeshTracks, type StaticMeshTrack } from './static-fx.js';
+import { reportFallback } from '../../char/fallback-log.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import type { SystemSpawner } from './multi-spark-runner.js';
 import type { DynLightSink } from './dyn-light.js';
