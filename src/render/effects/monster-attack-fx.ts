@@ -465,12 +465,18 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
       //   ⚠ `Start(name, pos, X)` 的 X 是 `startDelay`（`HoNewParticleMgr.h:86`）**不是缩放** ——
       //     我第一版写成 `scale: 0.3`；同理 `ChaosKaraSkillUser` 的 0.1 也是延迟
       parts: [{ asset: 'ChaosKaraNormal1_2', height: 1500 / 256, delaySec: 0.3 }],
-      // `:1341` `SetAssaEffect(0, "chao_glacial.ASE", 0, &charPos, 0, 0)` + `AniMaxCount=25 / AniDelayTime=2`
-      mesh: {
-        path: 'effect/assaeffect/chaoskara/chao_glacial.smd',
-        aniMaxCount: 25, aniDelayTime: 2,
-        note: '原版资产名 chao_glacial.ASE（hoAssaParticleEffect.cpp:1341）',
-      },
+      // ⚠ `:1341` 的 `SetAssaEffect(0, "chao_glacial.ASE", …)`（`AniMaxCount=25 / AniDelayTime=2`）
+      //   **暂时不挂**：接上后用户实测"点击攻击直接卡住"（实验室），根因尚未定位。
+      //   已排除的三点（都验过）：① 路径对（`effect/assaeffect/chaoskara/chao_glacial.smd` 存在）；
+      //   ② 格式对（文件头 `SMD Model data Ver 0.62` ⇒ 确实是 SMD，不是被改名的 ASE）；
+      //   ③ 文件很小（17.9KB ⇒ 不是"解析超大网格"）。
+      //   ⇒ 下次查：在浏览器里给 `spawnAssaMesh` 的每一步打点（loadStaticSmd → 轨道 → 首帧 apply），
+      //     并确认 `updateCastCircleMeshes` 里 `f.lifeSec`/`f.aniMaxFrame` 是否都有值（NaN 会污染 scale）。
+      //   通用实现（`cast-circle-runner.spawnAssaMesh`）已就位，法阵那条照旧用它 ✓。
+      unhandled: [
+        '同帧还起一个 ASE 网格 `chao_glacial`（`hoAssaParticleEffect.cpp:1341`）—— 已接但**会卡住**，'
+        + '先撤下（路径/格式/体积三点已排除，见源码注释）',
+      ],
       note: 'character.cpp:4679-4685 / hoAssaParticleEffect.cpp:1332-1350（事件帧，chaoscara.inx idx12 事件帧 800）',
     },
     skillByKeyCode: {
