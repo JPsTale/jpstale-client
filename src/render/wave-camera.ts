@@ -37,10 +37,21 @@ let factor = 0;
 let delay = 0;
 let count = 0;
 
-/** 触发一次震动（原版 `EffectWaveCamera(factor, delay)`）——`factor` 为 0 时不触发 */
+/**
+ * 触发一次震动（原版 `EffectWaveCamera(factor, delay)`）——`factor` 为 0 时不触发。
+ *
+ * ⚠ **同一时刻只有一个震动实例**（原版也是一个全局 `WaveCameraFlag`）：**正在震时的触发不重开**。
+ * 为什么必须这样（用户 2026-09-18 实测）：多只怪/多次施法时，每次命中都调一次本函数 ⇒
+ * 若每次都把 `factor` 重置回满幅，震动会被**持续续命**（实测 24 次命中首尾相接 ⇒ 相机在 ±17 上
+ * 一直抽搐 = "屏幕震动直接疯了"）。忽略后续触发后，一次震动照常衰减收尾，之后新触发再起一次。
+ *
+ * （原版那条 `EffectWaveCamera` 是"后来的覆盖 `factor`、且**不重置** `WaveCameraTimeCount`"，
+ *  覆盖同样会导致续命；故这里按用户要求取"不重开"。）
+ */
 export function waveCamera(factorIn: number, delayIn = 0): void {
   if (!enabled) return;
   if (!factorIn) return;
+  if (flag) return;               // 已在震：不重开（见上）
   flag = true;
   factor = factorIn;
   delay = delayIn;
