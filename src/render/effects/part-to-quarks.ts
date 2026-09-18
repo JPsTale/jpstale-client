@@ -427,7 +427,17 @@ export class PartBoxEmitter implements EmitterShape {
  *   Mesh 模式下 quarks 自己把 `startRotation` 设成 `AxisAngleGenerator`（`ParticleSystem.ts:656`）
  *   ⇒ 逐粒子旋转值就是四元数 ⇒ 能表达。
  */
-export function hasLocalAngle(em: PartEmitter): boolean {
+export function hasLocalAngle(_em: PartEmitter): boolean {
+  // ⚠ **暂时按住（2026-09-18 用户实测）**：切到 Mesh 后这些粒子**侧对相机、看不见** ——
+  //   quarks 的 Mesh 是**世界朝向**面片，而原版这些粒子是 **billboard + 局部倾斜**。
+  //   要同时满足"面向相机"和"绕局部 Y 转"，必须在 Mesh 路径上**逐帧写入相机朝向的基底四元数**
+  //   再乘本自转（原版的真实形态）—— 那块还没做 ⇒ 现在先返回 false，保持"粒子看得见"的旧观感。
+  //   恢复条件：`PtCameraFacing` 之类的基底写完并验证过（见本仓 git 历史里 1bc5b17 的实现）。
+  return false;
+}
+
+/** 真实的判定（`hasLocalAngle` 恢复启用时用它）—— 资产声明了非零 `localangleY` */
+export function declaresLocalAngleY(em: PartEmitter): boolean {
   // ⚠ 已知代价（用户 2026-09-18 已看过对比并认可）：quarks 的 Mesh 是**世界朝向**面片，
   //   **不面向相机**（原版这些粒子是 billboard，`localangle` 是在相机朝向上再倾斜）⇒
   //   切过来之后这些粒子的观感会变（侧立时更细更暗）。若日后觉得需要"既面向相机又绕局部 Y 转"，
