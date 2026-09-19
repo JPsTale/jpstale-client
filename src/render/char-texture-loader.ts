@@ -25,20 +25,20 @@ export interface TextureLoadResult {
 
 /** 单张：解码 → DataTexture（失败返回 null，不抛） */
 /**
- * @param opts.linear **按线性采样**（不做 sRGB 解码）——给**特效贴图**用。
+ * @param opts.linear 遮罩烘焙路径（亮度烘 alpha）——与原样路径一样**打 SRGBColorSpace**
+ *   （2026-09-19 裁定 B，见下）。
  *
- * 为什么特效要线性，而角色要 sRGB：**这是两条不同的"美术原样"路线**。
- *   · 角色/地图走 three 的常规管线（sRGB 贴图 → 解码到线性 → 光照 → 输出编码回 sRGB），
- *     一来一回等于美术原样，且光照在线性空间里才正确。
- *   · 特效走 quarks，而 quarks 的片元着色器**不做输出编码**（`particle_frag` 只
- *     include `tonemapping_fragment`，没有 `colorspace_fragment`）⇒ 若贴图仍按 sRGB 解码，
- *     就是"解码了但不编码" ⇒ 效果**整体偏暗**；若反过来给 quarks 补输出编码，则
- *     **加法混合的近黑背景会被抬起**，光晕显出方块（实测：`light01.tga` 有 42% 像素是
- *     "暗但非零"，补编码后整块变可见灰方块）。
- *   ⇒ 特效这条链**两侧都不做转换** = 原版引擎（D3D9）的行为 = 美术原样。
- *
- * 依据（实测）：`light0N.tga` / `m_spark06.tga` 的 **alpha 全 255**（光晕靠 RGB 黑底表达），
- * "靠 alpha 抠背景"这条路本来就不存在 —— 所以只能靠"原样进、原样出"来对齐原版。
+ * 颜色管线（2026-09-19 裁定 B，取代 2026-09-16 的"特效两侧都不转换"旧方案）：
+ *   · 旧判断"quarks 片元着色器不做输出编码"**已被证伪**：`particle_physics_frag.glsl.ts:162`
+ *     含 `#include <colorspace_fragment>`（three.quarks 当前版），输出端会按 renderer 的
+ *     outputColorSpace 做 sRGB 编码 ⇒ 旧方案（贴图 NoColorSpace 不解码 + 输出编码）
+ *     实为**单端编码**，低 alpha 雾被凭空提亮 ~3.9 倍（0.086→0.33）——
+ *     lab 实测：particlemeteo1_blue 渲染成可见灰色方块（应为黑心蓝环）。
+ *   · 裁定 B（协调者 2026-09-19）：贴图**统一打 SRGBColorSpace**——采样端 sRGB→线性解码、
+ *     输出端线性→sRGB 编码，rgb 一来一回 ≈ 美术原样；加法混合改在线性空间进行
+ *     （低 alpha 亮雾仍比原版 8bit 直算亮 ~3 倍——线性/γ 空间乘法的固有差异，已接受）。
+ *     alpha 通道不做解码（规范如此），按线性直用。
+ *   · 遮罩烘焙（亮度烘 alpha）仍在 **sRGB 8bit 数据上**进行（烘焙在解码前，与本裁定无冲突）。
  */
 export async function fetchAndDecodeTexture(
   url: string,
@@ -78,7 +78,7 @@ export async function fetchAndDecodeTexture(
     );
     tex.flipY = true;
     // 特效贴图按线性（见函数头的说明）；角色/地图仍 sRGB
-    tex.colorSpace = opts.linear ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+    tex.colorSpace = THREE.SRGBColorSpace;                     // 裁定 B：特效/角色统一 sRGB 管线
     // 与地图纹理（texture-loader）同一滤波策略：mipmap 线性，避免降采样"马赛克/颗粒"
     tex.generateMipmaps = true;
     tex.minFilter = THREE.LinearMipmapLinearFilter;

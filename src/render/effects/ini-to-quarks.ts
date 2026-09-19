@@ -34,13 +34,30 @@
 
 import * as THREE from 'three';
 import { ParticleSystem, RenderMode } from 'three.quarks';
-import { ConstantValue, Gradient, PointEmitter, Vector3 as QVec3 } from 'quarks.core';
-import { reportFallback } from '../../char/fallback-log.js';
+import {
+  ColorOverLife, ConstantValue, Gradient, PointEmitter, RotationOverLife,
+  SizeOverLife, Vector3Function, Vector3 as QVec3,
+} from 'quarks.core';
+import type { Behavior, FunctionValueGenerator } from 'quarks.core';
 import type { LoadedEffect } from './effect-assets.js';
 import { applyBlend } from './part-to-quarks.js';
 
 /** 原版 INI 的时间单位：**70Hz**（`effect-manager` 的 `EFFECT_HZ`，Delay 的步长） */
 export const EFFECT_HZ = 70;
+
+/** 帧内坡道因子：t∈[0,1] 时从 1 线性到 to/from（配 startSize=from ⇒ 绝对值 from→to）。
+ *  SizeOverLife 是乘法（startSize × factor），乘法因子必须相对化。 */
+class FrameRampGen implements FunctionValueGenerator {
+  type = 'function' as const;
+  constructor(private readonly from: number, private readonly to: number) {}
+  startGen(_m: unknown): void { /* 无逐粒子状态 */ }
+  genValue(_m: unknown, t = 0): number {
+    const ratio = this.to / this.from;
+    return 1 + (ratio - 1) * t;
+  }
+  toJSON(): { type: 'FrameRampGen'; from: number; to: number } { return { type: 'FrameRampGen' as const, from: this.from, to: this.to }; }
+  clone(): FrameRampGen { return new FrameRampGen(this.from, this.to); }
+}
 
 export interface IniToQuarksOpts {
   /** INI **没有 Size 段**时用的尺寸（世界单位）—— 原版在调用处显式给（`StartBillRectPrimitive` 的 sizeX/sizeY） */
@@ -60,20 +77,30 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
   const out: ParticleSystem[] = [];
   const scale = opts.scale ?? 1;
   let t = 0;                       // 累积起始时刻（秒）
+  let runningAngleDeg = 0;         // 角度链：本帧起点 = 上一帧目标（首帧 0，§A4 缺省）
+  let runningAlpha = 0;            // BlendValue 链：起步 = StartBlendValue（§A4 缺省 0；IR 未携带、缺省）
+  let runningWidth = opts.size;    // 宽度链：起步 = 调用方 sizeX（§A5 `SizeWidth = sizeX`）
 
   for (const f of eff.frames) {
     const dur = Math.max(1, f.delay) / EFFECT_HZ;
     if (!f.tex) { t += dur; continue; }              // 缺贴图的帧跳过（`diag` 里已记）
-    if (f.angle !== null && f.angle !== 0) {
-      reportFallback('fx', `INI「${eff.name}」某帧带 Angle=${f.angle}°，INI→quarks 尚未表达（该帧按无角度播）`);
-    }
+    // 逐帧坡道（§A5）：alpha 从 runningAlpha 渐变到 f.alpha；宽度从 runningWidth 渐变到 f.size；
+    // 角度从 runningAngleDeg 步进到 f.angle——三件同为"线性步进"语义
+    const alphaFrom = Math.min(1, Math.max(0, runningAlpha / 255));
+    const alphaTo = Math.min(1, Math.max(0, f.alpha / 255));
+    const widthFrom = Math.max(0.05, runningWidth * scale);
+    const widthTo = Math.max(0.05, (f.size ?? runningWidth) * scale);
+    const startAngleRad = runningAngleDeg * (Math.PI / 180);
+    const targetAngleDeg = f.angle ?? runningAngleDeg;   // null = 本帧目标不变（角速度 0）
+    const omegaRadPerSec = dur > 0
+      ? ((targetAngleDeg - runningAngleDeg) * (Math.PI / 180)) / dur
+      : 0;
+    runningAlpha = f.alpha; runningWidth = f.size ?? runningWidth; runningAngleDeg = targetAngleDeg;
 
     const mat = new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, depthTest: true });
     // 混合：**共享表**（`part-to-quarks.applyBlend` —— 含"亮度当 alpha 遮罩"的说明）
     applyBlend(mat, eff.blend);
 
-    const size = (f.size ?? opts.size) * scale;
-    const alpha = Math.min(1, Math.max(0, f.alpha / 255));
 
     const ps = new ParticleSystem({
       // 系统活到这一帧结束（`delay` 之前不发射，`delay + dur` 之后结束）
@@ -87,8 +114,33 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
       // 粒子寿命 = **这一帧的时长** ⇒ 到下一帧时刻恰好消失，逐帧精确
       startLife: new ConstantValue(dur),
       startSpeed: new ConstantValue(0),
-      startSize: new ConstantValue(size),
-      startColor: new Gradient([[new QVec3(1, 1, 1), 0]], [[alpha, 0]]),
+      // 行 [20] 结构：startSize = **绝对出生尺寸**，SizeOverLife 挂**相对坡道因子**
+      // （1 → to/from）⇒ 尺寸从起点渐变到目标。
+      // ⚠ startSize 不能放坡道生成器——SizeOverLife 会 ×= startSize，因子×因子 = 尺寸塌陷
+      //   （r[B7-5] 实测：全部 INI 只剩几像素）。
+      // ⚠ 高度：原版 = 调用方 sizeY（恒定，§A4）；lab 无调用方 sizeY ⇒ 按"宽高同值"
+      //   既登记偏差（行 [24]①）播——游戏侧接线（B8）传真实 sizeY 后按原版。
+      startSize: new Vector3Function(
+        new ConstantValue(widthFrom),
+        new ConstantValue(widthFrom),                       // 宽高同值（行 [24]① lab 偏差）
+        new ConstantValue(1),
+      ),
+      startColor: new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]),   // 乘法单位元（行 [L4]）
+      behaviors: [
+        // alpha 坡道：帧内从 alphaFrom 渐变到 alphaTo（§A5 BlendStep 语义）
+        new ColorOverLife(new Gradient(
+          [[new QVec3(1, 1, 1), 0]],
+          [[alphaFrom, 0], [alphaTo, 1]],
+        )),
+        ...(omegaRadPerSec !== 0 ? [new RotationOverLife(new ConstantValue(omegaRadPerSec)) as Behavior] : []),
+        // 宽高坡道因子（1 → to/from）——乘在 startSize 上
+        new SizeOverLife(new Vector3Function(
+          new FrameRampGen(widthFrom, widthTo),
+          new FrameRampGen(widthFrom, widthTo),
+          new ConstantValue(1),
+        )),
+      ],
+      startRotation: new ConstantValue(startAngleRad),
       renderMode: RenderMode.BillBoard,
       material: mat,
       // 粒子留在世界空间（INI 特效不随载体走；载体跟随由 emitter 挂载表达）

@@ -26,7 +26,7 @@ import { buildSheet, type RawImage } from '../../core/asset-cache.js';
 import { loadEffectByName } from './effect-registry.js';
 import { loadPartFromSystem, type LoadedPart } from './part-assets.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
-import { convertPart } from './part-to-quarks.js';
+import { convertPartV2 } from './plugin-part-convert.js';
 import { impShotSystem } from './imp-shot.js';
 import {
   POTION_BURST, POTION_PARTICLE_SIZE, POTION_LIGHT_SIZE,
@@ -158,7 +158,7 @@ export interface QuarksRuntime {
    * **通用入口**：把一份 `PartSystem`（我们的中间表示）交给 quarks 渲染。
    *
    * 这是"全用 quark"的接缝：怪物特效、法阵、拖尾、命中三件套……都是 `PartSystem`，
-   * 经 `convertPart` 转成 quarks 的 `ParticleSystem`（每 emitter 一支），由 `track` 登记。
+   * 经 `convertPartV2`（B7 新实现：PtClockBehavior 块语义）转成 quarks 的 `ParticleSystem`（每 emitter 一支），由 `track` 登记。
    * 首次遇到某份 spec 会 `await` 载入（其后命中缓存）—— 与旧
    * `effect-manager.spawnSystem` 的异步契约一致，故调用方可原样迁移。
    */
@@ -312,7 +312,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
         })),
       };
     }
-    const conv = convertPart(sysIn, loaded.textures);
+    const conv = convertPartV2(sysIn, loaded.textures);
     const tC = performance.now(); prof.convert += tC - tB;
     if (!conv.length) { missing.push(`spawnSystem(${key}): spec → quarks 转换失败`); return null; }
 
@@ -441,7 +441,7 @@ export function createQuarksRuntime(scene: THREE.Scene): QuarksRuntime {
 
     attachMagic(node) {
       if (!magicSpec) { missing.push('attachMagic: 预载未完成'); return null; }
-      const conv = convertPart(magicSpec.system, magicSpec.textures);
+      const conv = convertPartV2(magicSpec.system, magicSpec.textures);
       const ps = conv[0]?.system;
       if (!ps) { missing.push('attachMagic: spec → quarks 转换失败'); return null; }
       ps.worldSpace = true;         // 粒子留在世界空间 ⇒ 尾迹留在身后

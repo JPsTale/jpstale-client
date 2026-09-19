@@ -28,6 +28,9 @@
     "map-levels": "npx tsx scripts/extract-map-levels.ts",
     "monster-anim": "tsx scripts/extract-monster-anim.ts",
     "fx-names": "tsx scripts/scan-effect-names.ts",
+    "verify-quarks-map": "tsx scripts/verify-quarks-map.ts",
+    "verify-quarks-mechanisms": "tsx scripts/verify-quarks-mechanisms.ts",
+    "verify-lua-ir": "tsx scripts/verify-lua-ir.ts",
     "docs": "node scripts/gen-docs-preview.mjs"
   },
   "dependencies": {

@@ -578,6 +578,7 @@ export class PartBoxEmitter implements EmitterShape {
  * 需要就必须走 Mesh 模式（广告板只有面内 z，表达不了倾斜），见 `PtCameraFacingSpin`。
  */
 export function needs3DRotation(em: PartEmitter): boolean {
+  // 只由 `partangle*` 决定（`localangle*` 按原版只喂 TYPE_FOUR ⇒ 不参与广告板的朝向）
   for (const ax of ['x', 'y'] as const) {
     const t = angleTrackOf(em, ax, Math.max(0.05, midOf(em.lifetime, 1)));
     if (t.some((k) => Math.abs(k.v) > 1e-3)) return true;
@@ -620,10 +621,12 @@ export function angleTrackOf(em: PartEmitter, axis: 'x' | 'y' | 'z', lifeSec: nu
   };
   const ends = (v: Num | undefined, at: number): { t: number; v: number } | null =>
     (v == null ? null : { t: at, v: midOf(v, 0) });
+  // ⚠ **只取 `partangle*`**：原版 `LocalAngle` 只被 TYPE_FOUR 拖尾用（`AddFaceTrace`），
+  //   ONE/TWO/THREE 用的是 `PartAngle`（用户 2026-09-18 判定：旧实现把 localangle 也转在广告板上
+  //   是发明，按原版即可；`localanglez` 与 x/y 同属这条）。
   const part = withEnds(fieldTrack('partangle', pick(em.initialPartAngle) ?? ZERO),
     ends(pick(em.initialPartAngle), 0), ends(pick(em.finalPartAngle), 1));
-  const local = withEnds(fieldTrack('localangle', pick(em.initialLocalAngle) ?? ZERO),
-    ends(pick(em.initialLocalAngle), 0), ends(pick(em.finalLocalAngle), 1));
+  const local: Array<{ t: number; v: number }> = [];
   const num = (k: Array<{ t: number; v: unknown }>): Array<{ t: number; v: number }> =>
     k.map((x) => ({ t: x.t, v: midOf(x.v as Num, 0) }));
   const a = num(part);
@@ -888,7 +891,12 @@ export function convertPart(
       }
     }
 
-    // **3D 局部旋转**（`partanglex/y` + `localanglex/y` 合并成一条角度轨）——
+    if (em.particleType !== 4 && (em.initialLocalAngle || em.finalLocalAngle
+      || Object.keys(em.keyframes).some((k) => k.startsWith('localangle')))) {
+      notes.push('写了 localangle*，但原版 `LocalAngle` **只喂 TYPE_FOUR 拖尾**（ONE/TWO/THREE 用 '
+        + '`PartAngle`）⇒ 按原版忽略（用户 2026-09-18 判定）');
+    }
+    // **3D 局部旋转**（`partanglex/y`）——
     // 必须走 Mesh + **自带相机朝向基底**（quarks 的 Mesh 是世界朝向 ⇒ 直接用会侧立看不见）
     if (need3D) {
       const life = Math.max(0.05, midOf(em.lifetime, 1));
