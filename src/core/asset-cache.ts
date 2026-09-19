@@ -12,8 +12,11 @@ import { encodeAssetPath } from './texture';
  */
 const DB_NAME = 'pt-assets';
 const STORE = 'files';
-/** 换资产包时 +1（旧缓存随之失效，不留永远读不到的垃圾） */
-const DB_VERSION = 1;
+/** 换资产包时 +1（旧缓存随之失效，不留永远读不到的垃圾）。
+ *  v2（2026-09-19）：修正 `animationdata/skillroarlineparticle1.ini` 的 `DataFile` 拼写
+ *  （SkillRoarLinePartice1 → SkillRoarLineParticle1，资产自带错字）——**改了一个资产就要 bump**，
+ *  否则浏览器继续用旧副本（r[B7-7] 首次修复后 lab 仍 spawn=失败即此因）。 */
+const DB_VERSION = 2;
 
 /** 一级缓存：本次会话的内存副本 */
 const memory = new Map<string, ArrayBuffer>();
