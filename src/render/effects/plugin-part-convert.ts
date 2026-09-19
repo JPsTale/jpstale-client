@@ -24,7 +24,7 @@ import {
   ColorOverLife, ConstantValue, Gradient, IntervalValue, Vector3Function,
   Vector3 as QVec3,
 } from 'quarks.core';
-import type { Behavior, FunctionValueGenerator, ValueGenerator } from 'quarks.core';
+import type { Behavior, EmitterShape, FunctionValueGenerator, ValueGenerator } from 'quarks.core';
 import type { PartEmitter, PartSystem } from '../../core/effect/part-script.js';
 import type { PtEvent, PtSlot } from '../../core/effect/pt-timeline.js';
 import type { Num } from '../../core/effect/pt-value.js';
@@ -35,7 +35,7 @@ import { PtColorGen } from './plugin-value-gen.js';
 import { PtGravityBehavior } from './plugin-gravity.js';
 import { rotationWriterFor } from './orient-factory.js';
 import { PtAxialOrientation } from './orient-axial.js';
-import { PartSphereEmitter } from './plugin-shapes.js';
+import { PartSphereEmitter, PartDoughnutEmitter, CurPosVelocityShape } from './plugin-shapes.js';
 import {
   MeshRandomOrientation, OrientVelocityToNormal, PartBoxEmitter, applyBlend,
   type ConvertedEmitter,
@@ -114,6 +114,15 @@ export class PtDelayGateGen implements FunctionValueGenerator {
   clone(): FunctionValueGenerator { return new PtDelayGateGen(this.delaySec, this.durationSec, this.rate); }
 }
 
+/**
+ * `CurPos` 速度型必须**对所有出生形状**生效（原版在 `CreateNewParticle` 里做，与形状无关）——
+ * 之前只写在球/环形状里、盒形漏了（r[B7-17] 由校验器 L17 抓住）。
+ */
+function withCurPos(inner: EmitterShape, cfg: EmitterBuild, rand: () => number): EmitterShape {
+  if (cfg.velocityMode !== 'curpos' || !cfg.initialVelocity) return inner;
+  return new CurPosVelocityShape(inner, cfg.initialVelocity.x, rand);
+}
+
 /** 白色 startColor（乘法单位元——行 [L4]，颜色绝对值由轨道承担） */
 function whiteGradient(): Gradient {
   return new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]);
@@ -150,6 +159,8 @@ export interface EmitterBuild {
   velocityMode?: 'random' | 'curpos';
   /** 球形出生半径区间（`InitSpawnBoundingSphere`；给了就用球面点代替盒形） */
   sphereRadius?: [number, number];
+  /** 圆环出生（`InitSpawnBoundingDoughnut(x1,x2,y1,y2)`；给了就用它代替盒形） */
+  doughnut?: [number, number, number, number];
   sizeNum?: number;                          // 行 [19] startLength 的宽度基数
   sizeExtNum?: number;                       // 行 [19] startLength 的高度基数
   sizeXNum?: Num;                            // 行 [19] Trail 出生宽度（区间保留）
@@ -218,9 +229,15 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
   const system = new ParticleSystem({
     duration,
     looping: false,
-    shape: cfg.sphereRadius
-      ? new PartSphereEmitter(cfg.sphereRadius[0], cfg.sphereRadius[1], cfg.initialVelocity, cfg.velocityMode ?? 'random', rand)
-      : new PartBoxEmitter(cfg.emitRadius, cfg.initialVelocity ?? { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } } as never),
+    shape: withCurPos(
+      cfg.doughnut
+        ? new PartDoughnutEmitter(cfg.doughnut[0], cfg.doughnut[1], cfg.doughnut[2], cfg.doughnut[3], cfg.initialVelocity, cfg.velocityMode ?? 'random', rand)
+        : cfg.sphereRadius
+        ? new PartSphereEmitter(cfg.sphereRadius[0], cfg.sphereRadius[1], cfg.initialVelocity, cfg.velocityMode ?? 'random', rand)
+        : new PartBoxEmitter(cfg.emitRadius, cfg.initialVelocity ?? { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } } as never),
+      cfg,
+      rand,
+    ),
     startLife,
     startSize: new Vector3Function(new ConstantValue(1), new ConstantValue(1), new ConstantValue(1)),
     startColor: whiteGradient(),
@@ -340,6 +357,7 @@ export function luaIRToBuild(ir: LuaParticleIR, name: string, texture: THREE.Tex
     axial,
     velocityMode: ir.velocityType === 'CurPos' ? 'curpos' : 'random',
     sphereRadius: ir.spawnSphere,          // `InitSpawnBoundingSphere` ⇒ 球面出生
+    doughnut: ir.spawnDoughnut,            // `InitSpawnBoundingDoughnut` ⇒ 圆环出生
     renderModeOverride,
     sizeNum: 0, sizeExtNum: 0,                       // 尺寸走 time-0 事件（保留区间），此处不用
   };

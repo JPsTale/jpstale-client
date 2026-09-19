@@ -30,7 +30,7 @@ const ok = (name: string, pass: boolean, detail = ''): void => {
 interface MapFile {
   rows: Array<{
     id: string; vol: string; kind: string;
-    oracle: { kind: string; desc: string; check?: Check };
+    oracle: { kind: string; desc: string; check?: Check & Record<string, unknown> };
     mutation: { machine?: string | null; desc: string };
   }>;
 }
@@ -309,6 +309,264 @@ const expectNum = (id: string, frame: number, group: string, comp: number): numb
 console.log(fails === 0
   ? `\n✓ verify-quarks-mechanisms 通过 —— oracle 机器复算 ${refChecked + formulaChecked} 行、mutation 注入 ${mutationsRun} 条全部变红`
   : `\n✗ ${fails} 条不符 —— 对照 docs/handoff/frozen/ 的冻结卷第 5/6 栏查数据与求值器`);
+
+/* ════════ INI 族（B 计划：帧时长 / 坡道+相位 / 寿命 ε / 宽高 / 混合 / Angle） ════════ */
+
+import * as THREE from 'three';
+import { iniToQuarks } from '../src/render/effects/ini-to-quarks.js';
+
+interface IniFrameSpec { delay: number; alpha: number; size: number | null; angle: number | null }
+interface IniCheck {
+  frames: IniFrameSpec[];
+  opts: { size: number };
+  blend?: string;
+  expectDurations?: number[];
+  expectStarts?: number[];
+  expectFirstTickAlpha?: number;
+  expectDrawCounts?: number[];
+  expectEndWidth?: number;
+  expectHeight?: number;
+  expectBlending?: string;
+  expectFrame1EndRotationDeg?: number;
+  /** `INFO_DEFAULT` 分支（序列**没有 Size 段**）的对照：宽高都不步进 */
+  noSize?: { frames: IniCheck['frames']; expectWidth: number; expectHeight: number };
+}
+
+/** 合成一份 INI（1×1 贴图 + 指定帧），走与运行时同一条 `iniToQuarks` */
+function buildIni(c: IniCheck, blend: string): ReturnType<typeof iniToQuarks> {
+  const tex = new THREE.DataTexture(new Uint8Array([255, 255, 255, 255]), 1, 1);
+  const frames = c.frames.map((f) => ({ tex, delay: f.delay, alpha: f.alpha, size: f.size, angle: f.angle }));
+  const duration = frames.reduce((t, f) => t + Math.max(1, f.delay) / 70, 0);
+  const systems = iniToQuarks({ name: 'ini-synth', blend, frames, duration, diag: {} } as never, { size: c.opts.size });
+  // ⚠ 必须挂进 Scene：`ParticleSystem.update` 会检查"根父节点是不是 Scene"，不满足就自我 dispose 并 return
+  //   （与 lab/运行时的装配同一条要求）——不挂的话粒子数恒 0，检查会误报成"实现没画"。
+  const scene = new THREE.Scene();
+  for (const s2 of systems) scene.add(s2.emitter);
+  scene.updateMatrixWorld(true);
+  return systems;
+}
+
+console.log('INI 族（6 行 → 可机器验证；合成 effect + 逐帧绘制数不变式）');
+{
+  const iniRows = (map as unknown as { iniRows: Array<{ id: string; oracle: { check?: IniCheck } }> }).iniRows;
+  const checkOf = (id: string): IniCheck => iniRows.find((r) => r.id === id)!.oracle.check!;
+
+  // I1 帧时长 / 起始时刻
+  {
+    const c = checkOf('I1');
+    const systems = buildIni(c, 'lamp');
+    // `duration` 是**累计终点**（t + dur）⇒ 帧长 = 相邻差；同时校验帧起始的累计时刻
+    const ends = systems.map((s) => s.duration);
+    const lens = ends.map((e, i) => e - (i > 0 ? ends[i - 1]! : 0));
+    const starts = ends.map((e, i) => e - (c.expectDurations![i] ?? 0));
+    const wantLen = c.expectDurations!; const wantStart = c.expectStarts!;
+    const okI1 = wantLen.every((d, i) => Math.abs(lens[i]! - d) < 1e-9)
+      && wantStart.every((t, i) => Math.abs(starts[i]! - t) < 1e-9);
+    ok('I1 帧时长 = Delay/70（0.1 / 0.2）、帧起始 = 0 / 0.1',
+      okI1, `帧长 [${lens.map((d) => d.toFixed(3)).join(', ')}] 起始 [${starts.map((t) => t.toFixed(3)).join(', ')}]`);
+  }
+
+  // I2 坡道相位：单 tick 帧的 alpha = 目标值（不是起点）
+  {
+    const c = checkOf('I2');
+    const [s0] = buildIni(c, 'lamp');
+    s0!.update(1 / 70);
+    const p = (s0 as unknown as { particles: Array<{ color: { w: number } }> }).particles[0];
+    const alpha = p ? p.color.w * 255 : NaN;
+    ok('I2 帧内坡道 + 相位：Delay=1、目标 200 ⇒ 唯一 tick 的 alpha = 200（一 tick 到位）',
+      Math.abs(alpha - (c.expectFirstTickAlpha ?? 0)) < 0.5, `实际 alpha=${alpha.toFixed(1)}`);
+  }
+
+  // I3 寿命 ε：各系统**实际被绘制帧数** = 该帧 Delay
+  {
+    const c = checkOf('I3');
+    const systems = buildIni(c, 'lamp');
+    const counts = systems.map(() => 0);
+    const total = (c.expectDrawCounts ?? []).reduce((a, b) => a + b, 0);
+    for (let f = 0; f < total + 2; f++) {
+      systems.forEach((s, i) => {
+        s.update(1 / 70);
+        if ((s as unknown as { particleNum: number }).particleNum > 0) counts[i]! += 1;
+      });
+    }
+    const want = c.expectDrawCounts!;
+    ok('I3 寿命 ε：各系统被绘制帧数 = 该帧 Delay（[1,60,35]）',
+      want.every((w, i) => counts[i] === w), `实际 [${counts.join(', ')}]（期望 [${want.join(', ')}]）`);
+  }
+
+  // I4 宽高：宽向帧 Size 步进到目标、高 = 调用方 sizeY 恒定
+  {
+    const c = checkOf('I4');
+    const [s0] = buildIni(c, 'lamp');
+    for (let f = 0; f < c.frames[0]!.delay; f++) s0!.update(1 / 70);
+    const p = (s0 as unknown as { particles: Array<{ size: { x: number; y: number } }> }).particles[0];
+    const w = p ? p.size.x : NaN; const h = p ? p.size.y : NaN;
+    ok('I4a 宽高（带 Size 段）：帧末宽 = 高 = 帧 Size(70)（高按同一步长 25+(70−25)）',
+      Math.abs(w - (c.expectEndWidth ?? 0)) < 1e-6 && Math.abs(h - (c.expectHeight ?? 0)) < 1e-6,
+      `实际 宽=${w.toFixed(2)} 高=${h.toFixed(2)}`);
+    // I4b `INFO_DEFAULT`（无 Size 段）⇒ 宽高都保持调用方 sizeX/sizeY（`HoEffect.cpp:1075-1076`）
+    const c2 = c.noSize!;
+    const [b0] = buildIni({ ...c, frames: c2.frames }, 'lamp');
+    for (let f = 0; f < c2.frames[0]!.delay; f++) b0!.update(1 / 70);
+    const p2 = (b0 as unknown as { particles: Array<{ size: { x: number; y: number } }> }).particles[0];
+    const w2 = p2 ? p2.size.x : NaN; const h2 = p2 ? p2.size.y : NaN;
+    ok('I4b 宽高（INFO_DEFAULT，无 Size 段）：宽高都恒 = 调用方 size(25)',
+      Math.abs(w2 - c2.expectWidth) < 1e-6 && Math.abs(h2 - c2.expectHeight) < 1e-6,
+      `实际 宽=${w2.toFixed(2)} 高=${h2.toFixed(2)}`);
+  }
+
+  // I5 BlendType → 混合
+  {
+    const c = checkOf('I5');
+    const [s0] = buildIni(c, c.blend ?? 'lamp');
+    const blending = (s0 as unknown as { material: { blending: number } }).material.blending;
+    const wantAdditive = blending === THREE.AdditiveBlending;
+    ok('I5 BlendType=2(lamp) ⇒ AdditiveBlending', wantAdditive, `blending=${blending}`);
+  }
+
+  // I6 逐帧 Angle：帧1 末 rotation = 90°
+  {
+    const c = checkOf('I6');
+    const systems = buildIni(c, 'lamp');
+    const s1 = systems[1]!;
+    // 先推进过**前面帧**的时长（帧1 的 burst 在 t = 前缀和处），再多推 1 tick 让粒子出生后步进到帧末
+    const ticks = c.frames[0]!.delay + c.frames[1]!.delay;
+    for (let f = 0; f < ticks; f++) s1.update(1 / 70);
+    const p = (s1 as unknown as { particles: Array<{ rotation: unknown }> }).particles[0];
+    const deg = p ? (Number(p.rotation) * 180) / Math.PI : NaN;
+    ok('I6 逐帧 Angle：帧1 末 rotation = 90°（帧0 起点 0°）',
+      Math.abs(deg - (c.expectFrame1EndRotationDeg ?? 0)) < 0.5, `实际 ${deg.toFixed(2)}°`);
+  }
+}
+
+/* ════════ Lua 命令语义（A 计划：8 个 hand 行 → 可机器验证） ════════ */
+
+import { parseLuaScript, particleIR, meshIR } from '../src/core/effect/lua-script.js';
+import { luaIRToBuild, buildEmitterSystem } from '../src/render/effects/plugin-part-convert.js';
+import { setOrientCamera } from '../src/render/effects/orient-shared.js';
+import { PtAxialOrientation } from '../src/render/effects/orient-axial.js';
+import { Quaternion as QQuat, Vector3 as QVec3 } from 'quarks.core';
+
+/** 确定性随机（线性同余）——oracle 必须可复现 */
+function seededRand(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => { s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return s / 4294967296; };
+}
+/** 用种子随机造一个"单粒子"系统，返回其 spawn 时的 position/velocity（照形状的 initialize） */
+function probeSpawn(lua: string, seed: number): { pos: [number, number, number]; vel: [number, number, number]; behaviors: string[] } {
+  const ir = particleIR(parseLuaScript(lua))[0]!;
+  const rand = seededRand(seed);
+  const built = buildEmitterSystem(luaIRToBuild(ir, 'probe', null), rand);
+  const shape = (built.system as unknown as { emitterShape: { initialize(p: unknown, s?: unknown): void } }).emitterShape;
+  const p = { position: { x: 0, y: 0, z: 0 }, velocity: { x: 0, y: 0, z: 0 }, memory: [] };
+  shape.initialize(p as never, {} as never);
+  return {
+    pos: [p.position.x, p.position.y, p.position.z],
+    vel: [p.velocity.x, p.velocity.y, p.velocity.z],
+    behaviors: built.system.behaviors.map((b) => b.type),
+  };
+}
+const V3LEN = (v: [number, number, number]): number => Math.hypot(v[0], v[1], v[2]);
+const dot3 = (a: [number, number, number], b: [number, number, number]): number => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+
+console.log('Lua 命令语义（8 行 → 可机器验证；合成片段 + 种子随机）');
+{
+  // L14 InitParticleNum：显式值 + **缺省 50**（C++ ctor m_fParticleNum(50.f)）
+  const n7 = luaIRToBuild(particleIR(parseLuaScript('Begin("ParticleSystem");\nInitParticleNum(7);\nEnd();'))[0]!, 'x', null);
+  const nBare = luaIRToBuild(particleIR(parseLuaScript('Begin("ParticleSystem");\nEnd();'))[0]!, 'x', null);
+  ok('L14 InitParticleNum：显式 7 / 缺省 50（C++ ctor）', n7.numParticles === 7 && nBare.numParticles === 50,
+    `显式=${n7.numParticles} 缺省=${nBare.numParticles}`);
+
+  // L15 InitEmitRate：显式值 + **缺省 30**
+  const r11 = luaIRToBuild(particleIR(parseLuaScript('Begin("ParticleSystem");\nInitEmitRate(11);\nEnd();'))[0]!, 'x', null);
+  const rBare = luaIRToBuild(particleIR(parseLuaScript('Begin("ParticleSystem");\nEnd();'))[0]!, 'x', null);
+  ok('L15 InitEmitRate：显式 11 / 缺省 30（C++ ctor）', r11.emitRate === 11 && rBare.emitRate === 30,
+    `显式=${r11.emitRate} 缺省=${rBare.emitRate}`);
+
+  // L17 InitVelocityType：Random ⇒ v.y=v.z=0（单轴区间）；CurPos ⇒ v ∥ pos、|v| ∈ [90,100]
+  const rnd = probeSpawn('Begin("ParticleSystem");\nInitVelocity(-100,-90,0,0,0,0);\nInitVelocityType("Random");\nEnd();', 7);
+  // ⚠ CurPos 需要**非退化出生偏移**（原版就是从 `m_EmitRange->GetPos()` 取方向）⇒ 用例带球面出生
+  const cp = probeSpawn('Begin("ParticleSystem");\nInitSpawnBoundingSphere(100,100);\nInitVelocity(-100,-90,0,0,0,0);\nInitVelocityType("CurPos");\nEnd();', 7);
+  const cpSpeed = V3LEN(cp.vel);
+  const parallel = Math.abs(dot3(cp.vel, cp.pos)) / ((cpSpeed * V3LEN(cp.pos)) || 1);
+  ok('L17 VelocityType：Random 单轴 / CurPos 沿径向（|v|∈[90,100]、v∥pos）',
+    Math.abs(rnd.vel[1]) < 1e-9 && Math.abs(rnd.vel[2]) < 1e-9
+    && cpSpeed >= 90 && cpSpeed <= 100 && parallel > 0.999,
+    `Random v=(${rnd.vel.map((x) => x.toFixed(1)).join(',')}) CurPos |v|=${cpSpeed.toFixed(1)} v∥pos=${parallel.toFixed(3)}`);
+  // 反例对撞：若 CurPos 与 Random 同路（旧 bug）则 v 与 pos 不同向
+  const wrongParallel = Math.abs(dot3(rnd.vel, rnd.pos)) / ((V3LEN(rnd.vel) * V3LEN(rnd.pos)) || 1);
+  ok('L17 反例：把 CurPos 当 Random 会被抓住（v∥pos 不成立）', wrongParallel < 0.999,
+    `若同路：v∥pos=${wrongParallel.toFixed(3)}（<0.999 ⇒ 检查会红）`);
+
+  // L18 InitParticleType：Default ⇒ PtOrientOne；Axial ⇒ PtAxialOrientation + 长轴∥速度 + |q|=1
+  const dflt = probeSpawn('Begin("ParticleSystem");\nInitParticleType("BillboardDefault");\nEnd();', 3);
+  const ax = probeSpawn('Begin("ParticleSystem");\nInitParticleType("BillboardAxial");\nInitVelocity(10,10,0,0,0,0);\nEnd();', 3);
+  const hasDefault = dflt.behaviors.includes('PtOrientOne');
+  const hasAxial = ax.behaviors.includes('PtAxialOrientation');
+  // 轴向朝向的数学：Y 轴 ∥ 速度、四元数单位长
+  setOrientCamera({ x: 0, y: 0, z: 0, w: 1 }, { x: 0, y: 0, z: 200 });
+  const ob = new PtAxialOrientation();
+  const probe = { velocity: { x: 10, y: 0, z: 0 }, position: { x: 0, y: 0, z: 0 }, rotation: undefined } as never;
+  ob.update(probe as never, 1 / 60);
+  const q = (probe as unknown as { rotation: { x: number; y: number; z: number; w: number } }).rotation;
+  const qLen = Math.hypot(q.x, q.y, q.z, q.w);
+  // ⚠ 用四元数作用求"局部 +Y 在世界里的像"——**不要手写矩阵列**（我第一版手写取了转置，
+  //   于是把"实现正确"误判成 -X）。这里与 `_dbg-axial` 的验证方式一致。
+  const qq = new QQuat(q.x, q.y, q.z, q.w);
+  const yWorldV = new QVec3(0, 1, 0).applyQuaternion(qq);
+  const yWorld = { x: yWorldV.x, y: yWorldV.y, z: yWorldV.z };
+  ok('L18 ParticleType：Default→PtOrientOne / Axial→PtAxialOrientation（长轴∥速度、|q|=1）',
+    hasDefault && hasAxial && Math.abs(qLen - 1) < 1e-6 && Math.abs(yWorld.x - 1) < 1e-6,
+    `default=${hasDefault} axial=${hasAxial} |q|=${qLen.toFixed(6)} 长轴=(${yWorld.x.toFixed(3)},${yWorld.y.toFixed(3)},${yWorld.z.toFixed(3)})`);
+  ok('L18 反例：VerticalBillBoard 路线会被抓住（行为表无 PtAxialOrientation）',
+    ax.behaviors.includes('PtAxialOrientation'),
+    `axial 行为=[${ax.behaviors.join(',')}]`);
+
+  // L19 盒形：三轴各自区间
+  {
+    const ranges: Array<[number, number]> = [[-20, 20], [0, 50], [-30, 0]];
+    let inRange = true;
+    for (let s = 1; s <= 200; s++) {
+      const p = probeSpawn('Begin("ParticleSystem");\nInitSpawnBoundingBox(-20,20,0,50,-30,0);\nEnd();', s).pos;
+      for (let a = 0; a < 3; a++) if (p[a]! < ranges[a]![0]! - 1e-9 || p[a]! > ranges[a]![1]! + 1e-9) inRange = false;
+    }
+    ok('L19 InitSpawnBoundingBox：200 个样本全在三轴区间内', inRange, 'x[-20,20] y[0,50] z[-30,0]');
+  }
+
+  // L20 球面点：**半径恰等于掷出值**（不是球体内均匀）
+  {
+    let allOnSurface = true; let maxErr = 0;
+    for (let s = 1; s <= 200; s++) {
+      const d = Math.abs(V3LEN(probeSpawn('Begin("ParticleSystem");\nInitSpawnBoundingSphere(150,150);\nEnd();', s).pos) - 150);
+      if (d > 1e-6) allOnSurface = false;
+      maxErr = Math.max(maxErr, d);
+    }
+    ok('L20 InitSpawnBoundingSphere：定值半径 150 ⇒ |pos| 恒 150（球面而非球体）', allOnSurface, `最大偏差=${maxErr.toExponential(1)}`);
+  }
+
+  // L21 圆环：照 C++ 的"三轴盒 + z 加半径 + 绕 Y 微转" ⇒ |pos| 恒为 sqrt(1+1+51²)
+  {
+    const expect = Math.sqrt(1 + 1 + 51 * 51);
+    let maxErr = 0;
+    for (let s = 1; s <= 50; s++) {
+      const p = probeSpawn('Begin("ParticleSystem");\nInitSpawnBoundingDoughnut(50,50,1,1);\nEnd();', s).pos;
+      maxErr = Math.max(maxErr, Math.abs(V3LEN(p) - expect));
+    }
+    ok('L21 InitSpawnBoundingDoughnut：|pos| 恒 = sqrt(1+1+51²)（照 HoEffectController.h:355-404）',
+      maxErr < 1e-6, `期望=${expect.toFixed(4)} 最大偏差=${maxErr.toExponential(1)}`);
+  }
+
+  // L22 InitAxialPos：门控只认 BILLBOARD_AXIAL（粒子块里 no-op）
+  {
+    const inPs = parseLuaScript('Begin("ParticleSystem");\nInitAxialPos(0,-50,0,0,50,0);\nEnd();');
+    const inAx = parseLuaScript('Begin("BILLBOARD_AXIAL");\nInitAxialPos(0,-50,0,0,50,0);\nEnd();');
+    const g1 = inPs.blocks[0]!.commands[0]!.gate;
+    const g2 = inAx.blocks[0]!.commands[0]!.gate;
+    ok('L22 InitAxialPos：粒子块 dropped-gate / BILLBOARD_AXIAL applied（门控照抄）',
+      g1 === 'dropped-gate' && g2 === 'applied', `粒子=${g1} 轴对齐=${g2}`);
+  }
+  void meshIR;
+}
 
 /* ════════ 阶段二（B2/B5）：**实现符合性** —— 真实插件类跑同一批冻结 oracle ════════ */
 

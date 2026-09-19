@@ -75,6 +75,30 @@ class FrameRampGen implements FunctionValueGenerator {
   clone(): FrameRampGen { return new FrameRampGen(this.from, this.to, this.phase); }
 }
 
+/** INI 高度坡道 —— **带 Size 的序列（`INFO_ONESIZE` 与 `INFO_ONESIZEANGLE`）宽高都步进**
+ *  （`HoEffect.cpp:700-712` 两个分支各写着 `SizeWidth += SizeStep; **SizeHeight += SizeStep**;`，
+ *  逐字已核 —— 见复核记录 r[B7-19]）。
+ *  ⚠ 原版给宽高**同一步长**（`SizeStep = (帧 SizeWidth − SizeWidth)/Delay` 的**绝对增量**，不是同一比例）
+ *  ⇒ 高 = 调用方 sizeY + (本帧当前宽 − 起步宽)。只有当序列**没有 Size 段**（`INFO_DEFAULT`）时
+ *  两个尺寸都不动（仍是 `:1075-1076` 的 sizeX/sizeY）——那时本生成器退化成常量，故可无条件挂。 */
+class FrameHeightRampGen implements FunctionValueGenerator {
+  type = 'function' as const;
+  constructor(
+    private readonly from: number,      // 宽起步（调用方 sizeX·scale）
+    private readonly to: number,        // 本帧宽目标（帧 Size·scale）
+    private readonly base: number,      // 调用方 sizeY（高起步）
+    private readonly phase = 0,
+  ) {}
+  startGen(_m: unknown): void { /* 无逐粒子状态 */ }
+  genValue(_m: unknown, t = 0): number {
+    const sRatio = 1 + ((this.to / this.from) - 1) * Math.min(1, t + this.phase);
+    const width = this.from * sRatio;
+    return (this.base + (width - this.from)) / this.base;
+  }
+  toJSON(): { type: 'FrameHeightRampGen' } { return { type: 'FrameHeightRampGen' as const }; }
+  clone(): FrameHeightRampGen { return new FrameHeightRampGen(this.from, this.to, this.base, this.phase); }
+}
+
 /** alpha 坡道（同相位语义）：alpha(t) = from + (to−from)·min(1, t + phase)，写进 Vector4.w */
 class FrameAlphaGen implements FunctionColorGenerator {
   type = 'function' as const;
@@ -114,6 +138,10 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
   let runningAngleDeg = 0;         // 角度链：本帧起点 = 上一帧目标（首帧 0，§A4 缺省）
   let runningAlpha = 0;            // BlendValue 链：起步 = StartBlendValue（§A4 缺省 0；IR 未携带、缺省）
   let runningWidth = opts.size;    // 宽度链：起步 = 调用方 sizeX（§A5 `SizeWidth = sizeX`）
+  // 序列是否带 Size 段 ⇒ `INFO_ONESIZE` / `INFO_ONESIZEANGLE`（两者**宽高都步进**，`:700-712`）；
+  // 没有 Size 段的就是 `INFO_DEFAULT` ⇒ 宽高都保持调用方给的 sizeX/sizeY（`:1075-1076`）。
+  const sizeSeq = eff.frames.some((f) => f.size !== null);
+  const heightBase = Math.max(0.05, opts.size * scale);   // 调用方 sizeY（lab 无调用方 ⇒ 与 sizeX 同值）
 
   for (const f of eff.frames) {
     const dur = Math.max(1, f.delay) / EFFECT_HZ;
@@ -121,7 +149,12 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
     // 逐帧坡道（§A5）：alpha 从 runningAlpha 渐变到 f.alpha；宽度从 runningWidth 渐变到 f.size；
     // 角度从 runningAngleDeg 步进到 f.angle——三件同为"线性步进"语义
     const ticks = Math.max(1, Math.round(dur * EFFECT_HZ));   // 本帧的 tick 数（Delay 帧数）
-    const phase = 1 / ticks;                                   // §A5：步进后绘制 ⇒ 相位前移一 tick
+    // §A5 语义："固定步长步进 Delay 拍 ⇒ **最后一拍恰好落在本帧目标值**"（原版 `Xxx += Step`，Step 由
+    // (目标 − 起点)/Delay 一次算出）。我们的坡道是按**寿命归一化**的，而寿命被 LIFE_EPS 拉长成
+    // `dur + ε` ⇒ 直接写 1/ticks 会永远差 ε 那一口（实测帧末 69.96 而非 70，r[B7-18]）。
+    // ⚠ quarks 的行为在**自增 age 之前**跑（`SizeOverLife` 收到 `age/life`，首拍 age=0）⇒
+    // 第 k 拍的归一化时刻 = (k−1)·(dur/ticks)/(dur+ε)；令**最后一拍 k = ticks** 恰好到 1 即得相位：
+    const phase = 1 - ((ticks - 1) * (dur / ticks)) / (dur + LIFE_EPS);
     const alphaFrom = Math.min(1, Math.max(0, runningAlpha / 255));
     const alphaTo = Math.min(1, Math.max(0, f.alpha / 255));
     const widthFrom = Math.max(0.05, runningWidth * scale);
@@ -154,11 +187,11 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
       // （1 → to/from）⇒ 尺寸从起点渐变到目标。
       // ⚠ startSize 不能放坡道生成器——SizeOverLife 会 ×= startSize，因子×因子 = 尺寸塌陷
       //   （r[B7-5] 实测：全部 INI 只剩几像素）。
-      // ⚠ 高度：原版 = 调用方 sizeY（恒定，§A4）；lab 无调用方 sizeY ⇒ 按"宽高同值"
-      //   既登记偏差（行 [24]①）播——游戏侧接线（B8）传真实 sizeY 后按原版。
+      // §A4/§A5：宽起步 = 调用方 sizeX、高起步 = 调用方 sizeY（`HoEffect.cpp:1075-1076`）；
+      // lab 没有调用方 ⇒ 传进来的 `opts.size` 同时当 sizeX/sizeY（行 [24]① 的已登记偏差）。
       startSize: new Vector3Function(
         new ConstantValue(widthFrom),
-        new ConstantValue(widthFrom),                       // 宽高同值（行 [24]① lab 偏差）
+        new ConstantValue(heightBase),
         new ConstantValue(1),
       ),
       startColor: new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]),   // 乘法单位元（行 [L4]）
@@ -166,10 +199,13 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
         // alpha 坡道（§A5 BlendStep + "步进后绘制"的相位）
         new ColorOverLife(new FrameAlphaGen(alphaFrom, alphaTo, phase)),
         ...(omegaRadPerSec !== 0 ? [new RotationOverLife(new ConstantValue(omegaRadPerSec)) as Behavior] : []),
-        // 宽高坡道因子（1 → to/from）——乘在 startSize 上
+        // 宽高坡道因子（1 → to/from）——乘在 startSize 上；两个分量都是**绝对同一步长**语义
         new SizeOverLife(new Vector3Function(
           new FrameRampGen(widthFrom, widthTo, phase),
-          new FrameRampGen(widthFrom, widthTo, phase),
+          // 高：带 Size 段 ⇒ 与宽同一步长（r[B7-19] 逐字核过）；`INFO_DEFAULT` ⇒ 恒 = sizeY
+          sizeSeq
+            ? new FrameHeightRampGen(widthFrom, widthTo, heightBase, phase)
+            : new ConstantValue(1),
           new ConstantValue(1),
         )),
       ],
