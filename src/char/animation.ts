@@ -104,7 +104,7 @@ function writeBindRot(out: number[], m: ArrayLike<number>): void {
  * 逻辑与数值顺序严格照抄原实现（见文件头 C++ 出处）。
  * @param tmp 需要一块 16 元素的暂存（用于 slerp 后的旋转矩阵），由调用方提供
  */
-function getRotMatrixInto(obj: Obj3D, frame: number, out: number[], tmp: number[]): void {
+export function getRotMatrixInto(obj: Obj3D, frame: number, out: number[], tmp: number[]): void {
   const { tmRot, tmPrevRot } = obj;
   if (!tmRot || tmRot.length === 0 || !tmPrevRot || tmPrevRot.length === 0) {
     writeBindRot(out, obj.tmRotate.m);
@@ -154,7 +154,7 @@ function getRotMatrixInto(obj: Obj3D, frame: number, out: number[], tmp: number[
 const QUAT_SCRATCH = { x: 0, y: 0, z: 0, w: 0 };
 
 /** 该骨在当前帧的位移，写入 out（复用对象） */
-function getPosInto(obj: Obj3D, frame: number, out: { x: number; y: number; z: number }): void {
+export function getPosInto(obj: Obj3D, frame: number, out: { x: number; y: number; z: number }): void {
   const { tmPos } = obj;
   if (!tmPos || tmPos.length === 0) {
     out.x = obj.bindPos.x; out.y = obj.bindPos.y; out.z = obj.bindPos.z;

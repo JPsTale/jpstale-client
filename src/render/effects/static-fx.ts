@@ -36,8 +36,10 @@ import * as THREE from 'three';
 import { parseSmb } from '../../core/char-parser.js';
 import { normalizeTexturePath } from './part-assets.js';
 import { fetchAndDecodeTexture } from '../char-texture-loader.js';
-import { getMoveLocation, FONE } from '../../core/geom.js';
+import { FONE } from '../../core/geom.js';
 import { reportFallback } from '../../char/fallback-log.js';
+import { getRotMatrixInto, toYupRowInto } from '../../char/animation.js';
+import type { Obj3D } from '../../char/char-format.js';
 
 export interface StaticModelResult {
   group: THREE.Group;
@@ -62,6 +64,8 @@ export interface StaticMeshTrack {
   /** 该轨道的"轴向非 1"告警是否已上报过（**每轨道一次**，否则每帧都报 ⇒ 刷屏） */
   axisWarned?: boolean;
   group: THREE.Object3D;
+  /** 该对象的解析结果（`Obj3D`）——**逐帧旋转轨道**（`tmRot`）从它求，见 `applyStaticMeshTracks` */
+  obj: Obj3D;
   /** 位移关键帧（原版 `GetPosFrame`）：帧号 160/帧，值即 PT 空间平移 */
   keys: Array<{ frame: number; x: number; y: number; z: number }>;
   /** 缩放关键帧（原版 `GetScaleFrame`）：如法阵 `maam2` 的 z 从 1 → 9（张开），20 帧 */
@@ -76,8 +80,26 @@ export interface StaticMeshTrack {
  * PT 的 y↔three 的 −z ⇒ 缩放的负号无所谓 ⇒ `set(sx, sz, sy)`）—— 法阵的 `tmScale.z` = PT 的"上"，
  * 在 three 里落在 y 轴 ✓。
  */
+/** 逐帧旋转的暂存（单线程串行调用 ⇒ 模块级复用） */
+const ROT_A: number[] = new Array(16).fill(0);
+const ROT_OUT: number[] = new Array(16).fill(0);
+const ROT_M4 = new THREE.Matrix4();
+const ROT_P = new THREE.Vector3();
+const ROT_Q = new THREE.Quaternion();
+const ROT_S = new THREE.Vector3();
+
 export function applyStaticMeshTracks(tracks: StaticMeshTrack[], frame: number): void {
   for (const t of tracks) {
+    // ① **旋转**：原版每帧 `TmAnimation` → `GetRotFrame`（有旋转轨道时）或绑定姿态 `TmRotate`。
+    //    复用 `char/animation.js` 的 `getRotMatrixInto`（含"段查找 + 绑定姿态回退"的既有教训），
+    //    再按角色动画同一套 `toYupRowInto` 转 Y-up、`fromArray`+`decompose` 落地 —— 与
+    //    `char/animation.js:calcBone/applyToBones` 完全一致（AGENTS #15：不写第二份）。
+    getRotMatrixInto(t.obj, frame, ROT_A, ROT_OUT);
+    toYupRowInto(ROT_A, ROT_OUT, ROT_A.slice());
+    ROT_M4.fromArray(ROT_OUT);
+    ROT_M4.decompose(ROT_P, ROT_Q, ROT_S);
+    t.group.quaternion.copy(ROT_Q);
+
     const k = t.keys;
     if (k.length && k[0]!.frame <= frame) {
       let i = 0;
@@ -184,8 +206,6 @@ export async function loadStaticSmd(
     //     平移留空（否则会凭猜测把整簇挪到几百单位外）。
     //   `mWorld` / `tmResult` / `mLocal` 全是未初始化噪声（绑定流程没跑），不可用。
     const op = obj.posi ?? { x: 0, y: 0, z: 0 };
-    const oa = obj.angle ?? { x: 0, y: 0, z: 0 };
-    const tm = (obj.tmRotate as unknown as { m?: number[] } | undefined)?.m;
     // **何时应用 `tmRotate`** —— 照引擎 `smOBJ3D::TmAnimation`（`smObj3d.cpp:1482` 的条件）：
     // ```
     // if ((!TmFrameCnt && (TmRotCnt>0 || TmPosCnt>0 || TmScaleCnt>0)) ||
@@ -200,15 +220,14 @@ export async function loadStaticSmd(
     });
     const hasTracks = (trackCount.tmFrameCnt ?? 0) !== 0
       || (trackCount.tmRotCnt ?? 0) > 0 || (trackCount.tmPosCnt ?? 0) > 0 || (trackCount.tmScaleCnt ?? 0) > 0;
-    const rot = hasTracks && tm && tm.length === 16
-      ? new THREE.Matrix4().fromArray(tm.map((v) => v / 256))
-      : null;
+    // ⚠ **旋转不再烘进顶点**：`tmRotate` 只是"绑定姿态"，而原版每帧取的是
+    // **旋转轨道** `tmRot`（`smOBJ3D::TmAnimation` → `GetRotFrame`）——烘焙绑定姿态会让
+    // 有旋转轨道的网格停在绑定姿势（r[B7-16] 实测：刺客之眼的同心圆本该立起来，却平躺）。
+    // 现在：顶点只做 Z-up→Y-up；旋转由 `applyStaticMeshTracks` 每帧写到 `objGroup.quaternion`
+    // （复用 `char/animation.js` 的 `getRotMatrixInto` —— 与角色动画同一份实现）。
     const put = (vx: number, vy: number, vz: number): [number, number, number] => {
       if (!hasTracks) return toYup(vx, vy, vz);          // 无轨道：裸顶点（单位阵）
-      const r = getMoveLocation(vx, vy, vz, oa.x, oa.y, oa.z);
-      // 对象自身的旋转（`tmRotate`，PT 空间里先转，再统一 Z-up → Y-up）
-      const v = rot ? new THREE.Vector3(r.x, r.y, r.z).applyMatrix4(rot) : r;
-      return toYup(v.x + op.x / FONE, v.y + op.y / FONE, v.z + op.z / FONE);
+      return toYup(vx + op.x / FONE, vy + op.y / FONE, vz + op.z / FONE);
     };
     // 顶点按**面**展开（UV 是逐面的，同 `buildSkinnedMesh` 的做法）
     let tri = 0;
@@ -259,8 +278,11 @@ export async function loadStaticSmd(
       objGroup.add(mesh);
     }
     // 有位移轨道的对象登记轨道；初值取第 0 帧（原版起始就在远处，随后逐帧扫进来）
-    if (keys.length >= 1 || scaleKeys.length >= 1) {
-      const track: StaticMeshTrack = { group: objGroup, keys, scaleKeys };
+    // **任何轨道**（rot / pos / scale）都要建轨道：只按 `tmPos/tmScale` 建的话，
+    // "只有旋转轨道"的网格（如刺客之眼的 31 个 `tmRot` 键）永远不会被逐帧推进 ⇒ 停在绑定姿态
+    const rotKeys = ((obj as unknown as { tmRot?: unknown[] }).tmRot ?? []).length;
+    if (keys.length >= 1 || scaleKeys.length >= 1 || rotKeys >= 1) {
+      const track: StaticMeshTrack = { group: objGroup, obj: obj as unknown as Obj3D, keys, scaleKeys };
       tracks.push(track);
       applyStaticMeshTracks([track], 0);   // 初值 = 第 0 帧
     }
