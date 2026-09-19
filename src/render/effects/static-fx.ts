@@ -186,10 +186,25 @@ export async function loadStaticSmd(
     const op = obj.posi ?? { x: 0, y: 0, z: 0 };
     const oa = obj.angle ?? { x: 0, y: 0, z: 0 };
     const tm = (obj.tmRotate as unknown as { m?: number[] } | undefined)?.m;
-    const rot = tm && tm.length === 16
+    // **何时应用 `tmRotate`** —— 照引擎 `smOBJ3D::TmAnimation`（`smObj3d.cpp:1482` 的条件）：
+    // ```
+    // if ((!TmFrameCnt && (TmRotCnt>0 || TmPosCnt>0 || TmScaleCnt>0)) ||
+    //     ( TmFrameCnt && (NumTmRot>=0 || NumTmPos>=0 || NumTmScale>0))) { … TmRotate 作基础旋转 … }
+    // else TmResult = 单位阵;
+    // ```
+    // ⇒ **完全没有轨道时用单位阵（裸顶点），不应用 `TmRotate`**。r[B7-13] 实测：翅膀
+    // （`wing*.smd`，各计数 0）被我无条件应用 tmRotate ⇒ 朝向错（用户："y 轴颠倒"）；
+    // 而冰簇（`pt_4-1-25.smd`，TmPosCnt>0）走有轨道分支 ⇒ `tmRotate` **应当**应用。
+    const trackCount = (obj as unknown as {
+      tmRotCnt?: number; tmPosCnt?: number; tmScaleCnt?: number; tmFrameCnt?: number;
+    });
+    const hasTracks = (trackCount.tmFrameCnt ?? 0) !== 0
+      || (trackCount.tmRotCnt ?? 0) > 0 || (trackCount.tmPosCnt ?? 0) > 0 || (trackCount.tmScaleCnt ?? 0) > 0;
+    const rot = hasTracks && tm && tm.length === 16
       ? new THREE.Matrix4().fromArray(tm.map((v) => v / 256))
       : null;
     const put = (vx: number, vy: number, vz: number): [number, number, number] => {
+      if (!hasTracks) return toYup(vx, vy, vz);          // 无轨道：裸顶点（单位阵）
       const r = getMoveLocation(vx, vy, vz, oa.x, oa.y, oa.z);
       // 对象自身的旋转（`tmRotate`，PT 空间里先转，再统一 Z-up → Y-up）
       const v = rot ? new THREE.Vector3(r.x, r.y, r.z).applyMatrix4(rot) : r;
