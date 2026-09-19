@@ -34,6 +34,8 @@ import { PtSizeBehavior } from './plugin-size.js';
 import { PtColorGen } from './plugin-value-gen.js';
 import { PtGravityBehavior } from './plugin-gravity.js';
 import { rotationWriterFor } from './orient-factory.js';
+import { PtAxialOrientation } from './orient-axial.js';
+import { PartSphereEmitter } from './plugin-shapes.js';
 import {
   MeshRandomOrientation, OrientVelocityToNormal, PartBoxEmitter, applyBlend,
   type ConvertedEmitter,
@@ -141,7 +143,13 @@ export interface EmitterBuild {
   blend: 'lamp' | 'alpha' | 'color' | 'shadow' | 'invshadow' | 'addcolor';
   texture: THREE.Texture | null;
   particleType: number;                      // 1-4（5 = FIVE 走独立分支）
-  renderModeOverride?: RenderMode;           // Lua BillboardAxial ⇒ VerticalBillBoard（U-A5-3）
+  renderModeOverride?: RenderMode;           // （保留；轴向丝带改走下面 axial）
+  /** `BillboardAxial`：轴向丝带（Mesh + `PtAxialOrientation`，沿粒子自身径向、绕轴面向相机） */
+  axial?: boolean;
+  /** 速度型（C++ `SPAWN_VELOCITY_*`）：`curpos` = 沿出生点径向、大小取 velocity.x */
+  velocityMode?: 'random' | 'curpos';
+  /** 球形出生半径区间（`InitSpawnBoundingSphere`；给了就用球面点代替盒形） */
+  sphereRadius?: [number, number];
   sizeNum?: number;                          // 行 [19] startLength 的宽度基数
   sizeExtNum?: number;                       // 行 [19] startLength 的高度基数
   sizeXNum?: Num;                            // 行 [19] Trail 出生宽度（区间保留）
@@ -180,7 +188,8 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
   // 渲染模式先定：**四元数写者只在 Mesh 模式下挂**——广告板模式（BillBoard/VerticalBillBoard/…）
   // 的 `particle.rotation` 是**标量**，塞四元数会让渲染读错（r[B7-9]：BillboardAxial 曾同时挂
   // VerticalBillBoard 与 PtOrientThree ⇒ 类型不匹配）。
-  const renderMode = cfg.renderModeOverride ?? (isTrail ? RenderMode.Trail : RenderMode.Mesh);
+  const renderMode = cfg.axial ? RenderMode.Mesh
+    : (cfg.renderModeOverride ?? (isTrail ? RenderMode.Trail : RenderMode.Mesh));
   const useMesh = renderMode === RenderMode.Mesh;
 
   if (isFive) {
@@ -190,6 +199,9 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
     const sp = Math.hypot(midOf(cfg.initialVelocity?.x, 0), midOf(cfg.initialVelocity?.y, 0), midOf(cfg.initialVelocity?.z, 0));
     if (!(sp > 0)) throw new Error(`TYPE_FIVE「${cfg.name}」缺法向速度（initialVelocity 为 0/缺失）——F5 语义必需`);
     behaviors.push(new OrientVelocityToNormal(sp));
+  } else if (cfg.axial) {
+    // `BillboardAxial`：轴向丝带（Mesh + 绕轴面向相机；宽=size.x、长=size.y）
+    behaviors.push(new PtAxialOrientation());
   } else if (useMesh && (type === 1 || type === 2 || type === 3)) {
     const typeName = type === 1 ? 'ONE' : type === 2 ? 'TWO' : 'THREE';
     const writer = rotationWriterFor(`TYPE_${typeName}` as 'TYPE_ONE' | 'TYPE_TWO' | 'TYPE_THREE', { locator });
@@ -206,7 +218,9 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
   const system = new ParticleSystem({
     duration,
     looping: false,
-    shape: new PartBoxEmitter(cfg.emitRadius, cfg.initialVelocity ?? { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } } as never),
+    shape: cfg.sphereRadius
+      ? new PartSphereEmitter(cfg.sphereRadius[0], cfg.sphereRadius[1], cfg.initialVelocity, cfg.velocityMode ?? 'random', rand)
+      : new PartBoxEmitter(cfg.emitRadius, cfg.initialVelocity ?? { x: { k: 'n', v: 0 }, y: { k: 'n', v: 0 }, z: { k: 'n', v: 0 } } as never),
     startLife,
     startSize: new Vector3Function(new ConstantValue(1), new ConstantValue(1), new ConstantValue(1)),
     startColor: whiteGradient(),
@@ -280,8 +294,12 @@ function sizeOf(n: Num | undefined): Num | null { return n ?? null; }
 export function luaIRToBuild(ir: LuaParticleIR, name: string, texture: THREE.Texture | null): EmitterBuild {
   const notes: string[] = [];
   const blend = normalizeBlend(ir.blendType);
-  const renderModeOverride = ir.particleType === 'BillboardAxial' ? RenderMode.VerticalBillBoard : undefined;
-  if (renderModeOverride) notes.push('Lua BillboardAxial ⇒ VerticalBillBoard（U-A5-3 未取证）');
+  // `BillboardAxial` = 轴向丝带：沿粒子自身径向、绕轴面向相机（照 `UpdateBillboardAxial`）——
+  // 不再用 VerticalBillBoard 近似（那会让所有丝带竖着，用户实测：一片"竖线"）
+  const axial = ir.particleType === 'BillboardAxial';
+  const renderModeOverride: RenderMode | undefined = undefined;
+  if (axial) notes.push('Lua BillboardAxial ⇒ 轴向丝带（沿粒子径向 + 绕轴面向相机）');
+  if (ir.velocityType === 'CurPos') notes.push('Lua VelocityType=CurPos ⇒ 沿出生点径向（大小取 velocity.x）');
   const vel = ir.velocity;
   const initialVelocity = vel
     ? { x: { k: 'r' as const, a: vel[0]!, b: vel[1]! }, y: { k: 'r' as const, a: vel[2]!, b: vel[3]! }, z: { k: 'r' as const, a: vel[4]!, b: vel[5]! } }
@@ -318,7 +336,10 @@ export function luaIRToBuild(ir: LuaParticleIR, name: string, texture: THREE.Tex
     initialVelocity: initialVelocity ?? { x: { k: 'r', a: -10, b: 10 }, y: { k: 'r', a: -10, b: 10 }, z: { k: 'r', a: -10, b: 10 } },
     blend,
     texture,
-    particleType: ir.particleType === 'BillboardAxial' ? 3 : 1,
+    particleType: 1,                       // 朝向由 axial/ONE 决定（写者互斥）
+    axial,
+    velocityMode: ir.velocityType === 'CurPos' ? 'curpos' : 'random',
+    sphereRadius: ir.spawnSphere,          // `InitSpawnBoundingSphere` ⇒ 球面出生
     renderModeOverride,
     sizeNum: 0, sizeExtNum: 0,                       // 尺寸走 time-0 事件（保留区间），此处不用
   };

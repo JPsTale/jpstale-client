@@ -15,17 +15,27 @@ import { Quaternion, Vector3 } from 'quarks.core';
 // 相机四元数的**活引用**（不拷贝快照）：渲染侧的相机被 OrbitControls 等持续旋转，
 // 拷贝会立刻过期（r[B7-1] 期实测需求）。orient 行为每帧经 orientCamera() 读最新分量。
 let cameraRef: { x: number; y: number; z: number; w: number } | null = null;
+let cameraPosRef: { x: number; y: number; z: number } | null = null;
 const camScratch = new Quaternion();
 
-/** 渲染侧建好相机后调一次：传**相机的四元数对象**（活引用，传 null 注销） */
-export function setOrientCamera(q: { x: number; y: number; z: number; w: number } | null): void {
+/** 渲染侧建好相机后调一次：传**相机的四元数对象**（活引用，传 null 注销）。
+ *  可选 `pos` = 相机位置对象（同样活引用）——**轴向丝带**（行 [L18] BillboardAxial）需要它：
+ *  丝带的宽度轴在屏幕空间取垂直（原版 `UpdateBillboardAxial` 的 `persp=(-dy,+dx)`），
+ *  所以每帧要相机位置求"面向相机"的滚转角。 */
+export function setOrientCamera(
+  q: { x: number; y: number; z: number; w: number } | null,
+  pos?: { x: number; y: number; z: number } | null,
+): void {
   cameraRef = q;
+  cameraPosRef = pos ?? null;
 }
 export function orientCamera(): Quaternion | null {
   if (!cameraRef) return null;
   camScratch.set(cameraRef.x, cameraRef.y, cameraRef.z, cameraRef.w);
   return camScratch;
 }
+/** 相机世界位置（未注册为 null） */
+export function orientCameraPos(): { x: number; y: number; z: number } | null { return cameraPosRef; }
 
 const AXIS_X = new Vector3(1, 0, 0);
 const AXIS_Y = new Vector3(0, 1, 0);
