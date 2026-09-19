@@ -38,7 +38,7 @@ import {
   ColorOverLife, ConstantValue, Gradient, PointEmitter, RotationOverLife,
   SizeOverLife, Vector3Function, Vector3 as QVec3,
 } from 'quarks.core';
-import type { Behavior, FunctionValueGenerator } from 'quarks.core';
+import type { Behavior, FunctionColorGenerator, FunctionValueGenerator, Vector4 } from 'quarks.core';
 import type { LoadedEffect } from './effect-assets.js';
 import { applyBlend } from './part-to-quarks.js';
 
@@ -46,17 +46,42 @@ import { applyBlend } from './part-to-quarks.js';
 export const EFFECT_HZ = 70;
 
 /** 帧内坡道因子：t∈[0,1] 时从 1 线性到 to/from（配 startSize=from ⇒ 绝对值 from→to）。
- *  SizeOverLife 是乘法（startSize × factor），乘法因子必须相对化。 */
+ *  SizeOverLife 是乘法（startSize × factor），乘法因子必须相对化。
+ *  `phase` = 1/ticks：原版是"**步进后**再绘制"（§A5 `Xxx += Step` 在 draw 之前），故第 k 个 tick
+ *  显示 from + k·step；t=0（首个行为回调时 age=0）对应 **k=1** ⇒ 相位整体前移 1/ticks。
+ *  1 tick 的帧因此恒显示目标值（原版正是"一 tick 到位"）；缺相位时它恒显示起点值。 */
 class FrameRampGen implements FunctionValueGenerator {
   type = 'function' as const;
-  constructor(private readonly from: number, private readonly to: number) {}
+  constructor(
+    private readonly from: number,
+    private readonly to: number,
+    private readonly phase = 0,
+  ) {}
   startGen(_m: unknown): void { /* 无逐粒子状态 */ }
   genValue(_m: unknown, t = 0): number {
     const ratio = this.to / this.from;
-    return 1 + (ratio - 1) * t;
+    return 1 + (ratio - 1) * Math.min(1, t + this.phase);
   }
-  toJSON(): { type: 'FrameRampGen'; from: number; to: number } { return { type: 'FrameRampGen' as const, from: this.from, to: this.to }; }
-  clone(): FrameRampGen { return new FrameRampGen(this.from, this.to); }
+  toJSON(): { type: 'FrameRampGen'; from: number; to: number; phase: number } { return { type: 'FrameRampGen' as const, from: this.from, to: this.to, phase: this.phase }; }
+  clone(): FrameRampGen { return new FrameRampGen(this.from, this.to, this.phase); }
+}
+
+/** alpha 坡道（同相位语义）：alpha(t) = from + (to−from)·min(1, t + phase)，写进 Vector4.w */
+class FrameAlphaGen implements FunctionColorGenerator {
+  type = 'function' as const;
+  constructor(
+    private readonly from: number,
+    private readonly to: number,
+    private readonly phase = 0,
+  ) {}
+  startGen(_m: unknown): void { /* 无逐粒子状态 */ }
+  genColor(_m: unknown, color: Vector4, t = 0): Vector4 {
+    color.x = 1; color.y = 1; color.z = 1;
+    color.w = this.from + (this.to - this.from) * Math.min(1, t + this.phase);
+    return color;
+  }
+  toJSON(): { type: 'FrameAlphaGen' } { return { type: 'FrameAlphaGen' as const }; }
+  clone(): FunctionColorGenerator { return new FrameAlphaGen(this.from, this.to, this.phase); }
 }
 
 export interface IniToQuarksOpts {
@@ -86,6 +111,8 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
     if (!f.tex) { t += dur; continue; }              // 缺贴图的帧跳过（`diag` 里已记）
     // 逐帧坡道（§A5）：alpha 从 runningAlpha 渐变到 f.alpha；宽度从 runningWidth 渐变到 f.size；
     // 角度从 runningAngleDeg 步进到 f.angle——三件同为"线性步进"语义
+    const ticks = Math.max(1, Math.round(dur * EFFECT_HZ));   // 本帧的 tick 数（Delay 帧数）
+    const phase = 1 / ticks;                                   // §A5：步进后绘制 ⇒ 相位前移一 tick
     const alphaFrom = Math.min(1, Math.max(0, runningAlpha / 255));
     const alphaTo = Math.min(1, Math.max(0, f.alpha / 255));
     const widthFrom = Math.max(0.05, runningWidth * scale);
@@ -127,16 +154,13 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
       ),
       startColor: new Gradient([[new QVec3(1, 1, 1), 0]], [[1, 0]]),   // 乘法单位元（行 [L4]）
       behaviors: [
-        // alpha 坡道：帧内从 alphaFrom 渐变到 alphaTo（§A5 BlendStep 语义）
-        new ColorOverLife(new Gradient(
-          [[new QVec3(1, 1, 1), 0]],
-          [[alphaFrom, 0], [alphaTo, 1]],
-        )),
+        // alpha 坡道（§A5 BlendStep + "步进后绘制"的相位）
+        new ColorOverLife(new FrameAlphaGen(alphaFrom, alphaTo, phase)),
         ...(omegaRadPerSec !== 0 ? [new RotationOverLife(new ConstantValue(omegaRadPerSec)) as Behavior] : []),
         // 宽高坡道因子（1 → to/from）——乘在 startSize 上
         new SizeOverLife(new Vector3Function(
-          new FrameRampGen(widthFrom, widthTo),
-          new FrameRampGen(widthFrom, widthTo),
+          new FrameRampGen(widthFrom, widthTo, phase),
+          new FrameRampGen(widthFrom, widthTo, phase),
           new ConstantValue(1),
         )),
       ],
