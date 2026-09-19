@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve, join } from 'node:path';
 
 import { parseLuaScript, particleIR } from '../src/core/effect/lua-script.js';
+import { luaIRToBuild } from '../src/render/effects/plugin-part-convert.js';
 import { PtClockBehavior, type PtBlockLocator } from '../src/render/effects/plugin-clock.js';
 import type { Num, PtSlot } from '../src/core/effect/pt-timeline.js';
 
@@ -63,9 +64,32 @@ End();`;
     psBlock.commands.some((c) => c.name === 'InitAxialPos' && c.gate === 'dropped-gate'));
   const psIr = irs[0]!;
   ok('EventFadeSize 不在此 fixture（粒子块内未写）', !psIr.events.some((e) => e.slot === 'sizeExt' && e.fade));
-  ok('InitSize ⇒ time-0 事件（size/sizeExt 初值）',
-    psIr.events.some((e) => e.time === 0 && e.slot === 'size' && !e.fade)
-    && psIr.events.some((e) => e.time === 0 && e.slot === 'sizeExt' && !e.fade));
+  // InitSize 四参 ⇒ **两组区间**（IR），转换时变成 time-0 事件（逐粒子掷，同 C++ `m_Size.GetRandom()`）
+  ok('InitSize(10,10) ⇒ 区间对（两参 ⇒ 两端相等）',
+    psIr.size![0]!.k === 'n' && psIr.size![1]!.k === 'n');
+  {
+    const built = luaIRToBuild(psIr, 'chk', null);
+    ok('转换后 ⇒ time-0 的 size/sizeExt 事件（尺寸进块、逐粒子掷）',
+      built.events.some((e) => e.time === 0 && e.slot === 'size' && !e.fade)
+      && built.events.some((e) => e.time === 0 && e.slot === 'sizeExt' && !e.fade));
+    ok('写了 InitParticleNum(30) ⇒ 取 30', built.numParticles === 30);
+  }
+  // 缺省值 = C++ 控制器构造值（HoEffectController.cpp:455-460）——incu_summskill 那种不写
+  // InitParticleNum 的块，默认是 **50 颗**（我曾默认 1 ⇒ 只剩一根细丝）
+  {
+    const bare = particleIR(parseLuaScript('Begin("ParticleSystem");\nInitEmitRate(30);\nEnd();'))[0]!;
+    const b = luaIRToBuild(bare, 'bare', null);
+    ok('缺省 ParticleNum = 50 / EmitRate = 30 / Loop = 1 / EndTime = 1..2s / Size = 5..10',
+      b.numParticles === 50 && b.emitRate === 30 && b.loops === 1
+      && b.lifetime?.k === 'r' && b.lifetime.a === 1 && b.lifetime.b === 2);
+  }
+  // 四参形式：InitSize(0.2,1.2,30,60) ⇒ 宽度 R(0.2,1.2)、高度 R(30,60)
+  {
+    const four = particleIR(parseLuaScript('Begin("ParticleSystem");\nInitSize(0.2,1.2,30,60);\nEnd();'))[0]!;
+    ok('InitSize 四参 ⇒ 宽度区间 R(0.2,1.2) / 高度区间 R(30,60)',
+      four.size![0]!.k === 'r' && four.size![0]!.a === 0.2 && four.size![0]!.b === 1.2
+      && four.size![1]!.k === 'r' && four.size![1]!.a === 30 && four.size![1]!.b === 60);
+  }
 }
 
 /* ── ② 配对与枚举 ── */

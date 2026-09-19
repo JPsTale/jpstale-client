@@ -156,9 +156,11 @@ export function parseLuaScript(text: string): ParseResult {
 export interface LuaParticleIR {
   numParticles?: number;
   emitRate?: number;
+  loop?: number;
   delay?: number;
   endTime?: number | [number, number];
-  size?: [number, number];
+  /** 尺寸：**宽度区间、高度区间**（`InitSize(x1,x2,y1,y2)` 的四参语义；两参形式两端相等） */
+  size?: [Num, Num];
   velocity?: [number, number, number, number, number, number];
   velocityType?: 'Random' | 'CurPos';
   particleType?: 'BillboardDefault' | 'BillboardAxial';
@@ -199,8 +201,12 @@ export function particleIR(parsed: ParseResult): LuaParticleIR[] {
         case 'InitStartDelayTime': ir.delay = n(0); break;
         case 'InitEndTime':
           ir.endTime = args.length >= 2 ? [n(0), n(1)] : n(0); break;
-        case 'InitSize':
-          ir.size = args.length >= 4 ? [n(0), n(2)] : [n(0), n(1)]; break;
+        case 'InitSize': {   // C++：InitSize(x,y) ⇒ Min=Max；InitSize(x1,x2,y1,y2) ⇒ x∈[x1,x2]、y∈[y1,y2]
+          const nn = (i: number): Num => ({ k: 'n', v: n(i) });
+          const rr = (i: number, j: number): Num => ({ k: 'r', a: n(i), b: n(j) });
+          ir.size = args.length >= 4 ? [rr(0, 1), rr(2, 3)] : [nn(0), nn(1)];
+          break;
+        }
         case 'InitVelocity':
           ir.velocity = [n(0), n(1), n(2), n(3), n(4), n(5)]; break;
         case 'InitVelocityType':
@@ -238,7 +244,9 @@ export function particleIR(parsed: ParseResult): LuaParticleIR[] {
         case 'InitTextureName':
           ir.texture = String(args[0] ?? ''); break;
         case 'InitMeshName': case 'InitAniTextureName':
-        case 'InitMaxFrame': case 'InitLoop': case 'Update':
+        case 'InitLoop':
+          ir.loop = Math.trunc(n(0)); break;
+        case 'InitMaxFrame': case 'Update':
         case 'LoadScript': case 'LoadScriptAxial': case 'InitAxialPos':
           ir.codeSpec.push({ name, args, line, gate }); break;  // 行 [25]/[L5]/[L7]/[L8]/[L27]/[L28]
         default:
@@ -252,10 +260,8 @@ export function particleIR(parsed: ParseResult): LuaParticleIR[] {
   // 转成 time-0 事件进表，让 fade 链从初值起算（行 [L25] 的 255→128 斜坡依赖它）
   for (const ir of out) {
     if (ir.color) ir.events.unshift({ time: 0, slot: 'color', fade: false, next: -1, value: ir.color.map((c) => ({ k: 'n' as const, v: c })) });
-    if (ir.size) {
-      ir.events.unshift({ time: 0, slot: 'size', fade: false, next: -1, value: [{ k: 'n' as const, v: ir.size[0]! }] });
-      ir.events.unshift({ time: 0, slot: 'sizeExt', fade: false, next: -1, value: [{ k: 'n' as const, v: ir.size[1]! }] });
-    }
+    // 尺寸：区间原样进事件（PtClockBehavior 逐粒子掷 ⇒ 同 C++ `m_Size.GetRandom()`）——
+    // 尺寸事件由 `luaIRToBuild` 统一追加（那里也负责缺省值），此处不再重复。
   }
   return out;
 }

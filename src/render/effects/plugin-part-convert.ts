@@ -177,6 +177,12 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
   behaviors.push(new PtClockBehavior(events, locator, rand));
   if (!isTrail) behaviors.push(new PtSizeBehavior(locator));
   behaviors.push(new ColorOverLife(new PtColorGen(locator)));
+  // 渲染模式先定：**四元数写者只在 Mesh 模式下挂**——广告板模式（BillBoard/VerticalBillBoard/…）
+  // 的 `particle.rotation` 是**标量**，塞四元数会让渲染读错（r[B7-9]：BillboardAxial 曾同时挂
+  // VerticalBillBoard 与 PtOrientThree ⇒ 类型不匹配）。
+  const renderMode = cfg.renderModeOverride ?? (isTrail ? RenderMode.Trail : RenderMode.Mesh);
+  const useMesh = renderMode === RenderMode.Mesh;
+
   if (isFive) {
     behaviors.push(new MeshRandomOrientation());
     // 行 [22]：速度沿自身法线是 F5 的**语义必需**（原版 GetMoveLocation 沿法线推进）——
@@ -184,7 +190,7 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
     const sp = Math.hypot(midOf(cfg.initialVelocity?.x, 0), midOf(cfg.initialVelocity?.y, 0), midOf(cfg.initialVelocity?.z, 0));
     if (!(sp > 0)) throw new Error(`TYPE_FIVE「${cfg.name}」缺法向速度（initialVelocity 为 0/缺失）——F5 语义必需`);
     behaviors.push(new OrientVelocityToNormal(sp));
-  } else if (type === 1 || type === 2 || type === 3) {
+  } else if (useMesh && (type === 1 || type === 2 || type === 3)) {
     const typeName = type === 1 ? 'ONE' : type === 2 ? 'TWO' : 'THREE';
     const writer = rotationWriterFor(`TYPE_${typeName}` as 'TYPE_ONE' | 'TYPE_TWO' | 'TYPE_THREE', { locator });
     if (writer) behaviors.push(writer);
@@ -197,7 +203,6 @@ export function buildEmitterSystem(cfg: EmitterBuild, rand: () => number = Math.
   const startLife = numToGen(cfg.lifetime, 1);
   const startLength = new ConstantValue(cfg.sizeExtNum ?? cfg.sizeNum ?? 20);
 
-  const renderMode = cfg.renderModeOverride ?? (isTrail ? RenderMode.Trail : RenderMode.Mesh);
   const system = new ParticleSystem({
     duration,
     looping: false,
@@ -268,6 +273,9 @@ export function convertPartV2(sys: PartSystem, textures: Array<THREE.Texture | n
   return out;
 }
 
+/** IR 的尺寸项已是 Num（区间或定值）——原样用；缺省交给调用方 */
+function sizeOf(n: Num | undefined): Num | null { return n ?? null; }
+
 /** Lua IR → 装配输入（行 [25]：与 .part 归一） */
 export function luaIRToBuild(ir: LuaParticleIR, name: string, texture: THREE.Texture | null): EmitterBuild {
   const notes: string[] = [];
@@ -277,29 +285,42 @@ export function luaIRToBuild(ir: LuaParticleIR, name: string, texture: THREE.Tex
   const vel = ir.velocity;
   const initialVelocity = vel
     ? { x: { k: 'r' as const, a: vel[0]!, b: vel[1]! }, y: { k: 'r' as const, a: vel[2]!, b: vel[3]! }, z: { k: 'r' as const, a: vel[4]!, b: vel[5]! } }
-    : { x: { k: 'n' as const, v: 0 }, y: { k: 'n' as const, v: 0 }, z: { k: 'n' as const, v: 0 } };
+    : null;
   const spawnBox = ir.spawnBox;
   const emitRadius = spawnBox
     ? { x: { k: 'r' as const, a: spawnBox[0]!, b: spawnBox[1]! }, y: { k: 'r' as const, a: spawnBox[2]!, b: spawnBox[3]! }, z: { k: 'r' as const, a: spawnBox[4]!, b: spawnBox[5]! } }
     : { x: { k: 'n' as const, v: 0 }, y: { k: 'n' as const, v: 0 }, z: { k: 'n' as const, v: 0 } };
   const endTime = ir.endTime;
+  // 尺寸默认值 = C++ 控制器构造值（`m_Size.Min.x/Max.x = 5/10`，HoEffectController.cpp:486-490）
+  const sizeW: Num = sizeOf(ir.size?.[0]) ?? { k: 'r', a: 5, b: 10 };
+  const sizeH: Num = sizeOf(ir.size?.[1]) ?? { k: 'r', a: 5, b: 10 };
+  // `InitLoop` 语义（照 `HoEffectParticleController::Main`）：loop > 0 ⇒ 预算 = ParticleNum × loop 且
+  // 全部粒子死后系统结束；loop <= 0 ⇒ 不限（由调用方停）。我们的 `loops` 即该预算乘数（-1 = 不限）。
+  const loop = ir.loop ?? 1;                       // C++ 默认 m_iLoop(1)
   return {
     name,
-    events: ir.events,
-    lifetime: typeof endTime === 'number' ? { k: 'n', v: endTime } : endTime ? { k: 'r', a: endTime[0]!, b: endTime[1]! } : { k: 'n', v: 1 },
-    numParticles: ir.numParticles ?? 1,
-    emitRate: ir.emitRate ?? 1,
+    events: [
+      ...ir.events,
+      // 尺寸作为 time-0 事件进块（**保留区间** ⇒ PtClockBehavior 逐粒子掷，与 C++ m_Size.GetRandom() 同义）
+      { time: 0, slot: 'size' as const, fade: false, next: -1, value: [sizeW] },
+      { time: 0, slot: 'sizeExt' as const, fade: false, next: -1, value: [sizeH] },
+    ],
+    lifetime: typeof endTime === 'number'
+      ? { k: 'n', v: endTime }
+      : endTime ? { k: 'r', a: endTime[0]!, b: endTime[1]! }
+        : { k: 'r', a: 1, b: 2 },                    // C++ 默认 m_fEndTime = 1..2
+    numParticles: ir.numParticles ?? 50,             // C++ 默认 m_fParticleNum(50)
+    emitRate: ir.emitRate ?? 30,                     // C++ 默认 m_fEmitRate(30)
     delay: ir.delay ?? 0,
-    loops: -1,
+    loops: loop > 0 ? loop : -1,
     gravity: null,
     emitRadius,
-    initialVelocity,
+    initialVelocity: initialVelocity ?? { x: { k: 'r', a: -10, b: 10 }, y: { k: 'r', a: -10, b: 10 }, z: { k: 'r', a: -10, b: 10 } },
     blend,
     texture,
     particleType: ir.particleType === 'BillboardAxial' ? 3 : 1,
     renderModeOverride,
-    sizeNum: ir.size ? ir.size[0]! : 1,
-    sizeExtNum: ir.size ? ir.size[1]! : 1,
+    sizeNum: 0, sizeExtNum: 0,                       // 尺寸走 time-0 事件（保留区间），此处不用
   };
 }
 
