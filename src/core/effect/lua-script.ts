@@ -70,12 +70,19 @@ const WORK_TYPES: WorkType[] = ['PARENT', 'MESH', 'CREATEMESH', 'BILLBOARD', 'BI
  *  内部枚举带下划线 ⇒ 双方去 '_' 后比对，命中返回规范枚举 */
 const WORK_TYPE_LOOKUP = new Map(WORK_TYPES.map((t) => [t.replace(/_/g, ''), t]));
 
-/** 解析单个实参：数字 → number；带引号 → string（去引号） */
+/** 反斜杠（同 meshIR 的说明：沿用字符码构造，避免写文件链吃掉转义） */
+const BS = String.fromCharCode(92);
+
+/** 解析单个实参：数字 → number；带引号 → string（去引号 + 处理 Lua 转义）。
+ *  ⚠ Lua 字符串里的 `\` 是**一个反斜杠**（转义）——不处理的话路径会变成
+ *  `res//texturehit//x.bmp`（Windows 容忍，**Ubuntu 会 404**，见 r[B7-11]）。 */
 function parseArg(raw: string): number | string {
   const s = raw.trim();
   if (/^-?\d+(\.\d+)?$/.test(s)) return parseFloat(s);
-  if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) return s.slice(1, -1);
-  return s;
+  const quoted = (s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"));
+  if (!quoted) return s;
+  const inner = s.slice(1, -1);
+  return inner.split(BS + BS).join(BS).split(BS + '"').join('"');
 }
 
 /** 拆实参（顶层逗号；双引号字符串内的逗号不拆） */
@@ -262,6 +269,78 @@ export function particleIR(parsed: ParseResult): LuaParticleIR[] {
     if (ir.color) ir.events.unshift({ time: 0, slot: 'color', fade: false, next: -1, value: ir.color.map((c) => ({ k: 'n' as const, v: c })) });
     // 尺寸：区间原样进事件（PtClockBehavior 逐粒子掷 ⇒ 同 C++ `m_Size.GetRandom()`）——
     // 尺寸事件由 `luaIRToBuild` 统一追加（那里也负责缺省值），此处不再重复。
+  }
+  return out;
+}
+
+/* ── Mesh 块 → IR（`Begin("Mesh")`：ASE/SMD 网格 + 帧动画 + 颜色链） ── */
+
+/**
+ * Mesh 块 IR —— 依据 C++ `HoEffectMeshController`：
+ *   · `InitMaxFrame(frame)` ⇒ `m_iMaxFrame = int(frame*160)`（帧轴单位 160/帧，30fps 推进）；
+ *   · 到顶回 0 并**重置事件钟**（`m_fEventTimer = 0`、`CurrentEvent = NULL` ⇒ 颜色链重放），
+ *     `m_iLoopCount++`；`loop > 0 && loopCount >= loop` ⇒ 结束（基类默认 `m_iLoop(0)` = 无限）；
+ *   · `InitColor` = 初值；`EventFadeColor/EventColor` = 颜色链（与 `.part` 同构的事件算术）。
+ * 贴图来自网格文件自身的材质表（`loadStaticSmd` 解析）——Lua 的 `InitTextureName` 对网格不生效
+ * （C++ 的网格控制器没有该命令），遇到就逐条登记为未表达。
+ */
+export interface LuaMeshIR {
+  /** `InitMeshName` 原样（诊断用） */
+  meshRaw: string;
+  /** 归一成资源路径（反斜杠→斜杠、小写、`.ASE`→`.smd`） */
+  meshAsset: string;
+  /** `InitMeshName` 的第二参（挂骨骼；lab 无角色 ⇒ 忽略并登记） */
+  bone?: string;
+  pos: [number, number, number];
+  /** `InitMaxFrame` 的**帧数**（内部 ×160 成帧轴单位） */
+  maxFrame: number;
+  loop: number;
+  startDelay: number;
+  baseColor: [number, number, number, number];
+  colorEvents: Array<{ time: number; fade: boolean; rgba: [number, number, number, number] }>;
+  /** 该 Mesh 块里未表达的命令（逐条留痕，不静默） */
+  unsupported: Array<{ name: string; line: number }>;
+}
+
+/** 反斜杠字符——用字符码构造（此仓库的批量写文件链会把正则里的反斜杠吃掉，见 r[B7-11]） */
+const BACKSLASH = String.fromCharCode(92);
+
+/** 网格名归一成资源路径：`Effect\NewEffect\Res\Object\Wing.ASE` → `effect/neweffect/res/object/wing.smd` */
+export function normalizeMeshAsset(raw: string): string {
+  return raw.split(BACKSLASH).join('/').replace(/^\/+/, '').toLowerCase().replace(/\.ase$/, '.smd');
+}
+
+export function meshIR(parsed: ParseResult): LuaMeshIR[] {
+  const out: LuaMeshIR[] = [];
+  for (const b of parsed.blocks) {
+    if (b.type !== 'MESH') continue;
+    const ir: LuaMeshIR = {
+      meshRaw: '', meshAsset: '', pos: [0, 0, 0], maxFrame: 0, loop: 0, startDelay: 0,
+      baseColor: [255, 255, 255, 255], colorEvents: [], unsupported: [],
+    };
+    for (const { name, args, line } of b.commands) {
+      const n = (i: number, d = 0): number => (typeof args[i] === 'number' ? args[i] as number : d);
+      const rgba4 = (o: number): [number, number, number, number] => [n(o), n(o + 1), n(o + 2), n(o + 3, 255)];
+      switch (name) {
+        case 'InitMeshName':
+          ir.meshRaw = String(args[0] ?? '');
+          ir.meshAsset = normalizeMeshAsset(ir.meshRaw);
+          if (args[1] !== undefined) ir.bone = String(args[1]);
+          break;
+        case 'InitPos': ir.pos = [n(0), n(1), n(2)]; break;
+        case 'InitMaxFrame': ir.maxFrame = n(0); break;
+        case 'InitLoop': ir.loop = Math.trunc(n(0)); break;
+        case 'InitStartDelayTime': ir.startDelay = n(0); break;
+        case 'InitColor': ir.baseColor = rgba4(0); break;
+        case 'EventFadeColor': ir.colorEvents.push({ time: n(0), fade: true, rgba: rgba4(1) }); break;
+        case 'EventColor': ir.colorEvents.push({ time: n(0), fade: false, rgba: rgba4(1) }); break;
+        default:
+          ir.unsupported.push({ name, line });   // 网格控制器没有的命令/用不到：逐条留痕
+          break;
+      }
+    }
+    if (!ir.meshRaw) ir.unsupported.push({ name: '(缺 InitMeshName)', line: b.beginLine ?? 0 });
+    out.push(ir);
   }
   return out;
 }
