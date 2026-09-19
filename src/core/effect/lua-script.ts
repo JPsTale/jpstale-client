@@ -344,3 +344,38 @@ export function meshIR(parsed: ParseResult): LuaMeshIR[] {
   }
   return out;
 }
+
+/* ── 组位置：`Begin("Parent")` 的 `InitPos` + 各块的 `InitPos` 合成 ── */
+
+/**
+ * **Lua 局部坐标 → three 偏移**：Lua 的 `-z` 是**前方**（`GetMoveLocation` 的 +z 是前方，
+ * 见 `glacial-spike.ts` 的实测注释），three 的 `-z` 也是前方 ⇒ 取 `(x, y, -z)`。
+ * 已验证的参照：`glacial-spike.ts` 的 `PARENT = {x:0, y:-5, forward:20}`（来自 `InitPos(0,-5,-20)`）
+ * 与其 `worldOf`（把 forward 喂给 `getMoveLocation` 的第 3 参、结果直接当 three 坐标）。
+ */
+export function luaLocalToThree(p: [number, number, number]): { x: number; y: number; z: number } {
+  return { x: p[0], y: p[1], z: -p[2] };
+}
+
+/** `Begin("Parent")` 块的 `InitPos`（组偏移；无 Parent 块 ⇒ 0）。**子块的 `InitPos` 相对它**。 */
+export function parentInitPos(parsed: ParseResult): [number, number, number] {
+  for (const b of parsed.blocks) {
+    if (b.type !== 'PARENT') continue;
+    for (const { name, args } of b.commands) {
+      if (name === 'InitPos') {
+        return [Number(args[0] ?? 0) || 0, Number(args[1] ?? 0) || 0, Number(args[2] ?? 0) || 0];
+      }
+    }
+    break;                                  // 只认第一个 Parent 块
+  }
+  return [0, 0, 0];
+}
+
+/** 某个块的世界偏移（**父 + 子**，已转 three）——原版把子块挂在组下，位置相加 */
+export function blockWorldOffset(
+  parsed: ParseResult, localPos: [number, number, number] | undefined,
+): { x: number; y: number; z: number } {
+  const p = parentInitPos(parsed);
+  const l = localPos ?? [0, 0, 0];
+  return luaLocalToThree([p[0] + l[0], p[1] + l[1], p[2] + l[2]]);
+}

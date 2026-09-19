@@ -74,6 +74,8 @@ function buildColorEvents(ir: LuaMeshIR): LiveMesh['events'] {
 export async function spawnLuaMesh(
   ir: LuaMeshIR,
   scene: THREE.Object3D,
+  /** 世界偏移（= 父 `Begin("Parent")` 的 InitPos + 本块 InitPos，已由调用方转 three） */
+  offset?: { x: number; y: number; z: number },
 ): Promise<{ dispose: () => void } | null> {
   if (!ir.meshAsset) {
     reportFallback('fx', `Lua Mesh 块缺 InitMeshName ⇒ 不放（${ir.unsupported.map((u) => u.name).join('、') || '无其他命令'}）`);
@@ -84,7 +86,9 @@ export async function spawnLuaMesh(
     reportFallback('fx', `Lua Mesh「${ir.meshRaw}」→ 资源 ${ir.meshAsset} 加载失败`);
     return null;
   }
-  r.group.position.set(ir.pos[0], ir.pos[1], ir.pos[2]);
+  // 组偏移：父 + 子（原版把 Mesh 块挂在组的变换下）——不给就是本块 InitPos
+  if (offset) r.group.position.set(offset.x, offset.y, offset.z);
+  else r.group.position.set(ir.pos[0], ir.pos[1], ir.pos[2]);
   scene.add(r.group);
   const color: Rgba = { r: ir.baseColor[0], g: ir.baseColor[1], b: ir.baseColor[2], a: ir.baseColor[3] };
   const m: LiveMesh = {
