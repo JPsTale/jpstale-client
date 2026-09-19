@@ -45,6 +45,15 @@ import { applyBlend } from './part-to-quarks.js';
 /** 原版 INI 的时间单位：**70Hz**（`effect-manager` 的 `EFFECT_HZ`，Delay 的步长） */
 export const EFFECT_HZ = 70;
 
+/**
+ * 帧粒子寿命的 ε（秒）——quarks 的死亡判定发生在**当帧 `age += delta` 之后、渲染之前**
+ * （`ParticleSystem.update` 尾部的 die 清理）：寿命恰等于帧时长时，单 tick 帧的粒子在**出生帧
+ * 就被移除**，一个像素都没画过（r[B7-8] 实测：`levelupparticle1` 三帧全 Delay=1 ⇒ 存活数恒 0）。
+ * ε 取 0.1ms（比一 tick 14.3ms 小三个数量级）⇒ 只让"最后一帧能被画到"，不产生可见重叠。
+ * 对多 tick 帧同样是净收益：此前末帧也不显示（N tick 的帧只画 N−1 次）。
+ */
+const LIFE_EPS = 1e-4;
+
 /** 帧内坡道因子：t∈[0,1] 时从 1 线性到 to/from（配 startSize=from ⇒ 绝对值 from→to）。
  *  SizeOverLife 是乘法（startSize × factor），乘法因子必须相对化。
  *  `phase` = 1/ticks：原版是"**步进后**再绘制"（§A5 `Xxx += Step` 在 draw 之前），故第 k 个 tick
@@ -138,8 +147,8 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
       }],
       emissionOverTime: new ConstantValue(0),
       shape: new PointEmitter(),
-      // 粒子寿命 = **这一帧的时长** ⇒ 到下一帧时刻恰好消失，逐帧精确
-      startLife: new ConstantValue(dur),
+      // 粒子寿命 = 这一帧的时长 + ε ⇒ 到下一帧时刻消失，逐帧精确且**末帧能被画到**（见 LIFE_EPS）
+      startLife: new ConstantValue(dur + LIFE_EPS),
       startSpeed: new ConstantValue(0),
       // 行 [20] 结构：startSize = **绝对出生尺寸**，SizeOverLife 挂**相对坡道因子**
       // （1 → to/from）⇒ 尺寸从起点渐变到目标。
