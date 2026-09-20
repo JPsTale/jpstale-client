@@ -278,12 +278,20 @@ export function createAnimStateMachine(opts: AnimStateMachineOpts): AnimStateMac
       if (weaponType) {
         candidates = findMotionsByType(motions, STATE.SKILL, weaponType, classId, fs)
           .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
+        // ⚠ 降级必须可见（AGENTS #12）：这条放宽会让**别的手别/武器档位**的技能条目顶上来，
+        //   界面上看不出「播的不是这条技能应有的条目」⇒ 上报，别静默（`H-2` 的 ②）。
+        if (candidates.length) {
+          reportFallback('skill', `技能 #${skillIndex}：本武器(code=${weaponId ?? 'null'})无专属条目 → 放宽到**同类型武器**(${weaponType})，取 ${candidates.length} 条`);
+        }
       }
     }
-    // 武器仍无匹配 → 空手候选
+    // 武器仍无匹配 → 空手候选（同属降级，同样必须可见）
     if (!candidates.length && weaponId != null && weaponId !== 0) {
       candidates = findMotions(motions, STATE.SKILL, null, classId, fs)
         .filter(m => Array.from(m.skillCodeList || []).includes(skillIndex));
+      if (candidates.length) {
+        reportFallback('skill', `技能 #${skillIndex}：本武器(code=${weaponId})与同类型都无条目 → 放宽到**空手**候选，取 ${candidates.length} 条`);
+      }
     }
     return candidates;
   }

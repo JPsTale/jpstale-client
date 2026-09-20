@@ -31,7 +31,7 @@ import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
 import {
-  fireMonsterAttackEvent, MONSTER_RANGED, MONSTER_BOW_IDCODE, type MonsterFlySpec,
+  fireMonsterAttackEvent, findAttackBone, MONSTER_RANGED, MONSTER_BOW_IDCODE, type MonsterFlySpec,
 } from '../render/effects/monster-attack-fx.js';
 import { dmgFxGet, bounceScale, popArc, dirFromTo, easeOutCubic } from '../render/dmg-fx.js';
 import {
@@ -63,8 +63,8 @@ import { createQuarksRuntime } from '../render/effects/quarks-runtime.js';
 import { ITEM_DEFS } from '../game/data/itemDefs.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { CHRMOTION_STATE_DEAD, CHRMOTION_STATE_SKILL } from '../char/char-format.js';
-import { advanceAnimFrame, crossEventFrames, motionEventIndexOf } from '../char/animation.js';
-import { createAnimPlayer, applyPose, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
+import { advanceAnimFrame, crossEventFrames, motionEventIndexOf, evalBoneFrame } from '../char/animation.js';
+import { createAnimPlayer, applyPose, evalWorkspaceFor, buildMotionList as buildMotionListShared, type AnimPlayer } from '../char/anim-player.js';
 import { createProjectileManager, projectileChoiceOf, isRangedWeapon, unitBodyAnchorY, RELEASE_LEAD_FRAMES, releaseFlightTime, MAGIC_JOBS, type ProjectileManager } from '../render/projectile.js';
 import { loadCharTextures, type TextureTarget } from '../render/char-texture-loader.js';
 import { setCursorMode, getCursorMode, initCursor } from './cursor.js';
@@ -73,8 +73,11 @@ import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode, appearanceModelKey } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, weaponSizeMax, WeaponMount } from '../render/weapon-loader.js';
+import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, weaponSizeMax, combatBoneOf, WeaponMount } from '../render/weapon-loader.js';
+import { createWeaponTrail, MonsterTrails, type WeaponTrail } from '../render/effects/weapon-trail.js';
+import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
+import { skillLevelByIcon } from '../game/skillLevel.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
@@ -83,6 +86,7 @@ import { pickVisibleMonsters, VIS_TIERS, type VisibilityCandidate, type Visibili
 import { loadDisplayPrefs, type DisplayPrefs } from './display-prefs.js';
 import { updateWaveCamera, setWaveCameraEnabled } from '../render/wave-camera.js';
 import { setBillboardCamera } from '../render/effects/part-to-quarks.js';
+import { setOrientCamera } from '../render/effects/orient-shared.js';
 
 /** idcode → classItem（4=单手 / 6=双手），武器音效选码用（原版 WeaponPlaySound 的 HandType） */
 const ITEM_CLASS_BY_CODE = new Map<number, number>(ITEM_DEFS.map((d) => [d.code, d.class]));
@@ -595,6 +599,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * （`char/anim-player.ts`）。自机建模时创建；未建模时为 null。
    */
   let selfPlayer: AnimPlayer | null = null;
+  /**
+   * 自机的**近战武器曳光** —— **每只手一条**：原版 `smCHAR::DrawMotionBlur:10137-10141` 是
+   * `if (HvLeftHand.PatTool) DrawMotionBlurTool(&HvLeftHand); if (HvRightHand.PatTool) …`
+   * 左右手**各调一次**。刺客匕首双持时左手挂 `Bip weapon05`（AGENTS 纠错 #9）。
+   * 索引 0 = 主手（`combatBoneOf`），1 = 镜像份（刺客匕首的左手，`WeaponMount.mirror`）。
+   */
+  const selfTrails: Array<WeaponTrail | null> = [null, null];
+  const selfTrailWeaponIds = [-1, -1];
+  /** 曳光探针：这一会话里**见过哪些 `motion.state`**（去重后各打一行，用来对判据） */
+  const selfTrailStates = new Set<number>();
   /** 远程攻击的投射物（弓/弩 → 箭；标枪 → 标枪本身）。纯表现，见 render/projectile.ts */
   let projectileMgr: ProjectileManager | null = null;
   // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
@@ -1243,6 +1257,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     camera = new THREE.PerspectiveCamera(cam.fov, 1, 20, 4000);
       // 粒子“面向相机”的基底要用它（PtCameraFacingSpin = localangleY 的忠实形态）
       setBillboardCamera(camera);
+      // **orient 层（TYPE_ONE/THREE/FIVE）的相机** —— 与上一行是**两个**注册表（`orient-shared` 的
+      // 注释写着"WorldView/实验室各一次"）。两个实验台都注册了，而这里过去**只注册了 billboard 那个**
+      // ⇒ 游戏里 orient 行为拿不到相机、更新函数第一句 `if (!cam) return` 直接跳过 ⇒ `PartAngle`
+      // 永远不写进面片 ⇒ 长条光芒只剩默认轴向（用户 2026-09-20 在 Chain Lancer 上看到"只有 y 轴"，
+      // 而**实验室里正常** —— 因为实验室两个都注册了）。祭司那批技能踩过同一个坑。
+      // 传的是**活引用**（相机会被 OrbitControls/跟随逻辑持续旋转，拷贝快照会立刻过期）。
+      setOrientCamera(camera.quaternion, camera.position);
     // 官方后处理管线：RenderPass(主场景) → OutlinePass(hover 发光描边) → OutputPass(色彩空间输出)
     composer = new EffectComposer(renderer);
     composer.addPass(new RenderPass(scene, camera));
@@ -1900,8 +1921,59 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       dynLights,
       playSound: (path, pos) => { sfx.play(path, { pos }); },
       log: (msg) => console.log('[skillfx]' + msg),
+      // **技能等级**（唯一实现 `game/skillLevel.ts`，与技能面板读同一个值）——
+      // 环的半径/元素数（Pike Wind）、火花颗数（Multi Spark）都随等级变；
+      // 取不到时**不猜**（各条目自己决定是"不放并上报"还是"按 1 级并上报"）。
+      skillLevel: selfSkillRow
+        ? skillLevelByIcon(selfSkillRow.icon, getGameSnapshot().character?.level ?? null) : null,
       spawnAsset: fx ? (a, o) => fx.spawnStoppable(a, o) : undefined,
+      // 一次性粒子用 `spawn`（不需要"停下"的句柄）—— 与怪物侧同一条路
+      spawnPart: fx ? (a, o) => fx.spawn(a, o) : undefined,
+      // **ASE 动画网格**（原版 `StartAni(...)` 那一族，如 Pike Wind 的环）—— 与起手法阵/怪物侧
+      // 共用 `spawnAssaMesh`（**唯一实现**，AGENTS #15）
+      fireMesh: (spec, at) => spawnAssaMesh(
+        { scene: scene!, log: (m) => console.log('[fx]' + m) },
+        { mesh: spec.path, pos: at, aniMaxCount: spec.aniMaxCount, aniDelayTime: spec.aniDelayTime,
+          scale: spec.scale, rotY: spec.rotY, delaySec: spec.delaySec, upAxis: spec.upAxis,
+          note: spec.note },
+      ),
+      // **攻击落点**（原版 `GetAttackPoint`）：技能起手就取一次（`getter` 见下）
+      get weaponBase() { return selfAttackPoint(); },
     };
+  }
+
+  /**
+   * **玩家的攻击落点** —— 原版 `smCHAR::GetAttackPoint`（`character.cpp:1795-1858`）。
+   *
+   * ```c
+   * ChrTool = &HvRightHand;                       // 右手**工具骨**（不是 AttackObjBip）
+   * tz = ChrTool->PatTool ? ChrTool->SizeMax / 2 : 0;   // ← 玩家有武器道具 ⇒ 半个武器长
+   * AnimObjectTree(lpObj, frame, …);              // 当前帧
+   * *nX = pX + (tz*_31 >> FLOATNS) + _41;  …      // 骨原点 + 工具轴 × tz
+   * ```
+   *
+   * ⚠ **与怪物侧不能互相套**：怪物没有 `dwItemCode`（武器是模型自带的）⇒ `PatTool` 空 ⇒ `tz = 0`
+   *   ⇒ 落点是**握持点**（`findAttackBone` 的注释记录了这一点）；玩家有武器道具 ⇒ 落点是
+   *   **握持点 + 半个武器长度**（`weaponSizeMax/2`，本仓已有的"从挂点到顶端"的长度）。
+   *
+   * 骨轴 = 工具骨的**局部 Z**（原版 `_31/_32/_33` 那三个）—— 与自机曳光的 `dir` 是同一个轴
+   * （Y-up 转换后落在我们的 +Y 上，见曳光那段的说明）。
+   */
+  function selfAttackPoint(): { x: number; y: number; z: number } | null {
+    const g = selfWeaponMount.group;
+    if (!g || !selfPlayer || !charGroup || !animState) return null;
+    const bone = combatBoneOf(selfAppearance?.weaponPos);
+    const smb = animState.getCurrentMotion()?.animSmb ?? undefined;
+    const bf = selfPlayer.sampleBoneEnds(bone, selfPlayer.frame, smb);
+    if (!bf) return null;                     // 骨不在（该武器没有这挂点）⇒ 调用方会**上报并不放**
+    charGroup.updateWorldMatrix(true, false); // 渲染前手动刷（同曳光：不刷会读到上一帧/单位阵）
+    const rm = charGroup.matrixWorld;
+    const a = new THREE.Vector3(bf.ox, bf.oy, bf.oz);
+    const dir = new THREE.Vector3(bf.ayx, bf.ayy, bf.ayz);
+    a.applyMatrix4(rm);
+    dir.transformDirection(rm);
+    const p = a.addScaledVector(dir, weaponSizeMax(g) / 2);
+    return { x: p.x, y: p.y, z: p.z };
   }
 
   /** 起手（技能动画开始）：记下这一行 + 播起手音（原版 `SkillPlaySound`，在 `BeginSkill` 那一刻） */
@@ -2832,8 +2904,30 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // `render/effects/monster-attack-fx.ts`（`MONSTER_ATTACK_FX` / `fireMonsterAttackEvent`），
   // 游戏与怪物实验室共用同一份。这里只负责"什么时候到事件帧"。
 
+  /**
+   * 每个怪的**武器曳光组**（原版 `cAssaMotionBlur`）—— **共享实现**：
+   * 逻辑在 `render/effects/weapon-trail.ts` 的 `MonsterTrails`（登记表 `WEAPON_TRAILS` 也在那里），
+   * 怪物实验室调的是**同一个类**（AGENTS #15：不许"实验室一套、游戏一套"）。
+   * 惰性建：只有真的有登记的怪才会建出来（`MonsterTrails` 自己按 (kind, 阶段, KeyCode) 查表）。
+   */
+  const monsterTrails = new WeakMap<object, MonsterTrails>();
+  function getMonsterTrails(actor: MonsterActor): MonsterTrails {
+    let mt = monsterTrails.get(actor);
+    if (!mt) {
+      mt = new MonsterTrails({
+        who: actor.name ?? actor.modelKey,
+        effectId: actor.monsterEffectId,
+        // 与自机曳光的诊断同一通道（游戏里没有实验室那个日志面板）
+        log: (msg) => console.warn(msg),
+      });
+      monsterTrails.set(actor, mt);
+    }
+    return mt;
+  }
 
   function armMonsterMotionEvents(actor: MonsterActor): void {
+    // 起手：本招的**事件帧带子**还没到（源码在 `EventSkill_Monster`/`EventAttack` 才 `new`）
+    getMonsterTrails(actor).onSwingStart();
     const ef = actor.animState.getCurrentMotion()?.eventFrame;
     const frames = ef ? Array.from(ef).filter((f) => f > 0) : [];
     // **没有事件帧 ≠ 不播**：原版 `EventAttack` 有一条兜底分支
@@ -3250,6 +3344,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const actor = monsters.get(monsterId);
     if (actor) {
       sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_WARP', actor.root.position, actor.monsterEffectId);
+      // 曳光的带子挂在**场景**上（顶点已是世界坐标，不跟随角色变换）⇒ 角色移除时必须一起销毁，
+      // 否则"怪物消失、半空留着一条带子"
+      monsterTrails.get(actor)?.dispose();
+      monsterTrails.delete(actor);
       scene?.remove(actor.root);
       monsters.delete(monsterId);
     }
@@ -4463,11 +4561,17 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           // 玩家侧 / 怪物 / 怪物实验室三处不再各写一遍（AGENTS #15）
           const crossed = crossEventFrames(actor.attackEventFrames, actor.attackFired, compFrame);
           actor.attackFired = crossed.fired;
+          // 事件帧到了 ⇒ **事件帧阶段**的那条带子此刻才诞生（源码 `EventSkill_Monster`/`EventAttack`
+          // 里才 `new cAssaMotionBlur`）—— 起手时它不该存在（Ratoo 就是这样，用户实测）
+          if (crossed.hit.length) getMonsterTrails(actor).onEventFrame();
           for (const evFrame of crossed.hit) {
             // 与原版同源：同一个事件帧里既播音效也起特效（共用实现见 monster-attack-fx.ts）
             fireMonsterAttackEvent({
               modelKey: actor.modelKey, effectId: actor.monsterEffectId,
               pos: actor.root.position, facing: actor.root.rotation.y,
+              // **攻击骨**（原版 `GetAttackPoint`）：`anchor: 'weapon'` 的条目（如 D_PA 的 G/Z）
+              // 用它当落点 —— 取骨策略是共用的 `findAttackBone`（AGENTS #15 唯一实现）
+              weaponBase: findAttackBone(actor.root),
               // **普攻还是技能**（原版是两个函数）+ 动作的 KeyCode：多技能怪靠这两个选招式/选普攻那一套
               motionKind: motion.state === ANIM_ATTACK ? 'attack' : 'skill',
               keyCode: motion.keyCode,
@@ -4500,6 +4604,33 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
         // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
         applyPose(motion.animSmb ?? partSmb, actor.animFrame, partBones, partSkel);
+      }
+      // **武器曳光**（原版 `cAssaMotionBlur`）—— **共享实现**（`weapon-trail.ts` 的 `MonsterTrails`，
+      // 与怪物实验室同一份，AGENTS #15）。放在 `deadFrozen` 之外：不满足条件时它自己会 `hide()`
+      // （带子属于某一次挥击；尸体/站立时原版没有这些对象）。
+      // ⚠ 采样用**主模型**的动画包（副模型只用于尸体）；单骨求值是为了 32 段/帧不卡成 PPT。
+      // ⚠ `matrixWorld` 在渲染时才更新，而这里跑在渲染之前 ⇒ 必须手动刷新，否则第一次挥击
+      //   读到的是未更新的矩阵（带子跑到世界原点附近 —— 实验室里怪物恰在原点附近，这个 bug 藏得住）。
+      if (motion) {
+        // ⚠ **动画包必须与 `applyPose` 用的那一份相同**（上面那行是 `motion.animSmb ?? partSmb`）——
+        //   怪物动作常自带动画包，用错了取到的是**另一个动作**的姿势 ⇒ 带子形状全错。
+        //   （实验室侧同一约定；副模型只用于尸体，攻击/技能时就是主包。）
+        const trailSmb = motion.animSmb ?? actor.animSmb;
+        getMonsterTrails(actor).update({
+          kind: motion.state === ANIM_ATTACK ? 'attack' : 'skill',
+          keyCode: motion.keyCode,
+          inAction: motion.state === ANIM_ATTACK || motion.state === CHRMOTION_STATE_SKILL,
+          motion,
+          frame: actor.animFrame,
+          startFrame: motion.startFrame * 160,
+          sampleBone: (bone, f) => {
+            const bf = evalBoneFrame(trailSmb, bone, f, evalWorkspaceFor(trailSmb));
+            if (!bf) return null;
+            actor.root.updateWorldMatrix(true, false);
+            return new THREE.Vector3(bf.ox, bf.oy, bf.oz).applyMatrix4(actor.root.matrixWorld);
+          },
+          addToScene: (o) => { scene?.add(o); },
+        });
       }
     }
   }
@@ -5380,6 +5511,103 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
         }
         selfPlayer.apply();
+        // **近战武器曳光**（原版 `smCHAR::DrawMotionBlur`，`character.cpp:10121`；端点算法见
+        // `DrawMotionBlurTool:10147`）。它是**常驻**的：动作是 `ATTACK` **或** `SKILL`、手里有武器
+        // ⇒ 每次挥击出一条带子（原版每挥一次 `new cAssaMotionBlur`，活 `LiveTime` 帧后销毁）。
+        // · **每只手一条**（`:10137-10141` 左右手各调一次）—— 刺客匕首双持时左手那条挂 `Bip weapon05`
+        // · 段数/回溯：`ActionPattern == 0` ⇒ **32 段 × 40 帧**（`:10173-10187` 第一套）
+        // · 端点 = **武器骨原点** 与 **沿骨轴 × `SizeMax`**（`:10214-10245` 的 pTop/pBot）
+        // · 闸门照源码：`ATTACK|SKILL`（`:10134`）、有武器（`PatTool` 非空）、收械时不画
+        // 探针：**记录出现过的所有 `motion.state`**（去重，每见一个新值打一行）。
+        // ⚠ 只打一次会抓到待机那帧（0x40）——看不出攻击/技能时到底是什么值（我第一版就吃了这个亏）。
+        if (!selfTrailStates.has(motion.state)) {
+          selfTrailStates.add(motion.state);
+          console.warn('[曳光] 见到 motion.state =', motion.state, '=0x' + motion.state.toString(16),
+            ' stance=', selfWeaponStance, ' hasWeapon=', !!selfWeaponMount.group);
+        }
+        // **射击/施法时不画**：源码 `DrawMotionBlur:10134` 的 `if (ShootingMode || …) return FALSE;`
+        // —— 弓弩、标枪/投掷一律；法杖只在法师7/祭司8、图腾只在萨满10（判据见 `isShootingMode`）。
+        // 弓射箭、掷标枪、法师/祭司/萨满施法都出光就"太怪了"（用户 2026-09-20）。
+        const selfJob = getGameSnapshot().character?.job ?? 0;
+        if ((motion.state === ANIM_ATTACK || motion.state === CHRMOTION_STATE_SKILL)
+            && selfWeaponStance === 'combat'
+            && !isShootingMode(selfAppearance?.weaponIdcode ?? 0, selfJob)) {
+          const handSlots: Array<{ group: THREE.Group | null; bone: string; idcode: number }> = [
+            { group: selfWeaponMount.group, bone: combatBoneOf(selfAppearance?.weaponPos),
+              idcode: selfAppearance?.weaponIdcode ?? 0 },
+            // 镜像份只在"刺客匕首"时存在（`WeaponMount.mirror`），骨见 `szBipName_Assassin_LeftHand`
+            { group: selfWeaponMount.mirror, bone: WEAPON_BONES.ASSASSIN_LEFT,
+              idcode: (selfAppearance?.weaponIdcode ?? 0) + 1 },
+          ];
+          for (let hi = 0; hi < handSlots.length; hi++) {
+            const slot = handSlots[hi]!;
+            if (!slot.group) {
+              selfTrails[hi]?.dispose();
+              selfTrails[hi]?.object.removeFromParent();
+              selfTrails[hi] = null;
+              selfTrailWeaponIds[hi] = -1;
+              continue;
+            }
+            if (!selfTrails[hi] || selfTrailWeaponIds[hi] !== slot.idcode) {
+              selfTrails[hi]?.dispose();
+              selfTrails[hi]?.object.removeFromParent();
+              selfTrailWeaponIds[hi] = slot.idcode;
+              const len = weaponSizeMax(slot.group);
+              selfTrails[hi] = createWeaponTrail({
+                // ⚠ **不传 `liveTime`**（= 常驻，见 `weapon-trail.ts` 的字段说明）：玩家侧没有
+                //   "活 X 帧"这回事，传了就会在 80 帧后 alpha 永久归零 ⇒「只有第一次攻击有曳光」
+                //   （我上一轮只删了 `restart`、漏删了这一行）。
+                framesPerLevel: 40,   // 玩家侧 `DrawMotionBlurTool:10175` 是 **40**（怪物侧 30）
+                label: `${slot.bone}(长 ${len.toFixed(1)})`,
+                // （不用纹理：曳光是我方 shader 方案，见 `weapon-trail.ts` 顶部说明）
+                sample: (f) => {
+                  const smb = motion.animSmb ?? undefined;
+                  // ⚠ **单骨求值**（`sampleBoneEnds`）—— 32 段/帧若走"摆整骨架"那条会卡成 PPT
+                  const bf = selfPlayer!.sampleBoneEnds(slot.bone, f, smb);
+                  if (!bf) return null;
+                  // ⚠⚠ `evalBoneFrame` 给的是**模型空间**（`calcBone` 只算 `tmRot`/`tmPos`，
+                  //   **不含角色 root 的位置与朝向**）——必须补上角色的世界变换。
+                  //   原版那行就是 `pX + (rx>>FLOATNS) + mWorld->_41`：**角色坐标 + 骨在模型空间的平移**。
+                  //   漏了这一步，带子会被放到世界原点附近（角色在 (2211,210,14329) ⇒ 差一万四千单位，
+                  //   屏幕上什么都没有；而 lab 里怪物恰在原点附近 ⇒ 看着正常，这个 bug 就藏住了）。
+                  // ⚠ `matrixWorld` 由 three 在**渲染时**更新，而这里在渲染之前 ⇒ 手动刷新，
+                  //   否则读到的是**上一帧**（首次挥击更是接近单位阵 ⇒ 带子跑到世界原点、看不见）。
+                  charGroup?.updateWorldMatrix(true, false);
+                  const rootMat = charGroup?.matrixWorld;
+                  const a = new THREE.Vector3(bf.ox, bf.oy, bf.oz);
+                  const dir = new THREE.Vector3(bf.ayx, bf.ayy, bf.ayz);
+                  if (rootMat) { a.applyMatrix4(rootMat); dir.transformDirection(rootMat); }
+                  return { a, b: a.clone().addScaledVector(dir, len) };
+                },
+                log: (msg) => console.warn(msg),
+              });
+              scene?.add(selfTrails[hi]!.object);
+              // 建完报数（长度 = `weaponSizeMax` 的结果、武器网格数、是否进了场景）——
+              // 用来区分"没建 / 建了但长度为 0（带子退化）/ 建了没进场景 / 建了但画不出来"
+              let meshN = 0;
+              slot.group.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshN++; });
+              console.warn('[曳光] 已建：bone=', slot.bone, ' len=', len.toFixed(2),
+                ' 武器网格数=', meshN, ' inScene=', !!selfTrails[hi]!.object.parent,
+                ' 顶点数=', (selfTrails[hi]!.object as THREE.Mesh).geometry.attributes.position?.count);
+            }
+            const tr = selfTrails[hi]!;
+            // ⚠ 玩家侧**不传 `liveTime`、不做 restart**：源码的 `DrawMotionBlurTool` 是**每帧画**
+            //   （带子由"回溯历史帧"构成，没有"某次触发后活 X 帧"这个概念）。先前用"帧回绕"判
+            //   新一轮挥击 —— 连续攻击时帧号不回绕就判不到 ⇒ `timeCount` 一直涨 ⇒ alpha 归零
+            //   ⇒ **那一次没有曳光**（用户实测"有时候莫名其妙攻击没有曳光"）。
+            //   常驻之后：挥动时出现，停下时两骨几乎不动 ⇒ 带子自然收短/消失。
+            const curF = selfPlayer.frame;
+            tr.update(curF, motion.startFrame * 160);
+            // （**不再需要** `selfPlayer.apply()` 复原 —— `sampleBoneEnds` 只求骨矩阵、不摆姿势；
+            //   这里原先每帧多摆一次整骨架，是卡顿的另一半来源。）
+          }
+        } else {
+          // **离开动作态就什么都不画** —— 原版 `DrawMotionBlur` 每帧先过这道闸门（`:10134`），
+          // 带子本身也只在挥击时有内容。⚠ 只"停更"不隐藏的话，带子会**冻在最后一帧**的位置
+          //（玩家侧是常驻、`alpha` 恒 1）⇒ 半空中挂着一条静止的带子。
+          selfTrails[0]?.hide();
+          selfTrails[1]?.hide();
+        }
         // 兑现待切的武器套：原版同一处判据 `MotionInfo->State < 0x100`（站/走/跑才算"动作播完"）
         if (pendingSwitchWeapon && animState.getCurrentState() < 0x100) {
           pendingSwitchWeapon = false;
@@ -6200,6 +6428,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       projectileMgr = null;
       scene = null;
       camera = null;
+      // **两份相机注册表都要注销**（billboard + orient）—— 否则下一个世界还拿着这台已释放的相机
+      setBillboardCamera(null);
+      setOrientCamera(null);
       mapHandles.clear();
       collisionMeshes.clear();
       charGroup = null;

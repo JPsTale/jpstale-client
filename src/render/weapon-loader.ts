@@ -59,8 +59,28 @@ export async function loadDropItemModel(dorpItem: string | null): Promise<{ grou
  * ⇒ 这里取**包围盒最长的那一维**：语义仍是"从挂点到顶端的长度"，但不依赖建模约定。
  */
 export function weaponSizeMax(group: THREE.Object3D): number {
-  const box = new THREE.Box3().setFromObject(group);
-  if (!Number.isFinite(box.max.x)) return 0;
+  // ⚠ **必须在武器自己的局部空间里量**。原先直接 `new Box3().setFromObject(group)` ——
+  //   那是**世界轴对齐盒**，而本函数通常在武器**已挂到骨上**之后调用 ⇒ 斜握的武器其 AABB
+  //   会把旋转后的斜向跨度一并算进来 ⇒ 量出"比武器长很多"（用户实测：双手斧的曳光
+  //   "光比武器长很多"）。源码量的是**武器模型自己**的尺寸（`character.cpp:1981-1988`，
+  //   逐子网格取 `maxY`），**与挂载姿态无关** ⇒ 先把每个子网格的盒变换回 group 局部再并。
+  group.updateWorldMatrix(true, true);
+  const inv = new THREE.Matrix4().copy(group.matrixWorld).invert();
+  const box = new THREE.Box3();
+  const tmp = new THREE.Box3();
+  const mat = new THREE.Matrix4();
+  let any = false;
+  group.traverse((o) => {
+    const m = o as THREE.Mesh & { isMesh?: boolean };
+    if (!m.isMesh || !m.geometry) return;
+    m.geometry.computeBoundingBox();
+    const bb = m.geometry.boundingBox;
+    if (!bb || !Number.isFinite(bb.max.x)) return;
+    mat.copy(inv).multiply(m.matrixWorld);      // 网格局部 → 世界 → group 局部
+    tmp.copy(bb).applyMatrix4(mat);
+    if (any) box.union(tmp); else { box.copy(tmp); any = true; }
+  });
+  if (!any || !Number.isFinite(box.max.x)) return 0;
   const size = box.getSize(new THREE.Vector3());
   return Math.max(size.x, size.y, size.z);
 }

@@ -104,7 +104,9 @@ function writeBindRot(out: number[], m: ArrayLike<number>): void {
  * 逻辑与数值顺序严格照抄原实现（见文件头 C++ 出处）。
  * @param tmp 需要一块 16 元素的暂存（用于 slerp 后的旋转矩阵），由调用方提供
  */
-export function getRotMatrixInto(obj: Obj3D, frame: number, out: number[], tmp: number[]): void {
+export function getRotMatrixInto(
+  obj: Obj3D, frame: number, out: number[], tmp: number[],
+): void {
   const { tmRot, tmPrevRot } = obj;
   if (!tmRot || tmRot.length === 0 || !tmPrevRot || tmPrevRot.length === 0) {
     writeBindRot(out, obj.tmRotate.m);
@@ -115,6 +117,9 @@ export function getRotMatrixInto(obj: Obj3D, frame: number, out: number[], tmp: 
   // C++ TmAnimation: NumTmRot = GetTmFrameRot(frame)；若 <0（当前帧不在任何有效旋转段内，
   // 例如某骨骼在部分动作段无独立旋转数据）则走 else 分支 smFMatrixFromMatrix(qmat, TmRotate)，
   // 即回退到绑定姿态矩阵，而不是从全局 tmRot[0] 插值（后者对新 smb 多段数据会取错段 → 横躺）。
+  // ⚠ 段表是坏的时候（ASE 导出的 .smd 常见）**不要在这里救** —— 调用方走"直接对 key slerp"
+  //   的那条路（见 `static-fx.applyStaticMeshTracks` 的说明：乘上按坏表推导的 `tmPrevRot`
+  //   会把纯 yaw 变成绕斜轴的翻滚）。
   if (num < 0) {
     writeBindRot(out, obj.tmRotate.m);
     return;
@@ -312,6 +317,46 @@ export function evalSkeletonInto(
   ws.state.fill(0);
   for (let i = 0; i < n; i++) calcBone(ws, i, frame, rawMode);
   return ws.frames;
+}
+
+/** 一根骨在某一帧的"原点 + 局部 Y 轴"（都是世界量）—— 曳光两端点直接由它算 */
+export interface BoneFrame {
+  ox: number; oy: number; oz: number;   // 世界平移 = 矩阵第 4 行 `w[12..14]`
+  ayx: number; ayy: number; ayz: number; // 局部 Y 轴的世界方向 = 第 2 行 `w[4..6]`
+}
+
+/**
+ * **只求一根骨**（含其父链）—— 原版 `AnimObjectTree(ChrTool->ObjBip, pframe, …)` 的等价物：
+ * 它也只摆那一根，不是整骨架。
+ *
+ * 为什么需要它（2026-09-20，用户实测"一攻击就卡成 PPT"）：近战武器曳光每帧要 **32 个历史帧**
+ * 的骨矩阵，若每段都走 `evalSkeleton`（全骨架求值 + `applyToBones` + `skeleton.update()`
+ * 重算蒙皮矩阵）⇒ **32 段 × 2 只手 = 64 次全骨架重算/帧**。而 `calcBone` 自带 `ws.state` 缓存、
+ * 且**递归只算父链** ⇒ 单骨求值的代价是"到根的链长"（约 6 根）而不是 52 根。
+ *
+ * 矩阵约定与 `calcBone` 一致（row-major、平移在 `[12..14]`）：平移 = 第 4 行；
+ * 局部 Y = 第 2 行（与 three 列主序 `elements` 的 Y 轴索引恰好相同，调用方可直接当"轴"用）。
+ */
+export function evalBoneFrame(
+  smb: SmbData, boneName: string, frame: number, ws: EvalWorkspace,
+): BoneFrame | null {
+  if (ws.smb !== smb) throw new Error('evalBoneFrame: workspace 与 smb 不匹配（不同模型不能混用）');
+  const want = boneName.toLowerCase();
+  let idx = -1;
+  for (let i = 0; i < ws.objects.length; i++) {
+    // ⚠ 字段名是 **`nodeName` 不是 `name`** —— 我一度写成 `name`，于是永远匹配不到（`idx = -1`
+    //   ⇒ 返回 null ⇒ 曳光顶点全零、什么都不显示，而且这条路上**没有任何上报**，静默废掉）。
+    const nm = ws.objects[i]?.nodeName;
+    if (nm && nm.toLowerCase() === want) { idx = i; break; }
+  }
+  if (idx < 0) return null;
+  ws.state.fill(0);
+  calcBone(ws, idx, frame, false);
+  const w = ws.frames[idx]!.world;
+  return {
+    ox: w[12]!, oy: w[13]!, oz: w[14]!,
+    ayx: w[4]!, ayy: w[5]!, ayz: w[6]!,
+  };
 }
 
 /**

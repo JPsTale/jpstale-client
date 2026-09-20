@@ -30,6 +30,10 @@ export interface MonsterAttackFxDef {
    * 落点偏移 —— **原样照抄原版 `GetMoveLocation(x, y, z, angX, angY, angZ)` 的参数**
    * （`smLib3d/smgeosub.cpp:151`），由 `core/geom.getMoveLocation` 算出实际偏移。
    *
+   * ⚠ `angX` / `angZ` **必填**（源码每个调用点都写全 6 个参数；写 0 就写 0）。
+   *   标成可选会让"漏抄了一个参数"在编译期看不出来 —— 那是**没有显式报错**的一种，
+   *   只能等到运行期才发现（用户 2026-09-20："我要的就是显式报错"）。
+   *
    * ⚠ 为什么存"参数"而不是"翻译好的结果"：我当初把 `pX + GeoResult_X` 直接翻译成
    * `forward: 54`，就漏掉了"它取决于上一行的 `GetMoveLocation` 调用"这件事，
    * 于是粒子落在怪物身上而不是身前（用户实测发现）。**存参数、原样搬运**，
@@ -37,7 +41,7 @@ export interface MonsterAttackFxDef {
    *
    * `angY` 不在这里：它是**怪物的朝向**（原版 `Angle.y`，运行时给），见 `ctx.facing`。
    */
-  move?: { x: number; y: number; z: number; angX?: number; angZ?: number };
+  move?: { x: number; y: number; z: number; angX: number; angZ: number };
   /**
    * 高度偏移（world 单位）。
    *
@@ -100,7 +104,7 @@ export interface MonsterAttackFxDef {
    * **目标**，我却按"怪物身上"登记了 ⇒ 粒子长在自己脚下而不是被打的人身上（用户 2026-09-18 实测）。
    * 判据：看那个 case 把**谁**传给了 `ParkAssaParticle_*` —— 传 `chrAttackTarget` 就是目标。
    */
-  anchor?: 'caster' | 'target';
+  anchor?: 'caster' | 'target' | 'weapon';
   /**
    * **范围内的单位各挂一份**（原版 `SkillPlay_Monster_Effect(char, code, range)`，`netplay.cpp:12685`）——
    * 它不是音效（那个 code 参数在函数体里根本没被用到）：扫**所有玩家**，距离小于 `range` 的
@@ -142,6 +146,18 @@ export interface MonsterAttackFxDef {
    * 给数组 = 原版有多个候选（如 `VigorBall 1/2` 的 `rand()%2`）⇒ 由 `ctx.variant` 选，库内不随机。
    */
   sound?: string | string[];
+  /**
+   * **多段音时，下标从哪来** —— `sound` 写成**数组**的条目**必须**写这一项。
+   *   · `'variant'`     = 原版 `switch (rand() % N)`（候选，如 VigorBall/GlacialSpike 的 `1/2`）⇒ 下标 = `ctx.variant`
+   *   · `'motionEvent'` = 原版 `switch (MotionEvent)`（如 `character.cpp:14886-14897` 的 `CHAIN_LANCE1/2/3`）⇒ 下标 = **事件帧序号 − 1**
+   *
+   * ⚠ **越界不兜底**：这两种原版写法**都没有 `default` 分支** ⇒ 下标越界就是**不响**（返回 `null`），
+   *   不是"取最后一个"也不是"绕回第一个"（我一度在函数里 `clamp` + 取模，那是编的规则）。
+   * ⚠ **数组而没写本字段 = 数据缺失**：运行时不猜（不默认按 `variant`），`reportFallback` 后**不播**。
+   *   （我一度从"variant 是否为 0"去**猜**调用方有没有指定 —— 那是拿 0 当哨兵，且会**静默**把
+   *   VigorBall 从"随机候选"改成"按帧序号"。用户 2026-09-20 指出后撤除。）
+   */
+  soundPick?: 'variant' | 'motionEvent';
   /**
    * **代码内组合的特效**（键 = `skill-fx-runner.CODE_SKILL_FX`）—— 一个技能由"网格 + 若干粒子系统 +
    * 动态光"组合而成、没有单一资产文件时用它（如 Glacial Spike：从 NewEffect 的 Lua 脚本移植而来）。
@@ -269,6 +285,8 @@ export const FX_VIGOR_BALL: MonsterAttackFxDef = {
   height: 0,                            // 起点抬高走 `fly.lift`（原版 `curPos.y = pY + 5000`）
   // ⚠ 同目录另有 2 号系统（`AssaParticle.cpp:5598` `Start("…VigorBall2")`），**两个同时在飞**
   //   ⇒ 用 `systems` 附加，**不是**把 asset 写成数组（数组的语义是"多候选、挑一个"）
+  // 原版 `character.cpp:14914` `switch (rand() % 2)` ⇒ 候选，下标由调用方给
+  soundPick: 'variant',
   sound: ['wav/effects/skill/morion/vigorball 1.wav',
     'wav/effects/skill/morion/vigorball 2.wav'],
   fly: {
@@ -303,6 +321,8 @@ export const FX_GLACIAL_SPIKE: MonsterAttackFxDef = {
   asset: 'GlacialSpike',        // 显示名（真身是 `code`，见字段说明）
   height: 0,
   code: 'glacialspike',
+  // 原版 `character.cpp:14929` `if (rand() % 2)` ⇒ 候选，下标由调用方给
+  soundPick: 'variant',
   sound: ['wav/effects/skill/morion/glacialspike 01.wav',
     'wav/effects/skill/morion/glacialspike 02.wav'],
   note: "character.cpp:14926 怪物 case 'Z'（另含 SetDynLight 正前方 64、蓝 power 700）"
@@ -350,7 +370,9 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
     asset: ['HulkHit1', 'HulkHit2', 'HulkHit3'],
     // `character.cpp:4463` `GetMoveLocation(0, 0, 54 * fONE, 0, Angle.y, 0);` —— 原样搬参数
     //（54 = 身前，绕 Y 用怪物朝向；不是"落在身上"）
-    move: { x: 0, y: 0, z: 54 },
+    // 原版 `character.cpp:4463` `GetMoveLocation(0, 0, 54 * fONE, 0, Angle.y, 0);`
+    // ⇒ 第 4/6 个参数**源码写的就是 0**（不是我方省写）——故这里补全成 6 个参数
+    move: { x: 0, y: 0, z: 54, angX: 0, angZ: 0 },
     height: 48,           // `:4464` `pY + 48 * fONE`（固定值，非 GeoResult_Y）
     // `HoEffect.cpp:11723`（case 的第一行）：`SetDynLight(pos.x, pos.y, pos.z, 100, 255, 100, 255, 100, 1)`
     //   → 绿色（r=100,g=255,b=100）、a=255、power=100、每帧衰减 1 ⇒ 生命期 100 帧 ≈ 1.67s
@@ -385,6 +407,85 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
     note: 'character.cpp:4606 / hoAssaParticleEffect.cpp:5530-5539 / AssaParticle.cpp:7443,7474,7495',
   },
 
+  // 0x1950 = snCHAR_SOUND_REVIVED_PIKEMAN（被复活的枪兵 / 死亡枪兵 D_PA）—— **多技能怪**
+  //
+  // 原版 `character.cpp:14866-14902` `case snCHAR_SOUND_REVIVED_PIKEMAN:`
+  //   → `if (chrAttackTarget) switch (MotionInfo->KeyCode)`，两个分支：
+  //     · `'G'`（:14871-14878）→ `StartEffect(x, y, z, EFFECT_CRITICAL_HIT1)` +
+  //           `SetDynLight(x, y, z, 100, 0, 0, 0, 400)` +
+  //           `SkillPlaySound(SKILL_SOUND_JUMPING_CRASH2, pX, pY, pZ)`
+  //     · `'Z'`（:14879-14899）→ `AssaParticle_ChainLance(&pos)`（**与骑士圣剑穿刺同一条链**：
+  //           `hoAssaParticleEffect.cpp:3037` → `pPosi->y += 3000` + `g_NewParticleMgr.Start("Skill3Hit3", …)`
+  //           + `SetAngle(rand())` 随机朝向）+ 按 `MotionEvent` **1/2/3 三段音**
+  //           `SKILL_SOUND_SKILL_CHAIN_LANCE1/2/3`
+  //
+  // 动作表（`char/monster/d_pa/dpike.ini`，实测日志）：技能按钮 **2 个** `'G'` / `'Z'`
+  //   · idx 17 `'G'` 事件帧 [4320]
+  //   · idx 18 `'Z'` 事件帧 [4480, -7040, -8160]　← **两个负值未解**（见下）
+  //
+  // ⚠⚠ **落点降级（明写，不当源码语义用）**：两招的落点都是 `GetAttackPoint(&x, &y, &z)`
+  //   （`character.cpp:1795`）—— 它取 `HvRightHand` 的 **`ObjBip`**（无武器时退回 `AttackObjBip`）
+  //   的世界矩阵，变换 `(0, 0, SizeMax/2)` 再加到怪物坐标 ⇒ **右手武器尖端**（`SizeMax` = 武器长度）。
+  //   我方**尚未接"武器骨点"**（spec 现有 `move`/`height` 表达不了），故此处按
+  //   **怪物自身原点**登记。这是**已知降级、不是源码语义**，等能取到怪物右手武器骨再补。
+  //
+  // ⚠ **未登记项（不编，留空）**：
+  //   ① `'G'` 的 `SetDynLight(x,y,z,100,0,0,0,400)` —— 只给了 8 个参数，第 9 个（`decPower`）
+  //      走签名默认值，该默认值未查 ⇒ 不填 `dynLight`（填一个猜的衰减比不填更坏）。
+  //   ② `'Z'` 的三段音**按 `MotionEvent` 分段**，而 spec 的 `sound` 是"单值或候选数组"
+  //      （数组语义 = `rand()` 挑一个，见 HULK）⇒ **语义不同**，故不写成数组，留空并在 note 记明。
+  //   ③ `'Z'` 事件帧里的 `-7040 / -8160`（源码 `4294956896 / 4294959136` = 有符号负数）含义未定。
+  0x1950: {
+    skillByKeyCode: {
+      G: {
+        // `HoEffect.cpp:7319-7321` `case EFFECT_CRITICAL_HIT1:`
+        //   → `extPrimitive->StartBillRect(x, y, z, 120, 120, "Light1.ini", ANI_ONE);`（播一次）
+        // `character.cpp:14872` `GetAttackPoint(&x, &y, &z)` → `:14874` `StartEffect(x, y, z, …)`
+        // ⇒ 落点 = **攻击骨**（不是怪物脚下）
+        anchor: 'weapon',
+        asset: 'Light1',
+        size: 120,
+        height: 0,
+        // `effectsnd.cpp` 的 `SKILL_SOUND_JUMPING_CRASH2` 行
+        sound: 'wav/effects/skill/tempskron/jumping_crash 02.wav',
+        note: "character.cpp:14871-14878 case 'G' / HoEffect.cpp:7319-7321 Light1.ini 120x120 ANI_ONE；"
+          // 落点已按源码：`GetAttackPoint` ⇒ `anchor: 'weapon'`（怪物 tz=0 ⇒ 握持点，见 findAttackBone 的注释）。
+          // ⚠ 订正：本条曾写"当前按怪物原点（降级）"——那是加 `anchor` 之前的旧状态。
+          + '⚠ SetDynLight(x,y,z,100,0,0,0,400)（:14875）**未登记** —— 第 9 个参数省略即默认 `DecPower=10`'
+          + '（`particle.h:23` 的默认实参），我此前误记成"默认值未查"',
+      },
+      Z: {
+        // `hoAssaParticleEffect.cpp:3037-3046` `AssaParticle_ChainLance`：
+        //   `pPosi->y += 3000;` → `g_NewParticleMgr.Start("Skill3Hit3", *pPosi);` → `SetAngle(rand())`
+        // `character.cpp:14880` `GetAttackPoint(&x, &y, &z)` → `:14885` `AssaParticle_ChainLance(&pos)`
+        // ⇒ 落点 = **攻击骨**（`height` 是 `ChainLance` 内部那句 `pPosi->y += 3000`）
+        anchor: 'weapon',
+        asset: 'Skill3Hit3',
+        height: 3000 / 256,          // 上面那句 `pPosi->y += 3000`（定点数，fONE=256）
+        // 音：原版按 `MotionEvent` == 1/2/3 分三段（`character.cpp:14886-14897` 的 `switch`）。
+        // **走通用的 `sound` 数组**（不另立字段）：调用方不给 `variant` 时，下标 = 事件帧序号 − 1
+        // ⇒ 第 1/2/3 个事件帧分别响这三声。与 D_PR Vigor Ball 的"两段音"是同一个机制，
+        // 只差原版用 `rand()%2` 还是 `switch(MotionEvent)` 决定下标（见 `pickMonsterSound`）。
+        // 原版 `character.cpp:14886-14897` `switch (MotionEvent)` ⇒ 下标 = 事件帧序号 − 1
+        soundPick: 'motionEvent',
+        sound: [
+          'wav/effects/skill/tempskron/chainlance 01.wav',
+          'wav/effects/skill/tempskron/chainlance 02.wav',
+          'wav/effects/skill/tempskron/chainlance 03.wav',
+        ],
+        note: "character.cpp:14879-14899 case 'Z' / hoAssaParticleEffect.cpp:3037-3046 ChainLance→Skill3Hit3；"
+          // ⚠ 订正（同上）：落点 = `GetAttackPoint` ⇒ `anchor:'weapon'`（不是"怪物原点 + 12 单位"）；
+          //   三段音 = `sound` + `soundPick:'motionEvent'`（不是"spec 表达不了 ⇒ 未登记"）。
+          // ⚠ 另：ChainLance 里的 `SetAngle(rand()%ANGLE_45/360/45)` 对 `Skill3Hit3` 的 `TYPE_THREE`
+          //   **不生效** —— `HoNewParticle.cpp:3158-3176` 那一支把系统 Angle 整段注释掉了（朝向由 AddFaceThree 用 PartAngle 算）。
+          + '⚠ `SetDynLight` 见同招 `' + "'G'" + '` 那条（默认 DecPower=10）；'
+          + '⚠ 事件帧 [4480, -7040, -8160] 的负值含义未定',
+      },
+    },
+    note: 'character.cpp:14866 `case snCHAR_SOUND_REVIVED_PIKEMAN` → `switch (MotionInfo->KeyCode)`；'
+      + "动作表 char/monster/d_pa/dpike.ini：idx17='G' 事件帧4320 / idx18='Z' 事件帧[4480,-7040,-8160]",
+  },
+
   // 0x1960 = snCHAR_SOUND_REVIVED_PRIESTESS（被复活的祭司 / 死亡祭司）—— **多技能怪**。
   //
   // ⚠⚠ **特效挂在动作的 `KeyCode` 上，不是挂在 effectId 上。**
@@ -408,6 +509,60 @@ export const MONSTER_ATTACK_FX: Record<number, MonsterFxEntry> = {
   //   **既没有她的 case、也没有 default**。
   // · 起手（`character.cpp:14070` `BeginSkill_Monster`）有**脚下法阵**，**所有技能共用**：
   //   `sinEffect_StartMagic(&pos, 2)` → `MAAM2` 模型 + `maam2.tga` + `star05Q_03.bmp`。
+  // 0x2020 = snCHAR_SOUND_NPC_SKILLMASTER（Master Verkan）：**每个 KeyCode 是完全不同的一招**。
+  //   起手 `BeginSkill_Monster:14023-14043`、事件帧 `EventSkill_Monster:14529-14598`，两处各一个 switch。
+  //   ⚠ **本资产 `skillmaster.inx` 512 条动作的 KeyCode 全为空**（同一解析器在 Kelvezu/DevilBird/Chimera
+  //     上都读得出 4~6 条）⇒ 原版这两处的 `switch (MotionInfo->KeyCode)` 在这份资产上**全部落空**
+  //     （曳光与特效一样都触发不了）。出路三条见 `docs/2026-09-18-怪物特效-进展与移交.md` §9.7，**未擅自选**。
+  //
+  //   **只登记 `'N'`**（唯一一条我们现在真能放出来的）。其余五条**不登记** —— 它们的特效分别在
+  //   两个我方没有的运行时里（老 sin 层 / NewEffect Lua），登记了也只能放个音，那是拿"看起来放了"
+  //   冒充"做了"（用户 2026-09-20：不要任何兜底）。逐键的源码地图留在这里当**记录**（不参与运行）：
+  //     `'A'` `:14533-14537` → `StartSkillDest(pX, pY+24*fONE, pZ, 目标…, SKILL_SPARK, 8)`
+  //           + 音 `SKILL_SOUND_SKILL_SPARK2` = `skill/tempskron/spark 02.wav`（`effectsnd.cpp:508`）
+  //     `'B'` `:14538-14544` → `GetAttackPoint` → `StartSkill(…, SKILL_TRIPLE_IMPACT)`
+  //           + `SetDynLight(x,y,z, 100,0,0,0,300)` + 音 `AVANGING_CRASH` = `avengingcrash 01.wav`（:638）
+  //     `'M'` `:14554-14565` → 起点 `GetMoveLocation(0,24*fONE,24*fONE,0,Angle.y,0)`、终点目标 `pY+24*fONE`
+  //           → `SkillSagittarionPhoneixShot`（`HoNewEffectFunction.cpp:410-441` 的 `HoEffectType_PhoneixShot`，
+  //           NewEffect 内部类型）+ 音 `PHOENIX_SHOT` = `phoenixshot 01.wav`（:700）
+  //     `'Y'` `:14566-14576` → `GetAttackPoint` → `SkillWarriorDestroyerHit`（Lua
+  //           `SkillWarriorDestroyerHit.lua`，`HoNewEffectFunction.cpp:302-313`，`pos.y+1000`
+  //           + `SetDynLight(…,255,150,50,0,100,3)`）+ 音按 `MotionEvent` 阈值：`< 3` → `AVANGING_CRASH`，
+  //           否则 `EXPANSION2`（`expansion 02.wav`，:523）
+  //     `'L'` `:14577-14597`（事件帧）→ `GetAttackPoint` → `StartSkill(…, SKILL_TRIPLE_IMPACT)`
+  //           + `SetDynLight(…,100,0,0,0,400)` + 音按 `MotionEvent` 1/2/3-4 →
+  //           `CHAIN_LANCE2`(`chainlance 02.wav`, :644) / `AVANGING_CRASH` / `CHARGING_STRIKE`(`chargingstrike 03.wav`, :690)；
+  //           **起手那一半** `:14034-14037` `SkillLancelotChargingStrike(this)`（Lua
+  //           `SkillLancelotChargingStrike1.lua`，`HoNewEffectFunction.cpp:376-389`；原版那句
+  //           `Init(effectGroup, pos.x, pos.y, pos.y, …)` 把 **pos.y 当 z 传**了 —— 源码自己的 bug，照记）
+  //
+  //   为什么其余五条不登记也**不静默**：`fireMonsterAttackEvent` 对未登记的 KeyCode 会
+  //   `reportFallback`（"…未登记特效 ⇒ 不放特效（原版 switch 无 default；动作音照旧）"）。
+  0x2020: {
+    skillByKeyCode: {
+      // :14545-14553 `case 'N':` → `GetAttackPoint` → `AssaParticle_ChainLance(&pos)`（**无技能音**）
+      //   `hoAssaParticleEffect.cpp:3416-3428`：`pPosi->y += 3000` → `.part` `Skill3Hit3`
+      //   → `SetAngle(rand()%ANGLE_45/360/45)` → `SetDynLight(…, 100,50,0,0,250,5)`
+      // ⇒ 与 Pikeman Spirit 的 `'Z'`（`0x1950`）**同一个函数**（同一个资产），差别只有落点从哪来
+      N: {
+        anchor: 'weapon',
+        asset: 'Skill3Hit3',
+        height: 3000 / 256,          // `pPosi->y += 3000`（定点数，fONE = 256）
+        dynLight: { r: 100, g: 50, b: 0, a: 0, power: 250, decPower: 5 },
+        // ⚠ 曾记作"随机喷射角未做"，**读源码后订正**：`HoNewParticle.cpp:3158-3176` 的 `TYPE_THREE` 分支里
+        //   系统 `Angle`（= `SetAngle` 写进去的那个）**整段是被注释掉的**，真正决定朝向的是
+        //   `AddFaceThree(&Face2d, part.PartAngle)`（`:3174`）⇒ `AssaParticle_ChainLance` 那句 SetAngle
+        //   **对这个粒子类型不生效**（不是"我们没做"，是源码里根本没走）。
+        unhandled: [],
+        note: 'character.cpp:14545-14553 / hoAssaParticleEffect.cpp:3416-3428',
+      },
+      // 'A' / 'B' / 'M' / 'Y' / 'L' **故意不登记**（特效在老 sin 层 / NewEffect Lua，两个运行时我方都没有）
+      // —— 逐键源码地图见本条目上方的注释块。未登记 ⇒ 运行时会明确上报"未登记特效"。
+    },
+    note: 'NPC 技能大师：只登记 `N`（ChainLance，与 0x1950 的 Z 同函数）；其余五条的源码地图见上方注释'
+      + '；本资产 KeyCode 全空 ⇒ 本地无法触发（§9.7）',
+  },
+
   0x1960: {
     // 起手音：`effectsnd.cpp:537` `Casting_M.wav → SKILL_SOUND_SKILL_CASTING_MAGICIAN`
     //   —— 跟在 `BeginSkill_Monster`（动画开始）上，**不是事件帧**
@@ -587,8 +742,12 @@ export function isSkillSet(e: MonsterFxEntry): e is MonsterSkillSet {
   return (e as MonsterSkillSet).skillByKeyCode !== undefined;
 }
 
-/** `KeyCode` → 派表键：0 = 动作没有 KeyCode ⇒ `''`（原版走 `else` 分支的情形） */
-function keyOf(keyCode: number): string {
+/** `KeyCode` → 派表键：0 = 动作没有 KeyCode ⇒ `''`（原版走 `else` 分支的情形）
+ *
+ * ⚠ **导出**：武器曳光的登记表（`weapon-trail.ts`）按同一套键查表 —— 两张表各写一份转换的话，
+ * "0 还是空串"这类边界迟早分叉。
+ */
+export function keyOf(keyCode: number): string {
   return keyCode === 0 ? '' : String.fromCharCode(keyCode).toUpperCase();
 }
 
@@ -710,6 +869,11 @@ export interface MonsterAttackEventCtx {
   /** 怪物**世界坐标**（`root.position`）；特效按上面的 height / forward 偏移 */
   pos: { x: number; y: number; z: number };
   /**
+   * **攻击骨的世界坐标**（原版 `GetAttackPoint`）—— `anchor: 'weapon'` 的条目用它。
+   * 由调用方用 `findAttackBone(actor.root)` 算好放进来的；给不出就**不放**（不退回脚下）。
+   */
+  weaponBase?: { x: number; y: number; z: number } | null;
+  /**
    * 怪物**朝向**（弧度，绕 Y）—— 供 `forward` 前向偏移使用。
    * 与 `ctx.pos` 一样由调用方给（`root.rotation.y`）；不传则前向偏移按"未提供"跳过。
    */
@@ -796,26 +960,91 @@ export interface MonsterAttackEventCtx {
 }
 
 /**
+ * **攻击骨的世界坐标**（原版 `smCHAR::GetAttackPoint`，`character.cpp:1795`）——
+ * `anchor: 'weapon'` 的条目以它为落点。
+ *
+ * 骨名策略**照抄** `character.cpp:11482-11509` 的四个候选（原版按名字 `GetObjectFromName`
+ * 逐个试），最后退回右手骨（原版 `HvRightHand.ObjBip`）：
+ *   `Bip01 wea`（D_PA 实测就是这个）→ `bip01 weapon` → `Bip01 staff02` → `Bip01 Effect` → `Bip01 R Hand`
+ *
+ * ⚠ 原版还有一步 `tz = ChrTool->PatTool ? SizeMax/2 : 0`（沿骨轴再推半个武器长度）——
+ *   **怪物不装备独立武器对象（`PatTool` 为空）⇒ `tz = 0`**，故这里不做那一步。
+ *   若将来遇到确实挂了 `PatTool` 的怪，要按 `SizeMax` 补上（那需要武器模型长度）。
+ *
+ * **唯一实现**（AGENTS #15）：实验室与 `WorldView` 都调它 —— 两处各写一份骨名策略就是下一个 bug。
+ * 不依赖 three：只要求传入对象有 `getObjectByName`，骨的 `matrixWorld.elements[12..14]` 即世界平移
+ * （与原版 `mWorld->_41/_42/_43` 同一个量）。
+ */
+export function findAttackBone(root: unknown): { x: number; y: number; z: number } | null {
+  const r = root as { getObjectByName?: (n: string) => unknown } | null | undefined;
+  if (!r?.getObjectByName) return null;
+  // ⚠ 骨名是**精确匹配**：原版 `smPAT3D::GetObjectFromName` 用 `_stricmp`（`smObj3d.cpp:2238-2246`）
+  //   ⇒ `"bip01 wea"` **不会**命中 `Bip01 wea01`（模型里那是同一挂点的子节骨＝枪尖）。
+  //   D_PA 实测：`Bip01 wea` = (-0.7, 25.3, -10.9)（握持处）；`Bip01 wea01` = (-23.5, 79.7, -20.9)（枪尖）。
+  //
+  //   原版这两招的落点**就是握持处**（`wea`）：因为 `tz = ChrTool->SizeMax / 2` 那一步只在
+  //   装备武器道具时才有 —— `character.cpp:1975-1988` 整段在 `if (dwItemCode)` 里，而
+  //   **怪物没有 `dwItemCode`**（武器是模型自带的，不是装备的道具）⇒ `PatTool` 为空 ⇒ `tz = 0`。
+  //   （`SizeMax` 本身 = 武器模型网格的 `maxY`，`character.cpp:1981-1988` —— 不是"拿不到"，
+  //     而是这条路对怪物根本没走。玩家侧如果要用它，我方有 `it<码>.smd` 可以算。）
+  //
+  //   ⚠ 我一度把 `wea01` 排到前面、想让粒子落在枪尖 —— 那是**照观感改的，不是源码**，已撤回。
+  const names = ['Bip01 wea', 'bip01 wea', 'bip01 weapon', 'Bip01 weapon',
+    'Bip01 staff02', 'Bip01 Effect', 'Bip01 R Hand'];
+  for (const n of names) {
+    const o = r.getObjectByName(n) as { matrixWorld?: { elements: ArrayLike<number> } } | null | undefined;
+    const e = o?.matrixWorld?.elements;
+    if (e && e.length >= 16) return { x: e[12]!, y: e[13]!, z: e[14]! };
+  }
+  return null;
+}
+
+/**
  * 多候选时按 `variant` 取一个资产名。
  *
  * **唯一实现**：实验室的日志显示与实际播放必须走同一份判断，否则"日志说播的是 A、
  * 画面里是 B"这种分叉会同时污染两边（AGENTS #15）。
  */
-export function pickMonsterFxAsset(def: MonsterAttackFxDef, variant = 0): string {
-  const list = Array.isArray(def.asset) ? def.asset : [def.asset];
-  return list[Math.abs(variant) % list.length]!;
+export function pickMonsterFxAsset(def: MonsterAttackFxDef, variant = 0): string | null {  const list = Array.isArray(def.asset) ? def.asset : [def.asset];
+  const pick = list[variant];
+  if (pick === undefined) {
+    // **不绕回、不取模**：原版是 `rand() % N`，**不可能**越界 ⇒ 越界只可能来自调用方给了错下标。
+    // 这是调用方错误，不是"该挑一个" —— 上报并**不放**（我一度写 `Math.abs(variant) % list.length`）。
+    reportFallback('fx', `多候选资产下标越界：variant=${variant}，共 ${list.length} 个候选`
+      + `（${list.join(' / ')}）⇒ 本次不放`);
+    return null;
+  }
+  return pick;
 }
 
 /**
- * 技能音的候选选择（规则与 `pickMonsterFxAsset` 一致：**调用方给 `variant`，库内不随机**）。
+ * 技能音的选择（规则与 `pickMonsterFxAsset` 一致：**调用方给下标，库内不随机、也不兜底**）。
  *
- * 原版这里是 `switch (rand() % 2)`（`character.cpp:14915` 的 `VigorBall 1/2`）——
- * 我们把它提到调用方：实验室用它做"2 选 1"，将来要服务端权威随机就换成下发索引。
+ * 原版两种写法，**由数据里的 `soundPick` 显式声明是哪一种**，运行时不猜：
+ *   · `switch (rand() % N)`（Vigor Ball 的 `1/2`、Glacial Spike 的 `01/02`）⇒ `'variant'`
+ *   · `switch (MotionEvent)`（D_PA Chain Lance 的 `1/2/3`，`character.cpp:14886-14897`）⇒ `'motionEvent'`
+ *
+ * 下标越界 ⇒ **不响**（原版两种写法都没有 `default` 分支），**不做 clamp / 不取模**。
  */
-export function pickMonsterSound(def: MonsterAttackFxDef, variant = 0): string | null {
+export function pickMonsterSound(def: MonsterAttackFxDef, variant = 0,
+  motionEvent?: number | null): string | null {
   if (!def.sound) return null;
-  const list = Array.isArray(def.sound) ? def.sound : [def.sound];
-  return list[Math.abs(variant) % list.length]!;
+  if (!Array.isArray(def.sound)) return def.sound;      // 单值：与下标无关
+  if (def.soundPick === 'variant') return def.sound[variant] ?? null;
+  if (def.soundPick === 'motionEvent') {
+    // ⚠ **不 `?? 0`**：缺帧序号就**不播**并上报 —— 拿 0 顶上会得到下标 −1（一个巧合的"不响"），
+    //   那是把"调用方没给数据"伪装成"这一帧本来就没音"。
+    if (motionEvent == null) {
+      reportFallback('fx', '这一招的音按**事件帧**取（soundPick=\'motionEvent\'），'
+        + '但调用方没给 motionEvent ⇒ 本次不播');
+      return null;
+    }
+    return def.sound[motionEvent - 1] ?? null;   // 越界 = 原版无 default ⇒ 就是不响（不 clamp）
+  }
+  // 数组却没写 soundPick = **数据缺失**：不猜，报出来且本次不播
+  reportFallback('fx', `这一招的 sound 是数组（${def.sound.length} 段）但没写 soundPick`
+    + '（多段音的下标从哪来：\'variant\' | \'motionEvent\'）⇒ 本次不播，请补数据');
+  return null;
 }
 
 /**
@@ -915,7 +1144,9 @@ export function fireMonsterCastFx(
     reportFallback('fx', `怪 #${effectId} 的起手特效 ${def.asset} 起不来：未接渲染器`);
     return null;
   }
-  extras?.log?.(`  ✦ 起手特效 ${pickMonsterFxAsset(def)}（effectId=0x${effectId.toString(16).toUpperCase()}，出处 ${def.note}）`);
+  const castAsset = pickMonsterFxAsset(def);
+  if (!castAsset) return null;                     // 下标越界（已在 pick 内上报）⇒ 不放
+  extras?.log?.(`  ✦ 起手特效 ${castAsset}（effectId=0x${effectId.toString(16).toUpperCase()}，出处 ${def.note}）`);
   // 固定的几项放在最后（调用方不能覆盖 effectId/pos/阶段）
   return fireDef(def, {
     modelKey: '',
@@ -932,7 +1163,7 @@ function fireDef(
   // 技能音 = 这一招自己的音（`def.sound`，如 `VigorBall 1/2`；原版 `SkillPlaySound`）。
   // ⚠ **动作音不在这里** —— 它由 `fireMonsterAttackEvent` 在一切分支之前播（见那里的说明）：
   //   起手阶段没有动作音，而事件帧的每个分支都要有 ⇒ 放在这里就会逼出"每个分支各写一次"。
-  const skillSound = pickMonsterSound(def, ctx.variant);
+  const skillSound = pickMonsterSound(def, ctx.variant, ctx.motionEvent);
   if (skillSound) ctx.sfx?.play?.(skillSound, { pos: ctx.pos });
 
   // **原版还有、我们还没做的部分** —— 逐条上报（AGENTS #12：少一块必须看得见）。
@@ -942,7 +1173,12 @@ function fireDef(
     const key = `${ctx.effectId}:${u}`;
     if (reportedUnhandled.has(key)) continue;
     reportedUnhandled.add(key);
-    reportFallback('fx', `怪 #${ctx.effectId} 的 ${pickMonsterFxAsset(def, ctx.variant)}：${u}`);
+    const pickedForLog = pickMonsterFxAsset(def, ctx.variant);
+    // 空资产名要**说清楚**：那是"这一招数据里声明了没有粒子系统"（只音/动态光），
+    // 别的空名字会打出一句"怪 #N 的 ：…"，读的人不知道缺的是什么（我第一版就是这样）。
+    const what = pickedForLog === null ? '（下标越界，见上一条上报）'
+      : pickedForLog === '' ? '这一招（数据里声明无粒子资产）' : pickedForLog;
+    reportFallback('fx', `怪 #${ctx.effectId} 的 ${what}：${u}`);
   }
 
   // **代码内组合特效**（`def.code`，如 Glacial Spike）：交给调用方转交 `CODE_SKILL_FX`
@@ -964,7 +1200,15 @@ function fireDef(
   // —— 游戏与实验室**共用同一份**（此前只有实验室实现 ⇒ 游戏里根本不飞）
   if (def.fly) {
     const flyAsset = pickMonsterFxAsset(def, ctx.variant);
-    const ev = ctx.motionEvent ?? 1;
+    if (!flyAsset) return null;                    // 下标越界（已上报）⇒ 不放
+    // ⚠ **不 `?? 1`**：原版 `MotionEvent` 是必需的（它决定第几颗/哪一帧），
+    //   缺了就**不放**并上报 —— 拿 1 顶上就是替原版决定"第一颗"
+    if (ctx.motionEvent == null) {
+      reportFallback('fx', `怪 #${ctx.effectId} 的飞出物 ${flyAsset} 没放：调用方没给 motionEvent`
+        + '（原版用它决定第几颗，缺了不猜）');
+      return null;
+    }
+    const ev = ctx.motionEvent;
     if (!ctx.fireFly) {
       reportFallback('fx', `怪 #${ctx.effectId} 的飞出物 ${flyAsset} 没放：调用方没给 fireFly`);
       return null;
@@ -973,10 +1217,18 @@ function fireDef(
     //（原版 `ChaosKaraMeteo` 一次 4 颗）。逐颗派生一份 spec 交给同一个驱动，不另写一套。
     const drops = def.skyDrops;
     if (drops?.length) {
-      for (const d of drops) {
+      for (let i = 0; i < drops.length; i++) {
+        const d = drops[i]!;
+        // ⚠ **不 `?? 0`**：偏移缺失就**不放这一颗**并上报 —— 拿 0 顶上会让它落在中心，
+        //   而那与"原版这一颗落在哪"无关，是编的。
+        if (d.dx === undefined || d.dz === undefined) {
+          reportFallback('fx', `怪 #${ctx.effectId} 的天降第 ${i + 1}/${drops.length} 颗没放：`
+            + '数据里缺 dx/dz（原版每颗的落点偏移）⇒ 不猜');
+          continue;
+        }
         ctx.fireFly(flyAsset, {
           ...def.fly,
-          targetOffset: { x: d.dx ?? 0, z: d.dz ?? 0 },
+          targetOffset: { x: d.dx, z: d.dz },
           delayFrames: d.delayFrames,
         }, ev);
       }
@@ -991,16 +1243,44 @@ function fireDef(
   let off = { x: 0, y: 0, z: 0 };
   if (def.move) {
     const m = def.move;
+    // ⚠ **不 `?? 0`**：原版 `Angle.y`（怪物朝向）是必需的；拿 0 顶上 = 让它朝 +Z 放。
+    if (ctx.facing == null) {
+      reportFallback('fx', `怪 #${ctx.effectId} 的这一招要按怪物朝向算落点（原版 \`Angle.y\`），`
+        + '但调用方没给 facing ⇒ **本次不放**（不按 0 度放）');
+      return null;
+    }
+    // 第 4/6 个参数（angX/angZ）**必填**：原版每个调用点都写全 6 个参数
+    // ⇒ 缺了就是数据没抄全，**不放并上报**（不再 `?? 0` 顶上）
+    if (m.angX === undefined || m.angZ === undefined) {
+      reportFallback('fx', `怪 #${ctx.effectId} 的 move 缺 angX/angZ（原版 \`GetMoveLocation\` 的第 4/6 个参数）`
+        + ' ⇒ 本次不放；请在数据里写全 6 个参数（源码写 0 就写 0）');
+      return null;
+    }
     // 绕 Y 的角 = 怪物朝向（原版 `Angle.y`）；调用方给的是弧度，这里换成 PT 制式
-    off = getMoveLocation(m.x, m.y, m.z, m.angX ?? 0, radToPtAngle(ctx.facing ?? 0), m.angZ ?? 0);
+    off = getMoveLocation(m.x, m.y, m.z, m.angX, radToPtAngle(ctx.facing), m.angZ);
   }
   // **落点基准**：`anchor: 'target'` 的条目以**被打的那个单位**为原点（原版 `pDest->pX/pY/pZ`）
   // —— CC 普攻就是这样，我第一版按"怪物身上"登记，粒子于是长在自己脚下（用户实测）。
   let base = { x: ctx.pos.x, y: ctx.pos.y, z: ctx.pos.z };
   if (def.anchor === 'target') {
-    if (ctx.targetBase) base = ctx.targetBase;
-    else reportFallback('fx', `怪 #${ctx.effectId} 的 ${pickMonsterFxAsset(def, ctx.variant)} `
-      + '以**目标**为落点，但调用方没给 targetBase ⇒ 本次按怪物自己算（位置会偏）');
+    const anchorAsset = pickMonsterFxAsset(def, ctx.variant);
+    if (!ctx.targetBase) {
+      // ⚠ **不兜底**：原版落点就是目标 `pDest->pX/pY/pZ`，取不到就该**不放**并上报 ——
+      //   此前这里"退回按怪物自己算"，那是拿一个错位置顶上去（用户明令禁止任何兜底）。
+      reportFallback('fx', `怪 #${ctx.effectId} 的 ${anchorAsset ?? '（下标越界）'} 以**目标**为落点，`
+        + '但调用方没给 targetBase ⇒ **本次不放**（不做"按怪物自己算"的兜底）');
+      return null;
+    }
+    base = ctx.targetBase;
+  } else if (def.anchor === 'weapon') {
+    // **攻击骨**（原版 `GetAttackPoint`）：落点 = 那根骨的世界位置，不是怪物脚下。
+    // 取骨的策略在 `findAttackBone`（唯一实现，实验室与 WorldView 共用），由调用方放进 ctx。
+    if (!ctx.weaponBase) {
+      reportFallback('fx', `怪 #${ctx.effectId} 的这一招落点是**攻击骨**（原版 \`GetAttackPoint\`），`
+        + '但调用方没给 weaponBase（那根骨的世界坐标）⇒ **本次不放**（不退回脚下）');
+      return null;
+    }
+    base = ctx.weaponBase;
   }
   const at = {
     x: base.x + off.x,
@@ -1020,6 +1300,7 @@ function fireDef(
     else reportFallback('fx', `怪 #${ctx.effectId} 的 ASE 网格 ${def.mesh.path} 没起：调用方没给 fireMesh`);
   }
   const name = pickMonsterFxAsset(def, ctx.variant);
+  if (!name) return null;                          // 下标越界（已上报）⇒ 不放
   const label = `${name}（effectId=0x${ctx.effectId.toString(16).toUpperCase()}，出处 ${def.note}）`;
   // **同帧的其余系统**（`def.parts`）：各自的高度/缩放，落点与主系统一致
   const spawnOne = (asset: string, at: { x: number; y: number; z: number },

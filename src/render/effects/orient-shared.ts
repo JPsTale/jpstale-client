@@ -11,10 +11,13 @@
  *   · 行 [21]：rotation 每类型一个写者（工厂在 orient-factory.ts）；FOUR 不写。
  */
 import { Quaternion, Vector3 } from 'quarks.core';
+import { reportFallback } from '../../char/fallback-log.js';
 
 // 相机四元数的**活引用**（不拷贝快照）：渲染侧的相机被 OrbitControls 等持续旋转，
 // 拷贝会立刻过期（r[B7-1] 期实测需求）。orient 行为每帧经 orientCamera() 读最新分量。
 let cameraRef: { x: number; y: number; z: number; w: number } | null = null;
+/** "没注册相机"只喊一次（每粒子每帧都会走到这里，不能刷屏） */
+let warnedNoCamera = false;
 let cameraPosRef: { x: number; y: number; z: number } | null = null;
 const camScratch = new Quaternion();
 
@@ -30,7 +33,18 @@ export function setOrientCamera(
   cameraPosRef = pos ?? null;
 }
 export function orientCamera(): Quaternion | null {
-  if (!cameraRef) return null;
+  if (!cameraRef) {
+    // **缺相机必须喊一次**（不是静默跳过）：朝向层的"没转"看起来只是"长得不对"，
+    // 排查起来是"像 bug 又不像"——游戏侧就曾漏注册（只注册了 billboard 那个），
+    // 表现为"实验室正常、游戏里长条只剩一个轴"（用户 2026-09-20）。只报一次，不刷屏。
+    if (!warnedNoCamera) {
+      warnedNoCamera = true;
+      reportFallback('fx', 'orient 层（TYPE_ONE/THREE/FIVE 的相机基底）**没有注册相机** ⇒ '
+        + '朝向更新整段被跳过（面片不会按 PartAngle 转）。请在渲染侧建好相机后调 '
+        + '`setOrientCamera(camera.quaternion, camera.position)`（实验室与 WorldView 各一次）');
+    }
+    return null;
+  }
   camScratch.set(cameraRef.x, cameraRef.y, cameraRef.z, cameraRef.w);
   return camScratch;
 }

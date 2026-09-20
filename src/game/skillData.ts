@@ -11,7 +11,26 @@ export interface SkillDef {
   name: string;     // wartale 官方技能名
   reqLv: number;    // 需求等级
   type: string;     // 分类（Buff/Passive/Single Target/Target Area/Target Area(heal)/Summon/Active...）
-  useCode: 'RIGHT' | 'LEFT' | 'ALL' | 'NOT'; // 可绑拳位（源自 Game.exe 技能表：RIGHT=仅右拳/ALL=左右皆可/NOT=不可绑；LEFT 无）
+  /**
+   * **可绑"拳位"** —— "拳位" = **主 HUD 中央那两个图标**：默认图标是**两只拳头**（看起来就是左拳/右拳），
+   * 分别对应**鼠标左键/右键**；玩家在技能面板把某技能设为左键或右键使用后，对应那个拳头图标
+   * 就换成该技能的图标。⇒ **拳位 ≡ 鼠标键位**，不是手的骨骼、也不是哪个装备槽。
+   *
+   * 源码是**位掩码**（不是枚举）——`sinbaram/sinSkill_Info.h:2-5` 定义：
+   * ```
+   * SIN_SKILL_USE_RIGHT = 0x01000000   // 可绑右键（右拳位）
+   * SIN_SKILL_USE_LEFT  = 0x02000000   // 可绑左键（左拳位）
+   * SIN_SKILL_USE_ALL   = 0x03000000   // = LEFT|RIGHT（左右皆可）
+   * SIN_SKILL_USE_NOT   = 0x04000000   // 不可绑（被动等）
+   * ```
+   * 消费点：`LButtonUp` 判 `LEFT||ALL` → `pLeftSkill`（`sinSkill.cpp:1349-1351`）；
+   * `RButtonUp` 判 `RIGHT||ALL` → `pRightSkill`（`:1430-1432`）。
+   * ⚠ `sSKILL_INFO.USECODE` 是**资格**（能不能绑），**实际**绑到哪个键是运行时的 `sSKILL.MousePosi`
+   * （存进存档：`record.cpp:530` `ShortKey | (MousePosi << 4)`）。
+   *
+   * 我方现状：`RIGHT` 164 / `ALL` 30 / `NOT` 27 / **`LEFT` 0**（本表暂未用到 `LEFT`）。
+   */
+  useCode: 'RIGHT' | 'LEFT' | 'ALL' | 'NOT';
   alt?: string;     // 旧译名（仅与 wartale 官方名不一致时存在）
   weapon?: number[]; // 需求武器图标索引（1-11 对应原版 UseSkillItemInfo；空=无需武器）
   desc?: string;     // wartale 完整技能描述（多句以空格连接）
@@ -305,6 +324,13 @@ export function skillIconUrl(classDir: string, iconFile: string): string {
 export function weaponIconUrl(idx: number): string {
   return `/res/image/sinimage/skill/WeaponIcon/${idx}.bmp`;
 }
+
+/** `SkillDef.weapon` 里的索引 → 武器族名（DB skillinfo.itemallowedtype 对齐原版 UseSkillItemInfo）。
+ *  唯一实现：技能面板与职业实验室（efria-studio 的 job-lab）共用这一份。 */
+export const WEAPON_NAMES: Record<number, string> = {
+  1: 'Axe', 2: 'Staff', 3: 'Hammer', 4: 'Shield', 5: 'Pole/Spear',
+  6: 'Sword', 7: 'Claw', 8: 'Shooter', 9: 'Throwing', 10: 'Dagger', 11: 'Twin Blade',
+};
 
 /** 技能 i18n key（规范见 docs/skill-i18n-naming.md）：
  *  `skills.{job}.{skill_id}.{field}`，其中 skill_id = Button 文件名去 .bmp 小写转下划线。

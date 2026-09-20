@@ -45,57 +45,177 @@ import type { PartSystem } from '../../core/effect/part-script.js';
 import { FONE } from '../../core/geom.js';
 
 /**
- * 两个**家族**（原版 `sinEffect_StartMagic` 的 `CharFlag`）与两个**量级**（`Type`）。
+ * 三个**家族**（原版 `sinEffect_StartMagic` 的 `CharFlag`）与两个**量级**（`Type`）。
  *
  * ```
- * CharFlag == 1 → MAAM1.ASE + mama.dds  + star05C_03.dds
- * CharFlag == 2 → MAAM2.ASE + maam2.dds + star05Q_03.dds    ← 祭司
- * Type != 0     → 恒用 MAAM2 家族，但 Size.w 是 4800*10 / 6200*10（大一圈）
- * Type == 0     → 按 CharFlag（CharFlag=1 时 5300*3 / 6200*3）
+ * Type != 0     → 恒用 MAAM2 家族，Size.w = 4800*10 / 6200*10（大一圈）   ← 原版把它排在 CharFlag **之前**
+ * Type == 0     → 按 CharFlag：
+ *   CharFlag == 1  → MAAM1.ASE + mama.tga       + star05C_03.bmp   （5300*3 / 6200*3）  = 祭司
+ *   CharFlag == 2  → MAAM2.ASE + maam2.tga      + star05Q_03.bmp   （4800*3 / 6200*3）  = **法师**
+ *   CharFlag == 10 → MAAM6.ASE + ShamanMagic.tga + star05Q_03.bmp  （4800*3 / 6200*3）  = 萨满
  * ```
- * 出处：`sinSkillEffect.cpp:1697-1743`（ex-machina，本机可读）。
+ * 出处：`sinbaram/sinSkillEffect.cpp:1864-1940`（`sinEffect_StartMagic` 全文，本机可读）。
+ *
+ * ⚠ **`CharFlag == 2` 是法师，不是祭司** —— 本文件 2026-09-20 前的注释写成"`← 祭司`"，
+ *   而那正是"游戏里三个职业都用法师法阵"这个 bug 的源头（见 `castCircleFlagForJob`）。
+ * ⚠ 三族的 **`CharFlag` 由职业决定**（不是随便挑外观）：祭司 1 / 法师 2 / 萨满 10，
+ *   把 `smCHAR::BeginSkill` 的 36 个调用点逐条映射回技能即得，**无一例外**。
  */
 export interface CastCircleFamily {
-  /** 法阵本体（静态 `.smd`；原版 `MAAM{1,2}.ASE`） */
+  /** 法阵本体（静态 `.smd`；原版 `MAAM{1,2,6}.ASE`） */
   mesh: string;
   circleTex: string;
   ringTex: string;
   /** `Size.w` 的**原始实参**（`4800 * 3` 这种）——除以 `FONE` 才是世界单位 */
   circleW: number;
   ringW: number;
+  /** 光环的**自转**（度/秒）；`0` = 原版没给 `ARotateSpeed`（只有萨满那一族有，见 `SHAMAN_*`） */
+  spinDegPerSec: number;
 }
-export function castCircleFamily(charFlag: 1 | 2, type: 0 | 1): CastCircleFamily {
-  if (type !== 0 || charFlag === 2) {
-    const big = type !== 0;
+
+/**
+ * `sinEffect_StartMagic` 的 `CharFlag` —— 原版**只实现了这三支**
+ * （`sinbaram/sinSkillEffect.cpp:1896` / `:1911` / `:1927` 的 `if(CharFlag == …)`）。
+ *
+ * ⚠ **值是原版的，不是我们的编号** ⇒ 照抄 `1 / 2 / 10`，**别改成 1/2/3**
+ * （`10` 是原版给萨满留的位；改成 3 就对不上源码，也无法与怪物表里的 `castMagic` 互认）。
+ */
+export const CAST_CIRCLE_PRIESTESS = 1;    // MAAM1.ASE + mama.tga        + star05C_03.bmp（5300*3 / 6200*3）
+export const CAST_CIRCLE_MAGICIAN = 2;     // MAAM2.ASE + maam2.tga       + star05Q_03.bmp（4800*3 / 6200*3）
+export const CAST_CIRCLE_SHAMAN = 10;      // MAAM6.ASE + ShamanMagic.tga + star05Q_03.bmp（4800*3 / 6200*3，**会自转**）
+
+export type CastCircleFlag =
+  | typeof CAST_CIRCLE_PRIESTESS
+  | typeof CAST_CIRCLE_MAGICIAN
+  | typeof CAST_CIRCLE_SHAMAN;
+
+/** 三个家族的**唯一清单**（类型守卫与"该不该放法阵"都以它为准） */
+const ALL_CAST_CIRCLE_FLAGS = [
+  CAST_CIRCLE_PRIESTESS, CAST_CIRCLE_MAGICIAN, CAST_CIRCLE_SHAMAN,
+] as const;
+
+/**
+ * 类型守卫：把"数据里的数字"收窄成 `CastCircleFlag`。
+ * 用途：怪物特效表里的 `castMagic` 是**数据**（数字），过一道它再传下去，
+ * 免得把不在清单里的值当成某个家族用（那正是旧的"非 1 一律按 2"写法的病根）。
+ */
+export function isCastCircleFlag(v: number): v is CastCircleFlag {
+  return (ALL_CAST_CIRCLE_FLAGS as readonly number[]).includes(v);
+}
+
+/**
+ * `sinEffect_StartMagic` 的 `Type` 实参 —— 原版只有两档（`if(Type)` / `else`）。
+ *
+ * ⚠ `Type != 0` 时**完全忽略 `CharFlag`**（原版把它排在前头，见 `castCircleFamily`），
+ * 且 `Size.w` 是常规的 10 倍。它是**开发者调试键专用**的取值：
+ * `sinAssaSkillEffect.cpp:18` 的 `if(sinGetKeyClick('0'))` → `:21`
+ * —— 玩家技能与怪物技能**都不传**（36 个玩家调用点 + 2 个怪物调用点全是 `Type = 0`）。
+ */
+export const CAST_CIRCLE_TYPE_NORMAL = 0;
+export const CAST_CIRCLE_TYPE_LARGE = 1;
+
+export type CastCircleType = typeof CAST_CIRCLE_TYPE_NORMAL | typeof CAST_CIRCLE_TYPE_LARGE;
+
+const STAR05Q = 'image\\sinimage\\assaeffect\\startmagic\\p\\star05q_03.bmp';
+
+/**
+ * 萨满法阵的**自转**（三族里**只有它**有）。
+ *
+ * 原版 `sinbaram/sinSkillEffect.cpp:1934` `cAssaEffect[Assa]->ARotateSpeed.y = 100;`，
+ * 而 `sinbaram/AssaEffect.cpp:243-245` 逐帧做
+ * ```cpp
+ * pEffect->ARotate.y += pEffect->ARotateSpeed.y;
+ * pEffect->Angle.y = (pEffect->ARotate.y + ANGLE_90) & ANGCLIP;
+ * ```
+ * ⇒ **每帧 100 个角单位**。PT 的角单位一圈 = `ANGLE_360 = 4096`
+ * （`smLib3d/smSin.h:21`；`:29` `ANGLE_MASK = ANGLE_360-1`，`ANGCLIP` 即它）
+ * ⇒ `100 / 4096 × 360 = 8.7890625°`/帧 ⇒ 60fps 下 **≈ 527.34°/s**（约 1.46 圈/秒）。
+ *
+ * ⚠ `ANGLE_90` 那个 `+ANGLE_90` 是**基准朝向**偏移（四分之一圈），与转速无关，故不计入。
+ * ⚠ `ARotateSpeed.y == 10000` 在原版是**哨兵**（"别累加、固定 90°"，见 `:241`）——
+ *   萨满用的是 `100`，不是哨兵。
+ */
+export const SHAMAN_CIRCLE_SPIN_DEG_PER_SEC = (100 / 4096) * 360 * 60;   // ≈ 527.34
+
+export function castCircleFamily(charFlag: CastCircleFlag, type: CastCircleType): CastCircleFamily {
+  // ⚠ 原版把 `if(Type)` 排在 `if(CharFlag==…)` **之前**（`sinSkillEffect.cpp:1867`）
+  //   ⇒ `Type != 0` 时**完全忽略 CharFlag**，恒用 MAAM2 家族、Size.w ×10
+  if (type !== CAST_CIRCLE_TYPE_NORMAL) {
     return {
       mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam2.smd',
       circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\maam2.tga',
-      ringTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\star05q_03.bmp',
-      circleW: big ? 4800 * 10 : 4800 * 3,
-      ringW: big ? 6200 * 10 : 6200 * 3,
+      ringTex: STAR05Q,
+      circleW: 4800 * 10,
+      ringW: 6200 * 10,
+      spinDegPerSec: 0,
     };
   }
+  if (charFlag === CAST_CIRCLE_PRIESTESS) {
+    return {
+      mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam1.smd',
+      circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\mama.tga',
+      ringTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\star05c_03.bmp',
+      circleW: 5300 * 3,
+      ringW: 6200 * 3,
+      spinDegPerSec: 0,
+    };
+  }
+  if (charFlag === CAST_CIRCLE_SHAMAN) {
+    return {
+      mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam6.smd',
+      circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\shamanmagic.tga',
+      ringTex: STAR05Q,
+      circleW: 4800 * 3,
+      ringW: 6200 * 3,
+      spinDegPerSec: SHAMAN_CIRCLE_SPIN_DEG_PER_SEC,
+    };
+  }
+  // 剩下的一支 = `CAST_CIRCLE_MAGICIAN`（`CastCircleFlag` 是那三个字面量的联合型，
+  // 故这里即"法师"、不是兜底；新增家族时必须同步 `ALL_CAST_CIRCLE_FLAGS`）
   return {
-    mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam1.smd',
-    circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\mama.tga',
-    ringTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\star05c_03.bmp',
-    circleW: 5300 * 3,
+    mesh: 'image\\sinimage\\assaeffect\\startmagic\\maam2.smd',
+    circleTex: 'image\\sinimage\\assaeffect\\startmagic\\p\\maam2.tga',
+    ringTex: STAR05Q,
+    circleW: 4800 * 3,
     ringW: 6200 * 3,
+    spinDegPerSec: 0,
   };
 }
 
-/** 两张光环的贴图（D_PR 用的那一族：`CharFlag = 2`） */
-export const CAST_CIRCLE_TEX = castCircleFamily(2, 0).circleTex;
-export const CAST_RING_TEX = castCircleFamily(2, 0).ringTex;
+/**
+ * **施法职业 → `CharFlag`** —— 本判定**只有这一份实现**（`skill-fx-runner.fireSkillCast` 调它）。
+ *
+ * 依据：把 `smCHAR::BeginSkill`（`character.cpp:13156-13950`）里的 **36 个**
+ * `sinEffect_StartMagic` 调用点**逐条映射回所属 `case SKILL_PLAY_*`**，`CharFlag` 按职业分、
+ * **无一例外**：祭司 = `CAST_CIRCLE_PRIESTESS`（11 个技能）· 法师 = `CAST_CIRCLE_MAGICIAN`（11 个）·
+ * 萨满 = `CAST_CIRCLE_SHAMAN`（14 个）。
+ * （复算：`grep -a -n sinEffect_StartMagic character.cpp` 后逐条回溯最近的 `case`。）
+ *
+ * ⚠ **按职业目录名取，不按职业号** —— 号是裸数字（`skillData.ts:23` 的 `CLASS_DIR` 才是权威表），
+ *   而 `classDir` 字符串自解释；两处取值已实测逐条一致。
+ * ⚠ **其余 8 个职业在原版里根本没有这个调用** ⇒ 返回 `null` 表示"**不放法阵**"。
+ *   **不是**"用默认值" —— 别把 `null` 兜底成某一个家族（那正是本函数要修掉的旧 bug）。
+ */
+export function castCircleFlagForClass(classDir: string): CastCircleFlag | null {
+  switch (classDir) {
+    case 'priestess': return CAST_CIRCLE_PRIESTESS;
+    case 'magician': return CAST_CIRCLE_MAGICIAN;
+    case 'shaman': return CAST_CIRCLE_SHAMAN;
+    default: return null;   // 战士/机甲/弓箭手/枪兵/女猎/骑士/刺客/格斗家 —— 原版无法阵
+  }
+}
+
+/** 两张光环的贴图（法师那一族；⚠ 这不是"通用"值，别再拿它当默认） */
+export const CAST_CIRCLE_TEX = castCircleFamily(CAST_CIRCLE_MAGICIAN, CAST_CIRCLE_TYPE_NORMAL).circleTex;
+export const CAST_RING_TEX = castCircleFamily(CAST_CIRCLE_MAGICIAN, CAST_CIRCLE_TYPE_NORMAL).ringTex;
 
 /** 抬高（原版 `AddHeight = 1500`，`AssaEffect.cpp:371` `Posi.y += AddHeight`） */
 export const CAST_LIFT = 1500 / FONE;      // ≈ 5.86
 
-/** 内圈光环全宽（`Size.w = 4800 * 3`，`sinSkillEffect.cpp:1737`） */
-/** 内圈光环全宽（D_PR：`Size.w = 4800 * 3`） */
+/** 内圈光环全宽（法师族 `Size.w = 4800 * 3`，`sinSkillEffect.cpp:1898`） */
 export const CAST_CIRCLE_SIZE = (4800 * 3) / FONE;   // = 56.25
 
-/** 外圈星环全宽（D_PR：`Size.w = 6200 * 3`） */
+/** 外圈星环全宽（法师族：`Size.w = 6200 * 3`） */
 export const CAST_RING_SIZE = (6200 * 3) / FONE;     // = 72.66
 
 /**
@@ -178,11 +298,23 @@ export const CAST_MESH_VISIBLE = (20 + 20) / 60;   // ≈ 0.67 s
  * ⚠ 这样总时长是 `CAST_VISIBLE ≈ 1.37s`，**不是** `CAST_LIFE = 2.67s`：原版那 160 帧里
  *   后 78 帧光环已经全透明了（见 `CAST_FADE_FRAMES` 的推导）。
  */
-function circleSystem(name: string, texture: string, size: number, alpha: number): PartSystem {
+function circleSystem(
+  name: string, texture: string, size: number, alpha: number, spinDegPerSec = 0,
+): PartSystem {
   const num = (v: number) => ({ k: 'n' as const, v });
   const vec = (x: number, y: number, z: number) => ({ x: num(x), y: num(y), z: num(z) });
+  /**
+   * 自转的**度数值**（`partAngle` 的单位是度，`pt-timeline-behavior.ts:33` `DEG = π/180`）。
+   *
+   * ⚠ **轴是 `y`**：`particleType: 2` 的实现是 `q = R(partAngle) · Rx(-90°)`
+   *   （`pt-timeline-behavior.ts:147-153`）—— 几何先在 XY 面、被 `Rx(-90°)` 放平到 XZ，
+   *   再用 `R(partAngle)` 在**世界系**里转 ⇒ 要让已放平的光环**绕竖轴自转**，
+   *   必须给 `partAngleY`（给 `z` 会把它**翻倒**、给 `x` 是多余的一次倾角）。
+   *   ⇒ 原版 `Angle.y`（`AssaEffect.cpp:245`）↔ 这里的 `partAngleY`。
+   */
+  const spinAt = (tSec: number) => ({ x: num(0), y: num(spinDegPerSec * tSec), z: num(0) });
   const mk = (
-    tag: string, delaySec: number, lifeSec: number, a0: number, a1: number,
+    tag: string, delaySec: number, lifeSec: number, a0: number, a1: number, angleT0: number,
   ) => ({
     name: name + tag,
     blend: 'lamp' as const,          // 原版 SMMAT_BLEND_LAMP
@@ -199,34 +331,42 @@ function circleSystem(name: string, texture: string, size: number, alpha: number
     initialSize: num(size),
     initialSizeExt: num(size),       // 缺失会被当 1 ⇒ 压成细条，必须给
     initialColor: { r: num(255), g: num(255), b: num(255), a: num(a0) },
-    initialPartAngle: null,
+    // 自转：`0` 时保持 `null`（= 完全不碰这个字段，与改动前**逐字节一致**）
+    initialPartAngle: spinDegPerSec ? spinAt(angleT0) : null,
     initialLocalAngle: null,
+    finalPartAngle: spinDegPerSec ? spinAt(angleT0 + lifeSec) : null,
     finalColor: { r: num(255), g: num(255), b: num(255), a: num(a1) },
     finalSize: num(size),            // 光环不放大（原版没给尺寸动画）
     finalSizeExt: num(size),
-    finalPartAngle: null,
     finalLocalAngle: null,
     finalVelocity: null,
     keyframes: {},
   });
+  // 原版是**一个累加器**（`ARotate.y += ARotateSpeed.y`，`AssaEffect.cpp:243`）走过整段寿命；
+  // 而我方把光环拆成 `-in`/`-out` 两个 emitter ⇒ 第二个的**起点必须接上第一个的终点**，
+  // 否则每 40 帧会**跳回 0°**（快转时看着像一帧的抖动）。故这里显式传 `angleT0` 续上。
+  const t1 = CAST_FADE_FRAMES / 60;
   return {
     name,
     version: 1,
     position: null,
     emitters: [
-      mk('-in', 0, CAST_FADE_FRAMES / 60, 0, castPeakAlpha(alpha)),
-      mk('-out', CAST_FADE_FRAMES / 60, castFadeOutFrames(alpha) / 60, castPeakAlpha(alpha), 0),
+      mk('-in', 0, t1, 0, castPeakAlpha(alpha), 0),
+      mk('-out', t1, castFadeOutFrames(alpha) / 60, castPeakAlpha(alpha), 0, t1),
     ],
   };
 }
 
-/** 两张光环（内圈 `maam2.tga` + 外圈 `star05Q_03.bmp`）—— 调用方逐张 spawn，位置都抬高 `CAST_LIFT` */
-export function castCircleSystems(charFlag: 1 | 2 = 2, type: 0 | 1 = 0): PartSystem[] {
+/** 两张光环（内圈 + 外圈）—— 调用方逐张 spawn，位置都抬高 `CAST_LIFT` */
+export function castCircleSystems(
+  charFlag: CastCircleFlag = CAST_CIRCLE_MAGICIAN,
+  type: CastCircleType = CAST_CIRCLE_TYPE_NORMAL,
+): PartSystem[] {
   const f = castCircleFamily(charFlag, type);
   return [
     // 内圈：无 `MaxAlphaAmount`（按 255 算步长，实际峰值 240）
-    circleSystem('CastCircle', f.circleTex, f.circleW / FONE, 0),
+    circleSystem('CastCircle', f.circleTex, f.circleW / FONE, 0, f.spinDegPerSec),
     // 外圈：`MaxAlphaAmount = 120`（峰值即 120）
-    circleSystem('CastRing', f.ringTex, f.ringW / FONE, RING_ALPHA),
+    circleSystem('CastRing', f.ringTex, f.ringW / FONE, RING_ALPHA, f.spinDegPerSec),
   ];
 }

@@ -31,6 +31,7 @@
     "verify-quarks-map": "tsx scripts/verify-quarks-map.ts",
     "verify-quarks-mechanisms": "tsx scripts/verify-quarks-mechanisms.ts",
     "verify-lua-ir": "tsx scripts/verify-lua-ir.ts",
+    "verify-skills": "tsx scripts/verify-skills.ts",
     "docs": "node scripts/gen-docs-preview.mjs"
   },
   "dependencies": {

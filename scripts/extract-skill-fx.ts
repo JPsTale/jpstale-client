@@ -143,6 +143,11 @@ interface FxOverride {
   fx?: string[];
   /** 事件帧音效 */
   eventSfx?: string[];
+  /**
+   * **多段音的下标来源** —— `'motionEvent'` = 事件帧序号 − 1（原版 `switch (MotionEvent)`）。
+   * Chain Lancer 的三段音就是（`character.cpp:15585-15598`）。缺省 = 逐个全播（旧行为）。
+   */
+  soundPick?: 'motionEvent';
   /** 动画索引覆盖（skill-mapping 缺失或不对时手填；null 表示明确"无专属动画"） */
   animIndex?: number | null;
   /** 说明依据（谁、怎么核对的） */
@@ -167,6 +172,8 @@ const IGNORE_FX = ['valento', 'xmass', 'halloween', 'event', 'pcbang', 'lowlevel
 const ABSENT_IN_CLIENT = new Set(['martial']);
 
 const rows: Row[] = [];
+/** 用上覆盖表的行数（**打印用**；此前这个计数器没被 `++` 过 ⇒ 永远显示 0，看着像没生效） */
+let overridden = 0;
 /** 特效名两条键：原样 + 去掉末尾数字。
  *  后者用来匹配"名字里夹了五转职业名"的 Lua/part，如
  *  `skillwarriordestroyer1` → `skillwarriordestroyer` 可被 Destroyer 的 endsWith 命中。 */
@@ -293,10 +300,15 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
       sfx: ABSENT_IN_CLIENT.has(classDir) ? [] : eventSfx,
     };
 
+    // 覆盖计数：**此前这个计数器从来没被 `++` 过**，于是永远打印"手工覆盖 0 条" ——
+    // 明明生效了却看着像没生效（2026-09-20 发现）。计数放在真正用到覆盖的地方。
+    if (ov) overridden++;
     rows.push({
       job, classDir, icon: s.iconFile, name: s.name, alt: s.alt,
       fx, sfx: ABSENT_IN_CLIENT.has(classDir) ? [] : sfx,
       cast, event, confidence,
+      // 多段音的下标来源（`'motionEvent'` = 事件帧序号 − 1）—— 只从覆盖表来（自动派生不出这个）
+      ...(ov?.soundPick ? { soundPick: ov.soundPick } : {}),
       code: codeRow?.code ?? null,
       presenters: codeRow?.presenters ?? [],
       animIndex: SKILL_INDEX_BY_ICON[s.iconFile] ?? null,
@@ -311,7 +323,6 @@ writeFileSync(OUT, JSON.stringify({
 }, null, 1) + '\n');
 
 /** 手工覆盖条数（写入阶段累加，汇总日志要读它） */
-let overridden = 0;
 
 const scored = rows.filter((r) => r.confidence !== 'n/a');
 const withFx = scored.filter((r) => r.fx.length > 0).length;

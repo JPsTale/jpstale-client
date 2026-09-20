@@ -12,7 +12,8 @@
     ],
     "animIndex": "覆盖动画索引；null 表示明确无专属动画",
     "fx": "顶层的特效引用（数组；显式给 [] 即清空自动派生结果 —— event.fx 已由 code: 接管时用它消掉假告警）",
-    "note": "依据说明"
+    "note": "依据说明",
+    "soundPick": "多段音的下标来源；'motionEvent' = 事件帧序号 − 1（原版 switch (MotionEvent)），越界不响"
   },
   "skills": {
     "Brandish": {
@@ -46,6 +47,29 @@
         "code:glacialspike"
       ],
       "note": "**朝向前方的一列冰块**（近身 → 前方 100，越远越大）—— 原版是 NewEffect 的 Lua 脚本 `Effect/NewEffect/SkillCelestialGlacialSpike.lua`（1 网格 + 5 粒子系统 + 正前方蓝光 power 700）：玩家 `character.cpp:16338` 一族 / 怪物 D_PR 的 `'Z'`（`:14926`）**同一个函数** `SkillCelestialGlacialSpike`。Lua 不是一个资产文件，故走 code:（render/effects/glacial-spike.ts 逐条移植）。自动派生的 lua:skillcelestialglacialspike 此前没有加载器 ⇒ 什么都不播。"
+    },
+    "Chain Lancer": {
+      "eventFx": [
+        "code:chainlance"
+      ],
+      "eventSfx": [
+        "wav/effects/skill/tempskron/chainlance 01.wav",
+        "wav/effects/skill/tempskron/chainlance 02.wav",
+        "wav/effects/skill/tempskron/chainlance 03.wav"
+      ],
+      "soundPick": "motionEvent",
+      "note": "原版 character.cpp:15578-15624（玩家 EventSkill 的 case SKILL_PLAY_CHAIN_LANCE）：落点 = GetAttackPoint（攻击骨，玩家是『握持点 + SizeMax/2』）；粒子 = AssaParticle_ChainLance （hoAssaParticleEffect.cpp:3416-3428）⇒ .part 裸名 Skill3Hit3 + y += 3000 + SetDynLight(100,50,0,0,250,5)；音效按 MotionEvent 1/2/3 = chainlance 01/02/03（effectsnd.cpp:644-646）。⚠ 未做（见 docs/技能系统-pikeman.md §2.12 ⑥ / U-K-18）：AttackCritcal>=0 闸门（任一段未命中则后续不再出粒子）、MotionEvent<3 的 3 段伤害、SetSkillMotionBlurColor 红染色残影；⚠ 顶层 fx 不写（`fireSkillEvent` 遍历顶层+event 两处，写两份会放两次 —— 实测）"
+    },
+    "Pike Wind": {
+      "eventFx": [
+        "code:pikewind"
+      ],
+      "note": "原版 HoEffect.cpp:6291-6346（case SKILL_PIKE_WIND）：SetDynLight(50,50,200,255,200+level*10,3) + ① `15+level` 个 ASE 网格 PatObj[3]（= Effect\\ObjAnimationData\\PikeWind\bong.ini，其 AnimationEnd=20）摆成半径 `level*650` 的环、朝向 `ANGLE_180-ang`、第 8 帧起；② `15+level` 颗地面环粒子（内 8000+level*325 → 外 18000+level*325，MaterialNum[0]）—— ② 未做：材质清单未取证（docs/技能系统-pikeman.md §2.1 ①）。事件帧调用点 character.cpp:15368-15375（`StartSkill(pX,pY,pZ,…)` = 施法者位置）"
+    },
+    "Critical Hit": {
+      "fx": [],
+      "eventFx": [],
+      "note": "**清空自动派生的 `ini:criticalhit1/criticalhit21/criticalhit22`** —— 那三条是**命名约定**推出来的，与本招的源码冲突：`character.cpp:15377-15379` 的 `case SKILL_PLAY_CRITICAL_HIT:` **只 `return FALSE`**（`return FALSE` 还会**跳过** EventSkill 公共的受击/命中特效链），且 m4 里**没有该技能的条目**、源码也**没有** SkillPlaySound。见 docs/技能系统-pikeman.md §2.3 ① 与未决 U-K-5"
     }
   }
 }

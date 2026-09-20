@@ -1531,7 +1531,9 @@
     "sfx": []
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:pikewind"
+    ],
     "sfx": [
      "wav/effects/skill/tempskron/pike_wind 01.wav"
     ]
@@ -1565,21 +1567,13 @@
    "classDir": "pikeman",
    "icon": "tp14 cri_hit.bmp",
    "name": "Critical Hit",
-   "fx": [
-    "ini:criticalhit1",
-    "ini:criticalhit21",
-    "ini:criticalhit22"
-   ],
+   "fx": [],
    "sfx": [],
    "cast": {
     "sfx": []
    },
    "event": {
-    "fx": [
-     "ini:criticalhit1",
-     "ini:criticalhit21",
-     "ini:criticalhit22"
-    ],
+    "fx": [],
     "sfx": []
    },
    "confidence": "none",
@@ -1814,12 +1808,17 @@
     "sfx": []
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:chainlance"
+    ],
     "sfx": [
-     "wav/effects/skill/tempskron/chainlance 01.wav"
+     "wav/effects/skill/tempskron/chainlance 01.wav",
+     "wav/effects/skill/tempskron/chainlance 02.wav",
+     "wav/effects/skill/tempskron/chainlance 03.wav"
     ]
    },
    "confidence": "code",
+   "soundPick": "motionEvent",
    "code": "SKILL_PLAY_CHAIN_LANCE",
    "presenters": [],
    "animIndex": 52

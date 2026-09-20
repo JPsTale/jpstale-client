@@ -60,6 +60,36 @@ export function getHandTypeFromIdCode(idCode: number): string | null {
 }
 
 /**
+ * **`ShootingMode`**（原版 `character.cpp:2155-2165`，逐字）——
+ * **射击/施法时不画武器曳光**（消费点 `smCHAR::DrawMotionBlur:10134`
+ * 的 `if (ShootingMode || (State != ATTACK && State != SKILL)) return FALSE;`）。
+ *
+ * 源码判的是"**动作的武器族 + 职业**"（族常量 `sinItem.h:63-68`；
+ * `sinITEM_MASK2 = 0xFFFF0000` 见 `playmain.h:269`）：
+ *
+ * ```c
+ * if ((dwActionItemCode&sinITEM_MASK2) == sinWS1 || (dwActionItemCode&sinITEM_MASK2) == sinWT1 ||
+ *     ((dwActionItemCode&sinITEM_MASK2) == sinWM1 && (JOB_CODE == 7 || JOB_CODE == 8))
+ *     || ((dwActionItemCode&sinITEM_MASK2) == sinWN1 && JOB_CODE == 10))
+ *     ShootingMode = TRUE;
+ * else ShootingMode = FALSE;
+ * ```
+ *
+ * ⇒ 弓弩、标枪/投掷**一律**算射击；法杖**只在法师(7)/祭司(8)**、图腾**只在萨满(10)** 才算。
+ * ⚠ 后两条**带职业条件**：别的职业拿法杖/图腾挥是**有**曳光的 —— 源码如此，不是笔误。
+ * ⚠ 不是"按近战/远程二分"（用户 2026-09-20 问"哪些职业武器不该出光"，答案就是这四个族）。
+ */
+export function isShootingMode(idCode: number, job: number | null | undefined): boolean {
+  if (!idCode) return false;
+  const fam = idCode & 0xffff0000;
+  if (fam === 0x01060000) return true;                              // sinWS1 弓/弩
+  if (fam === 0x01080000) return true;                              // sinWT1 标枪/投掷
+  if (fam === 0x01040000 && (job === 7 || job === 8)) return true;  // sinWM1 + 法师/祭司
+  if (fam === 0x01090000 && job === 10) return true;                // sinWN1 + 萨满
+  return false;
+}
+
+/**
  * idcode → 收械挂点。**分层解析，永不返回 null**：
  *   ① 语义表逐件显式值（生成物；src 可能是 user / character.cpp / family-rule / default）
  *   ② 源码三张表（`character.cpp` L1356 起）

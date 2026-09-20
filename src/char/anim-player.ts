@@ -18,7 +18,8 @@
  *     所以 `advance()` 与 `apply()` 是**分开的两步**，不是一个包办的大函数。
  */
 import * as THREE from 'three';
-import { advanceAnimFrame, applyToBones, createEvalWorkspace, evalSkeletonInto } from './animation.js';
+import { advanceAnimFrame, applyToBones, createEvalWorkspace, evalSkeletonInto, evalBoneFrame, type BoneFrame } from './animation.js';
+import { reportFallback } from './fallback-log.js';
 import type { AnimStep, EvalWorkspace } from './animation.js';
 import { CHRMOTION_EXT } from './char-format.js';
 import type { InxData, MotionInfo, SmbData } from './char-format.js';
@@ -66,6 +67,31 @@ export interface AnimPlayer {
    * @param smbOverride 该动作自带的动画包（怪物/NPC 的 `motion.animSmb`）；缺省用构造时那个
    */
   apply(smbOverride?: SmbData): void;
+  /**
+   * **把骨摆到指定帧、返回它的世界坐标** —— 原版武器曳光的回溯求值
+   * （`cAssaMotionBlur::Draw`：`pframe = frame - cnt*30; AnimObjectTree(obj, pframe, …)`，
+   * `AssaParticle.cpp:2427-2445`）。
+   *
+   * ⚠ **它会改骨骼姿势**（把骨架摆到那一历史帧）⇒ 采样完调用方**必须** `apply()`
+   *   把当前帧复原，否则角色停在历史姿势上。
+   */
+  sampleBoneAt(boneName: string, atFrame: number, smbOverride?: SmbData): { x: number; y: number; z: number } | null;
+  /**
+   * 同 `sampleBoneAt`，但返回**整个世界矩阵**（要朝向时用 —— 例如玩家武器曳光的第二端点
+   * = 骨原点 + **骨轴** × `SizeMax`，`DrawMotionBlurTool:10214-10245`）。
+   * ⚠ 同样**会改骨骼姿势**，调用方必须 `apply()` 复原。返回的是 `clone()`，安全持有。
+   */
+  sampleBoneMatrix(boneName: string, atFrame: number, smbOverride?: SmbData): THREE.Matrix4 | null;
+  /**
+   * **只求一根骨的"原点 + 局部 Y 轴"**（曳光两端点直接由它算）—— **不碰骨架**：
+   * 不 `applyToBones`、不 `skeleton.update()`、也不需要事后 `apply()` 复原。
+   *
+   * ⚠ 为什么必须有这个（而不是用上面那个）：近战曳光每帧要 **32 个历史帧**的骨矩阵，
+   *   上面那个每段都会摆**整个骨架 + 重算蒙皮矩阵** ⇒ 32 段 × 2 手 = 64 次/帧，
+   *   用户实测"一攻击就卡成 PPT"。本方法只算目标骨**及其父链**（约 6 根）——
+   *   与原版 `AnimObjectTree(ChrTool->ObjBip, pframe, …)` 同量级。
+   */
+  sampleBoneEnds(boneName: string, atFrame: number, smbOverride?: SmbData): BoneFrame | null;
 }
 
 // 施加姿势用的临时量。**模块级即可**：`applyPose` 全同步、不会重入（每帧串行调用）。
@@ -107,6 +133,33 @@ export function createAnimPlayer(smb: SmbData, bones: THREE.Bone[], skeleton: TH
     },
     apply(smbOverride?: SmbData): void {
       applyPose(smbOverride ?? smb, frame, bones, skeleton);
+    },
+    sampleBoneAt(boneName: string, atFrame: number, smbOverride?: SmbData): { x: number; y: number; z: number } | null {
+      // ⚠ 动画包必须与 `apply()` 用**同一份**：技能动作走 `m.animSmb`（`apply(m.animSmb ?? undefined)`），
+      //   回溯时若用默认包，取到的是**另一个动作**的姿势 ⇒ 带子形状全错。
+      // `applyPose` 内部已含 `updateBoneWorlds` ⇒ 骨的 `matrixWorld` 就是这一帧的
+      applyPose(smbOverride ?? smb, atFrame, bones, skeleton);
+      const b = bones.find((x) => x.name.toLowerCase() === boneName.toLowerCase());
+      if (!b) return null;
+      const e = b.matrixWorld.elements;
+      return { x: e[12]!, y: e[13]!, z: e[14]! };
+    },
+    sampleBoneMatrix(boneName: string, atFrame: number, smbOverride?: SmbData): THREE.Matrix4 | null {
+      applyPose(smbOverride ?? smb, atFrame, bones, skeleton);
+      const want = boneName.toLowerCase();
+      const b = bones.find((x) => x.name.toLowerCase() === want);
+      return b ? b.matrixWorld.clone() : null;
+    },
+    sampleBoneEnds(boneName: string, atFrame: number, smbOverride?: SmbData): BoneFrame | null {
+      const s = smbOverride ?? smb;
+      const bf = evalBoneFrame(s, boneName, atFrame, evalWorkspaceFor(s));
+      // **不静默**：骨名找不到（拼错/该模型没这根）必须看得见 —— 否则曳光只是"不见了"，
+      // 无从判断是没数据还是没渲染（我一度在这条路上静默，白查了一轮）。
+      if (!bf) {
+        reportFallback('fx', `单骨求值取不到骨「${boneName}」：该动画包里没有这个名字的骨`
+          + '（字段是 `Obj3D.nodeName`，精确匹配不区分大小写）⇒ 本帧端点为零');
+      }
+      return bf;
     },
   };
 }

@@ -2,23 +2,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, equipFist, setQuickBinding, type FistBinding } from '../../app/gameStore.js';
-import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, skillNameKey, weaponIconUrl, normalAttackIconUrl, type SkillDef } from '../../game/skillData.js';
+import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, skillNameKey, weaponIconUrl, WEAPON_NAMES, normalAttackIconUrl, type SkillDef } from '../../game/skillData.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { SKILL_DEBUG, subscribeSkillDbg, getSkillDbgSnapshot, dbgLevel, setDbgLevel, resetDbgLevels } from '../../game/skillDbg.js';
 import { t } from '../../i18n/index.js';
+import { learnedLevel, skillLevelByIcon } from '../../game/skillLevel.js';
 
-// 学习等级 / 熟练度：服务端原版技能表同步前，用角色等级推断占位。
-// PT 掌握规则 ≈ 每超 reqLv 10 级可练高 1 级；熟练度（mastery）暂为 0，待服务端推送。
-function learnedLevel(charLevel: number, reqLv: number): number {
-  if (charLevel < reqLv) return 0;
-  return Math.min(20, Math.floor((charLevel - reqLv) / 10) + 1);
-}
-
-/** 技能当前等级：调试模式下手动等级(0~10)优先，否则按角色等级自动推断。 */
+// 学习等级 / 技能当前等级：**唯一实现在 `game/skillLevel.ts`**（面板与特效层读同一个值）。
+// 面板这边多一层兜底：图标不在技能表里时退回"按 reqLv 推"（面板必须显示一个数字）。
 function effectiveLevel(charLevel: number, reqLv: number, iconFile: string): number {
-  const dbg = dbgLevel(iconFile);
-  if (SKILL_DEBUG && dbg != null) return dbg;
-  return learnedLevel(charLevel, reqLv);
+  return skillLevelByIcon(iconFile, charLevel) ?? learnedLevel(charLevel, reqLv);
 }
 
 // —— 假数据（DEMO）：服务端技能表接入前，按技能分类规则生成 MP/SP/效果/下一级效果 ——
@@ -57,10 +50,7 @@ function demoNextEffect(skill: SkillDef, tierWeight: number, curLv: number): str
 }
 
 // 武器图标说明（DB skillinfo.itemallowedtype 对齐原版 UseSkillItemInfo）
-const WEAPON_NAMES: Record<number, string> = {
-  1: 'Axe', 2: 'Staff', 3: 'Hammer', 4: 'Shield', 5: 'Pole/Spear',
-  6: 'Sword', 7: 'Claw', 8: 'Shooter', 9: 'Throwing', 10: 'Dagger', 11: 'Twin Blade',
-};
+// —— WEAPON_NAMES 定义在 skillData（技能面板与职业实验室共用同一份）。
 
 // 技能图标：黑色背景透明化后本身即六边形，无需外部遮罩。
 function useSkillIconSrc(url: string): string {

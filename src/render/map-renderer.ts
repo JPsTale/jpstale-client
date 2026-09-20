@@ -401,13 +401,10 @@ export class MapRenderer {
     geom.setAttribute('normal', new THREE.BufferAttribute(nrm2, 3));
     geom.setAttribute('color', new THREE.BufferAttribute(col2, 3));
     if (uv0) geom.setAttribute('uv', new THREE.BufferAttribute(uv0, 2));
-    // ⚠ 第二套 UV 用**自有 attribute 名**（`aLightMapUv`），不用 three 的 `uv1`：
-    // 后者需要 three 注入 `attribute vec2 uv1;`（仅当材质用到 uv1 贴图时），我们只是自己读它 ⇒
-    // 声明缺失、shader 编译失败。属性名与 shader 里的引用必须同时改。
+
     if (uv1) geom.setAttribute('aLightMapUv', new THREE.BufferAttribute(uv1, 2));
     geom.setIndex(new THREE.BufferAttribute(outIndices, 1));
 
-    // 只有真的含共享顶点才建 attribute / 注入（否则该材质 shader 保持原样，零开销）
     const waterEdgeKind = waterEdgeCount > 0;
     if (waterEdgeKind) geom.setAttribute('aWaterEdge', new THREE.BufferAttribute(waterEdge!, 1));
 
@@ -818,12 +815,6 @@ export class MapRenderer {
     }
   }
 
-  /**
-   * 距离雾区间（world 单位）；`near <= 0` = 关闭。离线烘图（俯视正交，相机必然在 2km 外）必须关。
-   * ⚠ 所有材质**共用同一个 Vector2 实例**：`userData.shader` 要等首次 render 才存在，
-   *   所以"改已有 shader 的 uniform"这条路在烘图（改完才渲染）时是空转 —— 共享实例才让
-   *   改动在首帧上传时就生效。这也让游戏侧随时改都有效。
-   */
   setFogRange(near: number, far: number): void {
     this.fogRange.set(near, far);
   }
@@ -834,7 +825,6 @@ export class MapRenderer {
     torchPos: THREE.Vector3,
     torchColor: THREE.Vector3,
     torchRange: number,
-    /** 动态效果光的数据面（`DynLightPool.data()`）—— 共享引用，只在此换一次 */
     dyn?: { posRange: Float32Array; colAlpha: Float32Array },
   ): void {
     for (const mrd of this.materials) {
@@ -859,7 +849,7 @@ export class MapRenderer {
           }
         }
       }
-            // 动态光：只在**引用变了**时换（幂等；内容由池原地更新 ⇒ 无需每帧拷贝）
+
       if (dyn && shader.uniforms.uDynLightPos
           && shader.uniforms.uDynLightPos.value !== dyn.posRange) {
         shader.uniforms.uDynLightPos.value = dyn.posRange;
