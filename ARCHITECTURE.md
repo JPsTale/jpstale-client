@@ -75,7 +75,12 @@ src/
 - **net/**：`transport` 发送二进制 proto（encodeClient）；`bridge` 订阅消息把 S2C 状态写进 gameStore。写动作（allocStat/playerMove）由调用方经 `protocol.ts` 构造后 `send()`。
 - **ui/react/**：只渲染 `openPanel` 对应的唯一面板（互斥天然）；面板数据只从 `useSyncExternalStore(subscribeGame, getGameSnapshot)` 读，写发动作走 bridge，禁止直接改 store 外状态。
 - **动画/纹理的共享契约（重要）**：帧推进只有一处实现 —— `char/animation.ts` 的 `advanceAnimFrame`（同时导出 `ANIM_UNITS_PER_SEC`）；角色/怪物/武器纹理加载只有一处实现 —— `render/char-texture-loader.ts` 的 `loadCharTextures`。`WorldView` / `CharSelect` / 资产检查器**都必须走这两个入口**，不得再各写一份：工具与游戏共用同一份语义，"在这里改一次"就等于"两边都改"。新增需要推进动画的地方，先看这两个函数能不能直接用（`advanceAnimFrame` 返回 `{frame, raw, ended}`，`raw` 供命中帧跨帧检测、`ended` 供一次性动作切换）。
-- **tools/**：开发工具（`asset-inspector`），与游戏共用上述渲染/动画/音效模块，只是驱动方式不同（不接网络、可任意伪造状态）。不属于游戏主流程。
+- **tools/**：本仓库**只留"client 也要用"的开发工具**（`bake-*` 构建产物 / `*-demo` 演示页）。
+  ⚠ **纯实验室工具已外移**：`asset-inspector` 于 **2026-09-20 搬到 `efria/efria-studio/` 并更名 `job-lab`**（职业实验室）——
+  理由（用户 2026-09-20）：*"有一些纯实验室用的功能，应该抽到 efria-studio 而不是留在 client 里，除非确定是需要 client 也能用的"*。
+  ⇒ 判据：**client 运行时（`WorldView` 等）用到**的才留；只有"伪造状态、逐项观察"才需要的，归实验室。
+  ⚠ 但**判定的实现仍必须共用**（`advanceAnimFrame` / `loadCharTextures` / `WeaponMount` / `anim-match` 等）——
+  实验室页只做"加载 + 代际校验 + 把参数喂给共用实现"。
 
 ## 5. 当前进度
 
@@ -97,7 +102,7 @@ src/
   - `scripts/extract-sfx.ts`（`npm run sfx`）→ `src/audio/data/*.json`
   - 方案与移植记录（含两条参考源纠错）：`../plans/2026-09-11-audio-effects.md`
 - [ ] 粒子子系统：阶段 2 = `AnimationData/ImageData` 广告牌（普攻/命中/暴击/升级）；阶段 3 = `.part` 发射器 + 技能映射清单 + 预览页
-- [x] 资产检查器 `asset-inspector.html`（开发工具，非主流程）：玩家职业 / 怪物·NPC（`npm run models` 扫描资产树）/ 任意 `.inx` 直载；装备→音效码联动；状态适配表（复用 `anim-match` 的生产判定）；技能专属动画覆盖率；帧时间轴 + 骨骼 + 调试开关；诊断对照与批量走查
+- [x] **职业实验室 `job-lab.html`**（**2026-09-20 起在 `efria/efria-studio/`**；原 `client/asset-inspector.html`）：玩家职业 / 怪物·NPC（`npm run models` 扫描资产树）/ 任意 `.inx` 直载；装备→音效码联动；状态适配表（复用 `anim-match` 的生产判定）；技能专属动画覆盖率；帧时间轴 + 骨骼 + 调试开关；诊断对照与批量走查
   - 目标是逐步接管 `pt-web-server/static/pviewer`（上月调研的 JS 查看器；它无音效/粒子）
   - 详见 `../plans/2026-09-11-audio-effects.md` §4
 - [x] 消除重复实现（原为 4 份拷贝，改一处要改四处）：

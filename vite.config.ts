@@ -172,7 +172,9 @@ export default defineConfig(({ mode }) => {
           main: resolve(import.meta.dirname, 'index.html'),
           ...(process.env.PT_BUILD_TOOLS === '1' ? {
             'map-demo': resolve(import.meta.dirname, 'map-demo.html'),
-            'asset-inspector': resolve(import.meta.dirname, 'asset-inspector.html'),
+            // ⚠ `asset-inspector` 已于 2026-09-20 **搬到 efria-studio 并更名 `job-lab`**
+            //   （纯实验室工具，不该留在 client —— 用户 2026-09-20 决定）。
+            //   见 `efria/efria-studio/job-lab.html`（dev: `npm run dev` → :5175/job-lab.html）。
             planemap: resolve(import.meta.dirname, 'planemap.html'),
             worldmap: resolve(import.meta.dirname, 'worldmap.html'),
           } : {}),
