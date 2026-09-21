@@ -82,7 +82,10 @@ function ShopRow({ offer, gold, count, onCount, entityId }: {
     <button
       type="button"
       className={`jp-shop-row${afford ? '' : ' jp-shop-row--poor'}`}
-      onDoubleClick={() => sendShopBuy(entityId, offer.itemlistId, n)}
+      // ⚠ **不要再绑 onDoubleClick**：浏览器对一次双击会依次派发 click、click、dblclick，
+      // 两个 handler 都买 ⇒ **一次双击买 3 份**（数量框填几就买 3 倍）。
+      // 症状：用户以为买了 31 瓶，服务端账上是 133 瓶、金币扣了 9975 —— 看起来像"复制物品"，
+      // 实际是购买次数被放大了（2026-09-21 实测：7 秒内 13 次买入）。
       onClick={() => sendShopBuy(entityId, offer.itemlistId, n)}
       title={t('shop.buy')}
     >

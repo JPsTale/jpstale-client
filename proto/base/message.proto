@@ -79,6 +79,7 @@ message ServerMessage {
     S2C_AppearanceUpdate appearance_update = 208;
     S2C_MapSwitched map_switched = 210;
     S2C_PlayerTeleport player_teleport = 209;  // 不连续位移（脱困/传送）：本人据此搬自己，旁观者据此挪 actor
+    S2C_LevelUpBroadcast level_up_broadcast = 211;  // 升级广播：同级人升级，克星放声+特效，观者只放特效
     
     // 怪物 (300-399)
     S2C_MonsterAppear monster_appear = 300;
@@ -461,6 +462,11 @@ message S2C_PlayerTeleport {
   Position position = 3;
   float angle = 4;
   int32 reason = 5;    // 0=未知 1=脱困 2=GM 3=传送道具（客户端只做展示，不参与判定）
+}
+
+message S2C_LevelUpBroadcast {
+  int64 player_id = 1;
+  int32 level = 2;
 }
 
 // 脱困请求（系统菜单"脱离卡死"按钮 / 聊天框 /unstuck 都走它）。

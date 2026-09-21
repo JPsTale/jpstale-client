@@ -282,6 +282,8 @@ export interface WorldView {
    * 特效名对应 `effect/animationdata/<名>.ini`（如 NormalHit1 / CriticalHit1 / Light1）。
    */
   spawnEffectOnUnit(targetId: number, name: string): void;
+  /** 升级闪光：`EFFECT_LEVELUP1` 的四枚 INI（levelupparticle1/levelup/levelup1left/levelup1right）摆在目标锚点 */
+  spawnLevelUpEffect(targetId: number): void;
   /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
   /** attackerId：攻击者玩家 id（可选 —— 给到的话飘字沿 "被攻击者 → 攻击者" 方向漂移） */
   showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean, attackerId?: number): void;
@@ -1725,6 +1727,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const p = unitBodyAnchor(targetId);
     if (!p) return;
     void effects.spawn(name, { pos: { x: p.x, y: p.y, z: p.z } });
+  }
+
+  /** 升级闪光 = 原版 `EFFECT_LEVELUP1`（HoEffect.cpp:6915-7008）的四枚 INI 组装。
+   *  LevelUpLight1 在本 case 未被引用，不参与（见 levelup 设计 §1.4/§4.1）。
+   *  ⚠ 各枚的环向收拢/左右平移由 INI 内在数据自驱，此处只统一摆在单位锚点上。
+   */
+  function spawnLevelUpEffect(targetId: number): void {
+    for (const name of ['levelupparticle1', 'levelup', 'levelup1left', 'levelup1right']) {
+      spawnEffectOnUnit(targetId, name);
+    }
   }
 
   /**
@@ -6319,6 +6331,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     playSelfAttackResult,
     applyAttackPlan,
     spawnEffectOnUnit,
+    spawnLevelUpEffect,
     signalAttackStart,
     onTakeDamage,
     showFloater,

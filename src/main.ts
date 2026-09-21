@@ -1054,6 +1054,14 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.applyMapSwitched(Number(ms.mapId ?? 0));
       break;
     }
+    case 'levelUpBroadcast': {
+      // 升级：自机播升级音 + 闪光；他人只播闪光（等级数值由服务端权威推送）
+      const lb = msg.levelUpBroadcast!;
+      const pid = Number(lb.playerId ?? 0);
+      if (worldView.isSelf(pid)) sfx.playLevelUp();
+      worldView.spawnLevelUpEffect(pid);
+      break;
+    }
     case 'playerRespawn': {
       // 服务端权威复活：位置/地图/半血。自机位置权威在客户端 → 必须由客户端把自己搬过去。
       const pr = msg.playerRespawn!;
