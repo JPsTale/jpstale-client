@@ -36,6 +36,7 @@
     "verify-levelup": "tsx scripts/verify-levelup.ts",
     "verify-attack-crit-look": "tsx scripts/verify-attack-crit-look.ts",
     "verify-bind-bake": "tsx scripts/verify-bind-bake.ts",
+    "verify-loop-driver": "tsx scripts/verify-loop-driver.ts",
     "docs": "node scripts/gen-docs-preview.mjs"
   },
   "dependencies": {

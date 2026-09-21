@@ -1,6 +1,7 @@
 import { encodeClient, decodeServer, debugLog, ping } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import { reportFallback } from '../char/fallback-log.js';
+import { setKeepaliveInterval, clearKeepaliveInterval, setKeepaliveTimeout, clearKeepaliveTimeout } from '../core/keepalive-timer.js';
 
 type ProtoHandler = (msg: jpt.base.ServerMessage) => void;
 type JsonHandler = (type: string, data: Record<string, unknown>) => void;
@@ -57,7 +58,14 @@ function emitReconnect(ev: ReconnectEvent): void {
   for (const h of rcListeners) h(ev);
 }
 
-/** 有界自动重连：最多 total 次，间隔 delayMs。断线后由调用方触发。 */
+/**
+ * 有界自动重连：最多 total 次，间隔 delayMs。断线后由调用方触发（`main.ts` 的 onConnState('closed')）。
+ *
+ * ⚠ 这里的等待**必须用 keepalive 定时器**：后台标签页里 window 定时器被节流到 ≥1Hz（隐藏 ≥5min
+ * 后 ≥1/min），10 次 × 2s 的重连窗口会被拉成 ~10 分钟 —— 而"切 tab 掉线"正是要靠它救回来的场景
+ * （用户 2026-09-21 实测的卡死）。清理也必须成对用 `clearKeepaliveTimeout`：本模块句柄是
+ * keepalive 自己的编号空间，`clearTimeout` 清不掉（回调仍会飞）。
+ */
 export function startAutoReconnect(total = 10, delayMs = 2000): void {
   if (rcActive) return;
   if (!url) return;
@@ -69,8 +77,8 @@ export function startAutoReconnect(total = 10, delayMs = 2000): void {
 }
 
 function scheduleReconnectAttempt(delayMs: number): void {
-  clearTimeout(rcTimer);
-  rcTimer = window.setTimeout(() => {
+  clearKeepaliveTimeout(rcTimer);
+  rcTimer = setKeepaliveTimeout(() => {
     rcAttempt++;
     emitReconnect({ phase: 'connecting', attempt: rcAttempt, total: rcTotal });
     rcSuccessOpen = false;
@@ -82,7 +90,7 @@ function onReconnectOpen(): void {
   if (!rcActive) return;
   rcSuccessOpen = true;
   rcActive = false;
-  clearTimeout(rcTimer);
+  clearKeepaliveTimeout(rcTimer);
   emitReconnect({ phase: 'success', attempt: rcAttempt, total: rcTotal });
 }
 
@@ -91,7 +99,7 @@ function onReconnectClosed(): void {
   if (rcSuccessOpen) return; // 已成功过（onopen 关闭了状态机）
   if (rcAttempt >= rcTotal) {
     rcActive = false;
-    clearTimeout(rcTimer);
+    clearKeepaliveTimeout(rcTimer);
     emitReconnect({ phase: 'failed', attempt: rcAttempt, total: rcTotal });
   } else {
     scheduleReconnectAttempt(2000);
@@ -100,10 +108,13 @@ function onReconnectClosed(): void {
 
 export function stopAutoReconnect(): void {
   rcActive = false;
-  clearTimeout(rcTimer);
+  clearKeepaliveTimeout(rcTimer);
 }
 
-const HEARTBEAT_INTERVAL = 20000; // 每 20s 发一次 ping（服务端 60s 读空闲超时）
+// 服务端读空闲超时：WS 通道 `IdleStateHandler(120s)`（`WebSocketServer.java:55`）、
+// 裸 TCP 通道 60s（`NettyServer.java:49`）。客户端走 WS ⇒ 真正的红线是 120s。
+// 20s 心跳 + 4s 对时都压在 120s 以内（且都走 keepalive，后台不被节流）。
+const HEARTBEAT_INTERVAL = 20000; // 每 20s 发一次 ping
 const TIME_SYNC_INTERVAL = 4000;  // 每 4s 发一次时间校正
 
 export function connect(wsUrl: string, withToken = false): void {
@@ -172,8 +183,11 @@ function _connect(): void {
       onReconnectClosed(); // 有界重连状态机接管（onclose 即一次失败尝试结束）
       return;
     }
+    // ⚠ 这一支**当前不可达**：`shouldReconnect` 全仓只被赋 `false`（:18/:120/:264），没有置 true 的地方
+    // ⇒ 重连实际只走上面 `rcActive` 那条（`startAutoReconnect`，见 `main.ts` 的 onConnState('closed')）。
+    // 保留它是因为语义上仍然成立（3s 后单发重连一次），但**别以为它在保活**：真正常用的是有界重连。
     if (shouldReconnect && !intentionalClose) {
-      reconnectTimer = window.setTimeout(_connect, 3000);
+      reconnectTimer = setKeepaliveTimeout(_connect, 3000);
     }
   };
   ws.onerror = (e) => { console.error('[net] error', e); };
@@ -204,14 +218,14 @@ function startHeartbeat(): void {
   if (ws?.readyState === WebSocket.OPEN) {
     ws.send(encodeClient(ping()));
   }
-  heartbeatTimer = window.setInterval(() => {
+  heartbeatTimer = setKeepaliveInterval(() => {
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(encodeClient(ping()));
     }
   }, HEARTBEAT_INTERVAL);
   
   // 4秒时间同步
-  timeSyncTimer = window.setInterval(() => {
+  timeSyncTimer = setKeepaliveInterval(() => {
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(encodeClient(ping()));
     }
@@ -220,11 +234,11 @@ function startHeartbeat(): void {
 
 function stopHeartbeat(): void {
   if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
+    clearKeepaliveInterval(heartbeatTimer);
     heartbeatTimer = 0;
   }
   if (timeSyncTimer) {
-    clearInterval(timeSyncTimer);
+    clearKeepaliveInterval(timeSyncTimer);
     timeSyncTimer = 0;
   }
 }
@@ -255,7 +269,7 @@ export function onTimeSync(handler: TimeSyncHandler): () => void {
 export function disconnect(): void {
   shouldReconnect = false;
   intentionalClose = true;
-  clearTimeout(reconnectTimer);
+  clearKeepaliveTimeout(reconnectTimer);
   stopHeartbeat();
   ws?.close();
   ws = null;
