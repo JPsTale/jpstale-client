@@ -74,7 +74,7 @@ import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode, appearanceModelKey } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, weaponSizeMax, combatBoneOf, WeaponMount } from '../render/weapon-loader.js';
-import { createWeaponTrail, MonsterTrails, type WeaponTrail } from '../render/effects/weapon-trail.js';
+import { createWeaponTrail, MonsterTrails, trailTintOfSkill, type WeaponTrail } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillLevelByIcon } from '../game/skillLevel.js';
@@ -270,11 +270,11 @@ export interface WorldView {
    * S2C_AttackResult 音反馈（自机为攻击者）：MISS → 挥空音；暴击 → 追加暴击音。
    * 对应原版 WeaponPlaySound 末尾的 AttackCritcal / 暴击追加码 16。
    */
-  playSelfAttackResult(missed: boolean, critical: boolean, hitIndex?: number): void;
+  playSelfAttackResult(missed: boolean, critical: boolean, hitIndex?: number, attackEffect?: boolean): void;
   /** 应用服务端下发的攻击计划（B 方案）：起手即知各段结果 → 事件帧可直接播正确的音 */
   applyAttackPlan(plan: {
     clientSeq?: number | null;
-    segments?: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null }> | null;
+    segments?: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null; attackEffect?: boolean | null }> | null;
   }): void;
   /**
    * 在单位身上放一个 INI 广告牌特效（命中/暴击/升级等）。
@@ -360,6 +360,10 @@ export interface WorldViewOpts {
                    animIndex?: number, animClip?: string) => void;
   /** 命中帧（每段一次）→ main.ts 发 C2S_AttackHit(targetId, hitIndex)。 */
   onAttackHit?: (monsterId: number, hitIndex: number) => void;
+  /**
+   * 施放技能（当前**只有调试施法**会带换目标：Alt/Shift+点击瞄准怪）→ main.ts 发 C2S_UseSkill。
+   * skillId = 技能列表下标（`skillIndexByIcon` 的返回值，服务端 `predicate.useSkill`）。 */
+  onCastSkill?: (skillId: number, monsterId: number) => void;
   /**
    * 兑现一次「切换武器套」（W 键）→ main.ts 发 C2S_SwitchWeapon。
    *
@@ -493,6 +497,18 @@ export function requestPlayEat(kind: UseEffectKind = null): boolean {
   return playEatRequest ? playEatRequest(kind) : false;
 }
 
+/** 攻击段的"暴击外观"判定（T2 唯一实现）：原版 `AttackEffect`（character.cpp:13354 置位）
+ *  与真暴击 `is_critical` 谁为真都按暴击外观处理 —— 只影响命中特效/武器音，**不改伤害**。
+ *  ⚠ 飘字（showFloater 的 crit 参数）仍只跟 `isCritical`，别用本函数（见任务书 :173）。 */
+export interface CritLookSeg {
+  missed: boolean;
+  critical: boolean;
+  attackEffect?: boolean | null;
+}
+export function lookCritOf(seg: CritLookSeg | null | undefined): boolean {
+  return !!seg && !seg.missed && (seg.critical || !!seg.attackEffect);
+}
+
 export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): WorldView {
   const root = document.createElement('div');
   root.id = 'world-root';
@@ -609,6 +625,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const selfTrailWeaponIds = [-1, -1];
   /** 曳光探针：这一会话里**见过哪些 `motion.state`**（去重后各打一行，用来对判据） */
   const selfTrailStates = new Set<number>();
+  /** T1：当前这一下挥击由哪条**技能下标**驱动（决定残影染色，见 weapon-trail.ts 的 `SKILL_TRAIL_TINTS`）。
+   *   null/未登记 ⇒ 不染色；普攻 onset 与 `skill_normal` 路径置回 null。设值只两处，见 playSkillByIcon 与普攻循环。 */
+  let selfTrailSkillIndex: number | null = null;
   /** 远程攻击的投射物（弓/弩 → 箭；标枪 → 标枪本身）。纯表现，见 render/projectile.ts */
   let projectileMgr: ProjectileManager | null = null;
   // 自机动画播放速率倍率（1=基准）；攻击时按攻速对应的挥拳时长改写，离开 ATTACK 复原
@@ -676,9 +695,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let lastSelfAttackStartMs = -1e9;
   /** 服务端下发的攻击计划（B 方案）：key = hit_index。**有计划的段在事件帧直接播正确结果音**，
    *  不再走"乐观命中 → 结果到达再替换"；没有计划的段才退回乐观路径（计划未到/起手被拒）。 */
-  let selfAttackPlan: Map<number, { missed: boolean; critical: boolean }> | null = null;
+  let selfAttackPlan: Map<number, CritLookSeg> | null = null;
   /** 已按计划播过音的段 → **当时播的是哪套判定**（missed/critical）。结果到达时用它判断要不要修正 */
-  const selfPlanSounded = new Map<number, { missed: boolean; critical: boolean }>();
+  const selfPlanSounded = new Map<number, CritLookSeg>();
   let selfAttackHitFired = 0;
   /** 本次攻击的投射物是否已放（见 spawnProjectile 与 RELEASE_LEAD_FRAMES 的说明） */
   let selfProjectileFired = false;
@@ -1627,7 +1646,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function applyAttackPlan(plan: {
     clientSeq?: number | null;
     attackerId?: number | string | bigint | null;
-    segments?: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null }> | null;
+    segments?: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null; attackEffect?: boolean | null }> | null;
   }): void {
     // 旁观分支：计划不是打给自己的（attacker 是视野内别人）→ 交给对应的远端 actor，
     // 让它在自己挥拳的事件帧按同一份计划播正确的结果音（miss/暴击）。
@@ -1642,11 +1661,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       console.log(`[计划] 忽略过期攻击计划 seq=${seq}（当前 ${selfAttackSeq}）`);
       return;
     }
-    const map = new Map<number, { missed: boolean; critical: boolean }>();
+    const map = new Map<number, CritLookSeg>();
     const segs = plan.segments ?? [];
     for (let i = 0; i < segs.length; i++) {
       const s = segs[i]!;
-      map.set(Number(s.index ?? i), { missed: !!s.missed, critical: !!s.isCritical });
+      map.set(Number(s.index ?? i), { missed: !!s.missed, critical: !!s.isCritical, attackEffect: !!s.attackEffect });
     }
     selfAttackPlan = map;
     const miss = [...map.values()].filter((x) => x.missed).length;
@@ -1654,7 +1673,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     console.log(`[计划] 收到攻击计划 seq=${seq} 段数=${map.size}（miss ${miss} / 暴击 ${crit}）→ 各段将直接播对应音`);
   }
 
-  function playSelfAttackResult(missed: boolean, critical: boolean, hitIndex = 0): void {
+  function playSelfAttackResult(missed: boolean, critical: boolean, hitIndex = 0, attackEffect?: boolean): void {
     // 这一段在事件帧已按**服务端计划**播过音了（见事件帧派发）。是否要再动：
     //   计划判定 == 结果判定 → 音已经对了，**不重播**（否则同一段响两声）
     //   计划判定 != 结果判定 → **以服务端结果为准修正**：淡掉计划那一声，改播结果对应的音。
@@ -1663,7 +1682,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const planned = selfPlanSounded.get(hitIndex);
     if (planned) {
       selfPlanSounded.delete(hitIndex);
-      const crit = critical && !missed;
+      const crit = lookCritOf({ missed, critical, attackEffect });
       if (planned.missed === missed && planned.critical === crit) return;
       // 计划与结果不一致（起手时判命中、命中帧判定落空，或反之）→ 以结果为准修正。
       // 这条路径罕见但必须可见：它意味着玩家先听到了一声按计划播的音，然后被纠正。
@@ -2036,12 +2055,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     const norm = iconFile.replace(/\.bmp$/i, '');
     if (norm === 'skill_normal') {
+      selfTrailSkillIndex = null;   // T1：普攻 → 不染色
       const ok = animState.triggerAttack(true);
       console.log('[WorldView][dbg] 普攻动画 → ' + (ok ? 'OK' : '无匹配'));
       return ok;
     }
     const idx = skillIndexByIcon(norm + '.bmp');
     if (idx != null) {
+      // T1：这一击按技能染色（含下面的普攻回退分支 —— Critical Hit 正走这条）。设值只此一处（AGENTS #15）。
+      selfTrailSkillIndex = idx;
       // 指定技能：有专属 SKILL 动画则播专属；无则回退普攻（多数技能动作即普攻）
       const ok = animState.triggerSkill(idx);
       if (ok) {
@@ -2053,7 +2075,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       console.log('[WorldView][dbg] 技能无专属动画→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
       return fallback;
     }
-    // 无 saSkillData 条目（T5 等）：直接任意 SKILL 或普攻
+    // T1：无下标（不是已登记技能）→ 不染色。无 saSkillData 条目（T5 等）：直接任意 SKILL 或普攻
+    selfTrailSkillIndex = null;
     const ok = animState.triggerSkill(null);
     if (ok) { console.log('[WorldView][dbg] 任意SKILL动画 ' + iconFile); beginSelfSkill(iconFile, aim); return true; }
     const fallback = animState.triggerAttack(true);
@@ -2068,6 +2091,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const selfClass = CLASS_DIR[selfJobId] ?? 'fighter';
     if (!bind || bind.classDir !== selfClass) {
       return playSkillByIcon('skill_normal', aim);
+    }
+    const skillIdx = skillIndexByIcon(bind.iconFile + '.bmp');
+    // 施放真走服务端（真实链路，#14 结果同步）：有瞄准的怪 + 已登记技能 → 发 C2S_UseSkill。
+    // 到目前只有调试施法（Alt/Shift+点击瞄准怪）会带 aim，故实际只影响调试通路；
+    // 服务端 handleUseSkill 即时结算该技能（含 44 的 attackEffect）→ S2C_AttackResult 命中外观。
+    if (skillIdx != null && aim) {
+      const aimId = [...monsters.entries()].find(([, m]) => m.root === aim)?.[0];
+      if (aimId != null) opts?.onCastSkill?.(skillIdx, aimId);
     }
     return playSkillByIcon(bind.iconFile + '.bmp', aim);
   }
@@ -2700,13 +2731,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       targetId: number;
       /** 本次攻击的投射物是否已放（放箭时刻 = 首个事件帧 − `RELEASE_LEAD_FRAMES`，见 spawnProjectile） */
       projFired: boolean;
-      plan: Map<number, { missed: boolean; critical: boolean }> | null;
+      plan: Map<number, CritLookSeg> | null;
       voices: Map<number, VoiceHandle>;
       /** "计划未到"时乐观播过命中音的段号（计划迟到时据此纠正，见 applyRemoteAttackPlan） */
       optimistic: Set<number>;
     } | null;
     /** 比 S2C_AttackStart 先到的攻击计划（起手广播到达时消费；超时作废） */
-    pendingAttackPlan: { map: Map<number, { missed: boolean; critical: boolean }>; at: number } | null;
+    pendingAttackPlan: { map: Map<number, CritLookSeg>; at: number } | null;
   }
   const remotes = new Map<number, RemoteActor>();
   const remoteSpawning = new Set<number>();
@@ -3946,7 +3977,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     );
     const voice = sfx.playWeaponAttack(code, { pos });
     if (voice) actor.attack.voices.set(seg, voice);
-    if (planned?.critical) sfx.playCritical({ pos });
+    if (lookCritOf(planned)) sfx.playCritical({ pos });
     if (!planned) {
       actor.attack.optimistic.add(seg);
       reportFallback('anim', `远端攻击 id=${actor.playerId} 第 ${seg} 段：计划未到 → 乐观按命中播音（结果包到达前无法判定 miss/暴击）`);
@@ -3958,11 +3989,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 常见次序是"计划先到、起手广播后到"（服务端先发计划）→ 暂存待起手消费；
    * 若起手已在播（计划迟到）→ 立即挂到本次攻击，并**纠正**此前乐观播出的段。
    */
-  function applyRemoteAttackPlan(actor: RemoteActor, segments: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null }>): void {
-    const map = new Map<number, { missed: boolean; critical: boolean }>();
+  function applyRemoteAttackPlan(actor: RemoteActor, segments: ArrayLike<{ index?: number | null; missed?: boolean | null; isCritical?: boolean | null; attackEffect?: boolean | null }>): void {
+    const map = new Map<number, CritLookSeg>();
     for (let i = 0; i < segments.length; i++) {
       const s = segments[i]!;
-      map.set(Number(s.index ?? i), { missed: !!s.missed, critical: !!s.isCritical });
+      map.set(Number(s.index ?? i), { missed: !!s.missed, critical: !!s.isCritical, attackEffect: !!s.attackEffect });
     }
     const atk = actor.attack;
     if (!atk || atk.hitFired === 0) {
@@ -3982,7 +4013,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         voice?.stop(40);
         atk.voices.delete(seg);
         sfx.playWeaponMiss(handTypeOfIdCode(actor.appearance?.weaponIdcode ?? 0), { pos: actor.root.position });
-      } else if (p.critical) {
+      } else if (lookCritOf(p)) {
         sfx.playCritical({ pos: actor.root.position });
       }
     }
@@ -5478,12 +5509,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             if (planned) {
               // **B 方案命中**：结果已在起手时送达 → 这一帧直接播**正确**的音，不需要之后再替换。
               // 记下"这一声是按哪套判定播的"，结果包到达时据此判断要不要修正（见 playSelfAttackResult）。
-              selfPlanSounded.set(seg, { missed: planned.missed, critical: planned.critical && !planned.missed });
+              selfPlanSounded.set(seg, { missed: planned.missed, critical: lookCritOf(planned), attackEffect: planned.attackEffect });
               if (planned.missed) {
                 sfx.playWeaponMiss(selfHandType(), { priority: true });
               } else {
                 selfAttackVoices.set(seg, sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true }));
-                if (planned.critical) sfx.playCritical({ priority: true });
+                if (lookCritOf(planned)) sfx.playCritical({ priority: true });
               }
             } else {
               // 计划未到（高延迟/丢包/起手被拒）→ 乐观按命中播，等 AttackResult 到达再替换/追加
@@ -5597,6 +5628,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             //   ⇒ **那一次没有曳光**（用户实测"有时候莫名其妙攻击没有曳光"）。
             //   常驻之后：挥动时出现，停下时两骨几乎不动 ⇒ 带子自然收短/消失。
             const curF = selfPlayer.frame;
+            tr.setTint(trailTintOfSkill(selfTrailSkillIndex));   // T1：残影染色（写 uColor）
             tr.update(curF, motion.startFrame * 160);
             // （**不再需要** `selfPlayer.apply()` 复原 —— `sampleBoneEnds` 只求骨矩阵、不摆姿势；
             //   这里原先每帧多摆一次整骨架，是卡顿的另一半来源。）
@@ -5804,6 +5836,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 非攻击/技能/受击中，且已过起手闸门（镜像服务端冷却）→ 发起下一次挥拳（普攻动画）
         if (animState.triggerAttack(true)) {
           lastSelfAttackStartMs = rafMs;
+          selfTrailSkillIndex = null;   // T1：新一轮普攻挥击 → 残影不染色
           const m = animState.getCurrentMotion();
           const targetId = moveTarget.id;
           if (m) {

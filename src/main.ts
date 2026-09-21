@@ -17,7 +17,7 @@ import { createLoadingScreen } from './ui/LoadingScreen.js';
 import { createDeathPanel } from './ui/DeathPanel.js';
 import { createHud } from './ui/Hud.js';
 import type { HudState } from './ui/Hud.js';
-import { createWorldView } from './ui/WorldView.js';
+import { createWorldView, lookCritOf } from './ui/WorldView.js';
 import type { EnterGameInfo, WorldLoadHooks } from './ui/WorldView.js';
 import { t, tOr } from './i18n/index.js';
 import { createGameClock } from './ui/GameClock.js';
@@ -26,7 +26,7 @@ import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installLayerStack } from './ui/layerStack.js';
-import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract } from './net/bridge.js';
+import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill } from './net/bridge.js';
 import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
 import { useEffectKindOf } from './game/useEffect.js';
 import { itemDefById, itemIconUrl } from './game/data/itemDefs.js';
@@ -66,6 +66,8 @@ const worldView = createWorldView(app, {
   onAttackStart: (monsterId, clientSeq, segments, animIndex, animClip) =>
     send(attackStart(monsterId, clientSeq, segments, animIndex, animClip)),
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
+  // 调试施法（Alt/Shift+点击瞄准怪）→ C2S_UseSkill：真实链路（服务端即时结算该技能，含 attackEffect）。
+  onCastSkill: (skillId, monsterId) => sendUseSkill(skillId, monsterId),
   // 武器套切换的兑现（W 键被缓存到动作播完才回调，见 WorldView.requestSwitchWeapon）
   onSwitchWeapon: () => sendSwitchWeapon(),
 });
@@ -977,13 +979,16 @@ onMessage((msg: jpt.base.ServerMessage) => {
         const crit = !!ar.isCritical;
         worldView.showFloater('monster', targetId, String(ar.damage || 0), crit ? '#ffd166' : '#ffffff', crit, attackerId);
         worldView.applyMonsterHit(targetId, ar.damage || 0);
-        // 命中特效（原版 EFFECT_NORMAL_HIT1）；暴击追加 CriticalHit1 + Light1
-        worldView.spawnEffectOnUnit(targetId, 'NormalHit1');
-        if (crit) {
+        // 命中特效：暴击判定 = is_critical ∨ AttackEffect（原版 character.cpp:13354 置位 / :5166 消费）。
+        // ⚠ 只有外观与武器音走 lookCritOf；飘字（上方）仍只跟 isCritical（任务书 :173）。
+        const critLook = lookCritOf({ missed: false, critical: crit, attackEffect: !!ar.attackEffect });
+        if (critLook) {
           worldView.spawnEffectOnUnit(targetId, 'CriticalHit1');
           worldView.spawnEffectOnUnit(targetId, 'Light1');
+        } else {
+          worldView.spawnEffectOnUnit(targetId, 'NormalHit1');
         }
-        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(false, crit, Number(ar.hitIndex ?? 0));
+        if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(false, crit, Number(ar.hitIndex ?? 0), !!ar.attackEffect);
       }
       break;
     }

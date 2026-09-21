@@ -23896,6 +23896,7 @@ export const jpt = $root.jpt = (() => {
              * @property {boolean|null} [isCritical] S2C_AttackResult isCritical
              * @property {boolean|null} [missed] S2C_AttackResult missed
              * @property {number|null} [hitIndex] S2C_AttackResult hitIndex
+             * @property {boolean|null} [attackEffect] S2C_AttackResult attackEffect
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -23976,6 +23977,14 @@ export const jpt = $root.jpt = (() => {
             S2C_AttackResult.prototype.hitIndex = 0;
 
             /**
+             * S2C_AttackResult attackEffect.
+             * @member {boolean} attackEffect
+             * @memberof jpt.base.S2C_AttackResult
+             * @instance
+             */
+            S2C_AttackResult.prototype.attackEffect = false;
+
+            /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_AttackResult
@@ -24019,6 +24028,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 5, wireType 0 =*/40).bool(message.missed);
                 if (message.hitIndex != null && $Object.hasOwnProperty.call(message, "hitIndex") && message.hitIndex !== 0)
                     writer.uint32(/* id 6, wireType 0 =*/48).int32(message.hitIndex);
+                if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect") && message.attackEffect !== false)
+                    writer.uint32(/* id 7, wireType 0 =*/56).bool(message.attackEffect);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -24130,6 +24141,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.hitIndex;
                             continue;
                         }
+                    case 7: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.bool())
+                                message.attackEffect = value;
+                            else
+                                delete message.attackEffect;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -24196,6 +24216,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.hitIndex != null && $Object.hasOwnProperty.call(message, "hitIndex"))
                     if (!$util.isInteger(message.hitIndex))
                         return "hitIndex: integer expected";
+                if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect"))
+                    if (typeof message.attackEffect !== "boolean")
+                        return "attackEffect: boolean expected";
                 return null;
             };
 
@@ -24249,6 +24272,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.hitIndex != null)
                     if ($Number(object.hitIndex) !== 0)
                         message.hitIndex = object.hitIndex | 0;
+                if (object.attackEffect != null)
+                    if (object.attackEffect)
+                        message.attackEffect = $Boolean(object.attackEffect);
                 return message;
             };
 
@@ -24284,6 +24310,7 @@ export const jpt = $root.jpt = (() => {
                     object.isCritical = false;
                     object.missed = false;
                     object.hitIndex = 0;
+                    object.attackEffect = false;
                 }
                 if (message.attackerId != null && $Object.hasOwnProperty.call(message, "attackerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -24307,6 +24334,8 @@ export const jpt = $root.jpt = (() => {
                     object.missed = message.missed;
                 if (message.hitIndex != null && $Object.hasOwnProperty.call(message, "hitIndex"))
                     object.hitIndex = message.hitIndex;
+                if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect"))
+                    object.attackEffect = message.attackEffect;
                 return object;
             };
 
@@ -24760,6 +24789,7 @@ export const jpt = $root.jpt = (() => {
              * @property {boolean|null} [missed] AttackSegment missed
              * @property {boolean|null} [isCritical] AttackSegment isCritical
              * @property {number|null} [damage] AttackSegment damage
+             * @property {boolean|null} [attackEffect] AttackSegment attackEffect
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -24824,6 +24854,14 @@ export const jpt = $root.jpt = (() => {
             AttackSegment.prototype.damage = 0;
 
             /**
+             * AttackSegment attackEffect.
+             * @member {boolean} attackEffect
+             * @memberof jpt.base.AttackSegment
+             * @instance
+             */
+            AttackSegment.prototype.attackEffect = false;
+
+            /**
              * Creates a new AttackSegment instance using the specified properties.
              * @function create
              * @memberof jpt.base.AttackSegment
@@ -24863,6 +24901,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 3, wireType 0 =*/24).bool(message.isCritical);
                 if (message.damage != null && $Object.hasOwnProperty.call(message, "damage") && message.damage !== 0)
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.damage);
+                if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect") && message.attackEffect !== false)
+                    writer.uint32(/* id 5, wireType 0 =*/40).bool(message.attackEffect);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -24956,6 +24996,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.damage;
                             continue;
                         }
+                    case 5: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.bool())
+                                message.attackEffect = value;
+                            else
+                                delete message.attackEffect;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -25016,6 +25065,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.damage != null && $Object.hasOwnProperty.call(message, "damage"))
                     if (!$util.isInteger(message.damage))
                         return "damage: integer expected";
+                if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect"))
+                    if (typeof message.attackEffect !== "boolean")
+                        return "attackEffect: boolean expected";
                 return null;
             };
 
@@ -25049,6 +25101,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.damage != null)
                     if ($Number(object.damage) !== 0)
                         message.damage = object.damage | 0;
+                if (object.attackEffect != null)
+                    if (object.attackEffect)
+                        message.attackEffect = $Boolean(object.attackEffect);
                 return message;
             };
 
@@ -25074,6 +25129,7 @@ export const jpt = $root.jpt = (() => {
                     object.missed = false;
                     object.isCritical = false;
                     object.damage = 0;
+                    object.attackEffect = false;
                 }
                 if (message.index != null && $Object.hasOwnProperty.call(message, "index"))
                     object.index = message.index;
@@ -25083,6 +25139,8 @@ export const jpt = $root.jpt = (() => {
                     object.isCritical = message.isCritical;
                 if (message.damage != null && $Object.hasOwnProperty.call(message, "damage"))
                     object.damage = message.damage;
+                if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect"))
+                    object.attackEffect = message.attackEffect;
                 return object;
             };
 

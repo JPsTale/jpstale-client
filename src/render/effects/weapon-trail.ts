@@ -70,6 +70,43 @@ import { keyOf, type FxPhase, type MotionKind } from './monster-attack-fx.js';
 export const TRAIL_LEVEL = 32;   // 段数 `mLevel`
 export const TRAIL_FRAMES = 30;  // 每段回溯帧数 `mFrames`
 
+/**
+ * **玩家侧残影染色** —— 原版 `smCHAR::SetSkillMotionBlurColor`
+ * （`character.cpp:10119-10163`）。逐字正文与取整口径见任务书
+ * `docs/handoff/2026-09-21-枪兵一转三技能特效-任务书.md` §附A 与 §0.1。
+ * **键 = 我方技能下标**（§0.1-4，不写源码 `snCHAR_SOUND_*` 码名）。
+ *
+ * 值 = `clamp(255 + 增量, 0, 255) / 255`（乘性基色、无贴图 ⇒ 基准白 255）；逐字节比对 ⇒ 精确到三位小数。
+ * `claims` = 源码对应 case 是否 `return TRUE`：TRUE = **不再叠** `ColorBlink`、FALSE = 叠。
+ *   我方没有 `ColorBlink` ⇒ 差异当前不可观察，但照抄源码取值，**禁止把 FALSE 改成 TRUE**（§0.1-2）。
+ */
+export interface TrailTint {
+  /** [0,1] 乘性 RGB（源码 `cDefColor.r/g/b` 归一化） */
+  r: number;
+  g: number;
+  b: number;
+  /** 源码该 case 以 `return TRUE` 结尾 ⇒ 不再叠 `ColorBlink`（我方无此机制，仅照抄） */
+  claims: boolean;
+}
+
+/**
+ * 源码 `SetSkillMotionBlurColor` 的 case 表（玩家侧）。未登记 ⇒ `null` = 不染色（白）。
+ */
+export const SKILL_TRAIL_TINTS: ReadonlyMap<number, TrailTint> = new Map<number, TrailTint>([
+  // Critical Hit —— 源码该 case `return TRUE` ⇒ claims=true（不叠 ColorBlink）。§0.1-2。
+  [43, { r: 1.0, g: 0.749, b: 1.0, claims: true }],
+  // Chain Lance —— 源码该 case `break` → `return FALSE` ⇒ claims=false（叠 ColorBlink）。§0.1-2。
+  [52, { r: 1.0, g: 0.749, b: 0.749, claims: false }],
+  // 其余 4 个源码 case（Raving Blow / Impact Blow / Triple Impact Blow / Brutal Swing）属别的职业，
+  // 我方下标本任务未取证 ⇒ 留空 —— 待下标。
+]);
+
+/** T1 出入口：技能下标 → 染色值（`null`/未登记 ⇒ 不染色）。消费点只此一处（AGENTS #15）。 */
+export function trailTintOfSkill(skillIndex: number | null): TrailTint | null {
+  if (skillIndex == null) return null;
+  return SKILL_TRAIL_TINTS.get(skillIndex) ?? null;
+}
+
 /** 载入曳光贴图（原版 `AssaSearchRes("m_DoomG-01.bmp", …)`）。
  *
  * ⚠ **必须走 `core/texture.ts` 的解码器** —— PT 的 bmp/tga **文件头是加密的**
@@ -492,6 +529,11 @@ export interface WeaponTrail {
   /** 已存活帧数（`TimeCount`）/ 是否已超寿命 */
   readonly expired: boolean;
   readonly object: THREE.Object3D;
+  /**
+   * 设/清残影染色（写入 shader 的 `uColor`）。玩家侧由 `trailTintOfSkill` 决定；`null` = 复位白。
+   * ⚠ **每帧在 `update()` 之前**调用（`update` 每帧写 `uAlpha`、也会刷新 uniform），不是"设一次"。
+   */
+  setTint(t: TrailTint | null): void;
   dispose(): void;
 }
 
@@ -582,6 +624,11 @@ export function createWeaponTrail(deps: WeaponTrailDeps): WeaponTrail {
     object: mesh,
     get expired() { return deps.liveTime ? timeCount - (deps.delay ?? 0) > deps.liveTime : false; },
     restart(): void { timeCount = 0; alpha = 0; },
+    setTint(t: TrailTint | null): void {
+      const c = mat.uniforms.uColor.value;
+      if (!t) { c.set(1, 1, 1); return; }
+      c.set(t.r, t.g, t.b);
+    },
     update(frame: number, startFrame: number): void {
       timeCount++;
       // 原版 `Main():2373-2392` 的两段：

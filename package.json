@@ -32,6 +32,8 @@
     "verify-quarks-mechanisms": "tsx scripts/verify-quarks-mechanisms.ts",
     "verify-lua-ir": "tsx scripts/verify-lua-ir.ts",
     "verify-skills": "tsx scripts/verify-skills.ts",
+    "verify-skill-trail": "tsx scripts/verify-skill-trail.ts",
+    "verify-attack-crit-look": "tsx scripts/verify-attack-crit-look.ts",
     "docs": "node scripts/gen-docs-preview.mjs"
   },
   "dependencies": {

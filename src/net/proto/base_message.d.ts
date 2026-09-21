@@ -7819,6 +7819,9 @@ export namespace jpt {
             /** S2C_AttackResult hitIndex. */
             hitIndex: number;
 
+            /** S2C_AttackResult attackEffect. */
+            attackEffect: boolean;
+
             /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @param [properties] Properties to set
@@ -7920,6 +7923,9 @@ export namespace jpt {
 
                 /** S2C_AttackResult hitIndex */
                 hitIndex?: (number|null);
+
+                /** S2C_AttackResult attackEffect */
+                attackEffect?: (boolean|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -8095,6 +8101,9 @@ export namespace jpt {
             /** AttackSegment damage. */
             damage: number;
 
+            /** AttackSegment attackEffect. */
+            attackEffect: boolean;
+
             /**
              * Creates a new AttackSegment instance using the specified properties.
              * @param [properties] Properties to set
@@ -8190,6 +8199,9 @@ export namespace jpt {
 
                 /** AttackSegment damage */
                 damage?: (number|null);
+
+                /** AttackSegment attackEffect */
+                attackEffect?: (boolean|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
