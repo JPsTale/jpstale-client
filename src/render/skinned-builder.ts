@@ -40,6 +40,28 @@ export interface SkeletonResult {
   bindLocalByName: Map<string, number[]>;
   bindWorldByName: Map<string, number[]>;
   boneIndexByName: Map<string, number>;
+  /**
+   * **烘焙空间指纹** = 这套绑定姿势的精确摘要。进 `meshPartCache` 的键：
+   * 顶点几何是在绑定姿势空间里烘出来的，换一套绑定姿势就不能复用同一份几何
+   * （完整推导见 `meshPartCache` 的注释）。
+   */
+  bindKey: string;
+}
+
+/**
+ * 绑定姿势指纹：按骨名 + 16 个数逐项量化（1/65536 单位 —— 远小于任何可见差异，
+ * 但足以区分"lite 包 / 完整包"这种整骨级别的差异）。
+ * 用**精确字符串**而不是哈希：哈希碰撞会静默地让两套姿势共用一份几何 —— 正是本键要防的错
+ *（AGENTS #12：降级/巧合都不能静默）。同一姿势算出的字符串相等，`Map` 自动共享同一条目。
+ */
+function bindKeyOf(bindWorldByName: Map<string, number[]>): string {
+  const parts: string[] = [];
+  for (const [name, m] of bindWorldByName) {
+    let s = name + ':';
+    for (let i = 0; i < 16; i++) s += Math.round(m[i] * 65536) + ',';
+    parts.push(s);
+  }
+  return parts.join(';');
 }
 
 function intToFloat(intM: number[]): number[] {
@@ -117,15 +139,24 @@ export function buildSkeleton(smb: SmbData, rawMode: boolean): SkeletonResult {
   }
   bones.forEach(b => { b.updateMatrixWorld(true); });
 
-  return { bones, skeleton, skeletonGroup, boneByObj, bindLocalByName, bindWorldByName, boneIndexByName };
+  return { bones, skeleton, skeletonGroup, boneByObj, bindLocalByName, bindWorldByName, boneIndexByName, bindKey: bindKeyOf(bindWorldByName) };
 }
 
 /**
- * 与骨架无关的产物缓存：**geometry + material**（按网格数据实例存）。
+ * 骨架**无关**的产物缓存：**geometry + material**（按网格数据实例存）。
  *
- * 为什么能共享：这两样只依赖 `(网格数据, 网格名筛选, rawMode)` 与骨架的**绑定姿势矩阵**，
- * 不依赖具体哪一副骨架实例 —— 同一个 modelFile 解析出来的 SmbData 是同一份（AssetManager 的
- * 解析缓存保证），所以数值必然相同。
+ * 为什么能共享：这两样只依赖 `(网格数据, rawMode, 骨架的绑定姿势矩阵)`，不依赖具体哪一副
+ * 骨架**实例** —— 同一个 modelFile 解析出来的 SmbData 是同一份（AssetManager 的解析缓存保证），
+ * 而绑定姿势相同 ⇒ 数值必然相同。
+ *
+ * ⚠ **key 必须含"绑定姿势"（`SkeletonResult.bindKey`），不能只有 smd**：
+ * 顶点在 `buildSkinnedMesh` 里被**预乘进绑定姿势的世界空间**（下面 `bindWorldByName`），
+ * 而蒙皮用的是这具骨架自己的 `boneInverses`（= 同一个绑定姿势的逆）——**两者必须出自同一套姿势**。
+ * 同一份 .smd 会被**不同的动画包**装配：lite 包（选角预览）与完整包（进游戏）。
+ * lite 包只保留一条 STAND、帧轴从 1 开始（`client/char/tmabcd/lite/README.md`），于是它的
+ * `evalSkeleton(smb, 0)` ≠ 完整包的帧 0 —— 两套"绑定姿势"差最多 4.3 个单位（逐骨常量错位）。
+ * 谁先烘这份几何，另一套骨架就会按**自己的**绑定姿势去解释它 ⇒ 四肢/手被常量矩阵扭开。
+ * 用户 2026-09-21 实测：进游戏（完整包先烘）再回选角，预览角色手部变形 —— 就是这条。
  *
  * 为什么 **SkinnedMesh 实例不能共享**：它要 `bind()` 到各自的 skeleton（每只怪的动画相位、
  * 位置都不同）。所以这里缓存的是"原料"，每只怪仍新建自己的 SkinnedMesh。
@@ -141,8 +172,8 @@ interface CachedMeshPart {
   nodeName: string;
   materialIndex: number;
 }
-/** smd 实例 → (网格名|材质索引) → 原料 */
-const meshPartCache = new WeakMap<SmbData, WeakMap<object, Map<number, CachedMeshPart>>>();
+/** smd 实例 → **绑定姿势指纹** → (网格名|材质索引) → 原料 */
+const meshPartCache = new WeakMap<SmbData, Map<string, WeakMap<object, Map<number, CachedMeshPart>>>>();
 
 export function buildSkinnedMesh(
   smd: SmbData,
@@ -185,10 +216,18 @@ export function buildSkinnedMesh(
   // ⚠ key 必须按【obj 实例】分层：`.smd` 里多个 obj 可以**同名**（本模型 6 个都叫 `pr_d`），
   // 若按 `nodeName + 材质号` 做 key，不同 obj 的同号材质会互相命中缓存 → 复用错几何 → 
   // 整段部件消失（用户实测：D_PR 缺胸口以下，实测顶点数与预期逐组对账差 159）。
-  let partCache = meshPartCache.get(smd);
+  let byBind = meshPartCache.get(smd);
+  if (!byBind) {
+    byBind = new Map();
+    meshPartCache.set(smd, byBind);
+  }
+  // 烘焙空间 = 骨架的绑定姿势（+ rawMode：`transformVertex` 按它换轴，见下）。
+  // 同姿势的多副骨架（例如同一只怪的每次生成）算出**同一个 key 字符串** ⇒ 仍共用原料。
+  const bindSpace = (rawMode ? 'raw|' : 'yup|') + skel.bindKey;
+  let partCache = byBind.get(bindSpace);
   if (!partCache) {
     partCache = new WeakMap();
-    meshPartCache.set(smd, partCache);
+    byBind.set(bindSpace, partCache);
   }
   const transformVertex = (rx: number, ry: number, rz: number) => rawMode ? [rx, ry, rz] : [rx, rz, -ry];
   const transformNormal = (fx: number, fy: number, fz: number) => rawMode ? [fx, fy, fz] : [fx, fz, -fy];
