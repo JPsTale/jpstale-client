@@ -1,6 +1,7 @@
 import { encodeClient, decodeServer, debugLog, ping } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import { reportFallback } from '../char/fallback-log.js';
+import { setKeepaliveInterval, clearKeepaliveInterval, setKeepaliveTimeout, clearKeepaliveTimeout } from '../core/keepalive-timer.js';
 
 type ProtoHandler = (msg: jpt.base.ServerMessage) => void;
 type JsonHandler = (type: string, data: Record<string, unknown>) => void;
@@ -173,7 +174,7 @@ function _connect(): void {
       return;
     }
     if (shouldReconnect && !intentionalClose) {
-      reconnectTimer = window.setTimeout(_connect, 3000);
+      reconnectTimer = setKeepaliveTimeout(_connect, 3000);
     }
   };
   ws.onerror = (e) => { console.error('[net] error', e); };
@@ -204,14 +205,14 @@ function startHeartbeat(): void {
   if (ws?.readyState === WebSocket.OPEN) {
     ws.send(encodeClient(ping()));
   }
-  heartbeatTimer = window.setInterval(() => {
+  heartbeatTimer = setKeepaliveInterval(() => {
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(encodeClient(ping()));
     }
   }, HEARTBEAT_INTERVAL);
   
   // 4秒时间同步
-  timeSyncTimer = window.setInterval(() => {
+  timeSyncTimer = setKeepaliveInterval(() => {
     if (ws?.readyState === WebSocket.OPEN) {
       ws.send(encodeClient(ping()));
     }
@@ -220,11 +221,11 @@ function startHeartbeat(): void {
 
 function stopHeartbeat(): void {
   if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
+    clearKeepaliveInterval(heartbeatTimer);
     heartbeatTimer = 0;
   }
   if (timeSyncTimer) {
-    clearInterval(timeSyncTimer);
+    clearKeepaliveInterval(timeSyncTimer);
     timeSyncTimer = 0;
   }
 }
@@ -255,7 +256,7 @@ export function onTimeSync(handler: TimeSyncHandler): () => void {
 export function disconnect(): void {
   shouldReconnect = false;
   intentionalClose = true;
-  clearTimeout(reconnectTimer);
+  clearKeepaliveTimeout(reconnectTimer);
   stopHeartbeat();
   ws?.close();
   ws = null;

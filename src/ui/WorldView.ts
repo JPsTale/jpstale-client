@@ -29,6 +29,7 @@ import { setMaxAnisotropy } from '../render/texture-loader.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
+import { setKeepaliveInterval, clearKeepaliveInterval } from '../core/keepalive-timer.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
 import {
   fireMonsterAttackEvent, findAttackBone, MONSTER_RANGED, MONSTER_BOW_IDCODE, type MonsterFlySpec,
@@ -5400,8 +5401,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   (window as unknown as { __ptSetFps?: (n: number) => void }).__ptSetFps = setTargetFps;
 
+  // —— 标签页后台保活（完整挂机）——
+  // 前台：rAF 驱动（vsync 对齐）。后台：rAF 停摆，改用 Worker 闹钟按 30Hz 驱动同一 renderLoop，
+  // 只跳过 GPU 渲染提交；移动/AI/战斗/掉落照常推进，网络心跳/时间同步见 net/transport.ts。
+  // （原理与"为什么不用主线程 setInterval"见 core/keepalive-timer.ts）
+  const BACKGROUND_TICK_MS = 1000 / 30;
+  let bgTimerId = 0;
+  let worldActive = true; // 被 hide() 切走后不再后台保活
+
+  function scheduleNextFrame(): void {
+    // 隐藏时不排 rAF：隐藏页 rAF 不回调，继续排队会在恢复可见时集中触发（帧炸弹）
+    if (!document.hidden && worldActive) animFrameId = requestAnimationFrame(renderLoop);
+  }
+
+  function onVisibilityChange(): void {
+    if (document.hidden) {
+      if (worldActive && !bgTimerId) {
+        bgTimerId = setKeepaliveInterval(() => renderLoop(performance.now()), BACKGROUND_TICK_MS);
+      }
+    } else {
+      if (bgTimerId) { clearKeepaliveInterval(bgTimerId); bgTimerId = 0; }
+      // 后台期间没有新的 rAF 入队；回前台重起一条链（先取消可能残留的，防双链同跑）
+      cancelAnimationFrame(animFrameId);
+      animFrameId = requestAnimationFrame(renderLoop);
+    }
+  }
+  document.addEventListener('visibilitychange', onVisibilityChange);
+
   function renderLoop(tsMs = 0): void {
-    animFrameId = requestAnimationFrame(renderLoop);
+    scheduleNextFrame();
     // 帧率上限：未到目标间隔则跳过本帧（动画/移动已 delta-time 化，任意帧率速度一致）
     if (targetFps > 0) {
       const minInterval = 1000 / targetFps;
@@ -5409,6 +5437,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       lastFrameMs = tsMs;
     }
     if (!renderer || !scene || !camera) return;
+    const bg = document.hidden; // 后台帧：逻辑照跑，跳过 GPU 渲染提交
     // 剖析器：从"这一帧确实要渲染"处开始计时（被限帧跳过的帧不计入，fps 才是真实帧率）
     perfFrameStart();
     // 自适应视口尺寸
@@ -5922,10 +5951,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     perfMark('技能特效');
 
     // 小地图
-    drawMinimap();
+    if (!bg) drawMinimap();
     perfMark('小地图');
 
-    for (const mh of mapHandles.values()) {
+    if (!bg) for (const mh of mapHandles.values()) {
       mh.mapRenderer.render(camera);
       mh.mapRenderer.updateScroll(rafMs);
       mh.mapRenderer.updateWind(rafMs);
@@ -5934,7 +5963,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     perfMark('地图渲染');
     // hover 发光外轮廓（官方 OutlinePass 后处理）：设置目标与分类色后再整帧渲染
-    if (composer && outlinePass) {
+    if (!bg && composer && outlinePass) {
       if (hoverTarget) {
         outlinePass.selectedObjects = [hoverTarget.root];
         outlinePass.visibleEdgeColor.set(hoverTarget.color);
@@ -5944,10 +5973,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         outlinePass.enabled = false;
       }
     }
-    if (composer) composer.render();
+    if (!bg && composer) composer.render();
     perfMark('3D提交');
     // 名牌/血条 overlay（Canvas，压制被测遮挡）
-    drawNameplateOverlay();
+    if (!bg) drawNameplateOverlay();
     perfMark('名牌飘字');
     // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
     if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && hoverTarget && rafMs - lastHoverScanAt > 1500) {
@@ -5994,7 +6023,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       ri.reset();
     }
     // 场景遍历统计：遍历本身有成本（怪物多时上千对象），故 500ms 一次，不每帧做
-    if (rafMs - lastSceneScanAt > 500) {
+    if (!bg && rafMs - lastSceneScanAt > 500) {
       lastSceneScanAt = rafMs;
       let visibleMesh = 0, skinned = 0;
       const mats = new Set<THREE.Material>(), geos = new Set<THREE.BufferGeometry>();
@@ -6413,10 +6442,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     playEquippedSkill: (slot) => playEquippedSkill(slot),
     hide() {
       root.style.display = 'none';
+      worldActive = false;
+      if (bgTimerId) { clearKeepaliveInterval(bgTimerId); bgTimerId = 0; }
       mapAudio.suspend();
       if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
     },
     destroy() {
+      worldActive = false;
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      if (bgTimerId) { clearKeepaliveInterval(bgTimerId); bgTimerId = 0; }
       if (animFrameId) cancelAnimationFrame(animFrameId);
       for (const actor of remotes.values()) {
         scene?.remove(actor.root);
