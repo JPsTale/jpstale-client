@@ -120,10 +120,25 @@ class FrameAlphaGen implements FunctionColorGenerator {
 export interface IniToQuarksOpts {
   /** INI **没有 Size 段**时用的尺寸（世界单位）—— 原版在调用处显式给（`StartBillRectPrimitive` 的 sizeX/sizeY） */
   size: number;
+  /**
+   * 调用方的 **sizeY**（高）—— 原版给的是**两个独立尺寸**：`StartBillRect(x,y,z, sizeX, sizeY, ini, aniType)`
+   * 与 `HoPrimitivePolygon::StartPathTri` 内部写死的 `SizeX = 7; SizeY = 23`（`HoEffect.cpp:400-404`）。
+   * 省略 ⇒ 与 `size` 同值（既有调用点行为不变；lab 也没有"调用方给的 sizeY"这个概念）。
+   */
+  sizeY?: number;
   /** 整体倍率 */
   scale?: number;
   /** 粒子是否随载体走（见 `QuarksSpawnOpts.follow`） */
   follow?: boolean;
+  /**
+   * **整段帧序列循环**（原版 `AniType = ANI_LOOP`）—— 见 `HoPrimitivePolygon::Main`：
+   * `else if (AniType == ANI_LOOP) { CurrentFrame = 0; if (CurrentFrame >= AnimFrameCount - 1) CurrentFrame = 0; else CurrentFrame++; }`。
+   *
+   * 为什么要有这个开关：一次性的 INI（`ANI_ONE`）播完即止；而 **H2 路径粒子**（`StartPathTri`）
+   * 是"**飞行期间不断循环**"的 —— 只播一遍的话，43ms 的 `levelupparticle1` 在飞行到一半就没了
+   * （r[B7-7 附] 记过这一条）。默认关闭 ⇒ 既有行为不变。
+   */
+  loop?: boolean;
 }
 
 /**
@@ -141,7 +156,10 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
   // 序列是否带 Size 段 ⇒ `INFO_ONESIZE` / `INFO_ONESIZEANGLE`（两者**宽高都步进**，`:700-712`）；
   // 没有 Size 段的就是 `INFO_DEFAULT` ⇒ 宽高都保持调用方给的 sizeX/sizeY（`:1075-1076`）。
   const sizeSeq = eff.frames.some((f) => f.size !== null);
-  const heightBase = Math.max(0.05, opts.size * scale);   // 调用方 sizeY（lab 无调用方 ⇒ 与 sizeX 同值）
+  // 调用方 sizeY（高）—— 原版是两个独立尺寸；省略时与 sizeX 同值（既有调用点行为不变）
+  const heightBase = Math.max(0.05, (opts.sizeY ?? opts.size) * scale);
+  /** 整段帧序列的总时长（秒）—— `loop` 用它当周期（见下面 `duration` 处） */
+  const totalDur = eff.frames.reduce((s, f) => s + Math.max(1, f.delay) / EFFECT_HZ, 0);
 
   for (const f of eff.frames) {
     const dur = Math.max(1, f.delay) / EFFECT_HZ;
@@ -172,9 +190,12 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
 
 
     const ps = new ParticleSystem({
-      // 系统活到这一帧结束（`delay` 之前不发射，`delay + dur` 之后结束）
-      duration: t + dur,
-      looping: false,
+      // 系统活到这一帧结束（`delay` 之前不发射，`delay + dur` 之后结束）；
+      // **循环**时（原版 `ANI_LOOP`）每个系统都活到**整段结束**并循环 ⇒ 各帧的 burst 按周期重放
+      // （quarks `emit()`：`if (time > duration) { if (looping) { time -= duration; burstIndex = 0; … } }`）。
+      // 三个系统同 duration ⇒ 同时回绕，帧序不会错位。
+      duration: opts.loop ? totalDur : t + dur,
+      looping: opts.loop === true,
       emissionBursts: [{
         time: t, count: new ConstantValue(1), cycle: 1, interval: 0, probability: 1,
       }],
@@ -212,8 +233,11 @@ export function iniToQuarks(eff: LoadedEffect, opts: IniToQuarksOpts): ParticleS
       startRotation: new ConstantValue(startAngleRad),
       renderMode: RenderMode.BillBoard,
       material: mat,
-      // 粒子留在世界空间（INI 特效不随载体走；载体跟随由 emitter 挂载表达）
-      worldSpace: true,
+      // 粒子是否随载体走（`opts.follow` ⇔ `QuarksSpawnOpts.follow` 的同一语义，与 `.part` 那条路一致）：
+      // 不给 ⇒ 留在世界空间（INI 特效不随载体走，只有 emitter 跟着挂载点）；给了 ⇒ 整团随载体搬运
+      // （H2 路径粒子要这个：原版的 sprite 是**随 primitive 的世界坐标一起移动**的）。
+      // ⚠ 此前这里写死 `true`，`opts.follow` 声明了却没人读 —— 会静默忽略调用方的跟随请求。
+      worldSpace: opts.follow !== true,
     });
     ps.texture = f.tex;
     out.push(ps);

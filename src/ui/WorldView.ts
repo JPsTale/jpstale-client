@@ -42,6 +42,7 @@ import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
 import { updateGlacialSpikes } from '../render/effects/glacial-spike.js';
+import { runLevelUpFx, updateLevelUpFx, clearLevelUpFx, type LevelUpDeps } from '../render/effects/levelup-runner.js';
 import { CODE_SKILL_FX } from '../render/effects/skill-fx-runner.js';
 import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
@@ -282,8 +283,15 @@ export interface WorldView {
    * 特效名对应 `effect/animationdata/<名>.ini`（如 NormalHit1 / CriticalHit1 / Light1）。
    */
   spawnEffectOnUnit(targetId: number, name: string): void;
-  /** 升级闪光：`EFFECT_LEVELUP1` 的四枚 INI（levelupparticle1/levelup/levelup1left/levelup1right）摆在目标锚点 */
+  /**
+   * 升级闪光 = 原版 `EFFECT_LEVELUP1` 的四组组装（20 颗向心粒子 / 5 记闪光 /
+   * 左右各 5 条内收光带 / 一记白动态光）—— 装配与推进在 `render/effects/levelup-runner.ts`。
+   */
   spawnLevelUpEffect(targetId: number): void;
+  /**
+   * 单位**脚下**世界坐标（升级特效/升级音的锚点）。不在视野内 ⇒ null（调用方据此不放，不退回原点）。
+   */
+  unitFeetPos(targetId: number): { x: number; y: number; z: number } | null;
   /** 伤害/躲闪飘字：kind 可省略（按 id 自动归属 自机/怪物/远端玩家）；crit 放大字号 */
   /** attackerId：攻击者玩家 id（可选 —— 给到的话飘字沿 "被攻击者 → 攻击者" 方向漂移） */
   showFloater(kind: 'self' | 'monster' | 'remote' | null, id: number, text: string, color: string, crit: boolean, attackerId?: number): void;
@@ -1729,14 +1737,55 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     void effects.spawn(name, { pos: { x: p.x, y: p.y, z: p.z } });
   }
 
-  /** 升级闪光 = 原版 `EFFECT_LEVELUP1`（HoEffect.cpp:6915-7008）的四枚 INI 组装。
-   *  LevelUpLight1 在本 case 未被引用，不参与（见 levelup 设计 §1.4/§4.1）。
-   *  ⚠ 各枚的环向收拢/左右平移由 INI 内在数据自驱，此处只统一摆在单位锚点上。
+  /**
+   * 单位**脚下**的世界坐标（升级特效与升级音的锚点，原版 `pX/pY/pZ`）。
+   *
+   * ⚠ 与 `unitBodyAnchor`（身体中部）**是两个不同的锚点，都要有**：命中白光打在身上，
+   * 而升级那两处（`playsub.cpp:1310` / `character.cpp:9157`）用的都是 `pX, pY + 32*fONE, pZ` ——
+   * 抬高由特效自己加（见 `levelup-runner.LEVELUP_LIFT`），音效的距离衰减直接按脚下算。
+   * 找不到（不在视野内）⇒ null，**不退回世界原点**。
+   */
+  function unitFeetPos(targetId: number): { x: number; y: number; z: number } | null {
+    if (targetId === selfPlayerId) return { x: selfPos.x, y: selfPos.y, z: selfPos.z };
+    const mon = monsters.get(targetId);
+    const rem = mon ? null : remotes.get(targetId);
+    const root = mon?.root ?? rem?.root;
+    if (!root) return null;
+    return { x: root.position.x, y: root.position.y, z: root.position.z };
+  }
+
+  /**
+   * 升级闪光 = 原版 `EFFECT_LEVELUP1`（`HoEffect.cpp:7635-7735`）的**四组组装** ——
+   * 装配与逐帧推进都在 `render/effects/levelup-runner.ts`（**唯一实现**，游戏与实验室共用）。
+   *
+   * ⚠ 此前这里写的是"把四枚 INI 各放一遍、都摆在身体中部" —— 数量（原版 20/5/5/5）、
+   * 环半径、±y 偏移、起始帧（25…45 / 0…20）与**代码驱动的运动**（向心收拢、两侧内收）全都不对。
+   * 现在只传"脚下坐标"，其余照源码。
    */
   function spawnLevelUpEffect(targetId: number): void {
-    for (const name of ['levelupparticle1', 'levelup', 'levelup1left', 'levelup1right']) {
-      spawnEffectOnUnit(targetId, name);
+    if (!scene) return;                     // 世界已拆（换图/退出）
+    const feet = unitFeetPos(targetId);
+    if (!feet) {
+      reportFallback('fx', `升级特效：找不到单位 ${targetId} 的位置（不在视野内？）⇒ 本次不放`);
+      return;
     }
+    runLevelUpFx(levelUpDeps(), feet);
+  }
+
+  /** 升级 runner 的依赖（场景/相机/视口/动态光/特效管理器）—— 每帧推进要用同一份 */
+  function levelUpDeps(): LevelUpDeps {
+    return {
+      fx: effects,
+      scene: scene!,
+      dynLights,
+      camera,
+      // 屏幕空间 ±230px 的换算基准（见 runner 的 `applyBandOffset`）
+      viewport: () => ({
+        width: renderer?.domElement.width ?? 0,
+        height: renderer?.domElement.height ?? 0,
+      }),
+      log: (m) => console.log('[fx]' + m),
+    };
   }
 
   /**
@@ -5930,7 +5979,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
     updateGlacialSpikes(dt);          // 冰枪网格的 alpha 包络与寿命（共用实现）
-    dynLights?.update(dt);            // 动态光衰减（原版逐帧 power -= decPower）
+    updateLevelUpFx(dt);              // 升级特效：向心粒子飞行 + 两侧光带内收（共用实现）
+    dynLights?.update(dt);            // 动态光衰减（原版逐帧 power -= dcPower）
     perfMark('技能特效');
 
     // 小地图
@@ -6332,6 +6382,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyAttackPlan,
     spawnEffectOnUnit,
     spawnLevelUpEffect,
+    unitFeetPos,
     signalAttackStart,
     onTakeDamage,
     showFloater,
@@ -6471,6 +6522,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 投射物：摘掉在飞的（模型缓存留着 —— 按 URL 缓存，与 asset-manager 同一约定，换图不必重下）
       projectileMgr?.dispose();
       clearMonsterFlies();            // 飞出物载体节点随世界一起清（否则残留到下一个世界）
+      clearLevelUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
       projectileMgr = null;
       scene = null;
       camera = null;

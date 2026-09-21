@@ -15,7 +15,8 @@ import type { LoadedPart } from './part-assets.js';
 import type { PartSystem } from '../../core/effect/part-script.js';
 import { reportFallback } from '../../char/fallback-log.js';
 import { iniToQuarks } from './ini-to-quarks.js';
-import { lookupEffect, loadByEntry, loadPartByRef, preloadEffects } from './effect-registry.js';
+import { lookupEffect, loadByEntry, preloadEffects } from './effect-registry.js';
+import type { LoadedEffect } from './effect-assets.js';
 import type { QuarksRuntime, QuarksPartHandle } from './quarks-runtime.js';
 
 /** INI 未提供 Size 段时的默认世界尺寸（角色高约 46 世界单位，取 32 与命中特效同量级） */
@@ -91,6 +92,18 @@ export interface SpawnOpts {
    * 不给则 `attach` 是"出生点固化" ⇒ 老粒子留在原地形成**尾迹**（玩家施法弹要这个观感）。
    */
   rigidFollow?: boolean;
+  /* ⚠ 约定（两条族都适用）：**给了 `attach` ⇒ `pos` 不参与**，emitter 落在载体原点
+   *   —— 否则 three 的 `add()` 会把 `pos` 当局部坐标又加一次（载体 + pos 的双倍偏移）。 */
+  /**
+   * **调用方给的高**（世界单位）—— 原版 `StartBillRect(x,y,z, sizeX, sizeY, ini, aniType)` 是**两个独立尺寸**，
+   * 而 `size` 只是宽。省略 ⇒ 与 `size` 同值（既有调用点行为不变）。
+   */
+  sizeY?: number;
+  /**
+   * **整段 INI 帧序列循环**（原版 `AniType = ANI_LOOP`）—— 见 `ini-to-quarks` 的 `loop`。
+   * 只有"飞行期间要一直闪"的 H2 路径粒子需要它；一次性特效不要传（默认关闭）。
+   */
+  loop?: boolean;
   /** 物理粒子爆发：给出时复制 count 份并按原版物理运动（见 BurstSpec） */
   burst?: BurstSpec;
 }
@@ -102,9 +115,14 @@ export interface EffectManager {
    * 同 `spawn`，但返回**可停止句柄**（原版 `SetStop` → `FadeStop`：停发，已在飞的粒子自然消亡）。
    *
    * 飞出物到点必须停发，否则粒子会一直堆在命中点 —— 原版 `AssaParticle.cpp` 的 VigorBall 到点就是
-   * 一对 `SetStop(ParticleID)` / `SetFastStop(ParticleIDExt1)`。只覆盖 `.part` 那条路：
-   * 飞出物用的都是 `.part`；名字若其实是 INI 广告牌则返回 null **并上报**
-   * （那条路是一次性播完的形态，没有句柄可给）。
+   * 一对 `SetStop(ParticleID)` / `SetFastStop(ParticleIDExt1)`。
+   *
+   * **两条族都覆盖**（2026-09-21 起）：
+   *   · `.part` —— 走 `spawnViaQuarks`；
+   *   · **INI 广告板**（原版同样有"停发"语义）：`quarksFx.addSystems` 本来就返回句柄，此前只是
+   *     被丢掉了。H2 路径粒子（`loop: true` 的 `levelupparticle1`）**必须**能停 ——
+   *     它循环发射，不停就会一直闪下去。
+   * 名字不在清单里/两族都不是 ⇒ 返回 null 并上报。
    */
   spawnStoppable(name: string, opts: SpawnOpts): Promise<QuarksPartHandle | null>;
   /** 【临时诊断】透传 `QuarksRuntime.spawnProfile`（定位"生成"热点；定位完删除） */
@@ -180,40 +198,9 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
         // `.part` 文件 → **同样交给 quarks**（与代码内 spec 同一条路，见工厂处说明）
         return (await spawnViaQuarks(asset.part.system, opts, asset.part.name)) !== null;
       }
-      const eff = asset.effect;
       loaded++;
-      diag = eff.diag;
-      // 一帧贴图都没有 → 视为无法播放（避免生成不可见精灵）——**要说出原因**（AGENTS #12）
-      if (!eff.frames.some((f) => f.tex)) {
-        reportFallback('fx', `INI 特效「${name}」一帧贴图都没解出来`
-          + `（${eff.diag.animationIni}，缺 ${eff.diag.missing.join('、') || '原因未知'}）⇒ 不放`);
-        return false;
-      }
-      // **INI 广告板 → quarks**（"全用 quark"的最后一条，见 `ini-to-quarks.ts`）：
-      // 每帧一个单粒子系统（各带自己的贴图/Delay/BlendValue/Size）—— 才能表达
-      // `returnparticle1.ini` 那种**不等长 Delay**（20,5,5,5,30）。
-      if (!quarksFx) {
-        reportFallback('fx', `INI 特效「${name}」要渲染，但 effect-manager 没拿到 QuarksRuntime`);
-        return false;
-      }
-      if (opts.burst) {
-        // 原版这里是"同一份 INI 复制 count 份、每份一个物理体"（30 个 HoPrimitiveBillboard）。
-        // **现已无调用者**（药水改走 `quarksFx.playPotion`）⇒ 不静默兜底，明确上报。
-        reportFallback('fx', `INI 特效「${name}」传了 burst（物理粒子爆发），该模式随旧渲染器一并退役，未表达`);
-      }
-      const systems = iniToQuarks(eff, {
-        size: opts.size ?? eff.frames[0]?.size ?? DEFAULT_SIZE,
-        scale: opts.scale,
-      });
-      if (!systems.length) {
-        reportFallback('fx', `INI 特效「${name}」→ quarks 得到 0 个系统（帧贴图全缺？）`);
-        return false;
-      }
-      for (const ps of systems) {
-        ps.emitter.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
-      }
-      quarksFx.addSystems(systems, opts.attach ?? null);
-      return true;
+      diag = asset.effect.diag;
+      return (await spawnIni(asset.effect, name, opts)) !== null;
     } catch (e) {
       // 旧版是 `catch { return false }`（静默）—— 抛错与"资产不存在"必须能分辨
       reportFallback('fx', `特效「${name}」播放时抛错：${String(e)}`);
@@ -224,7 +211,54 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
   }
 
   /**
-   * `.part` 专用：**拿到可停止句柄**（复用 `spawn` 同一份解析与转换，不写第二份）。
+   * **INI 广告板 → quarks**（"全用 quark"的最后一条，见 `ini-to-quarks.ts`）—— `spawn` 与
+   * `spawnStoppable` 的**同一份**实现（句柄由 `addSystems` 给，前者只是丢掉它）。
+   *
+   * 每帧一个单粒子系统（各带自己的贴图/Delay/BlendValue/Size）—— 才能表达
+   * `returnparticle1.ini` 那种**不等长 Delay**（20,5,5,5,30）。
+   */
+  async function spawnIni(
+    eff: LoadedEffect, name: string, opts: SpawnOpts,
+  ): Promise<QuarksPartHandle | null> {
+    // 一帧贴图都没有 → 视为无法播放（避免生成不可见精灵）——**要说出原因**（AGENTS #12）
+    if (!eff.frames.some((f) => f.tex)) {
+      reportFallback('fx', `INI 特效「${name}」一帧贴图都没解出来`
+        + `（${eff.diag.animationIni}，缺 ${eff.diag.missing.join('、') || '原因未知'}）⇒ 不放`);
+      return null;
+    }
+    if (!quarksFx) {
+      reportFallback('fx', `INI 特效「${name}」要渲染，但 effect-manager 没拿到 QuarksRuntime`);
+      return null;
+    }
+    if (opts.burst) {
+      // 原版这里是"同一份 INI 复制 count 份、每份一个物理体"（30 个 HoPrimitiveBillboard）。
+      // **现已无调用者**（药水改走 `quarksFx.playPotion`）⇒ 不静默兜底，明确上报。
+      reportFallback('fx', `INI 特效「${name}」传了 burst（物理粒子爆发），该模式随旧渲染器一并退役，未表达`);
+    }
+    const systems = iniToQuarks(eff, {
+      size: opts.size ?? eff.frames[0]?.size ?? DEFAULT_SIZE,
+      sizeY: opts.sizeY,
+      scale: opts.scale,
+      loop: opts.loop,
+      follow: opts.rigidFollow === true,
+    });
+    if (!systems.length) {
+      reportFallback('fx', `INI 特效「${name}」→ quarks 得到 0 个系统（帧贴图全缺？）`);
+      return null;
+    }
+    // ⚠ **给了 `attach` 时 `pos` 不参与**：emitter 要落在**载体原点**（three 的 `add()` 保留局部坐标
+    //   ⇒ 若同时写 pos，位置会变成"载体 + pos"两倍偏移）。这与 `.part` 那条路**同一约定**
+    //   （见 `spawnViaQuarks`：有 attach 就不设 emitter.position），此前 INI 这条路没写这一条，
+    //   只是恰好没有调用方同时给两者。
+    for (const ps of systems) {
+      if (opts.attach) ps.emitter.position.set(0, 0, 0);
+      else ps.emitter.position.set(opts.pos.x, opts.pos.y, opts.pos.z);
+    }
+    return quarksFx.addSystems(systems, opts.attach ?? null);
+  }
+
+  /**
+   * `.part` / INI **通用**：拿到可停止句柄（复用 `spawn` 同一份解析与转换，不写第二份）。
    *
    * 见接口处的说明：飞出物到点要 `stop()`（原版 `SetStop`/`FadeStop`）。
    */
@@ -234,16 +268,22 @@ export function createEffectManager(quarks: QuarksRuntime | null = null): Effect
     pending++;
     try {
       const entry = lookupEffect(name);
-      if (!entry || entry.family !== 'part') {
-        reportFallback('fx', `「${name}」要可停止句柄，但它`
-          + (entry ? `是 ${entry.family} 资产「${entry.path}」` : '不在清单里'));
+      if (!entry) {
+        reportFallback('fx', `「${name}」要可停止句柄，但它不在清单里（重跑 npm run fx-names）`);
         return null;
       }
-      const part = await loadPartByRef(entry);
-      if (!part) return null;                      // 失败原因已由注册表上报
+      const asset = await loadByEntry(entry);
+      if (!asset) return null;                     // 失败原因已由注册表上报
+      if (asset.family === 'part') {
+        loaded++;
+        partDiag = asset.part.diag;
+        return await spawnViaQuarks(asset.part.system, opts, asset.part.name);
+      }
+      // INI 广告板也有"停发"这回事（原版 `SetStop` 对任何 primitive 都成立）；
+      // `loop: true` 的系统**必须**能停，否则会一直循环发射。
       loaded++;
-      partDiag = part.diag;
-      return await spawnViaQuarks(part.system, opts, part.name);
+      diag = asset.effect.diag;
+      return await spawnIni(asset.effect, name, opts);
     } finally {
       pending--;
     }

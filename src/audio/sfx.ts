@@ -536,14 +536,13 @@ export const CRITICAL_SOUND_CODE = 16;
  *   · 失败（拾取/拿起/放下/交换失败）      → `denied`（那个提示音）；
  *   · 界面按钮                            → `click`（原版 `sinSoundWav[0]`）。
  */
-export type UiSound = 'click' | 'denied' | 'cancel' | 'open' | 'levelup';
+export type UiSound = 'click' | 'denied' | 'cancel' | 'open';
 
 const UI_SOUNDS: Record<UiSound, string> = {
   click: 'wav/effects/items/interface-on.wav',   // 原版 sinSoundWav[0]：面板/按钮的界面音
   denied: 'wav/effects/menu/button01.wav',       // **只给失败用**（用户 2026-09-14：它本来就是提示音）
   cancel: 'wav/effects/menu/cancel01.wav',
   open: 'wav/effects/menu/turning01.wav',        // 语义推断：翻页/展开
-  levelup: 'wav/effects/menu/level up.wav',
 };
 
 /* ─────────── 界面点击音 ─────────── */
@@ -685,9 +684,18 @@ export const sfx = {
     if (file) start(file, opts);
   },
 
-  /** 升级音（原版 skILL_SOUND_LEARN 亦用于升级提示） */
-  playLevelUp(): void {
-    start(UI_SOUNDS.levelup, { priority: true });
+  /**
+   * **升级音** —— 原版 `esPlaySound(7, …)`，即 `esSoundWav[7] = wav\Effects\event\level UP.wav`
+   * （`effectsnd.cpp:342` 逐字；两个调用点：`playsub.cpp:1310` 自己升级音量 400、
+   * `character.cpp:9157` 看见别人升级 `GetDistVolume(pX,pY,pZ)` ⇒ **同一条音、按距离衰减**）。
+   *
+   * ⚠ 此前这里播的是 `wav/effects/menu/level up.wav` —— **另一支文件**，且 `generic[7]` 才是
+   * 源码那支（`menu/*` 整套在原版源码里一处引用都没有，见 `UiSound` 的说明）。
+   * 现在走 `playGeneric(7)`，并接受 `opts.pos`（旁观者用距离衰减，与原版一致）。
+   */
+  playLevelUp(opts?: PlayOpts): void {
+    const file = tables.generic[7];
+    if (file) start(file, opts ?? { priority: true });
   },
 
   /* ── 设置（系统设置面板） ── */

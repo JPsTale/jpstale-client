@@ -1055,10 +1055,22 @@ onMessage((msg: jpt.base.ServerMessage) => {
       break;
     }
     case 'levelUpBroadcast': {
-      // 升级：自机播升级音 + 闪光；他人只播闪光（等级数值由服务端权威推送）
+      // 升级：**自己与旁观者都播**升级音 + 特效（等级数值由服务端权威推送）。
+      // 原版两处调用点：`playsub.cpp:1310`（自己，音量 400）与 `character.cpp:9157`（看见别人升级，
+      // `esPlaySound(7, GetDistVolume(pX,pY,pZ))` ⇒ 同一条音、按距离衰减）。
       const lb = msg.levelUpBroadcast!;
       const pid = Number(lb.playerId ?? 0);
-      if (worldView.isSelf(pid)) sfx.playLevelUp();
+      const isSelf = worldView.isSelf(pid);
+      const at = worldView.unitFeetPos(pid);
+      if (isSelf) {
+        sfx.playLevelUp();                      // 原版 `esPlaySound(7, 400)`：自己，2D 优先音
+      } else if (at) {
+        sfx.playLevelUp({ pos: at });           // 原版 `esPlaySound(7, GetDistVolume(pX,pY,pZ))`
+      } else {
+        // 那个玩家不在视野里（服务端按 AOI 半径广播，边界上可能收得到）：**不放音也不放特效** ——
+        // 不退回"贴在耳边"的 2D 音（原版这条路的音量本来就来自距离）
+        break;
+      }
       worldView.spawnLevelUpEffect(pid);
       break;
     }
