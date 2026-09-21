@@ -152,6 +152,22 @@ export async function smokeTest(mapId: number, outDir: string, logFile = '_bake.
   unloadDecor([], scene);
   b.dispose();
   renderer.dispose();
+  // 冒烟也要写**本轮完成标记**：脚本的验收一律以它为准（见 `runBake` 末尾的说明），
+  // 不写的话脚本会一直等 `done.json`，直到 120s 看门狗判"卡住"——「冒烟挂了」其实是"没写标记"。
+  const ok = visible > 0 ? 1 : 0;
+  const marker = {
+    runId: logFile,
+    ok,
+    failed: 1 - ok,
+    requested: 1,
+    bakedIds: ok ? [mapId] : [],
+    failedIds: ok ? [] : [mapId],
+    smoke: true,
+    visiblePixels: visible,
+    finishedAt: new Date().toISOString(),
+  };
+  await putFile(`${outDir}/${logFile.replace(/\.log$/, '')}.done.json`,
+    new Blob([JSON.stringify(marker, null, 2)], { type: 'application/json' }));
   return visible;
 }
 

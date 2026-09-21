@@ -166,43 +166,43 @@ function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Li
     out.push({ section: true, value: '' });
     const job = jobName(it.jobCodeMask);
     if (job) out.push({ specHeader: true, value: t('itemtip.specHeader', { job }) });
-    if (it.specAbsorb > 0) out.push({ spec: true, label: t('itemtip.absorb'), value: (it.specAbsorb / 10).toFixed(1) });
-    if (it.specLevAttackRating > 0) out.push({ spec: true, label: t('itemtip.hit'), value: `Lv/${it.specLevAttackRating}` });
-    if (it.specLevDamageMax > 0) out.push({ spec: true, label: t('itemtip.atk'), value: `Lv/${it.specLevDamageMax}` });
-    if (it.specAttackSpeed > 0) out.push({ spec: true, label: t('itemtip.attackSpeed'), value: String(it.specAttackSpeed) });
-    if (it.specCritical > 0) out.push({ spec: true, label: t('itemtip.crit'), value: `${it.specCritical}%` });
-    if (it.specDefence > 0) out.push({ spec: true, label: t('itemtip.def'), value: String(it.specDefence) });
-    if (it.specBlockRating > 0) out.push({ spec: true, label: t('itemtip.block'), value: `${Math.round(it.specBlockRating / 10)}%` });
-    if (it.specSpeed > 0) out.push({ spec: true, label: t('itemtip.speed'), value: (it.specSpeed / 10).toFixed(1) });
-    if (it.specShootingRange > 0) out.push({ spec: true, label: t('itemtip.range'), value: String(it.specShootingRange) });
-    if (it.specMagicMastery > 0) out.push({ spec: true, label: t('itemtip.magicMastery'), value: (it.specMagicMastery / 10).toFixed(1) });
+    if (it.specAbsorb > 0) out.push({ spec: true, label: t('itemtip.specAbsorb'), value: (it.specAbsorb / 10).toFixed(1) });
+    if (it.specLevAttackRating > 0) out.push({ spec: true, label: t('itemtip.specHit'), value: `Lv/${it.specLevAttackRating}` });
+    if (it.specLevDamageMax > 0) out.push({ spec: true, label: t('itemtip.specAtk'), value: `Lv/${it.specLevDamageMax}` });
+    if (it.specAttackSpeed > 0) out.push({ spec: true, label: t('itemtip.specAttackSpeed'), value: String(it.specAttackSpeed) });
+    if (it.specCritical > 0) out.push({ spec: true, label: t('itemtip.specCrit'), value: `${it.specCritical}%` });
+    if (it.specDefence > 0) out.push({ spec: true, label: t('itemtip.specDef'), value: String(it.specDefence) });
+    if (it.specBlockRating > 0) out.push({ spec: true, label: t('itemtip.specBlock'), value: `${Math.round(it.specBlockRating / 10)}%` });
+    if (it.specSpeed > 0) out.push({ spec: true, label: t('itemtip.specSpeed'), value: (it.specSpeed / 10).toFixed(1) });
+    if (it.specShootingRange > 0) out.push({ spec: true, label: t('itemtip.specRange'), value: String(it.specShootingRange) });
+    if (it.specMagicMastery > 0) out.push({ spec: true, label: t('itemtip.specMagicMastery'), value: (it.specMagicMastery / 10).toFixed(1) });
     const specRes: [string, number][] = [
-      [t('itemtip.resBionic'), it.specResBionic],
-      [t('itemtip.resEarth'), it.specResEarth],
-      [t('itemtip.resFire'), it.specResFire],
-      [t('itemtip.resIce'), it.specResIce],
-      [t('itemtip.resLightning'), it.specResLighting],
-      [t('itemtip.resPoison'), it.specResPoison],
-      [t('itemtip.resWater'), it.specResWater],
-      [t('itemtip.resWind'), it.specResWind],
+      [t('itemtip.specResBionic'), it.specResBionic],
+      [t('itemtip.specResEarth'), it.specResEarth],
+      [t('itemtip.specResFire'), it.specResFire],
+      [t('itemtip.specResIce'), it.specResIce],
+      [t('itemtip.specResLightning'), it.specResLighting],
+      [t('itemtip.specResPoison'), it.specResPoison],
+      [t('itemtip.specResWater'), it.specResWater],
+      [t('itemtip.specResWind'), it.specResWind],
     ];
     for (const [label, v] of specRes) if (v !== 0) out.push({ spec: true, label, value: String(v) });
     const specLevRes: [string, number][] = [
-      [t('itemtip.resBionic'), it.specLevResBionic],
-      [t('itemtip.resEarth'), it.specLevResEarth],
-      [t('itemtip.resFire'), it.specLevResFire],
-      [t('itemtip.resIce'), it.specLevResIce],
-      [t('itemtip.resLightning'), it.specLevResLighting],
-      [t('itemtip.resPoison'), it.specLevResPoison],
-      [t('itemtip.resWater'), it.specLevResWater],
-      [t('itemtip.resWind'), it.specLevResWind],
+      [t('itemtip.specResBionic'), it.specLevResBionic],
+      [t('itemtip.specResEarth'), it.specLevResEarth],
+      [t('itemtip.specResFire'), it.specLevResFire],
+      [t('itemtip.specResIce'), it.specLevResIce],
+      [t('itemtip.specResLightning'), it.specLevResLighting],
+      [t('itemtip.specResPoison'), it.specLevResPoison],
+      [t('itemtip.specResWater'), it.specLevResWater],
+      [t('itemtip.specResWind'), it.specLevResWind],
     ];
     for (const [label, v] of specLevRes) if (v !== 0) out.push({ spec: true, label, value: `Lv/${v}` });
-    if (it.specLevLife > 0) out.push({ spec: true, label: t('itemtip.incLife'), value: `Lv/${it.specLevLife}` });
-    if (it.specLevMana > 0) out.push({ spec: true, label: t('itemtip.incMana'), value: `Lv/${it.specLevMana}` });
-    if (it.specPerLifeRegen > 0) out.push({ spec: true, label: t('itemtip.regenLife'), value: (it.specPerLifeRegen / 100).toFixed(2) });
-    if (it.specPerManaRegen > 0) out.push({ spec: true, label: t('itemtip.regenMana'), value: (it.specPerManaRegen / 100).toFixed(2) });
-    if (it.specPerStaminaRegen > 0) out.push({ spec: true, label: t('itemtip.regenStm'), value: (it.specPerStaminaRegen / 100).toFixed(2) });
+    if (it.specLevLife > 0) out.push({ spec: true, label: t('itemtip.specMaxHpBoost'), value: `Lv/${it.specLevLife}` });
+    if (it.specLevMana > 0) out.push({ spec: true, label: t('itemtip.specMaxMpBoost'), value: `Lv/${it.specLevMana}` });
+    if (it.specPerLifeRegen > 0) out.push({ spec: true, label: t('itemtip.specRegenLife'), value: (it.specPerLifeRegen / 100).toFixed(2) });
+    if (it.specPerManaRegen > 0) out.push({ spec: true, label: t('itemtip.specRegenMana'), value: (it.specPerManaRegen / 100).toFixed(2) });
+    if (it.specPerStaminaRegen > 0) out.push({ spec: true, label: t('itemtip.specRegenStm'), value: (it.specPerStaminaRegen / 100).toFixed(2) });
   }
   return out;
 }

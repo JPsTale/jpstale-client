@@ -48,10 +48,15 @@ npm run bake-maps -- --all --scale=8
 1. **`OrthographicCamera` 的 left/right/top/bottom 是"相对相机位置"的，不是世界坐标。**
    相机放在取景框中心时若把绝对坐标塞进去，等于偏移算两次 —— 整张图被推出画面，
    表现是"draw call 有、一个像素都没有"。正确写法：对称的半宽高 + 相机放中心。
-2. **必须调用 `MapRenderer.render(camera)`**（运行时的**每帧**入口，见 `WorldView` 渲染循环）。
-   它做分格剔除 + 索引打包（`setDrawRange`）；不调的话几何索引缓冲还是全 0（退化三角形），
-   同样表现为"提交了几万个三角面但画不出东西"。调用前要先把 `camera.matrixWorldInverse` 算好
-   （它读这个矩阵做视锥判定）。
+2. **要按运行时的可见结果出图，就得调 `MapRenderer.render(camera)`**（运行时的**每帧**入口，
+   见 `WorldView` 渲染循环）。它做两级剔除并 `setDrawRange(0, packed)` 把绘制范围**收窄**到
+   可见的那批面。调用前要先把 `camera.matrixWorldInverse` 算好（它读这个矩阵做视锥判定）。
+
+   ⚠ **契约在 2026-09-21 变了**：以前几何的索引缓冲初始为**全 0**（退化三角形），**不调 `render()`
+   就一个像素都画不出**；现在是"**恒等索引 + 全量 drawRange**"，几何天生可画，`render()` 只负责
+   收窄。所以漏调的后果从"整张图空白"变成"**画出全量（不做剔除）**" —— 不再静默，但仍然别漏：
+   俯视正交相机的取景已覆盖整张图，可见集合本来就该是全量，**烘图产物不受这次改动影响**
+   （对照见 `npm run verify-map-culling` 的"俯视正交（整图可见）"一行：面数与逐细格判定完全一致）。
 3. **距离雾必须关**（`mapRenderer.setFogRange(0, 0)`）。那是给第三人称的距离雾
    （2400~3000 world 单位就全黑），俯视正交相机必然在 2km 外 —— 不关整张图全黑。
    `uFogRange` 现在是 uniform，**所有材质共享同一个 `Vector2` 实例**（`userData.shader` 要等首帧才存在，

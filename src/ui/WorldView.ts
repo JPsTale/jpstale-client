@@ -6098,6 +6098,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     perfSetCounter('视口宽', root.clientWidth);
     perfSetCounter('视口高', root.clientHeight);
     perfSetCounter('渲染像素比', renderer ? renderer.getPixelRatio() : 0);
+    // 地图剔除的两个自证数字（与 `Draw(整帧)` / `三角形(整帧)` 搭配看）：
+    //   `地图材质` = Σ mapRenderer.drawCallCount（**只算地图**；`Draw(整帧)` 是全部，两者一减就是非地图）
+    //   `剔除(cell)` = Σ 本帧**实际检查过**的细格数（大格子跳表生效时它会比"地图材质 × 覆盖细格"小一个量级）
+    {
+      let mapDraws = 0;
+      let scanned = 0;
+      for (const mh of mapHandles.values()) {
+        mapDraws += mh.mapRenderer.drawCallCount;
+        scanned += mh.mapRenderer.scannedCellCount;
+      }
+      perfSetCounter('地图材质', mapDraws);
+      perfSetCounter('剔除(cell)', scanned);
+    }
     {
       const st = effects?.stats();
       perfSetCounter('特效(活动)', st ? st.active : 0);

@@ -1,8 +1,14 @@
 /**
  * Map Renderer — setDrawRange + CPU index 打包架构。
  * 迁移自 maps/js/map-renderer.js,TS 化;去掉 window.__ptWindAmpScale 全局钩子(恒 1)。
- * 每材质按 cell 排序索引缓冲;CPU 视锥剔除于 cell 级(交集打包到 index buffer 前部)。
- * 顶点着色注入: wind / water / fog / lightmap / 昼夜光 / 火把。
+ *
+ * **剔除是两级的**（2026-09-21 改，见 `KEY_SHIFT` / `blockOfKey` / `render()` 的注释）：
+ *   ① 材质级 AABB → ② **大格子级**（每图一次、所有材质共用；完全在内的大格子直接收下，
+ *   压边界的才逐细格判）。一级只按材质 AABB 判是不够的 —— 铺满全图的材质其 AABB ≈ 整张图，
+ *   永远过不了"整图不可见"，于是每帧都要把它全部细格走一遍（实测 49 万次/帧、150 万个临时对象）。
+ * 细格按**大格子主序**排序（不是 cellKey 升序），跳表才能是连续区间。
+ * 几何按**恒等索引 + 全量 drawRange** 建好（天生可画），`render()` 只负责**收窄**。
+ * 顶点着色注入: wind / water / fog / lightmap / 昼夜光 / 火把 / 动态光。
  */
 import * as THREE from 'three';
 import { DYN_LIGHT_MAX } from './effects/dyn-light.js';
@@ -29,18 +35,53 @@ export interface MatConfig {
   hasAnimation: boolean;
 }
 
-interface CellRange { start: number; count: number; }
+/**
+ * 细格 key 的编码步长：`key = cx * KEY_STRIDE + cz`。
+ * **必须 ≥ 单图细格 Z 数**（cellWorldSize = worldWidth/256 ⇒ Z 数 = 256 × 图高/图宽，
+ * 实测最大 ~302）—— 它只保证编码不自撞，同时让升序排序 = "cx 主序、cz 次序"的行主序，
+ * **大格子跳表就建立在这个行主序上**（同一大格子的细格必然是连续区间）。
+ */
+const KEY_STRIDE = 4096;
+
+/**
+ * 细格**排序键**的高位偏移：`sortKey = block * KEY_SHIFT + cellKey`。
+ *
+ * 为什么细格要按 **大格子主序** 排（而不是单纯按 cellKey 排）：跳表要求"同一个大格子的细格是
+ * **连续区间**"。而 `cellKey = cx*KEY_STRIDE + cz` 的升序是 (cx, cz) 字典序 —— `cz` 会对每个 cx
+ * 完整扫一遍，于是"大格子索引"沿这个顺序**来回震荡**（cz 回绕时跳回本行开头），同一大格子的细格
+ * **不连续**。这不是可以绕过的细节：按 (cx,cz) 序硬建跳表会把细格分错桶（实测外侧世界相机下
+ * 打包面数对不上，见 `scripts/verify-map-culling.ts`）。
+ *
+ * 取 2^21：`cellKey` 上界 = (256-1)*KEY_STRIDE + cz < 2^20，留一倍余量；`block * KEY_SHIFT`
+ * 最大约 600 × 2^21 ≈ 1.3e9，远小于 2^53，故 double 精确、排序无误差。
+ */
+const KEY_SHIFT = 1 << 21;
+
+/** 一个大格子 = `SUPER_CELLS × SUPER_CELLS` 个细格。细格是 `worldWidth/256`（实测 32~45 世界单位），
+ *  故一个大格子约 510~715 世界单位 —— 相对雾距（2400~3000）足够细，剔除不会白画多少。 */
+const SUPER_CELLS = 16;
 
 interface MaterialRenderData {
   matIdx: number;
   mesh: THREE.Mesh;
   geometry: THREE.BufferGeometry;
-  cellLookup: Map<number, CellRange>;
-  cellKeys: Uint32Array;
+  /**
+   * 大格子跳表（**每帧剔除的核心**）：长度 `superCount + 1`，`[superStart[s], superStart[s+1])`
+   * 是"本材质在大格子 s 里占的细格"在下面三张数组里的区间。空格子时区间为空。
+   *
+   * 为什么需要它：一级筛用的是 `aabb`（材质整体包围盒），而**铺满全图的材质其 aabb ≈ 整张图**
+   * （实测 fore-1 有 58 个材质覆盖全图 84~90%，village-2 有 1 个覆盖 100%）—— 这类材质永远过不了
+   * "整图不可见"的判定，于是旧代码每帧都要把它**全部**细格走一遍（village-2 单材质 58,835 个）。
+   * 有了这张表，每帧只走"可见大格子里的细格"，开销才与**看得见多少**挂钩。
+   */
+  superStart: Int32Array;
+  /** 本材质占用的细格（key 升序）、其在 `sortedFaces` 里的面区间起点与个数；三数组等长 */
+  fineKeys: Uint32Array;
+  fineStarts: Uint32Array;
+  fineCounts: Uint32Array;
   sortedFaces: Uint32Array;
   fullIndices: Uint32Array;
   outIndices: Uint32Array;
-  packedCount: number;
   seenFaces: Uint32Array;
   aabb: THREE.Box3;
   faceCount: number;
@@ -49,6 +90,11 @@ interface MaterialRenderData {
   /** 引擎的水面材质（`windMeshBottom & 0x7FF == 0x200`）：运行时用来做水波，
    *  离线烘图时会按它剔除水面（用户 2026-09-15：海水不烘进平面图） */
   isWater: boolean;
+  /** 构建期筛好的特性标记。**不能用 `material.userData.shader` 当筛子**：它要等首帧编译后才存在，
+   *  构建期读不到 ⇒ 三个 updater 无法提前缩到子集。 */
+  hasScroll: boolean;
+  hasWind: boolean;
+  hasWaterTime: boolean;
 }
 
 export interface SceneLightWorld {
@@ -67,6 +113,9 @@ export class MapRenderer {
   worldWidth = 0;
   worldDepth = 0;
   visibleCellCount = 0;
+  /** 本帧**实际检查过**的细格数（剖析器计数器 `剔除(cell)` 用）。与 `visibleCellCount`
+   *  （通过判定的细格数）一起看，就能证明"大格子跳过"真的把工作量压下去了。 */
+  scannedCellCount = 0;
   drawCallCount = 0;
   visibleFaceCount = 0;
   totalFaceCount = 0;
@@ -81,6 +130,64 @@ export class MapRenderer {
   private waterVertSet: Uint8Array | null = null;
   /** 距离雾区间：所有材质的 uFogRange 都引用这一个实例（见 setFogRange） */
   readonly fogRange = new THREE.Vector2(FOG_NEAR, FOG_FAR);
+
+  // ─────────── 大格子（二级剔除）───────────
+  /** 大格子边长 = cellWorldSize × SUPER_CELLS */
+  superCellSize = 0;
+  /** 大格子网格尺寸（细格数 ÷ 16 向上取整）与总数。**三者是公开的**：
+   *  `blockOfKey` 的算法与它们绑定，外部（校验脚本）必须用同一份实现，不许自己再推一遍。 */
+  superX = 0;
+  superZ = 0;
+  superCount = 0;
+  /** 非空大格子清单（构建期算一次）：每帧只测这些。空大格子若进了"可见清单"，
+   *  每个材质都要为它做一次空区间查表 —— 1283 材质 × 几十个空格子就是白白几万次。 */
+  private superUsedList = new Int32Array(0);
+  private superUsedCount = 0;
+
+  // ─────────── 每帧复用缓冲（**热路径零分配**）───────────
+  /** 视锥（每相机一个；`extraCameras` 目前无人使用，但接口保留） */
+  private readonly frustumScratch: THREE.Frustum[] = [];
+  private readonly projScreenScratch = new THREE.Matrix4();
+  /** 细格/大格子判定用的复用盒：旧代码每个 (材质, 细格) 都要 `new Box3(new Vector3, new Vector3)`，
+   *  即每帧约 150 万个对象。盒子的 6 个分量每次原地重写即可。 */
+  private readonly cellBoxScratch = new THREE.Box3();
+  private readonly superBoxScratch = new THREE.Box3();
+  /** 每帧的大格子可见性分类（0=外 / 1=压边界 / 2=完全在内）；`beginBuild` 按 superCount 重分配 */
+  private superMode = new Uint8Array(0);
+  /** 本帧可见大格子（升序）；`beginBuild` 按 superCount 重分配 */
+  private visibleSuper = new Int32Array(0);
+
+  // ─────────── 构建期筛好的 updater 子集 ───────────
+  /** 只有真的带 scroll / wind / water uniform 的材质才进这三张表 —— 三个 updater 因此
+   *  不再每帧遍历全部材质（旧实现是 3 趟 × 全部材质，且对没有该特性的材质也在查 `userData.shader`） */
+  private scrollMats: MaterialRenderData[] = [];
+  private windMats: MaterialRenderData[] = [];
+  private waterMats: MaterialRenderData[] = [];
+
+  // ─────────── 共享 uniform 值实例 ───────────
+  /**
+   * 全图材质**共用同一份值对象**（本文件里 `fogRange` / `uDynLight*` 早已是这么做的）。
+   * 理由：这些值对所有材质**完全相同**（都是每帧一次算出来的全局值）。逐材质各持一份时，
+   * `updateDayNight` 每帧要对 ~950 个材质各 `copy` 8 组场景光 ≈ **4.5 万次 Vector3.copy（实测 1.03ms）**；
+   * 共享后这些循环整个消失。`uTorchRange` 是 float（标量，无法共享引用），故单独按"变了才写"处理。
+   */
+  private readonly sharedEnvLight = new THREE.Vector3();
+  private readonly sharedTorchPos = new THREE.Vector3();
+  private readonly sharedTorchColor = new THREE.Vector3();
+  private readonly sharedSceneLightPos = Array.from({ length: 8 }, () => new THREE.Vector3());
+  private readonly sharedSceneLightColor = Array.from({ length: 8 }, () => new THREE.Vector3());
+  private readonly sharedSceneLightRange = new Float32Array(8);
+  private torchRangeApplied = 0;
+  /** 动态光池的共享数组（`updateDayNight` 第一次拿到时把已建材质切过去；之后新建的材质直接用它） */
+  private sharedDynPos: Float32Array | null = null;
+  private sharedDynCol: Float32Array | null = null;
+
+  // ─────────── 相机未变的快路径 ───────────
+  /** 上一帧打包时的相机：投影矩阵 + 视图矩阵各 16 个 double，位相等 ⇒ 视锥完全相同 ⇒
+   *  上一帧的打包结果与 `mesh.visible` 仍然有效，整张图跳过重打包，**也不置 `needsUpdate`**
+   *  （静止帧因此不再付每帧约 1.65MB 的索引重传）。 */
+  private readonly lastCamKey = new Float64Array(32);
+  private hasLastCam = false;
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
@@ -166,6 +273,29 @@ export class MapRenderer {
     this.worldWidth = this.worldMax[0] - this.worldMin[0];
     this.worldDepth = this.worldMax[2] - this.worldMin[2];
     this.cellWorldSize = this.worldWidth / 256;
+    // 细格索引由 `Math.floor((v - min) / cs)` 得到 ⇒ 顶点**正好落在远边界**上时索引可达
+    // `floor(width / cs)`，故格数是"最大索引 + 1"＝ `floor(width/cs) + 1`。
+    // ⚠ 少算这一格不是"少一个空格子"：贴着边界的那一格会落到格网外，建跳表时它的大格子索引
+    //   溢出（`(floor(cx/16)+1) * superZ`）→ **撞进隔壁 cx 带的桶**，于是那一带的材质会把它的面
+    //   一起收下（表现为"多画"）。实测由 `npm run verify-map-culling` 抓出：多画 65~320 面/位姿、
+    //   且总有 1 个材质"跳表区间求和 ≠ 细格总数"。
+    const cellsX = Math.floor(this.worldWidth / this.cellWorldSize) + 1;
+    const cellsZ = Math.floor(this.worldDepth / this.cellWorldSize) + 1;
+    this.superX = Math.ceil(cellsX / SUPER_CELLS);
+    this.superZ = Math.ceil(cellsZ / SUPER_CELLS);
+    this.superCount = this.superX * this.superZ;
+    this.superCellSize = this.cellWorldSize * SUPER_CELLS;
+    // 复用缓冲：容量随 superCount 走（重建一张图会换尺寸，故在此重分配）
+    this.superMode = new Uint8Array(this.superCount);
+    this.visibleSuper = new Int32Array(this.superCount);
+    this.superUsedList = new Int32Array(0);
+    this.superUsedCount = 0;
+    // 本图尚未打包过 ⇒ 首次 render() 必须走完整流程
+    this.hasLastCam = false;
+    this.scrollMats = [];
+    this.windMats = [];
+    this.waterMats = [];
+    this.buildCellTimeMs = 0;
 
     this.totalFaceCount = smdData.nFace;
 
@@ -221,10 +351,26 @@ export class MapRenderer {
 
     this.totalVertexCount = 0;
     this.totalTriangleCount = 0;
+    // 构建期一次性产出"每帧要用的三张子集表 + 非空大格子清单"（每帧再算就是白花）
+    this.scrollMats = [];
+    this.windMats = [];
+    this.waterMats = [];
+    const used = new Uint8Array(this.superCount);
     for (const mrd of this.materials) {
       this.totalVertexCount += mrd.geometry.attributes.position.count;
       this.totalTriangleCount += mrd.fullIndices.length / 3;
+      if (mrd.hasScroll) this.scrollMats.push(mrd);
+      if (mrd.hasWind) this.windMats.push(mrd);
+      if (mrd.hasWaterTime) this.waterMats.push(mrd);
+      const ss = mrd.superStart;
+      for (let s = 0; s < this.superCount; s++) if (ss[s] < ss[s + 1]) used[s] = 1;
     }
+    let n = 0;
+    for (let s = 0; s < this.superCount; s++) if (used[s]) n++;
+    this.superUsedList = new Int32Array(n);
+    this.superUsedCount = n;
+    let w = 0;
+    for (let s = 0; s < this.superCount; s++) if (used[s]) this.superUsedList[w++] = s;
 
     this.buildTimeMs = performance.now() - t0;
   }
@@ -354,16 +500,20 @@ export class MapRenderer {
       for (let cx = cMinX; cx <= cMaxX; cx++) {
         for (let cz = cMinZ; cz <= cMaxZ; cz++) {
           if (!this.triCellIntersect(wx0, wz0, wx1, wz1, wx2, wz2, wmX + cx * cellSize, wmZ + cz * cellSize, cellSize)) continue;
-          pairs.push([cx * 4096 + cz, fi]);
+          const key = cx * KEY_STRIDE + cz;
+          // 排序键 = 大格子主序（见 KEY_SHIFT 说明）
+          pairs.push([this.blockOfKey(key) * KEY_SHIFT + key, fi]);
         }
       }
     }
 
     pairs.sort((x, y) => x[0] - y[0]);
+    // 排序键的低位就是 cellKey
+    for (let i = 0; i < pairs.length; i++) pairs[i]![0] = pairs[i]![0] % KEY_SHIFT;
 
     // 每面只存一份顶点（pos2/nrm2/col2/uv0/uv1 已按 fi 紧凑布局），
-    // cellLookup 记录每个 cell 覆蓋的面区间（面可跨 cell，被多个 cell 记录）；
-    // 渲染时对可见 cell 收集面并去重提交——同一个面跨多个 cell 也只画一次。
+    // `fineKeys/fineStarts/fineCounts` 记录每个细格覆蓋的面区间（面可跨细格，被多个细格记录）；
+    // 渲染时对可见细格收集面并去重提交——同一个面跨多个细格也只画一次。
     const sortedFaces = new Uint32Array(pairs.length);
     for (let ni = 0; ni < pairs.length; ni++) sortedFaces[ni] = pairs[ni][1];
 
@@ -373,26 +523,41 @@ export class MapRenderer {
       fullIndices[fi * 3 + 1] = fi * 3 + 1;
       fullIndices[fi * 3 + 2] = fi * 3 + 2;
     }
-    const outIndices = new Uint32Array(nFaces * 3).fill(0);
+    // ⚠ 索引缓冲**初始化为恒等置换**（而不是全 0），并把 drawRange 设成全量：
+    //   全 0 时每个三角形都是退化三角形（(0,0,0)），必须等第一次 `render()` 打包完才画得出东西
+    //   —— 那是条**静默**契约（漏调 `render()` 的表现是"提交了几万个三角面但一个像素都没有"，见
+    //   `docs/planemap-bake.md §二.2`）。恒等置换下几何"天生可画"，`render()` 只负责**收窄**它。
+    const outIndices = new Uint32Array(fullIndices);
 
-    const cellKeys = new Uint32Array(pairs.length);
-    for (let ni = 0; ni < pairs.length; ni++) cellKeys[ni] = pairs[ni][0];
-
-    const cellLookup = new Map<number, CellRange>();
-    if (pairs.length > 0) {
-      let cellStart = 0;
-      let currentCell = pairs[0][0];
-      let cellCount = 0;
+    // 紧凑化成三张等长数组（key 升序 ⇒ 同一大格子的细格必然是连续区间）
+    const fineCellCount = (() => {
+      let n = 0;
+      for (let i = 0; i < pairs.length; i++) if (i === 0 || pairs[i][0] !== pairs[i - 1][0]) n++;
+      return n;
+    })();
+    const fineKeys = new Uint32Array(fineCellCount);
+    const fineStarts = new Uint32Array(fineCellCount);
+    const fineCounts = new Uint32Array(fineCellCount);
+    {
+      let w = 0, start = 0, cur = pairs.length > 0 ? pairs[0][0] : -1, cnt = 0;
       for (let i = 0; i < pairs.length; i++) {
-        if (pairs[i][0] !== currentCell) {
-          cellLookup.set(currentCell, { start: cellStart, count: cellCount });
-          currentCell = pairs[i][0];
-          cellStart = i;
-          cellCount = 0;
+        if (pairs[i][0] !== cur) {
+          if (w > 0 || cnt > 0) { fineKeys[w] = cur; fineStarts[w] = start; fineCounts[w] = cnt; w++; }
+          cur = pairs[i][0]; start = i; cnt = 0;
         }
-        cellCount += 1;
+        cnt++;
       }
-      cellLookup.set(currentCell, { start: cellStart, count: cellCount });
+      if (pairs.length > 0) { fineKeys[w] = cur; fineStarts[w] = start; fineCounts[w] = cnt; w++; }
+    }
+    // 大格子跳表：细格已按**大格子主序**排好（见 `KEY_SHIFT`），故大格子索引单调不减 ⇒ 单趟分桶即可。
+    const superStart = new Int32Array(this.superCount + 1);
+    {
+      let w = 0;
+      for (let s = 0; s < this.superCount; s++) {
+        superStart[s] = w;
+        while (w < fineCellCount && this.blockOfKey(fineKeys[w]!) <= s) w++;
+      }
+      superStart[this.superCount] = w;
     }
     this.buildCellTimeMs = (this.buildCellTimeMs || 0) + (performance.now() - cellBuildStart);
 
@@ -404,6 +569,7 @@ export class MapRenderer {
 
     if (uv1) geom.setAttribute('aLightMapUv', new THREE.BufferAttribute(uv1, 2));
     geom.setIndex(new THREE.BufferAttribute(outIndices, 1));
+    geom.setDrawRange(0, nFaces * 3);   // 与恒等索引配套 = 全量可画（`render()` 之后收窄）
 
     const waterEdgeKind = waterEdgeCount > 0;
     if (waterEdgeKind) geom.setAttribute('aWaterEdge', new THREE.BufferAttribute(waterEdge!, 1));
@@ -415,15 +581,17 @@ export class MapRenderer {
     mesh.userData.mapMesh = true;
     if (config.isRendLatter) mesh.renderOrder = 1;
 
+    const ud = threeMat.userData as { scrollSlots?: unknown[]; fxWind?: boolean; fxWaterTime?: boolean };
     return {
       matIdx,
       mesh,
       geometry: geom,
-      cellLookup,
-      cellKeys,
+      superStart,
+      fineKeys,
+      fineStarts,
+      fineCounts,
       fullIndices,
       outIndices,
-      packedCount: 0,
       sortedFaces,
       seenFaces: new Uint32Array(nFaces),
       aabb: new THREE.Box3(
@@ -434,7 +602,18 @@ export class MapRenderer {
       isTransparent: config.isTransparent,
       hasAnimation: config.hasAnimation,
       isWater: waterKind,
+      hasScroll: !!(ud.scrollSlots && ud.scrollSlots.length > 0),
+      hasWind: ud.fxWind === true,
+      hasWaterTime: ud.fxWaterTime === true,
     };
+  }
+
+  /** 细格 key → 大格子索引（`sx * superZ + sz`）。**必须与细格排序键同一套算法**（见 `KEY_SHIFT`）。
+   *  公开是为了让校验脚本用同一份实现 —— 这种"两处各写一遍公式"正是会静默漂移的那类代码。 */
+  blockOfKey(key: number): number {
+    const cx = (key / KEY_STRIDE) | 0;
+    const cz = key % KEY_STRIDE;
+    return ((cx / SUPER_CELLS) | 0) * this.superZ + ((cz / SUPER_CELLS) | 0);
   }
 
   private pointInTriangle(ax: number, az: number, bx: number, bz: number, cx: number, cz: number, px: number, pz: number): boolean {
@@ -581,6 +760,10 @@ export class MapRenderer {
     const vWindDZ = (windKind === 3 || windKind === 4) ? baseWindMagScaled : 0;
 
     threeMat.userData.scrollSlots = scrollSlot;
+    // 构建期特性标记：`updateScroll/Wind/Water` 靠它们把遍历缩到子集。
+    // **不能用 `userData.shader` 代替** —— 它要等首帧编译后才存在，构建期读不到。
+    threeMat.userData.fxWind = windKind !== 0;
+    threeMat.userData.fxWaterTime = waterKind || waterEdgeKind;
     threeMat.onBeforeCompile = (shader) => {
       let declInline = '#include <common>';
       if (needLM || need2Tex) {
@@ -741,16 +924,20 @@ export class MapRenderer {
         if (needLM) shader.uniforms.uLightMap = { value: config.lightmapTex };
         if (need2Tex) shader.uniforms.uSecondTex = { value: config.secondTex };
         shader.uniforms.uFogRange = { value: this.fogRange };
-        shader.uniforms.uEnvLight = { value: new THREE.Vector3(0, 0, 0) };
-        shader.uniforms.uTorchPos = { value: new THREE.Vector3(0, 0, 0) };
-        shader.uniforms.uTorchColor = { value: new THREE.Vector3(0, 0, 0) };
-        shader.uniforms.uTorchRange = { value: 0 };
-        shader.uniforms.uSceneLightPos = { value: Array.from({ length: 8 }, () => new THREE.Vector3()) };
-        shader.uniforms.uSceneLightColor = { value: Array.from({ length: 8 }, () => new THREE.Vector3()) };
-        shader.uniforms.uSceneLightRange = { value: new Float32Array(8) };
-        // 动态光：**共享引用**（池原地改内容 ⇒ three 每次绘制自动上传，无需每帧 JS）
-        shader.uniforms.uDynLightPos = { value: new Float32Array(DYN_LIGHT_MAX * 4) };
-        shader.uniforms.uDynLightColor = { value: new Float32Array(DYN_LIGHT_MAX * 4) };
+        // **共享值实例**（见字段区的说明）：这些值对所有材质完全相同，逐材质各持一份会让
+        // `updateDayNight` 每帧做材质数 × 8 组 × 2 次 Vector3.copy（实测 1.03ms）。共享后它只写一次。
+        shader.uniforms.uEnvLight = { value: this.sharedEnvLight };
+        shader.uniforms.uTorchPos = { value: this.sharedTorchPos };
+        shader.uniforms.uTorchColor = { value: this.sharedTorchColor };
+        shader.uniforms.uTorchRange = { value: this.torchRangeApplied };
+        shader.uniforms.uSceneLightPos = { value: this.sharedSceneLightPos };
+        shader.uniforms.uSceneLightColor = { value: this.sharedSceneLightColor };
+        shader.uniforms.uSceneLightRange = { value: this.sharedSceneLightRange };
+        // 动态光：**共享引用**（池原地改内容 ⇒ three 每次绘制自动上传，无需每帧 JS）。
+        // 池已就绪（`updateDayNight` 跑过）就直接挂它的数组；否则先挂本渲染器的占位数组，
+        // 由 `updateDayNight` 的首次切换把已建材质统一换过去 —— 这样**构建顺序无关**。
+        shader.uniforms.uDynLightPos = { value: this.sharedDynPos ?? new Float32Array(DYN_LIGHT_MAX * 4) };
+        shader.uniforms.uDynLightColor = { value: this.sharedDynCol ?? new Float32Array(DYN_LIGHT_MAX * 4) };
       }
 
       if (scrollU0 || scrollU1) shader.uniforms.uScrollU = { value: new THREE.Vector2(0, 0) };
@@ -766,15 +953,20 @@ export class MapRenderer {
     return threeMat;
   }
 
+  // 下面三个 updater 都只遍历**构建期筛好的子集**（`endBuild` 填）。
+  // 旧实现各自遍历全部材质（一张图 250~410 个），且对没有该特性的材质也在查 `userData.shader`。
+  // ⚠ 仍要查 `userData.shader`：材质要等首帧编译后才拿得到 shader 对象。
   updateScroll(animMs: number): void {
+    if (this.scrollMats.length === 0) return;
     const ms = animMs | 0;
     const baseW = (ms >>> 6) & 0xff;
     const baseFw = baseW / 256;
-    for (const mrd of this.materials) {
+    for (const mrd of this.scrollMats) {
       const threeMat = mrd.mesh.material as THREE.MeshBasicMaterial;
       const shader = threeMat.userData.shader;
+      if (!shader) continue;
       const slots = threeMat.userData.scrollSlots as Array<{ slot: number; kind: 'scroll' | 'slow'; mult: number; factor: number }> | undefined;
-      if (!shader || !slots || slots.length === 0) continue;
+      if (!slots || slots.length === 0) continue;
       const off = shader.uniforms.uScrollU ? shader.uniforms.uScrollU.value as THREE.Vector2 : null;
       if (!off) continue;
       for (const s of slots) {
@@ -792,25 +984,25 @@ export class MapRenderer {
   }
 
   updateWind(animMs: number): void {
+    if (this.windMats.length === 0) return;
     const ms = animMs | 0;
     let ttCnt = (ms >>> 2) & 0xff;
     const ttFlag = (ms >>> 10) & 1;
     if (!ttFlag) ttCnt = 255 - ttCnt;
     const uTime = (ttCnt / 255) * Math.PI * 2;
-    for (const mrd of this.materials) {
-      const threeMat = mrd.mesh.material as THREE.MeshBasicMaterial;
-      const shader = threeMat.userData.shader;
-      if (!shader || !shader.uniforms.uWindTime) continue;
+    for (const mrd of this.windMats) {
+      const shader = (mrd.mesh.material as THREE.MeshBasicMaterial).userData.shader;
+      if (!shader) continue;
       shader.uniforms.uWindTime.value = uTime;
     }
   }
 
   updateWater(animMs: number): void {
+    if (this.waterMats.length === 0) return;
     const ms = animMs | 0;
-    for (const mrd of this.materials) {
-      const threeMat = mrd.mesh.material as THREE.MeshBasicMaterial;
-      const shader = threeMat.userData.shader;
-      if (!shader || !shader.uniforms.uWaterTime) continue;
+    for (const mrd of this.waterMats) {
+      const shader = (mrd.mesh.material as THREE.MeshBasicMaterial).userData.shader;
+      if (!shader) continue;
       shader.uniforms.uWaterTime.value = ms;
     }
   }
@@ -827,113 +1019,263 @@ export class MapRenderer {
     torchRange: number,
     dyn?: { posRange: Float32Array; colAlpha: Float32Array },
   ): void {
-    for (const mrd of this.materials) {
-      const threeMat = mrd.mesh.material as THREE.MeshBasicMaterial;
-      const shader = threeMat.userData.shader;
-      if (!shader) continue;
-      if (shader.uniforms.uEnvLight) shader.uniforms.uEnvLight.value.copy(envLight);
-      const up = shader.uniforms.uSceneLightPos;
-      const uc = shader.uniforms.uSceneLightColor;
-      const ur = shader.uniforms.uSceneLightRange;
-      if (up && uc && ur) {
-        const n = Math.min(sceneLights.length, 8);
-        for (let i = 0; i < 8; i++) {
-          if (i < n) {
-            (up.value as THREE.Vector3[])[i].copy(sceneLights[i].pos);
-            (uc.value as THREE.Vector3[])[i].copy(sceneLights[i].color);
-            (ur.value as Float32Array)[i] = sceneLights[i].range;
-          } else {
-            (up.value as THREE.Vector3[])[i].set(0, 0, 0);
-            (uc.value as THREE.Vector3[])[i].set(0, 0, 0);
-            (ur.value as Float32Array)[i] = 0;
-          }
-        }
+    // 这些值对**所有材质完全相同**，而材质共用同一批值实例（见字段区说明）⇒ 每帧只写一次。
+    // 旧实现是"逐材质各 copy 8 组场景光" = 材质数 × 8 × 2 次 Vector3.copy ≈ 4.5 万次/帧（实测 1.03ms）。
+    this.sharedEnvLight.copy(envLight);
+    const n = Math.min(sceneLights.length, 8);
+    for (let i = 0; i < 8; i++) {
+      if (i < n) {
+        this.sharedSceneLightPos[i].copy(sceneLights[i].pos);
+        this.sharedSceneLightColor[i].copy(sceneLights[i].color);
+        this.sharedSceneLightRange[i] = sceneLights[i].range;
+      } else {
+        this.sharedSceneLightPos[i].set(0, 0, 0);
+        this.sharedSceneLightColor[i].set(0, 0, 0);
+        this.sharedSceneLightRange[i] = 0;
       }
+    }
+    this.sharedTorchPos.copy(torchPos);
+    this.sharedTorchColor.copy(torchColor);
 
-      if (dyn && shader.uniforms.uDynLightPos
-          && shader.uniforms.uDynLightPos.value !== dyn.posRange) {
+    // `uTorchRange` 是 float（标量，无法共享同一个对象引用）⇒ 只能逐材质写。
+    // 好在它几乎不变，故"变了才写一趟"；构建期读 `torchRangeApplied` 初始化，
+    // 于是**构建顺序无关**（新材质天生带着当前值）。
+    if (torchRange !== this.torchRangeApplied) {
+      this.torchRangeApplied = torchRange;
+      for (const mrd of this.materials) {
+        const shader = (mrd.mesh.material as THREE.MeshBasicMaterial).userData.shader;
+        if (shader?.uniforms.uTorchRange) shader.uniforms.uTorchRange.value = torchRange;
+      }
+    }
+
+    // 动态光池换实例时（第一次拿到、或宿主重建池）把**已建**材质切到共享数组上；之后建的直接用它。
+    if (dyn && this.sharedDynPos !== dyn.posRange) {
+      this.sharedDynPos = dyn.posRange;
+      this.sharedDynCol = dyn.colAlpha;
+      for (const mrd of this.materials) {
+        const shader = (mrd.mesh.material as THREE.MeshBasicMaterial).userData.shader;
+        if (!shader?.uniforms.uDynLightPos) continue;
         shader.uniforms.uDynLightPos.value = dyn.posRange;
         shader.uniforms.uDynLightColor.value = dyn.colAlpha;
       }
-if (shader.uniforms.uTorchPos) shader.uniforms.uTorchPos.value.copy(torchPos);
-      if (shader.uniforms.uTorchColor) shader.uniforms.uTorchColor.value.copy(torchColor);
-      if (shader.uniforms.uTorchRange) shader.uniforms.uTorchRange.value = torchRange;
     }
   }
 
+  /** 相机位姿是否与上次打包时**逐位相同**（相同则视锥完全相同，可整图跳过重打包） */
+  private camUnchanged(camera: THREE.Camera): boolean {
+    const k = this.lastCamKey;
+    const pe = camera.projectionMatrix.elements;
+    const ve = camera.matrixWorldInverse.elements;
+    for (let i = 0; i < 16; i++) if (k[i] !== pe[i]) return false;
+    for (let i = 0; i < 16; i++) if (k[16 + i] !== ve[i]) return false;
+    return true;
+  }
+
+  /**
+   * 盒子是否**完全落在**视锥内（`Frustum.containsBox` 在 three r165 里**并不存在** ——
+   * 只有 `Box3/Box2.containsBox`，类型定义里也没有，别照名字假设）。
+   *
+   * 符号约定（实测 `three@0.165`）：平面法线**朝内**，`distanceToPoint` 在内侧为**正**。
+   * 于是两种判定取的是**相反**的角：
+   *   - `Frustum.intersectsBox`（有没有交集）取"沿法线最远"的角，判 `distance < 0 ⇒ 无交集`；
+   *   - 本函数（是否完全在内）取"沿法线最近"的角，判 `distance < 0 ⇒ 没全在内`（有角在外侧）。
+   * ⚠ 这两条只差**取哪个角 + 不等号方向**，写错任何一处都表现为"把只相交、没全在内的盒子当成
+   *   完全在内"⇒ 多画面（不是少画，所以画面看不出问题）。实测由 `verify-map-culling` 抓出
+   *   （多画 47~234 面/位姿、零漏画）。
+   */
+  private boxInFrustum(f: THREE.Frustum, box: THREE.Box3): boolean {
+    if (!f.planes) return true;
+    for (let i = 0; i < 6; i++) {
+      const pl = f.planes[i];
+      const nx = pl.normal.x, ny = pl.normal.y, nz = pl.normal.z;
+      const x = nx >= 0 ? box.min.x : box.max.x;
+      const y = ny >= 0 ? box.min.y : box.max.y;
+      const z = nz >= 0 ? box.min.z : box.max.z;
+      if (nx * x + ny * y + nz * z + pl.constant < 0) return false;
+    }
+    return true;
+  }
+
+  private recordCam(camera: THREE.Camera): void {
+    const k = this.lastCamKey;
+    const pe = camera.projectionMatrix.elements;
+    const ve = camera.matrixWorldInverse.elements;
+    for (let i = 0; i < 16; i++) { k[i] = pe[i]; k[16 + i] = ve[i]; }
+    this.hasLastCam = true;
+  }
+
+  /**
+   * 每帧入口：**只负责收窄**。几何建好时就是"恒等索引 + 全量 drawRange"，不调它也能画全量。
+   *
+   * 两级剔除，**画出来的面与旧实现逐面相同**：
+   *   ① 材质级 `mrd.aabb`（旧行为逐字保留）：整张图不在视锥里时这是最便宜的一刀。
+   *   ② 大格子级：**每图一次、所有材质共用**。大格子分三类 —— 0=视锥外（整块跳过）、
+   *      1=压边界（逐细格判，判据与旧代码逐字相同）、2=完全在内（细格全部收下，不再逐个判）。
+   *
+   * 为什么 ② 是等价的：细格落在大格子内（跳表按构造保证），`containsBox(大格子)` ⇒ 细格也在视锥内
+   * ⇒ 旧的 `intersectsBox(细格)` 必然为真 ⇒ 旧代码本来就会收下它。多相机时两类判定都取"全部视锥"
+   * （与旧 `testFrustums` 的 AND 语义一致）。
+   *
+   * 开销因此从"材质 × 它覆盖的**全部**细格"（实测 49 万次/帧，且每格 `new Box3(new Vector3, new Vector3)`
+   * ≈ 150 万个对象）变成"材质 × **可见大格子**里的细格"，**且热路径零分配**。
+   */
   render(camera: THREE.Camera, extraCameras: THREE.Camera[] = []): void {
-    const frustums: THREE.Frustum[] = [];
-    for (const cam of [camera, ...extraCameras]) {
-      const projScreenMatrix = new THREE.Matrix4();
-      projScreenMatrix.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
-      const f = new THREE.Frustum();
-      f.setFromProjectionMatrix(projScreenMatrix);
-      frustums.push(f);
+    // 相机未动 ⇒ 视锥完全相同 ⇒ 上一帧的打包结果与 `mesh.visible` 仍然有效：
+    // 整图跳过重打包，也**不置 `needsUpdate`**（静止帧不再付每帧约 1.65MB 的索引重传）。
+    // ⚠ 只在单相机时走快路径 —— 多相机时只比第一个相机是不完备的。
+    if (this.hasLastCam && extraCameras.length === 0 && this.camUnchanged(camera)) return;
+
+    const cs = this.cellWorldSize;
+    const wmX = this.worldMin[0];
+    const wmZ = this.worldMin[2];
+    const nCam = 1 + extraCameras.length;
+
+    // ① 视锥（复用 scratch；旧实现每帧每图 new 一个 Matrix4 + Frustum）
+    for (let i = 0; i < nCam; i++) {
+      const cam = i === 0 ? camera : extraCameras[i - 1];
+      this.projScreenScratch.multiplyMatrices(cam.projectionMatrix, cam.matrixWorldInverse);
+      let f = this.frustumScratch[i];
+      if (!f) f = this.frustumScratch[i] = new THREE.Frustum();
+      f.setFromProjectionMatrix(this.projScreenScratch);
     }
 
+    // ② 大格子分类（所有材质共用这一次判定）。`superUsedList` 升序 ⇒ `visibleSuper` 也升序，
+    //    而细格在跳表里本就是升序 ⇒ 打包顺序与旧实现（`cellLookup` 的 key 升序）一致。
+    const mode = this.superMode;
+    mode.fill(0);
+    const visSuper = this.visibleSuper;
+    let visCount = 0;
+    let partialCount = 0;
+    {
+      const scs = this.superCellSize;
+      const box = this.superBoxScratch;
+      const y0 = this.worldMin[1], y1 = this.worldMax[1];
+      const sZ = this.superZ;
+      const used = this.superUsedList;
+      for (let ui = 0; ui < this.superUsedCount; ui++) {
+        const s = used[ui];
+        const x0 = wmX + ((s / sZ) | 0) * scs;
+        const z0 = wmZ + (s % sZ) * scs;
+        box.min.set(x0, y0, z0);
+        box.max.set(x0 + scs, y1, z0 + scs);
+        let hit = true;
+        let inside = true;
+        for (let i = 0; i < nCam; i++) {
+          const f = this.frustumScratch[i];
+          if (f.planes && !f.intersectsBox(box)) { hit = false; break; }
+          if (!this.boxInFrustum(f, box)) inside = false;
+        }
+        if (!hit) continue;
+        if (inside) mode[s] = 2;
+        else { mode[s] = 1; partialCount++; }
+        visSuper[visCount++] = s;
+      }
+    }
+    // 整图每个非空大格子都"完全在内"（离线烘图的正交相机必走这条）⇒ 细格不必过任何判据
+    const allVisible = partialCount === 0 && visCount === this.superUsedCount;
+
+    this.scannedCellCount = 0;
     this.visibleCellCount = 0;
     this.drawCallCount = 0;
     this.visibleFaceCount = 0;
 
-    const testFrustums = (box: THREE.Box3): boolean => {
-      for (const f of frustums) {
-        if (f.planes && !f.intersectsBox(box)) return false;
-      }
-      return true;
-    };
-
     const stamp = ++this.renderStamp;
     for (const mrd of this.materials) {
-      if (!testFrustums(mrd.aabb)) {
+      // ① 材质级（旧行为：任一视锥判不出 ⇒ 不可见）
+      let matVisible = true;
+      for (let i = 0; i < nCam; i++) {
+        const f = this.frustumScratch[i];
+        if (f.planes && !f.intersectsBox(mrd.aabb)) { matVisible = false; break; }
+      }
+      if (!matVisible) {
         mrd.mesh.visible = false;
         continue;
       }
 
-      const idxArr = mrd.geometry.index!.array as Uint32Array;
+      const idxArr = mrd.outIndices;      // 与 geometry.index.array 是同一个对象
       const fullIdx = mrd.fullIndices;
       const faces = mrd.sortedFaces;
       const seen = mrd.seenFaces;
+      const ss = mrd.superStart;
+      const fky = mrd.fineKeys;
+      const fst = mrd.fineStarts;
+      const fct = mrd.fineCounts;
+      const cellY0 = mrd.aabb.min.y;
+      const cellY1 = mrd.aabb.max.y;
+      const box = this.cellBoxScratch;
       let packed = 0;
-      for (const [cellKey, range] of mrd.cellLookup) {
-        const cx = Math.floor(cellKey / 4096);
-        const cz = cellKey % 4096;
-        const cellMinX = this.worldMin[0] + cx * this.cellWorldSize;
-        const cellMinZ = this.worldMin[2] + cz * this.cellWorldSize;
-        const cellMaxX = cellMinX + this.cellWorldSize;
-        const cellMaxZ = cellMinZ + this.cellWorldSize;
 
-        const cellAABB = new THREE.Box3(
-          new THREE.Vector3(cellMinX, mrd.aabb.min.y, cellMinZ),
-          new THREE.Vector3(cellMaxX, mrd.aabb.max.y, cellMaxZ),
-        );
-
-        if (!testFrustums(cellAABB)) continue;
-        this.visibleCellCount++;
-        const start = range.start;
-        const end = range.start + range.count;
-        for (let k = start; k < end; k++) {
-          const fi = faces[k];
-          if (seen[fi] === stamp) continue; // 面跨多 cell，去重
-          seen[fi] = stamp;
-          const off = fi * 3;
-          idxArr[packed] = fullIdx[off];
-          idxArr[packed + 1] = fullIdx[off + 1];
-          idxArr[packed + 2] = fullIdx[off + 2];
-          packed += 3;
+      if (allVisible) {
+        // ③ 全可见快路径：按细格升序把所有面收下（顺序与下面那条完全一致，只是省掉跳表与判据）
+        for (let k = 0, kn = fky.length; k < kn; k++) {
+          const st = fst[k], en = st + fct[k];
+          for (let j = st; j < en; j++) {
+            const fi = faces[j];
+            if (seen[fi] === stamp) continue;   // 面跨多细格，去重
+            seen[fi] = stamp;
+            const off = fi * 3;
+            idxArr[packed] = fullIdx[off];
+            idxArr[packed + 1] = fullIdx[off + 1];
+            idxArr[packed + 2] = fullIdx[off + 2];
+            packed += 3;
+          }
+        }
+      } else {
+        for (let vi = 0; vi < visCount; vi++) {
+          const s = visSuper[vi];
+          const a = ss[s], b = ss[s + 1];
+          if (a === b) continue;              // 本材质在这个大格子里没有面
+          const mustTest = mode[s] === 1;
+          for (let k = a; k < b; k++) {
+            if (mustTest) {
+              // 压边界的大格子：逐细格判（判据与旧实现逐字相同，这是"逐面一致"的保证）
+              this.scannedCellCount++;
+              const key = fky[k];
+              const x0 = wmX + ((key / KEY_STRIDE) | 0) * cs;
+              const z0 = wmZ + (key % KEY_STRIDE) * cs;
+              box.min.set(x0, cellY0, z0);
+              box.max.set(x0 + cs, cellY1, z0 + cs);
+              let vis = true;
+              for (let i = 0; i < nCam; i++) {
+                const f = this.frustumScratch[i];
+                if (f.planes && !f.intersectsBox(box)) { vis = false; break; }
+              }
+              if (!vis) continue;
+              this.visibleCellCount++;
+            }
+            const st = fst[k], en = st + fct[k];
+            for (let j = st; j < en; j++) {
+              const fi = faces[j];
+              if (seen[fi] === stamp) continue;
+              seen[fi] = stamp;
+              const off = fi * 3;
+              idxArr[packed] = fullIdx[off];
+              idxArr[packed + 1] = fullIdx[off + 1];
+              idxArr[packed + 2] = fullIdx[off + 2];
+              packed += 3;
+            }
+          }
         }
       }
-      mrd.packedCount = packed;
+
       if (packed === 0) {
         mrd.mesh.visible = false;
+        // ⚠ 顺手把 drawRange 压成空：**three 的 Raycaster 不看 `object.visible`**（只测 layers，
+        //   见 r165 `raycaster` 的 `intersect()`），而 `Mesh.raycast` 会按 `drawRange` 裁剪 ——
+        //   几何建好时 drawRange 是**全量**（为了"天生可画"），若此处留着它，被剔除的材质会以
+        //   **全部面**参与拾取（hover 命中看不见的东西）。压成 0 之后"不可见 = 也不可拾取"，
+        //   语义与 `visible` 一致。
+        mrd.geometry.setDrawRange(0, 0);
         continue;
       }
-      mrd.geometry.index!.needsUpdate = true;
+      mrd.geometry.index!.needsUpdate = true;   // 恒等索引 → 收窄后的索引
       mrd.geometry.setDrawRange(0, packed);
       mrd.mesh.visible = true;
       this.drawCallCount++;
       this.visibleFaceCount += packed / 3;
     }
     this.drawnVertexCount = Math.round(this.visibleFaceCount) * 3;
+    this.recordCam(camera);
   }
 
   dispose(): void {

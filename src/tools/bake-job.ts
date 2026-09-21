@@ -25,6 +25,10 @@ interface BakeJob {
   format: 'png' | 'webp';
   quality: number;
   smoke?: number;
+  /** 本轮独立日志名（脚本传 `_bake-<runId>.log`）。**冒烟分支也必须带上它** ——
+   *  漏传会让冒烟写 `_bake.log` 而脚本去轮询 `_bake-<runId>.log`，表现为"日志 120s 无增长"，
+   *  把"没写对文件名"误报成"冒烟卡住"。完成标记也按它命名。 */
+  logFile?: string;
   debug?: boolean;
   probeOnly?: boolean;
   override?: boolean;
@@ -65,7 +69,7 @@ if (!job) {
 
   const ids = job.all ? FIELDS.map((f) => f.id) : (job.ids ?? []);
   if (job.smoke !== undefined) {
-    smokeTest(job.smoke, job.outDir)
+    smokeTest(job.smoke, job.outDir, job.logFile ?? '_bake.log')
       .then((n) => { say(`冒烟检查：可见像素 ${n}`); document.title = n > 0 ? 'SMOKE OK' : 'SMOKE EMPTY'; })
       .catch((err) => { say('冒烟检查失败 ' + (err instanceof Error ? err.message : String(err))); document.title = 'SMOKE FAILED'; });
   } else if (ids.length === 0) {

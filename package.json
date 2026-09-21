@@ -37,6 +37,7 @@
     "verify-attack-crit-look": "tsx scripts/verify-attack-crit-look.ts",
     "verify-bind-bake": "tsx scripts/verify-bind-bake.ts",
     "verify-loop-driver": "tsx scripts/verify-loop-driver.ts",
+    "verify-map-culling": "tsx scripts/verify-map-culling.ts",
     "docs": "node scripts/gen-docs-preview.mjs"
   },
   "dependencies": {
