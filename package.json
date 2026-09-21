@@ -34,7 +34,8 @@
     "verify-skills": "tsx scripts/verify-skills.ts",
     "verify-skill-trail": "tsx scripts/verify-skill-trail.ts",
     "verify-attack-crit-look": "tsx scripts/verify-attack-crit-look.ts",
-    "docs": "node scripts/gen-docs-preview.mjs"
+    "docs": "node scripts/gen-docs-preview.mjs",
+    "verify-loop-driver": "tsx scripts/verify-loop-driver.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

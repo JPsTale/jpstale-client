@@ -30,6 +30,7 @@ import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { setKeepaliveInterval, clearKeepaliveInterval } from '../core/keepalive-timer.js';
+import { createLoopDriver } from '../app/loop-driver.js';
 import { loadMonsterModel } from '../render/monster-loader.js';
 import {
   fireMonsterAttackEvent, findAttackBone, MONSTER_RANGED, MONSTER_BOW_IDCODE, type MonsterFlySpec,
@@ -610,7 +611,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let skeleton: THREE.Skeleton | null = null;
   let animState: ReturnType<typeof createAnimStateMachine> | null = null;
   let motionList: MotionInfo[] = [];
-  let animFrameId = 0;
+  // 帧循环句柄（rAF id）**不在这里**：谁在驱动这一帧全归 `app/loop-driver.ts`
+  // （它同时是"后台用闹钟驱动"的唯一入口；本文件不再自己排 rAF —— 见 `loopDriver` 的说明）
   /**
    * 自机动画播放器（帧推进 + 求值 + 施加到骨骼）—— **与选角预览/远端/怪物/NPC 同一份实现**
    * （`char/anim-player.ts`）。自机建模时创建；未建模时为 null。
@@ -967,9 +969,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
   window.addEventListener('keydown', (e) => { if (!typingActive()) keys[e.code] = true; });
   window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+  /**
+   * 释放一切"按住的输入"：按键、鼠标按住、目标按下。
+   *
+   * 两个触发点：`window.blur`（点别的应用 → keyup/mouseup 落在别处）与**切到后台**
+   * （`loopDriver.onModeChange`）。后者 2026-09-21 补：切 tab 后同样没有 mouseup/keyup 到达，
+   * 而主循环在后台**照常推进** ⇒ 会用**过期光标坐标**继续驱动朝向/移动（挂机会直线跑进墙），
+   * 且 `targetPressActive` 一直挂着，回前台一抬手就补一次"目标点击"。
+   */
+  function releaseInputs(): void {
+    for (const k of Object.keys(keys)) keys[k] = false;
+    mouseDown = false;
+    targetPressActive = false;
+    if (getCursorMode() === 'pickup') setCursorMode('pickup', false);
+  }
   // 失焦清键：按住方向键时切窗口/点别的应用 → keyup 落在别处，按键状态会**永久卡住**
   // （实测：keys['ArrowUp'] 卡住后相机距离每帧 -8 一直缩到下限）。失焦即全部松开。
-  window.addEventListener('blur', () => { for (const k of Object.keys(keys)) keys[k] = false; });
+  window.addEventListener('blur', releaseInputs);
   // C 键已由全局 KeyBinding 接管（角色状态面板），这里不再注册 debugDump。
   // 调试输出改为挂到 KeyJ（不会与游戏键位冲突）。
   window.addEventListener('keydown', (e) => {
@@ -5404,32 +5420,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // —— 标签页后台保活（完整挂机）——
   // 前台：rAF 驱动（vsync 对齐）。后台：rAF 停摆，改用 Worker 闹钟按 30Hz 驱动同一 renderLoop，
   // 只跳过 GPU 渲染提交；移动/AI/战斗/掉落照常推进，网络心跳/时间同步见 net/transport.ts。
-  // （原理与"为什么不用主线程 setInterval"见 core/keepalive-timer.ts）
-  const BACKGROUND_TICK_MS = 1000 / 30;
-  let bgTimerId = 0;
-  let worldActive = true; // 被 hide() 切走后不再后台保活
+  // 「谁在驱动这一帧」**全部**交给 `app/loop-driver.ts`（唯一实现，状态+生命周期收在一个对象里）。
+  // 这里曾经自己管（`worldActive` + `bgTimerId` + `onVisibilityChange`），漏了两件事：
+  // ① `worldActive` 只置 false 从不置回 ⇒ "回选角再进游戏"后只渲染一帧就永久停摆；
+  // ② "进来时页面已经隐藏"（会话恢复的后台标签页可无手势进世界）没有任何人起闹钟。
+  const loopDriver = createLoopDriver({
+    isHidden: () => document.hidden,
+    raf: (cb) => requestAnimationFrame(cb),
+    cancelRaf: (id) => cancelAnimationFrame(id),
+    scheduleBackground: setKeepaliveInterval,
+    cancelBackground: clearKeepaliveInterval,
+    now: () => performance.now(),
+    subscribeVisibility: (cb) => {
+      document.addEventListener('visibilitychange', cb);
+      return () => document.removeEventListener('visibilitychange', cb);
+    },
+    onFrame: (tsMs, mode) => renderLoop(tsMs, mode),
+    // 切后台即释放按住的输入：否则后台会用**过期光标**继续驱动角色走/转身（挂机会直线跑进墙），
+    // 回前台抬手还会补一次"目标点击"（`targetPressActive` 一直挂着没被抬起过）
+    onModeChange: (m) => { if (m !== 'foreground') releaseInputs(); },
+    // 看门狗纠正驱动方式时说明原因（可见性 API 撒谎 / rAF 被停）—— 不静默（AGENTS #12）
+    onWarn: (detail) => console.warn('[loop] ' + detail),
+  });
 
-  function scheduleNextFrame(): void {
-    // 隐藏时不排 rAF：隐藏页 rAF 不回调，继续排队会在恢复可见时集中触发（帧炸弹）
-    if (!document.hidden && worldActive) animFrameId = requestAnimationFrame(renderLoop);
-  }
-
-  function onVisibilityChange(): void {
-    if (document.hidden) {
-      if (worldActive && !bgTimerId) {
-        bgTimerId = setKeepaliveInterval(() => renderLoop(performance.now()), BACKGROUND_TICK_MS);
-      }
-    } else {
-      if (bgTimerId) { clearKeepaliveInterval(bgTimerId); bgTimerId = 0; }
-      // 后台期间没有新的 rAF 入队；回前台重起一条链（先取消可能残留的，防双链同跑）
-      cancelAnimationFrame(animFrameId);
-      animFrameId = requestAnimationFrame(renderLoop);
-    }
-  }
-  document.addEventListener('visibilitychange', onVisibilityChange);
-
-  function renderLoop(tsMs = 0): void {
-    scheduleNextFrame();
+  /**
+   * 一帧的全部内容。
+   *
+   * `mode` **由驱动给出**（前台 rAF / 后台闹钟）—— 不在这里再读一次 `document.hidden`：
+   * 同一件事只有一处判断（AGENTS #15），而驱动才是"这一帧为什么来"的权威。
+   * 限帧（`targetFps`）留在这一层：它是**世界策略**，不是驱动策略（AGENTS #39）。
+   */
+  function renderLoop(tsMs: number, mode: 'foreground' | 'background'): void {
     // 帧率上限：未到目标间隔则跳过本帧（动画/移动已 delta-time 化，任意帧率速度一致）
     if (targetFps > 0) {
       const minInterval = 1000 / targetFps;
@@ -5437,16 +5458,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       lastFrameMs = tsMs;
     }
     if (!renderer || !scene || !camera) return;
-    const bg = document.hidden; // 后台帧：逻辑照跑，跳过 GPU 渲染提交
+    const bg = mode === 'background'; // 后台帧：逻辑照跑，跳过 GPU 渲染提交
     // 剖析器：从"这一帧确实要渲染"处开始计时（被限帧跳过的帧不计入，fps 才是真实帧率）
     perfFrameStart();
-    // 自适应视口尺寸
-    const w = root.clientWidth, h = root.clientHeight;
-    if (w > 0 && h > 0 && (renderer.domElement.width !== Math.floor(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.floor(h * renderer.getPixelRatio()))) {
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h, false);
-      composer?.setSize(w, h);
+    // 自适应视口尺寸（后台帧跳过：`clientWidth` 会强制布局，而且隐藏时没人看这块画布）
+    if (!bg) {
+      const w = root.clientWidth, h = root.clientHeight;
+      if (w > 0 && h > 0 && (renderer.domElement.width !== Math.floor(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.floor(h * renderer.getPixelRatio()))) {
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h, false);
+        composer?.setSize(w, h);
+      }
     }
     perfMark('帧准备');
     const dt = clock.getDelta();
@@ -5921,7 +5944,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateGroundItems(rafMs);
     perfMark('地面物品');
     // 光标 overlay：世界滚动/物品增减时静态光标下的指向也会变 → 逐帧(节流)重探测
-    if (mouseSeen) probeCursorAt(mouseX, mouseY);
+    // （后台帧跳过：hits 矩形表是**渲染时**重建的，隐藏时不渲染 ⇒ 拿陈旧表做射线毫无意义，
+    //   还会顺着 `setCursorMode` 写 document 光标样式、甚至去取光标图）
+    if (!bg && mouseSeen) probeCursorAt(mouseX, mouseY);
     perfMark('光标探测');
 
     // 相机跟随角色
@@ -5932,7 +5957,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     perfMark('相机');
 
     // 昼夜光照驱动（每帧）：darkLevel/BackColor 渐变 + 火把 + 场景灯 → 各地图 shader uniform
-    dnUpdate();
+    // （后台帧跳过：它只影响 GPU 提交，隐藏时不渲染；而它每帧会 new Vector3 + 排序 + 遍历全部已加载图）
+    if (!bg) dnUpdate();
     perfMark('昼夜光照');
 
     // 地图音效：3D 声源按角色距离更新音量（BGM/环境音已在进入/换图时设置）
@@ -5979,13 +6005,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!bg) drawNameplateOverlay();
     perfMark('名牌飘字');
     // 诊断（临时，默认关）：console 执行 window.__hoverScan=1 开启，每 ~1.5s 扫描主 framebuffer
-    if ((window as unknown as { __hoverScan?: number }).__hoverScan === 1 && hoverTarget && rafMs - lastHoverScanAt > 1500) {
+    // （后台帧跳过：framebuffer 自从隐藏起就没更新过，读到的是一片陈旧像素）
+    if (!bg && (window as unknown as { __hoverScan?: number }).__hoverScan === 1 && hoverTarget && rafMs - lastHoverScanAt > 1500) {
       lastHoverScanAt = rafMs;
       hoverOutlineScanDiag();
     }
 
     // 首帧渲染完成 → 通知 main.ts 收起加载页
-    if (firstFramePending) {
+    // ⚠ **只在真渲染过一帧之后**（`!bg`）：后台帧跳过 GPU 提交，若在这里收加载页，
+    //   玩家回到前台时加载页已经没了、却从没见过一帧（黑屏感）
+    if (!bg && firstFramePending) {
       firstFramePending = false;
       loadHooks?.onProgress?.(4, 4);
       loadHooks?.onReady?.();
@@ -6049,9 +6078,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     perfFrameEnd();
 
     // 统计面板（map-demo 同款）
-    fpsAcc += dt;
-    frameCount++;
-    if (fpsAcc >= 0.4 && mapHandles.size > 0) {
+    // 后台帧不计：这块显示的是"玩家看到的帧率"，而后台帧压根没提交渲染 ——
+    // 混进来会让回前台第一屏显示一个假的 30fps（且每 0.4s 白写一次 DOM）
+    if (!bg) {
+      fpsAcc += dt;
+      frameCount++;
+      if (fpsAcc >= 0.4 && mapHandles.size > 0) {
       const fps = frameCount / fpsAcc;
       let dc = 0, visT = 0, totT = 0, verts = 0;
       for (const mh of mapHandles.values()) {
@@ -6073,6 +6105,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         `Pos   ${selfPos.x.toFixed(1)}, ${selfPos.y.toFixed(1)}, ${selfPos.z.toFixed(1)}  m${currentMapId}\n` +
         `Time  ${String(dnDebugHour ?? dayNightHour).padStart(2, '0')}:${String(dayNightMin).padStart(2, '0')}${dnDebugHour !== null ? '*' : ''} Dark ${dayDark}`;
       frameCount = 0; fpsAcc = 0;
+      }
     }
   }
 
@@ -6302,7 +6335,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       requestAnimationFrame(() => requestAnimationFrame(resize));
       clock.getDelta();
       firstFramePending = true;
-      renderLoop();
+      // 起循环（**唯一入口**）：驱动会按当前可见性落位 —— 后台标签页自动进世界时直接走闹钟，
+      // 不需要（也等不到）`visibilitychange`。曾经这里是 `renderLoop()` 直调 + 一个从没被复位
+      // 的 `worldActive` 门，"回选角再进游戏"后只渲染一帧就永久停摆（见 app/loop-driver.ts）。
+      loopDriver.start();
     },
     setGameTime,
     toggleMinimap,
@@ -6442,16 +6478,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     playEquippedSkill: (slot) => playEquippedSkill(slot),
     hide() {
       root.style.display = 'none';
-      worldActive = false;
-      if (bgTimerId) { clearKeepaliveInterval(bgTimerId); bgTimerId = 0; }
+      loopDriver.stop();   // 停循环（rAF 与后台闹钟一并停；stop 之后不再有任何回调）
       mapAudio.suspend();
-      if (animFrameId) { cancelAnimationFrame(animFrameId); animFrameId = 0; }
     },
     destroy() {
-      worldActive = false;
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      if (bgTimerId) { clearKeepaliveInterval(bgTimerId); bgTimerId = 0; }
-      if (animFrameId) cancelAnimationFrame(animFrameId);
+      loopDriver.stop();
       for (const actor of remotes.values()) {
         scene?.remove(actor.root);
         actor.bodyGroup.children.forEach((c) => (c as THREE.SkinnedMesh).geometry?.dispose?.());

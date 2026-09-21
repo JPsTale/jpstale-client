@@ -23,8 +23,17 @@ self.onmessage = (e: MessageEvent<{ cmd: string; id: number; ms?: number }>) => 
     // 同 id 重设：先清旧句柄（幂等，调用方不必先 clear）
     const old = slots.get(id);
     if (old) (old.kind === 'interval' ? clearInterval : clearTimeout)(old.handle);
-    const fire = () => { (self as unknown as Worker).postMessage({ id }); };
-    const handle = cmd === 'interval' ? setInterval(fire, ms) : setTimeout(fire, ms);
+    // 一次性 timeout 触发后**自己从表里删掉**：否则主线程那侧已经删了槽、以后不会再发 clear，
+    // 这条句柄会在 Worker 里永久留着（僵尸条目 — 实测过的泄漏路径）。
+    const fire = (): void => {
+      if (cmd === 'timeout') slots.delete(id);
+      (self as unknown as Worker).postMessage({ id });
+    };
+    // 句柄类型：DOM 下这两个返回 `number`；本项目同时装了 @types/node，全局 `setTimeout`
+    // 会被解析成 Node 的 `Timeout` —— 这里句柄只用于 clear，统一按 number 存（运行时无差别）。
+    const handle: number = cmd === 'interval'
+      ? (setInterval(fire, ms) as unknown as number)
+      : (setTimeout(fire, ms) as unknown as number);
     slots.set(id, { kind: cmd === 'interval' ? 'interval' : 'timeout', handle });
   } else if (cmd === 'clear') {
     const old = slots.get(id);
