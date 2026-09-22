@@ -2,14 +2,12 @@ import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { subscribeGame, getGameSnapshot, hoveredItemOf, setHoverSpot, clearHoverItem, type GameItem, type HoverSource } from '../../app/gameStore.js';
 import { itemDefById } from '../../game/data/itemDefs.js';
-import { potionEffect } from '../../game/data/potionEffects.js';
-import { getWeaponTypeFromIdCode } from '../../char/weapon-type.js';
-import { t } from '../../i18n/index.js';
+import { buildLines, weaponTypeChar, weaponTypeName } from '../itemInfoLines.js';
 
 /**
  * 原版风格物品信息框（两列：左标签 / 右数值；需求不满足行红字）。
- * 版式依据 NewSourcePT cITEM::ShowItemInfo（szInfoBuff/szInfoBuff2 双缓冲 + RedLine 语义），
- * 逐物品种类对齐。当前覆盖装备类；药水/强化/职业特效行按批次补齐。
+ * **行列表本身在 `../itemInfoLines.ts`**（纯函数、可离线断言）；本文件只管"悬停住哪、怎么渲染"。
+ * 版式依据原版 `cITEM::ShowItemInfo` / `UIItemInfoBox`。
  */
 export interface ItemHover { it: GameItem; x: number; y: number; }
 
@@ -37,7 +35,6 @@ export function ItemInfoLayer() {
   return <ItemInfo hover={hover} />;
 }
 
-interface Line { label?: string; value: string; red?: boolean; dim?: boolean; section?: boolean; spec?: boolean; specHeader?: boolean; }
 
 export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
@@ -45,8 +42,10 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   const { it } = hover;
   const def = itemDefById(it.itemlistId);
   const rawName = def?.name ?? `#${it.itemlistId}`;
-  // 锻造（原版 sinItem.cpp:530）：Aging 物品名前缀 "+N"；武器名行居中、右上角武器类型小图标
-  const name = (it.agingLevel > 0 ? `+${it.agingLevel} ` : '') + rawName;
+  // 名字：本体名 + 右上角武器类型小图标。（锻造等级**不再**当前缀 ——
+  // 用户 2026-09-22："在名字下方显示强化等级"；`buildLines` 会把它作为 `sub` 行放在最前。）
+  const name = rawName;
+  const aged = it.agingLevel > 0;
   const cls = def?.class ?? 0;
   const ch = snap.character;
   const lines = buildLines(it, cls, ch);
@@ -58,14 +57,17 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   };
   return createPortal(
     <div className="jp-item-info" style={style}>
-      <div className="jp-item-info-name">
+      <div className={`jp-item-info-name${aged ? ' jp-item-info-age' : ''}`}>
         <span>{name}</span>
         {weaponIcon ? <span className="jp-item-info-wtype" title={weaponTypeName(it.itemCode)}>{weaponIcon}</span> : null}
       </div>
       {lines.map((ln, i) => (
         <div
           key={i}
-          className={`jp-item-info-line${ln.section ? ' jp-item-info-sec' : ''}${ln.red ? ' jp-item-info-red' : ''}${ln.dim ? ' jp-item-info-dim' : ''}${ln.specHeader ? ' jp-item-info-specHeader' : ''}${ln.spec ? ' jp-item-info-spec' : ''}`}
+          className={`jp-item-info-line${ln.section ? ' jp-item-info-sec' : ''}${ln.sub ? ' jp-item-info-sub' : ''}`
+            + `${ln.red ? ' jp-item-info-red' : ''}${ln.req ? ' jp-item-info-req' : ''}`
+            + `${ln.dim ? ' jp-item-info-dim' : ''}${ln.specHeader ? ' jp-item-info-specHeader' : ''}`
+            + `${ln.spec ? ' jp-item-info-spec' : ''}${ln.age ? ' jp-item-info-age' : ''}`}
         >
           {ln.label !== undefined && <span className="jp-item-info-l">{ln.label}</span>}
           <span className="jp-item-info-v">{ln.value}</span>
@@ -76,169 +78,3 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   );
 }
 
-/** 武器类型小图标（原版 lpShowWeaponClass：名字行右上 18×16 图标）→ 用字符徽标呈现 */
-function weaponTypeChar(code: number): string | null {
-  const map: Record<string, string> = {
-    SWORD: '剑', AXE: '斧', HAMMER: '锤', SPEAR: '枪', STAFF: '杖',
-    BOW: '弓', CROSSBOW: '弩', DAGGER: '匕', SHIELD: '盾', MACE: '锤',
-  };
-  const type = getWeaponTypeFromIdCode(code);
-  return type ? (map[type] ?? type.charAt(0)) : null;
-}
-
-function weaponTypeName(code: number): string {
-  const t1 = getWeaponTypeFromIdCode(code);
-  return t1 ? t(`itemtip.wtype.${t1}`) : '';
-}
-
-function buildLines(it: GameItem, cls: number, ch: GameCharacterLike | null): Line[] {
-  const out: Line[] = [];
-  const isWeapon = cls === 2 || cls === 4 || cls === 6;   // 盾/单手/双手
-  const isGear = cls === 8 || cls === 16 || cls === 32 || cls === 2048
-    || cls === 192 || cls === 512 || cls === 256;          // 甲/靴/手/腕/戒/链/宝石
-  // —— 基础能力：按"攻击侧 / 防御侧"两组排（用户 2026-09-14，与角色面板同一分组思路）——
-  //    攻击侧：攻击力 → 攻击速度 → 攻击距离 → 命中 → 必杀
-  //    防御侧：躲闪 → 防御 → 格挡 → 移速
-  //    （旧顺序把攻速/攻击距离甩到最末尾，中间隔着防御/吸收/格挡，读起来是散的）
-  if (isWeapon) {
-    if (it.damageMin > 0 || it.damageMax > 0) {
-      out.push({ label: t('itemtip.atk'), value: `${it.damageMin}-${it.damageMax}` });
-    }
-    if (it.attackSpeed > 0) out.push({ label: t('itemtip.attackSpeed'), value: String(it.attackSpeed) });
-    // ⚠ 这是**装备自身**的射程模板值：近战武器该列为 0（近战距离按手别定 40/80，与装备无关），
-    //   所以近战不显示这一行；远程武器才有值（弓/弩/杖）。
-    if (it.range > 0) out.push({ label: t('itemtip.range'), value: String(it.range) });
-    if (it.attackRating > 0) out.push({ label: t('itemtip.hit'), value: String(it.attackRating) });
-    if (it.critical > 0) out.push({ label: t('itemtip.crit'), value: `${it.critical}%` });
-  }
-  if (isWeapon || isGear) {
-    if (it.defence > 0) out.push({ label: t('itemtip.def'), value: String(it.defence) });
-    if (it.absorb > 0) out.push({ label: t('itemtip.absorb'), value: (it.absorb / 10).toFixed(1) });
-    if (it.blockRating > 0) out.push({ label: t('itemtip.block'), value: `${Math.round(it.blockRating / 10)}%` });
-    if (it.speed > 0) out.push({ label: t('itemtip.speed'), value: (it.speed / 10).toFixed(1) });
-  }
-  // —— 回复类（药水）：模板字段，不在实例里 → 查 `potion-effects.generated.json` ——
-  // （判据与服务端 rollRecovery 一致：三对列至少一个有值；显示区间与使用时掷点范围相同）
-  const rec = potionEffect(it.itemlistId);
-  if (rec) {
-    out.push({ section: true, value: '' });
-    if (rec.hp) out.push({ label: t('itemtip.recHp'), value: `${rec.hp[0]}-${rec.hp[1]}` });
-    if (rec.mp) out.push({ label: t('itemtip.recMp'), value: `${rec.mp[0]}-${rec.mp[1]}` });
-    if (rec.stm) out.push({ label: t('itemtip.recStm'), value: `${rec.stm[0]}-${rec.stm[1]}` });
-  }
-  // 8 系抗性（逐条非 0）
-  const resVals: [string, number][] = [
-    [t('itemtip.resBionic'), it.resBionic],
-    [t('itemtip.resEarth'), it.resEarth],
-    [t('itemtip.resFire'), it.resFire],
-    [t('itemtip.resIce'), it.resIce],
-    [t('itemtip.resLightning'), it.resLightning],
-    [t('itemtip.resPoison'), it.resPoison],
-    [t('itemtip.resWater'), it.resWater],
-    [t('itemtip.resWind'), it.resWind],
-  ];
-  if (resVals.some(([, v]) => v !== 0)) {
-    out.push({ section: true, value: '' });
-    for (const [label, v] of resVals) if (v !== 0) out.push({ label, value: String(v) });
-  }
-  // —— 耐久度（属性区最后）——
-  if (it.durabilityMax > 0) out.push({ label: t('itemtip.durability'), value: `${it.durability}/${it.durabilityMax}` });
-  // —— 需求（满足暗黄 / 不满足红；置于属性区之后）——
-  const lv = ch?.level ?? 0;
-  const st = ch?.strength ?? 0, sp = ch?.spirit ?? 0, ta = ch?.talent ?? 0;
-  const ag = ch?.agility ?? 0, hp = ch?.health ?? 0;
-  const req: [string, number, number][] = [
-    [t('itemtip.reqLv'), it.reqLevel, lv],
-    [t('itemtip.reqStr'), it.reqStrength, st],
-    [t('itemtip.reqSpirit'), it.reqSpirit, sp],
-    [t('itemtip.reqTalent'), it.reqTalent, ta],
-    [t('itemtip.reqAgility'), it.reqAgility, ag],
-    [t('itemtip.reqHealth'), it.reqHealth, hp],
-  ];
-  if (req.some(([, v]) => v > 0)) {
-    out.push({ section: true, value: '' });
-    for (const [label, need, have] of req) {
-      if (need > 0) out.push({ label, value: String(need), dim: have >= need, red: have < need });
-    }
-  }
-  // —— 职业特效（sITEM_SPECIAL；居中金/黄；数据 userdb.item.spec_*）——
-  if (it.jobCodeMask !== 0 && hasSpec(it)) {
-    out.push({ section: true, value: '' });
-    const job = jobName(it.jobCodeMask);
-    if (job) out.push({ specHeader: true, value: t('itemtip.specHeader', { job }) });
-    if (it.specAbsorb > 0) out.push({ spec: true, label: t('itemtip.specAbsorb'), value: (it.specAbsorb / 10).toFixed(1) });
-    if (it.specLevAttackRating > 0) out.push({ spec: true, label: t('itemtip.specHit'), value: `Lv/${it.specLevAttackRating}` });
-    if (it.specLevDamageMax > 0) out.push({ spec: true, label: t('itemtip.specAtk'), value: `Lv/${it.specLevDamageMax}` });
-    if (it.specAttackSpeed > 0) out.push({ spec: true, label: t('itemtip.specAttackSpeed'), value: String(it.specAttackSpeed) });
-    if (it.specCritical > 0) out.push({ spec: true, label: t('itemtip.specCrit'), value: `${it.specCritical}%` });
-    if (it.specDefence > 0) out.push({ spec: true, label: t('itemtip.specDef'), value: String(it.specDefence) });
-    if (it.specBlockRating > 0) out.push({ spec: true, label: t('itemtip.specBlock'), value: `${Math.round(it.specBlockRating / 10)}%` });
-    if (it.specSpeed > 0) out.push({ spec: true, label: t('itemtip.specSpeed'), value: (it.specSpeed / 10).toFixed(1) });
-    if (it.specShootingRange > 0) out.push({ spec: true, label: t('itemtip.specRange'), value: String(it.specShootingRange) });
-    if (it.specMagicMastery > 0) out.push({ spec: true, label: t('itemtip.specMagicMastery'), value: (it.specMagicMastery / 10).toFixed(1) });
-    const specRes: [string, number][] = [
-      [t('itemtip.specResBionic'), it.specResBionic],
-      [t('itemtip.specResEarth'), it.specResEarth],
-      [t('itemtip.specResFire'), it.specResFire],
-      [t('itemtip.specResIce'), it.specResIce],
-      [t('itemtip.specResLightning'), it.specResLighting],
-      [t('itemtip.specResPoison'), it.specResPoison],
-      [t('itemtip.specResWater'), it.specResWater],
-      [t('itemtip.specResWind'), it.specResWind],
-    ];
-    for (const [label, v] of specRes) if (v !== 0) out.push({ spec: true, label, value: String(v) });
-    const specLevRes: [string, number][] = [
-      [t('itemtip.specResBionic'), it.specLevResBionic],
-      [t('itemtip.specResEarth'), it.specLevResEarth],
-      [t('itemtip.specResFire'), it.specLevResFire],
-      [t('itemtip.specResIce'), it.specLevResIce],
-      [t('itemtip.specResLightning'), it.specLevResLighting],
-      [t('itemtip.specResPoison'), it.specLevResPoison],
-      [t('itemtip.specResWater'), it.specLevResWater],
-      [t('itemtip.specResWind'), it.specLevResWind],
-    ];
-    for (const [label, v] of specLevRes) if (v !== 0) out.push({ spec: true, label, value: `Lv/${v}` });
-    if (it.specLevLife > 0) out.push({ spec: true, label: t('itemtip.specMaxHpBoost'), value: `Lv/${it.specLevLife}` });
-    if (it.specLevMana > 0) out.push({ spec: true, label: t('itemtip.specMaxMpBoost'), value: `Lv/${it.specLevMana}` });
-    if (it.specPerLifeRegen > 0) out.push({ spec: true, label: t('itemtip.specRegenLife'), value: (it.specPerLifeRegen / 100).toFixed(2) });
-    if (it.specPerManaRegen > 0) out.push({ spec: true, label: t('itemtip.specRegenMana'), value: (it.specPerManaRegen / 100).toFixed(2) });
-    if (it.specPerStaminaRegen > 0) out.push({ spec: true, label: t('itemtip.specRegenStm'), value: (it.specPerStaminaRegen / 100).toFixed(2) });
-  }
-  return out;
-}
-
-function hasSpec(it: GameItem): boolean {
-  return it.specAbsorb > 0 || it.specDefence > 0 || it.specSpeed > 0
-    || it.specBlockRating > 0 || it.specAttackSpeed > 0 || it.specCritical > 0
-    || it.specShootingRange > 0 || it.specMagicMastery > 0
-    || it.specResBionic > 0 || it.specResEarth > 0 || it.specResFire > 0
-    || it.specResIce > 0 || it.specResLighting > 0 || it.specResPoison > 0
-    || it.specResWater > 0 || it.specResWind > 0
-    || it.specLevMana > 0 || it.specLevLife > 0
-    || it.specLevAttackRating > 0 || it.specLevDamageMax > 0
-    || it.specLevResBionic > 0 || it.specLevResEarth > 0 || it.specLevResFire > 0
-    || it.specLevResIce > 0 || it.specLevResLighting > 0 || it.specLevResPoison > 0
-    || it.specLevResWater > 0 || it.specLevResWind > 0
-    || it.specPerManaRegen > 0 || it.specPerLifeRegen > 0 || it.specPerStaminaRegen > 0;
-}
-
-/** job_code_mask → 职业显示名（位 → JobDataBase 中文表；取最大位）。 */
-function jobName(mask: number): string {
-  if (!mask) return '';
-  for (let i = 31; i >= 0; i--) {
-    const bit = (1 << i) >>> 0;
-    if ((mask & bit) === 0) continue;
-    const name = t(`itemtip.job.${bit}`);
-    if (name !== `itemtip.job.${bit}`) return name; // t 兜底返回 key 本身
-  }
-  return '';
-}
-
-interface GameCharacterLike {
-  level?: number;
-  strength?: number;
-  spirit?: number;
-  talent?: number;
-  agility?: number;
-  health?: number;
-}

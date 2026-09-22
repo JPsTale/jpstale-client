@@ -1,0 +1,7991 @@
+{
+ "note": "扫自 11 职业服务端 GameServer/OpenItem/*.txt 的 **특화（固定专精）与 **특화랜덤（候选清单）；解析规则照抄 ScrServer/src/fileread.cpp:3042-3094。生成脚本 scripts/scan-openitem-spec-jobs.ts",
+ "source": "OpenItem @ /data/PristonTale/精灵11职业单机版一键端/Server服务端/GameServer/OpenItem",
+ "items": [
+  {
+   "file": "_U_da112_A.txt",
+   "code": "_U_da112_A",
+   "fixed": null,
+   "random": [
+    "Archer"
+   ]
+  },
+  {
+   "file": "_U_da112_F.txt",
+   "code": "_U_da112_F",
+   "fixed": null,
+   "random": [
+    "Fighter"
+   ]
+  },
+  {
+   "file": "_Uds109_Defender of Royal.txt",
+   "code": "_Uds109_Defender of Royal",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "_Uo_Ancient Rage.txt",
+   "code": "_Uo_Ancient Rage",
+   "fixed": "Fighter",
+   "random": []
+  },
+  {
+   "file": "_Uo_Curio.txt",
+   "code": "_Uo_Curio",
+   "fixed": "Archer",
+   "random": []
+  },
+  {
+   "file": "_Uo_Defender of Royal.txt",
+   "code": "_Uo_Defender of Royal",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "_Uo_Injustice.txt",
+   "code": "_Uo_Injustice",
+   "fixed": "Pikeman",
+   "random": []
+  },
+  {
+   "file": "_Uo_Octopus.txt",
+   "code": "_Uo_Octopus",
+   "fixed": "Mechanician",
+   "random": []
+  },
+  {
+   "file": "_Uo_Royal Suit.txt",
+   "code": "_Uo_Royal Suit",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "_Uo_Shark.txt",
+   "code": "_Uo_Shark",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "_Uwa105_Bone Crasher.txt",
+   "code": "_Uwa105_Bone Crasher",
+   "fixed": "Fighter",
+   "random": []
+  },
+  {
+   "file": "_Uwa109_Destroyer.txt",
+   "code": "_Uwa109_Destroyer",
+   "fixed": "Fighter",
+   "random": []
+  },
+  {
+   "file": "_Uwc105_Arch Metal.txt",
+   "code": "_Uwc105_Arch Metal",
+   "fixed": "Mechanician",
+   "random": []
+  },
+  {
+   "file": "_Uwh110_Rule.txt",
+   "code": "_Uwh110_Rule",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "_Uwp105_Revenge.txt",
+   "code": "_Uwp105_Revenge",
+   "fixed": "Pikeman",
+   "random": []
+  },
+  {
+   "file": "_Uwp110_Justice.txt",
+   "code": "_Uwp110_Justice",
+   "fixed": "Pikeman",
+   "random": []
+  },
+  {
+   "file": "_Uws105_Dion's Bow.txt",
+   "code": "_Uws105_Dion's Bow",
+   "fixed": "Archer",
+   "random": []
+  },
+  {
+   "file": "_Uws111_Bone Age.txt",
+   "code": "_Uws111_Bone Age",
+   "fixed": "Archer",
+   "random": []
+  },
+  {
+   "file": "_Uws211_Majesty.txt",
+   "code": "_Uws211_Majesty",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "_Uwt110_Wind.txt",
+   "code": "_Uwt110_Wind",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "da102.txt",
+   "code": "da102",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da103.txt",
+   "code": "da103",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da104.txt",
+   "code": "da104",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da105.txt",
+   "code": "da105",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da106.txt",
+   "code": "da106",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da107.txt",
+   "code": "da107",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da108.txt",
+   "code": "da108",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da109.txt",
+   "code": "da109",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da110.txt",
+   "code": "da110",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da111.txt",
+   "code": "da111",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da112.txt",
+   "code": "da112",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da113.txt",
+   "code": "da113",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da114.txt",
+   "code": "da114",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da115.txt",
+   "code": "da115",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da116.txt",
+   "code": "da116",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da117.txt",
+   "code": "da117",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA118.txt",
+   "code": "DA118",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA119.txt",
+   "code": "DA119",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA120.txt",
+   "code": "DA120",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA121.txt",
+   "code": "DA121",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA122.txt",
+   "code": "DA122",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA123.txt",
+   "code": "DA123",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA124.txt",
+   "code": "DA124",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA125.txt",
+   "code": "DA125",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA126.txt",
+   "code": "DA126",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA127.txt",
+   "code": "DA127",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA128.txt",
+   "code": "DA128",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA129.txt",
+   "code": "DA129",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA147.txt",
+   "code": "DA147",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin"
+   ]
+  },
+  {
+   "file": "DA153.txt",
+   "code": "DA153",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin"
+   ]
+  },
+  {
+   "file": "DA162.txt",
+   "code": "DA162",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "DA163.txt",
+   "code": "DA163",
+   "fixed": null,
+   "random": [
+    "Archer",
+    "Atalanta",
+    "Assassin"
+   ]
+  },
+  {
+   "file": "DA171.txt",
+   "code": "DA171",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA172.txt",
+   "code": "DA172",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA173.txt",
+   "code": "DA173",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA174.txt",
+   "code": "DA174",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA175.txt",
+   "code": "DA175",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA176.txt",
+   "code": "DA176",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "DA177.txt",
+   "code": "DA177",
+   "fixed": null,
+   "random": [
+    "Archer",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA182.txt",
+   "code": "DA182",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA183.txt",
+   "code": "DA183",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA184.txt",
+   "code": "DA184",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "da202.txt",
+   "code": "da202",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da203.txt",
+   "code": "da203",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da204.txt",
+   "code": "da204",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da205.txt",
+   "code": "da205",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da206.txt",
+   "code": "da206",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da207.txt",
+   "code": "da207",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da208.txt",
+   "code": "da208",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da209.txt",
+   "code": "da209",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da210.txt",
+   "code": "da210",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da211.txt",
+   "code": "da211",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da212.txt",
+   "code": "da212",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da213.txt",
+   "code": "da213",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da214.txt",
+   "code": "da214",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da215.txt",
+   "code": "da215",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da216.txt",
+   "code": "da216",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "da217.txt",
+   "code": "da217",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA218.txt",
+   "code": "DA218",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA219.txt",
+   "code": "DA219",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA220.txt",
+   "code": "DA220",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA221.txt",
+   "code": "DA221",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA222.txt",
+   "code": "DA222",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA223.txt",
+   "code": "DA223",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA224.txt",
+   "code": "DA224",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA225.txt",
+   "code": "DA225",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA226.txt",
+   "code": "DA226",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA227.txt",
+   "code": "DA227",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA228.txt",
+   "code": "DA228",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA229.txt",
+   "code": "DA229",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA247.txt",
+   "code": "DA247",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA253.txt",
+   "code": "DA253",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA262.txt",
+   "code": "DA262",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA263.txt",
+   "code": "DA263",
+   "fixed": null,
+   "random": [
+    "Priestess"
+   ]
+  },
+  {
+   "file": "DA271.txt",
+   "code": "DA271",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "DA272.txt",
+   "code": "DA272",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "DA273.txt",
+   "code": "DA273",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "DA274.txt",
+   "code": "DA274",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "DA275.txt",
+   "code": "DA275",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "DA276.txt",
+   "code": "DA276",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA277.txt",
+   "code": "DA277",
+   "fixed": null,
+   "random": [
+    "Priestess"
+   ]
+  },
+  {
+   "file": "DA282.txt",
+   "code": "DA282",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA283.txt",
+   "code": "DA283",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA284.txt",
+   "code": "DA284",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA301.txt",
+   "code": "DA301",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA302.txt",
+   "code": "DA302",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin"
+   ]
+  },
+  {
+   "file": "da303.txt",
+   "code": "da303",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DA401.txt",
+   "code": "DA401",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DA402.txt",
+   "code": "DA402",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "db101.txt",
+   "code": "db101",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db102.txt",
+   "code": "db102",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "db103.txt",
+   "code": "db103",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db104.txt",
+   "code": "db104",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db105.txt",
+   "code": "db105",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db106.txt",
+   "code": "db106",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db107.txt",
+   "code": "db107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db108.txt",
+   "code": "db108",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db109.txt",
+   "code": "db109",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db110.txt",
+   "code": "db110",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db111.txt",
+   "code": "db111",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db112.txt",
+   "code": "db112",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db113.txt",
+   "code": "db113",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db114.txt",
+   "code": "db114",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db115.txt",
+   "code": "db115",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db116.txt",
+   "code": "db116",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db117.txt",
+   "code": "db117",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db118.txt",
+   "code": "db118",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db119.txt",
+   "code": "db119",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db120.txt",
+   "code": "db120",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db121.txt",
+   "code": "db121",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "db122.txt",
+   "code": "db122",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB123.txt",
+   "code": "DB123",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB124.txt",
+   "code": "DB124",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB125.txt",
+   "code": "DB125",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB126.txt",
+   "code": "DB126",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB127.txt",
+   "code": "DB127",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB128.txt",
+   "code": "DB128",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "db130.txt",
+   "code": "db130",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DB150.txt",
+   "code": "DB150",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG101.txt",
+   "code": "DG101",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG102.txt",
+   "code": "DG102",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG103.txt",
+   "code": "DG103",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG104.txt",
+   "code": "DG104",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG105.txt",
+   "code": "DG105",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG106.txt",
+   "code": "DG106",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG107.txt",
+   "code": "DG107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG108.txt",
+   "code": "DG108",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG109.txt",
+   "code": "DG109",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DG110.txt",
+   "code": "DG110",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG111.txt",
+   "code": "DG111",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG112.txt",
+   "code": "DG112",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG113.txt",
+   "code": "DG113",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG114.txt",
+   "code": "DG114",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG115.txt",
+   "code": "DG115",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG116.txt",
+   "code": "DG116",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG117.txt",
+   "code": "DG117",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG118.txt",
+   "code": "DG118",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG119.txt",
+   "code": "DG119",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG120.txt",
+   "code": "DG120",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG121.txt",
+   "code": "DG121",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG122.txt",
+   "code": "DG122",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG123.txt",
+   "code": "DG123",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG124.txt",
+   "code": "DG124",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG125.txt",
+   "code": "DG125",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG126.txt",
+   "code": "DG126",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG127.txt",
+   "code": "DG127",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DG128.txt",
+   "code": "DG128",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "DG130.txt",
+   "code": "DG130",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "DS101.txt",
+   "code": "DS101",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS102.txt",
+   "code": "DS102",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS103.txt",
+   "code": "DS103",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS104.txt",
+   "code": "DS104",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS105.txt",
+   "code": "DS105",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS106.txt",
+   "code": "DS106",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS107.txt",
+   "code": "DS107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS108.txt",
+   "code": "DS108",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS109.txt",
+   "code": "DS109",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS110.txt",
+   "code": "DS110",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS111.txt",
+   "code": "DS111",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS112.txt",
+   "code": "DS112",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS113.txt",
+   "code": "DS113",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS114.txt",
+   "code": "DS114",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS115.txt",
+   "code": "DS115",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS116.txt",
+   "code": "DS116",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS117.txt",
+   "code": "DS117",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS118.txt",
+   "code": "DS118",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS119.txt",
+   "code": "DS119",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS120.txt",
+   "code": "DS120",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS121.txt",
+   "code": "DS121",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS122.txt",
+   "code": "DS122",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS123.txt",
+   "code": "DS123",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS124.txt",
+   "code": "DS124",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS125.txt",
+   "code": "DS125",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS126.txt",
+   "code": "DS126",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "DS127.txt",
+   "code": "DS127",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "OA101.txt",
+   "code": "OA101",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA102.txt",
+   "code": "OA102",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA103.txt",
+   "code": "OA103",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA104.txt",
+   "code": "OA104",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA105.txt",
+   "code": "OA105",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA106.txt",
+   "code": "OA106",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA107.txt",
+   "code": "OA107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA108.txt",
+   "code": "OA108",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA109.txt",
+   "code": "OA109",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA110.txt",
+   "code": "OA110",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA111.txt",
+   "code": "OA111",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA112.txt",
+   "code": "OA112",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA113.txt",
+   "code": "OA113",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA114.txt",
+   "code": "OA114",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA115.txt",
+   "code": "OA115",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA116.txt",
+   "code": "OA116",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA117.txt",
+   "code": "OA117",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA118.txt",
+   "code": "OA118",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA119.txt",
+   "code": "OA119",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA120.txt",
+   "code": "OA120",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA121.txt",
+   "code": "OA121",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA122.txt",
+   "code": "OA122",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA123.txt",
+   "code": "OA123",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA124.txt",
+   "code": "OA124",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA125.txt",
+   "code": "OA125",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA126.txt",
+   "code": "OA126",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA129.txt",
+   "code": "OA129",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "OA130.txt",
+   "code": "OA130",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA144.txt",
+   "code": "OA144",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA160.txt",
+   "code": "OA160",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA161.txt",
+   "code": "OA161",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa201.txt",
+   "code": "oa201",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa202.txt",
+   "code": "oa202",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa203.txt",
+   "code": "oa203",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa204.txt",
+   "code": "oa204",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa205.txt",
+   "code": "oa205",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa206.txt",
+   "code": "oa206",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Archer",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "oa207.txt",
+   "code": "oa207",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa208.txt",
+   "code": "oa208",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa209.txt",
+   "code": "oa209",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa210.txt",
+   "code": "oa210",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa211.txt",
+   "code": "oa211",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa212.txt",
+   "code": "oa212",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa213.txt",
+   "code": "oa213",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa214.txt",
+   "code": "oa214",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa215.txt",
+   "code": "oa215",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa216.txt",
+   "code": "oa216",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa217.txt",
+   "code": "oa217",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa218.txt",
+   "code": "oa218",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa219.txt",
+   "code": "oa219",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa220.txt",
+   "code": "oa220",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa221.txt",
+   "code": "oa221",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "oa222.txt",
+   "code": "oa222",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA223.txt",
+   "code": "OA223",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA224.txt",
+   "code": "OA224",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA225.txt",
+   "code": "OA225",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA226.txt",
+   "code": "OA226",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA227.txt",
+   "code": "OA227",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OA228.txt",
+   "code": "OA228",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "OM101.txt",
+   "code": "OM101",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM102.txt",
+   "code": "OM102",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM103.txt",
+   "code": "OM103",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM104.txt",
+   "code": "OM104",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM105.txt",
+   "code": "OM105",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM106.txt",
+   "code": "OM106",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM107.txt",
+   "code": "OM107",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM108.txt",
+   "code": "OM108",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM109.txt",
+   "code": "OM109",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM110.txt",
+   "code": "OM110",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM111.txt",
+   "code": "OM111",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM112.txt",
+   "code": "OM112",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM113.txt",
+   "code": "OM113",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM114.txt",
+   "code": "OM114",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM115.txt",
+   "code": "OM115",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM116.txt",
+   "code": "OM116",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM117.txt",
+   "code": "OM117",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM118.txt",
+   "code": "OM118",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM119.txt",
+   "code": "OM119",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM120.txt",
+   "code": "OM120",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM121.txt",
+   "code": "OM121",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM122.txt",
+   "code": "OM122",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM123.txt",
+   "code": "OM123",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM124.txt",
+   "code": "OM124",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OM125.txt",
+   "code": "OM125",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "OR101.txt",
+   "code": "OR101",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR102.txt",
+   "code": "OR102",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR103.txt",
+   "code": "OR103",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR104.txt",
+   "code": "OR104",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR105.txt",
+   "code": "OR105",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR106.txt",
+   "code": "OR106",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR107.txt",
+   "code": "OR107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR108.txt",
+   "code": "OR108",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR109.txt",
+   "code": "OR109",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR110.txt",
+   "code": "OR110",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR111.txt",
+   "code": "OR111",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR112.txt",
+   "code": "OR112",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR113.txt",
+   "code": "OR113",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR114.txt",
+   "code": "OR114",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR115.txt",
+   "code": "OR115",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR116.txt",
+   "code": "OR116",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR117.txt",
+   "code": "OR117",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR118.txt",
+   "code": "OR118",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR119.txt",
+   "code": "OR119",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR120.txt",
+   "code": "OR120",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR121.txt",
+   "code": "OR121",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR122.txt",
+   "code": "OR122",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR123.txt",
+   "code": "OR123",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR124.txt",
+   "code": "OR124",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR125.txt",
+   "code": "OR125",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR126.txt",
+   "code": "OR126",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR129.txt",
+   "code": "OR129",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman"
+   ]
+  },
+  {
+   "file": "OR205.txt",
+   "code": "OR205",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR248.txt",
+   "code": "OR248",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OR260.txt",
+   "code": "OR260",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS101.txt",
+   "code": "OS101",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS102.txt",
+   "code": "OS102",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS103.txt",
+   "code": "OS103",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS104.txt",
+   "code": "OS104",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS105.txt",
+   "code": "OS105",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS106.txt",
+   "code": "OS106",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS107.txt",
+   "code": "OS107",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS108.txt",
+   "code": "OS108",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS109.txt",
+   "code": "OS109",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS110.txt",
+   "code": "OS110",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS111.txt",
+   "code": "OS111",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS112.txt",
+   "code": "OS112",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS113.txt",
+   "code": "OS113",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS114.txt",
+   "code": "OS114",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS115.txt",
+   "code": "OS115",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS116.txt",
+   "code": "OS116",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "OS117.txt",
+   "code": "OS117",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Magician",
+    "Assassin",
+    "Shaman",
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "SG001.txt",
+   "code": "SG001",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin"
+   ]
+  },
+  {
+   "file": "SG002.txt",
+   "code": "SG002",
+   "fixed": null,
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman",
+    "Archer",
+    "Knight",
+    "Atalanta",
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WA101.txt",
+   "code": "WA101",
+   "fixed": "Fighter",
+   "random": [
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA102.txt",
+   "code": "WA102",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA103.txt",
+   "code": "WA103",
+   "fixed": "Fighter",
+   "random": [
+    "Pikeman",
+    "Knight",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WA104.txt",
+   "code": "WA104",
+   "fixed": "Fighter",
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA105.txt",
+   "code": "WA105",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA106.txt",
+   "code": "WA106",
+   "fixed": "Fighter",
+   "random": [
+    "Atalanta",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA107.txt",
+   "code": "WA107",
+   "fixed": "Mechanician",
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Knight"
+   ]
+  },
+  {
+   "file": "WA108.txt",
+   "code": "WA108",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA109.txt",
+   "code": "WA109",
+   "fixed": "Fighter",
+   "random": [
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA110.txt",
+   "code": "WA110",
+   "fixed": "Fighter",
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA111.txt",
+   "code": "WA111",
+   "fixed": "Fighter",
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA112.txt",
+   "code": "WA112",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WA113.txt",
+   "code": "WA113",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA114.txt",
+   "code": "WA114",
+   "fixed": "Fighter",
+   "random": [
+    "Knight",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WA115.txt",
+   "code": "WA115",
+   "fixed": "Fighter",
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA116.txt",
+   "code": "WA116",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA117.txt",
+   "code": "WA117",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA118.txt",
+   "code": "WA118",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA119.txt",
+   "code": "WA119",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA120.txt",
+   "code": "WA120",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA121.txt",
+   "code": "WA121",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA122.txt",
+   "code": "WA122",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA123.txt",
+   "code": "WA123",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA124.txt",
+   "code": "WA124",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA125.txt",
+   "code": "WA125",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA127.txt",
+   "code": "WA127",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA128.txt",
+   "code": "WA128",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA129.txt",
+   "code": "WA129",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA130.txt",
+   "code": "WA130",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA151.txt",
+   "code": "WA151",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA152.txt",
+   "code": "WA152",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WA153.txt",
+   "code": "WA153",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC101.txt",
+   "code": "WC101",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC102.txt",
+   "code": "WC102",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC103.txt",
+   "code": "WC103",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC104.txt",
+   "code": "WC104",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC105.txt",
+   "code": "WC105",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WC106.txt",
+   "code": "WC106",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC107.txt",
+   "code": "WC107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC108.txt",
+   "code": "WC108",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC109.txt",
+   "code": "WC109",
+   "fixed": "Fighter",
+   "random": [
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC110.txt",
+   "code": "WC110",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC111.txt",
+   "code": "WC111",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC112.txt",
+   "code": "WC112",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC113.txt",
+   "code": "WC113",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC114.txt",
+   "code": "WC114",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC115.txt",
+   "code": "WC115",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC116.txt",
+   "code": "WC116",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC117.txt",
+   "code": "WC117",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC118.txt",
+   "code": "WC118",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WC119.txt",
+   "code": "WC119",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC120.txt",
+   "code": "WC120",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC121.txt",
+   "code": "WC121",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC122.txt",
+   "code": "WC122",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC123.txt",
+   "code": "WC123",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC124.txt",
+   "code": "WC124",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC126.txt",
+   "code": "WC126",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC127.txt",
+   "code": "WC127",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC128.txt",
+   "code": "WC128",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC129.txt",
+   "code": "WC129",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC151.txt",
+   "code": "WC151",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC152.txt",
+   "code": "WC152",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WC153.txt",
+   "code": "WC153",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WD101.txt",
+   "code": "WD101",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD102.txt",
+   "code": "WD102",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD103.txt",
+   "code": "WD103",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD104.txt",
+   "code": "WD104",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD105.txt",
+   "code": "WD105",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD106.txt",
+   "code": "WD106",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD107.txt",
+   "code": "WD107",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD108.txt",
+   "code": "WD108",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD109.txt",
+   "code": "WD109",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD110.txt",
+   "code": "WD110",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD111.txt",
+   "code": "WD111",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD112.txt",
+   "code": "WD112",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD113.txt",
+   "code": "WD113",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD114.txt",
+   "code": "WD114",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD115.txt",
+   "code": "WD115",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD116.txt",
+   "code": "WD116",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD117.txt",
+   "code": "WD117",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD118.txt",
+   "code": "WD118",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD119.txt",
+   "code": "WD119",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD120.txt",
+   "code": "WD120",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD121.txt",
+   "code": "WD121",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD122.txt",
+   "code": "WD122",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD123.txt",
+   "code": "WD123",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD124.txt",
+   "code": "WD124",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD125.txt",
+   "code": "WD125",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD126.txt",
+   "code": "WD126",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD127.txt",
+   "code": "WD127",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD128.txt",
+   "code": "WD128",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD129.txt",
+   "code": "WD129",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD151.txt",
+   "code": "WD151",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD152.txt",
+   "code": "WD152",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD153.txt",
+   "code": "WD153",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WD157.txt",
+   "code": "WD157",
+   "fixed": null,
+   "random": [
+    "Assassin"
+   ]
+  },
+  {
+   "file": "WH101.txt",
+   "code": "WH101",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WH102.txt",
+   "code": "WH102",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WH103.txt",
+   "code": "WH103",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WH104.txt",
+   "code": "WH104",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WH105.txt",
+   "code": "WH105",
+   "fixed": null,
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH106.txt",
+   "code": "WH106",
+   "fixed": "Mechanician",
+   "random": [
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH107.txt",
+   "code": "WH107",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WH108.txt",
+   "code": "WH108",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WH109.txt",
+   "code": "WH109",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WH110.txt",
+   "code": "WH110",
+   "fixed": null,
+   "random": [
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH111.txt",
+   "code": "WH111",
+   "fixed": null,
+   "random": [
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WH112.txt",
+   "code": "WH112",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WH113.txt",
+   "code": "WH113",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Priestess",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH114.txt",
+   "code": "WH114",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH115.txt",
+   "code": "WH115",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH116.txt",
+   "code": "WH116",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH117.txt",
+   "code": "WH117",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH118.txt",
+   "code": "WH118",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH119.txt",
+   "code": "WH119",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH120.txt",
+   "code": "WH120",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH121.txt",
+   "code": "WH121",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH122.txt",
+   "code": "WH122",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH123.txt",
+   "code": "WH123",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH124.txt",
+   "code": "WH124",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH125.txt",
+   "code": "WH125",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH126.txt",
+   "code": "WH126",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH128.txt",
+   "code": "WH128",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WH129.txt",
+   "code": "WH129",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WH130.txt",
+   "code": "WH130",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WH131.txt",
+   "code": "WH131",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WH151.txt",
+   "code": "WH151",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH152.txt",
+   "code": "WH152",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WH153.txt",
+   "code": "WH153",
+   "fixed": null,
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WM101.txt",
+   "code": "WM101",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM102.txt",
+   "code": "WM102",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM103.txt",
+   "code": "WM103",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM104.txt",
+   "code": "WM104",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM105.txt",
+   "code": "WM105",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM106.txt",
+   "code": "WM106",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM107.txt",
+   "code": "WM107",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM108.txt",
+   "code": "WM108",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM109.txt",
+   "code": "WM109",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM110.txt",
+   "code": "WM110",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM111.txt",
+   "code": "WM111",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM112.txt",
+   "code": "WM112",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM113.txt",
+   "code": "WM113",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM114.txt",
+   "code": "WM114",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM115.txt",
+   "code": "WM115",
+   "fixed": null,
+   "random": [
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WM116.txt",
+   "code": "WM116",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM117.txt",
+   "code": "WM117",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM118.txt",
+   "code": "WM118",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM119.txt",
+   "code": "WM119",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM120.txt",
+   "code": "WM120",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM121.txt",
+   "code": "WM121",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM122.txt",
+   "code": "WM122",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM123.txt",
+   "code": "WM123",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM124.txt",
+   "code": "WM124",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM125.txt",
+   "code": "WM125",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM126.txt",
+   "code": "WM126",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM128.txt",
+   "code": "WM128",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM129.txt",
+   "code": "WM129",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM130.txt",
+   "code": "WM130",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM131.txt",
+   "code": "WM131",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM151.txt",
+   "code": "WM151",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM152.txt",
+   "code": "WM152",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WM153.txt",
+   "code": "WM153",
+   "fixed": null,
+   "random": [
+    "Magician",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WN101.txt",
+   "code": "WN101",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN102.txt",
+   "code": "WN102",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN103.txt",
+   "code": "WN103",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN104.txt",
+   "code": "WN104",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN105.txt",
+   "code": "WN105",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN106.txt",
+   "code": "WN106",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN107.txt",
+   "code": "WN107",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN108.txt",
+   "code": "WN108",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN109.txt",
+   "code": "WN109",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN110.txt",
+   "code": "WN110",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN111.txt",
+   "code": "WN111",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN112.txt",
+   "code": "WN112",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN113.txt",
+   "code": "WN113",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN114.txt",
+   "code": "WN114",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN115.txt",
+   "code": "WN115",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN116.txt",
+   "code": "WN116",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN117.txt",
+   "code": "WN117",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN118.txt",
+   "code": "WN118",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN119.txt",
+   "code": "WN119",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN120.txt",
+   "code": "WN120",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN121.txt",
+   "code": "WN121",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN122.txt",
+   "code": "WN122",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN123.txt",
+   "code": "WN123",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN124.txt",
+   "code": "WN124",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN125.txt",
+   "code": "WN125",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN126.txt",
+   "code": "WN126",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN127.txt",
+   "code": "WN127",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN128.txt",
+   "code": "WN128",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN129.txt",
+   "code": "WN129",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN151.txt",
+   "code": "WN151",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN152.txt",
+   "code": "WN152",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN153.txt",
+   "code": "WN153",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WN157.txt",
+   "code": "WN157",
+   "fixed": null,
+   "random": [
+    "Shaman"
+   ]
+  },
+  {
+   "file": "WP101.txt",
+   "code": "WP101",
+   "fixed": "Pikeman",
+   "random": [
+    "Fighter",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP102.txt",
+   "code": "WP102",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP103.txt",
+   "code": "WP103",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP104.txt",
+   "code": "WP104",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP105.txt",
+   "code": "WP105",
+   "fixed": "Pikeman",
+   "random": []
+  },
+  {
+   "file": "WP106.txt",
+   "code": "WP106",
+   "fixed": "Pikeman",
+   "random": [
+    "Knight",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP107.txt",
+   "code": "WP107",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP108.txt",
+   "code": "WP108",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP109.txt",
+   "code": "WP109",
+   "fixed": "Pikeman",
+   "random": []
+  },
+  {
+   "file": "WP110.txt",
+   "code": "WP110",
+   "fixed": "Pikeman",
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP111.txt",
+   "code": "WP111",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP112.txt",
+   "code": "WP112",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP113.txt",
+   "code": "WP113",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP114.txt",
+   "code": "WP114",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WP115.txt",
+   "code": "WP115",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP116.txt",
+   "code": "WP116",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP117.txt",
+   "code": "WP117",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP118.txt",
+   "code": "WP118",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP119.txt",
+   "code": "WP119",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WP120.txt",
+   "code": "WP120",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP121.txt",
+   "code": "WP121",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP122.txt",
+   "code": "WP122",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP123.txt",
+   "code": "WP123",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP124.txt",
+   "code": "WP124",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP125.txt",
+   "code": "WP125",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP127.txt",
+   "code": "WP127",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP128.txt",
+   "code": "WP128",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP129.txt",
+   "code": "WP129",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP130.txt",
+   "code": "WP130",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WP151.txt",
+   "code": "WP151",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP152.txt",
+   "code": "WP152",
+   "fixed": "Pikeman",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WP153.txt",
+   "code": "WP153",
+   "fixed": "Pikeman",
+   "random": [
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WS101.txt",
+   "code": "WS101",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS102.txt",
+   "code": "WS102",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS103.txt",
+   "code": "WS103",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS104.txt",
+   "code": "WS104",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS105.txt",
+   "code": "WS105",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS106.txt",
+   "code": "WS106",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS107.txt",
+   "code": "WS107",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS108.txt",
+   "code": "WS108",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WS109.txt",
+   "code": "WS109",
+   "fixed": "Archer",
+   "random": [
+    "Mechanician",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS110.txt",
+   "code": "WS110",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS111.txt",
+   "code": "WS111",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS112.txt",
+   "code": "WS112",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS113.txt",
+   "code": "WS113",
+   "fixed": "Archer",
+   "random": [
+    "Mechanician",
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS114.txt",
+   "code": "WS114",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS115.txt",
+   "code": "WS115",
+   "fixed": "Archer",
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS116.txt",
+   "code": "WS116",
+   "fixed": "Archer",
+   "random": [
+    "Knight",
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS117.txt",
+   "code": "WS117",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS118.txt",
+   "code": "WS118",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS119.txt",
+   "code": "WS119",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS120.txt",
+   "code": "WS120",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS121.txt",
+   "code": "WS121",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS122.txt",
+   "code": "WS122",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS123.txt",
+   "code": "WS123",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS124.txt",
+   "code": "WS124",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS125.txt",
+   "code": "WS125",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS126.txt",
+   "code": "WS126",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS128.txt",
+   "code": "WS128",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS129.txt",
+   "code": "WS129",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS130.txt",
+   "code": "WS130",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS131.txt",
+   "code": "WS131",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS151.txt",
+   "code": "WS151",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS152.txt",
+   "code": "WS152",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS153.txt",
+   "code": "WS153",
+   "fixed": "Archer",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS201.txt",
+   "code": "WS201",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WS202.txt",
+   "code": "WS202",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS203.txt",
+   "code": "WS203",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WS204.txt",
+   "code": "WS204",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WS205.txt",
+   "code": "WS205",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS206.txt",
+   "code": "WS206",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS207.txt",
+   "code": "WS207",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS208.txt",
+   "code": "WS208",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Priestess",
+    "Magician"
+   ]
+  },
+  {
+   "file": "WS209.txt",
+   "code": "WS209",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta"
+   ]
+  },
+  {
+   "file": "WS210.txt",
+   "code": "WS210",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS211.txt",
+   "code": "WS211",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter"
+   ]
+  },
+  {
+   "file": "WS212.txt",
+   "code": "WS212",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS213.txt",
+   "code": "WS213",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS214.txt",
+   "code": "WS214",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS215.txt",
+   "code": "WS215",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS216.txt",
+   "code": "WS216",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS217.txt",
+   "code": "WS217",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS218.txt",
+   "code": "WS218",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS219.txt",
+   "code": "WS219",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS220.txt",
+   "code": "WS220",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS221.txt",
+   "code": "WS221",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS222.txt",
+   "code": "WS222",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS223.txt",
+   "code": "WS223",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS224.txt",
+   "code": "WS224",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS225.txt",
+   "code": "WS225",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS226.txt",
+   "code": "WS226",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS227.txt",
+   "code": "WS227",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS228.txt",
+   "code": "WS228",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS230.txt",
+   "code": "WS230",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS231.txt",
+   "code": "WS231",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS232.txt",
+   "code": "WS232",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS233.txt",
+   "code": "WS233",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS252.txt",
+   "code": "WS252",
+   "fixed": "Knight",
+   "random": [
+    "Atalanta",
+    "Mechanician"
+   ]
+  },
+  {
+   "file": "WS253.txt",
+   "code": "WS253",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WS254.txt",
+   "code": "WS254",
+   "fixed": "Knight",
+   "random": [
+    "Mechanician",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WT101.txt",
+   "code": "WT101",
+   "fixed": "Atalanta",
+   "random": [
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT102.txt",
+   "code": "WT102",
+   "fixed": "Atalanta",
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT103.txt",
+   "code": "WT103",
+   "fixed": "Atalanta",
+   "random": [
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT104.txt",
+   "code": "WT104",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT105.txt",
+   "code": "WT105",
+   "fixed": "Atalanta",
+   "random": [
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT106.txt",
+   "code": "WT106",
+   "fixed": "Atalanta",
+   "random": [
+    "Archer",
+    "Priestess"
+   ]
+  },
+  {
+   "file": "WT107.txt",
+   "code": "WT107",
+   "fixed": "Atalanta",
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT108.txt",
+   "code": "WT108",
+   "fixed": "Mechanician",
+   "random": [
+    "Atalanta",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WT109.txt",
+   "code": "WT109",
+   "fixed": "Atalanta",
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT110.txt",
+   "code": "WT110",
+   "fixed": "Atalanta",
+   "random": [
+    "Knight",
+    "Mechanician",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT111.txt",
+   "code": "WT111",
+   "fixed": "Atalanta",
+   "random": [
+    "Knight",
+    "Priestess",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT112.txt",
+   "code": "WT112",
+   "fixed": "Atalanta",
+   "random": [
+    "Knight",
+    "Fighter",
+    "Pikeman"
+   ]
+  },
+  {
+   "file": "WT113.txt",
+   "code": "WT113",
+   "fixed": "Atalanta",
+   "random": [
+    "Knight",
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT114.txt",
+   "code": "WT114",
+   "fixed": "Atalanta",
+   "random": [
+    "Fighter",
+    "Pikeman",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT115.txt",
+   "code": "WT115",
+   "fixed": "Atalanta",
+   "random": [
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT116.txt",
+   "code": "WT116",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT117.txt",
+   "code": "WT117",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT118.txt",
+   "code": "WT118",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT119.txt",
+   "code": "WT119",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT120.txt",
+   "code": "WT120",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT121.txt",
+   "code": "WT121",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT122.txt",
+   "code": "WT122",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT123.txt",
+   "code": "WT123",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT124.txt",
+   "code": "WT124",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT125.txt",
+   "code": "WT125",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT127.txt",
+   "code": "WT127",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT128.txt",
+   "code": "WT128",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT129.txt",
+   "code": "WT129",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT130.txt",
+   "code": "WT130",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT151.txt",
+   "code": "WT151",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT152.txt",
+   "code": "WT152",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WT153.txt",
+   "code": "WT153",
+   "fixed": "Atalanta",
+   "random": [
+    "Mechanician",
+    "Archer"
+   ]
+  },
+  {
+   "file": "WV101.txt",
+   "code": "WV101",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV102.txt",
+   "code": "WV102",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV103.txt",
+   "code": "WV103",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV104.txt",
+   "code": "WV104",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV105.txt",
+   "code": "WV105",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV106.txt",
+   "code": "WV106",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV107.txt",
+   "code": "WV107",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV108.txt",
+   "code": "WV108",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV109.txt",
+   "code": "WV109",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV110.txt",
+   "code": "WV110",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV111.txt",
+   "code": "WV111",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV112.txt",
+   "code": "WV112",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV113.txt",
+   "code": "WV113",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV114.txt",
+   "code": "WV114",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV115.txt",
+   "code": "WV115",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV116.txt",
+   "code": "WV116",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV117.txt",
+   "code": "WV117",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV118.txt",
+   "code": "WV118",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV119.txt",
+   "code": "WV119",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV120.txt",
+   "code": "WV120",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV122.txt",
+   "code": "WV122",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV123.txt",
+   "code": "WV123",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV124.txt",
+   "code": "WV124",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV125.txt",
+   "code": "WV125",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV126.txt",
+   "code": "WV126",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV127.txt",
+   "code": "WV127",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV128.txt",
+   "code": "WV128",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV151.txt",
+   "code": "WV151",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV152.txt",
+   "code": "WV152",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV153.txt",
+   "code": "WV153",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV154.txt",
+   "code": "WV154",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV155.txt",
+   "code": "WV155",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV156.txt",
+   "code": "WV156",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  },
+  {
+   "file": "WV157.txt",
+   "code": "WV157",
+   "fixed": null,
+   "random": [
+    "MartialArtist"
+   ]
+  }
+ ]
+}

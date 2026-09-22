@@ -673,7 +673,10 @@
     "specResWind": "风防御",
     "specMaxHpBoost": "生命最大值增加",
     "specMaxMpBoost": "灵力最大值增加",
-    "specMagicMastery": "魔法熟练度"
+    "specMagicMastery": "魔法熟练度",
+    "weight": "重量",
+    "potionSpace": "药水存放数量",
+    "price": "价格"
   },
   "npc": {
     "gmOnly": "只有管理员能使用这个 NPC",

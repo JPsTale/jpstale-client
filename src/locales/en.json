@@ -673,7 +673,10 @@
     "specResWind": "Spec. Wind",
     "specMaxHpBoost": "Max HP Boost",
     "specMaxMpBoost": "Max MP Boost",
-    "specMagicMastery": "Magic APT"
+    "specMagicMastery": "Magic APT",
+    "weight": "Weight",
+    "potionSpace": "Potion Storage",
+    "price": "Price"
   },
   "npc": {
     "gmOnly": "Only admins may use this NPC",

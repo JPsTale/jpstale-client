@@ -1287,7 +1287,10 @@
 
 /* 原版风格物品信息框（深色半透明底；名字白色居中；右上武器类型徽标）
    颜色对照 NewSourcePT cITEM::DrawItemText：正文数值 R254,215,163 / 标签白；
-   需求满足 R150,149,144 暗黄、不足红；职业特效标题橙 R235,143,60、属性行绿 R33,205,95。 */
+   配色口径（用户 2026-09-22 定，与两处源码冲突时以用户实测为准，记录见 AGENTS 纠错 #70）：
+   普通属性 = 白；需求**标签**橙黄 `#ffb464`（ex-machina `RGB(255,180,100)`）、不达标整行红；
+   职业特效 = 绿段（属性行 `#a4c729` / 标题 `#ffdc00`）；
+   被锻造/合成强化的行 = 蓝 `#6ea8ff`（合成 `#c77dff`，同管理端 `mod-age`/`mod-mix`）。 */
 .jp-item-info {
   position: fixed;
   /* 必须**高于持物图标**（`.jp-hand-ic` = 1300）：否则拿着道具 hover 别的物品时，
@@ -1347,17 +1350,30 @@
 .jp-item-info-l {
   color: #ffffff;
 }
+/* 数值列 **白**（用户 2026-09-22 定的口径：标签/数值默认都是白，只有需求标签橙黄、特效行绿、
+   被锻造的行蓝）。旧值 `#fed7a3` = 11 职业私服客户端 `sinItem.cpp:7665` 的默认色 `RGB(254,215,163)`
+   —— 那是该来源把"数值列"染成淡黄的做法，用户以游戏内实测为准改成白。 */
 .jp-item-info-v {
-  color: #fed7a3;
+  color: #ffffff;
   /* 数值**左对齐**（用户 2026-09-14）：所有数值从同一条左边缘开始，不再贴框右边 */
   text-align: left;
   justify-self: start;
+}
+/* 需求行的**标签**橙黄：给"等级要求/力量要求/精神要求/才能要求/敏捷要求/体质要求"这几个**字**上色，
+   右边数值保持白（用户 2026-09-22 定的口径）。色值取 ex-machina 给需求行用的 `RGB(255,180,100)`
+   （11 职业私服客户端那份是 `RGB(150,149,144)` 灰，用户已否掉 —— 见下面的 `.jp-item-info-dim`）。
+   ⚠ 本规则必须放在 `.jp-item-info-red` **之前**：两者同为 (0,2,0)，不达标时的红靠源码顺序覆盖它。 */
+.jp-item-info-req .jp-item-info-l {
+  color: #ffb464;
 }
 .jp-item-info-red .jp-item-info-l,
 .jp-item-info-red .jp-item-info-v {
   color: #ff0000;
 }
-/* 需求行满足：原版 R150,149,144 暗黄 */
+/* ⚠ 当前**无使用者**：需求行满足时用默认色（用户 2026-09-22："原版应该是默认偏黄，
+   装备不了就变红"）。这条规则的颜色来自 11 职业私服客户端 `sinItem.cpp:7715`
+   的 `RGB(150,149,144)`（它把**满足**的需求行画成灰黄）——那是该来源的实现，不是原版；
+   要接回去先问，别照源码"修好"。 */
 .jp-item-info-dim .jp-item-info-l,
 .jp-item-info-dim .jp-item-info-v {
   color: #969590;
@@ -1382,6 +1398,32 @@
 .jp-item-info-spec .jp-item-info-l,
 .jp-item-info-spec .jp-item-info-v {
   color: #a4c729;
+}
+
+/* —— 被合成/锻造加成过的行（用户 2026-09-22："有合成、锻造加成的时候，被强化的那一行属性需要变成
+   蓝色或紫色"）。色值 = 管理端 `js/item-effects.js` 的 `mod-age 蓝 #6ea8ff` / `mod-mix 紫 #c77dff`。
+   位置在 `.jp-item-info-spec` 之后 ⇒ 特效行同时被强化时蓝/紫覆盖绿（与管理端一致）。
+   哪几行算"被强化"= Aging 看 `agingLevel>0`（列清单照抄管理端 `applyAge`）；Mix 见 `mix` 类的说明。 —— */
+.jp-item-info-age .jp-item-info-l,
+.jp-item-info-age .jp-item-info-v {
+  color: #6ea8ff;
+}
+/* 名字也被强化时一起变色（用户："装备名字也会响应变色"） */
+.jp-item-info-name.jp-item-info-age {
+  color: #6ea8ff;
+}
+/* 名字**下方**那行（锻造等级 `+N`；合成配方名待 Mix 系统落地）：只有值、居中 */
+.jp-item-info-sub {
+  display: block;
+  grid-column: 1 / -1;   /* 覆盖 `.jp-item-info-line` 的 display:contents（同 `.jp-item-info-sec`） */
+  text-align: center;
+  font-size: 11px;
+}
+.jp-item-info-sub .jp-item-info-v {
+  justify-self: center;
+}
+.jp-item-info-sub.jp-item-info-age .jp-item-info-v {
+  color: #6ea8ff;
 }
 
 /* 背包拖放视觉（原版：悬停占格高亮 / 拿起持物 / 落点 绿=可放 黄=合并 红=冲突） */
