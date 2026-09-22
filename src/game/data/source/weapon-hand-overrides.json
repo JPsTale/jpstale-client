@@ -10,8 +10,7 @@
   "WP1xx": null,
   "WS1xx": null,
   "WS2xx": null,
-  "WT1xx": null,
-  "WV1xx": "2H"
+  "WT1xx": null
  },
  "codes": {
   "WA128": "2H",
@@ -65,6 +64,6 @@
   "WS1xx": "10 个码，例 WS127",
   "WS2xx": "10 个码，例 WS229",
   "WT1xx": "9 个码，例 WT126",
-  "WV1xx": "37 个码，例 WV101"
+  "WV1xx": "37 个码，例 WV101；手别不覆盖：用户 2026-09-22 指示拳套按爪处理（爪 classitem=4 = 单手 ⇒ 交给 classitem 判定）；2026-09-22 前这里曾有一条误加的 2H 覆盖，已撤"
  }
 }

@@ -1054,6 +1054,17 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.applyMapSwitched(Number(ms.mapId ?? 0));
       break;
     }
+    case 'ageUpBroadcast': {
+      // 锻造成功：**自己与旁观者都播**（原版 `smCOMMNAD_USER_AGINGUP`，服务端按 AOI 广播）——
+      // 白光 + `.part` aging，音效编号 7 与升级同一记音、按距离衰减（`netplay.cpp:7290-7298`）。
+      const ab = msg.ageUpBroadcast!;
+      const pid = Number(ab.playerId ?? 0);
+      const at = worldView.unitFeetPos(pid);
+      if (at) sfx.playLevelUp(worldView.isSelf(pid) ? undefined : { pos: at });
+      else break;              // 不在视野里：不放音也不放特效（同升级那支的口径）
+      worldView.spawnAgeUpEffect(pid);
+      break;
+    }
     case 'levelUpBroadcast': {
       // 升级：**自己与旁观者都播**升级音 + 特效（等级数值由服务端权威推送）。
       // 原版两处调用点：`playsub.cpp:1310`（自己，音量 400）与 `character.cpp:9157`（看见别人升级，

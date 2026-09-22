@@ -101,6 +101,9 @@ export type SheatheSlot = 'hand' | 'back' | 'bow' | 'crossbow' | 'dagger_l' | 'd
  */
 export const SHEATHE_FAMILY_RULES: Array<{ family: number; slot: SheatheSlot; label: string }> = [
   { family: FAM.CLAW, slot: 'hand', label: '爪族' },
+  // 拳套（WV 族 0x010B，**11 职业新增、源码里没有这个家族**）—— 用户 2026-09-22 指示"当作爪处理"，
+  // 故收械与爪同：留在手上（`hand`）。⚠ 这是**我们定的**（源码无 WV），与匕首那条同属"资产/用户裁定"。
+  { family: 0x010b0000, slot: 'hand', label: '拳套(照爪族)' },
   // 刺客匕首（WD 族）→ **挂右腰**。这条**不是**源码判定，是照资产 + 用户实测定的：
   //  ① 源码两版的三张表里都没有匕首 → 按机制应落 `dwItemSetting` 默认 1 → `Bip in01`（背）。
   //  ② 但 m6（**仅刺客**模型）骨架里有 `Bip in_DaggerL` / `Bip in_DaggerR` 两根腰挂骨，

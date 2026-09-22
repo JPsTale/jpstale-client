@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview } from '../app/gameStore.js';
 import {
   allocateStat,
   useSkill,
@@ -18,6 +18,10 @@ import {
   npcInteract,
   shopBuy,
   shopSell,
+  mixItem,
+  ageItem,
+  forceOrbItem,
+  mixPreview,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -136,6 +140,17 @@ resBionic: e.resBionic || 0,
     price: e.price || 0,
     jobCodeMask: e.jobCodeMask || 0,
     agingLevel: e.agingLevel || 0,
+    kindCode: e.kindCode || 0,
+    craftMask: e.craftMask || 0,
+    mixEffects: (e.mixEffects || []).map((m) => ({
+      key: m.key || '',
+      value: Number(m.value) || 0,
+      flat: !!m.flat,
+    })),
+    agingExp: Number(e.agingExp) || 0,
+    agingExpMax: Number(e.agingExpMax) || 0,
+    mixUniqueId: e.mixUniqueId || 0,
+    agingProtect: e.agingProtect || 0,
     critical: e.critical || 0,
     range: e.range || 0,
     attackSpeed: e.attackSpeed || 0,
@@ -195,6 +210,42 @@ export function installBridge(): void {
       for (const id of ids) applyItemRemoved(id);
     }
     if (msg.goldChange) setInventoryGold(Number(msg.goldChange.newGold) || 0);
+    // buff 条（左上角）：整表替换；`at` 记本地接收时刻，倒计时以它为基准（见 BuffEntry 注释）
+    if (msg.buffState) {
+      const at = Date.now();
+      setBuffs((msg.buffState.buffs || []).map((b) => ({
+        itemCode: Number(b.itemCode) || 0,
+        itemlistId: Number(b.itemlistId) || 0,
+        remainingMs: Number(b.remainingMs) || 0,
+        totalMs: Number(b.totalMs) || 0,
+        stack: Number(b.stack) || 1,
+        at,
+      })));
+    }
+    // NPC 的打造窗口（合成/锻造/力量石）：由服务端指明这个 NPC 提供哪几档服务
+    if (msg.craftOpen) {
+      const c = msg.craftOpen;
+      setCraftOpen(Number(c.entityId) || 0, (c.modes || []).map((m) => Number(m) || 0));
+      openPanel('craft');
+    }
+    // 合成预览（服务端算好的 before/after；客户端只显示）
+    if (msg.mixPreview) {
+      const pv = msg.mixPreview;
+      setCraftPreview({
+        matched: !!pv.matched,
+        reasonKey: pv.reasonKey || '',
+        recipeName: pv.recipeName || '',
+        effects: (pv.effects || []).map((e) => ({
+          bit: Number(e.bit) || 0,
+          key: e.key || '',
+          value: Number(e.value) || 0,
+          flat: !!e.flat,
+          before: Number(e.before) || 0,
+          after: Number(e.after) || 0,
+          intField: !!e.intField,
+        })),
+      });
+    }
     if (msg.shopOpen) {
       const o = msg.shopOpen;
       const items = (o.items || []).map((it) => ({
@@ -285,4 +336,26 @@ export function sendStackMerge(srcUid: number, dstUid: number): void {
 
 export function sendSwitchWeapon(): void {
   send(switchWeapon());
+}
+
+// —— 打造（合成 / 锻造 / 力量石）：服务端权威 ——
+
+/** 合成：目标装备 + 材料石（配方匹配与效果应用全在服务端）。 */
+export function sendMixItem(targetUid: number, stoneUids: readonly number[]): void {
+  send(mixItem(targetUid, stoneUids));
+}
+
+/** 锻造投石：目标装备 + 一颗材料石。 */
+export function sendAgeItem(targetUid: number, stoneUid: number): void {
+  send(ageItem(targetUid, stoneUid));
+}
+
+/** 力量大师：材料石 → 力量石。 */
+export function sendForceOrbItem(stoneUids: readonly number[]): void {
+  send(forceOrbItem(stoneUids));
+}
+
+/** 合成预览请求（服务端权威：配方匹配与数值都在服务端算）。 */
+export function sendMixPreview(targetUid: number, stoneUids: readonly number[]): void {
+  send(mixPreview(targetUid, stoneUids));
 }

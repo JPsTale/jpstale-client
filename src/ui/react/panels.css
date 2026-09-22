@@ -1331,18 +1331,13 @@
   padding-right: 26px;
   padding-left: 26px;
 }
+/* 物品框右上角的类别小图标（原版 18×16，`sinItem.cpp:1974-1984`）——
+   **不要边框/底色**（用户 2026-09-23），黑底由 transparentBmp 抠掉 */
 .jp-item-info-wtype {
-  position: absolute;
-  right: 0;
-  top: 0;
-  font-weight: 400;
-  font-size: 11px;
-  line-height: 1.4;
-  color: #cfe0ee;
-  border: 1px solid rgba(170, 190, 210, 0.4);
-  padding: 0 4px;
-  border-radius: 2px;
-  background: rgba(30, 40, 55, 0.55);
+  position: absolute; right: 0; top: 0;
+  width: 18px; height: 16px;
+  image-rendering: pixelated;
+  pointer-events: none;
 }
 .jp-item-info-line {
   display: contents;   /* 行本身不参与布局：两个 span 直接进容器的网格（于是标签列跨所有行对齐） */
@@ -1585,3 +1580,126 @@
 .jp-split-btns .jp-split-ok:hover {
   background: #3a5a42;
 }
+
+/* ==========================================================================
+   buff 图标条（左上角）—— 圆形图标 + 外圈圆环倒计时
+   版面依据用户 2026-09-22 给的私服截图：图标居中、圆环淡蓝填充表示**已经过**的时间、hover 出信息。
+   位置：左上角（我方 HUD 画布只在屏幕底部，左上角本来就是空的；世界地图面板的浮层在面板内部，不受影响）。
+   ========================================================================== */
+.jp-buffs {
+  position: absolute; left: 8px; top: 8px; z-index: 6;
+  display: flex; flex-wrap: wrap; gap: 2px;
+  max-width: 46vw;                 /* 一行放不下就换行，不压到画面中央 */
+  user-select: none; -webkit-user-select: none;
+}
+.jp-buff { position: relative; pointer-events: auto; }
+.jp-buff-ring { position: absolute; left: 0; top: 0; }
+/* 图标面盘：深色底 + 圆形裁切，让图标在任何背景上都读得出来（截图里也是这种"圆牌"感） */
+.jp-buff-face {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #3a3427, #14120d 75%);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.9);
+  display: flex; align-items: center; justify-content: center;
+}
+.jp-buff-face img { width: 26px; height: 26px; object-fit: contain; image-rendering: pixelated; }
+.jp-buff-stack {
+  position: absolute; right: 0; bottom: 0;
+  padding: 0 3px; border-radius: 6px;
+  background: #000000cc; color: #ffe9a8; font-size: 11px; line-height: 14px;
+}
+/* 悬停提示：名字 + 剩余时间（只写必要信息，不解释 buff 是干什么的） */
+.jp-buff-tip {
+  position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%);
+  padding: 3px 7px; border-radius: 4px; white-space: nowrap;
+  background: #0a0c12f2; border: 1px solid #4a4f5a; color: #e8e2d4;
+  font-size: 12px; line-height: 1.5; text-align: center;
+  pointer-events: none; z-index: 8;
+}
+.jp-buff-tip-name { color: #ffd98a; }
+.jp-buff-tip-time { color: #b9c4d0; }
+
+/* ==========================================================================
+   打造窗口（合成 / 锻造 / 力量石）—— NPC 交互打开
+   版面依据 docs/原版三窗口UI-版面与资产.md：标签条 + 3×4 材料格（原版 22px 格，放大到 34px 好点）
+   ========================================================================== */
+.jp-craft { display: flex; flex-direction: column; gap: 6px; min-width: 300px; }
+.jp-craft-tabs { display: flex; gap: 2px; }
+.jp-craft-tab {
+  flex: 1; padding: 3px 8px; cursor: pointer;
+  background: #1b1f26; color: #b9b2a2; border: 1px solid #4a4436; border-radius: 3px;
+  font-size: 12px; font-family: inherit;
+}
+.jp-craft-tab.is-on { background: #3a3325; color: #ffe9a8; border-color: #8a7a4a; }
+.jp-craft-row { display: flex; align-items: flex-start; gap: 8px; }
+.jp-craft-label { flex: none; width: 46px; padding-top: 8px; color: #b9b2a2; font-size: 12px; }
+.jp-craft-cells { display: grid; grid-template-columns: repeat(4, 34px); gap: 2px; }   /* 4×3 = 12 格（原版 `AgingLevelSheltomXY[4][3]`） */
+.jp-craft-slot {
+  width: 34px; height: 34px; padding: 0; position: relative; cursor: pointer;
+  background: #14161b; border: 1px solid #4a4436; border-radius: 2px;
+  display: flex; align-items: center; justify-content: center;
+}
+.jp-craft-slot:disabled { cursor: default; }
+.jp-craft-slot img { width: 30px; height: 30px; object-fit: contain; image-rendering: pixelated; }
+.jp-craft-slot.is-filled { border-color: #8a7a4a; }
+/* 目标格（单独一格，比材料格大一点：一眼看出"这件是要被强化的"） */
+.jp-craft-row .jp-craft-slot { width: 44px; height: 44px; }
+.jp-craft-row .jp-craft-slot img { width: 40px; height: 40px; }
+.jp-craft-count {
+  position: absolute; right: 0; bottom: 0; padding: 0 2px;
+  background: #000000cc; color: #ffe9a8; font-size: 10px; line-height: 12px; border-radius: 4px;
+}
+.jp-craft-src { display: flex; flex-direction: column; gap: 2px; }
+.jp-craft-src-title { color: #8f8878; font-size: 11px; }
+.jp-craft-src-empty { color: #6a6459; font-size: 11px; }
+.jp-craft-src-list {
+  display: flex; flex-wrap: wrap; gap: 2px; max-height: 78px; overflow-y: auto;
+  padding: 2px; background: #101216; border: 1px solid #33302a; border-radius: 3px;
+}
+.jp-craft-src-icon {
+  width: 26px; height: 26px; padding: 0; position: relative; cursor: pointer;
+  background: transparent; border: 1px solid transparent; border-radius: 2px;
+}
+.jp-craft-src-icon:hover:not(:disabled) { border-color: #8a7a4a; background: #2a2620; }
+.jp-craft-src-icon:disabled { opacity: 0.35; cursor: default; }
+.jp-craft-src-icon img { width: 24px; height: 24px; object-fit: contain; image-rendering: pixelated; }
+.jp-craft-actions { display: flex; align-items: center; gap: 8px; padding-top: 2px; }
+.jp-craft-ok {
+  padding: 4px 18px; cursor: pointer; font-family: inherit; font-size: 12px;
+  background: #3a3325; color: #ffe9a8; border: 1px solid #8a7a4a; border-radius: 3px;
+}
+.jp-craft-ok:disabled { opacity: 0.45; cursor: default; }
+.jp-craft-hint { color: #8f8878; font-size: 11px; }
+/* 合成预览：配方名 + 逐项 before → after（数都是服务端算的） */
+.jp-craft-preview {
+  padding: 3px 6px; border-radius: 3px; font-size: 12px; line-height: 1.7;
+  background: #12141a; border: 1px solid #33302a;
+}
+.jp-craft-preview--none { color: #d98a8a; border-color: #5a3a3a; }
+.jp-craft-preview-name { color: #ffd98a; }
+.jp-craft-preview-row { display: flex; justify-content: space-between; gap: 10px; }
+.jp-craft-preview-key { color: #b9b2a2; }
+.jp-craft-preview-val { color: #d8d2c4; }
+.jp-craft-preview-val b { color: #8fd4ff; font-weight: 400; }
+.jp-craft-preview-delta { margin-left: 4px; color: #8fbf6a; }
+/* 锻造熟练度进度条（原版 `AgingBar/AgingGage/AgingBar2` 三张图的近似；文字与原版一致：只有 +N） */
+.jp-item-info-barline { display: block; padding: 2px 0; }
+/* 底条用原版 `bar_.bmp`（空槽），进度用 `bar.bmp` 按 cur/max 裁宽；尺寸按贴图原始像素，不拉伸变形 */
+.jp-item-info-bar {
+  position: relative; display: block; height: 12px; margin: 0 auto; overflow: hidden;
+  background: url('/res/image/sinimage/shopall/Aging/bar_.bmp') left center / auto 12px repeat-x;
+  image-rendering: pixelated;
+}
+.jp-item-info-barfill { display: block; height: 12px; object-fit: cover; object-position: left center; image-rendering: pixelated; }
+.jp-item-info-barlevel {
+  position: absolute; inset: 0; text-align: center; line-height: 12px;
+  font-size: 11px; color: #ffe9a8; text-shadow: 0 0 2px #000;
+}
+/* 合成配方名（名字下方一行；用户 2026-09-22："被强化的…装备名字也会响应变色，并在名字下方显示…合成配方名称"） */
+.jp-item-info-mixname { display: block; text-align: center; color: #6ea8ff; font-size: 12px; }
+/* 名字颜色：**锻造过的名字用黄色**、**合成过的名字用天蓝**（用户 2026-09-23 按原版截图定；
+   注意与"属性行/配方行"的蓝（#6ea8ff）**不是同一个蓝**，那是给行用的） */
+.jp-item-info-name.jp-item-info-nameage { color: #ffd24a; }
+.jp-item-info-name.jp-item-info-namemix { color: #7fd4ff; }
+/* 锻造等级：**另起一行**（原版是一个小铭牌，我方先用同色文字，等图形资源接上再换） */
+.jp-item-info-level { display: block; text-align: center; color: #ffd24a; font-size: 12px; letter-spacing: 0.5px; }

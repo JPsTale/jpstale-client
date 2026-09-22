@@ -1,7 +1,7 @@
 {
  "note": "武器语义表（权威来源：gamedb.itemlist 的 weaponclass/category/classitem/modelposition/primaryspec）。生成物，勿手改；重新生成用 npx tsx scripts/extract-item-semantics.ts。字段：type=武器类型（Bows 内按 modelposition 2=弓/4=弩 细分）、hand=单双手、attackClass=攻击行为类、primaryClass=主用职业、sheath=挂点（modelposition）、handAttached=是否手持。注意：Phantom（萨满图腾）漂在角色背后，不挂手骨，handAttached=false；且 sItem 索引表（sitem-weapon-index.ts）只覆盖 0x0101~0x0108，Phantom(0x0109)/Dagger(0x010A) 无 sItem 索引，故永远不会出现在 .inx 的 itemCodeList 里。",
  "source": "ssh:root@192.168.31.10",
- "weaponCount": 316,
+ "weaponCount": 350,
  "categories": [
   {
    "category": "Axes/AXE",
@@ -209,6 +209,16 @@
    ],
    "primary": "none",
    "count": 1
+  },
+  {
+   "category": "Vambraces/KNUCKLE",
+   "type": "KNUCKLE",
+   "weaponClass": "MELEE",
+   "hand": [
+    "1H"
+   ],
+   "primary": "?",
+   "count": 34
   }
  ],
  "byIdcode": {
@@ -703,12 +713,12 @@
    "handAttached": true
   },
   "16910336": {
-   "name": "Ancient Revenge",
+   "name": "Pharaoh",
    "category": "Claws",
    "type": "CLAW",
    "hand": "1H",
    "attackClass": "MELEE",
-   "primaryClass": "none",
+   "primaryClass": "Mechanician",
    "sheath": 4,
    "sheathe": {
     "slot": "hand",
@@ -1501,7 +1511,7 @@
    "handAttached": true
   },
   "17041664": {
-   "name": "Skull Staff",
+   "name": "Dark Skull",
    "category": "Wands",
    "type": "STAFF",
    "hand": "2H",
@@ -2887,12 +2897,12 @@
    "handAttached": true
   },
   "17238528": {
-   "name": "Plated Sword",
+   "name": "Platinum Sword",
    "category": "Swords",
    "type": "SWORD",
    "hand": "2H",
    "attackClass": "MELEE",
-   "primaryClass": "Knight",
+   "primaryClass": "none",
    "sheath": 4,
    "sheathe": {
     "slot": "back",
@@ -3419,12 +3429,12 @@
    "handAttached": true
   },
   "17303808": {
-   "name": "Cobra",
+   "name": "Anaconda",
    "category": "Javelins",
    "type": "JAVELIN",
    "hand": "1H",
    "attackClass": "RANGED",
-   "primaryClass": "Atalanta",
+   "primaryClass": "none",
    "sheath": 4,
    "sheathe": {
     "slot": "back",
@@ -4301,12 +4311,12 @@
    "handAttached": true
   },
   "17434880": {
-   "name": "Platinum Dagger",
+   "name": "Falchion",
    "category": "Dagger",
    "type": "DAGGER",
    "hand": "2H",
    "attackClass": "MELEE",
-   "primaryClass": "none",
+   "primaryClass": "Assassin",
    "sheath": 4,
    "sheathe": {
     "slot": "dagger_r",
@@ -4633,6 +4643,482 @@
    "sheathe": {
     "slot": "dagger_r",
     "src": "family-rule(刺客匕首(腰挂))"
+   },
+   "handAttached": true
+  },
+  "17498368": {
+   "name": "纤维拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17498624": {
+   "name": "青铜拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17498880": {
+   "name": "羊皮拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17499136": {
+   "name": "传说的拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17499392": {
+   "name": "魔王拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17499648": {
+   "name": "嗜血拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17499904": {
+   "name": "灵魂之击拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17500160": {
+   "name": "白金拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17500416": {
+   "name": "枫击拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17500672": {
+   "name": "降龙拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17500928": {
+   "name": "玄铁拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17501184": {
+   "name": "蓝玉拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17501440": {
+   "name": "血染拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17501696": {
+   "name": "熔岩拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17501952": {
+   "name": "百裂拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17502208": {
+   "name": "龙王之怒拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17502464": {
+   "name": "钛金之手拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17502720": {
+   "name": "百战不殆拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17502976": {
+   "name": "精灵之力拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17503232": {
+   "name": "毁灭拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17503744": {
+   "name": "虎牙拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17504000": {
+   "name": "阿瑞斯拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17504256": {
+   "name": "波塞顿拳套",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17504512": {
+   "name": "悲伤之拳",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17504768": {
+   "name": "阿波罗之拳",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17505024": {
+   "name": "致命之拳",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17505280": {
+   "name": "烈焰之拳",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17511168": {
+   "name": "毁灭拳套(5h)",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17511424": {
+   "name": "阿瑞斯拳套(5h)",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17511680": {
+   "name": "波塞顿拳套(5h)",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17511936": {
+   "name": "黑色拳头(80Lv)",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17512192": {
+   "name": "黑色拳头(102Lv)",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17512448": {
+   "name": "黑色拳头(108Lv)",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
+   },
+   "handAttached": true
+  },
+  "17512704": {
+   "name": "黑色拳头",
+   "category": "Vambraces",
+   "type": "KNUCKLE",
+   "hand": "1H",
+   "attackClass": "MELEE",
+   "primaryClass": "ps1024",
+   "sheath": 4,
+   "sheathe": {
+    "slot": "hand",
+    "src": "family-rule(拳套(照爪族))"
    },
    "handAttached": true
   }

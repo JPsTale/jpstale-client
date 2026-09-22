@@ -1,6 +1,7 @@
-// 物品定义静态表（生成自 gamedb.itemlist，questid=0，992 条）
+// 物品定义静态表（生成自 gamedb.itemlist，questid=0，1026 条）
 // 图标路径 = /res/image/sinimage/items/{folder}/it{icon}.bmp
-// 生成 2026-09-09；改 DB 定义后重跑：psql 导出 json → node 格式化
+// 生成物，**勿手改**：改库后重跑 `npm run item-defs`（scripts/extract-item-defs.ts）。
+// 生成 2026-09-22；来源 ssh:root@192.168.31.10
 
 export interface ItemDef {
   id: number;      // itemlist.id（uid 关联用）
@@ -212,7 +213,7 @@ export const ITEM_DEFS: ItemDef[] = [
   { id: 193, code: 17307392, name: "Heretic Javelin", icon: "wt123", folder: "weapon", w: 1, h: 4, class: 4, pos: 4, sound: 8, reqLv: 102 },
   { id: 194, code: 134355200, name: "Arctic Crystal", icon: "gp125", folder: "event", w: 2, h: 2, class: 1, pos: 0, sound: 4, reqLv: 105 },
   { id: 195, code: 17307904, name: "Salamander Javelin", icon: "wt124", folder: "weapon", w: 1, h: 4, class: 4, pos: 4, sound: 8, reqLv: 105 },
-  { id: 196, code: 33620224, name: "Nude", icon: "da101", folder: "defense", w: 0, h: 0, class: 8, pos: 8, sound: 9, reqLv: 0 },
+  { id: 196, code: 33620224, name: "Nude", icon: "da101", folder: "defense", w: 1, h: 1, class: 8, pos: 8, sound: 9, reqLv: 0 },
   { id: 197, code: 33620480, name: "Battle Suit", icon: "da102", folder: "defense", w: 3, h: 4, class: 8, pos: 8, sound: 9, reqLv: 0 },
   { id: 198, code: 33620736, name: "Leather Armor", icon: "da103", folder: "defense", w: 3, h: 4, class: 8, pos: 8, sound: 9, reqLv: 0 },
   { id: 199, code: 33620992, name: "Brigandine", icon: "da104", folder: "defense", w: 3, h: 4, class: 8, pos: 8, sound: 9, reqLv: 10 },
@@ -1008,7 +1009,41 @@ export const ITEM_DEFS: ItemDef[] = [
   { id: 1223, code: 134968320, name: "Pet System 1h", icon: "bi341", folder: "premium", w: 2, h: 2, class: 1, pos: 0, sound: 4, reqLv: 0 },
   { id: 1224, code: 134968576, name: "Pet System 24h", icon: "bi342", folder: "premium", w: 2, h: 2, class: 1, pos: 0, sound: 4, reqLv: 0 },
   { id: 1225, code: 134968832, name: "Pet System 48h", icon: "bi343", folder: "premium", w: 2, h: 2, class: 1, pos: 0, sound: 4, reqLv: 0 },
-  { id: 1226, code: 134969344, name: "Pet System 72h", icon: "bi344", folder: "premium", w: 2, h: 2, class: 1, pos: 0, sound: 4, reqLv: 0 }
+  { id: 1226, code: 134969344, name: "Pet System 72h", icon: "bi344", folder: "premium", w: 2, h: 2, class: 1, pos: 0, sound: 4, reqLv: 0 },
+  { id: 1227, code: 17498368, name: "纤维拳套", icon: "wv101", folder: "weapon", w: 1, h: 2, class: 4, pos: 4, sound: 2, reqLv: 0 },
+  { id: 1228, code: 17498624, name: "青铜拳套", icon: "wv102", folder: "weapon", w: 1, h: 2, class: 4, pos: 4, sound: 2, reqLv: 0 },
+  { id: 1229, code: 17498880, name: "羊皮拳套", icon: "wv103", folder: "weapon", w: 1, h: 3, class: 4, pos: 4, sound: 2, reqLv: 6 },
+  { id: 1230, code: 17499136, name: "传说的拳套", icon: "wv104", folder: "weapon", w: 1, h: 3, class: 4, pos: 4, sound: 2, reqLv: 10 },
+  { id: 1231, code: 17499392, name: "魔王拳套", icon: "wv105", folder: "weapon", w: 1, h: 3, class: 4, pos: 4, sound: 5, reqLv: 13 },
+  { id: 1232, code: 17499648, name: "嗜血拳套", icon: "wv106", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 16 },
+  { id: 1233, code: 17499904, name: "灵魂之击拳套", icon: "wv107", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 22 },
+  { id: 1234, code: 17500160, name: "白金拳套", icon: "wv108", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 30 },
+  { id: 1235, code: 17500416, name: "枫击拳套", icon: "wv109", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 37 },
+  { id: 1236, code: 17500672, name: "降龙拳套", icon: "wv110", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 43 },
+  { id: 1237, code: 17500928, name: "玄铁拳套", icon: "wv111", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 50 },
+  { id: 1238, code: 17501184, name: "蓝玉拳套", icon: "wv112", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 55 },
+  { id: 1239, code: 17501440, name: "血染拳套", icon: "wv113", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 60 },
+  { id: 1240, code: 17501696, name: "熔岩拳套", icon: "wv114", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 65 },
+  { id: 1241, code: 17501952, name: "百裂拳套", icon: "wv115", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 70 },
+  { id: 1242, code: 17502208, name: "龙王之怒拳套", icon: "wv116", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 75 },
+  { id: 1243, code: 17502464, name: "钛金之手拳套", icon: "wv117", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 80 },
+  { id: 1244, code: 17502720, name: "百战不殆拳套", icon: "wv118", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 80 },
+  { id: 1245, code: 17502976, name: "精灵之力拳套", icon: "wv119", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 80 },
+  { id: 1246, code: 17503232, name: "毁灭拳套", icon: "wv120", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 80 },
+  { id: 1247, code: 17503744, name: "虎牙拳套", icon: "wv122", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 100 },
+  { id: 1248, code: 17504000, name: "阿瑞斯拳套", icon: "wv123", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 102 },
+  { id: 1249, code: 17504256, name: "波塞顿拳套", icon: "wv124", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 105 },
+  { id: 1250, code: 17504512, name: "悲伤之拳", icon: "wv125", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 108 },
+  { id: 1251, code: 17504768, name: "阿波罗之拳", icon: "wv126", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 118 },
+  { id: 1252, code: 17505024, name: "致命之拳", icon: "wv127", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 123 },
+  { id: 1253, code: 17505280, name: "烈焰之拳", icon: "wv128", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 130 },
+  { id: 1254, code: 17511168, name: "毁灭拳套(5h)", icon: "wv151", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 80 },
+  { id: 1255, code: 17511424, name: "阿瑞斯拳套(5h)", icon: "wv152", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 90 },
+  { id: 1256, code: 17511680, name: "波塞顿拳套(5h)", icon: "wv153", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 100 },
+  { id: 1257, code: 17511936, name: "黑色拳头(80Lv)", icon: "wv154", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 80 },
+  { id: 1258, code: 17512192, name: "黑色拳头(102Lv)", icon: "wv155", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 102 },
+  { id: 1259, code: 17512448, name: "黑色拳头(108Lv)", icon: "wv156", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 108 },
+  { id: 1260, code: 17512704, name: "黑色拳头", icon: "wv157", folder: "weapon", w: 2, h: 3, class: 4, pos: 4, sound: 2, reqLv: 115 }
 ];
 
 const byId = new Map<number, ItemDef>();

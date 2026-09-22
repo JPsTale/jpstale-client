@@ -248,3 +248,29 @@ export function debugLog(msg: jpt.base.ServerMessage): void {
     // console.log(JSON.stringify(jpt.base.ServerMessage.toObject(msg)));
     void msg;
 }
+
+/**
+ * 合成（Mix）：目标装备 + 投入的材料石。
+ * ⚠ 落点/顺序都由**服务端**按 `gamedb.mixlist` 重新匹配（客户端不知道配方，也不该知道）。
+ */
+export function mixItem(targetUid: number, stoneUids: readonly number[]): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ mixItem: { targetUid, stoneUids: [...stoneUids] } });
+}
+
+/** 锻造投石：目标装备 + 一颗材料石（"一键拉满"那颗力量石走 `useItem`，不走这里）。 */
+export function ageItem(targetUid: number, stoneUid: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ ageItem: { targetUid, stoneUid } });
+}
+
+/** 力量大师：材料石 → 力量石（每颗换同档一颗，规则见服务端 `ForceOrbService`）。 */
+export function forceOrbItem(stoneUids: readonly number[]): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ forceOrbItem: { stoneUids: [...stoneUids] } });
+}
+
+/**
+ * 合成**预览**请求：把当前投入的 uid 列表报给服务端，由服务端算好"会得到什么"再发回来。
+ * （客户端不持有配方表 —— 见 `S2C_MixPreview` 的注释。）
+ */
+export function mixPreview(targetUid: number, stoneUids: readonly number[]): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ mixPreview: { targetUid, stoneUids: [...stoneUids] } });
+}

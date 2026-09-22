@@ -42,7 +42,9 @@
     "item-extras": "tsx scripts/extract-item-extras.ts",
     "scan-spec-jobs": "npx tsx scripts/scan-openitem-spec-jobs.ts",
     "verify-itemtip": "tsx scripts/verify-itemtip-lines.ts",
-    "verify-i18n-parity": "tsx scripts/verify-i18n-parity.ts"
+    "verify-i18n-parity": "tsx scripts/verify-i18n-parity.ts",
+    "item-defs": "npx tsx scripts/extract-item-defs.ts",
+    "verify-ageup-fx": "tsx scripts/verify-ageup-fx.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

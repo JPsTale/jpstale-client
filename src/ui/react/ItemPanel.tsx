@@ -11,7 +11,7 @@ import { clearHoverItem } from '../../app/gameStore.js';
 import { requestSplit } from '../../app/splitStore.js';
 import { ITEM_CLASS, isStackable, isTwoHandWeaponClass } from '../../game/itemClass.js';
 import { requestPlayEat } from '../WorldView.js';
-import { useEffectKindOf } from '../../game/useEffect.js';
+import { useEffectKindOf, useWithoutAnimation } from '../../game/useEffect.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { sendEquipItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap, sendShopSell } from '../../net/bridge.js';
@@ -31,8 +31,8 @@ function slotXY(slot: number): { x: number; y: number } {
   return { x: slot % BAG_W, y: Math.floor(slot / BAG_W) };
 }
 
-/** 图片 hook：普通 BMP 黑色背景透明化；返回 dataURL。 */
-function useItemImg(url: string | null): string | null {
+/** 图片 hook：普通 BMP 黑色背景透明化；返回 dataURL。**导出**给 buff 图标条复用（同一份实现）。 */
+export function useItemImg(url: string | null): string | null {
   const [src, setSrc] = useState<string | null>(url);
   useEffect(() => {
     let alive = true;
@@ -741,8 +741,12 @@ export default function ItemPanel() {
   /** 右键使用：只上送 uid，效果与校验全在服务端（原版 RButtonDown 也是只表达"用这一件"） */
   function onUseBag(it: GameItem) {
     if (held) return;                 // 手里拿着东西时右键无效（对齐原版 MouseItem.Flag 守卫）
-    // 本地立刻播 EAT（原版 sinActionPotion/ActionEtherCore 都在点击瞬间切动作，不等服务端往返）。
-    // 只有"真的开始吃"才发请求：EAT 中 / 冷却中时返回 false，那一下整体无效（原版同）。
+    // 两类使用：
+    //  ① 有使用表现的（药水/以太核心）：本地立刻播 EAT（原版点击瞬间切动作，不等服务端往返），
+    //     只有"真的开始吃"才发请求 —— EAT 中 / 冷却中返回 false，那一下整体无效（原版同）。
+    //  ② **服务端有使用分支但不播动作**的（力量石 / 一键拉满石）：直接发请求。
+    //     少了这一支，右键它们会被 ① 的闸门吞掉（`requestPlayEat(null)` 恒为 false）→ 毫无反应。
+    if (useWithoutAnimation(it.itemCode)) { sendUseItem(it.uid); return; }
     if (requestPlayEat(useEffectKindOf(it.itemCode))) sendUseItem(it.uid);
   }
 

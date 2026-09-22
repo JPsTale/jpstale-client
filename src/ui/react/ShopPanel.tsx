@@ -79,14 +79,20 @@ function ShopRow({ offer, gold, count, onCount, entityId }: {
   const n = stackable ? count : 1;
   const afford = gold >= offer.price * n;
   return (
-    <button
-      type="button"
+    // ⚠ 这里**不能**用 `<button>`：里面还有数量增减的 `<button>`（+/-）⇒ HTML 不允许嵌套按钮，
+    //   React 会报 "In HTML, <button> cannot be a descendant of <button> ... hydration error"，
+    //   且嵌套后点击行为在不同浏览器下不一致（用户 2026-09-22 实测：打开杂货店就刷这个错）。
+    //   改用 `<div role="button">` 承载"点整行买入"，内层按钮各自 stopPropagation，语义与行为都正确。
+    <div
+      role="button"
+      tabIndex={0}
       className={`jp-shop-row${afford ? '' : ' jp-shop-row--poor'}`}
       // ⚠ **不要再绑 onDoubleClick**：浏览器对一次双击会依次派发 click、click、dblclick，
       // 两个 handler 都买 ⇒ **一次双击买 3 份**（数量框填几就买 3 倍）。
       // 症状：用户以为买了 31 瓶，服务端账上是 133 瓶、金币扣了 9975 —— 看起来像"复制物品"，
       // 实际是购买次数被放大了（2026-09-21 实测：7 秒内 13 次买入）。
       onClick={() => sendShopBuy(entityId, offer.itemlistId, n)}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sendShopBuy(entityId, offer.itemlistId, n); } }}
       title={t('shop.buy')}
     >
       {icon ? <img className="jp-shop-icon" src={icon} alt="" draggable={false} /> : null}
@@ -94,15 +100,15 @@ function ShopRow({ offer, gold, count, onCount, entityId }: {
       <span className="jp-shop-price">{offer.price}{t('item.gold')}</span>
       {stackable ? (
         <span className="jp-shop-count" onClick={(e) => e.stopPropagation()}>
-          <button type="button" onClick={() => onCount(Math.max(1, count - 1))}>-</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onCount(Math.max(1, count - 1)); }}>-</button>
           <input
             value={count}
             onChange={(e) => onCount(Math.max(1, Math.min(1000, Number(e.target.value) || 1)))}
             onClick={(e) => e.stopPropagation()}
           />
-          <button type="button" onClick={() => onCount(Math.min(1000, count + 1))}>+</button>
+          <button type="button" onClick={(e) => { e.stopPropagation(); onCount(Math.min(1000, count + 1)); }}>+</button>
         </span>
       ) : null}
-    </button>
+    </div>
   );
 }

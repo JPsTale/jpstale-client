@@ -45,6 +45,7 @@ import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
 import { updateGlacialSpikes } from '../render/effects/glacial-spike.js';
 import { runLevelUpFx, updateLevelUpFx, clearLevelUpFx, type LevelUpDeps } from '../render/effects/levelup-runner.js';
+import { runAgeUpFx, clearAgeUpFx, type AgeUpDeps } from '../render/effects/ageup-runner.js';
 import { CODE_SKILL_FX } from '../render/effects/skill-fx-runner.js';
 import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-light.js';
 import type { MonsterModelResult } from '../render/monster-loader.js';
@@ -290,6 +291,8 @@ export interface WorldView {
    * 左右各 5 条内收光带 / 一记白动态光）—— 装配与推进在 `render/effects/levelup-runner.ts`。
    */
   spawnLevelUpEffect(targetId: number): void;
+  /** 锻造成功（服务端 `S2C_AgeUpBroadcast`）→ 在那个单位身上播原版 `EFFECT_AGING`（白光 + `.part` aging） */
+  spawnAgeUpEffect(targetId: number): void;
   /**
    * 单位**脚下**世界坐标（升级特效/升级音的锚点）。不在视野内 ⇒ null（调用方据此不放，不退回原点）。
    */
@@ -1787,6 +1790,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     runLevelUpFx(levelUpDeps(), feet);
+  }
+
+  /** 锻造特效（`EFFECT_AGING`）：一记 `.part` + 一盏动态光，无需逐帧状态 */
+  function spawnAgeUpEffect(targetId: number): void {
+    if (!scene) return;                     // 世界已拆（换图/退出）
+    const feet = unitFeetPos(targetId);
+    if (!feet) {
+      reportFallback('fx', `锻造特效：找不到单位 ${targetId} 的位置（不在视野内？）⇒ 本次不放`);
+      return;
+    }
+    runAgeUpFx(ageUpDeps(), feet);
+  }
+
+  function ageUpDeps(): AgeUpDeps {
+    return { fx: effects, dynLights, log: (m) => console.log('[fx]' + m) };
   }
 
   /** 升级 runner 的依赖（场景/相机/视口/动态光/特效管理器）—— 每帧推进要用同一份 */
@@ -6460,6 +6478,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyAttackPlan,
     spawnEffectOnUnit,
     spawnLevelUpEffect,
+    spawnAgeUpEffect,
     unitFeetPos,
     signalAttackStart,
     onTakeDamage,
@@ -6600,7 +6619,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 投射物：摘掉在飞的（模型缓存留着 —— 按 URL 缓存，与 asset-manager 同一约定，换图不必重下）
       projectileMgr?.dispose();
       clearMonsterFlies();            // 飞出物载体节点随世界一起清（否则残留到下一个世界）
-      clearLevelUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
+      clearLevelUpFx();
+      clearAgeUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
       projectileMgr = null;
       scene = null;
       camera = null;

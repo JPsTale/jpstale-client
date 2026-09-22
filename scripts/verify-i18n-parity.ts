@@ -28,6 +28,10 @@ if (!existsSync(STATIC)) {
 
 type Table = Record<string, unknown>;
 const load = (p: string): Table => JSON.parse(readFileSync(p, 'utf8')) as Table;
+/** 服务端效果位 key 表（跨仓：客户端文案必须覆盖它的每一位） */
+const MIX_EFFECT_JAVA = resolve('..', 'jpstale-server', 'modules', 'common-service', 'src', 'main', 'java',
+  'org', 'jpstale', 'common', 'service', 'item', 'MixEffect.java');
+
 const flat = (o: unknown, prefix = ''): Map<string, string> => {
   const m = new Map<string, string>();
   if (o && typeof o === 'object') {
@@ -64,6 +68,24 @@ for (const loc of ['zh', 'en']) {
   let missing = 0;
   for (const r of refs) if (!adm.has(r)) { fail(`[${loc}] 语义表引用的 key 在语言表里缺失：${r}`); missing++; }
   if (missing === 0) console.log(`  ok   [${loc}] 语义表引用的 ${refs.size} 个 key 全部可解析`);
+}
+
+// ③ 服务端的效果位 key（`mixe.*`）必须在客户端两份文案里都有 ——
+//    否则合成预览面板会把原始 key（"mixe.attack-rating"）显示给玩家，而且**不报错**。
+//    服务端那侧加一位（`MixEffect.KEYS`）时，这里立刻会红。
+{
+  const java = readFileSync(MIX_EFFECT_JAVA, 'utf8');
+  const keys = [...java.matchAll(/"(fire|ice|lightning|poison|organic|critical|attack-rating|damage-min|damage-max|attack-speed|absorb|defence|block|move-speed|hp|mp|sp|hp-regen|mp-regen|sp-regen|potion-storage)"/g)]
+    .map((m) => m[1]);
+  if (keys.length === 0) fail(`读不到服务端 MixEffect.java 的效果 key 表（路径或写法变了？）`);
+  for (const loc of ['zh', 'en']) {
+    const cli = flat(load(resolve('src/locales', `${loc}.json`)));
+    let missing = 0;
+    for (const k of keys) {
+      if (!cli.has(`mixe.${k}`)) { fail(`[${loc}] 效果位文案缺失：mixe.${k}（服务端 MixEffect.KEYS 有它）`); missing++; }
+    }
+    if (missing === 0) console.log(`  ok   [${loc}] 服务端 ${keys.length} 个效果位 key 全部有文案`);
+  }
 }
 
 console.log(failed === 0 ? '\ni18n 一致性：全部通过' : `\ni18n 一致性：${failed} 条失败`);

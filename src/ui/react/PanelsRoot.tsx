@@ -12,6 +12,8 @@ import SystemMenu, { type SystemMenuSettings } from './SystemMenu.js';
 import ChatWindow from './ChatWindow.js';
 import SplitDialog from './SplitDialog.js';
 import WorldMapPanel, { type WorldMapPanelOptions } from './WorldMapPanel.js';
+import BuffStrip from './BuffStrip.js';
+import CraftPanel from './CraftPanel.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
 /**
@@ -66,6 +68,11 @@ function renderPanel(panel: OpenPanel, worldMapOptions: WorldMapPanelOptions) {
       </PanelShell>
     );
   }
+  if (panel === 'craft') {
+    // key 带 entityId：换一个 NPC 开窗时**重挂**组件，免得上一家的标签/材料留在界面上
+    const entityId = getGameSnapshot().craft?.entityId ?? 0;
+    return <CraftPanel key={`craft-${entityId}`} />;
+  }
   if (panel === 'inventory') {
     return (
       <PanelShell key="inventory" panel="inventory" title={t('panel.inventory')} align="left" width="auto">
@@ -95,6 +102,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
     <>
       {/* 游戏内聊天窗（常驻 World，折叠态缺省展开由 store 控制） */}
       <ChatWindow />
+      {/* 左上角 buff 图标条（常驻 World，与面板开关无关 —— 打怪时也看得见剩余时间） */}
+      <BuffStrip />
       {openPanels.map((p) => renderPanel(p, props.worldMapOptions ?? {}))}
       {/* 手持物品光标（常驻，与面板开关无关） */}
       <HeldCursor />

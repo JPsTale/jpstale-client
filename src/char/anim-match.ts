@@ -55,9 +55,14 @@ function matchWeapon(motion: MotionInfo, weaponIdCode: number | null): boolean {
  * 解决新武器无精确索引（SITEM_CODE_BY_INDEX）时的匹配问题。
  */
 function matchWeaponByType(motion: MotionInfo, weaponType: string | null): boolean {
+  // ★ 拳套（WV，类型 'KNUCKLE'）的**动画按爪（CLAW）匹配**：`.in` 条目里没有 KNUCKLE 这一族，
+  //   不映射就会退化到 generic/all（可见但非本意）。用户 2026-09-22："直接当作'爪'类型的武器来对待"。
+  //   ⚠ 只影响**动画条目匹配**；音效仍走拳套自己的（`audio/sfx.ts` 的 `case 'KNUCKLE'` → 14 拳击音，
+  //   那是上一轮照 AGENTS 纠错 #13 有意选定的，别顺手改成爪的 7）。
+  const want = weaponType === 'KNUCKLE' ? 'CLAW' : weaponType;
   const count = motion.itemCodeCount;
   if (count <= 0) return true;
-  if (weaponType == null || weaponType === 'BARE_HAND') {
+  if (want == null || want === 'BARE_HAND') {
     for (let i = 0; i < count && i < 52; i++) {
       if (motion.itemCodeList[i] === 0xFFFF) return true;
     }
@@ -65,7 +70,7 @@ function matchWeaponByType(motion: MotionInfo, weaponType: string | null): boole
   }
   for (let i = 0; i < count && i < 52; i++) {
     const t = getWeaponTypeFromSItemIndex(motion.itemCodeList[i]);
-    if (t === weaponType) return true;
+    if (t === want) return true;
   }
   return false;
 }

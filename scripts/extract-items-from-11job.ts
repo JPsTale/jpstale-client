@@ -14,7 +14,8 @@
  * 输出：src/game/data/items-supplement.generated.json
  * 用法：npx tsx scripts/extract-items-from-11job.ts
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ITEM_DEFS } from '../src/game/data/itemDefs.js';
 
@@ -26,6 +27,32 @@ interface ScanItem {
   sourceFile: string; weight?: number; price?: number; reqLevel?: number;
 }
 const scan = JSON.parse(readFileSync(SRC, 'utf8')) as ScanItem[];
+
+/**
+ * **DB 的 `idcode → itemlist.id` 表**（必须带上，否则客户端 `itemDefById()` 找不到这些物品：
+ * 工具提示/图标都按 `itemlist.id` 查 —— 2026-09-22 导入拳套（WV）时发现的衔接缺口）。
+ * 取数三级回退与 `extract-potion-effects.ts` 同款；取不到就**报错退出**（不静默生成没有 id 的表）。
+ */
+const DB_HOST = process.env.PT_DB_HOST ?? 'root@192.168.31.10';
+function fetchIdMap(): Map<number, number> {
+  const SQL = 'SELECT idcode, id FROM gamedb.itemlist ORDER BY id;';
+  const tryRun = (f: string, a: string[]): string | null => {
+    try { return execFileSync(f, a, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }); } catch { return null; }
+  };
+  const local = process.env.PT_ITEMLIST_DUMP;
+  const text = (local && existsSync(local) ? readFileSync(local, 'utf8') : null)
+    ?? tryRun('podman', ['exec', '-i', 'priston-pg', 'psql', '-U', 'sa', '-d', 'pristontale', '-At', '-F', '|', '-c', SQL])
+    ?? tryRun('ssh', [DB_HOST, `podman exec -i priston-pg psql -U sa -d pristontale -At -F'|' -c "${SQL}"`]);
+  if (!text) throw new Error('取不到 itemlist 的 idcode→id：设 PT_ITEMLIST_DUMP，或确保本机/ssh 能跑 podman exec');
+  const m = new Map<number, number>();
+  for (const line of text.split(String.fromCharCode(10))) {
+    const [idc, id] = line.trim().split('|');
+    if (!/^[0-9]+$/.test(idc ?? '') || !/^[0-9]+$/.test(id ?? '')) continue;
+    m.set(Number(idc), Number(id));      // 同 idcode 多行时取先出现者（与客户端 byCode 的取法一致）
+  }
+  return m;
+}
+const idByCode = fetchIdMap();
 
 const knownCodes = new Set(ITEM_DEFS.map((d) => d.code));
 const missing = scan.filter((x) => x.idCode && !knownCodes.has(x.idCode));
@@ -54,6 +81,7 @@ const fallback = {
   pos: mode(anyWeapon.map((d) => d.pos)) ?? 4,
 };
 
+const notInDb: string[] = [];
 const out = missing.map((x) => {
   const icon = x.code.toLowerCase();
   const prefix = x.code.slice(0, 2).toLowerCase();
@@ -71,7 +99,11 @@ const out = missing.map((x) => {
   const pos = pick('pos', siblings.map((d) => d.pos));
   const sound = mode(siblings.map((d) => d.sound)) ?? 0;
   if (siblings.length === 0) derived.sound = '无同族，取 0（拾取音未知）';
+  const dbId = idByCode.get(x.idCode);
+  if (dbId === undefined) notInDb.push(x.code);
   return {
+    /** `gamedb.itemlist.id` —— 客户端按它查定义（`itemDefById`）；缺了就只能靠 idcode 兜底 */
+    id: dbId ?? null,
     code: x.idCode,
     name: x.name,
     icon,
@@ -109,5 +141,10 @@ for (const [p, n] of [...byP.entries()].sort((a, b) => b[1] - a[1])) {
 }
 console.log('\n样例（WV 拳套）：');
 for (const o of out.filter((x) => x.icon.startsWith('wv')).slice(0, 4)) {
-  console.log(`  ${o.code}  ${o.name}  图标 ${o.icon}  class=${o.class} pos=${o.pos} reqLv=${o.reqLv}`);
+  if (notInDb.length > 0) {
+  console.log(`⚠ ${notInDb.length} 条在 11 职业扫描里有、但**不在我们库里**（id 为 null，客户端只能按 idcode 兜底）：${notInDb.join(', ')}`);
+} else {
+  console.log('✓ 全部条目都能在库里找到 id');
+}
+console.log(`  ${o.code}  ${o.name}  图标 ${o.icon}  class=${o.class} pos=${o.pos} reqLv=${o.reqLv}`);
 }

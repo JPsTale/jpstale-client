@@ -8,7 +8,7 @@ import { itemDefById } from '../game/data/itemDefs.js';
 import { isTwoHandWeaponClass } from '../game/itemClass.js';
 import { playItemSound, playItemDropSound } from '../audio/item-sounds.js';
 
-export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap';
+export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap' | 'craft';
 
 // 拳位装备：标识一个技能（用职业目录+图标文件，跨职业唯一稳定）。
 // iconFile === 'skill_normal'（无 .bmp）表示普通攻击。
@@ -129,6 +129,22 @@ export interface GameItem {
   price: number;
   jobCodeMask: number;
   agingLevel: number;
+  /** 原版 ItemKindCode：1 = 合成物、2 = 锻造物…（0 = 普通） */
+  kindCode: number;
+  /** 合成/锻造**效果位掩码**（原版 ItemKindMask）：被强化过的那几行据此上色 */
+  craftMask: number;
+  /**
+   * 合成配方的**效果清单**（服务端下发 `key`+值，**不发文案**）—— 客户端用 `t(key)` 查 `mixe.*`
+   * 拼出"配方显示名"（i18n 自动；用户 2026-09-22："后端下发名字不合适"）。
+   */
+  mixEffects: readonly { key: string; value: number; flat: boolean }[];
+  /** 锻造熟练度进度（原版 `ItemAgingCount[0]/[1]`）：客户端只用来画进度条 */
+  agingExp: number;
+  agingExpMax: number;
+  /** 合成**配方 id**（= gamedb.mixlist.mixuniqueid）：配方名/配色的来源 */
+  mixUniqueId: number;
+  /** 合成/锻造校验和（原版 ItemAgingProtect[0]）：只读，供诊断 */
+  agingProtect: number;
   critical: number;
   range: number;
   attackSpeed: number;
@@ -169,6 +185,24 @@ export interface GameItem {
   specPerStaminaRegen: number;
 }
 
+/**
+ * 生效中的 buff（力量石这一类持续效果）—— **服务端权威**。
+ *
+ * 由 `S2C_BuffState` 整表下发（生效 / 刷新 / 到期 / 任何一次状态推送都会重发）。
+ * 客户端只做两件事：按 `剩余/总时长` 画圆环、归零就不再绘制。**不自行判断 buff 是否生效**。
+ *
+ * `at` = **收到这条推送的本地时刻**：服务端的 `remaining_ms` 是拿服务端时钟算的，
+ * 用本地时钟直接相减会带上两端时钟差，故存下接收时刻当基准（形状同 `Player.forceOrbUntil`）。
+ */
+export interface BuffEntry {
+  itemCode: number;
+  itemlistId: number;
+  remainingMs: number;
+  totalMs: number;
+  stack: number;
+  at: number;
+}
+
 /** 物品容器快照（uid → 实例 索引，渲染时按 location/slot 排布）。 */
 export interface GameInventory {
   items: GameItem[];      // 全部活物品（背包+仓库+装备+备用武器）
@@ -201,6 +235,18 @@ export interface GameSnapshot {
   hoverSpot: { src: HoverSource; x: number; y: number } | null;
   /** NPC 商店：打开中的商店（entityId = NPC 运行时实体 id）与卖出模式（null = 没开） */
   shop: { entityId: number; items: ShopItem[]; sellMode: boolean } | null;
+  /** 生效中的 buff（左上角图标条；见 BuffEntry） */
+  buffs: readonly BuffEntry[];
+  /**
+   * 打造窗口（合成/锻造/力量石）—— 由 **NPC 交互**触发，`modes` 是**服务端**说这个 NPC 提供哪几档。
+   * 客户端**不**按 NPC 名字/模型判断能做什么（那会在改名时静默失效，AGENTS #24）。
+   */
+  craft: { entityId: number; modes: readonly number[] } | null;
+  /**
+   * 合成**预览**（服务端算好的 before/after）—— 客户端只显示，不做任何算术。
+   * 材料一变就置 null（"待服务端回话"），避免把上一次的结果留在界面上当成本次的结果。
+   */
+  craftPreview: CraftPreview | null;
 }
 
 const LS_FISTS = 'pt.fistBindings';
@@ -230,7 +276,58 @@ function loadInitial(): GameSnapshot {
     heldUid: null,
     hoverSpot: null,
     shop: null,
+    buffs: [],
+    craft: null,
+    craftPreview: null,
   };
+}
+
+/** 预览里的一项效果（数都是服务端算的；`key` 是文案 key，见服务端 `MixEffect.keyOf`）。 */
+export interface CraftPreviewEffect {
+  bit: number;
+  key: string;
+  value: number;
+  flat: boolean;
+  before: number;
+  after: number;
+  intField: boolean;
+}
+
+/** 合成预览结果（`matched=false` 时只带 `reasonKey`）。 */
+export interface CraftPreview {
+  matched: boolean;
+  reasonKey: string;
+  recipeName: string;
+  effects: readonly CraftPreviewEffect[];
+}
+
+/** 记下服务端下发的合成预览（材料/目标一变就由面板置 null 再重新请求）。 */
+export function setCraftPreview(pv: CraftPreview | null): void {
+  commit({ craftPreview: pv });
+}
+
+/** 服务端说"这个 NPC 提供打造服务" → 记下来并打开面板（实际打开动作在 bridge 里）。 */
+export function setCraftOpen(entityId: number, modes: readonly number[]): void {
+  commit({ craft: { entityId, modes } });
+}
+
+/** 关闭打造窗口（面板关闭时调用；下次交互会重新收到服务端的档位）。 */
+export function closeCraft(): void {
+  if (snapshot.craft === null) return;
+  commit({ craft: null });
+}
+
+/** 整表替换 buff 列表（服务端每次下发都是完整列表，不做增量合并）。 */
+export function setBuffs(list: readonly BuffEntry[]): void {
+  // 内容相同就不提交（S2C_BuffState 会跟着每次状态推送重发，避免无谓重渲染）
+  const cur = snapshot.buffs;
+  if (cur.length === list.length && cur.every((b, i) => sameBuff(b, list[i]))) return;
+  commit({ buffs: list });
+}
+
+function sameBuff(a: BuffEntry, b: BuffEntry): boolean {
+  return a.itemCode === b.itemCode && a.remainingMs === b.remainingMs
+    && a.totalMs === b.totalMs && a.stack === b.stack;
 }
 
 let snapshot: GameSnapshot = loadInitial();
@@ -269,7 +366,10 @@ export function getGameSnapshot(): GameSnapshot {
 export type HoverSource =
   | { kind: 'bag'; cell: number }      // 背包格（按足迹覆盖判定里面那件）
   | { kind: 'equip'; slot: number }    // 装备槽 1~13（含"双手武器占副手格"的镜像）
-  | { kind: 'potion'; idx: number };   // HUD 药水槽 0~2（ITEMSLOT 11~13）
+  | { kind: 'potion'; idx: number }    // HUD 药水槽 0~2（ITEMSLOT 11~13）
+  // 按 **uid** 悬停（打造窗口的格子）：那里的东西是"对背包里某件的引用"，不占任何格子，
+  // 所以位置类来源表达不了它 —— 只有 uid 是稳定的身份。
+  | { kind: 'item'; uid: number };
 
 /** 悬停物品信息（**全局唯一来源**）：背包格 / 装备槽 / HUD 药水槽都调这里。 */
 export function setHoverSpot(src: HoverSource, x: number, y: number): void {
@@ -288,6 +388,7 @@ function sameHoverSource(a: HoverSource, b: HoverSource): boolean {
   if (a.kind === 'bag' && b.kind === 'bag') return a.cell === b.cell;
   if (a.kind === 'equip' && b.kind === 'equip') return a.slot === b.slot;
   if (a.kind === 'potion' && b.kind === 'potion') return a.idx === b.idx;
+  if (a.kind === 'item' && b.kind === 'item') return a.uid === b.uid;
   return false;
 }
 
@@ -326,6 +427,9 @@ export function hoveredItemOf(snap: GameSnapshot = snapshot): GameItem | null {
   }
   if (src.kind === 'potion') {
     return items.find((x) => x.location === LOC.EQUIP && x.slot === POTION_SLOT_BASE + src.idx) ?? null;
+  }
+  if (src.kind === 'item') {
+    return items.find((x) => x.uid === src.uid) ?? null;
   }
   // 背包格：按**足迹覆盖**判定（与服务端画布同一规则：锚格 + 该件的 w×h）
   const cx = src.cell % LOC.BAG_W;
@@ -746,6 +850,11 @@ export function openPanel(p: OpenPanel): void {
 
 export function closePanel(p: OpenPanel): void {
   if (!snapshot.openPanels.includes(p)) return;
+  // 关掉打造窗口时一并清掉它的档位/引用 —— 下次交互由服务端重新给（不留下"上一家 NPC 的窗口"）
+  if (p === 'craft') {
+    commit({ openPanels: snapshot.openPanels.filter((x) => x !== p), craft: null, craftPreview: null });
+    return;
+  }
   commit({ openPanels: snapshot.openPanels.filter((x) => x !== p) });
 }
 

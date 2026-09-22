@@ -34,3 +34,27 @@ export const USE_EFFECT_INI: Record<Exclude<UseEffectKind, null>, string> = {
   potion3: 'Potion3',
   return: 'ReturnParticle1',
 };
+
+/**
+ * 「右键使用、但**不播** EAT 动作」的物品家族 —— 服务端有使用分支、原版也不播吃药用动作的那些。
+ *
+ * 判据必须与服务端一一对应（这是同一条判据的两半，客户端必须知道"要不要发请求"，无法合并）：
+ *   `0x0306` = 力量石     → `ForceOrbService.activate()`（走 USE，EU `netplay.cpp:2233` 的物品使用分支）
+ *   `0x080B` 的 34/35/36  → `AgeService.maxAgeKindOf()` 那三颗**一键拉满**石（原版同样走 USE，
+ *                          目标由**服务端**挑当前装备 —— 见 AGENTS"一件拉满应由服务端判断"）
+ *
+ * ⚠ 为什么必须有它（真 bug）：`ItemPanel.onUseBag` 原来只在 `requestPlayEat()` 返回 true 时才发
+ * `C2S_UseItem`，而这两族没有使用表现 → `requestPlayEat(null)` 返回 false → **右键毫无反应**
+ * （连请求都不发，服务端日志里也什么都看不到）。
+ * ⚠ 新增这类物品时，服务端分支与这里要一起加。
+ */
+export function useWithoutAnimation(idcode: number | null | undefined): boolean {
+  if (!idcode) return false;
+  const fam = (idcode >>> 16) & 0xFFFF;
+  if (fam === 0x0306) return true;                       // 力量石（sinFO1）
+  if (fam === 0x080B) {
+    const sub = (idcode >>> 8) & 0xFF;
+    return sub === 0x34 || sub === 0x35 || sub === 0x36; // 拉满石 A(武器)/B(盾·法球)/C(防具)
+  }
+  return false;
+}

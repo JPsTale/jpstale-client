@@ -78,7 +78,21 @@
     "skills": "技能",
     "inventory": "背包",
     "shop": "商店",
-    "worldmap": "世界地图"
+    "worldmap": "世界地图",
+    "craft": "打造",
+    "c_tabMix": "合成",
+    "c_tabAge": "锻造",
+    "c_tabForce": "力量石",
+    "c_target": "装备",
+    "c_materials": "材料石",
+    "c_stoneSource": "背包里的材料石",
+    "c_gearSource": "背包里的装备",
+    "c_ok": "确定",
+    "c_convert": "转化",
+    "c_empty": "把材料石放进来",
+    "c_none": "背包里没有可用的东西",
+    "c_recipe": "配方",
+    "c_noRecipe": "这些材料石凑不出配方"
   },
   "stats": {
     "hit": "命中率",
@@ -331,7 +345,34 @@
       "differentPotion": "这一格已经放了别的药水",
       "bagFull": "背包已满",
       "notDroppable": "该物品无法丢弃",
-      "failed": "操作失败"
+      "failed": "操作失败",
+      "mix": {
+        "target-not-found": "找不到这件装备",
+        "target-not-in-bag": "装备要放在背包里",
+        "no-stones": "没有投入材料石",
+        "stone-not-allowed": "投入的不是材料石",
+        "stone-not-found": "找不到某颗材料石",
+        "not-mixable": "这种装备不能合成",
+        "no-recipe": "这些材料石凑不出配方"
+      },
+      "age": {
+        "target-not-found": "找不到这件装备",
+        "target-not-in-bag": "装备要放在背包里",
+        "target-not-equipment": "这不是可锻造的装备",
+        "stone-not-found": "找不到那颗材料石",
+        "stone-not-allowed": "投入的不是材料石",
+        "max-level": "已经是最高锻造等级",
+        "no-curve": "锻造曲线缺这一级的数据",
+        "no-target-equipped": "没有可锻造的装备",
+        "noGold": "金币不足"
+      },
+      "force": {
+        "orb-not-found": "找不到力量石",
+        "orb-not-allowed": "这不是力量石",
+        "stone-not-found": "找不到某颗材料石",
+        "stone-not-allowed": "投入的不是材料石",
+        "no-stones": "没有投入材料石"
+      }
     }
   },
   "menu": {
@@ -510,6 +551,9 @@
     "notEnoughMoney": "钱不够",
     "cannotSell": "这件物品不能卖",
     "failed": "交易失败"
+  },
+  "buff": {
+    "remaining": "剩余 {s} 秒"
   },
   "itemtip": {
     "recHp": "恢复生命",
@@ -1267,5 +1311,29 @@
       "wait": "继续躺着，什么都不做",
       "waitCost": "代价：1% 经验"
     }
+  },
+  "mixe": {
+    "fire": "火防御",
+    "ice": "冰防御",
+    "lightning": "雷防御",
+    "poison": "毒防御",
+    "organic": "魔防御",
+    "critical": "必杀率",
+    "attack-rating": "命中率",
+    "damage-min": "最小攻击",
+    "damage-max": "最大攻击",
+    "attack-speed": "攻击速度",
+    "absorb": "防御",
+    "defence": "躲避",
+    "block": "抵挡率",
+    "move-speed": "速度",
+    "hp": "生命提高",
+    "mp": "灵力提高",
+    "sp": "耐力提高",
+    "hp-regen": "生命再生",
+    "mp-regen": "灵力再生",
+    "sp-regen": "耐力再生",
+    "potion-storage": "药水存放数量",
+    "unknown": "未知效果"
   }
 }
