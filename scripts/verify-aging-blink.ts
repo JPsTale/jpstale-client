@@ -10,7 +10,7 @@
  *   故这里的"期望值"必须能从源码行**复算**，不是照抄实现的输出。
  */
 import {
-  agingRowOf, craftRowOf, blinkRowOf, findBlinkRow, blinkWave, mixOverlayTexture, overlayScrollU,
+  agingRowOf, craftRowOf, blinkRowOf, blinkRowOfAppearance, findBlinkRow, blinkWave, mixOverlayTexture, overlayScrollU,
   BLINK_STEP, BLINK_PERIOD_MS, BLINK_HALF_MS, BLINK_DIV, ITEM_KIND_AGING, ITEM_KIND_CRAFT,
   SCROLL_PERIOD_MS, SCROLL_STEP_MS, MIX_TEXTURE_DIR,
 } from '../src/game/agingBlink.js';
@@ -167,6 +167,23 @@ check('未实现的滚动模式返回 null（不假装 0）',
   const missC = findBlinkRow(1, 2, 3, 4, 'craft');
   check('未命中 aging 行 → texMixCode=-1、texScroll=0', missA.texMixCode === -1 && missA.texScroll === 0, JSON.stringify(missA));
   check('未命中 craft 行 → 同上', missC.texMixCode === -1 && missC.texScroll === 0, JSON.stringify(missC));
+}
+
+// ───────────────── ⑥ 外观 → 行（世界内自机/远端、选角预览**共用**的入口） ─────────────────
+{
+  // 自机/远端外观上的四个字段就是服务端下发的 ItemKindCode + ItemAgingNum[0]
+  const app = { weaponKindCode: 2, weaponAgingLevel: 12, offHandKindCode: 2, offHandAgingLevel: 0 };
+  check('外观主手 → +12 那行', blinkRowOfAppearance(app, 'main')?.r === 10 && blinkRowOfAppearance(app, 'main')?.texMixCode === 4,
+    JSON.stringify(blinkRowOfAppearance(app, 'main')));
+  check('外观副手 → 各自那行（互不串用主手的值）',
+    blinkRowOfAppearance({ ...app, offHandKindCode: 1, offHandAgingLevel: 0 }, 'off')?.texMixCode === 9,
+    JSON.stringify(blinkRowOfAppearance({ ...app, offHandKindCode: 1, offHandAgingLevel: 0 }, 'off')));
+  check('字段缺失（旧服务端不下发 / 预览没给）→ null，不发光',
+    blinkRowOfAppearance(undefined, 'main') === null && blinkRowOfAppearance({}, 'main') === null
+    && blinkRowOfAppearance({ weaponKindCode: 2 }, 'main') === null);
+  check('普通装备（kindCode=0）→ null', blinkRowOfAppearance({ weaponKindCode: 0, weaponAgingLevel: 20 }, 'main') === null);
+  check('与 blinkRowOf 同源（同一份映射，不另写一套）',
+    blinkRowOfAppearance({ weaponKindCode: 2, weaponAgingLevel: 20 }, 'main') === blinkRowOf(2, 20));
 }
 
 console.log(failed === 0 ? '\n锻造/合成呼吸发光：全部通过' : `\n锻造/合成呼吸发光：${failed} 条失败`);

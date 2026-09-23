@@ -280,6 +280,30 @@ export interface MountResult {
 }
 
 /**
+ * 副手件姿态搬运：盾留左臂不动，匕首在左手 ↔ 左腰之间搬移。**唯一实现** ——
+ * 自机 / 远端 / 选角预览共用（主手不在这里：它连同"双手武器的镜像份"由 `WeaponMount` 统一管）。
+ * 找不到目标骨时**不静默丢弃**：返回骨名由调用方上报（纠错 #12：降级必须可见）。
+ */
+export function moveOffHandForStance(opts: {
+  root: THREE.Object3D;
+  off: THREE.Object3D | null;
+  idcode: number;
+  offKind: number;
+  stance: 'combat' | 'sheathed';
+}): { moved: boolean; missingBone: string | null } {
+  const { root, off, idcode, offKind, stance } = opts;
+  if (!off || offKind !== 2) return { moved: false, missingBone: null }; // 只有匕首参与搬运
+  const target = stance === 'combat'
+    ? offMountBoneOf(idcode, offKind, 'combat')
+    : offMountBoneOf(idcode, offKind, 'sheathed');
+  const bone = findBone(root, target);
+  if (!bone) return { moved: false, missingBone: target };
+  off.parent?.remove(off);
+  bone.add(off);
+  return { moved: true, missingBone: null };
+}
+
+/**
  * 主手武器挂载（含**双手武器的镜像份**）—— 自机 / 远端 / 检查器的**唯一实现**。
  *
  * 它收敛的是三件以前被各写一遍、于是彼此不一致的事：

@@ -121,6 +121,30 @@ export function blinkRowOf(kindCode: number, agingNum: number): BlinkRow | null 
 }
 
 /**
+ * 外观上的四个发光输入字段 —— **结构类型**（不 import `ui/CharSelect` 的接口，
+ * 免得 game → ui 反向依赖；`CharacterAppearance` 恰好满足它）。
+ */
+export interface AppearanceBlinkInput {
+  weaponKindCode?: number;
+  weaponAgingLevel?: number;
+  offHandKindCode?: number;
+  offHandAgingLevel?: number;
+}
+
+/**
+ * 一份外观 → 那只手的发光行。**唯一实现**（世界内的自机/远端、选角预览、将来的检查器都调它）：
+ * 主手取 `weaponKindCode/weaponAgingLevel`、副手取 `offHandKindCode/offHandAgingLevel`；
+ * 字段缺失（旧服务端不下发 / 预览没带）⇒ null = 不发光。
+ */
+export function blinkRowOfAppearance(app: AppearanceBlinkInput | undefined, hand: 'main' | 'off'): BlinkRow | null {
+  if (!app) return null;
+  const kind = hand === 'main' ? app.weaponKindCode : app.offHandKindCode;
+  const level = hand === 'main' ? app.weaponAgingLevel : app.offHandAgingLevel;
+  if (kind === undefined || level === undefined) return null;
+  return blinkRowOf(kind, level);
+}
+
+/**
  * 移植 `GetItemKindFromBliankColor`（playsub.cpp:771-786）：先置默认
  * `{texMixCode:-1, texScroll:0}`，再按 `kind` 的整张表从第 0 行起**精确比对** (r,g,b,a)。
  *

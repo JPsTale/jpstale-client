@@ -77,10 +77,10 @@ import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode, appearanceModelKey } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, weaponSizeMax, combatBoneOf, WeaponMount } from '../render/weapon-loader.js';
+import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, moveOffHandForStance, weaponSizeMax, combatBoneOf, WeaponMount } from '../render/weapon-loader.js';
 // 锻造/合成呼吸发光：判定/波形在 game/agingBlink.ts，材质写在 render/blink-fx.ts —— 自机与远端同一实现
 import { BlinkFx } from '../render/blink-fx.js';
-import { blinkRowOf, type BlinkRow } from '../game/agingBlink.js';
+import { blinkRowOfAppearance, type BlinkRow } from '../game/agingBlink.js';
 import { createWeaponTrail, MonsterTrails, trailTintOfSkill, type WeaponTrail } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
@@ -123,30 +123,6 @@ export function handTypeOfIdCode(idcode: number | null | undefined): HandType {
  */
 export function deriveAnimSeed(id: number, state: number): number {
   return (Math.imul(id >>> 0, 0x9E3779B1) ^ Math.imul(state >>> 0, 0x85EBCA6B)) >>> 0;
-}
-
-/**
- * 副手件姿态搬运：盾留左臂不动，匕首在左手 ↔ 左腰之间搬移。
- * （**主手**不在这里 —— 它连同"双手武器的镜像份"由 `WeaponMount` 统一管，见 weapon-loader。）
- * 找不到目标骨时**不静默丢弃**：返回骨名由调用方上报（纠错 #12：降级必须可见）。
- */
-export function moveOffHandForStance(opts: {
-  root: THREE.Object3D;
-  off: THREE.Object3D | null;
-  idcode: number;
-  offKind: number;
-  stance: 'combat' | 'sheathed';
-}): { moved: boolean; missingBone: string | null } {
-  const { root, off, idcode, offKind, stance } = opts;
-  if (!off || offKind !== 2) return { moved: false, missingBone: null }; // 只有匕首参与搬运
-  const target = stance === 'combat'
-    ? offMountBoneOf(idcode, offKind, 'combat')
-    : offMountBoneOf(idcode, offKind, 'sheathed');
-  const bone = findBone(root, target);
-  if (!bone) return { moved: false, missingBone: target };
-  off.parent?.remove(off);
-  bone.add(off);
-  return { moved: true, missingBone: null };
 }
 
 export interface EnterGameInfo {
@@ -1866,23 +1842,6 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function maxAniso(): number {
     return renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
-  }
-
-  /**
-   * 外观里的发光输入 → 表行。**自机与远端同一条路**（外观上的四个可选字段
-   * `weaponKindCode/weaponAgingLevel/offHandKindCode/offHandAgingLevel`，= 原版
-   * `ItemKindCode` + `ItemAgingNum[0]`）：
-   *   · 自机 —— main.ts 从**背包装备物品**补齐（服务端外观里没有这两列），
-   *     切武器套的乐观预测也在 `predictSwitchAppearance` 里一并给全；
-   *   · 远端 —— 等服务端在 appearance 里下发；**现在没有 ⇒ 远端不发光**（已知缺口，见文件头与
-   *     `docs/锻造发光-呼吸光.md`）。补上之后本层一行都不用改。
-   */
-  function blinkRowOfAppearance(app: CharacterAppearance | undefined, hand: 'main' | 'off'): BlinkRow | null {
-    if (!app) return null;
-    const kind = hand === 'main' ? app.weaponKindCode : app.offHandKindCode;
-    const level = hand === 'main' ? app.weaponAgingLevel : app.offHandAgingLevel;
-    if (kind === undefined || level === undefined) return null;
-    return blinkRowOf(kind, level);
   }
 
   /**

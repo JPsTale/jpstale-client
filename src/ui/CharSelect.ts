@@ -8,7 +8,9 @@ import { loadCharTextures } from '../render/char-texture-loader.js';
 import { createCameraControls } from './camera-controls.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, WeaponMount, sheatheBone, type MountResult } from '../render/weapon-loader.js';
+import { loadWeaponModel, WeaponMount, sheatheBone, findBone, offMountBoneOf, moveOffHandForStance, type MountResult } from '../render/weapon-loader.js';
+import { BlinkFx } from '../render/blink-fx.js';
+import { blinkRowOfAppearance } from '../game/agingBlink.js';
 import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 import { reportFallback } from '../char/fallback-log.js';
 
@@ -487,14 +489,21 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   }
 
   async function loadPreview(jobId: number, head: number, appearance?: CharacterAppearance) {
+    // 指纹里必须带上**副手**与**发光输入**：只差一面盾、或只差锻造等级的两个角色，
+    // 否则会被判成"同一个外观"而不重载 ⇒ 盾/发光停在上一件（用户 2026-09-23 报的选角页缺盾）。
     const appSig = appearance
-      ? `${appearance.bodyModel ?? ''}|${appearance.bodyModelIdcode}|${appearance.weaponDorp ?? ''}|${appearance.weaponIdcode}|${appearance.weaponPos}`
+      ? `${appearance.bodyModel ?? ''}|${appearance.bodyModelIdcode}`
+        + `|${appearance.weaponDorp ?? ''}|${appearance.weaponIdcode}|${appearance.weaponPos}`
+        + `|${appearance.offHandDorp ?? ''}|${appearance.offHandIdcode ?? 0}|${appearance.offHandKind ?? 0}`
+        + `|${appearance.weaponKindCode ?? 0}|${appearance.weaponAgingLevel ?? 0}`
+        + `|${appearance.offHandKindCode ?? 0}|${appearance.offHandAgingLevel ?? 0}`
       : '';
     if (currentPreviewJobId === jobId && currentPreviewHead === head && currentPreviewAppearance === appSig) return;
     currentPreviewJobId = jobId;
     currentPreviewHead = head;
     currentPreviewAppearance = appSig;
-    clearCharModel();
+    clearCharModel();                 // ⚠ 它会把 previewAppearance 清掉 ⇒ 这句必须在它**之后**
+    previewAppearance = appearance;
     const gen = ++loadGeneration;
     try {
       // bodyModel=时装 dorpItem（查 COSTUME_BODY_MAP），bodyModelIdcode=普通防具 idcode（算 armorNum）
@@ -540,6 +549,11 @@ export function createCharSelect(container: HTMLElement): CharSelect {
         await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos, gen);
       }
       if (gen !== loadGeneration) return;
+      // 副手挂载（盾/匕首）—— 与主手一样：代际校验 + 交给共享骨规则
+      if (appearance?.offHandDorp) {
+        await attachOffHandPreview(appearance.offHandDorp, gen);
+      }
+      if (gen !== loadGeneration) return;
       animState = createAnimStateMachine({
         getMotions: () => motionList,
         getClassId: () => jobId,
@@ -583,6 +597,16 @@ export function createCharSelect(container: HTMLElement): CharSelect {
   const weaponMount = new WeaponMount();
   let currentWeaponIdcode: number | null = null;
   let currentWeaponType: string | null = null;
+  /** 副手件（盾/匕首）的组 —— 主手由 `weaponMount` 管，副手在这里（与游戏内同一套骨判定+搬运） */
+  let offHandGroup: THREE.Group | null = null;
+  /**
+   * 预览里的两件发光效果（原版 `SetRenderBlinkColor`）—— 与游戏内**同一份实现**（`BlinkFx`），
+   * 行号来自这份外观的四个字段（`blinkRowOfAppearance`）。每帧在 `startRenderLoop` 里推进。
+   */
+  let mainBlink: BlinkFx | null = null;
+  let offHandBlink: BlinkFx | null = null;
+  /** 当前预览的外观（发光输入 + 副手 dorp/kind 的来源）；由 `loadPreview` 写 */
+  let previewAppearance: CharacterAppearance | undefined;
 
   /** 把挂载结果打出来（含**镜像份**与**缺失骨**）—— 挂载/姿态的每个出口都要可查（AGENTS #19/#12） */
   function logMount(what: string, res: MountResult): void {
@@ -595,9 +619,62 @@ export function createCharSelect(container: HTMLElement): CharSelect {
 
   /** 姿态（持械 ↔ 收械）——由状态机的 `onStanceChange` 触发，装配完还会**主动断言**一次 */
   function applyWeaponStance(stance: 'combat' | 'sheathed'): void {
-    if (!weaponGroup || !skeletonGroup) return;   // 没有武器 → 无事可做
-    if (weaponMount.currentStance === stance) return;
-    logMount('武器姿态 ' + stance, weaponMount.setStance(skeletonGroup, stance));
+    if (!skeletonGroup) return;
+    // 主手（含镜像份）由共享实现搬运；副手走 `moveOffHandForStance`（**唯一实现**：盾留左臂不动、
+    // 匕首在左手 ↔ 左腰之间搬）——与游戏内 `setSelfWeaponStance` 是同一套两件套。
+    if (weaponGroup && weaponMount.currentStance !== stance) {
+      logMount('武器姿态 ' + stance, weaponMount.setStance(skeletonGroup, stance));
+    }
+    const offRes = moveOffHandForStance({
+      root: skeletonGroup,
+      off: offHandGroup,
+      idcode: currentWeaponIdcode ?? 0,
+      offKind: previewAppearance?.offHandKind || 0,
+      stance,
+    });
+    if (offRes.missingBone) {
+      reportFallback('weapon', `选角预览副手姿态 ${stance}：目标骨 ${offRes.missingBone} 不在骨架里（该件留在原挂点）`);
+    }
+  }
+
+  /** 预览用各向异性（与纹理加载同一级别） */
+  function previewAniso(): number {
+    return renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
+  }
+
+  /**
+   * 选角预览的**副手件**（盾 → 左小臂；匕首 → 左手/左腰）。
+   *
+   * 骨名与搬运都走共享实现（`offMountBoneOf` / `moveOffHandForStance`），这里只做
+   * "加载 → 代际校验 → 喂给共享实现" —— 与主手 `attachWeaponPreview` 同样的分工。
+   * 之前选角页**完全不挂副手**，所以带盾的角色在选角界面看不到盾（用户 2026-09-23 实测）。
+   */
+  async function attachOffHandPreview(dorpItem: string, gen: number): Promise<void> {
+    const app = previewAppearance;
+    const offKind = app?.offHandKind || 0;
+    if (offKind === 0) return;
+    try {
+      const result = await loadWeaponModel(dorpItem);
+      // 代际守卫必须在**改场景的那一层**（同主手处的说明）：过期的那次会把副手留在骨上
+      if (gen !== loadGeneration) return;
+      const boneName = offMountBoneOf(currentWeaponIdcode ?? 0, offKind, 'combat');
+      const bone = findBone(skeletonGroup!, boneName);
+      if (!bone) {
+        reportFallback('weapon', `选角预览找不到副手挂载骨 ${boneName}（kind=${offKind}）⇒ 该件不显示`);
+        return;
+      }
+      // 发光效果在挂载之前建（镜像份是克隆出来的，晚建带不上叠加层；副手虽不镜像，口径保持一致）
+      offHandBlink = BlinkFx.create(result.group, blinkRowOfAppearance(app, 'off'), previewAniso());
+      offHandGroup = result.group;
+      bone.add(result.group);
+      console.log('[CharSelect] 副手挂载：' + dorpItem + ' kind=' + offKind + ' bone=' + bone.name);
+      await loadCharTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
+    } catch (err) {
+      console.warn('CharSelect: 副手加载失败', dorpItem, err);
+      offHandBlink?.dispose();
+      offHandBlink = null;
+      offHandGroup = null;
+    }
   }
 
   async function attachWeaponPreview(dorpItem: string, weaponPos: number, gen: number) {
@@ -611,6 +688,9 @@ export function createCharSelect(container: HTMLElement): CharSelect {
         // 同一条教训见 AGENTS #11 第三条：守卫要下沉到真正改状态的那一层。
         if (gen !== loadGeneration) return;
         weaponGroup = result.group;
+        // 发光效果（锻造/合成的呼吸光）在**挂载之前**建：镜像份是 `mount()` 里 clone 出来的，
+        // 晚建那份就没有叠加层（游戏内 `mountSelfWeapon` 同口径）。
+        mainBlink = BlinkFx.create(result.group, blinkRowOfAppearance(previewAppearance, 'main'), previewAniso());
         // 挂载（战斗骨由 weaponPos 定：2=左手，其余右手；**收械骨与镜像份由 idcode 定**）
         const res = weaponMount.mount(skeletonGroup!, result.group, currentWeaponIdcode, weaponPos, 'combat');
         logMount('武器挂载 ' + dorpItem + '（weaponPos=' + weaponPos + '）', res);
@@ -618,6 +698,8 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       } catch (err) {
         console.warn('CharSelect: 武器加载失败', dorpItem, err);
         weaponMount.detach();     // 组可能已经挂上去了：这里必须收干净，否则它会留在骨上无人管理
+        mainBlink?.dispose();
+        mainBlink = null;
         weaponGroup = null;
       }
     }
@@ -633,6 +715,17 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     // 这取代了旧的"挂过的组全量名单"：那份名单之所以存在，是因为当时挂载是这里手写的
     // （见 `weaponMount` 的说明）。现在往骨骼上加东西的只有 `WeaponMount`，它自己持有两份引用。
     weaponMount.detach();
+    // 副手是这里自己挂的（两处：本函数 + 姿态搬运）⇒ 也必须自己清干净，否则换角色时
+    // 上一件的盾会留在骨上（"手里和背后各有一把"那类残留的老毛病）。
+    if (offHandGroup) {
+      offHandGroup.parent?.remove(offHandGroup);
+      offHandGroup = null;
+    }
+    offHandBlink?.dispose();
+    offHandBlink = null;
+    mainBlink?.dispose();
+    mainBlink = null;
+    previewAppearance = undefined;
     weaponGroup = null;
     currentWeaponIdcode = null;
     currentWeaponType = null;
@@ -688,6 +781,9 @@ export function createCharSelect(container: HTMLElement): CharSelect {
           animPlayer.apply(motion.animSmb);
         }
       }
+      // 锻造/合成呼吸发光（原版逐帧 `SetRenderBlinkColor`）——同一份实现、同一个单调时钟
+      mainBlink?.update(nowMs);
+      offHandBlink?.update(nowMs);
 
       const rect = host.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {

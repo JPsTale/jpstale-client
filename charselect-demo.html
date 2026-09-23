@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>选角界面 · 调试</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0a0a1a; overflow: hidden; }
+    #stage { position: fixed; inset: 0; }
+    #note {
+      position: fixed; right: 10px; bottom: 10px; z-index: 100000; max-width: 380px;
+      background: rgba(12, 16, 22, .92); border: 1px solid #39465a; border-radius: 6px;
+      padding: 8px 10px; color: #9fb0c4; font: 11px/1.6 ui-monospace, Consolas, monospace;
+    }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="note">
+    假角色列表 + <b>真实</b>的 createCharSelect：① 锻造 +12 长剑（绿光 + mixS_05 叠加）+
+    合成盾（mixM_05 叠加）② 未锻造镰刀（对照，不发光）。切角色点左上角角色卡。
+  </div>
+  <script type="module" src="/src/tools/charselect-demo.ts"></script>
+</body>
+</html>
