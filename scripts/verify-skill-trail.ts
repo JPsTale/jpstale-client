@@ -103,11 +103,17 @@ ok('设值只有一处（idx 分支）—— 染色来源唯一',
   (wv.match(/selfTrailSkillIndex = idx;/g) ?? []).length === 1);
 
 console.log('\n[校验 3] 消费点只一处且 setTint 在 update 之前，双手槽都覆盖');
-const setLine = wv.indexOf("tr.setTint(trailTintOf(selfTrailSkillIndex, blinkRowOfAppearance(selfAppearance, 'main')))");
+const setLine = wv.indexOf("tr.setTint(trailTintOf(selfTrailSkillIndex, selfRig.mainRow))");
 const updLine = wv.indexOf('tr.update(curF, motion.startFrame * 160)');
 ok('消费点在曳光循环内（双手槽共用同一份）', setLine !== -1 && updLine !== -1);
-ok('武器色取自**外观**（与发光同一处派生，不在这里重推）',
-  wv.includes("blinkRowOfAppearance(selfAppearance, 'main')"));
+ok('武器色取自 **rig**（当前装备的唯一持有者，与发光同一份状态）',
+  wv.includes('trailTintOf(selfTrailSkillIndex, selfRig.mainRow)'));
+// ★ 2026-09-23 修的 bug：`selfAppearance` 原先只在"模型真的变了"时才写 ⇒ 只改发光输入（锻造+1）
+//   时它保持旧值，曳光拿到旧的四个字段 ⇒ 带子不染色。次序也要对：**先写外观，再判指纹**。
+const appSet = wv.indexOf('if (appearance) selfAppearance = appearance;', wv.indexOf('function applySelfAppearance'));
+const keyChk = wv.indexOf('const key = appearanceModelKey(appearance);', wv.indexOf('function applySelfAppearance'));
+ok('applySelfAppearance 无条件写 selfAppearance，且在指纹判断之前',
+  appSet !== -1 && keyChk !== -1 && appSet < keyChk);
 ok('setTint 在 update 之前调用', setLine !== -1 && updLine !== -1 && setLine < updLine);
 
 console.log('\n[校验 4] setTint 写入 uColor；null = 复位白');

@@ -14,6 +14,7 @@
  */
 import * as THREE from 'three';
 import { BlinkFx } from '../src/render/blink-fx.js';
+import { WeaponRig } from '../src/render/weapon-rig.js';
 import { agingRowOf, craftRowOf, BLINK_HALF_MS } from '../src/game/agingBlink.js';
 
 let failed = 0;
@@ -118,6 +119,23 @@ const row7 = agingRowOf(7)!;       // RGB(0,50,140)、第二通道 mixs_01 / SCR
   check('合成行（RGB 13,0,5）同样进 emissive', Math.abs(mat.emissive.r - (row0.r / 255) * (511 / 512)) < 1e-9,
     String(mat.emissive.r));
   fx.dispose();
+}
+
+// ───────────────── ⑤ WeaponRig 的色表行（曳光染色读它；2026-09-23 那个 bug 就出在这条链上）──
+{
+  const rig = new WeaponRig();
+  rig.setAppearance(undefined);
+  check('未给外观 ⇒ mainRow/offRow 都是 null（不染色）', rig.mainRow === null && rig.offRow === null);
+  // 主手锻造 +8（色表行 4 = RGB(100,0,90)）、副手合成（行 0）
+  rig.setAppearance({ weaponKindCode: 2, weaponAgingLevel: 8, offHandKindCode: 1, offHandAgingLevel: 0 });
+  check('锻造 +8 ⇒ mainRow = 行 4（RGB 100,0,90）',
+    rig.mainRow?.r === 100 && rig.mainRow?.g === 0 && rig.mainRow?.b === 90, JSON.stringify(rig.mainRow));
+  check('副手合成 ⇒ offRow = 行 0（texMixCode 9）', rig.offRow?.texMixCode === 9, JSON.stringify(rig.offRow));
+  // 再改一次（+12）：行跟着换 —— 这正是"装备着的武器锻造升级、模型没变"那条路
+  rig.setAppearance({ weaponKindCode: 2, weaponAgingLevel: 12 });
+  check('再 setAppearance（+12）后 mainRow 换成行 8（RGB 10,220,30）',
+    rig.mainRow?.r === 10 && rig.mainRow?.g === 220 && rig.mainRow?.b === 30, JSON.stringify(rig.mainRow));
+  check('这次没给副手 ⇒ offRow 回到 null（不残留上一件）', rig.offRow === null);
 }
 
 console.log(failed === 0 ? '\n呼吸发光渲染层：全部通过' : `\n呼吸发光渲染层：${failed} 条失败`);

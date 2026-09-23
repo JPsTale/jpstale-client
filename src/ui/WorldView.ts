@@ -80,8 +80,6 @@ import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadDropItemModel, WEAPON_BONES, weaponSizeMax, combatBoneOf, type WeaponMount } from '../render/weapon-loader.js';
 // 整套装备（主手 + 副手 + 发光 + 姿态 + 生命周期）的装配器 —— 自机/远端/选角预览**同一实现**
 import { WeaponRig } from '../render/weapon-rig.js';
-// 曳光染色与发光共用同一处派生（外观 → 色表行），别各推一份
-import { blinkRowOfAppearance } from '../game/agingBlink.js';
 import { createWeaponTrail, MonsterTrails, trailTintOf, type WeaponTrail } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
@@ -5653,9 +5651,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             //   常驻之后：挥动时出现，停下时两骨几乎不动 ⇒ 带子自然收短/消失。
             const curF = selfPlayer.frame;
             // T1：残影染色（写 uColor）—— **技能色 ⊕ 武器色**：普攻一定叠武器色（锻造/合成的色表行），
-            // 技能只在源码 `return FALSE` 那条（Chain Lance）叠；色表行取自外观（与发光同一处来源，
-            // 别在这里再推一遍）。两个槽都是**同一把**武器（主手 / 刺客匕首的镜像份）⇒ 同一行。
-            tr.setTint(trailTintOf(selfTrailSkillIndex, blinkRowOfAppearance(selfAppearance, 'main')));
+            // 技能只在源码 `return FALSE` 那条（Chain Lance）叠。色表行取自 **rig**（`mainRow`）：
+            // 那是"当前装备"的唯一持有者，与发光同一份状态 —— 别在这里按外观变量现推（那条路会
+            // 在"只改发光、模型没变"时拿到旧值，2026-09-23 踩过）。
+            // 两个槽都是**同一把**武器（主手 / 刺客匕首的镜像份）⇒ 同一行。
+            tr.setTint(trailTintOf(selfTrailSkillIndex, selfRig.mainRow));
             tr.update(curF, motion.startFrame * 160);
             // （**不再需要** `selfPlayer.apply()` 复原 —— `sampleBoneEnds` 只求骨矩阵、不摆姿势；
             //   这里原先每帧多摆一次整骨架，是卡顿的另一半来源。）
@@ -6130,6 +6130,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * （用户 2026-09-16 实测"整理背包动画就重播"）。
    */
   function applySelfAppearance(appearance: CharacterAppearance | undefined): void {
+    // ⚠ **先写 `selfAppearance`**（= 当前外观；发光、曳光染色、武器类型判定都读它）：它原先只在
+    // `reloadSelfModel`/`swapSelfBody` 里写，而那两个只在**模型指纹真的变了**时才被调到 ⇒
+    // "只改发光输入"（锻造 +1、模型没变）时它保持旧值 —— 发光本身会更新（rig 用的是传进来的那份），
+    // 但按 `selfAppearance` 现场取值的消费方（曳光染色）会拿到**旧的四个字段**。
+    // 用户 2026-09-23 实测：刺客匕首锻造 +8 后曳光颜色不变。
+    if (appearance) selfAppearance = appearance;
     // 发光与模型指纹**各判各的**（发光不换网格）：先更新发光（同步、便宜），再决定要不要重建模型。
     applySelfBlink(appearance);
     const key = appearanceModelKey(appearance);

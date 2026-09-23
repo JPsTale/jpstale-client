@@ -30,7 +30,7 @@ import {
 import { loadCharTextures } from './char-texture-loader.js';
 import { BlinkFx } from './blink-fx.js';
 import { reportFallback } from '../char/fallback-log.js';
-import { blinkRowOfAppearance, type AppearanceBlinkInput } from '../game/agingBlink.js';
+import { blinkRowOfAppearance, type AppearanceBlinkInput, type BlinkRow } from '../game/agingBlink.js';
 
 /**
  * 外观里与"手上那两件"有关的字段。**结构类型**（不 import `ui/CharSelect` 的接口）：
@@ -74,6 +74,13 @@ export class WeaponRig {
   private offMissing: string | null = null;
   private idcode = 0;
   private offKind = 0;
+  /**
+   * 当前两件的**色表行**（`null` = 未锻造/未合成）。**发光与曳光染色共用这一份状态**：
+   * 曳光（`WorldView` 的带子）只读它 —— 别在渲染层另推一次外观。曾经那样做过，踩的坑是
+   * "只更新发光、模型指纹没变"时那些外观变量**不会刷新**（`applySelfAppearance` 提前 return），
+   * 于是发光变了、曳光还是旧的（用户 2026-09-23 实测：匕首锻造 +8 后带子颜色不变）。
+   */
+  private rows: { main: BlinkRow | null; off: BlinkRow | null } = { main: null, off: null };
   private stance: 'combat' | 'sheathed' = 'combat';
   /**
    * 装配代际号：`dispose()` 与每次 `loadAndMount()` 都会 +1，于是"在途的那次加载"自动作废
@@ -87,6 +94,10 @@ export class WeaponRig {
   /** 副手组（null = 没挂） */
   get offHandGroup(): THREE.Object3D | null { return this.offGroup; }
   get currentStance(): 'combat' | 'sheathed' { return this.stance; }
+  /** 主手那件的色表行（曳光染色读它；`null` = 未锻造/未合成 ⇒ 不染色） */
+  get mainRow(): BlinkRow | null { return this.rows.main; }
+  /** 副手那件的色表行（同上；目前没有副手曳光，留着给将来的盾/副手特效） */
+  get offRow(): BlinkRow | null { return this.rows.off; }
 
   /**
    * 按外观把两件装好（**唯一入口**）。
@@ -112,6 +123,7 @@ export class WeaponRig {
     this.stance = stance;
     this.idcode = app?.weaponIdcode ?? 0;
     this.offKind = app?.offHandKind ?? 0;
+    this.setRows(app);
 
     // 摘旧副手（主手连同镜像份与旧发光由 `mount.mount()` 自己收）—— 副手组是本类挂的，
     // 所以它的父节点必然是那根骨（确定性：只有本类会 add 它）
@@ -209,8 +221,15 @@ export class WeaponRig {
   setAppearance(app: RigAppearance | undefined): void {
     if (app?.weaponIdcode !== undefined) this.idcode = app.weaponIdcode;
     if (app?.offHandKind !== undefined) this.offKind = app.offHandKind;
-    this.mount.blink?.setRow(blinkRowOfAppearance(app, 'main'));
-    this.offBlink?.setRow(blinkRowOfAppearance(app, 'off'));
+    this.setRows(app);
+  }
+
+  /** 记住两件的色表行并喂给发光（**唯一**的行派生点；曳光读 `mainRow`/`offRow`） */
+  private setRows(app: RigAppearance | undefined): void {
+    this.rows.main = blinkRowOfAppearance(app, 'main');
+    this.rows.off = blinkRowOfAppearance(app, 'off');
+    this.mount.blink?.setRow(this.rows.main);
+    this.offBlink?.setRow(this.rows.off);
   }
 
   /** 每帧推进两件的呼吸发光（原版逐帧 `SetRenderBlinkColor`） */
