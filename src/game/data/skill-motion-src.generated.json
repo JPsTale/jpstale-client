@@ -67,7 +67,7 @@
    "classDir": "fighter",
    "icon": "tf17 impact.bmp",
    "name": "Impact",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     1863,
     1867,
@@ -111,7 +111,7 @@
    "classDir": "fighter",
    "icon": "tf23 b_swing.bmp",
    "name": "Brutal Swing",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2432,
     2436,
@@ -153,7 +153,7 @@
    "classDir": "fighter",
    "icon": "tf30 r_zecram.bmp",
    "name": "Rage of Zecram",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2465,
     2469,
@@ -228,7 +228,7 @@
    "classDir": "fighter",
    "icon": "tf50 b_crash.bmp",
    "name": "Bone Crash",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2533,
     2537,
@@ -451,7 +451,7 @@
    "classDir": "mecha",
    "icon": "tm20 g_smash.bmp",
    "name": "Great Smash",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2060,
     2065,
@@ -548,7 +548,7 @@
    "classDir": "mecha",
    "icon": "tm43 grand_smash.bmp",
    "name": "Grand Smash",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2116,
     2121,
@@ -1216,7 +1216,7 @@
    "classDir": "pikeman",
    "icon": "tp17 j_crash.bmp",
    "name": "Jumping Crash",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     1925,
     1929,
@@ -1399,7 +1399,7 @@
    "classDir": "pikeman",
    "icon": "tp50 c_lance.bmp",
    "name": "Chain Lancer",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2192,
     2197,
@@ -1598,7 +1598,7 @@
    "classDir": "atalanta",
    "icon": "ma10 s_strike.bmp",
    "name": "Shield Strike",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2775,
     2779,
@@ -1734,7 +1734,7 @@
    "classDir": "atalanta",
    "icon": "ma26 s_sucker.bmp",
    "name": "Soul Sucker",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2932,
     2936,
@@ -1792,7 +1792,7 @@
    "classDir": "atalanta",
    "icon": "ma40 split_javelin.bmp",
    "name": "Split Javelin",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3003,
     3036,
@@ -1818,7 +1818,7 @@
    "classDir": "atalanta",
    "icon": "ma43 t_of_valhalla.bmp",
    "name": "Triumph of Valhalla",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3057,
     3061,
@@ -1837,7 +1837,7 @@
    "classDir": "atalanta",
    "icon": "ma46 l_javelin.bmp",
    "name": "Lightning Javelin",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3079,
     3084,
@@ -1868,7 +1868,7 @@
    "classDir": "atalanta",
    "icon": "ma50 storm_javelin.bmp",
    "name": "Storm Javelin",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3112,
     3134,
@@ -2052,7 +2052,7 @@
    "classDir": "knight",
    "icon": "mn10 s_blast.bmp",
    "name": "Sword Blast",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2603,
     2607,
@@ -2108,7 +2108,7 @@
    "classDir": "knight",
    "icon": "mn17 d_crash.bmp",
    "name": "Double Crash",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2632,
     2636,
@@ -2144,7 +2144,7 @@
    "classDir": "knight",
    "icon": "mn23 brandish.bmp",
    "name": "Brandish",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2665,
     2669,
@@ -2170,7 +2170,7 @@
    "classDir": "knight",
    "icon": "mn26 piercing.bmp",
    "name": "Piercing",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2686,
     2690,
@@ -2234,7 +2234,7 @@
    "classDir": "knight",
    "icon": "mn46 h_incantation.bmp",
    "name": "Holy Incantation",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2723,
     2727,
@@ -2260,7 +2260,7 @@
    "classDir": "knight",
    "icon": "mn50 g_cross.bmp",
    "name": "Grand Cross",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     2739,
     2743,
@@ -2441,7 +2441,7 @@
    "classDir": "magician",
    "icon": "mm12 firebolt.bmp",
    "name": "Fire Bolt",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3314,
     3326
@@ -2486,7 +2486,7 @@
    "classDir": "magician",
    "icon": "mm17 fireball.bmp",
    "name": "Fire Ball",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3335,
     3349
@@ -2531,7 +2531,7 @@
    "classDir": "magician",
    "icon": "mm23 watornado.bmp",
    "name": "Watornado",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3358,
     3372
@@ -2549,7 +2549,7 @@
    "classDir": "magician",
    "icon": "mm26 e_weapon.bmp",
    "name": "Enchant Weapon",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3386,
     3395
@@ -2567,7 +2567,7 @@
    "classDir": "magician",
    "icon": "mm30 d_ray.bmp",
    "name": "Death Ray",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3404,
     3417
@@ -2821,7 +2821,7 @@
    "classDir": "priestess",
    "icon": "mp10 healing.bmp",
    "name": "Healing",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3156,
     3167
@@ -2839,7 +2839,7 @@
    "classDir": "priestess",
    "icon": "mp12 holybolt.bmp",
    "name": "Holy Bolt",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3177,
     3196
@@ -2864,7 +2864,7 @@
    "classDir": "priestess",
    "icon": "mp14 m_spark.bmp",
    "name": "Multi Spark",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3212,
     3225
@@ -2889,7 +2889,7 @@
    "classDir": "priestess",
    "icon": "mp17 holymind.bmp",
    "name": "Holy Mind",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3236,
     3255
@@ -2984,7 +2984,7 @@
    "classDir": "priestess",
    "icon": "mp40 v_ball.bmp",
    "name": "Vigor Ball",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3292,
     3303
@@ -3044,7 +3044,7 @@
    "classDir": "priestess",
    "icon": "mp50 v_life.bmp",
    "name": "Virtual Life",
-   "motionSrc": "mixed",
+   "motionSrc": "skill",
    "motionLines": [
     3275,
     3281

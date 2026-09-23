@@ -1,0 +1,2905 @@
+{
+ "note": "技能 → 原版 MotionLoopSpeed 的速率形态（生成物，勿手改）。源 = SkillSub.cpp 的 `MotionLoopSpeed = …` 赋值点（两个入口 OpenPlaySkill / PlaySkillAttack）。kind: const/gaf-const/attack-speed/skill-level/loop-count/other；runtime 速率 = 帧步进 / 68.5714（= 4800/70，见 src/game/skillRate.ts）。重跑：npx tsx scripts/report-skill-motion-speed.ts --write",
+ "source": {
+  "file": ".refsrc/tree/SkillSub.cpp",
+  "md5": "468de9f003858c24160d4ab2897de420"
+ },
+ "rateDivisor": 68.57142857142857,
+ "rows": [
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf10 m_mastery.bmp",
+   "name": "Melee Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf12 f_attribute.bmp",
+   "name": "Fire Attribute",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf14 raving.bmp",
+   "name": "Raving",
+   "kind": "loop-count",
+   "base": 90,
+   "per": 10,
+   "expr": "90 + (10 * lpCurPlayer->MotionLoop)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1812,
+     "assignLine": 1847,
+     "form": "LOOP-COUNT",
+     "expr": "90 + (10 * lpCurPlayer->MotionLoop)",
+     "attackSpeedLines": []
+    },
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1812,
+     "assignLine": 1848,
+     "form": "CONST",
+     "expr": "100",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf17 impact.bmp",
+   "name": "Impact",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf20 t_impact.bmp",
+   "name": "Triple Impact",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf23 b_swing.bmp",
+   "name": "Brutal Swing",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf26 roar.bmp",
+   "name": "Roar",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 297,
+     "assignLine": 308,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf30 r_zecram.bmp",
+   "name": "Rage of Zecram",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf40 concentration.bmp",
+   "name": "Concentration",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 324,
+     "assignLine": 335,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf43 a_crash.bmp",
+   "name": "Avenging Crash",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf46 s_axe.bmp",
+   "name": "Swiftness",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 343,
+     "assignLine": 354,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf50 b_crash.bmp",
+   "name": "Bone Crash",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf60 destoryer.bmp",
+   "name": "Destroyer",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf63 berserker.bmp",
+   "name": "Berserker",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 880,
+     "assignLine": 891,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf66 c_strike.bmp",
+   "name": "Cyclone Strike",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf70 b_health.bmp",
+   "name": "Boost Health",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf100 survival_instinct.bmp",
+   "name": "Charge",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf103 sesmic_impact.bmp",
+   "name": "Inner Soul",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf106 ruthless_zecram.bmp",
+   "name": "Hellion",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf110 whirlwind.bmp",
+   "name": "Flame Vortex",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm10 ex_shield.bmp",
+   "name": "Extreme Shield",
+   "kind": "const",
+   "value": 100,
+   "expr": "100",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 55,
+     "assignLine": 64,
+     "form": "CONST",
+     "expr": "100",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm12 m_bomb.bmp",
+   "name": "Mechanic Bomb",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm14 p_attribute.bmp",
+   "name": "Reverse Engineering",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm17 ph_absorb.bmp",
+   "name": "Physical Absorption",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 71,
+     "assignLine": 83,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm20 g_smash.bmp",
+   "name": "Great Smash",
+   "kind": "const",
+   "value": 110,
+   "expr": "110",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2056,
+     "assignLine": 2067,
+     "form": "CONST",
+     "expr": "110",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm23 maximize.bmp",
+   "name": "Maximize",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 149,
+     "assignLine": 159,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm26 automation.bmp",
+   "name": "Automation",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 166,
+     "assignLine": 176,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm30 spark.bmp",
+   "name": "Spark",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm40 m_armor.bmp",
+   "name": "Metal Armor",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 364,
+     "assignLine": 376,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm43 grand_smash.bmp",
+   "name": "Grand Smash",
+   "kind": "attack-speed",
+   "add": 4,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 4)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2112,
+     "assignLine": 2123,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 4)",
+     "attackSpeedLines": [
+      "2123: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 4);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm44 m_weapon.bmp",
+   "name": "Mechanic Weapon Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm50 s_shield.bmp",
+   "name": "Spark Shield",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 389,
+     "assignLine": 401,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm60 impulsion.bmp",
+   "name": "Impulsion",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm63 compulsion.bmp",
+   "name": "Compulsion",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 813,
+     "assignLine": 824,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm66 m_sphere.bmp",
+   "name": "Magnetic Sphere",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 837,
+     "assignLine": 848,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm70 m_golem.bmp",
+   "name": "Metal Golem",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 858,
+     "assignLine": 869,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm100 rupture.bmp",
+   "name": "Precision",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm103 parasit_shot.bmp",
+   "name": "Trine Shield",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm106 hardening_shield.bmp",
+   "name": "Gravitation",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm110 magnetic_discharge.bmp",
+   "name": "Obliterate",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta10 s_hawk.bmp",
+   "name": "Scout Hawk",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta12 s_mastery.bmp",
+   "name": "Shooting Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta14 w_arrow.bmp",
+   "name": "Wind Arrow",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Wind_Arrow_Speed[lpSkill->Point - 1])",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1962,
+     "assignLine": 1995,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Wind_Arrow_Speed[lpSkill->Point - 1])",
+     "attackSpeedLines": [
+      "1995: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Wind_Arrow_Speed[lpSkill->Point - 1]);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta17 p_aim.bmp",
+   "name": "Perfect Aim",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta20 d_eye.bmp",
+   "name": "Dion's Eye",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta23 falcon.bmp",
+   "name": "Falcon",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 251,
+     "assignLine": 262,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta26 a_rage.bmp",
+   "name": "Arrow of Rage",
+   "kind": "const",
+   "value": 120,
+   "expr": "120",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2224,
+     "assignLine": 2234,
+     "form": "CONST",
+     "expr": "120",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta30 avalanchie.bmp",
+   "name": "Avalanche",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Avalanche_Speed[lpSkill->Point - 1])",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2243,
+     "assignLine": 2266,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Avalanche_Speed[lpSkill->Point - 1])",
+     "attackSpeedLines": [
+      "2266: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Avalanche_Speed[lpSkill->Point - 1]);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta40 e_shot.bmp",
+   "name": "Elemental Shot",
+   "kind": "attack-speed",
+   "add": 3,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 3)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2275,
+     "assignLine": 2306,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 3)",
+     "attackSpeedLines": [
+      "2306: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 3);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta43 g_falcon.bmp",
+   "name": "Golden Falcon",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 273,
+     "assignLine": 284,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta46 b_shot.bmp",
+   "name": "Bomb Shot",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "(GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed) * 80) / 100",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2314,
+     "assignLine": 2333,
+     "form": "ATTACKSPEED",
+     "expr": "(GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed) * 80) / 100",
+     "attackSpeedLines": [
+      "2333: lpCurPlayer->MotionLoopSpeed = (GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed) * 80) / 100;"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta50 perforation.bmp",
+   "name": "Perforation",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2341,
+     "assignLine": 2368,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+     "attackSpeedLines": [
+      "2368: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta60 r_wolverin.bmp",
+   "name": "Wolverine",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 926,
+     "assignLine": 937,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta63 e_mastery.bmp",
+   "name": "Evasion Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta66 p_shot.bmp",
+   "name": "Phoenix Shot",
+   "kind": "skill-level",
+   "base": 60,
+   "table": "Phoenix_Shot_Time",
+   "mult": 2,
+   "expr": "60 + (Phoenix_Shot_Time[lpSkill->Point - 1] * 2)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3550,
+     "assignLine": 3559,
+     "form": "SKILL-LEVEL",
+     "expr": "60 + (Phoenix_Shot_Time[lpSkill->Point - 1] * 2)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta70 f_o_nature.bmp",
+   "name": "Force of Nature",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 947,
+     "assignLine": 958,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta100 lethal_sight.bmp",
+   "name": "Stun Arrow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta103 fierce_wind.bmp",
+   "name": "Phoenix Speed",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta106 entailing_roots.bmp",
+   "name": "Leap Shot",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta110 bombardment.bmp",
+   "name": "Solar Arrow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp10 p_wind.bmp",
+   "name": "Pike Wind",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 105,
+     "assignLine": 117,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp12 i_attribute.bmp",
+   "name": "Ice Attribute",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp14 cri_hit.bmp",
+   "name": "Critical Hit",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "(80 * (fONE + 32 * cnt + 32)) >> FLOATNS",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1896,
+     "assignLine": 1910,
+     "form": "INLINE-ATTACKSPEED",
+     "expr": "(80 * (fONE + 32 * cnt + 32)) >> FLOATNS",
+     "attackSpeedLines": [
+      "1906: cnt = lpCurPlayer->smCharInfo.Attack_Speed - 6;"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp17 j_crash.bmp",
+   "name": "Jumping Crash",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1920,
+     "assignLine": 1950,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp20 g_pike.bmp",
+   "name": "Ground Pike",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 185,
+     "assignLine": 196,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp23 tornado.bmp",
+   "name": "Tornado",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp26 w_d_mastery.bmp",
+   "name": "Weapon Defense Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp30 expasion.bmp",
+   "name": "Expansion",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp40 v_spear.bmp",
+   "name": "Venom Spear",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 211,
+     "assignLine": 222,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp43 vanish.bmp",
+   "name": "Vanish",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 230,
+     "assignLine": 241,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp46 c_mastery.bmp",
+   "name": "Critical Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp50 c_lance.bmp",
+   "name": "Chain Lancer",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2188,
+     "assignLine": 2199,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+     "attackSpeedLines": [
+      "2199: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp60 a_eye.bmp",
+   "name": "Assassin's Eye",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp63 c_strike.bmp",
+   "name": "Charging Strike",
+   "kind": "skill-level",
+   "base": 60,
+   "table": "Charging_Strike_Time",
+   "mult": 2,
+   "expr": "60 + (Charging_Strike_Time[lpSkill->Point - 1] * 2)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3513,
+     "assignLine": 3523,
+     "form": "SKILL-LEVEL",
+     "expr": "60 + (Charging_Strike_Time[lpSkill->Point - 1] * 2)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp66 vague.bmp",
+   "name": "Vague",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 904,
+     "assignLine": 915,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp70 s_master.bmp",
+   "name": "Shadow Master",
+   "kind": "gaf-const",
+   "value": 7,
+   "expr": "GetAttackSpeedFrame(7)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3529,
+     "assignLine": 3544,
+     "form": "FIXED-via-GAF",
+     "expr": "GetAttackSpeedFrame(7)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp100 ring_spears.bmp",
+   "name": "Attack Rating Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp103 focus.bmp",
+   "name": "Lethal Strike",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp106 death_master.bmp",
+   "name": "Dodge",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp110 twister.bmp",
+   "name": "Vorpal Dive",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma10 s_strike.bmp",
+   "name": "Shield Strike",
+   "kind": "const",
+   "value": 90,
+   "expr": "90",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2772,
+     "assignLine": 2782,
+     "form": "CONST",
+     "expr": "90",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma12 farina.bmp",
+   "name": "Farina",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Farina_Speed[lpSkill->Point - 1])",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2806,
+     "assignLine": 2829,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Farina_Speed[lpSkill->Point - 1])",
+     "attackSpeedLines": [
+      "2829: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, Farina_Speed[lpSkill->Point - 1]);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma14 t_mastery.bmp",
+   "name": "Throwing Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma17 v_spear.bmp",
+   "name": "Vigor Spear",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma20 windy.bmp",
+   "name": "Windy",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma23 t_javelin.bmp",
+   "name": "Twist Javelin",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma26 s_sucker.bmp",
+   "name": "Soul Sucker",
+   "kind": "const",
+   "value": 90,
+   "expr": "90",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2929,
+     "assignLine": 2939,
+     "form": "CONST",
+     "expr": "90",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma30 f_javelin.bmp",
+   "name": "Fire Javelin",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma40 split_javelin.bmp",
+   "name": "Split Javelin",
+   "kind": "attack-speed",
+   "add": 1,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 1)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2993,
+     "assignLine": 3039,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 1)",
+     "attackSpeedLines": [
+      "3039: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 1);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma43 t_of_valhalla.bmp",
+   "name": "Triumph of Valhalla",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma46 l_javelin.bmp",
+   "name": "Lightning Javelin",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma50 storm_javelin.bmp",
+   "name": "Storm Javelin",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3102,
+     "assignLine": 3136,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+     "attackSpeedLines": [
+      "3136: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma60 h_o_valhalla.bmp",
+   "name": "Hall of Valhalla",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1013,
+     "assignLine": 1024,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma63 x_rage.bmp",
+   "name": "Extreme Rage",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma66 f_javelin.bmp",
+   "name": "Frost Javelin",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1039,
+     "assignLine": 1050,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma70 vengeance.bmp",
+   "name": "Vengeance",
+   "kind": "gaf-const",
+   "value": 6,
+   "expr": "GetAttackSpeedFrame(6)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3644,
+     "assignLine": 3653,
+     "form": "FIXED-via-GAF",
+     "expr": "GetAttackSpeedFrame(6)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma100 s_tiger.bmp",
+   "name": "Chimera of Light",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma103 golden_apple.bmp",
+   "name": "Poison Javelin",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma106 plague_javelin.bmp",
+   "name": "Amazon Rage",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma110 combo_javelin.bmp",
+   "name": "Javelin Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn10 s_blast.bmp",
+   "name": "Sword Blast",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn12 h_body.bmp",
+   "name": "Holy Body",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 421,
+     "assignLine": 433,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn14 p_traning.bmp",
+   "name": "Physical Training",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn17 d_crash.bmp",
+   "name": "Double Crash",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn20 h_valor.bmp",
+   "name": "Holy Valor",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 445,
+     "assignLine": 453,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn23 brandish.bmp",
+   "name": "Brandish",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn26 piercing.bmp",
+   "name": "Piercing",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn30 d_spirit.bmp",
+   "name": "Drastic Spirit",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 459,
+     "assignLine": 468,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn40 s_mastery.bmp",
+   "name": "Sword Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn43 d_inhalation.bmp",
+   "name": "Divine Shield",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 474,
+     "assignLine": 486,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn46 h_incantation.bmp",
+   "name": "Holy Incantation",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn50 g_cross.bmp",
+   "name": "Grand Cross",
+   "kind": "attack-speed",
+   "add": 1,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 1)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 2735,
+     "assignLine": 2746,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 1)",
+     "attackSpeedLines": [
+      "2746: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed, 1);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn60 s_o_justice.bmp",
+   "name": "Sword of Justice",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn63 g_shield.bmp",
+   "name": "Godly Shield",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 972,
+     "assignLine": 983,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn66 g_bless.bmp",
+   "name": "God's Blessing",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 992,
+     "assignLine": 1003,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn70 d_piercing.bmp",
+   "name": "Divine Piercing",
+   "kind": "gaf-const",
+   "value": 7,
+   "expr": "GetAttackSpeedFrame(7)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3567,
+     "assignLine": 3599,
+     "form": "FIXED-via-GAF",
+     "expr": "GetAttackSpeedFrame(7)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn100 holy_conviction.bmp",
+   "name": "Lightning Sword",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn103 divine_inquisiton.bmp",
+   "name": "Undead Bane",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn106 glorious_shield.bmp",
+   "name": "Zealous Reach",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn110 divine_cross.bmp",
+   "name": "Holy Aura",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm10 agony.bmp",
+   "name": "Agony",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 661,
+     "assignLine": 671,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm12 firebolt.bmp",
+   "name": "Fire Bolt",
+   "kind": "const",
+   "value": 100,
+   "expr": "100",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3309,
+     "assignLine": 3317,
+     "form": "CONST",
+     "expr": "100",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm14 zenith.bmp",
+   "name": "Zenith",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 681,
+     "assignLine": 691,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm17 fireball.bmp",
+   "name": "Fire Ball",
+   "kind": "const",
+   "value": 100,
+   "expr": "100",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3330,
+     "assignLine": 3338,
+     "form": "CONST",
+     "expr": "100",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm20 m_mastery.bmp",
+   "name": "Mental Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm23 watornado.bmp",
+   "name": "Watornado",
+   "kind": "const",
+   "value": 90,
+   "expr": "90",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3353,
+     "assignLine": 3361,
+     "form": "CONST",
+     "expr": "90",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm26 e_weapon.bmp",
+   "name": "Enchant Weapon",
+   "kind": "const",
+   "value": 90,
+   "expr": "90",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 703,
+     "assignLine": 717,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    },
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3376,
+     "assignLine": 3389,
+     "form": "CONST",
+     "expr": "90",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm30 d_ray.bmp",
+   "name": "Death Ray",
+   "kind": "const",
+   "value": 100,
+   "expr": "100",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3399,
+     "assignLine": 3407,
+     "form": "CONST",
+     "expr": "100",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm40 e_shield.bmp",
+   "name": "Energy Shield",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 725,
+     "assignLine": 735,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm43 diastrophism.bmp",
+   "name": "Diastrophism",
+   "kind": "const",
+   "value": 120,
+   "expr": "120",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 745,
+     "assignLine": 756,
+     "form": "CONST",
+     "expr": "120",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm46 s_elemental.bmp",
+   "name": "Spirit Elemental",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 765,
+     "assignLine": 776,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm50 d_sword.bmp",
+   "name": "Dancing Sword",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 786,
+     "assignLine": 799,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm60 f_elemental.bmp",
+   "name": "Fire Elemental",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1102,
+     "assignLine": 1113,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm63 f_wave.bmp",
+   "name": "Flame Wave",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm66 distortion.bmp",
+   "name": "Distortion",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1307,
+     "assignLine": 1318,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm70 meteo.bmp",
+   "name": "Meteorite",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm100 wizardtrance.bmp",
+   "name": "Magic Source",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm103 stone_skin.bmp",
+   "name": "Amplify",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm106 redray.bmp",
+   "name": "Stone Spike",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm110 cataclysm.bmp",
+   "name": "Dance of Calamity",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp10 healing.bmp",
+   "name": "Healing",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 537,
+     "assignLine": 549,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    },
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3149,
+     "assignLine": 3158,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp12 holybolt.bmp",
+   "name": "Holy Bolt",
+   "kind": "gaf-const",
+   "value": 8,
+   "expr": "GetAttackSpeedFrame(8)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3171,
+     "assignLine": 3181,
+     "form": "FIXED-via-GAF",
+     "expr": "GetAttackSpeedFrame(8)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp14 m_spark.bmp",
+   "name": "Multi Spark",
+   "kind": "gaf-const",
+   "value": 8,
+   "expr": "GetAttackSpeedFrame(8)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3200,
+     "assignLine": 3218,
+     "form": "FIXED-via-GAF",
+     "expr": "GetAttackSpeedFrame(8)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp17 holymind.bmp",
+   "name": "Holy Mind",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3229,
+     "assignLine": 3238,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp20 meditation.bmp",
+   "name": "Meditation",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp23 d_lightning.bmp",
+   "name": "Divine Lightning",
+   "kind": "const",
+   "value": 85,
+   "expr": "85",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 564,
+     "assignLine": 575,
+     "form": "CONST",
+     "expr": "85",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp26 h_reflection.bmp",
+   "name": "Holy Reflection",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp30 g_healing.bmp",
+   "name": "Grand Healing",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 593,
+     "assignLine": 601,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp40 v_ball.bmp",
+   "name": "Vigor Ball",
+   "kind": "gaf-const",
+   "value": 7,
+   "expr": "GetAttackSpeedFrame(7)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 3286,
+     "assignLine": 3295,
+     "form": "FIXED-via-GAF",
+     "expr": "GetAttackSpeedFrame(7)",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp43 resurrection.bmp",
+   "name": "Resurrection",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp46 extinction.bmp",
+   "name": "Extinction",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp50 v_life.bmp",
+   "name": "Virtual Life",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp60 g_spike.bmp",
+   "name": "Glacial Spike",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp63 r_field.bmp",
+   "name": "Regeneration Field",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1060,
+     "assignLine": 1071,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp66 c_lightning.bmp",
+   "name": "Chain Lightning",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp70 s_muspell.bmp",
+   "name": "Summon Muspell",
+   "kind": "const",
+   "value": 80,
+   "expr": "80",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1080,
+     "assignLine": 1091,
+     "form": "CONST",
+     "expr": "80",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp100 ice_elemental.bmp",
+   "name": "Divine Force",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp103 lightning_surge.bmp",
+   "name": "Ice Meteorite",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp106 heavenly_light.bmp",
+   "name": "Thunderstorm",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp110 consecration.bmp",
+   "name": "Divine Cleansing",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta10 stingger.bmp",
+   "name": "Stinger",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1567,
+     "assignLine": 1575,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta12 r_hit.bmp",
+   "name": "Double Blow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta14 d_mastery.bmp",
+   "name": "Dual Wield Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta17 wisp.bmp",
+   "name": "Wisp",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1593,
+     "assignLine": 1601,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta20 v_throne.bmp",
+   "name": "Venom Thorn",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta23 alas.bmp",
+   "name": "Alas",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1123,
+     "assignLine": 1131,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta26 s_shock.bmp",
+   "name": "Soul Shock",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta30 a_mastery.bmp",
+   "name": "Blade Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta40 s_sword.bmp",
+   "name": "Finishing Blow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta43 b_up.bmp",
+   "name": "Gust Slash",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta46 inpes.bmp",
+   "name": "Inpes",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1260,
+     "assignLine": 1268,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta50 blind.bmp",
+   "name": "Deception",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1273,
+     "assignLine": 1281,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta60 f_wind.bmp",
+   "name": "Frost Wind",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta63 f_mastery.bmp",
+   "name": "Fatal Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta66 polluted.bmp",
+   "name": "Pollute",
+   "kind": "const",
+   "value": 76,
+   "expr": "76",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1286,
+     "assignLine": 1294,
+     "form": "CONST",
+     "expr": "76",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta70 p_shadow.bmp",
+   "name": "Ninja Shadow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts80 j_bomb.bmp",
+   "name": "Shadow Bomb",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts83 r_slash.bmp",
+   "name": "Rising Slash",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts86 v_stab.bmp",
+   "name": "Violent Stab",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts90 storm.bmp",
+   "name": "Shadow Storm",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms10 darkbolt.bmp",
+   "name": "Dark Bolt",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1676,
+     "assignLine": 1683,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms12 darkwave.bmp",
+   "name": "Dark Wave",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1692,
+     "assignLine": 1699,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms14 curselazy.bmp",
+   "name": "Inertia",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "OpenPlaySkill",
+     "caseLine": 1136,
+     "assignLine": 1144,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms17 i_peace.bmp",
+   "name": "Inner Peace",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms20 s_flare.bmp",
+   "name": "Spiritual Flare",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms23 s_manacle.bmp",
+   "name": "Spiritual Manacle",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms26 c_hunt.bmp",
+   "name": "Chasing Hunt",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms30 a_migal.bmp",
+   "name": "Advent Migal",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms40 r_maker.bmp",
+   "name": "Rainmaker",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms43 l_ghost.bmp",
+   "name": "Phantom Call",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms46 haunt.bmp",
+   "name": "Haunt",
+   "kind": "const",
+   "value": 70,
+   "expr": "70",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1744,
+     "assignLine": 1751,
+     "form": "CONST",
+     "expr": "70",
+     "attackSpeedLines": []
+    }
+   ]
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms50 scratch.bmp",
+   "name": "Scratch",
+   "kind": "attack-speed",
+   "add": 0,
+   "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+   "sites": [
+    {
+     "scope": "PlaySkillAttack",
+     "caseLine": 1760,
+     "assignLine": 1767,
+     "form": "ATTACKSPEED",
+     "expr": "GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed)",
+     "attackSpeedLines": [
+      "1767: lpCurPlayer->MotionLoopSpeed = GetAttackSpeedFrame(lpCurPlayer->smCharInfo.Attack_Speed);"
+     ]
+    }
+   ]
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms60 r_knight.bmp",
+   "name": "Crimson Knight",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms63 judge.bmp",
+   "name": "Judgement",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms66 a_midranda.bmp",
+   "name": "Advent Midranda",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms70 m_pray.bmp",
+   "name": "Mourning Pray",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms80 creed.bmp",
+   "name": "Creed",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms83 p_deity.bmp",
+   "name": "Press Deity",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms86 g_nail.bmp",
+   "name": "Phantom Nail",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms90 h_regene.bmp",
+   "name": "Occult Life",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma10 lowkick.bmp",
+   "name": "Lowkick",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma12 s_mastery.bmp",
+   "name": "Spirit Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma14 dbblow.bmp",
+   "name": "Double Blow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma17 h_straight.bmp",
+   "name": "Half Straight",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma20 rage up.bmp",
+   "name": "Rage Up",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma23 patriot.bmp",
+   "name": "Patriot",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma26 r_elbow.bmp",
+   "name": "Rolling Elbow",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma30 s_mastery.bmp",
+   "name": "Speed Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma40 i_bulkup.bmp",
+   "name": "Iron Bulkup",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma43 t_cannon.bmp",
+   "name": "Tiger Cannon",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma46 war cry.bmp",
+   "name": "War Cry",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma50 j_heelkick.bmp",
+   "name": "Jump Heelkick",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma60 combination.bmp",
+   "name": "Combination",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma63 steelers.bmp",
+   "name": "Steelers",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma66 b_check.bmp",
+   "name": "Body Check",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma70 typhoon.bmp",
+   "name": "Typhoon",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma80 d_mastery.bmp",
+   "name": "Defence Mastery",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma83 h_hawk.bmp",
+   "name": "Hunting Hawk",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma86 l_breaking.bmp",
+   "name": "Leg Breaking",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma90 h_training.bmp",
+   "name": "Hawk Training",
+   "kind": "other",
+   "expr": "",
+   "sites": []
+  }
+ ]
+}

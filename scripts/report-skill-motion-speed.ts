@@ -29,10 +29,11 @@
  *                 `--src=E:/repo/ex-machina/src/game/Legacy/Game/Character/SkillSub.cpp`）。
  *                 ⚠ 换源后**行号与计数都变**，别把两份的数混着引用。
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { scanSwitchCases, type OpenPlayScan } from './openplay-scan.js';
+import { SKILLS, CLASS_DIR } from '../src/game/skillData.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..');
@@ -182,8 +183,131 @@ function scanFile(text: string): Row[] {
 
 const rows = scanFile(src);
 
-if (process.argv.includes('--json')) {
-  console.log(JSON.stringify({ file: '.refsrc/tree/SkillSub.cpp', rows }, null, 2));
+/* ─────────── 生成物：技能 → 速率形态（`npm run skill-motion-speed --write`） ─────────── */
+
+const RATE_OUT = resolve(ROOT, 'src/game/data/skill-motion-speed.generated.json');
+
+/** 源里那个"按攻速"的式子换算成**帧步进**（子帧/70Hz 逻辑帧）：
+ *  `GetAttackSpeedFrame(as[, add])` = `(80 * (GetAttackSpeedMainFrame(as) + add*32)) >> 8`，
+ *  而 `GetAttackSpeedMainFrame(as) = fONE + 32*clamp(as-6,0,6)`（`playsub.cpp:6338-6356`，
+ *  `fONE = 256` / `FLOATNS = 8` 见 `smType.h:21-22`）。 */
+export function frameStepFromAttackSpeed(attackSpeed: number, add = 0): number {
+  const clamped = Math.max(0, Math.min(attackSpeed - 6, 6));
+  const addBonus = add > 0 && add < 6 ? add * 32 : 0;
+  return (80 * (256 + 32 * clamped + addBonus)) >> 8;
+}
+/** 帧步进 → 我们的播放速率倍率：`rate = FrameStep / 68.5714`。
+ *  68.5714 = 4800/70 —— 原版每秒推进 = FrameStep×70 子帧 = FrameStep×70/160 动作帧，
+ *  我们 rate=1 时每秒 30 动作帧（`ANIM_FPS_BASE`）⇒ rate = (FrameStep·70/160)/30。 */
+export const RATE_DIVISOR = 4800 / 70;
+
+/** 一行生成物的形状（运行时读它，见 `src/game/skillRate.ts`） */
+interface RateRow {
+  job: number;
+  classDir: string;
+  icon: string;
+  name: string;
+  /** 速率形态：`const` / `gaf-const`（喂常量的 GetAttackSpeedFrame）/ `attack-speed` /
+   *  `skill-level`（含表格名，运行时按技能等级查我们自己的表）/ `loop-count` / `other` */
+  kind: 'const' | 'gaf-const' | 'attack-speed' | 'skill-level' | 'loop-count' | 'other';
+  /** `kind` 的取值：const=帧步进；gaf-const=输入给 GAF 的常量；attack-speed=add；
+   *  skill-level=`{base, table, mult}`；loop-count=`{base, per}` */
+  value?: number;
+  add?: number;
+  base?: number;
+  table?: string;
+  mult?: number;
+  per?: number;
+  expr: string;
+  /** 出处（`SkillSub.cpp` 的行号与入口；两个入口都有时会各一条 —— 值可以不同） */
+  sites: Array<{ scope: string; caseLine: number; assignLine: number; form: Form; expr: string; attackSpeedLines: string[] }>;
+}
+
+/**
+ * 把扫描结果**归到我们的技能行**上（按名字归一化，与 `extract-skill-map` 同一套），
+ * 每行合并两个入口（`PlaySkillAttack` 左拳/追打优先 —— 我们的三条施法入口里两条走它）。
+ */
+function buildRateTable(rs: Row[]): { json: Record<string, unknown>; matched: number } {
+  const norm = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const bySkill = new Map<string, Row[]>();
+  for (const r of rs) {
+    const key = norm(r.macro.replace(/^SKILL_/, ''));
+    const arr = bySkill.get(key);
+    if (arr) arr.push(r); else bySkill.set(key, [r]);
+  }
+  const parse = (r: Row): Pick<RateRow, 'kind' | 'value' | 'add' | 'base' | 'table' | 'mult' | 'per'> => {
+    if (r.form === 'CONST') return { kind: 'const', value: Number(r.expr) };
+    if (r.form === 'FIXED-via-GAF') return { kind: 'gaf-const', value: Number(/\((\d+)\)/.exec(r.expr)?.[1] ?? '0') };
+    const gafArg = (s: string): number => Number(/GetAttackSpeedFrame\([^,)]*,\s*(\d+)\s*\)/.exec(s)?.[1] ?? '0');
+    const gaf = /GetAttackSpeedFrame\([^)]*\)/.exec(r.expr)?.[0] ?? '';
+    if (r.form === 'ATTACKSPEED') return { kind: 'attack-speed', add: gafArg(r.expr) };
+    if (r.form === 'INLINE-ATTACKSPEED') {
+      // 内联式：右值是 `cnt`，真正的式子写在块内那行（证据行）
+      const line = r.attackSpeedLines.find((l) => l.includes('GetAttackSpeedFrame')) ?? '';
+      const handle = /Attack_Speed\s*-\s*6/.test(line) ? -1 : gafArg(line);
+      return handle === -1 ? { kind: 'attack-speed', add: 2 } : { kind: 'attack-speed', add: handle };
+    }
+    const m = /^(\d+)\s*\+\s*\(?\s*([A-Za-z_]\w*)\s*\[/.exec(r.expr);
+    if (r.form === 'SKILL-LEVEL' && m) {
+      return { kind: 'skill-level', base: Number(m[1]), table: m[2]!, mult: Number(/(\*\s*(\d+))/.exec(r.expr)?.[2] ?? '1') };
+    }
+    const lc = /^(\d+)\s*\+\s*\((\d+)\s*\*/.exec(r.expr);
+    if (r.form === 'LOOP-COUNT' && lc) return { kind: 'loop-count', base: Number(lc[1]), per: Number(lc[2]) };
+    return { kind: 'other' };
+  };
+
+  const outRows: RateRow[] = [];
+  let matched = 0;
+  const jobOf = new Map(Object.entries(CLASS_DIR).map(([job, dir]) => [dir, Number(job)]));
+  for (const [classDir, list] of Object.entries(SKILLS)) {
+    for (const s of list) {
+      const key = norm(s.name);
+      const altKey = s.alt ? norm(s.alt) : '';
+      const hits = bySkill.get(key) ?? (altKey ? bySkill.get(altKey) : undefined) ?? [];
+      // 两个入口都有 ⇒ `PlaySkillAttack`（左拳/追打）优先；值不同会在 sites 里各留一条（可复核）
+      const pick = hits.find((h) => h.scope === 'PlaySkillAttack') ?? hits[0];
+      const spec = pick ? parse(pick) : { kind: 'other' as const };
+      if (pick) matched++;
+      outRows.push({
+        job: jobOf.get(classDir)!,
+        classDir, icon: s.iconFile, name: s.name,
+        ...spec,
+        expr: pick?.expr ?? '',
+        sites: hits.map((h) => ({
+          scope: h.scope, caseLine: h.caseLine, assignLine: h.assignLine, form: h.form,
+          expr: h.expr, attackSpeedLines: h.attackSpeedLines,
+        })),
+      });
+    }
+  }
+  return {
+    matched,
+    json: {
+      note: '技能 → 原版 MotionLoopSpeed 的速率形态（生成物，勿手改）。'
+        + '源 = SkillSub.cpp 的 `MotionLoopSpeed = …` 赋值点（两个入口 OpenPlaySkill / PlaySkillAttack）。'
+        + 'kind: const/gaf-const/attack-speed/skill-level/loop-count/other；'
+        + 'runtime 速率 = 帧步进 / 68.5714（= 4800/70，见 src/game/skillRate.ts）。'
+        + '重跑：npx tsx scripts/report-skill-motion-speed.ts --write',
+      source: { file: '.refsrc/tree/SkillSub.cpp', md5: '468de9f003858c24160d4ab2897de420' },
+      rateDivisor: RATE_DIVISOR,
+      rows: outRows,
+    },
+  };
+}
+
+if (process.argv.includes('--write') || process.argv.includes('--json')) {
+  const out = buildRateTable(rows);
+  if (process.argv.includes('--write')) {
+    writeFileSync(RATE_OUT, JSON.stringify(out.json, null, 1) + '\n');
+    console.log(`写出 ${RATE_OUT}`);
+    console.log(`  技能 ${out.json.rows.length} 条（有速率行 ${out.matched}，源里查不到 ${out.json.rows.length - out.matched}）`);
+    const tally = new Map<string, number>();
+    for (const r of out.json.rows) tally.set(r.kind, (tally.get(r.kind) ?? 0) + 1);
+    console.log(`  kind：${[...tally.entries()].map(([k, v]) => `${k}=${v}`).join(' ')}`);
+  }
+  if (process.argv.includes('--json')) {
+    console.log(JSON.stringify({ file: '.refsrc/tree/SkillSub.cpp', rows }, null, 2));
+  }
   process.exit(0);
 }
 

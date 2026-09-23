@@ -84,6 +84,7 @@ import { PlayerTrails, MonsterTrails, trailTintOf } from '../render/effects/weap
 import { isShootingMode } from '../char/weapon-type.js';
 import { skillLevelByIcon } from '../game/skillLevel.js';
 import { fistIntentOf, type FistIntent } from '../game/skillBinding.js';
+import { skillMotionSrcByIcon, weaponSfxForIcon } from '../game/skillMotionSrc.js';
 import { noTargetCastBlock } from '../game/skillNoTarget.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
@@ -2108,14 +2109,40 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (idx != null) {
       // T1：这一击按技能染色（含下面的普攻回退分支 —— Critical Hit 正走这条）。设值只此一处（AGENTS #15）。
       selfTrailSkillIndex = idx;
-      // 指定技能：有专属 SKILL 动画则播专属；无则回退普攻（多数技能动作即普攻）
+      // **原版这一招就用普攻动作**（证据 `SkillSub.cpp` 那两行，见生成物 `skill-motion-src.generated.json`）：
+      //   · Raving  → `SetMotionFromCode(CHRMOTION_STATE_ATTACK)`（`SkillSub.cpp:1815-1816`）
+      //   · Critical Hit → 只有 `RetryPlayAttack`（= `PlayAttackFromPosi(…NormalAttackMode)`）
+      // ⇒ 动作与音效**都**走 ATTACK 那条路（原版 EventAttack 也是），属**证据值不是兜底**。
+      //   起手音照放（`beginSelfSkill`）——原版 `BeginSkill` 的 SkillPlaySound 与动作选择是两件事。
+      const src = skillMotionSrcByIcon(norm + '.bmp');
+      if (src?.motionSrc === 'attack') {
+        const okAttack = animState.triggerAttack(true);
+        console.log('[WorldView][dbg] 技能按原版走普攻动作 ' + iconFile + ': ' + (okAttack ? 'OK' : '无'));
+        if (okAttack) beginSelfSkill(iconFile, aim);
+        return okAttack;
+      }
+      // 指定技能：有专属 SKILL 动画则播专属
       const ok = animState.triggerSkill(idx);
       if (ok) {
         console.log('[WorldView][dbg] 技能动画 #' + idx + ' ' + iconFile);
         beginSelfSkill(iconFile, aim);
         return true;
       }
+      // **找不到专属动作**（`.inx` 里没有带这个技能码的 SKILL 条目）。原版在这里
+      // `SetMotionFromCode` 的 `FindCnt == 0` 分支**什么都不换**（`character.cpp:3482-3491`）——
+      // 不换成普攻、也不换成别的技能 ⇒ 我们**不许**再拿普攻顶上（那是自造替换，AGENTS #12）。
+      if (src?.motionSrc === 'skill' || src?.motionSrc === 'mixed') {
+        reportFallback('skill', `技能「${src.name}」#${idx}：动作表里没有带这个技能码的 SKILL 条目，`
+          + `原版 ${src.motionSrc === 'mixed' ? '（部分等级）' : ''}走技能动作但找不到 ⇒ 按原版**不换动作**`
+          + `（无出手动画、无事件帧音；起手音照放）`);
+        beginSelfSkill(iconFile, aim);
+        return true;    // 起手音/特效已放：这一击算"放出去了"（原版同样开始结算）
+      }
+      // 源里没有这一招（`motionSrc === null`，如 11 职业才有的 Inner Soul/Hellion/Flame Vortex）——
+      // **未知**，不是"没有"。暂时沿用老写法（普攻动作）但**必须上报**，不许静默（AGENTS #12）。
       const fallback = animState.triggerAttack(true);
+      reportFallback('skill', `技能「${src?.name ?? iconFile}」#${idx}：参考源里没有这一招的动作分支 ⇒ `
+        + `动作未知，暂按普攻动作（**自造替换**，待补证据）`);
       console.log('[WorldView][dbg] 技能无专属动画→普攻回退 ' + iconFile + ': ' + (fallback ? 'OK' : '无'));
       return fallback;
     }
@@ -5875,6 +5902,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
                 // 目标**每帧现取**（飞出物最长飞 100 帧，目标走动时要跟着）
                 targetGetter: aimTargetOf,
               }, selfPos, targetPos);
+              // **武器挥击音**（原版 `EventAttack` 通用分支：`EventSkill()` 返回 FALSE 时调
+              // `WeaponPlaySound(this)`，`character.cpp:4207` + `:4244`）。这一声不在 `skill-fx.json` 里
+              //（它不是技能的专属 wav，而是**手上那把武器**的攻击音）⇒ 只看生成物 `weaponSfx`。
+              // 少了它，Raving/Impact/Triple Impact、Critical Hit 这类"事件帧无专属音"的招**整招一声不响**
+              //（用户 2026-09-23 报的"武士技能没音效"）。同一份判定 = `weaponSfxForIcon`（唯一实现）。
+              if (weaponSfxForIcon(selfSkillRow.icon)) {
+                sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true });
+              }
             }
           }
         }

@@ -179,11 +179,13 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
     const evHit = evNorm.get(`skillplay${norm(s.name)}`)
       ?? (altKey ? evNorm.get(`skillplay${altKey}`) : undefined);
 
-    // 动作：显式 `SetMotionFromCode(SKILL)` 优先（它写在 RetryPlayAttack 之后，会盖掉普攻）；
-    // 只有普攻那一路（ATTACK / RetryPlayAttack）⇒ 'attack'；两者都有 ⇒ 'mixed'（按技能等级二选一）
+    // 动作：显式 `SetMotionFromCode(SKILL)` 优先（它写在 RetryPlayAttack 之后，会盖掉普攻）。
+    // **只有两种 SetMotionFromCode 都出现**才算 `mixed`（= 同一 case 内按条件二选一，
+    // Triple Impact 就是嵌套 switch 按技能等级选）；`RetryPlayAttack` 单独出现只是"起一次普攻"
+    // ⇒ 'attack'（Critical Hit 只有它：动作就是普攻动作）。
     const mset = subHit?.motions;
     const motionSrc: MotionSrc | null = !subHit ? null
-      : mset?.has('skill') && (mset.has('attack') || subHit.retry) ? 'mixed'
+      : mset?.has('attack') && mset.has('skill') ? 'mixed'
         : mset?.has('skill') ? 'skill'
           : (mset?.has('attack') || subHit.retry) ? 'attack' : null;
     const sounds = (evHit?.sounds ?? []).map((sym) => ({ symbol: sym, file: fileBySymbol.get(sym) ?? null }));
