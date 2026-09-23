@@ -3981,19 +3981,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     drainStaleRemoteAttacks();
     const actor = remotes.get(attackerId);
     if (!actor) {
-      // **演员还没建好**（模型在下载：`spawnRemote` 是异步的）—— 这条起手是**一次性事件**，
-      // 直接丢就永远不会补 ⇒ 旁观者看不到那一刀（与"怪物被秒杀后看不到挥击"是同一类症状的两个来源）。
-      // 存**最新一条**（只留一次挥击；补播一串陈旧的挥击反而更怪），演员一上线就补上（见 spawnRemote），
-      // 超过 `REMOTE_ATTACK_GRACE_MS` 的作废并如实上报（AGENTS #12：降级要可见）。
-      if (remoteSpawning.has(attackerId)) {
-        pendingRemoteAttacks.set(attackerId, {
-          targetId, attackSpeed, animIndex, animClip, at: performance.now(),
-        });
-      } else {
-        // 既不在演员表、也不在加载中：本地没有这个玩家的任何信息（AOI 本不该发这种广播）
-        reportFallback('anim', `远端 id=${attackerId} 的起手广播到了，但本地没有这个演员`
-          + `（既不在加载也不在演员表）→ 该次挥击未显示`);
-      }
+      // **演员还没建好** ⇒ 存起来，等它上线补播（见 `spawnRemote` 的 flush）。三种时序都靠它兜住：
+      //   ① 起手比 `playerAppear` 先到（AOI 顺序）；② 模型正在下载；③ `playerAppear` 到了但 actor 还在建。
+      // ⚠ **不在这里判"是否在加载中"**：我第一版加了 `remoteSpawning.has(...)` 守卫，于是①整类
+      //   被当成"本地没这个玩家"丢掉（用户 2026-09-23 实测"经常丢掉远端第一下攻击动画"）。
+      // 「能不能补播」只由**那一招还剩多久**决定（`flushRemoteAttack` 用该招自己的时长算），
+      // 过期则上报 ⇒ 这条路不会静默丢（#12）。
+      pendingRemoteAttacks.set(attackerId, {
+        targetId, attackSpeed, animIndex, animClip, at: performance.now(),
+      });
       return;
     }
     playRemoteAttack(actor, targetId, attackSpeed, animIndex, animClip);
@@ -4003,16 +3999,30 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const pendingRemoteAttacks = new Map<number, {
     targetId: number; attackSpeed: number; animIndex: number; animClip: string; at: number;
   }>();
-  /** 补播窗口：演员在这段时间内建好 ⇒ 补播那一刀；超过 ⇒ 作废并上报（不静默丢） */
-  const REMOTE_ATTACK_GRACE_MS = 500;
+  /** 队列的**内存兜底**（与"能不能补播"无关）：留太久（演员一直没来）就清掉并上报 */
+  const REMOTE_ATTACK_KEEP_MS = 5000;
+  /** 动作表里查不到 `animIndex`（两端数据不同代）时，"这一招大概多久"的保守默认 */
+  const REMOTE_ATTACK_FALLBACK_MS = 1000;
+
+  /**
+   * 那一招**还剩多久**（ms）—— 用它**自己的时长**算：本项目帧空间 = 原版帧 ×160，
+   * 推进 `ANIM_UNITS_PER_SEC`(4800)/秒 ⇒ `(endFrame-startFrame)×160/4800` = `(endFrame-startFrame)/30` 秒。
+   * `> 0` = 这一挥还在进行中（补播是"从第 0 帧重演一遍"，比什么都不演更接近真相；
+   * 我们不知道对方播到哪一帧 —— 协议没带进度）。
+   */
+  function attackRemainMs(actor: RemoteActor, animIndex: number, at: number): number {
+    const m = actor.motionList.find((x) => x.index === animIndex);
+    const durMs = m ? ((m.endFrame - m.startFrame) / 30) * 1000 : REMOTE_ATTACK_FALLBACK_MS;
+    return durMs - (performance.now() - at);
+  }
 
   function drainStaleRemoteAttacks(): void {
     const now = performance.now();
     for (const [id, p] of pendingRemoteAttacks) {
-      if (now - p.at < REMOTE_ATTACK_GRACE_MS) continue;
+      if (now - p.at < REMOTE_ATTACK_KEEP_MS) continue;
       pendingRemoteAttacks.delete(id);
-      reportFallback('anim', `远端 id=${id} 的起手广播到达时演员还在加载、超过 ${REMOTE_ATTACK_GRACE_MS}ms 未建好`
-        + ` → 该次挥击未显示（不是静默丢弃）`);
+      reportFallback('anim', `远端 id=${id} 的起手广播已等待 ${REMOTE_ATTACK_KEEP_MS}ms 仍未等到演员`
+        + `（模型一直没建好？）→ 该次挥击未显示`);
     }
   }
 
@@ -4934,14 +4944,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         };
         remotes.set(pid, actorObj);
         animState2.triggerIdle();
-        // 演员建好前到达的起手（见 `signalAttackStart` 的队列）：够新就补播那一刀
+        // 演员建好前到达的起手（见 `signalAttackStart` 的队列）：**那一招还在进行中**就补播
         {
           const pend = pendingRemoteAttacks.get(pid);
           if (pend) {
             pendingRemoteAttacks.delete(pid);
-            if (performance.now() - pend.at < REMOTE_ATTACK_GRACE_MS) {
-              console.warn('[WorldView] 远端 id=' + pid + ' 的起手广播迟到补播（演员刚建好）');
+            const remain = attackRemainMs(actorObj, pend.animIndex, pend.at);
+            if (remain > 0) {
+              console.warn('[WorldView] 远端 id=' + pid + ' 的起手广播迟到补播：该招还剩 '
+                + Math.round(remain) + 'ms（从第 0 帧重演这一挥）');
               playRemoteAttack(actorObj, pend.targetId, pend.attackSpeed, pend.animIndex, pend.animClip);
+            } else {
+              reportFallback('anim', `远端 id=${pid} 的起手广播到达时该招（index=${pend.animIndex}）已演完`
+                + `（迟到 ${Math.round(performance.now() - pend.at)}ms）→ 该次挥击未显示`);
             }
           }
         }
@@ -5003,7 +5018,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     remotes.clear();
     remoteSpawning.clear();
-    pendingRemoteAttacks.clear();   // 换图/重进：上一段的迟到起手不能带到下一局
+    // 换图/重进：上一段的迟到起手不能带到下一局 —— 但**不能静默清**（那几次挥击就真的没人知道了）
+    for (const [id, p] of pendingRemoteAttacks) {
+      reportFallback('anim', `换图/重进时丢弃了远端 id=${id} 未补播的起手（animIndex=${p.animIndex}）`);
+    }
+    pendingRemoteAttacks.clear();
 
     for (const actor of monsters.values()) {
       scene?.remove(actor.root);

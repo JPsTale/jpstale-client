@@ -122,7 +122,12 @@ const keyChk = wv.indexOf('const key = appearanceModelKey(appearance);', wv.inde
 ok('applySelfAppearance 无条件写 selfAppearance，且在指纹判断之前',
   appSet !== -1 && keyChk !== -1 && appSet < keyChk);
 // 起手广播的迟到补播（一次性的动作事件不能在"演员还在加载"时丢掉）
-ok('远端起手有"演员未建好"的短队列 + 建好后补播', wv.includes('pendingRemoteAttacks') && wv.includes('playRemoteAttack(actorObj, pend.targetId'));
+ok('远端起手有"演员未建好"的队列 + 建好后补播', wv.includes('pendingRemoteAttacks') && wv.includes('playRemoteAttack(actorObj, pend.targetId'));
+// ★ 反例守卫：排队**不许**看 `remoteSpawning` —— 那会漏掉"先收到起手、后收到 playerAppear"这一整类
+//   （演员当时既不在演员表也不在加载中），正是"经常丢掉远端第一下攻击动画"的成因之一。
+ok('排队不按 remoteSpawning 过滤（反例守卫）', !wv.includes('if (remoteSpawning.has(attackerId))'));
+// 能不能补播只由**那一招还剩多久**决定，不是拍死的窗口常量
+ok('补播窗口按该招自己的时长算（attackRemainMs）', wv.includes('function attackRemainMs(') && wv.includes('attackRemainMs(actorObj, pend.animIndex, pend.at)'));
 
 
 console.log('\n[校验 4] setTint 写入 uColor；null = 复位白');
