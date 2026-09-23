@@ -78,6 +78,9 @@ import type { CharacterAppearance } from './CharSelect.js';
 import { armorNumFromIdCode, appearanceModelKey } from './CharSelect.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadWeaponModel, loadDropItemModel, findBone, WEAPON_BONES, offMountBoneOf, weaponSizeMax, combatBoneOf, WeaponMount } from '../render/weapon-loader.js';
+// 锻造/合成呼吸发光：判定/波形在 game/agingBlink.ts，材质写在 render/blink-fx.ts —— 自机与远端同一实现
+import { BlinkFx } from '../render/blink-fx.js';
+import { blinkRowOf, type BlinkRow } from '../game/agingBlink.js';
 import { createWeaponTrail, MonsterTrails, trailTintOfSkill, type WeaponTrail } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
@@ -306,8 +309,13 @@ export interface WorldView {
   playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkAnimRate?: number, runAnimRate?: number): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
-  /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型 */
+  /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型（发光随之更新，见下） */
   updateSelfAppearance(appearance?: CharacterAppearance): void;
+  /**
+   * 自机**当前**的外观（WorldView 是它的持有者）。调用方（main.ts）需要它来在物品表变化后
+   * 重推一次带发光输入的外观（锻造 +1 / 换装只改材质，不重建模型）。
+   */
+  currentSelfAppearance(): CharacterAppearance | undefined;
   updateRemoteAppearance(playerId: number, appearance?: CharacterAppearance): void;
   /** 换头（转职换头饰/道具换发型）：只替换头部网格，骨架/身体/动画不动 */
   changeSelfHead(jobId: number, faceNum: number, tier: number): void;
@@ -610,6 +618,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // 自机主手武器挂载器（含双手武器镜像份、姿态搬运）—— 与远端/检查器同一实现
   const selfWeaponMount = new WeaponMount();
   let selfOffHandGroup: THREE.Group | null = null; // 当前挂载的自机副手（盾/匕首）
+  let selfOffHandBlink: BlinkFx | null = null;     // 副手的呼吸发光（主手那份在 selfWeaponMount.blink 里）
+  /**
+   * 自机两件装备的发光行（原版 `sinSetCharItem` 按 ItemKindCode + ItemAgingNum 定）。
+   * **由 main.ts 从背包里的装备物品推**（`gameStore` 只有主线程知道）——
+   * 这里只管存着并在挂载/变化时喂给 BlinkFx；`null` = 那件没在发光（未锻造/未合成）。
+   */
+  let selfBlinkMain: BlinkRow | null = null;
+  let selfBlinkOff: BlinkRow | null = null;
   // 自机武器姿态：'combat'=挂手部（攻击姿态）；'sheathed'=收到腰间/背后（安全区村庄态）。对齐 CharSelect。
   let selfWeaponStance: 'combat' | 'sheathed' = 'combat';
   /** 自机是否处于死亡态（躺下等复活）—— 期间定身、不接受移动/攻击 */
@@ -1848,6 +1864,51 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       + (mainRes.mirrorBone ? ' 镜像=' + mainRes.mirrorBone : ''));
   }
 
+  function maxAniso(): number {
+    return renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
+  }
+
+  /**
+   * 外观里的发光输入 → 表行。**自机与远端同一条路**（外观上的四个可选字段
+   * `weaponKindCode/weaponAgingLevel/offHandKindCode/offHandAgingLevel`，= 原版
+   * `ItemKindCode` + `ItemAgingNum[0]`）：
+   *   · 自机 —— main.ts 从**背包装备物品**补齐（服务端外观里没有这两列），
+   *     切武器套的乐观预测也在 `predictSwitchAppearance` 里一并给全；
+   *   · 远端 —— 等服务端在 appearance 里下发；**现在没有 ⇒ 远端不发光**（已知缺口，见文件头与
+   *     `docs/锻造发光-呼吸光.md`）。补上之后本层一行都不用改。
+   */
+  function blinkRowOfAppearance(app: CharacterAppearance | undefined, hand: 'main' | 'off'): BlinkRow | null {
+    if (!app) return null;
+    const kind = hand === 'main' ? app.weaponKindCode : app.offHandKindCode;
+    const level = hand === 'main' ? app.weaponAgingLevel : app.offHandAgingLevel;
+    if (kind === undefined || level === undefined) return null;
+    return blinkRowOf(kind, level);
+  }
+
+  /**
+   * 按一份外观应用自机两件装备的发光 —— **唯一入口**。
+   *
+   * 与 `appearanceModelKey` **无关**：发光不换网格（锻造 +1 只是换材质颜色/叠加层），
+   * 若并进指纹，每次锻造升级都会把当前动画从头重播（那正是 `appearanceModelKey` 要防的）。
+   * 所以两者各判各的：模型变了才重建，发光变了就改材质。
+   */
+  function applySelfBlink(appearance: CharacterAppearance | undefined): void {
+    selfBlinkMain = blinkRowOfAppearance(appearance, 'main');
+    selfBlinkOff = blinkRowOfAppearance(appearance, 'off');
+    selfWeaponMount.blink?.setRow(selfBlinkMain);
+    selfOffHandBlink?.setRow(selfBlinkOff);
+  }
+
+  /** 每帧推进所有发光（自机两件 + 每个远端两件）—— `renderLoop` 里调一次，别在别处再调。 */
+  function updateBlinkFx(nowMs: number): void {
+    selfWeaponMount.blink?.update(nowMs);
+    selfOffHandBlink?.update(nowMs);
+    for (const a of remotes.values()) {
+      a.weaponMount.blink?.update(nowMs);
+      a.offHandBlink?.update(nowMs);
+    }
+  }
+
   // 挂载当前自机武器（主手 + 副手）；旧武器先清。初始姿态按当前区域。
   async function mountSelfWeapon(): Promise<void> {
     if (!scene || !charGroup) return;
@@ -1856,6 +1917,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (selfOffHandGroup) {
       removeFromAnywhere(charGroup, selfOffHandGroup);
       selfOffHandGroup = null;
+      selfOffHandBlink?.dispose();
+      selfOffHandBlink = null;
     }
 
     // ---- 主手（含双手武器的镜像份）----
@@ -1870,9 +1933,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         console.warn('[WorldView] 主手挂载失败 dorp=' + dorp, e);
       }
     }
+    // 发光效果**必须在 mount() 之前建**：叠加层是挂在网格子节点上的，而镜像份是 mount() 里
+    // `clone()` 出来的 —— 建晚了镜像那份就没有叠加层（刺客匕首会一眼看出来）
+    const mainBlink = BlinkFx.create(mainGroup, selfBlinkMain, maxAniso());
     // 挂载与姿态判定**全部**在 WeaponMount 里（含刺客匕首克隆一份到另一侧）
     const res = selfWeaponMount.mount(charGroup, mainGroup,
-      selfAppearance?.weaponIdcode ?? 0, selfAppearance?.weaponPos, sheathed ? 'sheathed' : 'combat');
+      selfAppearance?.weaponIdcode ?? 0, selfAppearance?.weaponPos, sheathed ? 'sheathed' : 'combat', mainBlink);
     selfWeaponStance = sheathed ? 'sheathed' : 'combat';
     if (res.missingBone) {
       reportFallback('mount', `自机主手挂点缺失 dorp=${dorp} 目标骨=${res.missingBone}（已按回退链挂载）`);
@@ -1895,6 +1961,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           || findBone(charGroup, WEAPON_BONES.LEFT_HAND)
           || findBone(charGroup, WEAPON_BONES.SHIELD);
         if (bone) {
+          selfOffHandBlink?.dispose();
+          selfOffHandBlink = BlinkFx.create(ores.group, selfBlinkOff, maxAniso());
           selfOffHandGroup = ores.group;
           bone.add(ores.group);
           console.log('[WorldView] 自机副手挂载: dorp=' + offDorp + ' kind=' + offKind + ' bone=' + bone.name);
@@ -2817,6 +2885,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     weaponMount: WeaponMount;
     /** 副手武器组（0=无 1=盾 2=匕首） */
     offHandGroup: THREE.Object3D | null;
+    /** 副手的呼吸发光（主手那份在 weaponMount.blink 里）—— 与自机同一实现 */
+    offHandBlink: BlinkFx | null;
     /** 本次攻击的动画与逐段音效状态（旁观者按服务端计划在事件帧直接播正确结果音） */
     attack: {
       motion: MotionInfo;
@@ -4794,6 +4864,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (actor.offHandGroup) {
       actor.offHandGroup.parent?.remove(actor.offHandGroup);
       actor.offHandGroup = null;
+      actor.offHandBlink?.dispose();
+      actor.offHandBlink = null;
     }
     const idcode = app.weaponIdcode ?? 0;
     const stance: 'combat' | 'sheathed' = sheathed ? 'sheathed' : 'combat';
@@ -4810,7 +4882,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         console.warn('[WorldView] 远端武器加载失败: id=' + actor.playerId + ' dorp=' + app.weaponDorp, e);
       }
     }
-    const mainRes = actor.weaponMount.mount(root, mainGroup, idcode, app.weaponPos, stance);
+    // 发光效果在 mount() 之前建（镜像份是 mount 里克隆的，晚建就带不上叠加层）
+    const mainBlink = BlinkFx.create(mainGroup, blinkRowOfAppearance(app, 'main'), maxAniso());
+    const mainRes = actor.weaponMount.mount(root, mainGroup, idcode, app.weaponPos, stance, mainBlink);
     if (mainRes.missingBone) {
       reportFallback('mount', `远端主手挂点缺失 id=${actor.playerId} dorp=${app.weaponDorp} 目标骨=${mainRes.missingBone}（已按回退链挂载）`);
     }
@@ -4828,6 +4902,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           || findBone(root, WEAPON_BONES.LEFT_HAND)
           || findBone(root, WEAPON_BONES.SHIELD);
         if (bone) {
+          actor.offHandBlink?.dispose();
+          actor.offHandBlink = BlinkFx.create(ores.group, blinkRowOfAppearance(app, 'off'), maxAniso());
           actor.offHandGroup = ores.group;
           bone.add(ores.group);
         } else {
@@ -4952,6 +5028,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           appearance: app,
           weaponMount: new WeaponMount(),
           offHandGroup: null,
+          offHandBlink: null,
           attack: null,
           pendingAttackPlan: null,
         };
@@ -4972,6 +5049,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const actor = remotes.get(playerId);
     if (actor) {
       scene?.remove(actor.root);
+      // 发光效果的材质是本层造的 ⇒ 随演员一起收掉（组本身没 dispose，那是既有的现状）
+      actor.weaponMount.blink?.dispose();
+      actor.offHandBlink?.dispose();
       remotes.delete(playerId);
     }
     remoteSpawning.delete(playerId);
@@ -5007,6 +5087,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function clearWorldActors(): void {
     for (const actor of remotes.values()) {
       scene?.remove(actor.root);
+      actor.weaponMount.blink?.dispose();
+      actor.offHandBlink?.dispose();
     }
     remotes.clear();
     remoteSpawning.clear();
@@ -5037,6 +5119,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       selfHeadGroup = null;
       selfBodyArmor = null;
     }
+    // 自机的发光效果同理（材质归本层）—— light 行留着（同一局重进时还是那两件装备）
+    selfWeaponMount.blink?.dispose();
+    selfOffHandBlink?.dispose();
+    selfOffHandBlink = null;
   }
 
   // 每帧：远端演员按"时间戳快照插值"渲染（滞后 REMOTE_INTERP_DELAY ms）+ 动画推进
@@ -6022,6 +6108,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 地面物品：周期高亮闪烁（对齐 scITEM::Draw）
     updateGroundItems(rafMs);
     perfMark('地面物品');
+    // 锻造/合成呼吸发光（原版逐帧 `SetRenderBlinkColor`）：自机两件 + 视野内每个远端两件。
+    // 时钟用 `rafMs`（世界内单调毫秒）—— 原版用 `dwPlayTime` 做 `& 1023` 的相位，只要单调即可；
+    // **全场同一时钟**才会"所有发光武器同相呼吸"（原版如此）。放在这里而不是塞进 updateRemotes：
+    // 后者会按显示预算跳过被裁掉的演员，被裁掉的武器一旦出现在视野边缘就会停在不亮的一帧。
+    updateBlinkFx(rafMs);
+    perfMark('发光');
     // 光标 overlay：世界滚动/物品增减时静态光标下的指向也会变 → 逐帧(节流)重探测
     // （后台帧跳过：hits 矩形表是**渲染时**重建的，隐藏时不渲染 ⇒ 拿陈旧表做射线毫无意义，
     //   还会顺着 `setCursorMode` 写 document 光标样式、甚至去取光标图）
@@ -6228,6 +6320,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * （用户 2026-09-16 实测"整理背包动画就重播"）。
    */
   function applySelfAppearance(appearance: CharacterAppearance | undefined): void {
+    // 发光与模型指纹**各判各的**（发光不换网格）：先更新发光（同步、便宜），再决定要不要重建模型。
+    applySelfBlink(appearance);
     const key = appearanceModelKey(appearance);
     if (key === selfAppearanceKey) return;
     selfAppearanceKey = key;
@@ -6549,6 +6643,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
     updateSelfAppearance: (appearance) => { applySelfAppearance(appearance); },
+    currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
     monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate) => {
@@ -6582,6 +6677,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       for (const actor of remotes.values()) {
         scene?.remove(actor.root);
         actor.bodyGroup.children.forEach((c) => (c as THREE.SkinnedMesh).geometry?.dispose?.());
+        actor.weaponMount.blink?.dispose();
+        actor.offHandBlink?.dispose();
       }
       remotes.clear();
       remoteSpawning.clear();

@@ -1,0 +1,39 @@
+{
+  "note": "锻造(Aging)与合成(Craft)呼吸发光色表。逐字抄录 ex-machina playsub.cpp:740-769 的 AgingBlinkColor[17] 与 CraftBlinkColor[6]，行序即数组下标。每行六元素 [R, G, B, A, TexMixCode, TexScroll]；TexScroll 为 smTEXSTATE_FS_* 数值（smType.h:446-466），SCROLL4=8/5=9/6=10/8=12/9=13/10=14。带质量的条目(TexMixCode>=0)同时启用第二通道贴图叠加与 UV 滚动。A 列恒 0（数据不变量，verify 断言）：原版 SetRenderBlinkColor 的两条 alpha 分支（a<0 / a>0）在这张表上都不成立。取证：NewSourcePT-2023/ScrServer/src/playsub.cpp:1095-1133（11 职业服务端副本）与本表逐字相同 ⇒ 采信；NewSourcePT-2023/SrcGame/src/playsub.cpp:1218-1241（11 职业客户端副本）是私服改版（+14/+19/+20 三行取值不同，且多出两行取值 256/768 永不命中）⇒ 不采信。等级→行映射见 src/game/agingBlink.ts（aging 4..20 → 行 0..16；craft 0 → 行 0、6..10 → 行 1..5、其余不发光）。",
+  "source": "E:\\repo\\ex-machina\\src\\game\\Legacy\\Game\\Character\\playsub.cpp:740-769 (AgingBlinkColor, CraftBlinkColor); smType.h:446-466 (smTEXSTATE_FS_*)",
+  "count": { "aging": 17, "craft": 6 },
+  "maxAging": 20,
+  "scroll": {
+    "NONE": 0, "FORMX": 1, "FORMY": 2, "FORMZ": 3, "SCROLL": 4, "REFLEX": 5,
+    "SCROLL2": 6, "SCROLL3": 7, "SCROLL4": 8, "SCROLL5": 9, "SCROLL6": 10, "SCROLL7": 11,
+    "SCROLL8": 12, "SCROLL9": 13, "SCROLL10": 14, "SCROLLSLOW1": 15, "SCROLLSLOW2": 16,
+    "SCROLLSLOW3": 17, "SCROLLSLOW4": 18
+  },
+  "aging": [
+    [100, 40, 90, 0, -1, 0],
+    [120, 100, 10, 0, -1, 0],
+    [0, 110, 30, 0, -1, 0],
+    [0, 50, 140, 0, 0, 9],
+    [100, 0, 90, 0, 1, 10],
+    [150, 60, 0, 0, 2, 10],
+    [150, 10, 0, 0, 3, 12],
+    [20, 220, 190, 0, 4, 12],
+    [10, 220, 30, 0, 4, 12],
+    [170, 40, 170, 0, 4, 13],
+    [250, 30, 160, 0, 4, 13],
+    [30, 190, 255, 0, 4, 13],
+    [250, 130, 30, 0, 4, 13],
+    [120, 30, 30, 0, 5, 14],
+    [130, 0, 255, 0, 5, 14],
+    [220, 240, 70, 0, 5, 14],
+    [240, 240, 240, 0, 5, 14]
+  ],
+  "craft": [
+    [13, 0, 5, 0, 9, 8],
+    [13, 0, 6, 0, 5, 8],
+    [13, 0, 7, 0, 6, 9],
+    [13, 0, 8, 0, 7, 9],
+    [13, 0, 9, 0, 8, 9],
+    [13, 0, 10, 0, 9, 9]
+  ]
+}

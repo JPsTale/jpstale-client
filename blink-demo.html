@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>锻造/合成呼吸发光 · 调试</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #0b0d12; overflow: hidden; }
+    #stage { position: fixed; inset: 0; }
+    #panel {
+      position: fixed; right: 10px; top: 10px; z-index: 10; width: 380px;
+      background: rgba(12, 16, 22, .92); border: 1px solid #39465a; border-radius: 6px;
+      padding: 10px 12px; color: #dce6f2; font: 12px/1.7 ui-monospace, Consolas, monospace;
+    }
+    #panel h3 { margin: 0 0 8px; font-size: 12px; color: #9fb0c4; font-weight: normal; }
+    #panel .row { display: flex; align-items: center; gap: 8px; margin: 4px 0; }
+    #panel .row label { flex: 0 0 96px; color: #9fb0c4; }
+    #panel select { flex: 1; background: #1b2530; color: #dce6f2; border: 1px solid #39465a; border-radius: 3px; padding: 2px 4px; }
+    #panel button { background: #22303f; color: #cfe0f0; border: 1px solid #39465a; border-radius: 3px; padding: 3px 8px; cursor: pointer; }
+    #info { white-space: pre-wrap; margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a3644; color: #a9e5b4; font-size: 11px; line-height: 1.7; }
+    .hint { color: #8fa3b8; font-size: 11px; margin-top: 6px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="panel">
+    <h3>锻造/合成呼吸发光 —— 复用游戏内同一实现（render/blink-fx.ts）</h3>
+    <div id="controls"></div>
+    <div id="info"></div>
+    <div class="hint">呼吸周期 1024ms（原版 Blink=9：512 半周期）；「第二通道」= 原版 D3D 第二纹理级
+      （COLOROP_ADD）的叠加贴图 + UV 横向滚动，只有 +7 及以上/合成物才有。</div>
+  </div>
+  <script type="module" src="/src/tools/blink-demo.ts"></script>
+</body>
+</html>

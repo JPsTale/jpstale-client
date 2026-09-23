@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { parseSmb } from '../core/char-parser.js';
 import { cachedFetch } from '../core/asset-cache.js';
 import { getSheatheSlot } from '../char/weapon-type.js';
+import type { BlinkFx } from './blink-fx.js';
 
 const DROPITEM_DIR = 'image/sinimage/items/dropitem/';
 
@@ -297,16 +298,27 @@ export class WeaponMount {
   private idcode = 0;
   private combatBone: string = WEAPON_BONES.RIGHT_HAND;
   private stance: 'combat' | 'sheathed' = 'combat';
+  private blinkFx: BlinkFx | null = null;
 
   /** 当前主手组（null = 没武器）；所有权仍归调用方 */
   get group(): THREE.Group | null { return this.mainGroup; }
   /** 当前镜像份（null = 该武器不镜像） */
   get mirror(): THREE.Group | null { return this.mirrorGroup; }
   get currentStance(): 'combat' | 'sheathed' { return this.stance; }
+  /**
+   * 挂在这件武器上的锻造/合成呼吸发光（null = 没建/已卸）。
+   * 用 `blink.update(nowMs)` 每帧推进 —— 自机与远端的**主手**都由挂载器持有它，
+   * 副手（盾/匕首）另建一份（见 WorldView 的 offHandBlink）。
+   */
+  get blink(): BlinkFx | null { return this.blinkFx; }
 
   /**
    * 换/设主手武器并立即按 `stance` 挂好（`group=null` = 卸下）。
    * 换武器**必须**走这里（镜像份要重建）。
+   *
+   * `blink` 由调用方用 `BlinkFx.create(group, row)` 建好（**必须在挂载之前**：
+   * 叠加层是挂在网格子节点上的，晚于 `clone()` 建立的镜像份就带不上它了）。
+   * 换武器时旧的发光效果在这里被 `dispose()`（那件已经换下，不该继续占着材质）。
    */
   mount(
     root: THREE.Object3D,
@@ -314,8 +326,11 @@ export class WeaponMount {
     idcode: number | null | undefined,
     weaponPos: number | null | undefined,
     stance: 'combat' | 'sheathed',
+    blink: BlinkFx | null = null,
   ): MountResult {
     this.detach();
+    this.blinkFx?.dispose();
+    this.blinkFx = blink;
     this.mainGroup = group;
     this.idcode = idcode ?? 0;
     this.combatBone = combatBoneOf(weaponPos);
@@ -331,7 +346,8 @@ export class WeaponMount {
     return this.place(root);
   }
 
-  /** 摘除主手与镜像（不销毁组本身 —— 组的所有权在调用方） */
+  /** 摘除主手与镜像（不销毁组本身 —— 组的所有权在调用方；发光效果也不在这里销毁，
+   *  因为可能只是姿态搬运/临时摘除，真正的销毁发生在换武器 `mount()` 或调用方明确丢弃时） */
   detach(): void {
     this.mainGroup?.parent?.remove(this.mainGroup);
     this.mirrorGroup?.parent?.remove(this.mirrorGroup);

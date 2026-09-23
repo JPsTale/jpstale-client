@@ -44,7 +44,9 @@
     "verify-itemtip": "tsx scripts/verify-itemtip-lines.ts",
     "verify-i18n-parity": "tsx scripts/verify-i18n-parity.ts",
     "item-defs": "npx tsx scripts/extract-item-defs.ts",
-    "verify-ageup-fx": "tsx scripts/verify-ageup-fx.ts"
+    "verify-ageup-fx": "tsx scripts/verify-ageup-fx.ts",
+    "verify-aging-blink": "tsx scripts/verify-aging-blink.ts",
+    "verify-blink-fx": "tsx scripts/verify-blink-fx.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

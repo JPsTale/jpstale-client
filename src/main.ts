@@ -29,6 +29,8 @@ import { installLayerStack } from './ui/layerStack.js';
 import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill } from './net/bridge.js';
 import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
 import { useEffectKindOf } from './game/useEffect.js';
+import { LOC } from './game/itemLocations.js';
+import type { CharacterAppearance } from './ui/CharSelect.js';
 import { itemDefById, itemIconUrl } from './game/data/itemDefs.js';
 import { overweightBlocks } from './game/itemRules.js';
 import type { PotionSlotView } from './ui/Hud.js';
@@ -71,6 +73,64 @@ const worldView = createWorldView(app, {
   // 武器套切换的兑现（W 键被缓存到动作播完才回调，见 WorldView.requestSwitchWeapon）
   onSwitchWeapon: () => sendSwitchWeapon(),
 });
+
+/**
+ * proto 外观 → 客户端外观：**逐字段映射 + 缺省归一**，唯一一份。
+ *
+ * ⚠ 它**不做任何"我方补充"**。自机的发光输入由 `withSelfBlink` 补（本地物品表更新），
+ *   那一步**只能用在自机**：套到远端身上会把**我的**武器锻造等级塞到别人身上
+ *   （远端那几项只能来自服务端下发的 `S2C_AppearanceUpdate`）。
+ */
+function mapAppearance(pa: jpt.base.ICharacterAppearance | null | undefined): CharacterAppearance | undefined {
+  if (!pa) return undefined;
+  return {
+    classId: pa.classId || 0,
+    head: pa.head || 0,
+    rank: pa.rank || 0,
+    bodyModel: pa.bodyModel || undefined,
+    bodyModelIdcode: pa.bodyModelIdcode || 0,
+    weaponDorp: pa.weaponDorp || undefined,
+    weaponIdcode: pa.weaponIdcode || 0,
+    weaponPos: pa.weaponPos || 0,
+    offHandDorp: pa.offHandDorp || undefined,
+    offHandIdcode: pa.offHandIdcode || 0,
+    offHandKind: pa.offHandKind || 0,
+    offHandPos: pa.offHandPos || 0,
+    // 呼吸发光的输入（原版 ItemKindCode / ItemAgingNum[0]）：服务端下发，客户端只转发给渲染层
+    weaponKindCode: pa.weaponKindCode || 0,
+    weaponAgingLevel: pa.weaponAgingLevel || 0,
+    offHandKindCode: pa.offHandKindCode || 0,
+    offHandAgingLevel: pa.offHandAgingLevel || 0,
+    sizeLevel: pa.sizeLevel || 0,
+  };
+}
+
+// ── 自机装备的锻造/合成呼吸发光（原版 `SetRenderBlinkColor`，装备时由 `sinSetCharItem` 定色）──
+// 输入 = **装备物品的 (ItemKindCode, ItemAgingNum[0])**（`game/agingBlink.ts` 的表行）。
+// 服务端现在也会下发这两列（远端玩家靠它发光），但自机**以本地物品表为准**：客户端手上就是最新的
+// （锻造刚 +1 时服务端那条包可能还没到），所以这里在推外观之前用本地物品表覆盖一次。
+// 订阅物品变化 ⇒ 锻造升级 / 换装 / 拿起放下 都会立刻反映（发光只改材质，不触发模型重建）。
+function withSelfBlink(app: CharacterAppearance | undefined): CharacterAppearance | undefined {
+  if (!app) return app;
+  const items = getGameSnapshot().inventory?.items ?? [];
+  const at = (slot: number) => items.find((x) => x.location === LOC.EQUIP && x.slot === slot);
+  const main = at(1);   // 主手槽 1（与服务端 `ItemLocations.SLOT_MAIN_HAND` 同值）
+  const off = at(2);    // 副手槽 2
+  return {
+    ...app,
+    // 本地有这件就用本地的；没有（进图快照还没到）就留服务端下发的，别把值抹成 undefined
+    weaponKindCode: main ? main.kindCode : app.weaponKindCode,
+    weaponAgingLevel: main ? main.agingLevel : app.weaponAgingLevel,
+    offHandKindCode: off ? off.kindCode : app.offHandKindCode,
+    offHandAgingLevel: off ? off.agingLevel : app.offHandAgingLevel,
+  };
+}
+/** 物品表变了 ⇒ 用**当前外观**（WorldView 持有）重推一次，把发光输入换成新的装备 */
+function repushSelfBlink(): void {
+  const cur = worldView.currentSelfAppearance();
+  if (cur) worldView.updateSelfAppearance(withSelfBlink(cur));
+}
+subscribeGame(repushSelfBlink);
 /**
  * 世界地图 —— 现在是**普通面板**（`panel:worldmap`，由 `WorldMapPanel` 渲染），
  * 与背包/角色/技能/NPC 商店共用 `PanelShell` 外壳、层级栈与 `openPanels` 开关。
@@ -569,6 +629,8 @@ function showPanelFor(to: AppScreen, ...args: unknown[]) {
       setChatVisible(true);
       const enterGame = args[1] as EnterGameInfo | undefined;
       if (enterGame) {
+        // 发光输入已随 `enterGame.appearance` 一并补好（见上面的 `withSelfBlink`）；
+        // 之后任何物品变化都由 `subscribeGame(repushSelfBlink)` 重推，这里不必再补一次。
         // 进图加载页：go() 的 hideAll 已收起 loadingScreen，这里同 tick 重新显示盖住世界画面，
         // WorldView 阶段进度喂进度条，首帧渲染完成（onReady）后收起
         const mapName = t(`map.${enterGame.mapId}`);
@@ -697,21 +759,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         classId: c.classId || 0,
         level: c.level || 1,
         mapId: Number(c.mapId) || 0,
-        appearance: c.appearance ? {
-          classId: c.appearance.classId || 0,
-          head: c.appearance.head || 0,
-          rank: c.appearance.rank || 0,
-          bodyModel: c.appearance.bodyModel || undefined,
-          bodyModelIdcode: c.appearance.bodyModelIdcode || 0,
-          weaponDorp: c.appearance.weaponDorp || undefined,
-          weaponIdcode: c.appearance.weaponIdcode || 0,
-          weaponPos: c.appearance.weaponPos || 0,
-          offHandDorp: c.appearance.offHandDorp || undefined,
-          offHandIdcode: c.appearance.offHandIdcode || 0,
-          offHandKind: c.appearance.offHandKind || 0,
-          offHandPos: c.appearance.offHandPos || 0,
-          sizeLevel: c.appearance.sizeLevel || 0,
-        } : undefined,
+        appearance: mapAppearance(c.appearance),
       }));
       if (getScreen() === AppScreen.SERVER_SELECT) {
         go(AppScreen.CHAR_SELECT, chars);
@@ -797,21 +845,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
           y: eg.rotation.y || 0,
           z: eg.rotation.z || 0,
         } : undefined,
-        appearance: eg.appearance ? {
-          classId: eg.appearance.classId || 0,
-          head: eg.appearance.head || 0,
-          rank: eg.appearance.rank || 0,
-          bodyModel: eg.appearance.bodyModel || undefined,
-          bodyModelIdcode: eg.appearance.bodyModelIdcode || 0,
-          weaponDorp: eg.appearance.weaponDorp || undefined,
-          weaponIdcode: eg.appearance.weaponIdcode || 0,
-          weaponPos: eg.appearance.weaponPos || 0,
-          offHandDorp: eg.appearance.offHandDorp || undefined,
-          offHandIdcode: eg.appearance.offHandIdcode || 0,
-          offHandKind: eg.appearance.offHandKind || 0,
-          offHandPos: eg.appearance.offHandPos || 0,
-          sizeLevel: eg.appearance.sizeLevel || 0,
-        } : undefined,
+        appearance: withSelfBlink(mapAppearance(eg.appearance)),
         // 全量地图包围盒（服务端权威，SMD 派生）→ 判图/预加载查找表
         maps: eg.maps?.map((m) => ({
           mapId: Number(m.mapId) || 0,
@@ -860,21 +894,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.position?.y || 0,
         a.position?.z || 0,
         a.angle || 0,
-        pa ? {
-          classId: pa.classId || 0,
-          head: pa.head || 0,
-          rank: pa.rank || 0,
-          bodyModel: pa.bodyModel || undefined,
-          bodyModelIdcode: pa.bodyModelIdcode || 0,
-          weaponDorp: pa.weaponDorp || undefined,
-          weaponIdcode: pa.weaponIdcode || 0,
-          weaponPos: pa.weaponPos || 0,
-          offHandDorp: pa.offHandDorp || undefined,
-          offHandIdcode: pa.offHandIdcode || 0,
-          offHandKind: pa.offHandKind || 0,
-          offHandPos: pa.offHandPos || 0,
-          sizeLevel: pa.sizeLevel || 0,
-        } : undefined,
+        mapAppearance(pa),
         // 走/跑**动画速率**（服务端查表算好；1 档 = 1.0）——本消息里不再传速度值（那对字段已废弃）
         a.animWalkRate || 1,
         a.animRunRate || 1,
@@ -888,23 +908,11 @@ onMessage((msg: jpt.base.ServerMessage) => {
     case 'appearanceUpdate': {
       const a = msg.appearanceUpdate!;
       const pa = a.appearance;
-      const app = pa ? {
-        classId: pa.classId || 0,
-        head: pa.head || 0,
-        rank: pa.rank || 0,
-        bodyModel: pa.bodyModel || undefined,
-        bodyModelIdcode: pa.bodyModelIdcode || 0,
-        weaponDorp: pa.weaponDorp || undefined,
-        weaponIdcode: pa.weaponIdcode || 0,
-        weaponPos: pa.weaponPos || 0,
-        offHandDorp: pa.offHandDorp || undefined,
-        offHandIdcode: pa.offHandIdcode || 0,
-        offHandKind: pa.offHandKind || 0,
-        offHandPos: pa.offHandPos || 0,
-        sizeLevel: pa.sizeLevel || 0,
-      } : undefined;
       const pid = Number(a.playerId);
-      if (worldView.isSelf(pid)) {
+      const self = worldView.isSelf(pid);
+      // 自机：本地物品表覆盖（锻造刚 +1 时本条包可能还是旧的）；远端：**只用**服务端下发
+      const app = self ? withSelfBlink(mapAppearance(pa)) : mapAppearance(pa);
+      if (self) {
         worldView.updateSelfAppearance(app);
       } else {
         worldView.updateRemoteAppearance(pid, app);
@@ -1208,21 +1216,7 @@ onJsonMessage((type, data) => {
         classId: c.classId ?? c.class_id ?? 0,
         level: c.level ?? 1,
         mapId: c.mapId ?? c.lastStage ?? 0,
-        appearance: c.appearance ? {
-          classId: c.appearance.classId ?? 0,
-          head: c.appearance.head ?? 0,
-          rank: c.appearance.rank ?? 0,
-          bodyModel: c.appearance.bodyModel ?? undefined,
-          bodyModelIdcode: c.appearance.bodyModelIdcode ?? 0,
-          weaponDorp: c.appearance.weaponDorp ?? undefined,
-          weaponIdcode: c.appearance.weaponIdcode ?? 0,
-          weaponPos: c.appearance.weaponPos ?? 0,
-          offHandDorp: c.appearance.offHandDorp ?? undefined,
-          offHandIdcode: c.appearance.offHandIdcode ?? 0,
-          offHandKind: c.appearance.offHandKind ?? 0,
-          offHandPos: c.appearance.offHandPos ?? 0,
-          sizeLevel: c.appearance.sizeLevel ?? 0,
-        } : undefined,
+        appearance: mapAppearance(c.appearance as jpt.base.ICharacterAppearance | undefined),
       }));
       if (getScreen() === AppScreen.SERVER_SELECT || getScreen() === AppScreen.WORLD) {
         go(AppScreen.CHAR_SELECT, chars);

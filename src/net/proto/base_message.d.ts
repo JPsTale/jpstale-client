@@ -16364,6 +16364,18 @@ export namespace jpt {
             /** CharacterAppearance offHandPos. */
             offHandPos: number;
 
+            /** CharacterAppearance weaponKindCode. */
+            weaponKindCode: number;
+
+            /** CharacterAppearance weaponAgingLevel. */
+            weaponAgingLevel: number;
+
+            /** CharacterAppearance offHandKindCode. */
+            offHandKindCode: number;
+
+            /** CharacterAppearance offHandAgingLevel. */
+            offHandAgingLevel: number;
+
             /**
              * Creates a new CharacterAppearance instance using the specified properties.
              * @param [properties] Properties to set
@@ -16486,6 +16498,18 @@ export namespace jpt {
 
                 /** CharacterAppearance offHandPos */
                 offHandPos?: (number|null);
+
+                /** CharacterAppearance weaponKindCode */
+                weaponKindCode?: (number|null);
+
+                /** CharacterAppearance weaponAgingLevel */
+                weaponAgingLevel?: (number|null);
+
+                /** CharacterAppearance offHandKindCode */
+                offHandKindCode?: (number|null);
+
+                /** CharacterAppearance offHandAgingLevel */
+                offHandAgingLevel?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

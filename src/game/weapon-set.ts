@@ -84,5 +84,13 @@ export function predictSwitchAppearance(
     next.offHandPos = 0;
   }
 
+  // 锻造/合成呼吸发光的**输入**（`ItemKindCode` + `ItemAgingNum[0]`，见 `game/agingBlink.ts`）：
+  // 预测也要带上 —— 否则换套之后的那一个往返里，新武器会沿用**旧武器**的发光颜色
+  // （原版是装备一变就换色）。它不进模型指纹（发光不换网格），只是同一次预测一并给全。
+  next.weaponKindCode = main?.kindCode;
+  next.weaponAgingLevel = main?.agingLevel;
+  next.offHandKindCode = off?.kindCode;
+  next.offHandAgingLevel = off?.agingLevel;
+
   return next;
 }

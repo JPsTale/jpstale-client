@@ -26,6 +26,20 @@ export interface CharacterAppearance {
   offHandKind?: number; // 0=无 1=盾 2=匕首
   offHandPos?: number;
   sizeLevel: number;
+  /**
+   * **发光输入**（原版 `sinSetCharItem` 里用到的那两列）—— 锻造/合成呼吸发光用，见 `game/agingBlink.ts`：
+   * `weaponKindCode` = `ItemKindCode`（1=合成物 2=锻造物）、`weaponAgingLevel` = `ItemAgingNum[0]`；
+   * `offHand*` 指副手那件（盾）。
+   *
+   * ⚠ **可选，且不在 `appearanceModelKey` 里**：发光不换网格 —— 若进了指纹，"锻造 +1"会被判成
+   *   模型变了，当前动画会被从头重播。
+   * ⚠ **服务端目前不下发这四个字段**（`AppearanceService.derive` 只推导模型相关列）⇒ **远端玩家不发光**；
+   *   自机由 main.ts 从背包里的装备物品补齐。服务端补上这四个字段后，客户端这一层一行都不用改。
+   */
+  weaponKindCode?: number;
+  weaponAgingLevel?: number;
+  offHandKindCode?: number;
+  offHandAgingLevel?: number;
 }
 
 // 浠?idCode 璁＄畻閾犵敳缂栧彿锛堝榻?pviewer armorNumFromIdCode锛夛細(idcode >> 8) & 0xff, >25 鏃?-=17

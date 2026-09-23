@@ -48293,6 +48293,10 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [offHandIdcode] CharacterAppearance offHandIdcode
              * @property {number|null} [offHandKind] CharacterAppearance offHandKind
              * @property {number|null} [offHandPos] CharacterAppearance offHandPos
+             * @property {number|null} [weaponKindCode] CharacterAppearance weaponKindCode
+             * @property {number|null} [weaponAgingLevel] CharacterAppearance weaponAgingLevel
+             * @property {number|null} [offHandKindCode] CharacterAppearance offHandKindCode
+             * @property {number|null} [offHandAgingLevel] CharacterAppearance offHandAgingLevel
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -48429,6 +48433,38 @@ export const jpt = $root.jpt = (() => {
             CharacterAppearance.prototype.offHandPos = 0;
 
             /**
+             * CharacterAppearance weaponKindCode.
+             * @member {number} weaponKindCode
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.weaponKindCode = 0;
+
+            /**
+             * CharacterAppearance weaponAgingLevel.
+             * @member {number} weaponAgingLevel
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.weaponAgingLevel = 0;
+
+            /**
+             * CharacterAppearance offHandKindCode.
+             * @member {number} offHandKindCode
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.offHandKindCode = 0;
+
+            /**
+             * CharacterAppearance offHandAgingLevel.
+             * @member {number} offHandAgingLevel
+             * @memberof jpt.base.CharacterAppearance
+             * @instance
+             */
+            CharacterAppearance.prototype.offHandAgingLevel = 0;
+
+            /**
              * Creates a new CharacterAppearance instance using the specified properties.
              * @function create
              * @memberof jpt.base.CharacterAppearance
@@ -48486,6 +48522,14 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 12, wireType 0 =*/96).int32(message.offHandKind);
                 if (message.offHandPos != null && $Object.hasOwnProperty.call(message, "offHandPos") && message.offHandPos !== 0)
                     writer.uint32(/* id 13, wireType 0 =*/104).int32(message.offHandPos);
+                if (message.weaponKindCode != null && $Object.hasOwnProperty.call(message, "weaponKindCode") && message.weaponKindCode !== 0)
+                    writer.uint32(/* id 14, wireType 0 =*/112).int32(message.weaponKindCode);
+                if (message.weaponAgingLevel != null && $Object.hasOwnProperty.call(message, "weaponAgingLevel") && message.weaponAgingLevel !== 0)
+                    writer.uint32(/* id 15, wireType 0 =*/120).int32(message.weaponAgingLevel);
+                if (message.offHandKindCode != null && $Object.hasOwnProperty.call(message, "offHandKindCode") && message.offHandKindCode !== 0)
+                    writer.uint32(/* id 16, wireType 0 =*/128).int32(message.offHandKindCode);
+                if (message.offHandAgingLevel != null && $Object.hasOwnProperty.call(message, "offHandAgingLevel") && message.offHandAgingLevel !== 0)
+                    writer.uint32(/* id 17, wireType 0 =*/136).int32(message.offHandAgingLevel);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -48660,6 +48704,42 @@ export const jpt = $root.jpt = (() => {
                                 delete message.offHandPos;
                             continue;
                         }
+                    case 14: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.weaponKindCode = value;
+                            else
+                                delete message.weaponKindCode;
+                            continue;
+                        }
+                    case 15: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.weaponAgingLevel = value;
+                            else
+                                delete message.weaponAgingLevel;
+                            continue;
+                        }
+                    case 16: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.offHandKindCode = value;
+                            else
+                                delete message.offHandKindCode;
+                            continue;
+                        }
+                    case 17: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.offHandAgingLevel = value;
+                            else
+                                delete message.offHandAgingLevel;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -48747,6 +48827,18 @@ export const jpt = $root.jpt = (() => {
                 if (message.offHandPos != null && $Object.hasOwnProperty.call(message, "offHandPos"))
                     if (!$util.isInteger(message.offHandPos))
                         return "offHandPos: integer expected";
+                if (message.weaponKindCode != null && $Object.hasOwnProperty.call(message, "weaponKindCode"))
+                    if (!$util.isInteger(message.weaponKindCode))
+                        return "weaponKindCode: integer expected";
+                if (message.weaponAgingLevel != null && $Object.hasOwnProperty.call(message, "weaponAgingLevel"))
+                    if (!$util.isInteger(message.weaponAgingLevel))
+                        return "weaponAgingLevel: integer expected";
+                if (message.offHandKindCode != null && $Object.hasOwnProperty.call(message, "offHandKindCode"))
+                    if (!$util.isInteger(message.offHandKindCode))
+                        return "offHandKindCode: integer expected";
+                if (message.offHandAgingLevel != null && $Object.hasOwnProperty.call(message, "offHandAgingLevel"))
+                    if (!$util.isInteger(message.offHandAgingLevel))
+                        return "offHandAgingLevel: integer expected";
                 return null;
             };
 
@@ -48807,6 +48899,18 @@ export const jpt = $root.jpt = (() => {
                 if (object.offHandPos != null)
                     if ($Number(object.offHandPos) !== 0)
                         message.offHandPos = object.offHandPos | 0;
+                if (object.weaponKindCode != null)
+                    if ($Number(object.weaponKindCode) !== 0)
+                        message.weaponKindCode = object.weaponKindCode | 0;
+                if (object.weaponAgingLevel != null)
+                    if ($Number(object.weaponAgingLevel) !== 0)
+                        message.weaponAgingLevel = object.weaponAgingLevel | 0;
+                if (object.offHandKindCode != null)
+                    if ($Number(object.offHandKindCode) !== 0)
+                        message.offHandKindCode = object.offHandKindCode | 0;
+                if (object.offHandAgingLevel != null)
+                    if ($Number(object.offHandAgingLevel) !== 0)
+                        message.offHandAgingLevel = object.offHandAgingLevel | 0;
                 return message;
             };
 
@@ -48841,6 +48945,10 @@ export const jpt = $root.jpt = (() => {
                     object.offHandIdcode = 0;
                     object.offHandKind = 0;
                     object.offHandPos = 0;
+                    object.weaponKindCode = 0;
+                    object.weaponAgingLevel = 0;
+                    object.offHandKindCode = 0;
+                    object.offHandAgingLevel = 0;
                 }
                 if (message.classId != null && $Object.hasOwnProperty.call(message, "classId"))
                     object.classId = message.classId;
@@ -48868,6 +48976,14 @@ export const jpt = $root.jpt = (() => {
                     object.offHandKind = message.offHandKind;
                 if (message.offHandPos != null && $Object.hasOwnProperty.call(message, "offHandPos"))
                     object.offHandPos = message.offHandPos;
+                if (message.weaponKindCode != null && $Object.hasOwnProperty.call(message, "weaponKindCode"))
+                    object.weaponKindCode = message.weaponKindCode;
+                if (message.weaponAgingLevel != null && $Object.hasOwnProperty.call(message, "weaponAgingLevel"))
+                    object.weaponAgingLevel = message.weaponAgingLevel;
+                if (message.offHandKindCode != null && $Object.hasOwnProperty.call(message, "offHandKindCode"))
+                    object.offHandKindCode = message.offHandKindCode;
+                if (message.offHandAgingLevel != null && $Object.hasOwnProperty.call(message, "offHandAgingLevel"))
+                    object.offHandAgingLevel = message.offHandAgingLevel;
                 return object;
             };
 
