@@ -6344,6 +6344,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   async function reloadRemoteModel(playerId: number, appearance: CharacterAppearance | undefined): Promise<void> {
     const old = remotes.get(playerId);
     if (!old) return;
+    // **模型没变就不重建演员**（指纹判据与自机同一份，见 `appearanceModelKey`）：
+    // 重建 = 移除演员再在原地重建 ⇒ 画面"跳一下"、动画从头播。
+    // 为什么必须有这道闸：服务端现在**只改了发光输入也会推外观**（锻造升级，见
+    // `AppearanceService.recalcAndBroadcast`）—— 没闸的话，附近有人锻造 +1 就能看到他"抖一下"。
+    // 只发光变了的那条路就地改材质（`BlinkFx.setRow`），不碰模型/动画/位置/血条。
+    const key = appearanceModelKey(appearance);
+    if (old.appearance && key === appearanceModelKey(old.appearance)) {
+      old.appearance = appearance;
+      old.weaponMount.blink?.setRow(blinkRowOfAppearance(appearance, 'main'));
+      old.offHandBlink?.setRow(blinkRowOfAppearance(appearance, 'off'));
+      return;
+    }
     const p = old.root.position;
     const name = old.name || '';
     const jobId = appearance?.classId || old.jobId || 1;
