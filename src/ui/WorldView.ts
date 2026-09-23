@@ -80,7 +80,7 @@ import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadDropItemModel, WEAPON_BONES, weaponSizeMax, combatBoneOf, type WeaponMount } from '../render/weapon-loader.js';
 // 整套装备（主手 + 副手 + 发光 + 姿态 + 生命周期）的装配器 —— 自机/远端/选角预览**同一实现**
 import { WeaponRig } from '../render/weapon-rig.js';
-import { createWeaponTrail, MonsterTrails, trailTintOf, type WeaponTrail } from '../render/effects/weapon-trail.js';
+import { PlayerTrails, MonsterTrails, trailTintOf } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillLevelByIcon } from '../game/skillLevel.js';
@@ -299,7 +299,7 @@ export interface WorldView {
    * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
    * 直接摆成死亡姿势，不播 idle。
    */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
@@ -619,13 +619,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   let selfPlayer: AnimPlayer | null = null;
   /**
-   * 自机的**近战武器曳光** —— **每只手一条**：原版 `smCHAR::DrawMotionBlur:10137-10141` 是
-   * `if (HvLeftHand.PatTool) DrawMotionBlurTool(&HvLeftHand); if (HvRightHand.PatTool) …`
-   * 左右手**各调一次**。刺客匕首双持时左手挂 `Bip weapon05`（AGENTS 纠错 #9）。
-   * 索引 0 = 主手（`combatBoneOf`），1 = 镜像份（刺客匕首的左手，`WeaponMount.mirror`）。
+   * 自机的**近战武器曳光** —— 每只手一条（原版 `smCHAR::DrawMotionBlur:10137-10141` 左右手各调一次）。
+   * 建/驱/销与染色都在共享的 `PlayerTrails`（`render/effects/weapon-trail.ts`）；
+   * **远端玩家用同一个类**（`RemoteActor.trails`，原版 `playmain.cpp:3245` 对每个其他玩家同样逐帧调
+   * `DrawMotionBlur()`）—— 别在这里再写一遍编排（AGENTS #15）。
    */
-  const selfTrails: Array<WeaponTrail | null> = [null, null];
-  const selfTrailWeaponIds = [-1, -1];
+  const selfTrails = new PlayerTrails({ who: '自机', log: (m) => console.warn(m) });
   /** 曳光探针：这一会话里**见过哪些 `motion.state`**（去重后各打一行，用来对判据） */
   const selfTrailStates = new Set<number>();
   /** T1：当前这一下挥击由哪条**技能下标**驱动（决定残影染色，见 weapon-trail.ts 的 `SKILL_TRAIL_TINTS`）。
@@ -2755,6 +2754,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     appearance?: CharacterAppearance;
     /** 该玩家的整套装备（主手含镜像份 + 副手 + 两件各自的发光 + 姿态搬运）—— 与自机同一实现 */
     rig: WeaponRig;
+    /** 武器曳光（每只手一条）—— 与自机共用 `PlayerTrails`；原版对其他玩家也逐帧画 */
+    trails: PlayerTrails;
     /** 本次攻击的动画与逐段音效状态（旁观者按服务端计划在事件帧直接播正确结果音） */
     attack: {
       motion: MotionInfo;
@@ -2873,6 +2874,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     name: string;
     /** 服务端 `monster_effect_id`：用于音效目录解析 */
     monsterEffectId: number;
+    /**
+     * 召唤物归属：`S2C_MonsterAppear.owner_entity_id`（主人的**运行时实体 id**）；0 = 普通怪。
+     *
+     * 判据只有一个 —— `ownerEntityId > 0` 即"这是玩家召唤出来的"（原版对应
+     * `smCharInfo.Brood == smCHAR_MONSTER_USER`）。三处用到：名牌画蓝 + 第二行 `(主人名)`、
+     * 自己的召唤物不被显示预算裁剪、**不能攻击自己的召唤物**（原版 `attack_UserMonster` 闸门）。
+     */
+    ownerEntityId: number;
+    /** 主人角色名（名牌第二行画 `(名字)`；原版 `Winmain.cpp:4010-4019`） */
+    ownerName: string;
     /** 模型资产路径（音效目录名解析用：<怪物名>/<怪物名>.smd → 目录 basename） */
     modelKey: string;
     hp: number;
@@ -3242,6 +3253,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     monsterEffectId?: number;
     /** 服务端算好的动画播放速率倍率（来自 DB `attackspeed`，客户端没有这个数据） */
     animRate?: number;
+    /** 召唤物归属（`S2C_MonsterAppear.owner_entity_id`）；0/未给 = 普通怪 */
+    ownerEntityId?: number;
+    /** 主人角色名（名牌第二行 `(名字)`） */
+    ownerName?: string;
   }): void {
     if (!scene) {
       pendingMonsterAppears.push(actorInfo);
@@ -3311,6 +3326,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animFrame: 0,
           // 服务端算好的播放速率（来自 DB attackspeed）；0/缺失 → 退成 1（= 客户端基准速度）
           animRate: actorInfo.animRate && actorInfo.animRate > 0 ? actorInfo.animRate : 1,
+          ownerEntityId: actorInfo.ownerEntityId && actorInfo.ownerEntityId > 0 ? actorInfo.ownerEntityId : 0,
+          ownerName: actorInfo.ownerName || '',
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: dead ? ANIM_DEAD : 0x0040 }],
           lastAnimState: dead ? ANIM_DEAD : 0x0040,
           culled: false,
@@ -3654,7 +3671,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   interface PillStyle {
     nameColor: string;
-    clan?: string;       // 公会名（玩家有公会时显示在名字下方）
+    clan?: string;       // 公会名（玩家有公会时显示在名字下方，带 ◆ 前缀）
+    /**
+     * 第二行的**其它**文本（召唤物的 `(主人名)`）—— 与 `clan` 互斥，**不带 ◆ 前缀**。
+     *
+     * 单独一个字段而不是复用 `clan`：原版画的是纯 `(名字)`（`Winmain.cpp:4010-4019`），
+     * 带上 `◆` 会把它读成"公会"，而这两者在屏幕上要能一眼分开。
+     */
+    sub?: string;
     showHp: boolean;
     ratio: number;       // hp/maxHp（showHp 时有效）
     selected: boolean;
@@ -3668,13 +3692,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): { x: number; y: number; w: number; h: number } {
     const NAME_FONT = '13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
     const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+    // 第二行：公会名（带 ◆）或召唤物的 `(主人名)`（不带前缀）
+    const line2 = s.clan ? '◆ ' + s.clan : (s.sub || null);
     ctx.font = NAME_FONT;
     const nameW = ctx.measureText(name).width;
-    const clanW = s.clan ? ctx.measureText('◆ ' + s.clan).width : 0;
-    let pillW = Math.max(nameW, clanW) + 16;
+    const line2W = line2 ? ctx.measureText(line2).width : 0;
+    let pillW = Math.max(nameW, line2W) + 16;
 
-    // 名牌块（名字+公会）固定高；血条独立于名牌块下方，出现仅抬高名牌块
-    const blockH = 18 + (s.clan ? 3 + 14 : 0);
+    // 名牌块（名字+第二行）固定高；血条独立于名牌块下方，出现仅抬高名牌块
+    const blockH = 18 + (line2 ? 3 + 14 : 0);
     const HP_BAR_W = 84, HP_BAR_H = 7;
     const GAP = s.showHp ? 3 : 0; // 名牌块底边与血条顶间距
     if (s.showHp) pillW = Math.max(pillW, HP_BAR_W + 12 + 4); // 血条(含轮廓)比名牌块略宽，居中
@@ -3700,11 +3726,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.font = NAME_FONT;
     ctx.fillStyle = s.nameColor;
     ctx.fillText(name, x, rowY);
-    if (s.clan) {
+    if (line2) {
       rowY += 18;
       ctx.font = CLAN_FONT;
-      ctx.fillStyle = 'rgba(184, 212, 240, 0.9)';
-      ctx.fillText('◆ ' + s.clan, x, rowY);
+      // 公会名用淡蓝灰；召唤物的主人名用淡黄 RGB(255,255,200) —— 原版 `DrawTwoLineMessage`
+      // 第二行的颜色（`Winmain.cpp:4010-4019`）
+      ctx.fillStyle = s.clan ? 'rgba(184, 212, 240, 0.9)' : '#ffffc8';
+      ctx.fillText(line2, x, rowY);
     }
 
     // 血条：名牌块下方，深色外轮廓 + 玻璃质感
@@ -3950,8 +3978,46 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function signalAttackStart(attackerId: number, targetId: number, attackSpeed: number, animIndex = 0, animClip = ''): void {
     if (attackerId === selfPlayerId) return;
+    drainStaleRemoteAttacks();
     const actor = remotes.get(attackerId);
-    if (!actor) return;
+    if (!actor) {
+      // **演员还没建好**（模型在下载：`spawnRemote` 是异步的）—— 这条起手是**一次性事件**，
+      // 直接丢就永远不会补 ⇒ 旁观者看不到那一刀（与"怪物被秒杀后看不到挥击"是同一类症状的两个来源）。
+      // 存**最新一条**（只留一次挥击；补播一串陈旧的挥击反而更怪），演员一上线就补上（见 spawnRemote），
+      // 超过 `REMOTE_ATTACK_GRACE_MS` 的作废并如实上报（AGENTS #12：降级要可见）。
+      if (remoteSpawning.has(attackerId)) {
+        pendingRemoteAttacks.set(attackerId, {
+          targetId, attackSpeed, animIndex, animClip, at: performance.now(),
+        });
+      } else {
+        // 既不在演员表、也不在加载中：本地没有这个玩家的任何信息（AOI 本不该发这种广播）
+        reportFallback('anim', `远端 id=${attackerId} 的起手广播到了，但本地没有这个演员`
+          + `（既不在加载也不在演员表）→ 该次挥击未显示`);
+      }
+      return;
+    }
+    playRemoteAttack(actor, targetId, attackSpeed, animIndex, animClip);
+  }
+
+  /** 存起来的"演员还没建好时到达的起手"（只留最新一条；键 = playerId） */
+  const pendingRemoteAttacks = new Map<number, {
+    targetId: number; attackSpeed: number; animIndex: number; animClip: string; at: number;
+  }>();
+  /** 补播窗口：演员在这段时间内建好 ⇒ 补播那一刀；超过 ⇒ 作废并上报（不静默丢） */
+  const REMOTE_ATTACK_GRACE_MS = 500;
+
+  function drainStaleRemoteAttacks(): void {
+    const now = performance.now();
+    for (const [id, p] of pendingRemoteAttacks) {
+      if (now - p.at < REMOTE_ATTACK_GRACE_MS) continue;
+      pendingRemoteAttacks.delete(id);
+      reportFallback('anim', `远端 id=${id} 的起手广播到达时演员还在加载、超过 ${REMOTE_ATTACK_GRACE_MS}ms 未建好`
+        + ` → 该次挥击未显示（不是静默丢弃）`);
+    }
+  }
+
+  /** 起手的**播放核心**（唯一实现）：演员已存在时走它 —— `signalAttackStart` 与"演员迟到后补播"共用 */
+  function playRemoteAttack(actor: RemoteActor, targetId: number, attackSpeed: number, animIndex: number, animClip: string): void {
     // 攻击者**自己播的那一条**（随 C2S_AttackStart 上报、服务端透传）→ 旁观者直接播同一条，
     // 不再本地重跑匹配器（否则各客户端各自随机，同一刀在不同客户端上动作/长度都不一样）。
     const specified = animIndex > 0 ? actor.motionList.find((m) => m.index === animIndex) ?? null : null;
@@ -4277,15 +4343,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 怪物：范围内常显；远处仅"悬停/点击选中"才显示（对齐 exm：普通怪名的默认行为是选中才显示）
     for (const a of monsters.values()) {
       if (!a.root.visible || a.dead) continue;   // 尸体不挂名牌/血条（原版血条按 Life 判定，尸体已不参与）
+      const isSummon = a.ownerEntityId > 0;      // 召唤物：`owner_entity_id > 0`（原版 Brood == MONSTER_USER）
       const dx = a.root.position.x - selfPos.x, dz = a.root.position.z - selfPos.z;
       const far = dx * dx + dz * dz > NAME_TAG_RANGE * NAME_TAG_RANGE;
       const sel = isSelected(a.root);
-      if (far && !sel) continue;
+      // 召唤物的名牌**无视距离**常显 —— 原版把 MONSTER_USER 直接塞进名牌候选、不判距离
+      // （`Winmain.cpp:3786-3795`），普通怪则只有选中时才有名字。
+      if (far && !sel && !isSummon) continue;
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { continue; }
-      const showHp = sel || a.stateBar || (a.maxHp > 0 && a.hp < a.maxHp);
+      // 自己的召唤物**血条常显**（原版 `Next_Exp == 自己` ⇒ DispBar；看别人的召唤物时画的是主人名）
+      const showHp = sel || a.stateBar || (a.maxHp > 0 && a.hp < a.maxHp)
+        || (isSummon && a.ownerEntityId === selfPlayerId);
       recordPill(drawPill(ctx, pt.x, pt.y, a.name || '', {
-        nameColor: '#ff8080',
+        // 召唤物蓝色 RGB(0,153,255)（原版 `Winmain.cpp:3921-3933` 的 MONSTER_USER 分支），普通怪原色
+        nameColor: isSummon ? '#0099ff' : '#ff8080',
+        // 第二行 `(主人名)`（原版同一处的 DrawTwoLineMessage）
+        sub: isSummon && a.ownerName ? '(' + a.ownerName + ')' : undefined,
         showHp,
         ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
         selected: sel,
@@ -4512,7 +4586,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const t = moveTarget;
     if (t?.kind === 'monster' && t.id === a.monsterId) return true;
     if (selfAttackTargetId === a.monsterId) return true;
+    // **自己的召唤物**永不参与裁剪：它是"你放出去的东西"，被预算裁掉会让你以为它没了
+    // （血量、位置、还在不在都看不出来）。原版把 MONSTER_USER 的名牌做成无视距离常显，
+    // 同一用意；这里连**渲染**也不裁，免得"有名牌没身体"。
+    if (a.ownerEntityId > 0 && a.ownerEntityId === selfPlayerId) return true;
     return false;
+  }
+
+  /**
+   * 这只怪是不是**我自己召唤出来的**（`owner_entity_id == 自机实体 id`）。
+   *
+   * 用途只有一个：**不能攻击自己的召唤物** —— 原版 `PlayMain.cpp` 的 `attack_UserMonster` 闸门
+   * （非 PkMode 下点自己的召唤物时 `attack = 0`，但**治疗类技能仍可指向它**）。
+   * 服务端另有保护（召唤物只打怪、怪只打玩家/召唤物），这里挡的是"客户端自己发攻击请求"。
+   */
+  function isOwnSummonId(monsterId: number): boolean {
+    const a = monsters.get(monsterId);
+    return !!a && a.ownerEntityId > 0 && a.ownerEntityId === selfPlayerId;
   }
 
   /** 按当前偏好重算"哪些怪参与渲染与骨骼求值"，并把结果写到 actor.culled / root.visible */
@@ -4838,11 +4928,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           eatEffect: null,
           appearance: app,
           rig: new WeaponRig(),
+          trails: new PlayerTrails({ who: `远端 id=${pid}`, log: (m) => console.warn(m) }),
           attack: null,
           pendingAttackPlan: null,
         };
         remotes.set(pid, actorObj);
         animState2.triggerIdle();
+        // 演员建好前到达的起手（见 `signalAttackStart` 的队列）：够新就补播那一刀
+        {
+          const pend = pendingRemoteAttacks.get(pid);
+          if (pend) {
+            pendingRemoteAttacks.delete(pid);
+            if (performance.now() - pend.at < REMOTE_ATTACK_GRACE_MS) {
+              console.warn('[WorldView] 远端 id=' + pid + ' 的起手广播迟到补播（演员刚建好）');
+              playRemoteAttack(actorObj, pend.targetId, pend.attackSpeed, pend.animIndex, pend.animClip);
+            }
+          }
+        }
         console.log('[WorldView] 远端玩家出现: id=' + pid + ' job=' + jobId + ' name=' + actorInfo.name
           + ' weapon=' + (app?.weaponIdcode ? app.weaponIdcode.toString(16) : '(无)'));
         await mountRemoteWeapon(actorObj);
@@ -4860,6 +4962,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       scene?.remove(actor.root);
       // 发光效果的材质是本层造的 ⇒ 随演员一起收掉（组本身没 dispose，那是既有的现状）
       actor.rig.dispose();
+      actor.trails.dispose();
       remotes.delete(playerId);
     }
     remoteSpawning.delete(playerId);
@@ -4896,9 +4999,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     for (const actor of remotes.values()) {
       scene?.remove(actor.root);
       actor.rig.dispose();
+      actor.trails.dispose();
     }
     remotes.clear();
     remoteSpawning.clear();
+    pendingRemoteAttacks.clear();   // 换图/重进：上一段的迟到起手不能带到下一局
 
     for (const actor of monsters.values()) {
       scene?.remove(actor.root);
@@ -5029,6 +5134,41 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
         // 姿势尾巴 = 共享实现（char/anim-player.applyPose）：求值 + 施加 + 更新矩阵
         applyPose(motion.animSmb ?? actor.animSmb, actor.animFrame, actor.bones, actor.skeleton);
+
+        // 武器曳光 —— **原版对每个其他玩家同样逐帧调**（`playmain.cpp:3245 chrOtherPlayer[cnt].DrawMotionBlur()`），
+        // 与自机共用 `PlayerTrails`（建/驱/销 + 染色都在里面）。闸门与自机同一套（源码 `DrawMotionBlur:10134`）：
+        // 动作态 ATTACK|SKILL ∧ 持械 ∧ 非射击/施法。采样用**主模型动画包**（`motion.animSmb ?? actor.animSmb`）
+        // + `actor.root.matrixWorld`，与怪物那条路同构（单骨求值，32 段/帧不卡）。
+        const trailSmb = motion.animSmb ?? actor.animSmb;
+        actor.trails.update({
+          slots: [
+            { group: actor.rig.main.group, bone: combatBoneOf(actor.appearance?.weaponPos),
+              idcode: actor.appearance?.weaponIdcode ?? 0 },
+            { group: actor.rig.main.mirror, bone: WEAPON_BONES.ASSASSIN_LEFT,
+              idcode: (actor.appearance?.weaponIdcode ?? 0) + 1 },
+          ],
+          active: (motion.state === ANIM_ATTACK || motion.state === CHRMOTION_STATE_SKILL)
+            && actor.rig.currentStance === 'combat'
+            && !isShootingMode(actor.appearance?.weaponIdcode ?? 0, actor.jobId),
+          frame: actor.animFrame,
+          startFrame: motion.startFrame * 160,
+          // ⚠ 远端**只有武器色那一半**：技能色表按"我方技能下标"查，而服务端只透传动画条目
+          //   （`animIndex`/`animClip`）、不透传技能 id ⇒ 这里拿不到技能下标（不是漏做，是无据）。
+          //   要补需给 `S2C/C2S_AttackStart` 加一个技能下标字段（协议改动，见 docs）。
+          tint: trailTintOf(null, actor.rig.mainRow),
+          sample: (bone, f) => {
+            const bf = evalBoneFrame(trailSmb, bone, f, evalWorkspaceFor(trailSmb));
+            if (!bf) return null;
+            // `matrixWorld` 渲染时才更新，而这里在渲染之前 ⇒ 手动刷新（否则读到上一帧的位置）
+            actor.root.updateWorldMatrix(true, false);
+            const rootMat = actor.root.matrixWorld;
+            return {
+              at: new THREE.Vector3(bf.ox, bf.oy, bf.oz).applyMatrix4(rootMat),
+              dir: new THREE.Vector3(bf.ayx, bf.ayy, bf.ayz).transformDirection(rootMat),
+            };
+          },
+          addToScene: (o) => { scene?.add(o); },
+        });
       }
     }
   }
@@ -5582,91 +5722,51 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // —— 弓弩、标枪/投掷一律；法杖只在法师7/祭司8、图腾只在萨满10（判据见 `isShootingMode`）。
         // 弓射箭、掷标枪、法师/祭司/萨满施法都出光就"太怪了"（用户 2026-09-20）。
         const selfJob = getGameSnapshot().character?.job ?? 0;
-        if ((motion.state === ANIM_ATTACK || motion.state === CHRMOTION_STATE_SKILL)
-            && selfWeaponStance === 'combat'
-            && !isShootingMode(selfAppearance?.weaponIdcode ?? 0, selfJob)) {
-          const handSlots: Array<{ group: THREE.Group | null; bone: string; idcode: number }> = [
+        // 闸门照源码（`DrawMotionBlur:10134`）：动作态 ATTACK|SKILL ∧ 持械姿态 ∧ **非射击/施法**
+        //（弓射箭、掷标枪、法师/祭司/萨满施法都出光就"太怪了"，用户 2026-09-20）。
+        // 建/驱/销 + 染色都在共享的 `PlayerTrails` 里（**远端玩家走同一份**，见 updateRemotes）。
+        selfTrails.update({
+          slots: [
             { group: selfRig.main.group, bone: combatBoneOf(selfAppearance?.weaponPos),
               idcode: selfAppearance?.weaponIdcode ?? 0 },
             // 镜像份只在"刺客匕首"时存在（`WeaponMount.mirror`），骨见 `szBipName_Assassin_LeftHand`
             { group: selfRig.main.mirror, bone: WEAPON_BONES.ASSASSIN_LEFT,
               idcode: (selfAppearance?.weaponIdcode ?? 0) + 1 },
-          ];
-          for (let hi = 0; hi < handSlots.length; hi++) {
-            const slot = handSlots[hi]!;
-            if (!slot.group) {
-              selfTrails[hi]?.dispose();
-              selfTrails[hi]?.object.removeFromParent();
-              selfTrails[hi] = null;
-              selfTrailWeaponIds[hi] = -1;
-              continue;
-            }
-            if (!selfTrails[hi] || selfTrailWeaponIds[hi] !== slot.idcode) {
-              selfTrails[hi]?.dispose();
-              selfTrails[hi]?.object.removeFromParent();
-              selfTrailWeaponIds[hi] = slot.idcode;
-              const len = weaponSizeMax(slot.group);
-              selfTrails[hi] = createWeaponTrail({
-                // ⚠ **不传 `liveTime`**（= 常驻，见 `weapon-trail.ts` 的字段说明）：玩家侧没有
-                //   "活 X 帧"这回事，传了就会在 80 帧后 alpha 永久归零 ⇒「只有第一次攻击有曳光」
-                //   （我上一轮只删了 `restart`、漏删了这一行）。
-                framesPerLevel: 40,   // 玩家侧 `DrawMotionBlurTool:10175` 是 **40**（怪物侧 30）
-                label: `${slot.bone}(长 ${len.toFixed(1)})`,
-                // （不用纹理：曳光是我方 shader 方案，见 `weapon-trail.ts` 顶部说明）
-                sample: (f) => {
-                  const smb = motion.animSmb ?? undefined;
-                  // ⚠ **单骨求值**（`sampleBoneEnds`）—— 32 段/帧若走"摆整骨架"那条会卡成 PPT
-                  const bf = selfPlayer!.sampleBoneEnds(slot.bone, f, smb);
-                  if (!bf) return null;
-                  // ⚠⚠ `evalBoneFrame` 给的是**模型空间**（`calcBone` 只算 `tmRot`/`tmPos`，
-                  //   **不含角色 root 的位置与朝向**）——必须补上角色的世界变换。
-                  //   原版那行就是 `pX + (rx>>FLOATNS) + mWorld->_41`：**角色坐标 + 骨在模型空间的平移**。
-                  //   漏了这一步，带子会被放到世界原点附近（角色在 (2211,210,14329) ⇒ 差一万四千单位，
-                  //   屏幕上什么都没有；而 lab 里怪物恰在原点附近 ⇒ 看着正常，这个 bug 就藏住了）。
-                  // ⚠ `matrixWorld` 由 three 在**渲染时**更新，而这里在渲染之前 ⇒ 手动刷新，
-                  //   否则读到的是**上一帧**（首次挥击更是接近单位阵 ⇒ 带子跑到世界原点、看不见）。
-                  charGroup?.updateWorldMatrix(true, false);
-                  const rootMat = charGroup?.matrixWorld;
-                  const a = new THREE.Vector3(bf.ox, bf.oy, bf.oz);
-                  const dir = new THREE.Vector3(bf.ayx, bf.ayy, bf.ayz);
-                  if (rootMat) { a.applyMatrix4(rootMat); dir.transformDirection(rootMat); }
-                  return { a, b: a.clone().addScaledVector(dir, len) };
-                },
-                log: (msg) => console.warn(msg),
-              });
-              scene?.add(selfTrails[hi]!.object);
-              // 建完报数（长度 = `weaponSizeMax` 的结果、武器网格数、是否进了场景）——
-              // 用来区分"没建 / 建了但长度为 0（带子退化）/ 建了没进场景 / 建了但画不出来"
-              let meshN = 0;
-              slot.group.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshN++; });
-              console.warn('[曳光] 已建：bone=', slot.bone, ' len=', len.toFixed(2),
-                ' 武器网格数=', meshN, ' inScene=', !!selfTrails[hi]!.object.parent,
-                ' 顶点数=', (selfTrails[hi]!.object as THREE.Mesh).geometry.attributes.position?.count);
-            }
-            const tr = selfTrails[hi]!;
-            // ⚠ 玩家侧**不传 `liveTime`、不做 restart**：源码的 `DrawMotionBlurTool` 是**每帧画**
-            //   （带子由"回溯历史帧"构成，没有"某次触发后活 X 帧"这个概念）。先前用"帧回绕"判
-            //   新一轮挥击 —— 连续攻击时帧号不回绕就判不到 ⇒ `timeCount` 一直涨 ⇒ alpha 归零
-            //   ⇒ **那一次没有曳光**（用户实测"有时候莫名其妙攻击没有曳光"）。
-            //   常驻之后：挥动时出现，停下时两骨几乎不动 ⇒ 带子自然收短/消失。
-            const curF = selfPlayer.frame;
-            // T1：残影染色（写 uColor）—— **技能色 ⊕ 武器色**：普攻一定叠武器色（锻造/合成的色表行），
-            // 技能只在源码 `return FALSE` 那条（Chain Lance）叠。色表行取自 **rig**（`mainRow`）：
-            // 那是"当前装备"的唯一持有者，与发光同一份状态 —— 别在这里按外观变量现推（那条路会
-            // 在"只改发光、模型没变"时拿到旧值，2026-09-23 踩过）。
-            // 两个槽都是**同一把**武器（主手 / 刺客匕首的镜像份）⇒ 同一行。
-            tr.setTint(trailTintOf(selfTrailSkillIndex, selfRig.mainRow));
-            tr.update(curF, motion.startFrame * 160);
-            // （**不再需要** `selfPlayer.apply()` 复原 —— `sampleBoneEnds` 只求骨矩阵、不摆姿势；
-            //   这里原先每帧多摆一次整骨架，是卡顿的另一半来源。）
-          }
-        } else {
-          // **离开动作态就什么都不画** —— 原版 `DrawMotionBlur` 每帧先过这道闸门（`:10134`），
-          // 带子本身也只在挥击时有内容。⚠ 只"停更"不隐藏的话，带子会**冻在最后一帧**的位置
-          //（玩家侧是常驻、`alpha` 恒 1）⇒ 半空中挂着一条静止的带子。
-          selfTrails[0]?.hide();
-          selfTrails[1]?.hide();
-        }
+          ],
+          active: (motion.state === ANIM_ATTACK || motion.state === CHRMOTION_STATE_SKILL)
+            && selfWeaponStance === 'combat'
+            && !isShootingMode(selfAppearance?.weaponIdcode ?? 0, selfJob),
+          frame: selfPlayer.frame,
+          startFrame: motion.startFrame * 160,
+          // T1：残影染色（写 uColor）—— **技能色 ⊕ 武器色**：普攻一定叠武器色（锻造/合成的色表行），
+          // 技能只在源码 `return FALSE` 那条（Chain Lance）叠。色表行取自 **rig**（`mainRow`）：
+          // 那是"当前装备"的唯一持有者，与发光同一份状态 —— 别按外观变量现推（会在"只改发光、
+          // 模型没变"时拿到旧值，2026-09-23 踩过）。两个槽是同一把武器（主手 / 镜像份）⇒ 同一行。
+          tint: trailTintOf(selfTrailSkillIndex, selfRig.mainRow),
+          sample: (bone, f) => {
+            // 本块已在 `if (animState && selfPlayer)` 内；闭包里再取一次只为让类型收窄成立
+            const sp = selfPlayer;
+            if (!sp) return null;
+            const smb = motion.animSmb ?? undefined;
+            // ⚠ **单骨求值**（`sampleBoneEnds`）—— 32 段/帧若走"摆整骨架"那条会卡成 PPT
+            const bf = sp.sampleBoneEnds(bone, f, smb);
+            if (!bf) return null;
+            // ⚠⚠ `evalBoneFrame` 给的是**模型空间**（`calcBone` 只算 `tmRot`/`tmPos`，
+            //   **不含角色 root 的位置与朝向**）——必须补上角色的世界变换。
+            //   原版那行就是 `pX + (rx>>FLOATNS) + mWorld->_41`：**角色坐标 + 骨在模型空间的平移**。
+            //   漏了这一步，带子会被放到世界原点附近（角色在 (2211,210,14329) ⇒ 差一万四千单位，
+            //   屏幕上什么都没有；而 lab 里怪物恰在原点附近 ⇒ 看着正常，这个 bug 就藏住了）。
+            // ⚠ `matrixWorld` 由 three 在**渲染时**更新，而这里跑在渲染之前 ⇒ 手动刷新，
+            //   否则读到的是**上一帧**（首次挥击更是接近单位阵 ⇒ 带子跑到世界原点、看不见）。
+            charGroup?.updateWorldMatrix(true, false);
+            const rootMat = charGroup?.matrixWorld;
+            const at = new THREE.Vector3(bf.ox, bf.oy, bf.oz);
+            const dir = new THREE.Vector3(bf.ayx, bf.ayy, bf.ayz);
+            if (rootMat) { at.applyMatrix4(rootMat); dir.transformDirection(rootMat); }
+            return { at, dir };
+          },
+          addToScene: (o) => { scene?.add(o); },
+        });
         // 兑现待切的武器套：原版同一处判据 `MotionInfo->State < 0x100`（站/走/跑才算"动作播完"）
         if (pendingSwitchWeapon && animState.getCurrentState() < 0x100) {
           pendingSwitchWeapon = false;
@@ -5853,7 +5953,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // ===== 自机普通攻击循环（design-player-combat.md §6.2）=====
     // 动画驱动：进入攻击距离后挥拳，挥拳播完（onAnimationEnd→STAND）自动下一击；不挂定时器。
     // 攻速→挥拳时长镜像服务端公式；离 ATTACK 态复原基准步进（见上方自机动画推进）。
-    if (monsterEngaged && moveTarget && moveTarget.kind === 'monster' && !falling && charGroup) {
+    if (monsterEngaged && moveTarget && moveTarget.kind === 'monster' && !falling && charGroup
+        && !isOwnSummonId(moveTarget.id)) {
       charGroup.rotation.y = selfAngle; // 面向目标（停步时 updateMovement 不接管旋转）
       const st = animState?.getCurrentState();
       // EAT 也在内：喝药期间不能起手攻击（原版 playmain.cpp:1744 屏蔽的正是 ATTACK/EAT/SKILL 三者）。
@@ -6473,8 +6574,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0 });
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '' });
     },
     monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);
@@ -6505,6 +6606,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         scene?.remove(actor.root);
         actor.bodyGroup.children.forEach((c) => (c as THREE.SkinnedMesh).geometry?.dispose?.());
         actor.rig.dispose();
+        actor.trails.dispose();
       }
       remotes.clear();
       remoteSpawning.clear();

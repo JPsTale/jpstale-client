@@ -75,6 +75,8 @@ import { keyOf, type FxPhase, type MotionKind } from './monster-attack-fx.js';
 // 武器色表行的类型（锻造/合成发光那张表；`BlinkRow` 是 `{r,g,b,a,texMixCode,texScroll}`，
 // 曳光只用 r/g/b）—— **只引类型**，不在这一层依赖它的运行时
 import type { BlinkRow } from '../../game/agingBlink.js';
+// 武器长度（原版 `smCHARTOOL::SizeMax`）—— 玩家侧带子的另一端 = 骨原点 + 轴向 × 这个长度
+import { weaponSizeMax } from '../weapon-loader.js';
 
 /** `Draw():2410-2411` 的两个常量（不是我方调的） */
 export const TRAIL_LEVEL = 32;   // 段数 `mLevel`
@@ -786,4 +788,116 @@ export function createWeaponTrail(deps: WeaponTrailDeps): WeaponTrail {
     dispose(): void { geo.dispose(); mat.dispose(); },
     hide(): void { mesh.visible = false; },
   };
+}
+
+// ───────────────────────── 玩家侧：每只手一条（自机 / 远端玩家**共用**） ─────────────────────────
+
+/** 一只手（一个槽）要挂曳光的东西：武器组 + 挂载骨 + 武器 idcode（idcode 变了 ⇒ 换武器 ⇒ 重建） */
+export interface TrailSlot {
+  group: THREE.Object3D | null;
+  bone: string;
+  idcode: number;
+}
+
+/**
+ * 一帧要喂给玩家侧曳光的东西。**自机与远端玩家喂的是同一套字段**（只是"谁来采样"不同）：
+ * 远端的采样走 `evalBoneFrame(actor.animSmb, …)` + `actor.root.matrixWorld`，
+ * 自机走 `selfPlayer.sampleBoneEnds(...)` + `charGroup.matrixWorld`（见 `WorldView` 的两个调用点）。
+ */
+export interface PlayerTrailFrame {
+  /** 每只手一条：主手 / 刺客匕首的**镜像份**（原版 `DrawMotionBlur:10137-10141` 左右手各调一次） */
+  slots: readonly TrailSlot[];
+  /**
+   * 本帧是否"会出曳光"。调用方按源码的闸门算好再传：
+   * 动作态 ∈ `ATTACK|SKILL`（`DrawMotionBlur:10134`）∧ 持械姿态 ∧ **非射击/施法**
+   * （`if (ShootingMode …) return FALSE`：弓弩、投掷、法师/祭司/萨满施法都不画）。
+   */
+  active: boolean;
+  /** 当前动画帧（与 `startFrame` 同一单位：本项目 = 原版帧 ×160） */
+  frame: number;
+  /** 该动作的起手帧（`MotionInfo->StartFrame`） */
+  startFrame: number;
+  /** 本帧的染色（技能色 ⊕ 武器色；`null` = 白）—— 由调用方按 `trailTintOf` 算 */
+  tint: TrailTint | null;
+  /**
+   * 取"骨在某历史帧的**位置与轴向**"（世界空间）。带子另一端 = `at + dir × 武器长度`，
+   * 长度由本类用 `weaponSizeMax(slot.group)` 自己量（原版 `pBot = (0,0,SizeMax)`）。
+   * 返回 `null` = 该帧取不到（骨不在/没武器）⇒ 那一段写零。
+   */
+  sample: (bone: string, frame: number) => { at: THREE.Vector3; dir: THREE.Vector3 } | null;
+  /** 把带子的 mesh 加进场景（自机加进世界场景；实验室可换成自己的） */
+  addToScene: (o: THREE.Object3D) => void;
+}
+
+/**
+ * **玩家侧武器曳光**（`smCHAR::DrawMotionBlur` + `DrawMotionBlurTool`）—— **常驻**、每只手一条。
+ *
+ * 为什么要有这个类：这段"建/驱/销 + 染色"的编排原先只写在自机的渲染循环里，而原版对**每个其他
+ * 玩家**也同样逐帧调用（`playmain.cpp:3245 chrOtherPlayer[cnt].DrawMotionBlur()`）。
+ * 用户 2026-09-23 问"为什么看不到 remote 玩家的曳光"——就是因为当时只做了自机那一份。
+ * 照抄第二遍必然漂移（AGENTS #15），故与 `MonsterTrails` 同构地收成一个类，自机/远端共用。
+ *
+ * 生命周期：首次出现（或有武器/换武器）时 `createWeaponTrail`，之后每帧 `setTint` + `update`；
+ * 离开动作态只是 `hide()`（**不销毁** —— 常驻，见 `DrawMotionBlurTool` 是每帧画的）；
+ * 武器没了（`slot.group === null`）才销毁；角色消失由调用方 `dispose()`。
+ */
+export class PlayerTrails {
+  private trails: Array<WeaponTrail | null> = [null, null];
+  private ids: number[] = [-1, -1];
+
+  constructor(private readonly opts: { who: string; log?: (msg: string) => void }) {}
+
+  /** 每帧调一次（不管有没有在挥 —— 离开动作态需要把带子藏起来） */
+  update(fr: PlayerTrailFrame): void {
+    for (let hi = 0; hi < 2; hi++) {
+      const slot = fr.slots[hi];
+      if (!slot?.group) {
+        this.drop(hi);
+        continue;
+      }
+      if (!fr.active) {
+        this.trails[hi]?.hide();
+        continue;
+      }
+      if (!this.trails[hi] || this.ids[hi] !== slot.idcode) {
+        this.drop(hi);
+        this.ids[hi] = slot.idcode;
+        const len = weaponSizeMax(slot.group);
+        this.trails[hi] = createWeaponTrail({
+          // ⚠ **不传 `liveTime`**（= 常驻）：玩家侧没有"活 X 帧"这回事，传了会在 80 帧后 alpha
+          //   永久归零 ⇒「只有第一次攻击有曳光」（踩过）。玩家侧帧步长见 `DrawMotionBlurTool:10175` = 40。
+          framesPerLevel: 40,
+          label: `${this.opts.who} ${slot.bone}(长 ${len.toFixed(1)})`,
+          // （不用纹理：曳光是我方 shader 方案，见本文件顶部说明）
+          sample: (f) => {
+            const at = fr.sample(slot.bone, f);
+            if (!at) return null;
+            return { a: at.at, b: at.at.clone().addScaledVector(at.dir, len) };
+          },
+          log: this.opts.log,
+        });
+        fr.addToScene(this.trails[hi]!.object);
+        let meshN = 0;
+        slot.group.traverse((o) => { if ((o as THREE.Mesh).isMesh) meshN++; });
+        this.opts.log?.('[曳光] 已建：who=' + this.opts.who + ' bone=' + slot.bone
+          + ' len=' + len.toFixed(2) + ' 武器网格数=' + meshN
+          + ' inScene=' + !!this.trails[hi]!.object.parent);
+      }
+      this.trails[hi]!.setTint(fr.tint);
+      this.trails[hi]!.update(fr.frame, fr.startFrame);
+    }
+  }
+
+  /** 角色消失/换人时调：两条都销毁（带子 mesh 一并从场景摘掉） */
+  dispose(): void {
+    this.drop(0);
+    this.drop(1);
+  }
+
+  private drop(hi: number): void {
+    this.trails[hi]?.dispose();
+    this.trails[hi]?.object.removeFromParent();
+    this.trails[hi] = null;
+    this.ids[hi] = -1;
+  }
 }
