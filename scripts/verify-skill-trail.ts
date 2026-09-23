@@ -11,6 +11,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { SKILL_TRAIL_TINTS, trailTintOfSkill } from '../src/render/effects/weapon-trail.js';
+import { SKILL_INDEX_BY_ICON } from '../src/game/data/skillIndexByIcon.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(here, '../src');
@@ -32,6 +33,31 @@ ok('52 Chain Lance → (1.000, 0.749, 0.749) claims=false（禁止改 TRUE，§0
   !!c52 && c52.r === 1.0 && c52.g === 0.749 && c52.b === 0.749 && c52.claims === false);
 ok('g 通道 = 0.749（任务书 §附A 钉死的截断十进制；精确值 191/255）',
   Math.abs(c43!.g - 191 / 255) < 1e-3);
+// ── 2026-09-23 补齐的 4 条（战士一转/二转）：值同样按源码增量逐字节换算 ──
+// 取证链见 weapon-trail.ts 表内注释（技能 → 播放码 → 图标号 → 我方下标）。
+const c23 = SKILL_TRAIL_TINTS.get(23);
+const c24 = SKILL_TRAIL_TINTS.get(24);
+const c25 = SKILL_TRAIL_TINTS.get(25);
+const c26 = SKILL_TRAIL_TINTS.get(26);
+ok('23 Raving（+256/-64/-64，return TRUE）→ (1.000, 0.749, 0.749) claims=true',
+  !!c23 && c23.r === 1.0 && c23.g === 0.749 && c23.b === 0.749 && c23.claims === true);
+ok('24 Impact（+256/+256/-64，return TRUE）→ (1.000, 1.000, 0.749) claims=true',
+  !!c24 && c24.r === 1.0 && c24.g === 1.0 && c24.b === 0.749 && c24.claims === true);
+ok('25 Triple Impact（+256/-64/+256，return TRUE）→ (1.000, 0.749, 1.000) claims=true',
+  !!c25 && c25.r === 1.0 && c25.g === 0.749 && c25.b === 1.0 && c25.claims === true);
+ok('26 Brutal Swing（-64/+256/+128 ⇒ B 截到 255，return TRUE）→ (0.749, 1.000, 1.000) claims=true',
+  !!c26 && c26.r === 0.749 && c26.g === 1.0 && c26.b === 1.0 && c26.claims === true);
+ok('全 6 个源码 case 都在表里（43/52/23/24/25/26），没有多余的键',
+  SKILL_TRAIL_TINTS.size === 6
+  && [43, 52, 23, 24, 25, 26].every((k) => SKILL_TRAIL_TINTS.has(k)));
+ok('只有 Chain Lance 是 claims=false（源码唯一 break 后落到 return FALSE 的那条）',
+  [...SKILL_TRAIL_TINTS.entries()].filter(([, v]) => v.claims === false).map(([k]) => k).join(',') === '52');
+// ★ 键的可复算性：图标 → 我方下标这一段读**我们的数据表**（不是写死在断言里）。
+//   图标号来自源码信息表首列（14/17/20/23），见 weapon-trail.ts 表内注释 ③④。
+ok('23 ↔ tf14 raving.bmp（图标号 14 来自源码信息表首列）', SKILL_INDEX_BY_ICON['tf14 raving.bmp'] === 23);
+ok('24 ↔ tf17 impact.bmp（图标号 17）', SKILL_INDEX_BY_ICON['tf17 impact.bmp'] === 24);
+ok('25 ↔ tf20 t_impact.bmp（图标号 20）', SKILL_INDEX_BY_ICON['tf20 t_impact.bmp'] === 25);
+ok('26 ↔ tf23 b_swing.bmp（图标号 23）', SKILL_INDEX_BY_ICON['tf23 b_swing.bmp'] === 26);
 ok('trailTintOfSkill(null) → null（不染色）', trailTintOfSkill(null) === null);
 ok('trailTintOfSkill(99)（未登记）→ null（不染色）', trailTintOfSkill(99) === null);
 ok('trailTintOfSkill(43) → 紫', trailTintOfSkill(43)?.g === 0.749);

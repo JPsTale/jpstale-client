@@ -90,15 +90,40 @@ export interface TrailTint {
 }
 
 /**
- * 源码 `SetSkillMotionBlurColor` 的 case 表（玩家侧）。未登记 ⇒ `null` = 不染色（白）。
+ * 源码 `SetSkillMotionBlurColor` 的 case 表（玩家侧）—— **全 6 个 case 都在**。
+ * 未登记 ⇒ `null` = 不带技能色（白色带子）。
+ *
+ * ⚠ 与 `DrawMotionBlurTool` 的配合（exm `character.cpp:7993-8000`；NSP 同名函数逐字相同）：
+ *   `cnt = SetSkillMotionBlurColor(AttackSkil)`，随后 `if (!cnt && ChrTool->ColorBlink) 叠武器色`。
+ *   ⇒ `claims = true`（源码该 case `return TRUE`）时**只有技能色**；`claims = false`（加了色后
+ *   `break` 落到 `return FALSE`）时**技能色 + 武器色（色表色 `>> 1`）都叠**。普攻（`AttackSkil == 0`）
+ *   不进这个 switch ⇒ 一律叠武器色。
  */
 export const SKILL_TRAIL_TINTS: ReadonlyMap<number, TrailTint> = new Map<number, TrailTint>([
-  // Critical Hit —— 源码该 case `return TRUE` ⇒ claims=true（不叠 ColorBlink）。§0.1-2。
+  // ── 枪兵(Pikeman) ──
+  // Critical Hit：`SKILL_PLAY_CRITICAL_HIT`(17) → 信息表首列（图标号）14 ⇒ 我方 `tp14 cri_hit.bmp` = 43。
+  // 源码 `Color_R += 256; Color_G += -64; Color_B += 256; return TRUE`。§0.1-2。
   [43, { r: 1.0, g: 0.749, b: 1.0, claims: true }],
-  // Chain Lance —— 源码该 case `break` → `return FALSE` ⇒ claims=false（叠 ColorBlink）。§0.1-2。
+  // Chain Lance：`SKILL_PLAY_CHAIN_LANCE`(24) ⇒ 我方 = 52。同样的 `+256/-64/-64`，但结尾是 `break`
+  // ⇒ 落到 `return FALSE` ⇒ **技能色与武器色都叠**（本表唯一 claims=false）。§0.1-2。
   [52, { r: 1.0, g: 0.749, b: 0.749, claims: false }],
-  // 其余 4 个源码 case（Raving Blow / Impact Blow / Triple Impact Blow / Brutal Swing）属别的职业，
-  // 我方下标本任务未取证 ⇒ 留空 —— 待下标。
+
+  // ── 战士(Fighter) 一转/二转 —— 2026-09-23 补齐（此前标注"待下标"，现把取证链写在这里）──
+  // 四条同构，取证链（每条都能复算）：
+  //   ① 技能 → 播放码：`SkillSub.cpp` 里该技能处理函数内的 `AttackSkil = SKILL_PLAY_*`（行号见各条）；
+  //   ② 播放码 → 常量值：`character.h:163-166`（`SKILL_PLAY_RAVING`=29 … `BRUTAL_SWING`=32）；
+  //   ③ 技能 → 图标号：`Language/English/e_sinSkill_Info.h` 每行**首列就是图标号**（14/17/20/23），
+  //      名字也在同一行（"Raving" / "Impact" / "Triple Impact" / "Brutal Swing"）；
+  //   ④ 图标号 → 我方下标：`src/game/data/skillIndexByIcon.ts`（`tf14 raving.bmp`=23 … `tf23 b_swing.bmp`=26）。
+  // 四个 case 都是 `return TRUE` ⇒ `claims = true`（不叠武器色）。
+  // Raving Blow：`SkillSub.cpp:1818`；首列 14 ⇒ 下标 **23**；`+256/-64/-64`。
+  [23, { r: 1.0, g: 0.749, b: 0.749, claims: true }],
+  // Impact：`SkillSub.cpp:1865`；首列 17 ⇒ 下标 **24**；`+256/+256/-64`。
+  [24, { r: 1.0, g: 1.0, b: 0.749, claims: true }],
+  // Triple Impact：`SkillSub.cpp:2382`；首列 20 ⇒ 下标 **25**；`+256/-64/+256`。
+  [25, { r: 1.0, g: 0.749, b: 1.0, claims: true }],
+  // Brutal Swing：`SkillSub.cpp:2434`；首列 23 ⇒ 下标 **26**；`-64/+256/+128`（B 加到 383 ⇒ 截 255 = 1.000）。
+  [26, { r: 0.749, g: 1.0, b: 1.0, claims: true }],
 ]);
 
 /** T1 出入口：技能下标 → 染色值（`null`/未登记 ⇒ 不染色）。消费点只此一处（AGENTS #15）。 */
