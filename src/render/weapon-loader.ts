@@ -13,6 +13,7 @@ import * as THREE from 'three';
 import { parseSmb } from '../core/char-parser.js';
 import { cachedFetch } from '../core/asset-cache.js';
 import { getSheatheSlot } from '../char/weapon-type.js';
+import { JOB_DATA } from './char-loader.js';
 import type { BlinkFx } from './blink-fx.js';
 
 const DROPITEM_DIR = 'image/sinimage/items/dropitem/';
@@ -195,7 +196,7 @@ export function findBone(root: THREE.Object3D, name: string): THREE.Object3D | n
 }
 
 /**
- * 武器挂载点名称（与 C++ szBipName_* 对应）
+ * 手部挂点名称表（与 C++ szBipName_* 对应）
  */
 export const WEAPON_BONES = {
   RIGHT_HAND: 'Bip weapon01',
@@ -210,6 +211,29 @@ export const WEAPON_BONES = {
   SHEATHE_DAGGER_L: 'Bip in_DaggerL',
   SHEATHE_DAGGER_R: 'Bip in_DaggerR',
 };
+
+/**
+ * **骨架专属的手部挂点**（骨架标识 = `JOB_DATA[job].bipSmb`，如 `'m8.smb'`）。
+ *
+ * 为什么需要它：通用右手挂点是 `Bip weapon01`，但**第 11 职业·格斗家的 m8 骨架里没有这根骨**
+ * （实测：`m1..m7.smb` 都有 `Bip weapon01`，**只有 m8 没有**；m8 有 `Bip01 R/L Hand`、
+ * `Bip01 L Forearm`、`Bip in01/in-bow/in-cro`）。格斗家是**徒手职业**，她的武器（拳套 WV1xx）
+ * 与其它武器都戴在手上 ⇒ 她的手部挂点就是手骨本身。
+ *
+ * ⚠ 这是**数据映射，不是回退链**（用户 2026-09-23："装备在哪个手应该是确定性的"）：
+ *   只换**骨名**、绝不换**手** —— 右手永远右手。表里没有的骨架而通用骨也缺 ⇒ 不挂 + 上报。
+ * ⚠ 键是**骨架**不是职业：将来若有别的职业复用 m8，它会自动拿到同一根骨（不会漏）。
+ */
+const HAND_BONE_BY_SKELETON: Readonly<Record<string, string>> = {
+  'm8.smb': 'Bip01 R Hand',       // 第 11 职业·格斗家（徒手）：武器/拳套戴在右手
+};
+
+/** 该职业的骨架是否登记了专属手部骨（`null` = 用通用的 `Bip weapon01`） */
+function handBoneOfJob(jobId: number | null | undefined): string | null {
+  if (jobId == null) return null;
+  const smb = JOB_DATA[jobId]?.bipSmb;
+  return smb ? (HAND_BONE_BY_SKELETON[smb] ?? null) : null;
+}
 
 
 /**
@@ -254,9 +278,16 @@ export function mirrorLeftBone(idcode: number | null | undefined, stance: 'comba
   return stance === 'combat' ? WEAPON_BONES.ASSASSIN_LEFT : WEAPON_BONES.SHEATHE_DAGGER_L;
 }
 
-/** 主手战斗骨：weaponPos=2 → 左手，其余右手（character.cpp SetTool） */
-export function combatBoneOf(weaponPos: number | null | undefined): string {
-  return weaponPos === 2 ? WEAPON_BONES.LEFT_HAND : WEAPON_BONES.RIGHT_HAND;
+/**
+ * 主手**战斗态**挂点：`weaponPos=2` → 左手，其余右手（原版 `SetTool` 的 RHAND/LHAND 两个分支）。
+ *
+ * 右手那支按**骨架**查表（`HAND_BONE_BY_SKELETON`）：通用骨架是 `Bip weapon01`，
+ * 第 11 职业·格斗家的 m8 没有这根骨 ⇒ 用她的手骨 `Bip01 R Hand`。
+ * **只手不换**：确定性地决定"哪只手"，不因为找不到骨而换到另一只手（用户 2026-09-23）。
+ */
+export function combatBoneOf(weaponPos: number | null | undefined, jobId?: number | null): string {
+  if (weaponPos === 2) return WEAPON_BONES.LEFT_HAND;
+  return handBoneOfJob(jobId) ?? WEAPON_BONES.RIGHT_HAND;
 }
 
 /**
@@ -351,13 +382,15 @@ export class WeaponMount {
     weaponPos: number | null | undefined,
     stance: 'combat' | 'sheathed',
     blink: BlinkFx | null = null,
+    /** 职业（决定骨架 ⇒ 决定手部骨名；见 `HAND_BONE_BY_SKELETON`） */
+    jobId?: number | null,
   ): MountResult {
     this.detach();
     this.blinkFx?.dispose();
     this.blinkFx = blink;
     this.mainGroup = group;
     this.idcode = idcode ?? 0;
-    this.combatBone = combatBoneOf(weaponPos);
+    this.combatBone = combatBoneOf(weaponPos, jobId);
     this.stance = stance;
     if (!group) return { mainBone: null, mirrorBone: null, missingBone: null };
     return this.place(root);
@@ -391,10 +424,13 @@ export class WeaponMount {
       this.mirrorGroup = null;
     }
 
-    const mainTarget = this.findMountBone(root, mainBoneName);
+    // 目标骨**只认指定的那一根，没有回退链**（用户 2026-09-23："装备在哪个手应该是确定性的，
+    // 为什么需要回退？！"）。这里曾经是 `指定骨 → 右手 → 左手`：它把"目标骨不存在"（真实的
+    // 资产/职业不匹配，例如第 11 职业·格斗家的 m8 骨架里根本没有 weapon 骨）伪装成"挂上了但
+    // 位置怪"，比"不挂"更难诊断。原版也是这个口径：`SetPattern` 就是 `GetObjectFromName(...)`，
+    // 取不到即 NULL（NSP `character.cpp:1865`）。找不到返回 null，由调用方上报（`WeaponRig`）。
+    const mainTarget = findBone(root, mainBoneName);
     if (mainTarget && this.mainGroup) mainTarget.add(this.mainGroup);
-    // 镜像骨**不做回退**：找不到就不挂。回退到右手只会让两份武器重叠在同一个位置，
-    // 比"少一份"更难诊断（该骨架本就没有那根骨，属数据/职业不匹配，由调用方上报）。
     const mirrorTarget = mirrorBoneName ? findBone(root, mirrorBoneName) : null;
     if (mirrorTarget && this.mirrorGroup) mirrorTarget.add(this.mirrorGroup);
 
@@ -405,11 +441,13 @@ export class WeaponMount {
     };
   }
 
-  /** 挂载骨查找：指定骨 → 右手 → 左手（旧实现遗留的回退链，三处一致） */
-  private findMountBone(root: THREE.Object3D, name: string): THREE.Object3D | null {
-    return findBone(root, name)
-      || findBone(root, WEAPON_BONES.RIGHT_HAND)
-      || findBone(root, WEAPON_BONES.LEFT_HAND);
+  /**
+   * 卸下并销毁挂在这件武器上的发光效果（组本身不动 —— 组归调用方）。
+   * 换武器时 `mount()` 自己会做这件事；这里是给"整个人物消失"的路径用的（`WeaponRig.dispose`）。
+   */
+  disposeBlink(): void {
+    this.blinkFx?.dispose();
+    this.blinkFx = null;
   }
 }
 

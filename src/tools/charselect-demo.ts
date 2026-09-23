@@ -13,6 +13,7 @@
  *   ② "未锻造的镰刀" —— 两件都不发光（对照）
  */
 import { createCharSelect } from '../ui/CharSelect.js';
+import { fallbackSummary } from '../char/fallback-log.js';
 import type { CharacterAppearance, CharacterInfo } from '../ui/CharSelect.js';
 
 const stage = document.getElementById('stage')!;
@@ -33,6 +34,22 @@ const forged: CharacterAppearance = {
   offHandKindCode: 1, offHandAgingLevel: 0,   // 合成 ⇒ 表行 0：RGB(13,0,5) + mixM_05 / SCROLL4
 };
 
+/**
+ * 三号：**第 11 职业·格斗家**（骨架 `m8.smb`）+ 拳套 WV101。
+ *
+ * m8 是**唯一**没有通用 `Bip weapon01` 的骨架（m1..m7 都有；实测逐文件 grep）。格斗家是徒手职业
+ * —— 拳套戴在手上 ⇒ 她的手部挂点显式登记为 **`Bip01 R Hand`**（见 weapon-loader
+ * `HAND_BONE_BY_SKELETON`）。这不是回退链：**只换骨名、不换手**；表里没登记的骨架而通用骨也缺
+ * ⇒ 不挂 + 降级清单可见。
+ */
+const martialWithWeapon: CharacterAppearance = {
+  classId: 11, head: 0, rank: 0, bodyModelIdcode: 0,
+  weaponDorp: 'wv101', weaponIdcode: 0x010b0100, weaponPos: 4,
+  sizeLevel: 0,
+  weaponKindCode: 2, weaponAgingLevel: 12,
+  offHandKindCode: 0, offHandAgingLevel: 0,
+};
+
 /** 二号：未锻造的镰刀 + 无副手 —— 两件都不该发光（对照） */
 const plain: CharacterAppearance = {
   classId: 4, head: 0, rank: 0, bodyModelIdcode: 0,
@@ -45,6 +62,7 @@ const plain: CharacterAppearance = {
 const chars: CharacterInfo[] = [
   { characterId: 1, name: '锻造+12 长剑 / 合成盾', classId: 1, level: 40, mapId: 1, appearance: forged },
   { characterId: 2, name: '未锻造镰刀（对照）', classId: 4, level: 40, mapId: 1, appearance: plain },
+  { characterId: 3, name: '格斗家 + 拳套（m8 手骨）', classId: 11, level: 40, mapId: 1, appearance: martialWithWeapon },
 ];
 
 // `show` 会自动选中第一个角色（`renderList` 里 `selectCharacter(characters[0])`）
@@ -57,4 +75,6 @@ panel.show(chars, { onSelect: noop, onCreate: noop, onLogout: noop, onBackToServ
     const card = document.querySelector(`[data-character-id="${id}"]`) as HTMLElement | null;
     card?.click();
   },
+  /** 降级清单（"找不到骨就不挂"这类必须是**可见**的，AGENTS #12） */
+  fallbacks: (): string => fallbackSummary(),
 };

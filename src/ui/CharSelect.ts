@@ -8,9 +8,9 @@ import { loadCharTextures } from '../render/char-texture-loader.js';
 import { createCameraControls } from './camera-controls.js';
 import type { MotionInfo } from '../char/char-format.js';
 import { resolveCostumeBody } from '../render/costume-body-map.js';
-import { loadWeaponModel, WeaponMount, sheatheBone, findBone, offMountBoneOf, moveOffHandForStance, type MountResult } from '../render/weapon-loader.js';
-import { BlinkFx } from '../render/blink-fx.js';
-import { blinkRowOfAppearance } from '../game/agingBlink.js';
+import { sheatheBone } from '../render/weapon-loader.js';
+// 整套装备（主手 + 副手 + 发光 + 姿态）的装配器 —— 与自机/远端**同一实现**
+import { WeaponRig } from '../render/weapon-rig.js';
 import { getWeaponTypeFromIdCode } from '../char/weapon-type.js';
 import { reportFallback } from '../char/fallback-log.js';
 
@@ -502,8 +502,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     currentPreviewJobId = jobId;
     currentPreviewHead = head;
     currentPreviewAppearance = appSig;
-    clearCharModel();                 // ⚠ 它会把 previewAppearance 清掉 ⇒ 这句必须在它**之后**
-    previewAppearance = appearance;
+    clearCharModel();
     const gen = ++loadGeneration;
     try {
       // bodyModel=时装 dorpItem（查 COSTUME_BODY_MAP），bodyModelIdcode=普通防具 idcode（算 armorNum）
@@ -544,16 +543,16 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       console.log('[CharSelect] 武器：idcode=' + (currentWeaponIdcode ?? 'null')
         + ' type=' + (currentWeaponType ?? 'null') + ' → 收械槽骨 ' + sheatheBone(currentWeaponIdcode ?? 0)
         + '（idcode 缺失时会退成默认背挂点）');
-      // 武器挂载（如有）
-      if (appearance?.weaponDorp) {
-        await attachWeaponPreview(appearance.weaponDorp, appearance.weaponPos, gen);
-      }
-      if (gen !== loadGeneration) return;
-      // 副手挂载（盾/匕首）—— 与主手一样：代际校验 + 交给共享骨规则
-      if (appearance?.offHandDorp) {
-        await attachOffHandPreview(appearance.offHandDorp, gen);
-      }
-      if (gen !== loadGeneration) return;
+      // 整套装备（主手含镜像份 + 副手）—— 一次交给共享装配器：
+      // 它内部按顺序做"加载 → **发光先于挂载** → 找骨（找不到不挂、不回退、上报）"，
+      // 并且**每次 await 之后**校验 `isAlive`（代际号）——过期的那次一个场景对象都不碰。
+      const rigReport = await previewRig.loadAndMount(skeletonGroup!, appearance, 'combat', {
+        anisotropy: previewAniso(),
+        isAlive: () => gen === loadGeneration,
+        label: '选角预览',
+        jobId,
+      });
+      if (rigReport.cancelled || gen !== loadGeneration) return;
       animState = createAnimStateMachine({
         getMotions: () => motionList,
         getClassId: () => jobId,
@@ -583,126 +582,27 @@ export function createCharSelect(container: HTMLElement): CharSelect {
     }
   }
 
-  let weaponGroup: THREE.Group | null = null;
   /**
-   * 武器挂载 = **共享的 `WeaponMount`**（自机 / 远端 / 检查器 / 选角页同一份实现）。
+   * 预览的整套装备 = **共享的 `WeaponRig`**（自机 / 远端 / 选角预览同一实现）。
    *
-   * ⚠ 这里曾自己实现一套（`weaponGroup` + `attachedWeaponGroups` + `currentCombatBone` +
-   * `weaponStance` + 手写 `findBone` 搬运），于是**少了一个能力：镜像** —— 游戏里刺客匕首走
-   * `WeaponMount.mirrorLeftBone` 镜像成左右两份（`Bip weapon05` / 左右腰 `Bip in_Dagger*`），
-   * 选角页却只挂了一份（用户 2026-09-15 实测："刺客只挂了一边"）。
-   * 这正是 AGENTS #15 说的"同一个判定在仓库里出现第二份，哪怕只差一点，就是 bug 的种子"。
-   * 现在只保留"加载 → 代际校验 → 喂给共享实现"。
+   * ⚠ 选角页曾经自己实现一套挂载（`weaponGroup` + 手写 `findBone` 搬运），于是少了两件事：
+   * 镜像份（刺客匕首只挂一边，用户 2026-09-15）与副手（带盾的角色看不到盾，用户 2026-09-23）。
+   * 现在只保留"加载 → 交 rig"，连"发光先于挂载""找不到骨不回退"都由 rig 统一保证。
+   * `currentWeaponIdcode/Type` 仍在这里维护：动画状态机的 getter 读它们（与 rig 无关）。
    */
-  const weaponMount = new WeaponMount();
+  const previewRig = new WeaponRig();
   let currentWeaponIdcode: number | null = null;
   let currentWeaponType: string | null = null;
-  /** 副手件（盾/匕首）的组 —— 主手由 `weaponMount` 管，副手在这里（与游戏内同一套骨判定+搬运） */
-  let offHandGroup: THREE.Group | null = null;
-  /**
-   * 预览里的两件发光效果（原版 `SetRenderBlinkColor`）—— 与游戏内**同一份实现**（`BlinkFx`），
-   * 行号来自这份外观的四个字段（`blinkRowOfAppearance`）。每帧在 `startRenderLoop` 里推进。
-   */
-  let mainBlink: BlinkFx | null = null;
-  let offHandBlink: BlinkFx | null = null;
-  /** 当前预览的外观（发光输入 + 副手 dorp/kind 的来源）；由 `loadPreview` 写 */
-  let previewAppearance: CharacterAppearance | undefined;
-
-  /** 把挂载结果打出来（含**镜像份**与**缺失骨**）—— 挂载/姿态的每个出口都要可查（AGENTS #19/#12） */
-  function logMount(what: string, res: MountResult): void {
-    console.log('[CharSelect] ' + what + '：主手=' + (res.mainBone ?? '未挂')
-      + ' 镜像=' + (res.mirrorBone ?? '无（该武器不镜像）'));
-    if (res.missingBone) {
-      reportFallback('weapon', `选角预览找不到挂载骨 ${res.missingBone}（main=${res.mainBone ?? 'none'}）`);
-    }
-  }
 
   /** 姿态（持械 ↔ 收械）——由状态机的 `onStanceChange` 触发，装配完还会**主动断言**一次 */
   function applyWeaponStance(stance: 'combat' | 'sheathed'): void {
     if (!skeletonGroup) return;
-    // 主手（含镜像份）由共享实现搬运；副手走 `moveOffHandForStance`（**唯一实现**：盾留左臂不动、
-    // 匕首在左手 ↔ 左腰之间搬）——与游戏内 `setSelfWeaponStance` 是同一套两件套。
-    if (weaponGroup && weaponMount.currentStance !== stance) {
-      logMount('武器姿态 ' + stance, weaponMount.setStance(skeletonGroup, stance));
-    }
-    const offRes = moveOffHandForStance({
-      root: skeletonGroup,
-      off: offHandGroup,
-      idcode: currentWeaponIdcode ?? 0,
-      offKind: previewAppearance?.offHandKind || 0,
-      stance,
-    });
-    if (offRes.missingBone) {
-      reportFallback('weapon', `选角预览副手姿态 ${stance}：目标骨 ${offRes.missingBone} 不在骨架里（该件留在原挂点）`);
-    }
+    previewRig.setStance(skeletonGroup, stance);   // 主手（含镜像份）+ 副手成对搬
   }
 
   /** 预览用各向异性（与纹理加载同一级别） */
   function previewAniso(): number {
     return renderer ? renderer.capabilities.getMaxAnisotropy() : 1;
-  }
-
-  /**
-   * 选角预览的**副手件**（盾 → 左小臂；匕首 → 左手/左腰）。
-   *
-   * 骨名与搬运都走共享实现（`offMountBoneOf` / `moveOffHandForStance`），这里只做
-   * "加载 → 代际校验 → 喂给共享实现" —— 与主手 `attachWeaponPreview` 同样的分工。
-   * 之前选角页**完全不挂副手**，所以带盾的角色在选角界面看不到盾（用户 2026-09-23 实测）。
-   */
-  async function attachOffHandPreview(dorpItem: string, gen: number): Promise<void> {
-    const app = previewAppearance;
-    const offKind = app?.offHandKind || 0;
-    if (offKind === 0) return;
-    try {
-      const result = await loadWeaponModel(dorpItem);
-      // 代际守卫必须在**改场景的那一层**（同主手处的说明）：过期的那次会把副手留在骨上
-      if (gen !== loadGeneration) return;
-      const boneName = offMountBoneOf(currentWeaponIdcode ?? 0, offKind, 'combat');
-      const bone = findBone(skeletonGroup!, boneName);
-      if (!bone) {
-        reportFallback('weapon', `选角预览找不到副手挂载骨 ${boneName}（kind=${offKind}）⇒ 该件不显示`);
-        return;
-      }
-      // 发光效果在挂载之前建（镜像份是克隆出来的，晚建带不上叠加层；副手虽不镜像，口径保持一致）
-      offHandBlink = BlinkFx.create(result.group, blinkRowOfAppearance(app, 'off'), previewAniso());
-      offHandGroup = result.group;
-      bone.add(result.group);
-      console.log('[CharSelect] 副手挂载：' + dorpItem + ' kind=' + offKind + ' bone=' + bone.name);
-      await loadCharTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
-    } catch (err) {
-      console.warn('CharSelect: 副手加载失败', dorpItem, err);
-      offHandBlink?.dispose();
-      offHandBlink = null;
-      offHandGroup = null;
-    }
-  }
-
-  async function attachWeaponPreview(dorpItem: string, weaponPos: number, gen: number) {
-    if (!weaponGroup) {
-      try {
-        const result = await loadWeaponModel(dorpItem);
-        // ⚠ 代际守卫必须在**这里**（=改场景的那一层），不能只靠调用方在 await 返回后再 check：
-        // 本函数自己就会把组挂进骨骼。两次预览重叠时，过期的那一次会把武器留在骨骼上，
-        // 而新的一次随后清理时只按当前引用清 → 清不掉它。用户实测（2026-09-14）：
-        // 角色选择页"手里和背后各有一把武器"。
-        // 同一条教训见 AGENTS #11 第三条：守卫要下沉到真正改状态的那一层。
-        if (gen !== loadGeneration) return;
-        weaponGroup = result.group;
-        // 发光效果（锻造/合成的呼吸光）在**挂载之前**建：镜像份是 `mount()` 里 clone 出来的，
-        // 晚建那份就没有叠加层（游戏内 `mountSelfWeapon` 同口径）。
-        mainBlink = BlinkFx.create(result.group, blinkRowOfAppearance(previewAppearance, 'main'), previewAniso());
-        // 挂载（战斗骨由 weaponPos 定：2=左手，其余右手；**收械骨与镜像份由 idcode 定**）
-        const res = weaponMount.mount(skeletonGroup!, result.group, currentWeaponIdcode, weaponPos, 'combat');
-        logMount('武器挂载 ' + dorpItem + '（weaponPos=' + weaponPos + '）', res);
-        await loadCharTextures(result.texturesToLoad.map(x => ({ url: x.url, mat: x.mat })));
-      } catch (err) {
-        console.warn('CharSelect: 武器加载失败', dorpItem, err);
-        weaponMount.detach();     // 组可能已经挂上去了：这里必须收干净，否则它会留在骨上无人管理
-        mainBlink?.dispose();
-        mainBlink = null;
-        weaponGroup = null;
-      }
-    }
   }
 
   function clearCharModel() {
@@ -711,22 +611,8 @@ export function createCharSelect(container: HTMLElement): CharSelect {
       skeletonGroup.remove(charResult.bodyGroup);
       skeletonGroup.remove(charResult.headGroup);
     }
-    // 武器（含**镜像份**）由共享实现自己摘 —— 主手与镜像是一对，分开清必然漏一份。
-    // 这取代了旧的"挂过的组全量名单"：那份名单之所以存在，是因为当时挂载是这里手写的
-    // （见 `weaponMount` 的说明）。现在往骨骼上加东西的只有 `WeaponMount`，它自己持有两份引用。
-    weaponMount.detach();
-    // 副手是这里自己挂的（两处：本函数 + 姿态搬运）⇒ 也必须自己清干净，否则换角色时
-    // 上一件的盾会留在骨上（"手里和背后各有一把"那类残留的老毛病）。
-    if (offHandGroup) {
-      offHandGroup.parent?.remove(offHandGroup);
-      offHandGroup = null;
-    }
-    offHandBlink?.dispose();
-    offHandBlink = null;
-    mainBlink?.dispose();
-    mainBlink = null;
-    previewAppearance = undefined;
-    weaponGroup = null;
+    // 两件（含镜像份与发光）由装配器自己摘干净 —— 换角色时不会留下上一件的武器/盾
+    previewRig.dispose();
     currentWeaponIdcode = null;
     currentWeaponType = null;
     charResult = null;
@@ -782,8 +668,7 @@ export function createCharSelect(container: HTMLElement): CharSelect {
         }
       }
       // 锻造/合成呼吸发光（原版逐帧 `SetRenderBlinkColor`）——同一份实现、同一个单调时钟
-      mainBlink?.update(nowMs);
-      offHandBlink?.update(nowMs);
+      previewRig.updateBlink(nowMs);
 
       const rect = host.getBoundingClientRect();
       if (rect.width > 0 && rect.height > 0) {
