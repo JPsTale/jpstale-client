@@ -33,6 +33,13 @@
  * · `liveTime` = 存活帧数（`LiveTime`）；`Alpha` 从 0 起随时间淡出
  * · 贴图 `m_DoomG-01.bmp`、`SMMAT_BLEND_LAMP`（加法混合）、UV 沿 V 按 `1/32` 分片
  *
+ * ## 染色（玩家侧）
+ *
+ * 两条来源，合成规则与数值出处见 `trailTintOf` / `SKILL_TRAIL_TINTS`：
+ * · **技能色**（`SetSkillMotionBlurColor` 的 6 个 case，登记在我方技能下标上）；
+ * · **武器色**（锻造/合成物 `ColorBlink != 0` ⇒ 其**色表行色**参与染色）——
+ *   普攻**一定**叠；技能里只有 Chain Lance 叠（其余 5 个源码 `return TRUE` = 独占）。
+ *
  * ## 挂在哪（调用点）
  *
  * · **怪物**：`character.cpp:14081` `AssaMotionBlur(this, "Bip01 R Hand", "bip01 wea", 80)`（D_PA）
@@ -65,6 +72,9 @@ import { decodeTextureAsync } from '../../core/texture.js';
 // 阶段/种类/KeyCode 的**同一套模型**（AGENTS #15：`monster-attack-fx.ts` 是唯一出处，
 // 别在这里再造一份 —— 两张表对"0 还是空串""普攻还是技能"的理解必须一致）
 import { keyOf, type FxPhase, type MotionKind } from './monster-attack-fx.js';
+// 武器色表行的类型（锻造/合成发光那张表；`BlinkRow` 是 `{r,g,b,a,texMixCode,texScroll}`，
+// 曳光只用 r/g/b）—— **只引类型**，不在这一层依赖它的运行时
+import type { BlinkRow } from '../../game/agingBlink.js';
 
 /** `Draw():2410-2411` 的两个常量（不是我方调的） */
 export const TRAIL_LEVEL = 32;   // 段数 `mLevel`
@@ -130,6 +140,50 @@ export const SKILL_TRAIL_TINTS: ReadonlyMap<number, TrailTint> = new Map<number,
 export function trailTintOfSkill(skillIndex: number | null): TrailTint | null {
   if (skillIndex == null) return null;
   return SKILL_TRAIL_TINTS.get(skillIndex) ?? null;
+}
+
+/**
+ * **武器色进入曳光的强度** —— `0.5` = "从白向武器色走一半"。
+ *
+ * 原版是 `smRender.Color_R += sColors[SMC_R] >> 1`（色表色的**一半**）加到**当时的渲染色**上，
+ * 而那个渲染色是场景/昼夜色（约 0.4~0.6 亮）——**我们这条带子没有"场景色"这一项**（`uColor` 基准恒为白），
+ * 照搬会把所有通道顶到 1（白）而看不出颜色。故取"白 → 武器色走一半"作等价观感。
+ *
+ * ⚠ 这是**我们的映射决定**（原式不可直接搬），不是源码数值 —— 别当成"照抄"来引用。
+ */
+export const WEAPON_TINT_MIX = 0.5;
+
+/**
+ * 曳光的**最终**染色 = 技能色 ⊕ 武器色（原版 `DrawMotionBlurTool` 里那两段的合成）。
+ *
+ * 源码（exm `character.cpp:7993-8000`，NSP 同名函数逐字相同）：
+ * ```c
+ * if (AttackSkil) cnt = SetSkillMotionBlurColor(AttackSkil);   // 只有那 6 个 case、其中 5 个返回非 0
+ * if (!cnt && ChrTool->ColorBlink) { Color_R += sColors[R] >> 1; … }   // 武器色（锻造/合成才有 ColorBlink）
+ * ```
+ * ⇒ 谁能叠：
+ *   · 技能在表里且 `claims === true`（源码 `return TRUE`）⇒ **技能色独占**，武器色不叠；
+ *   · 技能在表里但 `claims === false`（只有 Chain Lance）⇒ 技能色 **+** 武器色；
+ *   · 技能**不在表里**（含普攻传 `null`）⇒ 只叠武器色 —— 注意这与"未登记=白色"**不同**：
+ *     源码里未登记的技能同样落到 `return FALSE`，所以它也会被武器色染色。
+ *
+ * @param skillIndex 这一刀是哪个技能下标（普攻传 `null`）
+ * @param weaponRow  该手的发光色表行（`blinkRowOfAppearance(外观, 'main')`）；
+ *                   `null` = 未锻造/未合成（原版 `ColorBlink == 0`）⇒ 不叠武器色
+ * @returns `null` = 不染色（复位白）—— 只有"既无技能色也无武器色"才是 `null`。
+ *          `claims` 字段在返回值里只是把输入带出来，消费方只用 `r/g/b`。
+ */
+export function trailTintOf(skillIndex: number | null, weaponRow: BlinkRow | null): TrailTint | null {
+  const skill = trailTintOfSkill(skillIndex);
+  const row = weaponRow && skill?.claims !== true ? weaponRow : null;
+  if (!skill && !row) return null;
+  // 白 = 1；武器色 = 色表色/255；两者按 WEAPON_TINT_MIX 混（技能色存在时以它为基础）
+  const k = WEAPON_TINT_MIX;
+  const mix = (base: number, target: number): number => base + (target - base) * k;
+  const r = row ? mix(skill ? skill.r : 1, row.r / 255) : skill!.r;
+  const g = row ? mix(skill ? skill.g : 1, row.g / 255) : skill!.g;
+  const b = row ? mix(skill ? skill.b : 1, row.b / 255) : skill!.b;
+  return { r, g, b, claims: skill ? skill.claims : false };
 }
 
 /** 载入曳光贴图（原版 `AssaSearchRes("m_DoomG-01.bmp", …)`）。

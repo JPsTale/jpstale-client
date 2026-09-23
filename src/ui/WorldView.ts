@@ -80,7 +80,9 @@ import { resolveCostumeBody } from '../render/costume-body-map.js';
 import { loadDropItemModel, WEAPON_BONES, weaponSizeMax, combatBoneOf, type WeaponMount } from '../render/weapon-loader.js';
 // 整套装备（主手 + 副手 + 发光 + 姿态 + 生命周期）的装配器 —— 自机/远端/选角预览**同一实现**
 import { WeaponRig } from '../render/weapon-rig.js';
-import { createWeaponTrail, MonsterTrails, trailTintOfSkill, type WeaponTrail } from '../render/effects/weapon-trail.js';
+// 曳光染色与发光共用同一处派生（外观 → 色表行），别各推一份
+import { blinkRowOfAppearance } from '../game/agingBlink.js';
+import { createWeaponTrail, MonsterTrails, trailTintOf, type WeaponTrail } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
 import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillLevelByIcon } from '../game/skillLevel.js';
@@ -5650,7 +5652,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             //   ⇒ **那一次没有曳光**（用户实测"有时候莫名其妙攻击没有曳光"）。
             //   常驻之后：挥动时出现，停下时两骨几乎不动 ⇒ 带子自然收短/消失。
             const curF = selfPlayer.frame;
-            tr.setTint(trailTintOfSkill(selfTrailSkillIndex));   // T1：残影染色（写 uColor）
+            // T1：残影染色（写 uColor）—— **技能色 ⊕ 武器色**：普攻一定叠武器色（锻造/合成的色表行），
+            // 技能只在源码 `return FALSE` 那条（Chain Lance）叠；色表行取自外观（与发光同一处来源，
+            // 别在这里再推一遍）。两个槽都是**同一把**武器（主手 / 刺客匕首的镜像份）⇒ 同一行。
+            tr.setTint(trailTintOf(selfTrailSkillIndex, blinkRowOfAppearance(selfAppearance, 'main')));
             tr.update(curF, motion.startFrame * 160);
             // （**不再需要** `selfPlayer.apply()` 复原 —— `sampleBoneEnds` 只求骨矩阵、不摆姿势；
             //   这里原先每帧多摆一次整骨架，是卡顿的另一半来源。）

@@ -10,7 +10,8 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { SKILL_TRAIL_TINTS, trailTintOfSkill } from '../src/render/effects/weapon-trail.js';
+import { SKILL_TRAIL_TINTS, trailTintOfSkill, trailTintOf, WEAPON_TINT_MIX } from '../src/render/effects/weapon-trail.js';
+import { agingRowOf, craftRowOf } from '../src/game/agingBlink.js';
 import { SKILL_INDEX_BY_ICON } from '../src/game/data/skillIndexByIcon.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -62,8 +63,38 @@ ok('trailTintOfSkill(null) → null（不染色）', trailTintOfSkill(null) === 
 ok('trailTintOfSkill(99)（未登记）→ null（不染色）', trailTintOfSkill(99) === null);
 ok('trailTintOfSkill(43) → 紫', trailTintOfSkill(43)?.g === 0.749);
 
+console.log('\n[校验 1b] 武器色 ⊕ 技能色（锻造/合成武器染曳光；原版 DrawMotionBlurTool 的第二段）');
+const rowAged = agingRowOf(12)!;    // 锻造 +12 的色表行 → RGB(10,220,30)
+const rowCraft = craftRowOf(0)!;    // 合成行 0        → RGB(13,0,5)
+const mixW = (base: number, target: number): number => base + (target - base) * WEAPON_TINT_MIX;
+const near = (a: number, b: number): boolean => Math.abs(a - b) < 1e-9;
+{
+  // ① 普攻（技能=null）+ 锻造武器：从白向武器色走一半（期望值**现算**，不写死结果）
+  const t = trailTintOf(null, rowAged);
+  ok('普攻 + 锻造武器 → mix(白, 色表色, 0.5)',
+    !!t && near(t.r, mixW(1, 10 / 255)) && near(t.g, mixW(1, 220 / 255)) && near(t.b, mixW(1, 30 / 255)));
+  // ② 技能 claims=true（Critical Hit）⇒ **武器色被独占**：传了行也不变
+  const excl = trailTintOf(43, rowAged);
+  const solo = trailTintOf(43, null);
+  ok('43（claims=true）传武器行 == 不传（独占，禁止叠）',
+    !!excl && !!solo && excl.r === solo.r && excl.g === solo.g && excl.b === solo.b);
+  // ③ 技能 claims=false（Chain Lance）⇒ 技能色与武器色**都叠**
+  const both = trailTintOf(52, rowAged);
+  ok('52（claims=false）→ 以技能色为基础再向武器色走一半',
+    !!both && near(both.r, mixW(1.0, 10 / 255)) && near(both.g, mixW(0.749, 220 / 255))
+    && near(both.b, mixW(0.749, 30 / 255)));
+  // ④ 未登记技能：源码里它也落到 return FALSE ⇒ **仍叠武器色**（≠"未登记=白"）
+  const unknown = trailTintOf(99, rowCraft);
+  ok('未登记技能 + 武器 → 仍叠武器色（与"未登记=白"不同）',
+    !!unknown && near(unknown.r, mixW(1, 13 / 255)) && near(unknown.g, 0.5) && near(unknown.b, mixW(1, 5 / 255)));
+  // ⑤ 未锻造/未合成（row=null）
+  ok('普攻 + 未锻造武器 → null（不染色）', trailTintOf(null, null) === null);
+  ok('未登记技能 + 未锻造 → null', trailTintOf(99, null) === null);
+  ok('武器色强度常量 = 0.5（我们的映射决定，见 WEAPON_TINT_MIX 的说明）', WEAPON_TINT_MIX === 0.5);
+}
+
 console.log('\n[校验 2] 设值点只在 playSkillByIcon 与普攻 onset（§5.2）');
-ok('WorldView import 了 trailTintOfSkill', /import\s*\{[^}]*\btrailTintOfSkill\b/.test(wv));
+ok('WorldView import 了 trailTintOf（合成函数，不是只引技能表）', /import\s*\{[^}]*\btrailTintOf\b/.test(wv));
 ok('普攻路径 / 无下标路径 / 普攻循环 onset 三处置 null（≥2 处即成立）',
   (wv.match(/selfTrailSkillIndex = null/g) ?? []).length >= 2);
 ok('playSkillByIcon 的 idx 分支设了 selfTrailSkillIndex = idx（含普攻回退子分支）',
@@ -72,9 +103,11 @@ ok('设值只有一处（idx 分支）—— 染色来源唯一',
   (wv.match(/selfTrailSkillIndex = idx;/g) ?? []).length === 1);
 
 console.log('\n[校验 3] 消费点只一处且 setTint 在 update 之前，双手槽都覆盖');
-const setLine = wv.indexOf('tr.setTint(trailTintOfSkill(selfTrailSkillIndex))');
+const setLine = wv.indexOf("tr.setTint(trailTintOf(selfTrailSkillIndex, blinkRowOfAppearance(selfAppearance, 'main')))");
 const updLine = wv.indexOf('tr.update(curF, motion.startFrame * 160)');
 ok('消费点在曳光循环内（双手槽共用同一份）', setLine !== -1 && updLine !== -1);
+ok('武器色取自**外观**（与发光同一处派生，不在这里重推）',
+  wv.includes("blinkRowOfAppearance(selfAppearance, 'main')"));
 ok('setTint 在 update 之前调用', setLine !== -1 && updLine !== -1 && setLine < updLine);
 
 console.log('\n[校验 4] setTint 写入 uColor；null = 复位白');
