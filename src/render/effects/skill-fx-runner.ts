@@ -128,10 +128,16 @@ export const CODE_SKILL_FX: Record<string, (
   target: { x: number; y: number; z: number } | null,
 ) => void> = {
   // 颗数 = **等级表 + 随机区间**（原版 `M_Spark_Num[Point-1]` → `GetRandomPos(cnt/2+1, cnt)`）。
-  // ⚠ 调用方给不出技能等级时按 1 级算，并**说明**（不静默）—— 1 级 = "3-4 颗"。
+  // ⚠ 等级必须由调用方给（`M_Spark_Num` 按 `Point-1` 取，等级错 ⇒ 颗数错）。
+  // 早先这里写的是 `ctx.skillLevel ?? 1`（"按 1 级算"）—— 那是**猜一个值**，AGENTS #12 禁；现改为
+  // **本次不放**并上报（与 Pike Wind 同一条口径）。
   multispark: (ctx, caster, target) => {
-    const lv = ctx.skillLevel ?? 1;
-    if (ctx.skillLevel == null) ctx.log?.('    ⚠ 未提供技能等级 ⇒ 按 1 级取颗数（3-4 颗）');
+    const lv = ctx.skillLevel;
+    if (lv == null) {
+      reportFallback('skillfx', 'MultiSpark 的颗数按技能等级取（`M_Spark_Num[Point-1]`），'
+        + '但调用方没给 skillLevel ⇒ **本次不放**（不按 1 级猜）');
+      return;
+    }
     const num = playerSparkCount(lv);
     ctx.log?.(`    ✦ MultiSpark：${num} 颗（等级 ${lv}）`);
     runMultiSpark(ctx, caster, target, num);

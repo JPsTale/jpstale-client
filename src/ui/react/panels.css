@@ -412,6 +412,16 @@
   font-size: 13px;
 }
 
+/* 技能表没到：加点一律不可按，这里说明原因（不假装 0 点） */
+.jp-skill-warn {
+  padding: 3px 6px;
+  background: #2a2210;
+  border: 1px solid #6b5a1e;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #ffd98a;
+}
+
 .jp-skill-group {
   display: flex;
   flex-direction: column;
@@ -437,7 +447,9 @@
 .jp-skill-cell {
   position: relative;
   width: 46px;
-  height: 56px;
+  /* 高度**随内容**（min 56 = 图标 44 + 熟练度条 + 边距），不再写死 56：
+     格里除图标与熟练度条外还有 `+ 学习`，写死高度会让它溢出格子。 */
+  min-height: 56px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -497,80 +509,64 @@
   border-radius: 2px;
 }
 
-/* 调试：技能等级微调（0=未学，1~10）。▲▼ 一行叠在格子底部。 */
-.jp-skill-lvdbg {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  margin-top: 1px;
-  flex: 0 0 auto;
-}
-.jp-skill-lvdbg-btn {
-  width: 16px;
-  height: 14px;
-  padding: 0;
-  border: 1px solid #3a3f46;
-  border-radius: 2px;
-  background: #0d1117;
-  color: #8b949e;
-  font-size: 11px;
-  line-height: 1;
-  cursor: pointer;
-}
-.jp-skill-lvdbg-btn:hover {
-  background: #2d333b;
-  color: #e6edf3;
-}
-.jp-skill-lvdbg-val {
-  min-width: 14px;
-  text-align: center;
+/* 拳位角标（L / R）：贴图标两侧**底角**（左上角归 `.jp-skill-lv`），以 iconbox 为界不溢出 */
+.jp-skill-fistbadge,
+.jp-skill-fistonly {
+  position: absolute;
+  bottom: 1px;
   font-size: 10px;
-  color: #6e7681;
-  cursor: pointer;
   line-height: 1;
-}
-.jp-skill-lvdbg-val--set {
-  color: #ffa657;
   font-weight: 700;
+  background: rgba(20, 22, 26, 0.8);
+  border-radius: 2px;
+  padding: 1px 3px;
+  pointer-events: none;
+}
+.jp-skill-fistbadge--left,
+.jp-skill-fistonly {       /* "只能绑左拳"提示与 L 角标同位置：后者仅 fist===null 时才画，二者互斥 */
+  left: 1px;
+}
+.jp-skill-fistbadge--right {
+  right: 1px;
+}
+.jp-skill-fistbadge { color: #ffd479; }
+.jp-skill-fistonly { color: #6e7681; }
+
+/* F1~F8 快捷角标：右上角（与拳位角标、等级角标三者各占一角，互不压住） */
+.jp-skill-keybadge {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  font-size: 10px;
+  line-height: 1;
+  color: #8ab4f8;
+  background: rgba(20, 22, 26, 0.75);
+  border-radius: 2px;
+  padding: 1px 2px;
+  pointer-events: none;
 }
 
-/* 调试工具条：武器切换 + 重置（SKILL_DEBUG=false 时整块随组件消失） */
-.jp-skill-dbgbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  background: #101318;
-  border: 1px solid #2a2f36;
-  border-radius: 4px;
-  font-size: 12px;
-  color: #9aa0a6;
-}
-.jp-skill-dbgbar-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.jp-skill-dbgbar-select {
-  background: #0d1117;
-  color: #c9d1d9;
-  border: 1px solid #3a3f46;
+/* 真加点（服务端权威）：绿色整条 + 文字，与下面灰方块 `− n +` 的调试行刻意长得不一样 */
+.jp-skill-learn {
+  width: 44px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid #2f6b3a;
   border-radius: 3px;
-  font-size: 12px;
-  padding: 1px 4px;
-}
-.jp-skill-dbgbar-btn {
-  background: #1f2329;
-  color: #9aa0a6;
-  border: 1px solid #3a3f46;
-  border-radius: 3px;
-  font-size: 11px;
-  padding: 2px 8px;
+  background: #10240f;
+  color: #9fe8a8;
+  font-size: 10px;
+  line-height: 1;
   cursor: pointer;
+  flex: 0 0 auto;
 }
-.jp-skill-dbgbar-btn:hover {
-  background: #2d333b;
-  color: #e6edf3;
+.jp-skill-learn:hover:not(:disabled) {
+  border-color: #4f9c5e;
+  background: #17330f;
+}
+.jp-skill-learn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 /* —— 技能悬停信息框（portal 到 body，fixed 跟随鼠标，脱离面板裁剪）—— */

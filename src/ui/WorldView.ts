@@ -24,7 +24,7 @@ import { canEnterMap, mapLevelRequirement } from '../game/safeZones.js';
 import { monsterStopRing } from '../game/combatRange.js';
 import { isInputBlocked } from '../app/inputGate.js';
 import { appendSystemMessage } from '../app/chatStore.js';
-import { mapLightProfile } from '../maps/map-light.js';
+import { mapLightProfile, isVillageMap } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
 import { t } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
@@ -51,7 +51,7 @@ import { createDynLightPool, type DynLightPool } from '../render/effects/dyn-lig
 import type { MonsterModelResult } from '../render/monster-loader.js';
 import { mapAudio } from '../maps/map-audio.js';
 import type { SceneLightWorld } from '../render/map-renderer.js';
-import { createAnimStateMachine } from '../char/anim-state-machine.js';
+import { createAnimStateMachine, STATE } from '../char/anim-state-machine.js';
 import { semanticEntryOfMotion } from '../char/anim-match.js';
 import { reportFallback } from '../char/fallback-log.js';
 import { semanticEntriesForJob } from '../char/semantic-anim.js';
@@ -82,8 +82,9 @@ import { loadDropItemModel, WEAPON_BONES, weaponSizeMax, combatBoneOf, type Weap
 import { WeaponRig } from '../render/weapon-rig.js';
 import { PlayerTrails, MonsterTrails, trailTintOf } from '../render/effects/weapon-trail.js';
 import { isShootingMode } from '../char/weapon-type.js';
-import { SKILL_DEBUG } from '../game/skillDbg.js';
 import { skillLevelByIcon } from '../game/skillLevel.js';
+import { fistIntentOf, type FistIntent } from '../game/skillBinding.js';
+import { noTargetCastBlock } from '../game/skillNoTarget.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
@@ -334,7 +335,7 @@ export interface WorldView {
   groundItemDisappear(groundItemId: number): void;
   /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
   playSkillByIcon(iconFile: string, aim?: THREE.Object3D | null): boolean;
-  /** [调试/装备] 播放当前装备在指定拳的技能动画 */
+  /** 播放当前装备在指定拳的技能动画（鼠标左/右键施法的入口） */
   playEquippedSkill(slot: 'left' | 'right', aim?: THREE.Object3D | null): boolean;
 }
 
@@ -366,9 +367,11 @@ export interface WorldViewOpts {
   /** 命中帧（每段一次）→ main.ts 发 C2S_AttackHit(targetId, hitIndex)。 */
   onAttackHit?: (monsterId: number, hitIndex: number) => void;
   /**
-   * 施放技能（当前**只有调试施法**会带换目标：Alt/Shift+点击瞄准怪）→ main.ts 发 C2S_UseSkill。
-   * skillId = 技能列表下标（`skillIndexByIcon` 的返回值，服务端 `predicate.useSkill`）。 */
-  onCastSkill?: (skillId: number, monsterId: number) => void;
+   * 施放技能 → main.ts 发 `C2S_UseSkill(skillId, targetId)`。两条来源：
+   *   ① 无目标施放（右键先试，`tryNoTargetCast`）⇒ `targetId = 0`；
+   *   ② 用该拳技能打光标下的怪（左/右键，`playEquippedSkill`）⇒ `targetId = 怪的 id`。
+   * `skillId` = **数字技能 id**（图标 → id 的唯一查表在 `game/skillIdentity.ts`）。 */
+  onCastSkill?: (skillId: number, targetId: number) => void;
   /**
    * 兑现一次「切换武器套」（W 键）→ main.ts 发 C2S_SwitchWeapon。
    *
@@ -660,7 +663,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 为什么不直接用 `selfAttackTargetId`：那个值是**自动攻击循环**在"跑到射程内起手"时赋的
    * （见下面的普攻分支），它不是"可保持的选中状态" —— 点一只怪只会**跑过去**，所以
    * "先选目标再施法"这条路在我们客户端并不存在（用户 2026-09-17 实测卡在这里）。
-   * 故调试入口改用**已有的 hover 目标**（`hoverTarget`，也就是你看到高亮的那只怪 ——
+   * 故瞄准改用**已有的 hover 目标**（`hoverTarget`，也就是你看到高亮的那只怪 ——
    * "所见即所瞄"，不再自己挑一次；先前我用 `nameplateTargetAt ?? pickTargetAt` 又挑了一遍，
    * 那是同一判定的第二份实现）。存**节点引用**而不是坐标：原版传的是 `desChar` 引用，
    * 第 30 帧改瞄取的是它**当下**的位置（目标会动）。
@@ -1985,8 +1988,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // **技能等级**（唯一实现 `game/skillLevel.ts`，与技能面板读同一个值）——
       // 环的半径/元素数（Pike Wind）、火花颗数（Multi Spark）都随等级变；
       // 取不到时**不猜**（各条目自己决定是"不放并上报"还是"按 1 级并上报"）。
-      skillLevel: selfSkillRow
-        ? skillLevelByIcon(selfSkillRow.icon, getGameSnapshot().character?.level ?? null) : null,
+      skillLevel: selfSkillRow ? skillLevelByIcon(selfSkillRow.icon) : null,
       spawnAsset: fx ? (a, o) => fx.spawnStoppable(a, o) : undefined,
       // 一次性粒子用 `spawn`（不需要"停下"的句柄）—— 与怪物侧同一条路
       spawnPart: fx ? (a, o) => fx.spawn(a, o) : undefined,
@@ -2126,23 +2128,33 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return fallback;
   }
 
-  /** 播放当前装备在指定拳的技能动画（左/右拳）。未装备/普通攻击 → 播普攻。 */
+  /**
+   * 播放当前装备在指定拳的技能动画（左/右拳）。未装备/普通攻击 → 播普攻。
+   *
+   * **村庄不放技能**：原版在"这一击用哪个技能"的取用处把技能清成 0
+   * （`playmain.cpp:2316-2317`：`StageField[..]->State == FIELD_STATE_VILLAGE ⇒ lpAttackSkill = 0`），
+   * 也就是**照样出手、但这一击是普通攻击**。我们按同一语义退化成"无绑定"那条路（普通攻击动画、
+   * **不发技能包**）。村庄判据 = `isVillageMap`（= `field.cpp` 的 `Field State`，只 2 张图）。
+   *
+   * ⚠ 三种"放不出技能"的结果**不同**（AGENTS #12）：
+   *   · 未绑（`normal`）/ 村庄 ⇒ **普通攻击**（源码规格：`lpAttackSkill = 0` 就是普攻）；
+   *   · 绑定表还没到（`unknown`）/ 绑的不是本职业的技能（`invalid`）⇒ **这一击什么都不放**（返回 false
+   *     并已上报），**不许**退化成普攻 —— 早先的 `if (!fs …) return playSkillByIcon('skill_normal')`
+   *     正是"把异职业绑定当没绑定再退普攻"，属兜底。
+   */
   function playEquippedSkill(slot: 'left' | 'right', aim: THREE.Object3D | null = null): boolean {
-    const snap = getGameSnapshot();
-    const bind = snap.fistBindings[slot];
-    const selfClass = CLASS_DIR[selfJobId] ?? 'fighter';
-    if (!bind || bind.classDir !== selfClass) {
-      return playSkillByIcon('skill_normal', aim);
-    }
-    const skillIdx = skillIndexByIcon(bind.iconFile + '.bmp');
-    // 施放真走服务端（真实链路，#14 结果同步）：有瞄准的怪 + 已登记技能 → 发 C2S_UseSkill。
-    // 到目前只有调试施法（Alt/Shift+点击瞄准怪）会带 aim，故实际只影响调试通路；
+    const it = fistIntent(slot);
+    if (it.kind === 'unknown' || it.kind === 'invalid') return false;   // 显式未知/异常：不放
+    if (it.kind === 'normal' || isVillageMap(currentMapId)) return playSkillByIcon('skill_normal', aim);
+    // 施放真走服务端（真实链路，#14 结果同步）：有瞄准的怪 → 发 C2S_UseSkill。
+    // 带 aim 的调用方是**鼠标施法**（左键=左拳 / 右键=右拳，见 `fistCastTarget`）；
     // 服务端 handleUseSkill 即时结算该技能（含 44 的 attackEffect）→ S2C_AttackResult 命中外观。
-    if (skillIdx != null && aim) {
+    // ⚠ 上报的是**数字 skillId**（`it.row` 已保证身份存在 —— 查不到就不发，宁可这一击不结算）
+    if (aim) {
       const aimId = [...monsters.entries()].find(([, m]) => m.root === aim)?.[0];
-      if (aimId != null) opts?.onCastSkill?.(skillIdx, aimId);
+      if (aimId != null) opts?.onCastSkill?.(it.skillId, aimId);
     }
-    return playSkillByIcon(bind.iconFile + '.bmp', aim);
+    return playSkillByIcon(it.row.iconFile, aim);
   }
 
   // 相机跟随角色（/pt/maps/ updateDummy 同款，Winmain.cpp 卫星相机）
@@ -2285,32 +2297,117 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return true;
   }
 
-  /** 该节点是不是某只怪（按 `monsters` 的 root 身份判定 —— 比拿高亮颜色当类型判据稳） */
-  function isMonsterRoot(root: THREE.Object3D): boolean {
-    for (const m of monsters.values()) if (m.root === root) return true;
-    return false;
+  /**
+   * 该拳此刻的**施法意图** —— 绑定链的唯一判定（`game/skillBinding.fistIntentOf`），
+   * `fistCastTarget`（打光标下的怪）、`playEquippedSkill`（放出来）、`tryNoTargetCast`（右键即时施放）
+   * 与追踪循环的出手都读它，免得四处各写一遍判定再各自漂移（AGENTS #15）。
+   *
+   * `job` 取自已下发的 `S2C_CharacterStatus`（`selfJobId`）；**还没有职业就返回 unknown**
+   * （不再 `?? 'fighter'` 拿别的职业的目录去解析 —— 那会把异职业绑定当成本职业的）。
+   */
+  function fistIntent(slot: 'left' | 'right'): FistIntent {
+    const snap = getGameSnapshot();
+    return fistIntentOf(snap.skillBindings, snap.character?.job ?? null, slot);
+  }
+
+  /**
+   * 自身职业目录名（施法链用）—— 取已下发的 `S2C_CharacterStatus.job`；**查不到就 null**（并上报），
+   * **不 `?? 'fighter'`**：拿一个默认职业去解析技能，会把别职业的技能当成本职业的（AGENTS #12）。
+   */
+  function selfClassDir(): string | null {
+    const job = getGameSnapshot().character?.job ?? null;
+    if (job == null) {
+      reportFallback('job.unknown', '自身职业未下发（S2C_CharacterStatus 未到）⇒ 不按任何职业处理');
+      return null;
+    }
+    const dir = CLASS_DIR[job];
+    if (!dir) {
+      reportFallback('job.unknown', `自身职业号 ${job} 没有对应目录（1..11 之外）⇒ 不按任何职业处理`);
+      return null;
+    }
+    return dir;
+  }
+
+  /**
+   * 该拳此刻能放的技能（`null` = **这一击不是技能**：未绑 / 村庄 / 表还没到 / 绑的不是本职业的）。
+   *
+   * ⚠ 四种"不是技能"的原因**不能混**：`normal`（未绑）与村庄是**规格**（源码 `lpAttackSkill = 0`
+   * ⇒ 普通攻击，`playmain.cpp:2316-2317`），而 `unknown`（绑定表没到）与 `invalid`（异职业/查不到）
+   * 是**异常**：调用方要**什么都不做**并已由 `fistIntentOf` 上报，**不许**当成"没绑定"再退化普攻
+   * （AGENTS #12 明令：把异职业绑定当没绑定属兜底）。
+   */
+  function fistSkillOf(slot: 'left' | 'right'): { icon: string; skillId: number } | null {
+    const it = fistIntent(slot);
+    if (it.kind !== 'skill') return null;
+    // 动画链的键仍是**图标名**（`skillIndexByIcon` 那套，本轮不动）；身份行给出它的唯一来源
+    return { icon: it.row.iconFile, skillId: it.skillId };
+  }
+
+  /**
+   * 该拳此刻能不能"打光标下的怪"：**有绑定（同职业）+ 光标下有怪 + 有数字身份**；缺一返回 null ⇒
+   * 落回该键原有行为（不吞掉走路/选目标）。
+   *
+   * 瞄准**用点击这一下自己的判定**（`nameplateTargetAt ?? pickTargetAt`，与 `onGroundTap` 同一套）——
+   * 原版也是点击时取 `lpCharSelPlayer`/`lpCharMsTrace`（`Winmain.cpp:2994`）。
+   * ⚠ 早先这里读的是逐帧探测的 `hoverTarget`（15Hz 采样 + 位置滞后）⇒ 点得到怪却可能因为
+   * "探测还停在上一处"而**静默不施法**（用户 2026-09-23 报"技能音效没了"的一类）。
+   *
+   * ⚠ 右键的调用点在 `tryNoTargetCast()` **之后**（原版顺序：先试即时施放，失败才落到打人）；
+   *   左键的调用点就是它的全部语义（原版左键只有"有目标 → 进攻击循环"这一岔）。
+   */
+  function fistCastTarget(slot: 'left' | 'right', cx: number, cy: number): THREE.Object3D | null {
+    if (!fistSkillOf(slot)) return null;
+    const tag = nameplateTargetAt(cx, cy) ?? pickTargetAt(cx, cy);    // 与点击同一判定（唯一实现）
+    if (!tag || tag.kind !== 'monster') return null;
+    return monsters.get(tag.id)?.root ?? null;
+  }
+
+  /**
+   * 右键的**第一件事**：试"无目标施放"（原版 `OpenPlaySkill`，`SkillSub.cpp:29`；
+   * 调用点 `Winmain.cpp:3080-3090`）。**与光标下有没有怪无关** —— 自身 buff / 自身中心 AoE
+   * 只有这条路放得出来（原版那批 `case` 里有一批守卫就是"必须没选中角色"）。
+   *
+   * 顺序照源码：① 不在施法/攻击/进食动作里（调用点的 `State != ATTACK && != SKILL` + `!= EAT`）
+   * ② 有绑定且是本职业 ③ `noTargetCastBlock` 的四道闸门（村庄/职业/名单/技能等级）
+   * ④ **先播动画、后发包**、不等回包；**播放层自己拦下的**（`playSkillByIcon` 的
+   * "该技能必须有目标"门，用户 2026-09-18 定）不算放出去 —— 不发包，退回"打光标下的怪"。
+   * @returns true = 已施放（调用方必须**直接结束**，不再进"用右拳打怪"那条路）
+   */
+  function tryNoTargetCast(): boolean {
+    if (!animState) return false;
+    const st = animState.getCurrentState();
+    if (st === STATE.ATTACK || st === STATE.SKILL || st === STATE.EAT) return false;
+    const fs = fistSkillOf('right');                 // 绑定/职业/身份：缺一不放
+    if (!fs) return false;
+    // 职业目录：查不到（职业未下发 / 号不在 1..11）⇒ **不放**并上报，不 `?? 'fighter'` 拿别职业顶上
+    const selfClass = selfClassDir();
+    if (selfClass == null) return false;
+    if (noTargetCastBlock(fs.skillId, selfClass, isVillageMap(currentMapId)) != null) return false;
+    // ① 本地先播（原版 BeginSkill/SetMotion 在发包之前）。播不出来（连普攻都找不到）⇒ 这一击不算放出去
+    if (!playSkillByIcon(fs.icon, null)) return false;
+    opts?.onCastSkill?.(fs.skillId, 0);              // ② 再发 C2S_UseSkill(skillId, targetId=0)，不等回包
+    return true;
   }
 
   function onMouseDown(e: MouseEvent): void {
     if (isInputBlocked()) return;   // 加载页/遮罩期间不接收世界点击（不把正确性押在 DOM 叠放上）
-    // [调试] Alt/Shift+点击 → 原地播放左/右拳装备的技能动画（不移动、不选目标）
-    if (SKILL_DEBUG && (e.altKey || e.shiftKey) && e.button === 0) {
-      const slot = e.altKey ? 'left' : 'right';
-      e.preventDefault();
-      // 瞄准 = **已有的 hover 目标**（你看到高亮的那只怪）—— 不自己再挑一次判据，
-      // 也不依赖 `selfAttackTargetId`（那是自动攻击循环在射程内才赋的值，见其声明处说明）。
-      const aim = hoverTarget && isMonsterRoot(hoverTarget.root) ? hoverTarget.root : null;
-      // 诊断（用户要求）：把 hover 目标与解析结果都打出来 —— 一次定位，免得来回猜
-      const ht = hoverTarget?.root;
-      const aimId = aim ? [...monsters.entries()].find(([, m]) => m.root === aim)?.[0] : null;
-      console.log('[WorldView][dbg] 施法瞄准：hoverTarget='
-        + (ht ? `${ht.name || '(无名)'}@(${ht.position.x.toFixed(1)},${ht.position.y.toFixed(1)},${ht.position.z.toFixed(1)})` : 'null')
-        + ` isMonster=${ht ? isMonsterRoot(ht) : false}`
-        + ` ⇒ aim=${aim ? `monster#${aimId}` : 'null'}`
-        + ` selfPos=(${selfPos.x.toFixed(1)},${selfPos.y.toFixed(1)},${selfPos.z.toFixed(1)})`);
-      if (!aim) console.log('[WorldView][dbg] Shift/Alt+点击：光标下没有怪 ⇒ 无目标施放（原版此情形不施放）');
-      playEquippedSkill(slot, aim);
-      return;
+    // 真·左右键施法（左键=左拳、右键=右拳）；右键在药水槽/面板还要用 ⇒ 只 preventDefault、不阻断传播
+    if (e.button === 0 || e.button === 2) {
+      const slot = e.button === 0 ? 'left' : 'right';
+      // 右键：**先试无目标施放**，成功即结束（原版 Winmain.cpp:3087-3088 的 `break` 跳过打人那条路）。
+      // ⚠ 左键**没有**这条路（原版左键分支根本不看拳位，只有"进攻击循环/走路"两岔）。
+      if (e.button === 2 && tryNoTargetCast()) { e.preventDefault(); return; }
+      const aim = fistCastTarget(slot, e.clientX, e.clientY);
+      if (aim) {
+        e.preventDefault();
+        playEquippedSkill(slot, aim);
+        // ⚠ **左键不 return**：原版这一岔是 `SelMouseButton = 1; TraceAttackPlay();`（`Winmain.cpp:2994-2996`）
+        //   —— 施法**与**"选中这只怪去追打"是同一件事的两个后果（技能由攻击循环逐次放出，
+        //   见 `playmain.cpp:2474` 的 `PlaySkillAttack(lpAttackSkill, …)`）。早先这里直接 return，
+        //   于是"点怪放技能"之后并不进入战斗循环（也就不再有后续的技能音）。
+        //   右键保持 return（源码那条 `break` 只跳"打人"分支）。
+        if (e.button === 2) return;
+      } else if (e.button === 2) { e.preventDefault(); return; }   // 右键也放不出、光标下也没怪：什么都不做（原版同）
     }
     if (e.button === 0) {
       // 指向可交互目标（掉落物/怪物/玩家/NPC）：整次按压都视为"点击目标"，禁用按住跑，
@@ -4683,15 +4780,26 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
-   * 这只怪是不是**我自己召唤出来的**（`owner_entity_id == 自机实体 id`）。
+   * 这只怪是不是**玩家召唤出来的**（`owner_entity_id > 0`）—— 用来禁止对它发起攻击。
    *
-   * 用途只有一个：**不能攻击自己的召唤物** —— 原版 `PlayMain.cpp` 的 `attack_UserMonster` 闸门
-   * （非 PkMode 下点自己的召唤物时 `attack = 0`，但**治疗类技能仍可指向它**）。
-   * 服务端另有保护（召唤物只打怪、怪只打玩家/召唤物），这里挡的是"客户端自己发攻击请求"。
+   * 原版（`SrcGame/src/playmain.cpp:2380-2387`）：
+   * <pre>
+   *   if (lpCharMsTrace->smCharInfo.State == smCHAR_STATE_ENEMY &amp;&amp; lpCharMsTrace->smCharInfo.Brood == smCHAR_MONSTER_USER)
+   *       if (!PkMode) { attack_UserMonster = TRUE; attack = 0; }
+   * </pre>
+   * ⚠ 那句**没有"是不是我的"判断** —— `attack = 0` 对**任何人的**召唤物都生效，只有 PkMode 下才放行；
+   * 而**我们客户端没有 PkMode**（全仓搜不到）⇒ 等于**一律不可攻击**。
+   * 我上一版只挡了自己那只（当时的函数名还叫 `isOwnSummonId`），于是别人的召唤兽点上去就能打
+   * （用户 2026-09-23 报的现象）。
+   *
+   * 配套的原版规则（我们暂缺对应路径，记在这里备查）：自动索敌 `agFindAttack` **排除**所有
+   * `MONSTER_USER`（`ActionGame.cpp:325`，我们没有空格自动索敌）；友方技能索敌 `agFindUser`
+   * **包含**它（`:381`）；治疗技能可指向召唤物（`playmain.cpp:2394`，我们技能效果还没接）。
+   * 服务端也补了一道同样的拒绝（`CombatService` 三条攻击入口），改包也打不了。
    */
-  function isOwnSummonId(monsterId: number): boolean {
+  function isSummonMonster(monsterId: number): boolean {
     const a = monsters.get(monsterId);
-    return !!a && a.ownerEntityId > 0 && a.ownerEntityId === selfPlayerId;
+    return !!a && a.ownerEntityId > 0;
   }
 
   /** 按当前偏好重算"哪些怪参与渲染与骨骼求值"，并把结果写到 actor.culled / root.visible */
@@ -6073,22 +6181,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 动画驱动：进入攻击距离后挥拳，挥拳播完（onAnimationEnd→STAND）自动下一击；不挂定时器。
     // 攻速→挥拳时长镜像服务端公式；离 ATTACK 态复原基准步进（见上方自机动画推进）。
     if (monsterEngaged && moveTarget && moveTarget.kind === 'monster' && !falling && charGroup
-        && !isOwnSummonId(moveTarget.id)) {
+        && !isSummonMonster(moveTarget.id)) {
       charGroup.rotation.y = selfAngle; // 面向目标（停步时 updateMovement 不接管旋转）
       const st = animState?.getCurrentState();
       // EAT 也在内：喝药期间不能起手攻击（原版 playmain.cpp:1744 屏蔽的正是 ATTACK/EAT/SKILL 三者）。
       const busy = st === animState?.STATE.ATTACK || st === animState?.STATE.SKILL
         || st === animState?.STATE.DAMAGE || st === animState?.STATE.EAT;
-      if (!busy && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
-        // 非攻击/技能/受击中，且已过起手闸门（镜像服务端冷却）→ 发起下一次挥拳（普攻动画）
-        if (animState.triggerAttack(true)) {
+      // **这一击用哪个技能** = 左拳绑定（原版 `playmain.cpp:2300-2313` 的 `SelMouseButton → lpAttackSkill`，
+      // 再由 `:2474` 的 `PlaySkillAttack(lpAttackSkill, …)` 起手）；未绑/村庄 ⇒ 普通攻击
+      // （源码 `lpAttackSkill = 0`，`:2316-2317`）。
+      // ⚠ 绑定表没到（unknown）/ 绑的不是本职业的技能（invalid）⇒ **这一击不起手**（AGENTS #12：
+      // 不许当成"没绑定"再退化普攻 —— 那正是"把异职业绑定当没绑定"的兜底）。
+      // 判据放**条件里**（不是 `return`）：本帧后面还有许多别的更新要走。
+      const it = isVillageMap(currentMapId) ? { kind: 'normal' as const } : fistIntent('left');
+      const bindBroken = it.kind === 'unknown' || it.kind === 'invalid';
+      if (!busy && !bindBroken && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
+        const sk = it.kind === 'skill' ? { icon: it.row.iconFile, skillId: it.skillId } : null;
+        selfTrailSkillIndex = null;   // T1：默认不染色（技能那一支由 `playSkillByIcon` 自己设成该技能下标）
+        const played = sk ? playSkillByIcon(sk.icon, monsters.get(moveTarget.id)?.root ?? null)
+          : animState.triggerAttack(true);
+        if (played) {
           lastSelfAttackStartMs = rafMs;
-          selfTrailSkillIndex = null;   // T1：新一轮普攻挥击 → 残影不染色
           const m = animState.getCurrentMotion();
           const targetId = moveTarget.id;
+          // 技能那一击的**结算**走技能包（原版 `PlaySkillAttack` 里的 `dm_SendTransDamage` 同义）；
+          // 普攻那一支仍由下面的逐帧 `onAttackHit` 结算 —— 两者互斥（技能态不进 ATTACK 的事件帧分支）。
+          if (sk) opts?.onCastSkill?.(sk.skillId, targetId);
           if (m) {
-            selfAnimRate = attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
-            // 记录本次挥拳的命中帧（非零 eventFrame，相对 startFrame×160；原版最多 4 段）
+            // 技能动作按**自身时长**播（原版每个技能自带 `MotionLoopSpeed`）；普攻才按攻速换算速率
+            selfAnimRate = animState.getCurrentState() === STATE.SKILL
+              ? 1 : attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
+            // 记录本次出手的命中帧（非零 eventFrame，相对 startFrame×160；原版最多 4 段）
             selfAttackMotion = m;
             selfAttackTargetId = targetId;
             selfAttackEventFrames = Array.from(m.eventFrame).filter((f) => f > 0);

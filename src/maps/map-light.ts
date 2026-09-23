@@ -26,11 +26,23 @@ const DUNGEON_DEFAULT = new Set([13, 14, 15, 16, 32, 36, 42, 43]);
 // 村庄（field.cpp State=VILLAGE，仅这两图），夜间地形色减半
 const VILLAGE_IDS = new Set([3, 21]);
 
+/**
+ * 该图是不是**村庄**（原版 `Field[x].State == FIELD_STATE_VILLAGE`，`field.cpp:534 / :992`）。
+ * 唯一出口：`mapLightProfile` 与"村庄禁技能"（原版 `SkillSub.cpp:41` / `playmain.cpp:2316`）都查这里，
+ * 别再各写一份表。
+ * ⚠ 与 `game/safeZones.ts` 的 `isSafeMap` **不是同一件事**：那个是服务端按 DB
+ * `maplist.typemap='Cities'` 下发的 **6** 张城（多出 navisko / eura / atlantis / ba），
+ * 而这里判的是 `field.cpp` 的 Field State（**只有 2 张**）。
+ */
+export function isVillageMap(mapId: number): boolean {
+  return VILLAGE_IDS.has(mapId);
+}
+
 export function mapLightProfile(mapId: number): MapLightProfile {
   const f = DUNGEON_FIXED[mapId];
   if (f || DUNGEON_DEFAULT.has(mapId)) {
     const [dark, back] = f ?? [110, [0, 0, 0] as [number, number, number]];
     return { mode: 'fixed', village: false, dark, back };
   }
-  return { mode: 'daynight', village: VILLAGE_IDS.has(mapId), dark: 0, back: [0, 0, 0] };
+  return { mode: 'daynight', village: isVillageMap(mapId), dark: 0, back: [0, 0, 0] };
 }

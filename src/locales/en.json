@@ -248,12 +248,10 @@
     "equipLeft": "Equipped: Left Fist",
     "equipRight": "Equipped: Right Fist",
     "quickKey": "Hotkey",
-    "lvUp": "Skill level +1",
-    "lvDown": "Skill level -1",
-    "lvAuto": "Level auto-inferred (click center number to set 0~10 manually)",
-    "lvReset": "Clear manual level, back to auto-inferred",
-    "dbgWeapon": "Debug weapon:",
-    "dbgReset": "Reset skill levels",
+    "learn": "Learn",
+    "learnNoList": "Skill table not loaded — cannot spend points yet",
+    "bindNoList": "Bindings not loaded — cannot change binds yet",
+    "noClass": "No skill table for this class",
     "martial": {
       "tma10_lowkick": {
         "name": "Lowkick"
@@ -315,6 +313,29 @@
       "tma14_dbblow": {
         "name": "Double Blow"
       }
+    }
+  },
+  "skill": {
+    "op": {
+      "unknownSkill": "Unknown skill",
+      "noSkillTree": "No skill tree for this class",
+      "wrongJob": "Not a skill of this class",
+      "slotLocked": "This skill is not open yet",
+      "prevNotLearned": "Learn the previous skill first",
+      "levelTooLow": "Level too low",
+      "maxPoint": "Skill level cap reached",
+      "noSkillPoint": "Not enough skill points",
+      "noGold": "Not enough gold",
+      "resetUsed": "Skill points already reset this login"
+    },
+    "bind": {
+      "badKind": "Unknown bind slot",
+      "badIndex": "Bind slot out of range",
+      "noSkillTree": "No skill tree for this class",
+      "unknownSkill": "Unknown skill",
+      "wrongJob": "Not a skill of this class",
+      "notBindable": "This skill cannot be bound",
+      "wrongFist": "This skill cannot go on that fist"
     }
   },
   "item": {

@@ -1,0 +1,324 @@
+{
+ "note": "右键\"无目标施放\"技能名单（生成物，勿手改；重生用 `npm run openplay-skills`）。来源 = .refsrc/tree/SkillSub.cpp 的 int OpenPlaySkill(sSKILL*)（第 29 行）内 switch (lpSkill->Skill_Info.CODE)（第 52 行）到其闭合 }（第 1334 行） 之间**花括号深度 = 1** 的全部 case SKILL_*。 判据与\"为什么不是行号窗口切出的 57 条\"见 scripts/openplay-scan.ts 头注释； 逐行调研与闸门出处见 docs/技能施法-原版流程.md。 ⚠ 同文件 GetSkillDistRange（射程表）也是 case SKILL_*，是**另一个函数里的另一个 switch**（其分支与本名单**本来就会重叠**，故\"不相交\"不是判据）；它的边界记在 excludedOtherSwitch 里供复核。 ⚠ 名单只回答\"这个技能**能不能**无目标放\"，**不含**源码每个 case 自己的守卫（如 SKILL_TRIUMPH_OF_VALHALLA 要求\"没选中任何角色\"）—— 那部分本轮未实现。",
+ "source": ".refsrc/tree/SkillSub.cpp",
+ "function": "OpenPlaySkill",
+ "funcLine": 29,
+ "funcEndLine": 1339,
+ "switchLine": 52,
+ "switchEndLine": 1334,
+ "count": 65,
+ "excludedOtherSwitch": {
+  "function": "GetSkillDistRange",
+  "switchLine": 1354,
+  "switchEndLine": 1485,
+  "cases": [
+   "SKILL_MECHANIC_BOMB",
+   "SKILL_SPARK",
+   "SKILL_EXPANSION",
+   "SKILL_VENGEANCE",
+   "SKILL_TORNADO",
+   "SKILL_SWORD_BLAST",
+   "SKILL_SHIELD_STRIKE",
+   "SKILL_HEALING",
+   "SKILL_HOLY_BOLT",
+   "SKILL_MULTISPARK",
+   "SKILL_HOLY_MIND",
+   "SKILL_DIVINE_LIGHTNING",
+   "SKILL_FIRE_BOLT",
+   "SKILL_FIRE_BALL",
+   "SKILL_WATORNADO",
+   "SKILL_ENCHANT_WEAPON",
+   "SKILL_DEAD_RAY",
+   "SKILL_HOLY_INCANTATION",
+   "SKILL_VIGOR_BALL",
+   "SKILL_TRIUMPH_OF_VALHALLA",
+   "SKILL_PERFORATION",
+   "SKILL_VIRTUAL_LIFE"
+  ]
+ },
+ "nestedCasesInBody": [],
+ "join": {
+  "tableRows": 220,
+  "matched": 65,
+  "missing": [],
+  "notDefinedInSinSkillH": [],
+  "byUseCode": {
+   "RIGHT": 64,
+   "NOT": 1
+  },
+  "byClassDir": {
+   "mecha": 10,
+   "pikeman": 5,
+   "archer": 5,
+   "fighter": 4,
+   "knight": 6,
+   "atalanta": 4,
+   "priestess": 9,
+   "magician": 9,
+   "assassin": 5,
+   "shaman": 8
+  }
+ },
+ "macros": [
+  {
+   "macro": "SKILL_EXTREME_SHIELD",
+   "line": 55
+  },
+  {
+   "macro": "SKILL_PHYSICAL_ABSORB",
+   "line": 71
+  },
+  {
+   "macro": "SKILL_POISON_ATTRIBUTE",
+   "line": 95
+  },
+  {
+   "macro": "SKILL_PIKE_WIND",
+   "line": 105
+  },
+  {
+   "macro": "SKILL_SCOUT_HAWK",
+   "line": 131
+  },
+  {
+   "macro": "SKILL_MAXIMIZE",
+   "line": 149
+  },
+  {
+   "macro": "SKILL_AUTOMATION",
+   "line": 166
+  },
+  {
+   "macro": "SKILL_GROUND_PIKE",
+   "line": 185
+  },
+  {
+   "macro": "SKILL_VENOM_SPEAR",
+   "line": 211
+  },
+  {
+   "macro": "SKILL_VANISH",
+   "line": 230
+  },
+  {
+   "macro": "SKILL_FALCON",
+   "line": 251
+  },
+  {
+   "macro": "SKILL_GOLDEN_FALCON",
+   "line": 273
+  },
+  {
+   "macro": "SKILL_ROAR",
+   "line": 297
+  },
+  {
+   "macro": "SKILL_CONCENTRATION",
+   "line": 324
+  },
+  {
+   "macro": "SKILL_SWIFT_AXE",
+   "line": 343
+  },
+  {
+   "macro": "SKILL_METAL_ARMOR",
+   "line": 364
+  },
+  {
+   "macro": "SKILL_SPARK_SHIELD",
+   "line": 389
+  },
+  {
+   "macro": "SKILL_HOLY_BODY",
+   "line": 421
+  },
+  {
+   "macro": "SKILL_HOLY_VALOR",
+   "line": 445
+  },
+  {
+   "macro": "SKILL_DRASTIC_SPIRIT",
+   "line": 459
+  },
+  {
+   "macro": "SKILL_DIVINE_INHALATION",
+   "line": 474
+  },
+  {
+   "macro": "SKILL_WINDY",
+   "line": 499
+  },
+  {
+   "macro": "SKILL_TRIUMPH_OF_VALHALLA",
+   "line": 512
+  },
+  {
+   "macro": "SKILL_HEALING",
+   "line": 537
+  },
+  {
+   "macro": "SKILL_DIVINE_LIGHTNING",
+   "line": 564
+  },
+  {
+   "macro": "SKILL_HOLY_REFLECTION",
+   "line": 582
+  },
+  {
+   "macro": "SKILL_GRAND_HEALING",
+   "line": 593
+  },
+  {
+   "macro": "SKILL_RESURRECTION",
+   "line": 613
+  },
+  {
+   "macro": "SKILL_EXTINCTION",
+   "line": 625
+  },
+  {
+   "macro": "SKILL_VIRTUAL_LIFE",
+   "line": 643
+  },
+  {
+   "macro": "SKILL_AGONY",
+   "line": 661
+  },
+  {
+   "macro": "SKILL_ZENITH",
+   "line": 681
+  },
+  {
+   "macro": "SKILL_ENCHANT_WEAPON",
+   "line": 703
+  },
+  {
+   "macro": "SKILL_ENERGY_SHIELD",
+   "line": 725
+  },
+  {
+   "macro": "SKILL_DIASTROPHISM",
+   "line": 745
+  },
+  {
+   "macro": "SKILL_SPIRIT_ELEMENTAL",
+   "line": 765
+  },
+  {
+   "macro": "SKILL_DANCING_SWORD",
+   "line": 786
+  },
+  {
+   "macro": "SKILL_COMPULSION",
+   "line": 813
+  },
+  {
+   "macro": "SKILL_MAGNETIC_SPHERE",
+   "line": 837
+  },
+  {
+   "macro": "SKILL_METAL_GOLEM",
+   "line": 858
+  },
+  {
+   "macro": "SKILL_BERSERKER",
+   "line": 880
+  },
+  {
+   "macro": "SKILL_VAGUE",
+   "line": 904
+  },
+  {
+   "macro": "SKILL_RECALL_WOLVERIN",
+   "line": 926
+  },
+  {
+   "macro": "SKILL_FORCE_OF_NATURE",
+   "line": 947
+  },
+  {
+   "macro": "SKILL_GODLY_SHIELD",
+   "line": 972
+  },
+  {
+   "macro": "SKILL_GOD_BLESS",
+   "line": 992
+  },
+  {
+   "macro": "SKILL_HALL_OF_VALHALLA",
+   "line": 1013
+  },
+  {
+   "macro": "SKILL_FROST_JAVELIN",
+   "line": 1039
+  },
+  {
+   "macro": "SKILL_REGENERATION_FIELD",
+   "line": 1060
+  },
+  {
+   "macro": "SKILL_SUMMON_MUSPELL",
+   "line": 1080
+  },
+  {
+   "macro": "SKILL_FIRE_ELEMENTAL",
+   "line": 1102
+  },
+  {
+   "macro": "SKILL_ALAS",
+   "line": 1123
+  },
+  {
+   "macro": "SKILL_CURSELAZY",
+   "line": 1136
+  },
+  {
+   "macro": "SKILL_C_HUNT",
+   "line": 1151
+  },
+  {
+   "macro": "SKILL_A_MIGAL",
+   "line": 1166
+  },
+  {
+   "macro": "SKILL_R_MAKER",
+   "line": 1178
+  },
+  {
+   "macro": "SKILL_L_GHOST",
+   "line": 1191
+  },
+  {
+   "macro": "SKILL_R_KNIGHT",
+   "line": 1205
+  },
+  {
+   "macro": "SKILL_A_MIDRANDA",
+   "line": 1219
+  },
+  {
+   "macro": "SKILL_M_PRAY",
+   "line": 1231
+  },
+  {
+   "macro": "SKILL_S_SHOCK",
+   "line": 1245
+  },
+  {
+   "macro": "SKILL_INPES",
+   "line": 1260
+  },
+  {
+   "macro": "SKILL_BLIND",
+   "line": 1273
+  },
+  {
+   "macro": "SKILL_POLLUTED",
+   "line": 1286
+  },
+  {
+   "macro": "SKILL_DISTORTION",
+   "line": 1307
+  }
+ ]
+}

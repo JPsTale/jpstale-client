@@ -1,0 +1,4145 @@
+{
+ "note": "原版\"这一招用哪条动作 + 音从哪来\"，由 scripts/extract-skill-motion-src.ts 从 SkillSub.cpp（起手动作选择）与 character.cpp 的 EventSkill（事件帧音效）机械提取。生成物，勿手改。motionSrc: attack/skill/mixed(按技能等级)/null(源无此招)；eventSfx: skill(事件帧专属 wav)/weapon(事件帧落回武器挥击音)/none(事件帧无音)。",
+ "source": {
+  "skillSub": {
+   "path": ".refsrc/SkillSub.cpp",
+   "md5": "468de9f003858c24160d4ab2897de420"
+  },
+  "character": {
+   "path": ".refsrc/character.cpp",
+   "md5": "9f516cc3958eaec248c814a76f4f1f8b"
+  }
+ },
+ "rows": [
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf10 m_mastery.bmp",
+   "name": "Melee Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf12 f_attribute.bmp",
+   "name": "Fire Attribute",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf14 raving.bmp",
+   "name": "Raving",
+   "motionSrc": "attack",
+   "motionLines": [
+    1814,
+    1815,
+    1856
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "weapon",
+   "sounds": [],
+   "weaponSfx": true,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    15338
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf17 impact.bmp",
+   "name": "Impact",
+   "motionSrc": "mixed",
+   "motionLines": [
+    1863,
+    1867,
+    1889
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "weapon",
+   "sounds": [],
+   "weaponSfx": true,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    15365
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf20 t_impact.bmp",
+   "name": "Triple Impact",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2380,
+    2390,
+    2397,
+    2402,
+    2425
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "weapon",
+   "sounds": [],
+   "weaponSfx": true,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15784
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf23 b_swing.bmp",
+   "name": "Brutal Swing",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2432,
+    2436,
+    2455
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING1",
+     "file": "wav/effects/skill/skill_swing 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15815,
+    15819
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf26 roar.bmp",
+   "name": "Roar",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf30 r_zecram.bmp",
+   "name": "Rage of Zecram",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2465,
+    2469,
+    2488
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_RAGE_OF_ZECRAM1",
+     "file": "wav/effects/skill/tempskron/roz 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15840
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf40 concentration.bmp",
+   "name": "Concentration",
+   "motionSrc": "skill",
+   "motionLines": [
+    332
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf43 a_crash.bmp",
+   "name": "Avenging Crash",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf46 s_axe.bmp",
+   "name": "Swiftness",
+   "motionSrc": "skill",
+   "motionLines": [
+    351
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf50 b_crash.bmp",
+   "name": "Bone Crash",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2533,
+    2537,
+    2556
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf60 destoryer.bmp",
+   "name": "Destroyer",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVANGING_CRASH",
+     "file": "wav/effects/skill/tempskron/avengingcrash 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXPANSION2",
+     "file": "wav/effects/skill/tempskron/expansion 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": 13,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16611,
+    16613,
+    16619
+   ]
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf63 berserker.bmp",
+   "name": "Berserker",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf66 c_strike.bmp",
+   "name": "Cyclone Strike",
+   "motionSrc": "skill",
+   "motionLines": [
+    3490
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf70 b_health.bmp",
+   "name": "Boost Health",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf100 survival_instinct.bmp",
+   "name": "Charge",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf103 sesmic_impact.bmp",
+   "name": "Inner Soul",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf106 ruthless_zecram.bmp",
+   "name": "Hellion",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 1,
+   "classDir": "fighter",
+   "icon": "tf110 whirlwind.bmp",
+   "name": "Flame Vortex",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm10 ex_shield.bmp",
+   "name": "Extreme Shield",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm12 m_bomb.bmp",
+   "name": "Mechanic Bomb",
+   "motionSrc": "skill",
+   "motionLines": [
+    1803
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_MECHANIC_BOMB1",
+     "file": "wav/effects/skill/tempskron/mechanic_bomb 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15319
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm14 p_attribute.bmp",
+   "name": "Reverse Engineering",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm17 ph_absorb.bmp",
+   "name": "Physical Absorption",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm20 g_smash.bmp",
+   "name": "Great Smash",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2060,
+    2065,
+    2090
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING1",
+     "file": "wav/effects/skill/skill_swing 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15416
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm23 maximize.bmp",
+   "name": "Maximize",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm26 automation.bmp",
+   "name": "Automation",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm30 spark.bmp",
+   "name": "Spark",
+   "motionSrc": "skill",
+   "motionLines": [
+    2105
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK2",
+     "file": "wav/effects/skill/tempskron/spark 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15440
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm40 m_armor.bmp",
+   "name": "Metal Armor",
+   "motionSrc": "skill",
+   "motionLines": [
+    374
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm43 grand_smash.bmp",
+   "name": "Grand Smash",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2116,
+    2121,
+    2145
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING2",
+     "file": "wav/effects/skill/skill_swing 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": 13,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15452,
+    15458
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm44 m_weapon.bmp",
+   "name": "Mechanic Weapon Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm50 s_shield.bmp",
+   "name": "Spark Shield",
+   "motionSrc": "skill",
+   "motionLines": [
+    399
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK3",
+     "file": "wav/effects/skill/tempskron/spark 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15484
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm60 impulsion.bmp",
+   "name": "Impulsion",
+   "motionSrc": "skill",
+   "motionLines": [
+    3452
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_IMPULSION",
+     "file": "wav/effects/skill/tempskron/impulsion 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE2",
+     "file": "wav/effects/skill/tempskron/chainlance 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16570,
+    16572
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm63 compulsion.bmp",
+   "name": "Compulsion",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm66 m_sphere.bmp",
+   "name": "Magnetic Sphere",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPARK3",
+     "file": "wav/effects/skill/tempskron/spark 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16588
+   ]
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm70 m_golem.bmp",
+   "name": "Metal Golem",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm100 rupture.bmp",
+   "name": "Precision",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm103 parasit_shot.bmp",
+   "name": "Trine Shield",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm106 hardening_shield.bmp",
+   "name": "Gravitation",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 2,
+   "classDir": "mecha",
+   "icon": "tm110 magnetic_discharge.bmp",
+   "name": "Obliterate",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta10 s_hawk.bmp",
+   "name": "Scout Hawk",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta12 s_mastery.bmp",
+   "name": "Shooting Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta14 w_arrow.bmp",
+   "name": "Wind Arrow",
+   "motionSrc": "attack",
+   "motionLines": [
+    1973,
+    1977,
+    2001
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_WIND_ARROW",
+     "file": "wav/effects/skill/tempskron/wind_arrow 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15393
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta17 p_aim.bmp",
+   "name": "Perfect Aim",
+   "motionSrc": "attack",
+   "motionLines": [
+    2017,
+    2019,
+    2050
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_PERFECT_AIM",
+     "file": "wav/effects/skill/tempskron/perfect aim 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15403
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta20 d_eye.bmp",
+   "name": "Dion's Eye",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta23 falcon.bmp",
+   "name": "Falcon",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta26 a_rage.bmp",
+   "name": "Arrow of Rage",
+   "motionSrc": "skill",
+   "motionLines": [
+    2231
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_WIND_ARROW",
+     "file": "wav/effects/skill/tempskron/wind_arrow 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15646
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta30 avalanchie.bmp",
+   "name": "Avalanche",
+   "motionSrc": "attack",
+   "motionLines": [
+    2246,
+    2247,
+    2270
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVALANCHE1",
+     "file": "wav/effects/skill/tempskron/avalanche 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVALANCHE2",
+     "file": "wav/effects/skill/tempskron/avalanche 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVALANCHE3",
+     "file": "wav/effects/skill/tempskron/avalanche 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15662,
+    15665,
+    15668,
+    15673
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta40 e_shot.bmp",
+   "name": "Elemental Shot",
+   "motionSrc": "attack",
+   "motionLines": [
+    2278,
+    2279,
+    2310
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_ELEMENTAL_SHOT",
+     "file": "wav/effects/skill/tempskron/elementalshot 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15706
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta43 g_falcon.bmp",
+   "name": "Golden Falcon",
+   "motionSrc": "skill",
+   "motionLines": [
+    281
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta46 b_shot.bmp",
+   "name": "Bomb Shot",
+   "motionSrc": "attack",
+   "motionLines": [
+    2317,
+    2318,
+    2337
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BOMB_SHOT1",
+     "file": "wav/effects/skill/tempskron/bombshot 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15728
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta50 perforation.bmp",
+   "name": "Perforation",
+   "motionSrc": "attack",
+   "motionLines": [
+    2344,
+    2345,
+    2372
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_PERFORATION",
+     "file": "wav/effects/skill/tempskron/perforation 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15749
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta60 r_wolverin.bmp",
+   "name": "Wolverine",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_RECALL_WOLVERIN",
+     "file": "wav/effects/skill/tempskron/recallwolverin 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16809
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta63 e_mastery.bmp",
+   "name": "Evasion Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta66 p_shot.bmp",
+   "name": "Phoenix Shot",
+   "motionSrc": "skill",
+   "motionLines": [
+    3555
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_PHOENIX_SHOT",
+     "file": "wav/effects/skill/tempskron/phoenixshot 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16860
+   ]
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta70 f_o_nature.bmp",
+   "name": "Force of Nature",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta100 lethal_sight.bmp",
+   "name": "Stun Arrow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta103 fierce_wind.bmp",
+   "name": "Phoenix Speed",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta106 entailing_roots.bmp",
+   "name": "Leap Shot",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 3,
+   "classDir": "archer",
+   "icon": "ta110 bombardment.bmp",
+   "name": "Solar Arrow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp10 p_wind.bmp",
+   "name": "Pike Wind",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_PIKE_WIND",
+     "file": "wav/effects/skill/tempskron/pike_wind 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15372
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp12 i_attribute.bmp",
+   "name": "Ice Attribute",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp14 cri_hit.bmp",
+   "name": "Critical Hit",
+   "motionSrc": "attack",
+   "motionLines": [
+    1899,
+    1916
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "weapon",
+   "sounds": [],
+   "weaponSfx": true,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    15378
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp17 j_crash.bmp",
+   "name": "Jumping Crash",
+   "motionSrc": "mixed",
+   "motionLines": [
+    1925,
+    1929,
+    1954
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_JUMPING_CRASH2",
+     "file": "wav/effects/skill/tempskron/jumping_crash 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    15383,
+    15384
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp20 g_pike.bmp",
+   "name": "Ground Pike",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_GROUND_PIKE",
+     "file": "wav/effects/skill/tempskron/ground pike 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15498
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp23 tornado.bmp",
+   "name": "Tornado",
+   "motionSrc": "skill",
+   "motionLines": [
+    2161
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_TORNADO1",
+     "file": "wav/effects/skill/tempskron/tornado 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15540
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp26 w_d_mastery.bmp",
+   "name": "Weapon Defense Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp30 expasion.bmp",
+   "name": "Expansion",
+   "motionSrc": "attack",
+   "motionLines": [
+    2564,
+    2566,
+    2592
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXPANSION2",
+     "file": "wav/effects/skill/tempskron/expansion 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    15504,
+    15514
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp40 v_spear.bmp",
+   "name": "Venom Spear",
+   "motionSrc": "skill",
+   "motionLines": [
+    219
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENOM_SPEAR1",
+     "file": "wav/effects/skill/tempskron/venomspear 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENOM_SPEAR2",
+     "file": "wav/effects/skill/tempskron/venomspear 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15555,
+    15559
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp43 vanish.bmp",
+   "name": "Vanish",
+   "motionSrc": "skill",
+   "motionLines": [
+    238
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VANISH2",
+     "file": "wav/effects/skill/tempskron/vanish 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15566
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp46 c_mastery.bmp",
+   "name": "Critical Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp50 c_lance.bmp",
+   "name": "Chain Lancer",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2192,
+    2197,
+    2219
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE1",
+     "file": "wav/effects/skill/tempskron/chainlance 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE2",
+     "file": "wav/effects/skill/tempskron/chainlance 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE3",
+     "file": "wav/effects/skill/tempskron/chainlance 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": 13,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15591,
+    15594,
+    15597,
+    15605
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp60 a_eye.bmp",
+   "name": "Assassin's Eye",
+   "motionSrc": "skill",
+   "motionLines": [
+    3506
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp63 c_strike.bmp",
+   "name": "Charging Strike",
+   "motionSrc": "skill",
+   "motionLines": [
+    3518
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LANCE2",
+     "file": "wav/effects/skill/tempskron/chainlance 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_AVANGING_CRASH",
+     "file": "wav/effects/skill/tempskron/avengingcrash 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHARGING_STRIKE",
+     "file": "wav/effects/skill/tempskron/chargingstrike 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": 13,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16685,
+    16688,
+    16692,
+    16700
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp66 vague.bmp",
+   "name": "Vague",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp70 s_master.bmp",
+   "name": "Shadow Master",
+   "motionSrc": "skill",
+   "motionLines": [
+    3534
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE1",
+     "file": "wav/effects/skill/tempskron/shadowstrike 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE2",
+     "file": "wav/effects/skill/tempskron/shadowstrike 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHADOW_STRIKE3",
+     "file": "wav/effects/skill/tempskron/shadowstrike 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": 13,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16772,
+    16775,
+    16778,
+    16787
+   ]
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp100 ring_spears.bmp",
+   "name": "Attack Rating Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp103 focus.bmp",
+   "name": "Lethal Strike",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp106 death_master.bmp",
+   "name": "Dodge",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 4,
+   "classDir": "pikeman",
+   "icon": "tp110 twister.bmp",
+   "name": "Vorpal Dive",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma10 s_strike.bmp",
+   "name": "Shield Strike",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2775,
+    2779,
+    2802
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHIELDSTRIKE",
+     "file": "wav/effects/skill/morion/shieldspake 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16084
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma12 farina.bmp",
+   "name": "Farina",
+   "motionSrc": "attack",
+   "motionLines": [
+    2816,
+    2818,
+    2851
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FARINA",
+     "file": "wav/effects/skill/morion/farina 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    16098,
+    16100
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma14 t_mastery.bmp",
+   "name": "Throwing Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma17 v_spear.bmp",
+   "name": "Vigor Spear",
+   "motionSrc": "attack",
+   "motionLines": [
+    2866,
+    2868,
+    2886
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIGORSPEAR",
+     "file": "wav/effects/skill/morion/vigorspear 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16092
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma20 windy.bmp",
+   "name": "Windy",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma23 t_javelin.bmp",
+   "name": "Twist Javelin",
+   "motionSrc": "attack",
+   "motionLines": [
+    2901,
+    2903,
+    2925
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_TWISTJAVELIN",
+     "file": "wav/effects/skill/morion/twistjavelin.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    16114,
+    16116
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma26 s_sucker.bmp",
+   "name": "Soul Sucker",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2932,
+    2936,
+    2957
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SOULSUCKER2",
+     "file": "wav/effects/skill/morion/soulsucker 2.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_SHIELDSTRIKE",
+     "file": "wav/effects/skill/morion/shieldspake 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16125,
+    16127
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma30 f_javelin.bmp",
+   "name": "Fire Javelin",
+   "motionSrc": "attack",
+   "motionLines": [
+    2971,
+    2973,
+    2989
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREJAVELIN",
+     "file": "wav/effects/skill/morion/firejavelin 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": true,
+   "soundLines": [
+    16142,
+    16145
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma40 split_javelin.bmp",
+   "name": "Split Javelin",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3003,
+    3036,
+    3047
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPLIT_JAVELIN2",
+     "file": "wav/effects/skill/morion/splitjavelin 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16151
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma43 t_of_valhalla.bmp",
+   "name": "Triumph of Valhalla",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3057,
+    3061,
+    3065
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma46 l_javelin.bmp",
+   "name": "Lightning Javelin",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3079,
+    3084,
+    3095
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_LIGHTNING_JAVELIN1",
+     "file": "wav/effects/skill/morion/lightningjavelin 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_LIGHTNING_JAVELIN2",
+     "file": "wav/effects/skill/morion/lightningjavelin 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16188,
+    16191
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma50 storm_javelin.bmp",
+   "name": "Storm Javelin",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3112,
+    3134,
+    3143
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_STORM_JAVELIN1",
+     "file": "wav/effects/skill/morion/stormjavelin 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_STORM_JAVELIN2",
+     "file": "wav/effects/skill/morion/stormjavelin 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16230,
+    16233
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma60 h_o_valhalla.bmp",
+   "name": "Hall of Valhalla",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma63 x_rage.bmp",
+   "name": "Extreme Rage",
+   "motionSrc": "skill",
+   "motionLines": [
+    3632
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE1",
+     "file": "wav/effects/skill/morion/extremerage 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE2",
+     "file": "wav/effects/skill/morion/extremerage 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_EXTREM_RAGE3",
+     "file": "wav/effects/skill/morion/extremerage 03.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16955,
+    16958,
+    16961
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma66 f_javelin.bmp",
+   "name": "Frost Javelin",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma70 vengeance.bmp",
+   "name": "Vengeance",
+   "motionSrc": "skill",
+   "motionLines": [
+    3649
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENGEANCE1",
+     "file": "wav/effects/skill/morion/vengeance 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VENGEANCE2",
+     "file": "wav/effects/skill/morion/vengeance 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16992,
+    16994
+   ]
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma100 s_tiger.bmp",
+   "name": "Chimera of Light",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma103 golden_apple.bmp",
+   "name": "Poison Javelin",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma106 plague_javelin.bmp",
+   "name": "Amazon Rage",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 5,
+   "classDir": "atalanta",
+   "icon": "ma110 combo_javelin.bmp",
+   "name": "Javelin Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn10 s_blast.bmp",
+   "name": "Sword Blast",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2603,
+    2607,
+    2626
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWORDBLAST2",
+     "file": "wav/effects/skill/morion/swordblast 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15939
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn12 h_body.bmp",
+   "name": "Holy Body",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn14 p_traning.bmp",
+   "name": "Physical Training",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn17 d_crash.bmp",
+   "name": "Double Crash",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2632,
+    2636,
+    2657
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "weapon",
+   "sounds": [],
+   "weaponSfx": true,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15960
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn20 h_valor.bmp",
+   "name": "Holy Valor",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn23 brandish.bmp",
+   "name": "Brandish",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2665,
+    2669,
+    2679
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_BLANDISH2",
+     "file": "wav/effects/skill/morion/brandish 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    15995
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn26 piercing.bmp",
+   "name": "Piercing",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2686,
+    2690,
+    2715
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn30 d_spirit.bmp",
+   "name": "Drastic Spirit",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn40 s_mastery.bmp",
+   "name": "Sword Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn43 d_inhalation.bmp",
+   "name": "Divine Shield",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn46 h_incantation.bmp",
+   "name": "Holy Incantation",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2723,
+    2727,
+    2731
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLY_INCANTATION",
+     "file": "wav/effects/skill/morion/holy incantation 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16030
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn50 g_cross.bmp",
+   "name": "Grand Cross",
+   "motionSrc": "mixed",
+   "motionLines": [
+    2739,
+    2743,
+    2765
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SWING2",
+     "file": "wav/effects/skill/skill_swing 02.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_GRAND_CROSS",
+     "file": "wav/effects/skill/morion/grandcross 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": 13,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16046,
+    16051,
+    16058
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn60 s_o_justice.bmp",
+   "name": "Sword of Justice",
+   "motionSrc": "skill",
+   "motionLines": [
+    3609
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn63 g_shield.bmp",
+   "name": "Godly Shield",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn66 g_bless.bmp",
+   "name": "God's Blessing",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn70 d_piercing.bmp",
+   "name": "Divine Piercing",
+   "motionSrc": "skill",
+   "motionLines": [
+    3577,
+    3584,
+    3588
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DVINE_PIERCING",
+     "file": "wav/effects/skill/morion/divinepiercing 07.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16896,
+    16898
+   ]
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn100 holy_conviction.bmp",
+   "name": "Lightning Sword",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn103 divine_inquisiton.bmp",
+   "name": "Undead Bane",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn106 glorious_shield.bmp",
+   "name": "Zealous Reach",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 6,
+   "classDir": "knight",
+   "icon": "mn110 divine_cross.bmp",
+   "name": "Holy Aura",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm10 agony.bmp",
+   "name": "Agony",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm12 firebolt.bmp",
+   "name": "Fire Bolt",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3314,
+    3326
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBOLT1",
+     "file": "wav/effects/skill/morion/firebolt 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBOLT2",
+     "file": "wav/effects/skill/morion/firebolt 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16411,
+    16413
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm14 zenith.bmp",
+   "name": "Zenith",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm17 fireball.bmp",
+   "name": "Fire Ball",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3335,
+    3349
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBALL1",
+     "file": "wav/effects/skill/morion/fireball 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FIREBALL2",
+     "file": "wav/effects/skill/morion/fireball 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16427,
+    16429
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm20 m_mastery.bmp",
+   "name": "Mental Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm23 watornado.bmp",
+   "name": "Watornado",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3358,
+    3372
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm26 e_weapon.bmp",
+   "name": "Enchant Weapon",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3386,
+    3395
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm30 d_ray.bmp",
+   "name": "Death Ray",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3404,
+    3417
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DEATHRAY",
+     "file": "wav/effects/skill/morion/deathray 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16486
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm40 e_shield.bmp",
+   "name": "Energy Shield",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_ENERGY_SHIELD",
+     "file": "wav/effects/skill/morion/energyshield 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16506
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm43 diastrophism.bmp",
+   "name": "Diastrophism",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIASTROPHISM",
+     "file": "wav/effects/skill/morion/diastrophism 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16511
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm46 s_elemental.bmp",
+   "name": "Spirit Elemental",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_SPIRIT_ELEMENTAL",
+     "file": "wav/effects/skill/morion/spiritelemental 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16528
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm50 d_sword.bmp",
+   "name": "Dancing Sword",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DANCING_SWORD",
+     "file": "wav/effects/skill/morion/dancingsword 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16542
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm60 f_elemental.bmp",
+   "name": "Fire Elemental",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm63 f_wave.bmp",
+   "name": "Flame Wave",
+   "motionSrc": "skill",
+   "motionLines": [
+    3694
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE1",
+     "file": "wav/effects/skill/morion/flamewave 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_FLAME_WAVE2",
+     "file": "wav/effects/skill/morion/flamewave 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    17137,
+    17139
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm66 distortion.bmp",
+   "name": "Distortion",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm70 meteo.bmp",
+   "name": "Meteorite",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_METEO1",
+     "file": "wav/effects/skill/morion/meteo 01.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    17190
+   ]
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm100 wizardtrance.bmp",
+   "name": "Magic Source",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm103 stone_skin.bmp",
+   "name": "Amplify",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm106 redray.bmp",
+   "name": "Stone Spike",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 7,
+   "classDir": "magician",
+   "icon": "mm110 cataclysm.bmp",
+   "name": "Dance of Calamity",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp10 healing.bmp",
+   "name": "Healing",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3156,
+    3167
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp12 holybolt.bmp",
+   "name": "Holy Bolt",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3177,
+    3196
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_HOLYBOLT",
+     "file": "wav/effects/skill/morion/holybolt 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16252
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp14 m_spark.bmp",
+   "name": "Multi Spark",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3212,
+    3225
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_MULTISPARK",
+     "file": "wav/effects/skill/morion/multispark 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16261
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp17 holymind.bmp",
+   "name": "Holy Mind",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3236,
+    3255
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp20 meditation.bmp",
+   "name": "Meditation",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp23 d_lightning.bmp",
+   "name": "Divine Lightning",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING1",
+     "file": "wav/effects/skill/morion/divinelightning 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING2",
+     "file": "wav/effects/skill/morion/divinelightning 2.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_DIVINELIGHTNING3",
+     "file": "wav/effects/skill/morion/divinelightning 3.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16284,
+    16287,
+    16290
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp26 h_reflection.bmp",
+   "name": "Holy Reflection",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp30 g_healing.bmp",
+   "name": "Grand Healing",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp40 v_ball.bmp",
+   "name": "Vigor Ball",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3292,
+    3303
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIGOR_BALL1",
+     "file": "wav/effects/skill/morion/vigorball 1.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIGOR_BALL2",
+     "file": "wav/effects/skill/morion/vigorball 2.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16352,
+    16355
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp43 resurrection.bmp",
+   "name": "Resurrection",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp46 extinction.bmp",
+   "name": "Extinction",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp50 v_life.bmp",
+   "name": "Virtual Life",
+   "motionSrc": "mixed",
+   "motionLines": [
+    3275,
+    3281
+   ],
+   "motionRetryPlayAttack": true,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_VIRTUAL_LIFE",
+     "file": "wav/effects/skill/morion/virtuallife 1.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    16395
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp60 g_spike.bmp",
+   "name": "Glacial Spike",
+   "motionSrc": "skill",
+   "motionLines": [
+    3670
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_GLACIAL_SPIKE1",
+     "file": "wav/effects/skill/morion/glacialspike 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_GLACIAL_SPIKE2",
+     "file": "wav/effects/skill/morion/glacialspike 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    17026,
+    17028
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp63 r_field.bmp",
+   "name": "Regeneration Field",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp66 c_lightning.bmp",
+   "name": "Chain Lightning",
+   "motionSrc": "skill",
+   "motionLines": [
+    3682
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LIGHTNING1",
+     "file": "wav/effects/skill/morion/chainlightning 01.wav"
+    },
+    {
+     "symbol": "SKILL_SOUND_SKILL_CHAIN_LIGHTNING2",
+     "file": "wav/effects/skill/morion/chainlightning 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    17084,
+    17086
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp70 s_muspell.bmp",
+   "name": "Summon Muspell",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "skill",
+   "sounds": [
+    {
+     "symbol": "SKILL_SOUND_SKILL_MUSPELL2",
+     "file": "wav/effects/skill/morion/muspell 02.wav"
+    }
+   ],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": [
+    17095
+   ]
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp100 ice_elemental.bmp",
+   "name": "Divine Force",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp103 lightning_surge.bmp",
+   "name": "Ice Meteorite",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp106 heavenly_light.bmp",
+   "name": "Thunderstorm",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 8,
+   "classDir": "priestess",
+   "icon": "mp110 consecration.bmp",
+   "name": "Divine Cleansing",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta10 stingger.bmp",
+   "name": "Stinger",
+   "motionSrc": "skill",
+   "motionLines": [
+    1573
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta12 r_hit.bmp",
+   "name": "Double Blow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta14 d_mastery.bmp",
+   "name": "Dual Wield Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta17 wisp.bmp",
+   "name": "Wisp",
+   "motionSrc": "skill",
+   "motionLines": [
+    1599
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta20 v_throne.bmp",
+   "name": "Venom Thorn",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta23 alas.bmp",
+   "name": "Alas",
+   "motionSrc": "skill",
+   "motionLines": [
+    1129
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta26 s_shock.bmp",
+   "name": "Soul Shock",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta30 a_mastery.bmp",
+   "name": "Blade Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta40 s_sword.bmp",
+   "name": "Finishing Blow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta43 b_up.bmp",
+   "name": "Gust Slash",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta46 inpes.bmp",
+   "name": "Inpes",
+   "motionSrc": "skill",
+   "motionLines": [
+    1266
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta50 blind.bmp",
+   "name": "Deception",
+   "motionSrc": "skill",
+   "motionLines": [
+    1279
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta60 f_wind.bmp",
+   "name": "Frost Wind",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta63 f_mastery.bmp",
+   "name": "Fatal Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta66 polluted.bmp",
+   "name": "Pollute",
+   "motionSrc": "skill",
+   "motionLines": [
+    1292
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ta70 p_shadow.bmp",
+   "name": "Ninja Shadow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts80 j_bomb.bmp",
+   "name": "Shadow Bomb",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts83 r_slash.bmp",
+   "name": "Rising Slash",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts86 v_stab.bmp",
+   "name": "Violent Stab",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 9,
+   "classDir": "assassin",
+   "icon": "ts90 storm.bmp",
+   "name": "Shadow Storm",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms10 darkbolt.bmp",
+   "name": "Dark Bolt",
+   "motionSrc": "skill",
+   "motionLines": [
+    1681
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms12 darkwave.bmp",
+   "name": "Dark Wave",
+   "motionSrc": "skill",
+   "motionLines": [
+    1697
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms14 curselazy.bmp",
+   "name": "Inertia",
+   "motionSrc": "skill",
+   "motionLines": [
+    1142
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms17 i_peace.bmp",
+   "name": "Inner Peace",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms20 s_flare.bmp",
+   "name": "Spiritual Flare",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms23 s_manacle.bmp",
+   "name": "Spiritual Manacle",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms26 c_hunt.bmp",
+   "name": "Chasing Hunt",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms30 a_migal.bmp",
+   "name": "Advent Migal",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms40 r_maker.bmp",
+   "name": "Rainmaker",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms43 l_ghost.bmp",
+   "name": "Phantom Call",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms46 haunt.bmp",
+   "name": "Haunt",
+   "motionSrc": "skill",
+   "motionLines": [
+    1749
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms50 scratch.bmp",
+   "name": "Scratch",
+   "motionSrc": "skill",
+   "motionLines": [
+    1765
+   ],
+   "motionRetryPlayAttack": false,
+   "eventSfx": "none",
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms60 r_knight.bmp",
+   "name": "Crimson Knight",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms63 judge.bmp",
+   "name": "Judgement",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms66 a_midranda.bmp",
+   "name": "Advent Midranda",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms70 m_pray.bmp",
+   "name": "Mourning Pray",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms80 creed.bmp",
+   "name": "Creed",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms83 p_deity.bmp",
+   "name": "Press Deity",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms86 g_nail.bmp",
+   "name": "Phantom Nail",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 10,
+   "classDir": "shaman",
+   "icon": "ms90 h_regene.bmp",
+   "name": "Occult Life",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma10 lowkick.bmp",
+   "name": "Lowkick",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma12 s_mastery.bmp",
+   "name": "Spirit Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma14 dbblow.bmp",
+   "name": "Double Blow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma17 h_straight.bmp",
+   "name": "Half Straight",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma20 rage up.bmp",
+   "name": "Rage Up",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma23 patriot.bmp",
+   "name": "Patriot",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma26 r_elbow.bmp",
+   "name": "Rolling Elbow",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma30 s_mastery.bmp",
+   "name": "Speed Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma40 i_bulkup.bmp",
+   "name": "Iron Bulkup",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma43 t_cannon.bmp",
+   "name": "Tiger Cannon",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma46 war cry.bmp",
+   "name": "War Cry",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma50 j_heelkick.bmp",
+   "name": "Jump Heelkick",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma60 combination.bmp",
+   "name": "Combination",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma63 steelers.bmp",
+   "name": "Steelers",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma66 b_check.bmp",
+   "name": "Body Check",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma70 typhoon.bmp",
+   "name": "Typhoon",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma80 d_mastery.bmp",
+   "name": "Defence Mastery",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma83 h_hawk.bmp",
+   "name": "Hunting Hawk",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma86 l_breaking.bmp",
+   "name": "Leg Breaking",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  },
+  {
+   "job": 11,
+   "classDir": "martial",
+   "icon": "tma90 h_training.bmp",
+   "name": "Hawk Training",
+   "motionSrc": null,
+   "motionLines": [],
+   "motionRetryPlayAttack": false,
+   "eventSfx": null,
+   "sounds": [],
+   "weaponSfx": false,
+   "weaponDirect": null,
+   "evSkillReturnsFalse": false,
+   "soundLines": []
+  }
+ ]
+}

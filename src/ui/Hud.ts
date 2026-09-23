@@ -2,8 +2,10 @@ import { decodeTextureAsync } from '../core/texture.js';
 import { fetchAsset } from '../core/asset-manager.js';
 import type { GameClock } from './GameClock.js';
 import { t } from '../i18n/index.js';
-import { clearHoverItem, getGameSnapshot, registerUiHitTest, setHoverSpot, subscribeGame, type FistBinding } from '../app/gameStore.js';
+import { clearHoverItem, getGameSnapshot, registerUiHitTest, setHoverSpot, subscribeGame } from '../app/gameStore.js';
 import { isInputBlocked } from '../app/inputGate.js';
+import { reportFallback } from '../char/fallback-log.js';
+import { fistIntentOf, type FistIntent } from '../game/skillBinding.js';
 import { sfx } from '../audio/sfx.js';
 
 /**
@@ -203,39 +205,75 @@ export function createHud(container: HTMLElement): Hud {
   const textures: Partial<Record<string, Tex>> = {};
   let rafId = 0;
 
-  // 左/右拳当前装备的技能（HUD 拳位图标显示；null=普攻拳）
-  const fistSlots: { left: FistBinding | null; right: FistBinding | null } = { left: null, right: null };
+  // 左/右拳此刻该画的**状态** —— 由 `game/skillBinding.fistIntentOf` 判定（判定只此一处），
+  // 这里只负责"换图标"。`normal` = 未绑（普通攻击拳），`unknown` = 绑定表还没到。
+  type FistView = { kind: 'normal' } | { kind: 'unknown' } | { kind: 'skill'; skillId: number; rel: string }
+    | { kind: 'invalid'; skillId: number };
+  const fistSlots: { left: FistView; right: FistView } = {
+    left: { kind: 'unknown' }, right: { kind: 'unknown' },
+  };
 
-  // 把某拳位绑定异步加载成纹理（key fistL/fistR），成功后重绘。
-  // binding=null（普攻）→ 用默认 fist 纹理（skill_normal），加载失败也回退默认。
-  async function loadFistIcon(slot: 'left' | 'right', binding: FistBinding | null): Promise<void> {
+  /** 意图 → 视图（含图标相对路径；**不在这一步做任何替换**）。 */
+  function viewOfIntent(intent: FistIntent): FistView {
+    if (intent.kind === 'skill') {
+      return { kind: 'skill', skillId: intent.skillId,
+        // ⚠ 路径**不做百分号编码**：编码只归 `encodeAssetPath`（`cachedFetch` 内）。在这里先编一次
+        // 会让 `%20` 变 `%2520` ⇒ 中间件解不回文件名、拿回 index.html（200+HTML）⇒ 静默退回默认图标。
+        rel: `skill/${intent.row.classDir}/button/${intent.row.iconFile.replace(/\.bmp$/i, '')}.bmp` };
+    }
+    return intent.kind === 'invalid' ? { kind: 'invalid', skillId: intent.skillId } : { kind: intent.kind };
+  }
+
+  function sameView(a: FistView, b: FistView): boolean {
+    if (a.kind !== b.kind) return false;
+    return a.kind === 'skill' ? a.rel === (b as { rel: string }).rel : true;
+  }
+
+  /**
+   * 把某拳位的视图加载成纹理（key fistL/fistR），成功后重绘。
+   *
+   * **不画**的情形（都由上游 `fistIntentOf` 显式判出，本函数只是执行）：
+   * `unknown` = 绑定表还没到、`invalid` = 绑的不是本角色的技能、`skill` 但图标取不到
+   * —— 三种一律**删掉纹理 ⇒ 那一格留空**，**不退回 `skill_normal`**
+   * （早先的 `textures[key] ? key : 'fist'` 就是"换一个值顶上"，AGENTS #12 禁）。
+   * `normal`（未绑）才画默认的 `fist` 纹理 —— 那是**原版行为**：原版普攻格 `UseSkill[0]` 就是
+   * 一只普通拳头图标（`skill_normal.bmp`），不是我们的降级。
+   */
+  async function loadFistIcon(slot: 'left' | 'right', view: FistView): Promise<void> {
     const key = slot === 'left' ? 'fistL' : 'fistR';
-    if (!binding || !binding.iconFile || binding.iconFile === 'skill_normal') {
+    if (view.kind !== 'skill') {
       delete textures[key];
       return;
     }
-    const file = binding.iconFile.replace(/\.bmp$/i, '').split(' ').map(encodeURIComponent).join('%20');
-    const rel = `skill/${binding.classDir}/button/${file}.bmp`;
-    const tex = await loadTex(rel, key);
+    const tex = await loadTex(view.rel, key);
     if (tex) textures[key] = tex;
-    else delete textures[key];
+    else {
+      delete textures[key];
+      reportFallback('hud.fistIcon', `${slot} ${view.rel}`);   // 取不到 ⇒ 这一格留空（降级可见）
+    }
   }
 
-  // 同步拳位绑定（equipFist/快捷键变化时刷新图标）；重载时回调触发重绘
+  // 同步拳位视图（服务端推来新绑定表时刷新图标）；重载时回调触发重绘
   function syncFists(): void {
     const snap = getGameSnapshot();
-    const needL = snap.fistBindings.left;
-    const needR = snap.fistBindings.right;
-    const lChanged = (fistSlots.left?.classDir !== needL?.classDir) || (fistSlots.left?.iconFile !== needL?.iconFile);
-    const rChanged = (fistSlots.right?.classDir !== needR?.classDir) || (fistSlots.right?.iconFile !== needR?.iconFile);
+    const job = snap.character?.job ?? null;
+    const needL = viewOfIntent(fistIntentOf(snap.skillBindings, job, 'left'));
+    const needR = viewOfIntent(fistIntentOf(snap.skillBindings, job, 'right'));
+    // 比较键 = 视图本身（图标 URL 由 rel 唯一决定）；两拳各有自己的纹理键（fistL/fistR），
+    // 故"同名图标跨职业""同图标绑两拳"都各自独立、不会串。
+    const lChanged = !sameView(fistSlots.left, needL);
+    const rChanged = !sameView(fistSlots.right, needR);
     if (!lChanged && !rChanged) return;
     fistSlots.left = needL;
     fistSlots.right = needR;
     if (lChanged) void loadFistIcon('left', needL);
     if (rChanged) void loadFistIcon('right', needR);
   }
-  // 订阅：装备/快捷键切换拳位 → 同步图标（世界内才重绘，无世界时也加载缓存无妨）
+  // 订阅：绑定表变化 → 同步图标（世界内才重绘，无世界时也加载缓存无妨）
   const unsubFist = subscribeGame(syncFists);
+  // 首次同步：绑定由登录时的 `S2C_SkillBindings` 推来，可能早于 HUD 建成 ⇒ 先拉一次
+  syncFists();
+  // 重绘不需要额外挂钩：`loop()` 每帧 `draw()`，纹理换掉后下一帧就画新的。
 
   // 指针（悬停/按下；HUD canvas 为 pointer-events:none，事件走 window 只读检测，不拦截世界点击）
   let ptrX = -1, ptrY = -1, ptrDown = false;
@@ -467,8 +505,13 @@ export function createHud(container: HTMLElement): Hud {
     // menu-1/menu-2 的拳位是"圆形镂空"(圆内 alpha=0)，后画的主 HUD 会把拳位图标的
     // 方形黑底圆外部分盖住 → 呈现"圆形槽内技能图标"，而非方形黑底。
     // 故拳头/拳位技能图标必须先于 menu 背景绘制。
-    drawTex(textures['fistL'] ? 'fistL' : 'fist', 349, 541, 49, 46);
-    drawTex(textures['fistR'] ? 'fistR' : 'fist', 403, 541, 49, 46);
+    // 拳位图标：纹理取不到就**不画这一格** —— 早先写的是 `textures['fistL'] ? 'fistL' : 'fist'`，
+    // 那会把"绑了但图标取不到/绑的是异职业技能/绑定表还没到"一律画成普通拳头图标（换一个值顶上）。
+    // 只有 `normal`（未绑）才画 `fist`（原版普攻格 `UseSkill[0]` 本就画这张，见 loadFistIcon 注释）。
+    if (fistSlots.left.kind === 'normal') drawTex('fist', 349, 541, 49, 46);
+    else if (textures['fistL']) drawTex('fistL', 349, 541, 49, 46);
+    if (fistSlots.right.kind === 'normal') drawTex('fist', 403, 541, 49, 46);
+    else if (textures['fistR']) drawTex('fistR', 403, 541, 49, 46);
 
     // Menu背景 (原版 (288,472) 256x128 + (544,536) 256x64)
     drawTex('menu1', 288, 472, 256, 128);

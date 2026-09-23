@@ -26,8 +26,8 @@ import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installLayerStack } from './ui/layerStack.js';
-import { installBridge, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill } from './net/bridge.js';
-import { beginOptimistic, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, pressQuickBinding, subscribeGame } from './app/gameStore.js';
+import { installBridge, pressQuickKey, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill } from './net/bridge.js';
+import { beginOptimistic, clearCharacterTables, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, subscribeGame } from './app/gameStore.js';
 import { useEffectKindOf } from './game/useEffect.js';
 import { LOC } from './game/itemLocations.js';
 import type { CharacterAppearance } from './ui/CharSelect.js';
@@ -68,8 +68,9 @@ const worldView = createWorldView(app, {
   onAttackStart: (monsterId, clientSeq, segments, animIndex, animClip) =>
     send(attackStart(monsterId, clientSeq, segments, animIndex, animClip)),
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
-  // 调试施法（Alt/Shift+点击瞄准怪）→ C2S_UseSkill：真实链路（服务端即时结算该技能，含 attackEffect）。
-  onCastSkill: (skillId, monsterId) => sendUseSkill(skillId, monsterId),
+  // 施法 → C2S_UseSkill：真实链路。`targetId=0` = **无目标施放**（右键即时施放那条路；
+  // 服务端目前对 0 是空转 —— 技能效果属 P3+）。skillId = **数字技能 id**（`game/skillIdentity.ts`）。
+  onCastSkill: (skillId, targetId) => sendUseSkill(skillId, targetId),
   // 武器套切换的兑现（W 键被缓存到动作播完才回调，见 WorldView.requestSwitchWeapon）
   onSwitchWeapon: () => sendSwitchWeapon(),
 });
@@ -458,11 +459,15 @@ keyBinding.onKeyDown((action) => {
     case 'showGroundItems':
       worldView.toggleGroundItemLabels();
       break;
-    // F1~F8 快捷技能：把绑定在该键的技能自动切到对应拳（skill1=F1→index0）
+    // F1~F8 快捷技能：把绑定在该键的技能装到它的拳上（skill1=F1→index0）。
+    // 目标拳的判定在 `game/skillBinding.quickFistOf`（唯一实现）；定不下来（该键未绑 / 绑定表没到 /
+    // `useCode` 左右都能绑的 ALL 类 / 异职业绑定）⇒ `pressQuickKey` 返回 false 且**什么都不做**。
     case 'skill1': case 'skill2': case 'skill3': case 'skill4':
     case 'skill5': case 'skill6': case 'skill7': case 'skill8': {
       const idx = Number(action.slice(5)) - 1;
-      pressQuickBinding(idx);
+      if (!pressQuickKey(idx)) {
+        console.log('[skillbind] F' + (idx + 1) + ' 没有可装的目标（未绑 / 绑定表未到 / 目标拳无法确定）');
+      }
       break;
     }
     // 数字键 1/2/3：使用对应药水快捷槽（ITEMSLOT 11/12/13）里的药水。
@@ -823,6 +828,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
     }
     case 'enterGame': {
       const eg = msg.enterGame!;
+      // 进图的**第一件事**：把上一个角色留下的"按角色权威表"清成**未知**（技能表 + 绑定表）——
+      // 服务端紧接着补发（`sendSkillTables`），在那之前谁也不许拿旧表画东西
+      // （否则"换角色进图"的头几帧 HUD 会画出**上一个角色**的拳位图标，用户 2026-09-24 的症状）。
+      clearCharacterTables();
       setSafeMaps(eg.maps?.map(m => ({ mapId: m.mapId ?? undefined, isSafe: m.isSafe ?? false, levelReq: m.levelReq ?? 0 })));
       // 时间锚定不在此处做：连接即已发 ping，onTimeSync 首次回调已用服务器权威时钟初始化 GameClock
       const hudState: HudState = {

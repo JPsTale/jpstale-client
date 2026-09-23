@@ -22,6 +22,9 @@ import {
   ageItem,
   forceOrbItem,
   mixPreview,
+  learnSkill,
+  resetSkillPoints,
+  setSkillBinding,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -31,10 +34,18 @@ import {
   upsertInventoryItem,
   applyItemRemoved,
   setInventoryGold,
+  setSkillList,
+  setSkillBindings,
+  getGameSnapshot,
   type GameCharacter,
   type GamePlayer,
   type GameItem,
 } from '../app/gameStore.js';
+import {
+  BIND_KIND_FIST, BIND_KIND_QUICK, FIST_INDEX, QUICK_SLOT_COUNT, quickFistOf, quickSkillIdOf,
+  type FistSlot,
+} from '../game/skillBinding.js';
+import { reportFallback } from '../char/fallback-log.js';
 
 export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): GameCharacter {
   return {
@@ -52,8 +63,8 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     agility: e.agility || 0,
     health: e.health || 0,
     statePoint: e.statePoint || 0,
-    skillPoint: (e as unknown as { skillPoint?: number }).skillPoint ?? 0,
-    specialSkillPoint: (e as unknown as { specialSkillPoint?: number }).specialSkillPoint ?? 0,
+    skillPoint: e.skillPoint ?? 0,
+    specialSkillPoint: e.specialSkillPoint ?? 0,
     hp: e.hp || 0,
     maxHp: e.maxHp || 0,
     mp: e.mp || 0,
@@ -210,6 +221,36 @@ export function installBridge(): void {
       for (const id of ids) applyItemRemoved(id);
     }
     if (msg.goldChange) setInventoryGold(Number(msg.goldChange.newGold) || 0);
+    // 已学技能表（登录/学习/洗点后各来一次，**整表替换**）：面板的等级/熟练度只认这一份（AGENTS #12：
+    // 表没到 ≠ 什么都没学 —— 存 null，面板据此**不点亮**，不拿角色等级推一个等级出来）
+    if (msg.skillList) {
+      const learned: Record<number, { point: number; mastery: number }> = {};
+      for (const s of msg.skillList.skills || []) learned[Number(s.skillId) || 0] = { point: s.point || 0, mastery: s.mastery || 0 };
+      setSkillList({
+        learned,
+        skillPoint: msg.skillList.skillPoint || 0,
+        specialSkillPoint: msg.skillList.specialSkillPoint || 0,
+      });
+    }
+    // 技能绑定表（登录/选角、学技能后、改绑定后）：**整表替换**，而且只认这一条消息
+    // —— 客户端没有任何本地持久化，`null`（还没到）就是显式未知（AGENTS #12）。
+    if (msg.skillBindings) {
+      const b = msg.skillBindings;
+      const quick = (b.quick || []).map((v) => Number(v) || 0);
+      // 服务端**定长 8**（0 = 未绑）。长度不对 = 协议出问题 ⇒ 整表按未知处理并上报，
+      // **不许**用 0 补长（那会把"服务端少发了几项"画成"这几个 F 键没绑"）。
+      if (quick.length !== QUICK_SLOT_COUNT) {
+        reportFallback('skill.bind.length',
+          `S2C_SkillBindings.quick 长度 ${quick.length} ≠ ${QUICK_SLOT_COUNT} ⇒ 整表按未知处理（不补齐）`);
+        setSkillBindings(null);
+      } else {
+        setSkillBindings({
+          fistLeft: Number(b.fistLeft) || 0,
+          fistRight: Number(b.fistRight) || 0,
+          quick,
+        });
+      }
+    }
     // buff 条（左上角）：整表替换；`at` 记本地接收时刻，倒计时以它为基准（见 BuffEntry 注释）
     if (msg.buffState) {
       const at = Date.now();
@@ -266,9 +307,57 @@ export function sendAllocateStat(stat: string, points = 1): void {
   send(allocateStat(stat, points));
 }
 
-/** 释放技能（服务端权威）：skillId 见 protocol.useSkill 注释（当前为技能列表下标）；targetId 默认 0 */
+/** 释放技能（服务端权威）：`skillId` = **数字技能 id**（`iconFile → skillId` 查表得来，见
+ *  `game/skillIdentity.ts`）；`targetId` 默认 0，见 `protocol.useSkill`。 */
 export function sendUseSkill(skillId: number, targetId = 0): void {
   send(useSkill(skillId, targetId));
+}
+
+/** 学/升级技能（服务端权威：判定 + 扣钱扣点；结果由 `S2C_SkillList`/`S2C_Error` 回来）。 */
+export function sendLearnSkill(skillId: number): void {
+  send(learnSkill(skillId));
+}
+
+/** 洗点（服务端权威：退点 + 清零；**会话内一次**，被拒回 `skill.op.resetUsed`）。 */
+export function sendResetSkillPoints(): void {
+  send(resetSkillPoints());
+}
+
+/* ─────────── 技能绑定（拳位 / F1~F8）：只发包，界面等 `S2C_SkillBindings` 回推 ─────────── */
+
+/**
+ * 改一个绑定（服务端权威）。`skillId` 0 = 解绑。
+ * **不做乐观更新**：本地状态只由 `S2C_SkillBindings` 改（与学技能同口径）——
+ * 服务端会校验（本职业/`useCode` 是否允许该位置），被拒回 `S2C_Error.key = skill.bind.*`。
+ */
+export function sendSkillBinding(kind: number, index: number, skillId: number): void {
+  send(setSkillBinding(kind, index, skillId));
+}
+
+/** 把某技能装到某只拳（或 `0` = 恢复普通攻击）。 */
+export function equipFistSkill(slot: FistSlot, skillId: number): void {
+  sendSkillBinding(BIND_KIND_FIST, FIST_INDEX[slot], skillId);
+}
+
+/** 记录 F 键绑定（`index0` 0=F1；`skillId` 0 = 解掉该键）。 */
+export function bindQuickKey(index0: number, skillId: number): void {
+  sendSkillBinding(BIND_KIND_QUICK, index0 + 1, skillId);
+}
+
+/**
+ * 按下 F1~F8（`index0` 0=F1）：把该键绑的技能装到它的拳上（**唯一实现**，`main.ts` 的按键分派调它）。
+ *
+ * 目标拳由 `game/skillBinding.quickFistOf` 判定；判不出来（`ALL` 类技能 / 表没到 / 未绑）⇒
+ * **什么都不做**（返回 false，内部已上报）——不猜一只拳、不退化成"恢复普攻"。
+ */
+export function pressQuickKey(index0: number): boolean {
+  const snap = getGameSnapshot();
+  const skillId = quickSkillIdOf(snap.skillBindings, index0);
+  if (skillId == null || skillId === 0) return false;   // 未知 / 该键未绑：都没有"要装的东西"
+  const slot = quickFistOf(skillId, snap.skillBindings, snap.character?.job ?? null);
+  if (slot == null) return false;
+  equipFistSkill(slot, skillId);
+  return true;
 }
 
 // —— 物品操作（服务端权威：位图校验 + DB 事务）——

@@ -248,12 +248,10 @@
     "equipLeft": "已装备左拳",
     "equipRight": "已装备右拳",
     "quickKey": "快捷键",
-    "lvUp": "技能等级 +1",
-    "lvDown": "技能等级 -1",
-    "lvAuto": "自动推断等级（点中间数字手动设 0~10）",
-    "lvReset": "清除手动等级，恢复自动推断",
-    "dbgWeapon": "调试武器:",
-    "dbgReset": "重置技能等级",
+    "learn": "学习",
+    "learnNoList": "技能表未到，暂不能加点",
+    "bindNoList": "绑定表未到，暂不能改绑定",
+    "noClass": "该职业没有技能表",
     "martial": {
       "tma10_lowkick": {
         "name": "力量控制"
@@ -315,6 +313,29 @@
       "tma14_dbblow": {
         "name": "超级直击"
       }
+    }
+  },
+  "skill": {
+    "op": {
+      "unknownSkill": "未知技能",
+      "noSkillTree": "该职业没有技能表",
+      "wrongJob": "不是本职业技能",
+      "slotLocked": "该技能尚未开放",
+      "prevNotLearned": "需要先学习上一技能",
+      "levelTooLow": "等级不够",
+      "maxPoint": "已达技能等级上限",
+      "noSkillPoint": "技能点不足",
+      "noGold": "金钱不足",
+      "resetUsed": "本次登录已洗过点"
+    },
+    "bind": {
+      "badKind": "未知的绑定位置",
+      "badIndex": "绑定位置越界",
+      "noSkillTree": "该职业没有技能表",
+      "unknownSkill": "未知技能",
+      "wrongJob": "不是本职业技能",
+      "notBindable": "该技能不能绑定",
+      "wrongFist": "该技能不能绑到这只拳"
     }
   },
   "item": {

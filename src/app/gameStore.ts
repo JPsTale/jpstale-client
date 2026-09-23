@@ -10,18 +10,25 @@ import { playItemSound, playItemDropSound } from '../audio/item-sounds.js';
 
 export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap' | 'craft';
 
-// 拳位装备：标识一个技能（用职业目录+图标文件，跨职业唯一稳定）。
-// iconFile === 'skill_normal'（无 .bmp）表示普通攻击。
-export interface FistBinding {
-  classDir: string;    // CLASS_DIR 职业目录（fighter/mecha/...）
-  iconFile: string;    // skillData iconFile 的文件名（不含 .bmp），普攻='skill_normal'
+// 技能绑定（拳位 / F1~F8）**不在这里定义标识**：身份是**数字 `skillId`**
+// （`SkillBindings`，见下），图标/职业由 `game/skillIdentity.ts` 反查。
+// ⚠ 早先这里是 `{classDir, iconFile}` 且存在**全局 localStorage**（`pt.fistBindings`/`pt.quickBindings`）——
+// 于是"换个角色进去看到的还是上一个角色的绑定、HUD 还画出别职业的技能图标"。两条都已在 2026-09-24 删掉。
+
+/** 一条已学技能（`S2C_SkillList` 下发；未学的技能**不下发**）。 */
+export interface LearnedSkillState {
+  point: number;    // 技能等级 1..10（已学的必然 ≥1）
+  mastery: number;  // 熟练度 0..10000
 }
 
-/** F1~F8 快捷绑定：按下时把某技能切到对应拳（自动切换，无需开面板）。 */
-export interface QuickBinding {
-  classDir: string;
-  iconFile: string;    // 同 FistBinding；可含普攻
-  target: 'left' | 'right';
+/**
+ * 已学技能表 + 两个技能点池 —— **服务端下发的唯一真值**（`S2C_SkillList`，只发本人）。
+ * `null` = 这张表**还没到**（≠ 什么都没学）：等级一律按"未学"处理，不猜（AGENTS #12）。
+ */
+export interface SkillListState {
+  learned: Readonly<Record<number, LearnedSkillState>>;   // skillId → 等级/熟练度
+  skillPoint: number;          // 1–3 转池剩余点
+  specialSkillPoint: number;   // 4 转池剩余点
 }
 
 export interface GameCharacter {
@@ -40,8 +47,8 @@ export interface GameCharacter {
   agility: number;
   health: number;
   statePoint: number;
-  skillPoint: number;          // 普通技能点（学习 T1-T4 技能）
-  specialSkillPoint: number;   // 特殊技能点（学习 T5 技能）
+  skillPoint: number;          // 1–3 转池剩余点（与 `SkillListState.skillPoint` 同源：服务端 `free(Pool.ONE)`）
+  specialSkillPoint: number;   // 4 转池剩余点（同上 `free(Pool.FOUR)`；**5 转不属任何池**，别读成"T5 的点"）
   hp: number;
   maxHp: number;
   mp: number;
@@ -215,10 +222,6 @@ export interface GameSnapshot {
   inventory: GameInventory | null;
   openPanels: readonly OpenPanel[];
   systemMenuOpen: boolean;
-  /** 当前装备到左右拳的技能（null=普通攻击；拳位默认普通攻击） */
-  fistBindings: { left: FistBinding | null; right: FistBinding | null };
-  /** F1~F8 快捷绑定（length 8，index 0=F1）；按下 F 键自动把技能切到 target 拳 */
-  quickBindings: readonly (QuickBinding | null)[];
   /**
    * 手上拿着的道具（原版 MouseItem）——**交互状态**，不是物品数据。
    * 放在这里是为了让 HUD 的药水槽也能接收"从背包拿起的那瓶药水"（原版：左键拿起 → 点药水槽放下）。
@@ -247,38 +250,47 @@ export interface GameSnapshot {
    * 材料一变就置 null（"待服务端回话"），避免把上一次的结果留在界面上当成本次的结果。
    */
   craftPreview: CraftPreview | null;
+  /** 已学技能表（`S2C_SkillList`；null = 还没收到，面板据此**不点亮**任何技能） */
+  skillList: SkillListState | null;
+  /**
+   * 技能绑定表（`S2C_SkillBindings`）—— **服务端权威、按角色存 props**。
+   *
+   * `null` = **这条消息还没到**（≠ 没绑过）：面板/ HUD 一律按"未知"处理（不可绑、不画图标、并上报），
+   * 绝不拿本地残留或默认值顶上（AGENTS #12）。**没有任何本地持久化**：绑定跨角色串台就是因为
+   * 早先存在全局 localStorage 里（`pt.fistBindings`/`pt.quickBindings`，2026-09-24 已删）。
+   */
+  skillBindings: SkillBindings | null;
 }
 
-const LS_FISTS = 'pt.fistBindings';
-const LS_QUICK = 'pt.quickBindings';
-
-function loadJSON<T>(key: string): T | null {
-  try {
-    const s = localStorage.getItem(key);
-    return s ? (JSON.parse(s) as T) : null;
-  } catch { return null; }
+/**
+ * 绑定表快照。值 = **数字 `skillId`**，`0` = 该位置**没有绑定**
+ * （拳位 0 = 普通攻击拳，就是原版 `pLeftSkill/pRightSkill == NULL` 的状态；快捷 0 = 该 F 键没绑东西）。
+ *
+ * ⚠ 身份**只有 skillId**：图标文件名/职业目录都是客户端资产命名，存它们会在改名时静默错位
+ * （AGENTS #24）—— 图标一律由 `skillRowBySkillId` 反查（`game/skillIdentity.ts`，单一定义）。
+ */
+export interface SkillBindings {
+  fistLeft: number;
+  fistRight: number;
+  /** 定长 8，**下标 0 = F1**；0 = 未绑。 */
+  quick: readonly number[];
 }
 
 function loadInitial(): GameSnapshot {
-  const fb = loadJSON<{ left: FistBinding | null; right: FistBinding | null }>(LS_FISTS);
-  const qb = loadJSON<(QuickBinding | null)[]>(LS_QUICK);
   return {
     character: null,
     player: null,
     inventory: null,
     openPanels: [],
     systemMenuOpen: false,
-    fistBindings: {
-      left: fb?.left ?? null,
-      right: fb?.right ?? null,
-    },
-    quickBindings: Array.isArray(qb) && qb.length === 8 ? qb : new Array(8).fill(null),
     heldUid: null,
     hoverSpot: null,
     shop: null,
     buffs: [],
     craft: null,
     craftPreview: null,
+    skillList: null,
+    skillBindings: null,
   };
 }
 
@@ -330,15 +342,39 @@ function sameBuff(a: BuffEntry, b: BuffEntry): boolean {
     && a.totalMs === b.totalMs && a.stack === b.stack;
 }
 
+/** 整表替换已学技能表（服务端每次下发都是完整表；未学的技能不在键里 = 明确的"未学"）。 */
+export function setSkillList(v: SkillListState | null): void {
+  commit({ skillList: v });
+}
+
+/**
+ * 整表替换技能绑定（`S2C_SkillBindings`）—— **服务端下发的唯一写入处**。
+ *
+ * ⚠ 除了这里，**没有任何别的地方会改** `skillBindings`：本地的绑定动作（装备到拳位、录 F 键）
+ * 一律**只发 `C2S_SetSkillBinding` 然后等回推**（与 `CharStatusPanel`/学技能同一口径）——
+ * 不做乐观更新，也就没有"本地以为绑上了、服务端其实拒了"这种对不上的状态。
+ *
+ * `null` = 该消息还没到（显式未知）；`v` 必为服务端原样下发的值（含 0 = 未绑）。
+ */
+export function setSkillBindings(v: SkillBindings | null): void {
+  commit({ skillBindings: v });
+}
+
+/**
+ * 清掉**按角色的服务端权威表**（已学技能表 + 绑定表）—— 进图（`enterGame`）时调一次。
+ *
+ * <p>为什么必须有这一步：`enterGame` 到"服务端补发技能表/绑定表"之间有**一个窗口**，
+ * 若不在这里清，"换角色进去"的头几帧 HUD 画的还是**上一个角色**的拳位图标（用户 2026-09-24 的症状）。
+ * 清成 `null` = **显式未知**（不画 / 不可绑），随后服务端在选角那批里重发（`sendSkillTables`）。
+ * ⚠ 不是"恢复到默认值"的那种兜底 —— 它把状态变成"不知道"，而不是变成另一个值。
+ */
+export function clearCharacterTables(): void {
+  if (snapshot.skillList === null && snapshot.skillBindings === null) return;
+  commit({ skillList: null, skillBindings: null });
+}
+
 let snapshot: GameSnapshot = loadInitial();
 const listeners = new Set<() => void>();
-
-function persist(): void {
-  try {
-    localStorage.setItem(LS_FISTS, JSON.stringify(snapshot.fistBindings));
-    localStorage.setItem(LS_QUICK, JSON.stringify(snapshot.quickBindings));
-  } catch { /* 隐私模式等写入失败忽略 */ }
-}
 
 /**
  * 药水快捷槽（ITEMSLOT 11/12/13）里的物品 uid；idx 0..2 对应数字键 1/2/3。
@@ -644,7 +680,6 @@ function commit(patch: Partial<GameSnapshot>): void {
       && patch.inventory?.gold !== undefined && patch.inventory.gold > beforeGold) {
     playItemSound(18);   // SIN_SOUND_COIN
   }
-  persist();
   for (const l of [...listeners]) l();
 }
 
@@ -894,32 +929,8 @@ export function toggleSystemMenu(): void {
   }
 }
 
-// —— 拳位装备 / F1~F8 快捷绑定（持久化到 localStorage） ——
-// 语义与原版一致：装备某技能到拳位 = 战斗中左/右键自动释放该技能。
-// null 拳位 = 普通攻击（原版普攻格/恢复普攻）。
-
-export function equipFist(target: 'left' | 'right', bind: FistBinding | null): void {
-  if (bind && snapshot.fistBindings[target] && snapshot.fistBindings[target]!.classDir === bind.classDir
-    && snapshot.fistBindings[target]!.iconFile === bind.iconFile) return;
-  commit({ fistBindings: { ...snapshot.fistBindings, [target]: bind } });
-}
-
-/** 记录 F1~F8 快捷绑定（index 0=F1）；同 F 键旧绑定被覆盖（原版同一 F 键只能绑一个）。 */
-export function setQuickBinding(index: number, qb: QuickBinding | null): void {
-  if (index < 0 || index > 7) return;
-  const arr = [...snapshot.quickBindings];
-  arr[index] = qb;
-  commit({ quickBindings: arr });
-}
-
-/**
- * 按下 F1~F8：把该键绑定的技能自动切到对应拳（无需开面板）。
- * @returns 是否命中绑定（命中即切换）
- */
-export function pressQuickBinding(index: number): boolean {
-  if (index < 0 || index > 7) return false;
-  const qb = snapshot.quickBindings[index];
-  if (!qb) return false;
-  equipFist(qb.target, { classDir: qb.classDir, iconFile: qb.iconFile });
-  return true;
-}
+// —— 拳位装备 / F1~F8 快捷绑定 ——
+// **本文件不再有改绑定的入口**：绑定是服务端权威（`characterinfo.props`），
+// 装备/解绑一律走 `net/bridge.sendSkillBinding` 发包，等 `S2C_SkillBindings` 回推（见 `setSkillBindings`）。
+// 语义与原版一致：装备某技能到拳位 = 战斗中左/右键自动释放该技能；未绑（0）= 普通攻击。
+// "这个绑定此刻该怎么解释"（画哪张图标 / 该不该放技能 / 按 F 键装到哪只拳）见 `game/skillBinding.ts`。
