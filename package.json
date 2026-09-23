@@ -46,7 +46,8 @@
     "item-defs": "npx tsx scripts/extract-item-defs.ts",
     "verify-ageup-fx": "tsx scripts/verify-ageup-fx.ts",
     "verify-aging-blink": "tsx scripts/verify-aging-blink.ts",
-    "verify-blink-fx": "tsx scripts/verify-blink-fx.ts"
+    "verify-blink-fx": "tsx scripts/verify-blink-fx.ts",
+    "verify-use-crystal": "tsx scripts/verify-use-crystal.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

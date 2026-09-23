@@ -13129,6 +13129,8 @@ export const jpt = $root.jpt = (() => {
              * @property {string|null} [clanMark] S2C_PlayerAppear clanMark
              * @property {number|null} [animWalkRate] S2C_PlayerAppear animWalkRate
              * @property {number|null} [animRunRate] S2C_PlayerAppear animRunRate
+             * @property {number|null} [animIndex] S2C_PlayerAppear animIndex
+             * @property {string|null} [animClip] S2C_PlayerAppear animClip
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -13265,6 +13267,22 @@ export const jpt = $root.jpt = (() => {
             S2C_PlayerAppear.prototype.animRunRate = 0;
 
             /**
+             * S2C_PlayerAppear animIndex.
+             * @member {number} animIndex
+             * @memberof jpt.base.S2C_PlayerAppear
+             * @instance
+             */
+            S2C_PlayerAppear.prototype.animIndex = 0;
+
+            /**
+             * S2C_PlayerAppear animClip.
+             * @member {string} animClip
+             * @memberof jpt.base.S2C_PlayerAppear
+             * @instance
+             */
+            S2C_PlayerAppear.prototype.animClip = "";
+
+            /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_PlayerAppear
@@ -13322,6 +13340,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 14, wireType 5 =*/117).float(message.animWalkRate);
                 if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate") && !$Object.is(message.animRunRate, 0))
                     writer.uint32(/* id 15, wireType 5 =*/125).float(message.animRunRate);
+                if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex") && message.animIndex !== 0)
+                    writer.uint32(/* id 16, wireType 0 =*/128).int32(message.animIndex);
+                if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip") && message.animClip !== "")
+                    writer.uint32(/* id 17, wireType 2 =*/138).string(message.animClip);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -13490,6 +13512,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.animRunRate;
                             continue;
                         }
+                    case 16: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.animIndex = value;
+                            else
+                                delete message.animIndex;
+                            continue;
+                        }
+                    case 17: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.animClip = value;
+                            else
+                                delete message.animClip;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -13581,6 +13621,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
                     if (typeof message.animRunRate !== "number")
                         return "animRunRate: number expected";
+                if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex"))
+                    if (!$util.isInteger(message.animIndex))
+                        return "animIndex: integer expected";
+                if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip"))
+                    if (!$util.isString(message.animClip))
+                        return "animClip: string expected";
                 return null;
             };
 
@@ -13652,6 +13698,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.animRunRate != null)
                     if (!$Object.is($Number(object.animRunRate), 0))
                         message.animRunRate = $Number(object.animRunRate);
+                if (object.animIndex != null)
+                    if ($Number(object.animIndex) !== 0)
+                        message.animIndex = object.animIndex | 0;
+                if (object.animClip != null)
+                    if (typeof object.animClip !== "string" || object.animClip.length)
+                        message.animClip = $String(object.animClip);
                 return message;
             };
 
@@ -13690,6 +13742,8 @@ export const jpt = $root.jpt = (() => {
                     object.clanMark = "";
                     object.animWalkRate = 0;
                     object.animRunRate = 0;
+                    object.animIndex = 0;
+                    object.animClip = "";
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -13722,6 +13776,10 @@ export const jpt = $root.jpt = (() => {
                     object.animWalkRate = options.json && !$isFinite(message.animWalkRate) ? $String(message.animWalkRate) : message.animWalkRate;
                 if (message.animRunRate != null && $Object.hasOwnProperty.call(message, "animRunRate"))
                     object.animRunRate = options.json && !$isFinite(message.animRunRate) ? $String(message.animRunRate) : message.animRunRate;
+                if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex"))
+                    object.animIndex = message.animIndex;
+                if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip"))
+                    object.animClip = message.animClip;
                 return object;
             };
 
@@ -20403,6 +20461,8 @@ export const jpt = $root.jpt = (() => {
              * @property {boolean|null} [dead] S2C_MonsterAppear dead
              * @property {number|null} [monsterEffectId] S2C_MonsterAppear monsterEffectId
              * @property {number|null} [animRate] S2C_MonsterAppear animRate
+             * @property {number|Long|null} [ownerEntityId] S2C_MonsterAppear ownerEntityId
+             * @property {string|null} [ownerName] S2C_MonsterAppear ownerName
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -20531,6 +20591,22 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterAppear.prototype.animRate = 0;
 
             /**
+             * S2C_MonsterAppear ownerEntityId.
+             * @member {number|Long} ownerEntityId
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.ownerEntityId = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * S2C_MonsterAppear ownerName.
+             * @member {string} ownerName
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.ownerName = "";
+
+            /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterAppear
@@ -20586,6 +20662,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 11, wireType 0 =*/88).int32(message.monsterEffectId);
                 if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate") && !$Object.is(message.animRate, 0))
                     writer.uint32(/* id 12, wireType 5 =*/101).float(message.animRate);
+                if (message.ownerEntityId != null && $Object.hasOwnProperty.call(message, "ownerEntityId") && (typeof message.ownerEntityId === "object" ? message.ownerEntityId.low || message.ownerEntityId.high : message.ownerEntityId !== 0))
+                    writer.uint32(/* id 13, wireType 0 =*/104).int64(message.ownerEntityId);
+                if (message.ownerName != null && $Object.hasOwnProperty.call(message, "ownerName") && message.ownerName !== "")
+                    writer.uint32(/* id 14, wireType 2 =*/114).string(message.ownerName);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -20748,6 +20828,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.animRate;
                             continue;
                         }
+                    case 13: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.ownerEntityId = value;
+                            else
+                                delete message.ownerEntityId;
+                            continue;
+                        }
+                    case 14: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.ownerName = value;
+                            else
+                                delete message.ownerName;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -20834,6 +20932,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate"))
                     if (typeof message.animRate !== "number")
                         return "animRate: number expected";
+                if (message.ownerEntityId != null && $Object.hasOwnProperty.call(message, "ownerEntityId"))
+                    if (!$util.isInteger(message.ownerEntityId) && !(message.ownerEntityId && $util.isInteger(message.ownerEntityId.low) && $util.isInteger(message.ownerEntityId.high)))
+                        return "ownerEntityId: integer|Long expected";
+                if (message.ownerName != null && $Object.hasOwnProperty.call(message, "ownerName"))
+                    if (!$util.isString(message.ownerName))
+                        return "ownerName: string expected";
                 return null;
             };
 
@@ -20900,6 +21004,19 @@ export const jpt = $root.jpt = (() => {
                 if (object.animRate != null)
                     if (!$Object.is($Number(object.animRate), 0))
                         message.animRate = $Number(object.animRate);
+                if (object.ownerEntityId != null)
+                    if (typeof object.ownerEntityId === "object" ? object.ownerEntityId.low || object.ownerEntityId.high : $Number(object.ownerEntityId) !== 0)
+                        if ($util.Long)
+                            message.ownerEntityId = $util.Long.fromValue(object.ownerEntityId, false);
+                        else if (typeof object.ownerEntityId === "string")
+                            message.ownerEntityId = $parseInt(object.ownerEntityId, 10);
+                        else if (typeof object.ownerEntityId === "number")
+                            message.ownerEntityId = object.ownerEntityId;
+                        else if (typeof object.ownerEntityId === "object")
+                            message.ownerEntityId = new $util.LongBits(object.ownerEntityId.low >>> 0, object.ownerEntityId.high >>> 0).toNumber();
+                if (object.ownerName != null)
+                    if (typeof object.ownerName !== "string" || object.ownerName.length)
+                        message.ownerName = $String(object.ownerName);
                 return message;
             };
 
@@ -20937,6 +21054,12 @@ export const jpt = $root.jpt = (() => {
                     object.dead = false;
                     object.monsterEffectId = 0;
                     object.animRate = 0;
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.ownerEntityId = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.ownerEntityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.ownerName = "";
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -20967,6 +21090,15 @@ export const jpt = $root.jpt = (() => {
                     object.monsterEffectId = message.monsterEffectId;
                 if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate"))
                     object.animRate = options.json && !$isFinite(message.animRate) ? $String(message.animRate) : message.animRate;
+                if (message.ownerEntityId != null && $Object.hasOwnProperty.call(message, "ownerEntityId"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.ownerEntityId = typeof message.ownerEntityId === "number" ? $BigInt(message.ownerEntityId) : $util.Long.fromBits(message.ownerEntityId.low >>> 0, message.ownerEntityId.high >>> 0, false).toBigInt();
+                    else if (typeof message.ownerEntityId === "number")
+                        object.ownerEntityId = options.longs === $String ? $String(message.ownerEntityId) : message.ownerEntityId;
+                    else
+                        object.ownerEntityId = options.longs === $String ? $util.Long.prototype.toString.call(message.ownerEntityId) : options.longs === $Number ? new $util.LongBits(message.ownerEntityId.low >>> 0, message.ownerEntityId.high >>> 0).toNumber() : message.ownerEntityId;
+                if (message.ownerName != null && $Object.hasOwnProperty.call(message, "ownerName"))
+                    object.ownerName = message.ownerName;
                 return object;
             };
 

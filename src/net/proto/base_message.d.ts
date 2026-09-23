@@ -4285,6 +4285,12 @@ export namespace jpt {
             /** S2C_PlayerAppear animRunRate. */
             animRunRate: number;
 
+            /** S2C_PlayerAppear animIndex. */
+            animIndex: number;
+
+            /** S2C_PlayerAppear animClip. */
+            animClip: string;
+
             /**
              * Creates a new S2C_PlayerAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -4407,6 +4413,12 @@ export namespace jpt {
 
                 /** S2C_PlayerAppear animRunRate */
                 animRunRate?: (number|null);
+
+                /** S2C_PlayerAppear animIndex */
+                animIndex?: (number|null);
+
+                /** S2C_PlayerAppear animClip */
+                animClip?: (string|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -6550,6 +6562,12 @@ export namespace jpt {
             /** S2C_MonsterAppear animRate. */
             animRate: number;
 
+            /** S2C_MonsterAppear ownerEntityId. */
+            ownerEntityId: (number|Long);
+
+            /** S2C_MonsterAppear ownerName. */
+            ownerName: string;
+
             /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -6669,6 +6687,12 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear animRate */
                 animRate?: (number|null);
+
+                /** S2C_MonsterAppear ownerEntityId */
+                ownerEntityId?: (number|Long|null);
+
+                /** S2C_MonsterAppear ownerName */
+                ownerName?: (string|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

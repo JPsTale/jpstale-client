@@ -281,7 +281,14 @@ export interface WorldView {
   /** 服务端权威移动（S2C_PlayerMove）：自机→阈值收敛插值；他人→远端演员跟踪 */
   applyPlayerMove(playerId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animClip?: string, useSeq?: number, useItemIdcode?: number): void;
   /** 玩家进入视野（S2C_PlayerAppear）→ 异步加载独立克隆演员；angle=出现时朝向(弧度) */
-  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkAnimRate?: number, runAnimRate?: number): void;
+  /**
+   * 玩家进入视野（`S2C_PlayerAppear`）。
+   *
+   * `animIndex`/`animClip` = **对方此刻正在播的那一条**（服务端缓存其最近一次上报）——
+   * 进视野时要靠它对齐，否则"出现时正在挥砍/施法/走路"的玩家只能先站住，丢掉当前这一条动作
+   * （用户 2026-09-23："客户端经常丢掉远端玩家的第一下攻击动画"）。`0`/空串 = 没有（按站姿开始）。
+   */
+  playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkAnimRate?: number, runAnimRate?: number, animIndex?: number, animClip?: string): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
   /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型（发光随之更新，见下） */
@@ -4846,7 +4853,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     actor.rig.setStance(actor.root, stance);
   }
 
-  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; animWalkRate?: number; animRunRate?: number }): void {
+  function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; animWalkRate?: number; animRunRate?: number; animIndex?: number; animClip?: string }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
@@ -4943,7 +4950,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           pendingAttackPlan: null,
         };
         remotes.set(pid, actorObj);
-        animState2.triggerIdle();
+        // **进视野对齐对方此刻播的那一条**（`S2C_PlayerAppear.anim_index`，服务端缓存自其最近一次上报）：
+        // 否则"出现时正在挥砍/施法/走路"的玩家会先站住，丢掉当前这一条动作
+        // （用户 2026-09-23："客户端经常丢掉远端玩家的第一下攻击动画"）。
+        // 查不到条目 ⇒ 回退站姿 + 上报（#12 不静默；两端动画数据不同代时会出现）。
+        // ⚠ 只对齐**动画**、不建 `actor.attack`：那一刀的事件帧音效发生在**我们看到之前**，
+        //   补音反而错位（要补的是"这一挥还在进行中"的那类，那条路走 `playRemoteAttack`）。
+        {
+          const want = actorInfo.animIndex ?? 0;
+          const appearMotion = want > 0 ? motionList2.find((m) => m.index === want) ?? null : null;
+          if (appearMotion) {
+            animState2.playMotion(appearMotion);
+            verifyRemoteAnimData(actorObj, actorInfo.animClip ?? '');
+            console.log('[WorldView] 远端 id=' + pid + ' 进视野对齐动画: index=' + want
+              + ' state=0x' + appearMotion.state.toString(16) + ' clip=' + (actorInfo.animClip || '(无)'));
+          } else {
+            if (want > 0) {
+              reportFallback('anim', `远端 id=${pid} 进视野时上报的动画条目 #${want} 不在本地动作表里`
+                + `（两端数据不同代）→ 退回站姿`);
+            }
+            animState2.triggerIdle();
+          }
+        }
         // 演员建好前到达的起手（见 `signalAttackStart` 的队列）：**那一招还在进行中**就补播
         {
           const pend = pendingRemoteAttacks.get(pid);
@@ -6576,8 +6604,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         }
       }
     },
-    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance, animWalkRate, animRunRate) => {
-      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance, animWalkRate, animRunRate });
+    playerAppear: (playerId, name, classId, level, hp, maxHp, clanName, clanMark, x, y, z, angle, appearance, animWalkRate, animRunRate, animIndex, animClip) => {
+      spawnRemote({ playerId: Number(playerId), name, classId: classId || 1, level, hp: hp || 0, maxHp: maxHp || 0, clanName: clanName || '', clanMark: clanMark || '', x, y, z, angle, appearance, animWalkRate, animRunRate, animIndex: animIndex || 0, animClip: animClip || '' });
     },
     setSpeed: (walkWps, runWps, walkAnimRate, runAnimRate) => {
       // 速度（世界/秒）—— 用于**本地移动步长**；非法值忽略，保留当前值

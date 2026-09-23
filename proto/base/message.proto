@@ -365,6 +365,13 @@ message S2C_PlayerAppear {
   // 走/跑**动画速率** = 实际速度 ÷ 1档速度（服务端查表算好；客户端直接用，不再本地换算）
   float anim_walk_rate = 14;
   float anim_run_rate = 15;
+  // 该玩家**此刻正在播的那一条动画**（服务端缓存其最近一次上报：`C2S_PlayerMove` / `C2S_AttackStart`）。
+  // 语义与 `S2C_PlayerMove.anim_index/anim_clip` **完全一致**（同一个 `SemanticEntry.clip` 校验口径），
+  // 用途只有一个：**进视野时对齐** —— 否则"出现时正在挥砍/施法/走路"的玩家只能先站住，
+  // 丢掉当前这一条动作（用户 2026-09-23："客户端经常丢掉远端玩家的第一下攻击动画"）。
+  // ⚠ 不带进度：客户端从该条目的第 0 帧播起（与"起手广播迟到补播"同一口径）。
+  int32 anim_index = 16;
+  string anim_clip = 17;
 }
 
 message S2C_PlayerDisappear {
@@ -572,6 +579,22 @@ message S2C_MonsterAppear {
   // 这样 `attackspeed` 才真正作用于动画速度（快怪动画播得快），且与**服务端算的动画时长同源**
   // （服务端"等动画播完"必须等于客户端实际播完的时间）。
   float anim_rate = 12;
+  // ==================== 召唤物归属（怪物水晶） ====================
+  // 这两项只在"这只怪是玩家召唤出来的"时非零/非空 —— 不另发一条"这是召唤物"的消息，
+  // 用 `owner_entity_id > 0` 作唯一判据（原版对应 `smCharInfo.Brood == smCHAR_MONSTER_USER`）。
+  //
+  // 客户端用途：① 认出"这是我自己的召唤物"（不可攻击、不被裁剪、名牌画蓝）；
+  // ② 在名牌第二行画 `(主人名)`（原版 `Winmain.cpp:4010-4019` 的画法）。
+  //
+  // ⚠ 本文件是**服务端 proto 的副本**（服务端在 `modules/protocol/src/main/proto/base/message.proto`）——
+  //    改一边要一起改，否则客户端生成的类型里没有新字段（`npm run proto` 读的是本目录）。
+  int64 owner_entity_id = 13; // 主人的**运行时实体 id**（PlayerEntity.getId()）；0 = 不是召唤物
+  string owner_name = 14;     // 主人角色名（名牌第二行 `(名字)`）
+  // 剩余寿命（只对召唤物非零）：客户端据此在名牌下画一条**按比例**收缩的倒计时条。
+  // 为什么是**两个数**（总量 + 剩余）：条要按"剩余/总量"画，只给剩余量的话客户端要么抄一份
+  // 寿命公式（服务端规则出现第二份实现），要么在重新进入视野收到新 Appear 时把进度重置成满格。
+  int32 summon_life_total_ms = 15;     // 总寿命（毫秒）；0 = 不是召唤物
+  int32 summon_life_remaining_ms = 16; // 自本消息发出时算起还剩多少毫秒
 }
 
 message S2C_MonsterDisappear {

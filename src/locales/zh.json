@@ -346,6 +346,11 @@
       "bagFull": "背包已满",
       "notDroppable": "该物品无法丢弃",
       "failed": "操作失败",
+      "crystal": {
+        "level": "需要 {level} 级才能使用这颗水晶",
+        "town": "城市里不能使用水晶",
+        "noTemplate": "召唤失败，水晶没有消耗"
+      },
       "mix": {
         "target-not-found": "找不到这件装备",
         "target-not-in-bag": "装备要放在背包里",

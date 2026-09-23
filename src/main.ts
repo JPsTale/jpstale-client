@@ -898,6 +898,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
         // 走/跑**动画速率**（服务端查表算好；1 档 = 1.0）——本消息里不再传速度值（那对字段已废弃）
         a.animWalkRate || 1,
         a.animRunRate || 1,
+        // 对方**此刻在播的那一条**（服务端缓存自其最近上报）：进视野时对齐用 —— 否则"出现时正在
+        // 挥砍/施法/走路"的玩家会先站住（用户 2026-09-23）。不在外观指纹里（不换网格、只选动画条目）。
+        a.animIndex || 0,
+        a.animClip || '',
       );
       break;
     }
@@ -936,6 +940,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         !!a.dead,
         a.monsterEffectId || 0,
         a.animRate || 0,   // 动画播放速率（服务端按 DB attackspeed 算好下发）
+        Number(a.ownerEntityId) || 0,  // 召唤物归属：>0 = 玩家召唤出来的（名牌画蓝 + `(主人名)`、不可攻击自己那只）
+        a.ownerName || '',
       );
       break;
     }

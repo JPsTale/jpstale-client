@@ -346,6 +346,11 @@
       "bagFull": "Bag is full",
       "notDroppable": "That item cannot be dropped",
       "failed": "Operation failed",
+      "crystal": {
+        "level": "Requires level {level} to use this crystal",
+        "town": "Crystals cannot be used in town",
+        "noTemplate": "Summon failed, the crystal was not consumed"
+      },
       "mix": {
         "target-not-found": "Item not found",
         "target-not-in-bag": "Put the item in your bag first",
