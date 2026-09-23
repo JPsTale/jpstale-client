@@ -6568,6 +6568,12 @@ export namespace jpt {
             /** S2C_MonsterAppear ownerName. */
             ownerName: string;
 
+            /** S2C_MonsterAppear summonLifeTotalMs. */
+            summonLifeTotalMs: number;
+
+            /** S2C_MonsterAppear summonLifeRemainingMs. */
+            summonLifeRemainingMs: number;
+
             /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @param [properties] Properties to set
@@ -6693,6 +6699,12 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear ownerName */
                 ownerName?: (string|null);
+
+                /** S2C_MonsterAppear summonLifeTotalMs */
+                summonLifeTotalMs?: (number|null);
+
+                /** S2C_MonsterAppear summonLifeRemainingMs */
+                summonLifeRemainingMs?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

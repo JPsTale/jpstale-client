@@ -942,6 +942,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.animRate || 0,   // 动画播放速率（服务端按 DB attackspeed 算好下发）
         Number(a.ownerEntityId) || 0,  // 召唤物归属：>0 = 玩家召唤出来的（名牌画蓝 + `(主人名)`、不可攻击自己那只）
         a.ownerName || '',
+        a.summonLifeTotalMs || 0,      // 头顶倒计时条：总寿命 + 收到时的剩余（客户端本地推比例）
+        a.summonLifeRemainingMs || 0,
       );
       break;
     }

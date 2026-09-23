@@ -306,7 +306,7 @@ export interface WorldView {
    * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
    * 直接摆成死亡姿势，不播 idle。
    */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string, lifeTotalMs?: number, lifeRemainMs?: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
@@ -2889,6 +2889,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      * 自己的召唤物不被显示预算裁剪、**不能攻击自己的召唤物**（原版 `attack_UserMonster` 闸门）。
      */
     ownerEntityId: number;
+    /**
+     * 召唤物剩余寿命的显示数据（头顶那条倒计时条）。
+     *
+     * 三个字段一起用：`lifeTotalMs` 是总寿命，`lifeRemainMs` 是**收到 Appear 那一刻**还剩多少，
+     * `lifeAnchorMs` 是收到时刻（本地 `performance.now()`）。当前剩余 = `lifeRemainMs - (now - lifeAnchorMs)`
+     * ⇒ 比例本地推、**不在客户端重算寿命公式**（那是服务端的规则，只存一份）。
+     *
+     * `lifeTotalMs === 0` = 不是召唤物 / 不下发 ⇒ 不画这条。
+     */
+    lifeTotalMs: number;
+    lifeRemainMs: number;
+    lifeAnchorMs: number;
     /** 主人角色名（名牌第二行画 `(名字)`；原版 `Winmain.cpp:4010-4019`） */
     ownerName: string;
     /** 模型资产路径（音效目录名解析用：<怪物名>/<怪物名>.smd → 目录 basename） */
@@ -3264,7 +3276,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ownerEntityId?: number;
     /** 主人角色名（名牌第二行 `(名字)`） */
     ownerName?: string;
+    /** 召唤物总寿命（毫秒）；0/未给 = 不画倒计时条 */
+    lifeTotalMs?: number;
+    /** 收到 Appear 那一刻的剩余寿命（毫秒），配合 `lifeTotalMs` 本地推比例 */
+    lifeRemainMs?: number;
   }): void {
+    // 倒计时条的锚点：**收到 Appear 的那一刻**（不是模型加载完之后）——
+    // 下面的 actorObj 是在 `await loadMonsterModel(...)` 之后才建出来的，若在那里取
+    // `performance.now()`，锚点会晚于"服务端发消息"若干毫秒（模型加载耗时），条子会跟着偏慢。
+    // 声明在这里（同步入口、await 之前）就与"服务端说还剩多少"对齐到同一时刻。
+    const lifeAnchorMs = performance.now();
     if (!scene) {
       pendingMonsterAppears.push(actorInfo);
       return;
@@ -3335,6 +3356,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animRate: actorInfo.animRate && actorInfo.animRate > 0 ? actorInfo.animRate : 1,
           ownerEntityId: actorInfo.ownerEntityId && actorInfo.ownerEntityId > 0 ? actorInfo.ownerEntityId : 0,
           ownerName: actorInfo.ownerName || '',
+          // 倒计时条：锚点取**本地收到时刻**（不是服务器时钟 —— 我们之间没有对时）。
+          lifeTotalMs: actorInfo.lifeTotalMs && actorInfo.lifeTotalMs > 0 ? actorInfo.lifeTotalMs : 0,
+          lifeRemainMs: actorInfo.lifeRemainMs && actorInfo.lifeRemainMs > 0 ? actorInfo.lifeRemainMs : 0,
+          lifeAnchorMs,
           snaps: [{ t: performance.now(), x: actorInfo.x, y: actorInfo.y, z: actorInfo.z, angle: actorInfo.angle || 0, anim: dead ? ANIM_DEAD : 0x0040 }],
           lastAnimState: dead ? ANIM_DEAD : 0x0040,
           culled: false,
@@ -3624,6 +3649,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return `hsl(${hue.toFixed(0)} 85% 50%)`;
   }
 
+  /**
+   * 召唤物**倒计时条**的填充色（青）—— 固定色、不随剩余时间变色，好与血条一眼分开。
+   *
+   * ⚠ 这是**我们自定**的显示：原版没有"头顶倒计时条"这个东西 —— 它的召唤剩余时间显示在
+   * **左上角的水晶图标 + 圆环**里（服务端发条命令、客户端 `AddTimer` 注册进技能计时槽，
+   * 见 `docs/召唤物系统-源码分析.md` §3.6）。头顶这条是用户 2026-09-23 要求的自有设计，
+   * 所以配色只能由我们定（选了青色：血条走红→绿，青色与它不冲突，也不撞名牌的淡黄主人名）。
+   */
+  const LIFE_BAR_COLOR = 'hsl(186 80% 55%)';
+
   function rrect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
     const rr = Math.min(r, w / 2, h / 2);
     ctx.beginPath();
@@ -3688,6 +3723,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     sub?: string;
     showHp: boolean;
     ratio: number;       // hp/maxHp（showHp 时有效）
+    /**
+     * 召唤物**剩余寿命比例**（0..1）；`undefined` = 这条不画。
+     *
+     * 由服务端下发的"总量 + 剩余"在客户端本地按锚点推进算出（见 `MonsterActor.lifeAnchorMs`），
+     * **不在客户端重算寿命公式** —— 那是服务端的规则，只存一份。
+     */
+    lifeRatio?: number;
     selected: boolean;
   }
   /** 在锚点 (x,y) 上方画一块名牌：名牌块(名字+公会)尺寸恒定；血条出现时仅让整块上移，自身不变高 */
@@ -3706,15 +3748,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const line2W = line2 ? ctx.measureText(line2).width : 0;
     let pillW = Math.max(nameW, line2W) + 16;
 
-    // 名牌块（名字+第二行）固定高；血条独立于名牌块下方，出现仅抬高名牌块
+    // 名牌块（名字+第二行）固定高；条挂在名牌块下方，出现仅抬高名牌块
     const blockH = 18 + (line2 ? 3 + 14 : 0);
-    const HP_BAR_W = 84, HP_BAR_H = 7;
-    const GAP = s.showHp ? 3 : 0; // 名牌块底边与血条顶间距
-    if (s.showHp) pillW = Math.max(pillW, HP_BAR_W + 12 + 4); // 血条(含轮廓)比名牌块略宽，居中
-    const blockBottom = y - (s.showHp ? HP_BAR_H + GAP : 0) - 4; // 名牌块底边贴着血条下方留 4px
+    const BAR_W = 84, HP_BAR_H = 7, LIFE_BAR_H = 5;
+    // 名牌块下面可以挂**两条**：血条（受伤/选中/自己的召唤物）与召唤物的倒计时条。
+    // 用列表驱动高度与绘制 —— 多一条就只在这里 push 一次，不必把下面每处
+    // `s.showHp ? … : …` 都改一遍（那正是"漏改一处就布局错位"的来源）。
+    const bars: number[] = [];
+    if (s.showHp) bars.push(HP_BAR_H);
+    if (s.lifeRatio !== undefined) bars.push(LIFE_BAR_H);
+    const GAP = bars.length > 0 ? 3 : 0;
+    const barsH = bars.reduce((a, b) => a + b + GAP, 0);
+    if (bars.length > 0) pillW = Math.max(pillW, BAR_W + 12 + 4); // 条(含轮廓)比名牌块略宽，居中
+    const blockBottom = y - barsH - 4; // 名牌块底边贴着最下面那条的下方留 4px
     const blockTop = blockBottom - blockH;
 
-    // 名牌块背景 + 选中描边（描边只圈名牌块，不圈血条）
+    // 名牌块背景 + 选中描边（描边只圈名牌块，不圈条）
     ctx.fillStyle = 'rgba(8, 11, 16, 0.55)';
     rrect(ctx, x - pillW / 2, blockTop, pillW, blockH, 4);
     ctx.fill();
@@ -3724,8 +3773,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       rrect(ctx, x - pillW / 2, blockTop, pillW, blockH, 4);
       ctx.stroke();
     }
-    // 命中矩形：从名牌块顶边到锚点 y（含血条），宽度取"名牌块 / 血条"的较宽者
-    const hitW = Math.max(pillW, s.showHp ? HP_BAR_W + 16 : pillW);
+    // 命中矩形：从名牌块顶边到锚点 y（含条），宽度取"名牌块 / 条"的较宽者
+    const hitW = Math.max(pillW, bars.length > 0 ? BAR_W + 16 : pillW);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -3742,19 +3791,31 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       ctx.fillText(line2, x, rowY);
     }
 
-    // 血条：名牌块下方，深色外轮廓 + 玻璃质感
+    // 条：名牌块下方依次排（血条 → 召唤物倒计时条），深色外轮廓 + 玻璃质感
+    let barTop = blockBottom + GAP;
     if (s.showHp) {
-      drawHpBar(ctx, x, blockBottom + GAP, HP_BAR_W + 4, HP_BAR_H, s.ratio);
+      drawHpBar(ctx, x, barTop, BAR_W + 4, HP_BAR_H, s.ratio);
+      barTop += HP_BAR_H + GAP;
+    }
+    if (s.lifeRatio !== undefined) {
+      drawBar(ctx, x, barTop, BAR_W + 4, LIFE_BAR_H, s.lifeRatio, LIFE_BAR_COLOR);
+      barTop += LIFE_BAR_H + GAP;
     }
 
-    // 命中矩形：从名牌块顶边到锚点 y（含下方血条），宽度取较宽者 —— 供"指向名牌 = 指向目标"
+    // 命中矩形：从名牌块顶边到锚点 y（含下方所有条），宽度取较宽者 —— 供"指向名牌 = 指向目标"
     const hitTop = blockTop;
-    const hitBottom = s.showHp ? blockBottom + GAP + HP_BAR_H : blockBottom;
+    const hitBottom = barTop - GAP;
     return { x: x - hitW / 2, y: hitTop, w: hitW, h: Math.max(1, hitBottom - hitTop) };
   }
 
-  /** 血条（圆形玻璃质感）: 深色外轮廓 → 深色槽 → 渐变填充 + 顶部高光 */
-  function drawHpBar(ctx: CanvasRenderingContext2D, cx: number, top: number, w: number, h: number, ratio: number): void {
+  /**
+   * 一条"玻璃条"的几何与质感（**唯一实现**）—— 血条与召唤物倒计时条共用，只有填充色不同。
+   *
+   * `drawHpBar` 是它 + `hpColor`（按比例红→绿）；倒计时条是它 + 固定色 `LIFE_BAR_COLOR`。
+   * 抽成一份是为了"刀口只有一处"：槽/外轮廓/高光的尺寸改一次两边同时生效，
+   * 不会出现"两条粗细/圆角不一样"。
+   */
+  function drawBar(ctx: CanvasRenderingContext2D, cx: number, top: number, w: number, h: number, ratio: number, color: string): void {
     const r = h / 2;
     // 外轮廓（深色描边底板，比槽大一圈）
     ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
@@ -3770,7 +3831,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const fw = Math.max(2, (iw - 2) * r0);
     const fx = cx - (iw - 2) / 2;
     const fy = top + 1, fh = h - 2;
-    ctx.fillStyle = hpColor(r0);
+    ctx.fillStyle = color;
     rrect(ctx, fx, fy, fw, fh, fh / 2);
     ctx.fill();
     // 玻璃高光：上亮下暗渐变叠加
@@ -3782,6 +3843,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     ctx.fillStyle = gloss;
     rrect(ctx, fx, fy, fw, fh, fh / 2);
     ctx.fill();
+  }
+
+  /** 血条 = `drawBar` + 按比例红→绿（`hpColor`）。几何/质感只有 `drawBar` 一份。 */
+  function drawHpBar(ctx: CanvasRenderingContext2D, cx: number, top: number, w: number, h: number, ratio: number): void {
+    drawBar(ctx, cx, top, w, h, ratio, hpColor(ratio));
   }
 
   /** 名牌数据变更 / overlay 创建（自机 hp 数据等入口） */
@@ -4372,6 +4438,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 自己的召唤物**血条常显**（原版 `Next_Exp == 自己` ⇒ DispBar；看别人的召唤物时画的是主人名）
       const showHp = sel || a.stateBar || (a.maxHp > 0 && a.hp < a.maxHp)
         || (isSummon && a.ownerEntityId === selfPlayerId);
+      // 召唤物**倒计时条**：比例在本地按锚点推进（服务端给的是"总量 + 收到时的剩余"，
+      // 不在这里重算寿命公式）。到 0 只是显示到头 —— 真正收场由服务端决定（发 Death）。
+      const lifeRatio = a.lifeTotalMs > 0
+        ? Math.max(0, Math.min(1, (a.lifeRemainMs - (now - a.lifeAnchorMs)) / a.lifeTotalMs))
+        : undefined;
       recordPill(drawPill(ctx, pt.x, pt.y, a.name || '', {
         // 召唤物蓝色 RGB(0,153,255)（原版 `Winmain.cpp:3921-3933` 的 MONSTER_USER 分支），普通怪原色
         nameColor: isSummon ? '#0099ff' : '#ff8080',
@@ -4379,6 +4450,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         sub: isSummon && a.ownerName ? '(' + a.ownerName + ')' : undefined,
         showHp,
         ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
+        lifeRatio,
         selected: sel,
       }), a.root, HOVER_COLOR_MONSTER, 'attack');
     }
@@ -6621,8 +6693,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '' });
+    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0 });
     },
     monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);

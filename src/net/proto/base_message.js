@@ -20463,6 +20463,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [animRate] S2C_MonsterAppear animRate
              * @property {number|Long|null} [ownerEntityId] S2C_MonsterAppear ownerEntityId
              * @property {string|null} [ownerName] S2C_MonsterAppear ownerName
+             * @property {number|null} [summonLifeTotalMs] S2C_MonsterAppear summonLifeTotalMs
+             * @property {number|null} [summonLifeRemainingMs] S2C_MonsterAppear summonLifeRemainingMs
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -20607,6 +20609,22 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterAppear.prototype.ownerName = "";
 
             /**
+             * S2C_MonsterAppear summonLifeTotalMs.
+             * @member {number} summonLifeTotalMs
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.summonLifeTotalMs = 0;
+
+            /**
+             * S2C_MonsterAppear summonLifeRemainingMs.
+             * @member {number} summonLifeRemainingMs
+             * @memberof jpt.base.S2C_MonsterAppear
+             * @instance
+             */
+            S2C_MonsterAppear.prototype.summonLifeRemainingMs = 0;
+
+            /**
              * Creates a new S2C_MonsterAppear instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterAppear
@@ -20666,6 +20684,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 13, wireType 0 =*/104).int64(message.ownerEntityId);
                 if (message.ownerName != null && $Object.hasOwnProperty.call(message, "ownerName") && message.ownerName !== "")
                     writer.uint32(/* id 14, wireType 2 =*/114).string(message.ownerName);
+                if (message.summonLifeTotalMs != null && $Object.hasOwnProperty.call(message, "summonLifeTotalMs") && message.summonLifeTotalMs !== 0)
+                    writer.uint32(/* id 15, wireType 0 =*/120).int32(message.summonLifeTotalMs);
+                if (message.summonLifeRemainingMs != null && $Object.hasOwnProperty.call(message, "summonLifeRemainingMs") && message.summonLifeRemainingMs !== 0)
+                    writer.uint32(/* id 16, wireType 0 =*/128).int32(message.summonLifeRemainingMs);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -20846,6 +20868,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.ownerName;
                             continue;
                         }
+                    case 15: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.summonLifeTotalMs = value;
+                            else
+                                delete message.summonLifeTotalMs;
+                            continue;
+                        }
+                    case 16: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.summonLifeRemainingMs = value;
+                            else
+                                delete message.summonLifeRemainingMs;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -20938,6 +20978,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.ownerName != null && $Object.hasOwnProperty.call(message, "ownerName"))
                     if (!$util.isString(message.ownerName))
                         return "ownerName: string expected";
+                if (message.summonLifeTotalMs != null && $Object.hasOwnProperty.call(message, "summonLifeTotalMs"))
+                    if (!$util.isInteger(message.summonLifeTotalMs))
+                        return "summonLifeTotalMs: integer expected";
+                if (message.summonLifeRemainingMs != null && $Object.hasOwnProperty.call(message, "summonLifeRemainingMs"))
+                    if (!$util.isInteger(message.summonLifeRemainingMs))
+                        return "summonLifeRemainingMs: integer expected";
                 return null;
             };
 
@@ -21017,6 +21063,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.ownerName != null)
                     if (typeof object.ownerName !== "string" || object.ownerName.length)
                         message.ownerName = $String(object.ownerName);
+                if (object.summonLifeTotalMs != null)
+                    if ($Number(object.summonLifeTotalMs) !== 0)
+                        message.summonLifeTotalMs = object.summonLifeTotalMs | 0;
+                if (object.summonLifeRemainingMs != null)
+                    if ($Number(object.summonLifeRemainingMs) !== 0)
+                        message.summonLifeRemainingMs = object.summonLifeRemainingMs | 0;
                 return message;
             };
 
@@ -21060,6 +21112,8 @@ export const jpt = $root.jpt = (() => {
                     } else
                         object.ownerEntityId = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.ownerName = "";
+                    object.summonLifeTotalMs = 0;
+                    object.summonLifeRemainingMs = 0;
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -21099,6 +21153,10 @@ export const jpt = $root.jpt = (() => {
                         object.ownerEntityId = options.longs === $String ? $util.Long.prototype.toString.call(message.ownerEntityId) : options.longs === $Number ? new $util.LongBits(message.ownerEntityId.low >>> 0, message.ownerEntityId.high >>> 0).toNumber() : message.ownerEntityId;
                 if (message.ownerName != null && $Object.hasOwnProperty.call(message, "ownerName"))
                     object.ownerName = message.ownerName;
+                if (message.summonLifeTotalMs != null && $Object.hasOwnProperty.call(message, "summonLifeTotalMs"))
+                    object.summonLifeTotalMs = message.summonLifeTotalMs;
+                if (message.summonLifeRemainingMs != null && $Object.hasOwnProperty.call(message, "summonLifeRemainingMs"))
+                    object.summonLifeRemainingMs = message.summonLifeRemainingMs;
                 return object;
             };
 
