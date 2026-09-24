@@ -242,7 +242,18 @@ console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + �
     for (const [model, stem] of Object.entries(keyMap)) {
       modelsByStem.set(stem, [...(modelsByStem.get(stem) ?? []), model]);
     }
-    const unreachable = zhKeys.filter((k) => !modelsByStem.has(k));
+    // ⚠ 同一模型可有多个 inf 词干（对照表只记一个"获胜"词干）——其余词干的名字若与
+    // 获胜词干**相同**（同一份中文资料的别名文件），视为等价可达；不同才算不可达。
+    // 同一模型多个 inf 词干时对照表只记一个；判等价用**名字集合**：
+    // 名字表里的某个键，只要它的中文名出现在"任何一个获胜词干"的名字里 ⇒ 视为可达
+    // （同一份中文资料被别名文件共享，如 54/c54_mudygolem 都是「泥妖」）。
+    const winnerNames = new Set<string>(
+      [...new Set(Object.values(keyMap))].map((w) => zhMon[w]?.name).filter(Boolean) as string[]);
+    const unreachable = zhKeys.filter((k) => {
+      if (modelsByStem.has(k)) return false;
+      const own = zhMon[k]?.name;
+      return own === undefined || !winnerNames.has(own);
+    });
     if (unreachable.length) {
       fail(`名字表里 ${unreachable.length} 个键在服务端对照表里没有对应模型（服务端发不出这些 nameKey）：`
         + unreachable.slice(0, 5).join(', '));
