@@ -3573,23 +3573,6 @@
     "empty": "还没有聊天消息",
     "normal": "普通",
     "party": {
-      "noParty": "你还没有组队",
-      "targetOffline": "目标玩家 {name} 不在线",
-      "cannotInviteSelf": "不能邀请自己",
-      "full": "队伍已满",
-      "alreadyInParty": "你已在队伍中",
-      "notFound": "队伍不存在"
-    },
-    "guild": "公会",
-    "trade": "交易",
-    "battle": "战斗",
-    "system": "系统",
-    "fold": "折叠聊天窗",
-    "readonly": "该频道仅查看，请输入 /玩家名: 消息 私聊",
-    "hint": "按 Enter 发言",
-    "placeholder": "输入消息…",
-    "guildNotOpen": "公会频道暂未开放",
-    "party": {
       "noParty": "你没有加入队伍",
       "targetOffline": "对方不在线或不存在",
       "cannotInviteSelf": "不能邀请自己",
@@ -3602,6 +3585,15 @@
       "inviteExpired": "邀请已过期",
       "notMember": "对方不是本队成员"
     },
+    "guild": "公会",
+    "trade": "交易",
+    "battle": "战斗",
+    "system": "系统",
+    "fold": "折叠聊天窗",
+    "readonly": "该频道仅查看，请输入 /玩家名: 消息 私聊",
+    "hint": "按 Enter 发言",
+    "placeholder": "输入消息…",
+    "guildNotOpen": "公会频道暂未开放",
     "cmd": {
       "teleportNotOpen": "该区域尚未开放",
       "teleportLevelLow": "等级不足，无法进入该区域（需要 {level} 级）",
@@ -3690,6 +3682,11 @@
   "buff": {
     "remaining": "剩余 {s} 秒"
   },
+  "target": {
+    "button": {
+      "party": "组队"
+    }
+  },
   "party": {
     "expand": "展开队伍",
     "collapse": "收起队伍",
@@ -3710,7 +3707,8 @@
       "disband": "解散队伍",
       "changeMode": "切换模式"
     }
-  },  "itemtip": {
+  },
+  "itemtip": {
     "recHp": "恢复生命",
     "recMp": "恢复灵力",
     "recStm": "恢复耐力",
@@ -4490,5 +4488,544 @@
     "sp-regen": "耐力再生",
     "potion-storage": "药水存放数量",
     "unknown": "未知效果"
+  },
+  "monster": {
+    "b_104_babel": {
+      "name": "巴别塔"
+    },
+    "109_ruca": {
+      "name": "魔魂"
+    },
+    "12_doral": {
+      "name": "双足虫"
+    },
+    "12_mutantplant": {
+      "name": "绿木精灵"
+    },
+    "110_naz senior": {
+      "name": "嗜血达克"
+    },
+    "111_igolation": {
+      "name": "依格拉底女巫"
+    },
+    "111_kakoa": {
+      "name": "卡可依"
+    },
+    "111_undeadminer": {
+      "name": "矿工"
+    },
+    "112_sealcrasher": {
+      "name": "矿山晶石"
+    },
+    "112_sprin": {
+      "name": "斯伯林"
+    },
+    "112_undeadmanager": {
+      "name": "管理者"
+    },
+    "113_itechnician": {
+      "name": "技术专家"
+    },
+    "113_ltechnician": {
+      "name": "技术员"
+    },
+    "114_lengineer": {
+      "name": "工程师"
+    },
+    "115_minebat": {
+      "name": "寒冰恶魔"
+    },
+    "115_tsoldier": {
+      "name": "坦克兵"
+    },
+    "115_ttechnician": {
+      "name": "高级技术员"
+    },
+    "116_tbomber": {
+      "name": "爆破侵略兵"
+    },
+    "117_ibomber": {
+      "name": "爆破兵"
+    },
+    "117_inferno": {
+      "name": "地狱火灵王"
+    },
+    "117_minegolem": {
+      "name": "矿山傀儡"
+    },
+    "117_rguard": {
+      "name": "黑暗铁甲狂魔"
+    },
+    "117_telite": {
+      "name": "泰利特"
+    },
+    "117_xetan": {
+      "name": "鏉板潶"
+    },
+    "118_dmystery": {
+      "name": "黑暗魔鬼"
+    },
+    "118_lguardian": {
+      "name": "守护者"
+    },
+    "118_nihil": {
+      "name": "虚无"
+    },
+    "118_tarantulika": {
+      "name": "冰甲毒蛛"
+    },
+    "119_acero": {
+      "name": "拳击手"
+    },
+    "119_ignis": {
+      "name": "三头火龙"
+    },
+    "14_hobgoblin": {
+      "name": "魔兽兵"
+    },
+    "14_northgoblin": {
+      "name": "变异魔兽兵"
+    },
+    "120_devil shy": {
+      "name": "天使魔女"
+    },
+    "120_iceserpent": {
+      "name": "冰蛇"
+    },
+    "120_ielite": {
+      "name": "伊莱特"
+    },
+    "120_najan": {
+      "name": "小恶魔"
+    },
+    "121_chalybs": {
+      "name": "矿工机械"
+    },
+    "121_crios": {
+      "name": "克里奥斯"
+    },
+    "123_wlord": {
+      "name": "巫婆领主"
+    },
+    "15_mutantrabie": {
+      "name": "变异兔妖"
+    },
+    "130_draxos": {
+      "name": "特克魔王"
+    },
+    "130_greedy": {
+      "name": "贪婪之主"
+    },
+    "130_midranda": {
+      "name": "米德兰达"
+    },
+    "130_tulla": {
+      "name": "图拉"
+    },
+    "16_mutanttree": {
+      "name": "树根怪"
+    },
+    "18_corrupt": {
+      "name": "骷髅王"
+    },
+    "18_skeleton": {
+      "name": "骷髅"
+    },
+    "19_zombie": {
+      "name": "僵尸"
+    },
+    "21_cokris": {
+      "name": "独眼蜈蚣"
+    },
+    "22_beedog": {
+      "name": "蜂巢怪"
+    },
+    "23_mephit": {
+      "name": "青精灵"
+    },
+    "25_minigsilver": {
+      "name": "蓝豆糕"
+    },
+    "27_scorpion": {
+      "name": "蝎兽"
+    },
+    "28_plantlord": {
+      "name": "木精灵领主"
+    },
+    "30_leech": {
+      "name": "入地龙"
+    },
+    "31_decoy": {
+      "name": "浮灵"
+    },
+    "32_ghoul": {
+      "name": "盗贼"
+    },
+    "33_cyclops": {
+      "name": "独眼魔人"
+    },
+    "34_web": {
+      "name": "大头蜘蛛"
+    },
+    "36_buma": {
+      "name": "布玛熊"
+    },
+    "37_bronzewolverine": {
+      "name": "铜狼"
+    },
+    "38_crypt": {
+      "name": "地精"
+    },
+    "38_silverwolverine": {
+      "name": "银狼"
+    },
+    "40_bargon": {
+      "name": "刀斧手"
+    },
+    "41_goldenwolverine": {
+      "name": "金狼"
+    },
+    "43_mightygoblin": {
+      "name": "魔兽怪"
+    },
+    "44_skeletonranger": {
+      "name": "骷髅游骑兵"
+    },
+    "47_cyclopsknight": {
+      "name": "独眼魔神"
+    },
+    "49_skeletonwarrior": {
+      "name": "骷髅战士"
+    },
+    "4_hopy": {
+      "name": "独角兽"
+    },
+    "50_greven": {
+      "name": "巨蜥怪"
+    },
+    "53_titan": {
+      "name": "泰坦巨人"
+    },
+    "54_skeletonknight": {
+      "name": "骷髅爵士"
+    },
+    "55_sandlem": {
+      "name": "沙妖"
+    },
+    "59_headcutter": {
+      "name": "魔剑士"
+    },
+    "6_arma": {
+      "name": "穿山甲"
+    },
+    "5_mushroomghost": {
+      "name": "蘑菇精"
+    },
+    "66_slaughter": {
+      "name": "魔剑圣"
+    },
+    "67_illusionknight": {
+      "name": "魔战妖王"
+    },
+    "69_figon": {
+      "name": "火灵王"
+    },
+    "73_stonegiant": {
+      "name": "无双石怪"
+    },
+    "86_kinghopy": {
+      "name": "独角兽王"
+    },
+    "10_minig": {
+      "name": "绿豆糕"
+    },
+    "97_cyclopswarrior": {
+      "name": "暴风战士"
+    },
+    "11_imp": {
+      "name": "火精灵"
+    },
+    "35_armoredbettle": {
+      "name": "重甲蝎兽"
+    },
+    "61_avelisk-l": {
+      "name": "魔枪人马"
+    },
+    "70_avelisklord": {
+      "name": "魔锤人马"
+    },
+    "56_avelisk-s": {
+      "name": "魔剑人马"
+    },
+    "82_avelin": {
+      "name": "魔弓手"
+    },
+    "badwolf": {
+      "name": "Pol韈ia do Lobo"
+    },
+    "62_beevil": {
+      "name": "蜂王"
+    },
+    "106_bloodyknight": {
+      "name": "血色骑士"
+    },
+    "99_blizzardgiant": {
+      "name": "暴风巨人"
+    },
+    "c54_mudygolem": {
+      "name": "泥妖"
+    },
+    "52_muffin": {
+      "name": "松饼怪"
+    },
+    "83_chaingolem": {
+      "name": "链锤傀儡"
+    },
+    "100_chaoscara": {
+      "name": "混沌魔神"
+    },
+    "94_coldeye": {
+      "name": "冷眼魔"
+    },
+    "5_cuepy": {
+      "name": "红独角兽"
+    },
+    "65_darkknight": {
+      "name": "黑暗战士"
+    },
+    "105_darkphalanx": {
+      "name": "暗影骑兵"
+    },
+    "77_dawlin": {
+      "name": "双头毒眼"
+    },
+    "80_deadhopy": {
+      "name": "死亡独角兽"
+    },
+    "108_deadkinghopy": {
+      "name": "死亡独角兽王"
+    },
+    "85_deadzone": {
+      "name": "机械魔蚊"
+    },
+    "110_death_knight": {
+      "name": "死亡骑士"
+    },
+    "28_devilishtree": {
+      "name": "恶梦树"
+    },
+    "52_direbee": {
+      "name": "蜜蜂精"
+    },
+    "89_d-machine": {
+      "name": "霸天蛛"
+    },
+    "69_doomguard": {
+      "name": "黑暗爵士"
+    },
+    "75_dusk": {
+      "name": "达克"
+    },
+    "107_d_ar": {
+      "name": "箭神"
+    },
+    "107_d_atal": {
+      "name": "女武神"
+    },
+    "107_d_fi": {
+      "name": "圣殿武士"
+    },
+    "107_d_kn": {
+      "name": "剑圣"
+    },
+    "107_d_magi": {
+      "name": "死灵法师"
+    },
+    "107_d_meca": {
+      "name": "机甲武士"
+    },
+    "107_d_pa": {
+      "name": "皇家骑士"
+    },
+    "107_d_pr": {
+      "name": "圣灵法师"
+    },
+    "60_evilplant": {
+      "name": "黑暗魔树"
+    },
+    "50_evilsnail": {
+      "name": "蜗牛怪"
+    },
+    "101_fireworm": {
+      "name": "地狱火焰虫"
+    },
+    "97_frost": {
+      "name": "寒霜魔"
+    },
+    "95_frozen": {
+      "name": "冰妖"
+    },
+    "105_fury": {
+      "name": "狮王"
+    },
+    "8_ghost": {
+      "name": "鬼魂"
+    },
+    "great_greven": {
+      "name": "铁甲巨蜥"
+    },
+    "86_grotesque": {
+      "name": "大力鬼王"
+    },
+    "72_heavygoblin": {
+      "name": "重装魔兽兵"
+    },
+    "102_hellhound": {
+      "name": "地狱猎犬"
+    },
+    "100_hest": {
+      "name": "赫斯特"
+    },
+    "85_typhoon": {
+      "name": "台风"
+    },
+    "46_hungky": {
+      "name": "小绿人"
+    },
+    "84_hypermachine": {
+      "name": "杀戮机械"
+    },
+    "93_icegoblin": {
+      "name": "冰甲魔兽兵"
+    },
+    "96_icegolem": {
+      "name": "冰石人"
+    },
+    "88_ironfist": {
+      "name": "铁拳领主"
+    },
+    "81_ironguard": {
+      "name": "铁甲狂魔"
+    },
+    "110_kelvezu": {
+      "name": "凯尔维苏"
+    },
+    "lizardfolk": {
+      "name": "嗜血鳍狼"
+    },
+    "88_metron": {
+      "name": "异形"
+    },
+    "83_mimic": {
+      "name": "模仿者"
+    },
+    "57_mirekeeper": {
+      "name": "泥潭守护者"
+    },
+    "105_kingspider": {
+      "name": "狂暴蛛王"
+    },
+    "120_mokova": {
+      "name": "暗影教皇"
+    },
+    "100_ratoo": {
+      "name": "鲁图怪"
+    },
+    "107_seto": {
+      "name": "蛇灵"
+    },
+    "110_templeguard": {
+      "name": "暗影金刚"
+    },
+    "82_incubus": {
+      "name": "英酷巴斯"
+    },
+    "71_witch": {
+      "name": "女巫"
+    },
+    "87_morgon": {
+      "name": "巨斧萨满"
+    },
+    "89_mountain": {
+      "name": "巨锤魔"
+    },
+    "64_mummy": {
+      "name": "木乃伊"
+    },
+    "54_mudygolem": {
+      "name": "泥妖"
+    },
+    "92_mystic": {
+      "name": "神秘尖晶石"
+    },
+    "m_lord": {
+      "name": "木乃伊旗主"
+    },
+    "67_nightmare": {
+      "name": "梦魇"
+    },
+    "82_niken": {
+      "name": "丹尼肯"
+    },
+    "92_omega": {
+      "name": "神秘十八"
+    },
+    "79_omicron": {
+      "name": "神秘十五"
+    },
+    "omu": {
+      "name": "变异甲虫"
+    },
+    "84_rampage": {
+      "name": "暴跳怪"
+    },
+    "87_runicguardian": {
+      "name": "远古祭司"
+    },
+    "88_sadness": {
+      "name": "机械刑天"
+    },
+    "79_shadow": {
+      "name": "鬼影杀手"
+    },
+    "37_skeletonarcher": {
+      "name": "骷髅射手"
+    },
+    "103_darkguard": {
+      "name": "暗影守卫"
+    },
+    "104_darkmage": {
+      "name": "暗黑教主"
+    },
+    "72_sliver": {
+      "name": "三角魔神"
+    },
+    "60_solidsnail": {
+      "name": "变异蜗牛"
+    },
+    "spider": {
+      "name": "蜘蛛女皇"
+    },
+    "stingray": {
+      "name": "独眼飞蛾"
+    },
+    "74_stonegolem": {
+      "name": "无双石魔"
+    },
+    "strider": {
+      "name": "双刀娜迦"
+    },
+    "79_stygian": {
+      "name": "幽灵"
+    },
+    "62_thorncrawler": {
+      "name": "荆棘爬行者"
+    },
+    "98_turtlecannon": {
+      "name": "铁甲神龟"
+    },
+    "49_vampiricbat": {
+      "name": "独眼蝙蝠"
+    }
   }
 }

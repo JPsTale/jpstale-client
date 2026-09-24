@@ -941,6 +941,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         Number(a.monsterId),
         a.templateId || 0,
         a.name || '',
+        a.nameKey || '',                          // i18n 键名段（= 该怪 .inf 文件名词干；空 = 用数据名）
         a.modelFile || '',
         Number(a.level) || 1,
         a.hp || 0,
@@ -956,6 +957,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         a.ownerName || '',
         a.summonLifeTotalMs || 0,      // 头顶倒计时条：总寿命 + 收到时的剩余（客户端本地推比例）
         a.summonLifeRemainingMs || 0,
+        a.cameraY || 0,                // 目标窗相机补正（monsterlist cameray/cameraz → ArrowPosi）
+        a.cameraZ || 0,
       );
       break;
     }

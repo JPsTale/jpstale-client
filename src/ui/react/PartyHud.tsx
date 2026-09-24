@@ -5,7 +5,7 @@ import {
 } from '../../app/gameStore.js';
 import { itemDefByCode, itemIconUrl } from '../../game/data/itemDefs.js';
 import { useItemImg } from './ItemPanel.js';
-import { loadUiImage } from '../../render/ui-texture.js';
+import { useUiImageUrl } from './useUiImage.js';
 import { sendPartyAccept, sendPartyAction, sendPartyLeave } from '../../net/bridge.js';
 import { t } from '../../i18n/index.js';
 
@@ -34,19 +34,6 @@ const PORTRAIT = '/res/image/party/party_man_0.bmp';
 const PORTRAIT_LEADER = '/res/image/party/party_man_jang.bmp';
 const HP_BASE = '/res/image/party/smallenergy_red.bmp';
 const HP_FILL = '/res/image/party/smallenergy_blue.bmp';
-
-/** /res 贴图 → dataURL（loadUiImage 内部有缓存与并发合并，多行同图只加载一次） */
-function useUiImageUrl(path: string): string | null {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let alive = true;
-    loadUiImage(path).then((img) => {
-      if (alive) setUrl(img ? img.src : null);
-    });
-    return () => { alive = false; };
-  }, [path]);
-  return url;
-}
 
 export default function PartyHud() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);

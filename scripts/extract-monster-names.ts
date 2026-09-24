@@ -88,6 +88,7 @@ for (const f of readdirSync(join(SRC, 'name'))) {
 /** inf 词干 → 中文名（可能多来源 ⇒ 收集后查重） */
 const inf2names = new Map<string, Set<string>>();
 let renamedByStem = 0;
+let skipped = 0;
 for (const [stem, { inf, name }] of zhoon) {
   // 本文件名词干自己对应的 inf（有就优先用它判"注释是否笔误"）
   const own = infByStem.get(stem);
@@ -103,7 +104,12 @@ for (const [stem, { inf, name }] of zhoon) {
   } else {
     target = (inf && infByStem.has(inf.replace(/\.inf$/, ''))) ? inf.replace(/\.inf$/, '') : stem;
   }
-  if (!infByStem.has(target)) continue;    // inf 不存在（模型都没定义）⇒ 跳过
+  if (!infByStem.has(target)) {
+    // 词干对不上（含注释指路也不存在）⇒ 跳过。**这里会丢名字**（如无注释且 inf 缺失的），
+    // 但"猜一个模型"更危险 —— 显式丢弃并在计数里可见。
+    skipped++;
+    continue;
+  }
   const set = inf2names.get(target) ?? new Set<string>();
   set.add(name);
   inf2names.set(target, set);
@@ -141,8 +147,18 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
 }
 
 // ── ⑤ 服务端对照表：模型路径 → inf 词干 ──
+// ⚠ 多个 inf 可指向**同一模型**（如 hopy.ini ← 3_Hopy(注释指向4_Hopy)/Sb1_Hopy/…）——
+// 直接 `keyMap[model] = stem` 会被最后写的覆盖，可能选中"没有中文名"的那个词干，
+// 服务端 nameKey 就指到一个查不到词条的键 ⇒ 名字永远回落数据名。
+// 修法：**有中文名的 inf 词干优先**（同名模型多个都有中文时取文件序第一个）。
 const keyMap: Record<string, string> = {};
-for (const [stem, { model }] of infByStem) keyMap[model] = stem;
+for (const [stem, { model }] of [...infByStem].sort((a, b) => {
+  const aHas = inf2names.has(a[0]) ? 0 : 1;      // 有中文名的排前
+  const bHas = inf2names.has(b[0]) ? 0 : 1;
+  return aHas - bHas;
+})) {
+  if (!(model in keyMap)) keyMap[model] = stem;
+}
 if (!existsSync(SRV_RESOURCE)) {
   const { mkdirSync } = await import('node:fs');
   mkdirSync(SRV_RESOURCE, { recursive: true });
@@ -152,4 +168,4 @@ writeFileSync(join(SRV_RESOURCE, 'monster-name-keys.json'),
 
 console.log(`来源：inf ${infByStem.size} 个（有模型）/ zhoon ${zhoon.size} 个有中文名`
   + `（${renamedByStem} 条按文件名归位 —— 首行注释笔误）`);
-console.log(`语言表 monster.<inf>.name：${inf2names.size} 条；服务端对照表 ${Object.keys(keyMap).length} 条`);
+console.log(`语言表 monster.<inf>.name：${inf2names.size} 条（丢弃 ${skipped} 条无 inf 的）；服务端对照表 ${Object.keys(keyMap).length} 条`);

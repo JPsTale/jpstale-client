@@ -199,5 +199,67 @@ console.log('\n[物品名] `item.<id>.name`（全量写在 locales/{zh,en}.json�
   ok2('key 形态 = item.<id>.name', itemNameKey(755) === 'item.755.name');
 }
 
+console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + 服务端对照表）');
+{
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, configurable: true,
+  });
+  Object.defineProperty(globalThis, 'navigator', { value: { language: 'zh' }, configurable: true });
+  const { t, tOr, setLocale } = await import('../src/i18n/index.js');
+
+  const zhTable = load(resolve('src/locales/zh.json'));
+  const enTable = load(resolve('src/locales/en.json'));
+  const zhMon = (zhTable.monster ?? {}) as Record<string, { name?: string }>;
+  const enMon = (enTable.monster ?? {}) as Record<string, { name?: string }>;
+  const zhKeys = Object.keys(zhMon);
+  const enKeys = Object.keys(enMon);
+
+  ok2(`zh/en 各 ${zhKeys.length} 条，键集成对`,
+    zhKeys.length > 0 && zhKeys.length === enKeys.length
+    && zhKeys.every((k) => k in enMon));
+  ok2('zh 的怪物名都含汉字（来源只收含汉字的 B_NAME；zh==en 的条目 = 0）',
+    zhKeys.length > 0 && zhKeys.every((k) => /[\u4e00-\u9fff]/.test(zhMon[k]?.name ?? '')));
+
+  // 端到端：`tOr('monster.<key>.name', fallback)` 真取到中文
+  const sample = zhKeys[0];
+  setLocale('zh');
+  ok2(`zh 下 monster.${sample}.name =「${zhMon[sample]?.name}」`,
+    t(`monster.${sample}.name`) === zhMon[sample]?.name
+    && tOr(`monster.${sample}.name`, 'X') === zhMon[sample]?.name);
+  ok2('没词条的键回落到 fallback（不静默显示 key）',
+    tOr('monster.__no_such_key__.name', 'X') === 'X');
+
+  // 服务端对照表在册（模型路径 → inf 词干；建怪时算 nameKey 用）
+  const keyMapPath = resolve('../jpstale-server/modules/common-service/src/main/resources/monsterdata/monster-name-keys.json');
+  if (!existsSync(keyMapPath)) {
+    fail('缺服务端对照表 monsterdata/monster-name-keys.json（跑 npm run monster-names）');
+  } else {
+    const keyMap = JSON.parse(readFileSync(keyMapPath, 'utf8')) as Record<string, string>;
+    const badRef = Object.entries(keyMap).filter(([, stem]) => !(stem in zhMon));
+    // 对照表可以比名字表大（同一个 inf 有没有中文是另一回事）——但**反向不许**：
+    // 名字表里的每个键必须能在对照表里找到对应模型（否则服务端永远发不出这个 nameKey）
+    const modelsByStem = new Map<string, string[]>();
+    for (const [model, stem] of Object.entries(keyMap)) {
+      modelsByStem.set(stem, [...(modelsByStem.get(stem) ?? []), model]);
+    }
+    const unreachable = zhKeys.filter((k) => !modelsByStem.has(k));
+    if (unreachable.length) {
+      fail(`名字表里 ${unreachable.length} 个键在服务端对照表里没有对应模型（服务端发不出这些 nameKey）：`
+        + unreachable.slice(0, 5).join(', '));
+    } else {
+      console.log(`  ok   名字表 ${zhKeys.length} 个键都能由对照表到达（对照表 ${Object.keys(keyMap).length} 条）`);
+    }
+  }
+
+  // 客户端接线：名牌 i18n 优先（WorldView 的怪物 pill + main.ts 传 nameKey）
+  const wv = readFileSync(resolve('src/ui/WorldView.ts'), 'utf8');
+  ok2('怪物名牌 i18n 优先（`monster.${a.nameKey}.name` + tOr 回落数据名）',
+    /tOr\(`monster\.\$\{a\.nameKey\}\.name`, a\.name \|\| ''\)/.test(wv));
+  const main = readFileSync(resolve('src/main.ts'), 'utf8');
+  ok2('main.ts 把 `name_key` 传给 monsterAppear（服务端没给 = 显式空串，不用名字顶替）',
+    /a\.nameKey \|\| ''/.test(main));
+  setLocale('zh');
+}
+
 console.log(failed === 0 ? '\ni18n 一致性：全部通过' : `\ni18n 一致性：${failed} 条失败`);
 process.exit(failed === 0 ? 0 : 1);

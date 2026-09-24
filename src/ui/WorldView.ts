@@ -26,7 +26,7 @@ import { isInputBlocked } from '../app/inputGate.js';
 import { appendSystemMessage } from '../app/chatStore.js';
 import { mapLightProfile, isVillageMap } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
-import { t } from '../i18n/index.js';
+import { t, tOr } from '../i18n/index.js';
 import { loadCharacterModel, getHead } from '../render/char-loader.js';
 import { faceAngleOf, faceAngleFromDir } from '../core/geom.js';
 import { setKeepaliveInterval, clearKeepaliveInterval } from '../core/keepalive-timer.js';
@@ -95,6 +95,7 @@ import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { skillIdByIcon } from '../game/skillIdentity.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
+import { targetWindowState } from './targetWindow.js';
 import { frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, report as perfReport } from '../app/profiler.js';
 import { pickVisibleMonsters, VIS_TIERS, type VisibilityCandidate, type VisibilityResult } from '../render/monster-visibility.js';
 import { loadDisplayPrefs, type DisplayPrefs } from './display-prefs.js';
@@ -322,7 +323,7 @@ export interface WorldView {
    * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
    * 直接摆成死亡姿势，不播 idle。
    */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string, lifeTotalMs?: number, lifeRemainMs?: number): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, nameKey: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string, lifeTotalMs?: number, lifeRemainMs?: number, cameraY?: number, cameraZ?: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
@@ -893,6 +894,120 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let moveStuckStart = 0;
   /** 最近一次算出的"到追逐目标的距离"（世界单位）；-1 = 还没算过。见到位拾取日志 */
   let lastChaseDist = -1;
+
+  // ==================== 目标信息窗（右上角 3D 头像框，docs/目标信息窗-源码分析.md） ====================
+  // 选中状态 = 原版 chrEachMaster 语义：点选怪/玩家/NPC 时设置；**不随 Chase 到位/开打清除**
+  //（moveTarget 在追到位后就没了，而原版窗口在攻击全程保持）。清除点：点空地 / 点掉落物 / ESC /
+  // 目标死亡动画播完（0x50 帧 ≈1.4s，原版 playmain.cpp:4499）/ 目标消失（逐帧解析兜底）/ 换图。
+  type TargetSel = { kind: 'monster' | 'player' | 'npc'; id: number };
+  let targetSel: TargetSel | null = null;
+  let targetSelCloseTimer = 0;
+  let portraitMarkedRoot: THREE.Object3D | null = null;
+  let portraitCam: THREE.PerspectiveCamera | null = null;
+  /** 肖像专用层：目标对象与场景灯光都开这一层，小视口相机只看这一层 ⇒ 孔里只画目标本体 */
+  const PORTRAIT_LAYER = 3;
+
+  function targetSelActor(): {
+    root: THREE.Object3D; topY: number; name: string; level: number;
+    hp: number; maxHp: number; dead: boolean; cameraY: number; cameraZ: number; bones?: THREE.Bone[];
+  } | null {
+    if (!targetSel) return null;
+    if (targetSel.kind === 'monster') {
+      const m = monsters.get(targetSel.id);
+      if (!m) return null;
+      return { root: m.root, topY: m.topY, name: m.name, level: m.level, hp: m.hp, maxHp: m.maxHp, dead: m.dead, cameraY: m.cameraY, cameraZ: m.cameraZ, bones: m.bones };
+    }
+    if (targetSel.kind === 'player') {
+      const r = remotes.get(targetSel.id);
+      if (!r) return null;
+      return { root: r.root, topY: r.topY, name: r.name, level: r.level, hp: r.hp, maxHp: r.maxHp, dead: r.hp <= 0, cameraY: 0, cameraZ: 0, bones: r.bones };
+    }
+    const n = npcs.get(targetSel.id);
+    if (!n) return null;
+    // NPC 没有血量数据 → 面板按 maxHp<=0 隐藏血条（显式没有，不是 0 血）；
+    // 显示名走 nameKey（npc.* 本地化，与名牌同源）
+    return { root: n.root, topY: n.topY, name: n.nameKey, level: 0, hp: 0, maxHp: 0, dead: false, cameraY: 0, cameraZ: 0 };
+  }
+
+  /** 换目标时给新旧模型对象打/摘肖像层；灯光补层跟在标记之后（选择是低频事件，traverse 一次可承受） */
+  function markPortraitLayers(): void {
+    if (portraitMarkedRoot) {
+      portraitMarkedRoot.traverse((o) => o.layers.disable(PORTRAIT_LAYER));
+    }
+    portraitMarkedRoot = null;
+    const a = targetSelActor();
+    if (!a) return;
+    a.root.traverse((o) => o.layers.enable(PORTRAIT_LAYER));
+    portraitMarkedRoot = a.root;
+    scene?.traverse((o) => { if ((o as THREE.Light).isLight) o.layers.enable(PORTRAIT_LAYER); });
+  }
+
+  function setTargetSel(sel: TargetSel | null): void {
+    if (targetSelCloseTimer) { clearTimeout(targetSelCloseTimer); targetSelCloseTimer = 0; }
+    targetSel = sel;
+    markPortraitLayers();
+    if (!sel) targetWindowState.info = null;
+  }
+
+  /** 每帧：把选中目标的实时数据写给 React 面板；目标实体已被移除 → 显式关窗（消失事件的兜底） */
+  function updateTargetWindowState(): void {
+    if (!targetSel) return;
+    const a = targetSelActor();
+    if (!a) { setTargetSel(null); return; }
+    const sel = targetSel;
+    targetWindowState.info = {
+      kind: sel.kind, id: sel.id, name: a.name, level: a.level,
+      hp: a.hp, maxHp: a.maxHp, dead: a.dead,
+    };
+  }
+
+  /**
+   * 小视口直渲（原版 DrawEachPlayer 的 three.js 对应做法）：在面板预留的**透明孔**矩形里
+   * scissor 清屏 + 只渲染目标本体（层隔离，不需要 clone/SkeletonUtils，装备外观自动一致），
+   * 画完立刻恢复全局视口与清屏色。
+   *
+   * 相机标定：原版配方 = 锚点(Bip01 Head，取不到退 PatHeight-10*fONE) + ArrowPosi 偏移、
+   * dist=(100+cameraz)×fONE、朝向 ANGLE_180（正面）。我们单位按"原版人体 ≈110 fONE"折算：
+   * base=身高×2.2、偏移=cameray/z ÷110 ×身高 —— cameraz=150（默认档）比 cameraz=25（BOSS 近摄）
+   * **更远**这条数据序关系被原样保留（DB 数据不改、不做二次换算表）。
+   */
+  function renderTargetPortrait(): void {
+    if (!targetSel || !renderer || !scene) return;
+    const hole = targetWindowState.hole;
+    if (!hole || hole.w <= 0 || hole.h <= 0) return;
+    const a = targetSelActor();
+    if (!a || !a.root.parent) return;
+    if (!portraitCam) portraitCam = new THREE.PerspectiveCamera(35, 1, 0.1, 2000);
+    const el = renderer.domElement;
+    const cssW = el.clientWidth;
+    const cssH = el.clientHeight;
+    const yGL = cssH - (hole.y + hole.h);
+    const height = Math.max(0.2, a.topY - 0.5);
+    const anchor = new THREE.Vector3();
+    const head = a.bones?.find((b) => b.name.toLowerCase().includes('head'));
+    if (head) head.getWorldPosition(anchor);
+    else anchor.set(a.root.position.x, a.root.position.y + height * 0.85, a.root.position.z);
+    anchor.y += (a.cameraY / 110) * height;
+    const dist = height * 2.2 + (a.cameraZ / 110) * height;
+    // 站到目标正面（沿模型朝向 rotation.y 退后；0 = 朝 +Z，与实体朝向约定一致）
+    const forward = new THREE.Vector3(Math.sin(a.root.rotation.y), 0, Math.cos(a.root.rotation.y));
+    portraitCam.aspect = hole.w / hole.h;
+    portraitCam.updateProjectionMatrix();
+    portraitCam.position.set(anchor.x + forward.x * dist, anchor.y + height * 0.22, anchor.z + forward.z * dist);
+    portraitCam.lookAt(anchor);
+    portraitCam.layers.set(PORTRAIT_LAYER);
+    const prevColor = renderer.getClearColor(new THREE.Color());
+    const prevAlpha = renderer.getClearAlpha();
+    renderer.setScissorTest(true);
+    renderer.setScissor(hole.x, yGL, hole.w, hole.h);
+    renderer.setViewport(hole.x, yGL, hole.w, hole.h);
+    renderer.setClearColor(0x10161c, 1);
+    renderer.clear(true, true);
+    renderer.render(scene, portraitCam);
+    renderer.setClearColor(prevColor, prevAlpha);
+    renderer.setScissorTest(false);
+    renderer.setViewport(0, 0, cssW, cssH);
+  }
 
   /** Chase/移动目标实时位置：找不到（消失/离视野）返回 null → 取消追踪 */
   function chaseTargetPos(): { x: number; z: number } | null {
@@ -2654,17 +2769,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       switch (tag.kind) {
         case 'monster':
           moveTarget = { kind: 'monster', id: tag.id };
+          setTargetSel({ kind: 'monster', id: tag.id });   // 右上角目标窗
           console.log('[WorldView] 选中怪物 mid=' + tag.id + ' → Chase(实时跟随)');
           return;
         case 'player':
           moveTarget = { kind: 'player', id: tag.id };
+          setTargetSel({ kind: 'player', id: tag.id });
           console.log('[WorldView] 选中玩家 playerId=' + tag.id + ' → Chase(实时跟随)');
           return;
         case 'npc':
           moveTarget = { kind: 'npc', id: tag.id };
+          setTargetSel({ kind: 'npc', id: tag.id });
           console.log('[WorldView] 选中 NPC entityId=' + tag.id + ' → Chase');
           return;
         case 'item': {
+          setTargetSel(null);   // 原版 trace 切到掉落物 ⇒ 目标窗关闭（它不是"目标"实体）
           const g = groundItems.get(tag.id);
           if (g) {
             const d = Math.hypot(g.root.position.x - selfPos.x, g.root.position.z - selfPos.z);
@@ -2687,6 +2806,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       moveTarget = null;
       moveStuckStart = 0;
     }
+    setTargetSel(null);   // 点空地 = 原版 trace 清空 → 目标窗关闭
   }
 
   /**
@@ -2700,11 +2820,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 提前清掉会让"已经挥出去的那一拳"打空（事件帧上报时目标已变成 0）。
    */
   function cancelTarget(): void {
-    if (!moveTarget) return;
-    console.log('[WorldView] ESC 取消目标 kind=' + moveTarget.kind
-      + (moveTarget.kind === 'ground' ? '' : ' id=' + moveTarget.id));
-    moveTarget = null;
-    moveStuckStart = 0;
+    if (!moveTarget && !targetSel) return;
+    if (moveTarget) {
+      console.log('[WorldView] ESC 取消目标 kind=' + moveTarget.kind
+        + (moveTarget.kind === 'ground' ? '' : ' id=' + moveTarget.id));
+      moveTarget = null;
+      moveStuckStart = 0;
+    }
+    setTargetSel(null);
   }
 
   /**
@@ -3132,8 +3255,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface MonsterActor {
     monsterId: number;
     name: string;
+    /** 显示名的 i18n 键名段（服务端 `name_key` = 该怪 .inf 文件名词干；空 = 没对上 inf）。 */
+    nameKey: string;
     /** 等级（`S2C_MonsterAppear.level`，模板 `monsterlist.level`）—— 名牌画 `Lv.X 名字` 前缀 */
     level: number;
+    /** 目标窗相机补正（monsterlist.cameray/cameraz → 客户端 ArrowPosi 语义，随 Appear 下发） */
+    cameraY: number;
+    cameraZ: number;
     /** 服务端 `monster_effect_id`：用于音效目录解析 */
     monsterEffectId: number;
     /**
@@ -3520,7 +3648,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function spawnMonster(actorInfo: {
-    monsterId: number; name: string; modelFile: string;
+    monsterId: number; name: string; nameKey: string; modelFile: string;
     /** 等级（`S2C_MonsterAppear.level`）—— 名牌 `Lv.X 名字` 前缀 */
     level?: number;
     hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number;
@@ -3530,6 +3658,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     monsterEffectId?: number;
     /** 服务端算好的动画播放速率倍率（来自 DB `attackspeed`，客户端没有这个数据） */
     animRate?: number;
+    /** 目标窗相机补正（monsterlist.cameray/cameraz，仅怪有） */
+    cameraY?: number;
+    cameraZ?: number;
     /** 召唤物归属（`S2C_MonsterAppear.owner_entity_id`）；0/未给 = 普通怪 */
     ownerEntityId?: number;
     /** 主人角色名（名牌第二行 `(名字)`） */
@@ -3599,6 +3730,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           level: actorInfo.level && actorInfo.level > 0 ? actorInfo.level : 1,
           monsterEffectId: actorInfo.monsterEffectId || 0,
           name: actorInfo.name,
+          nameKey: actorInfo.nameKey || '',
           modelKey: actorInfo.modelFile,
           hp: actorInfo.hp || 0,
           maxHp: actorInfo.maxHp || 0,
@@ -3613,6 +3745,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           animFrame: 0,
           // 服务端算好的播放速率（来自 DB attackspeed）；0/缺失 → 退成 1（= 客户端基准速度）
           animRate: actorInfo.animRate && actorInfo.animRate > 0 ? actorInfo.animRate : 1,
+          cameraY: actorInfo.cameraY || 0,
+          cameraZ: actorInfo.cameraZ || 0,
           ownerEntityId: actorInfo.ownerEntityId && actorInfo.ownerEntityId > 0 ? actorInfo.ownerEntityId : 0,
           ownerName: actorInfo.ownerName || '',
           // 倒计时条：锚点取**本地收到时刻**（不是服务器时钟 —— 我们之间没有对时）。
@@ -3709,6 +3843,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyMonsterDeathPose(actor);
     sfx.playSoundByName(actor.modelKey, 'CHRMOTION_STATE_DEAD', actor.root.position, actor.monsterEffectId);
     clearMonsterTargets(actor);
+    if (targetSel && targetSel.kind === 'monster' && targetSel.id === monsterId) {
+      // 原版：目标死亡后**死亡动画播完才关窗**（FrameCounter > 0x50 帧 @60fps ≈1.4s，playmain.cpp:4499）
+      targetSelCloseTimer = window.setTimeout(() => setTargetSel(null), 1400);
+    }
     console.log('[WorldView] 怪物死亡(尸体保留): id=' + monsterId + ' name=' + actor.name);
   }
 
@@ -4174,6 +4312,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 防止两端归属漂移。大字提示由 `enterMap` 统一负责：本地已判过则不重复弹。
    */
   function applyMapSwitched(mapId: number): void {
+    setTargetSel(null);   // 换图：场景重建，目标窗关闭（原版 netplay 侧同条件）
     enterMap(mapId, '服务端校准');
   }
 
@@ -4801,7 +4940,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const lifeRatio = a.lifeTotalMs > 0
         ? Math.max(0, Math.min(1, (a.lifeRemainMs - (now - a.lifeAnchorMs)) / a.lifeTotalMs))
         : undefined;
-      recordPill(drawPill(ctx, pt.x, pt.y, lvPrefix(a.level) + (a.name || ''), {
+      // 显示名：**i18n 优先**（`monster.<inf词干>.name`，zh 来自中文客户端的 name/*.zhoon）；
+      // 没词条（tOr 回落）用服务端给的 monsterlist 数据名。
+      const shownName = a.nameKey ? tOr(`monster.${a.nameKey}.name`, a.name || '') : (a.name || '');
+      recordPill(drawPill(ctx, pt.x, pt.y, lvPrefix(a.level) + shownName, {
         // 召唤物蓝色 RGB(0,153,255)（原版 `Winmain.cpp:3921-3933` 的 MONSTER_USER 分支），普通怪原色
         nameColor: isSummon ? '#0099ff' : '#ff8080',
         // 第二行 `(主人名)`（原版同一处的 DrawTwoLineMessage）
@@ -6660,6 +6802,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     if (!bg && composer) composer.render();
     perfMark('3D提交');
+    // 目标信息窗小视口（原版 DrawEachPlayer 语义）：主画面之后、名牌之前，在面板预留的透明孔里
+    // scissor 直渲目标本体（层隔离，见 renderTargetPortrait / docs/目标信息窗-源码分析.md）
+    if (!bg) { updateTargetWindowState(); renderTargetPortrait(); }
     // 名牌/血条 overlay（Canvas，压制被测遮挡）
     if (!bg) drawNameplateOverlay();
     perfMark('名牌飘字');
@@ -7164,8 +7309,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, level: Number(level) || 1, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0 });
+    monsterAppear: (monsterId, _templateId, name, nameKey, modelFile, level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs, cameraY, cameraZ) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', nameKey: nameKey || '', modelFile, level: Number(level) || 1, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0, cameraY: Number(cameraY) || 0, cameraZ: Number(cameraZ) || 0 });
     },
     monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);

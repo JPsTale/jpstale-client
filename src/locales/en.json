@@ -3574,23 +3574,6 @@
     "normal": "Normal",
     "party": {
       "noParty": "You are not in a party",
-      "targetOffline": "Player {name} is not online",
-      "cannotInviteSelf": "You cannot invite yourself",
-      "full": "The party is full",
-      "alreadyInParty": "You are already in a party",
-      "notFound": "Party not found"
-    },
-    "guild": "Guild",
-    "trade": "Trade",
-    "battle": "Battle",
-    "system": "System",
-    "fold": "Collapse chat window",
-    "readonly": "View only. Use /player: message to whisper.",
-    "hint": "Press Enter to chat",
-    "placeholder": "Enter message…",
-    "guildNotOpen": "Guild channel is not available yet",
-    "party": {
-      "noParty": "You are not in a party",
       "targetOffline": "That player is offline or does not exist",
       "cannotInviteSelf": "You cannot invite yourself",
       "full": "Party is full (6 members)",
@@ -3602,6 +3585,15 @@
       "inviteExpired": "The invitation has expired",
       "notMember": "That player is not in your party"
     },
+    "guild": "Guild",
+    "trade": "Trade",
+    "battle": "Battle",
+    "system": "System",
+    "fold": "Collapse chat window",
+    "readonly": "View only. Use /player: message to whisper.",
+    "hint": "Press Enter to chat",
+    "placeholder": "Enter message…",
+    "guildNotOpen": "Guild channel is not available yet",
     "cmd": {
       "teleportNotOpen": "That area is not open yet",
       "teleportLevelLow": "Level too low to enter that area (requires level {level})",
@@ -3690,6 +3682,11 @@
   "buff": {
     "remaining": "{s}s left"
   },
+  "target": {
+    "button": {
+      "party": "Party"
+    }
+  },
   "party": {
     "expand": "Expand party",
     "collapse": "Collapse party",
@@ -3710,7 +3707,8 @@
       "disband": "Disband Party",
       "changeMode": "Change Mode"
     }
-  },  "itemtip": {
+  },
+  "itemtip": {
     "recHp": "HP Recovery",
     "recMp": "MP Recovery",
     "recStm": "STM Recovery",
@@ -4490,5 +4488,544 @@
     "sp-regen": "STM Regen",
     "potion-storage": "Potion Storage",
     "unknown": "Unknown effect"
+  },
+  "monster": {
+    "b_104_babel": {
+      "name": "Babel"
+    },
+    "109_ruca": {
+      "name": "Ruca"
+    },
+    "12_doral": {
+      "name": "Doral"
+    },
+    "12_mutantplant": {
+      "name": "Mutant Plant"
+    },
+    "110_naz senior": {
+      "name": "Naz Senior"
+    },
+    "111_igolation": {
+      "name": "Igolation"
+    },
+    "111_kakoa": {
+      "name": "Kakoa"
+    },
+    "111_undeadminer": {
+      "name": "Undead Miner"
+    },
+    "112_sealcrasher": {
+      "name": "Seal Crasher"
+    },
+    "112_sprin": {
+      "name": "Sprin"
+    },
+    "112_undeadmanager": {
+      "name": "Undead Manager"
+    },
+    "113_itechnician": {
+      "name": "ITechnician"
+    },
+    "113_ltechnician": {
+      "name": "LTechnician"
+    },
+    "114_lengineer": {
+      "name": "LEngineer"
+    },
+    "115_minebat": {
+      "name": "Minebat"
+    },
+    "115_tsoldier": {
+      "name": "TSoldier"
+    },
+    "115_ttechnician": {
+      "name": "TTechnician"
+    },
+    "116_tbomber": {
+      "name": "TBomber"
+    },
+    "117_ibomber": {
+      "name": "IBomber"
+    },
+    "117_inferno": {
+      "name": "Inferno"
+    },
+    "117_minegolem": {
+      "name": "MineGolem"
+    },
+    "117_rguard": {
+      "name": "RustGuard"
+    },
+    "117_telite": {
+      "name": "TElite"
+    },
+    "117_xetan": {
+      "name": "Xetan"
+    },
+    "118_dmystery": {
+      "name": "Dark Mystery"
+    },
+    "118_lguardian": {
+      "name": "LGuardian"
+    },
+    "118_nihil": {
+      "name": "Nihil"
+    },
+    "118_tarantulika": {
+      "name": "Tarantulika"
+    },
+    "119_acero": {
+      "name": "Acero"
+    },
+    "119_ignis": {
+      "name": "Ignis"
+    },
+    "14_hobgoblin": {
+      "name": "Hobgoblin"
+    },
+    "14_northgoblin": {
+      "name": "NorthGoblin"
+    },
+    "120_devil shy": {
+      "name": "Devil Shy"
+    },
+    "120_iceserpent": {
+      "name": "Ice Serpent"
+    },
+    "120_ielite": {
+      "name": "IElite"
+    },
+    "120_najan": {
+      "name": "Najan"
+    },
+    "121_chalybs": {
+      "name": "Chalybs"
+    },
+    "121_crios": {
+      "name": "Crios"
+    },
+    "123_wlord": {
+      "name": "Witch lord"
+    },
+    "15_mutantrabie": {
+      "name": "Mutant Rabie"
+    },
+    "130_draxos": {
+      "name": "Draxos"
+    },
+    "130_greedy": {
+      "name": "Greedy"
+    },
+    "130_midranda": {
+      "name": "Midranda"
+    },
+    "130_tulla": {
+      "name": "Tulla"
+    },
+    "16_mutanttree": {
+      "name": "Mutant Tree"
+    },
+    "18_corrupt": {
+      "name": "Corrupt"
+    },
+    "18_skeleton": {
+      "name": "Skeleton"
+    },
+    "19_zombie": {
+      "name": "Zombi"
+    },
+    "21_cokris": {
+      "name": "Cokris"
+    },
+    "22_beedog": {
+      "name": "Bee Dog"
+    },
+    "23_mephit": {
+      "name": "Mephit"
+    },
+    "25_minigsilver": {
+      "name": "MiniG Silver"
+    },
+    "27_scorpion": {
+      "name": "Scorpion"
+    },
+    "28_plantlord": {
+      "name": "PlantLord"
+    },
+    "30_leech": {
+      "name": "LEEch"
+    },
+    "31_decoy": {
+      "name": "Decoy"
+    },
+    "32_ghoul": {
+      "name": "Ghoul"
+    },
+    "33_cyclops": {
+      "name": "Cyclops"
+    },
+    "34_web": {
+      "name": "web"
+    },
+    "36_buma": {
+      "name": "Buma"
+    },
+    "37_bronzewolverine": {
+      "name": "Bronze Wolverine"
+    },
+    "38_crypt": {
+      "name": "Crypt"
+    },
+    "38_silverwolverine": {
+      "name": "Silver Wolverine"
+    },
+    "40_bargon": {
+      "name": "Bagon"
+    },
+    "41_goldenwolverine": {
+      "name": "Golden Wolverine"
+    },
+    "43_mightygoblin": {
+      "name": "Mighty Goblin"
+    },
+    "44_skeletonranger": {
+      "name": "Skeleton Ranger"
+    },
+    "47_cyclopsknight": {
+      "name": "Cyclops Knight"
+    },
+    "49_skeletonwarrior": {
+      "name": "Skeleton Warrior"
+    },
+    "4_hopy": {
+      "name": "HOPY"
+    },
+    "50_greven": {
+      "name": "Greven"
+    },
+    "53_titan": {
+      "name": "Titan"
+    },
+    "54_skeletonknight": {
+      "name": "Skeleton Knight"
+    },
+    "55_sandlem": {
+      "name": "SandLem"
+    },
+    "59_headcutter": {
+      "name": "Head Cutter"
+    },
+    "6_arma": {
+      "name": "Arma"
+    },
+    "5_mushroomghost": {
+      "name": "Mushroom Ghost"
+    },
+    "66_slaughter": {
+      "name": "Slaughter"
+    },
+    "67_illusionknight": {
+      "name": "Illusion Knight"
+    },
+    "69_figon": {
+      "name": "Figon"
+    },
+    "73_stonegiant": {
+      "name": "Stone Giant"
+    },
+    "86_kinghopy": {
+      "name": "Hopy King"
+    },
+    "10_minig": {
+      "name": "MiniG"
+    },
+    "97_cyclopswarrior": {
+      "name": "Cyclops Warrior"
+    },
+    "11_imp": {
+      "name": "ImP"
+    },
+    "35_armoredbettle": {
+      "name": "Armored Bettle"
+    },
+    "61_avelisk-l": {
+      "name": "Avelisk-L"
+    },
+    "70_avelisklord": {
+      "name": "Avelisk Lord"
+    },
+    "56_avelisk-s": {
+      "name": "Avelisk-S"
+    },
+    "82_avelin": {
+      "name": "Avelin"
+    },
+    "badwolf": {
+      "name": "Bad Wolf"
+    },
+    "62_beevil": {
+      "name": "BeEvil"
+    },
+    "106_bloodyknight": {
+      "name": "Bloody Knight"
+    },
+    "99_blizzardgiant": {
+      "name": "Blizzard Giant"
+    },
+    "c54_mudygolem": {
+      "name": "Mudy Golem"
+    },
+    "52_muffin": {
+      "name": "Muffin"
+    },
+    "83_chaingolem": {
+      "name": "Chain Golem"
+    },
+    "100_chaoscara": {
+      "name": "chaoscara"
+    },
+    "94_coldeye": {
+      "name": "coldeye"
+    },
+    "5_cuepy": {
+      "name": "Cuepy"
+    },
+    "65_darkknight": {
+      "name": "Dark Knight"
+    },
+    "105_darkphalanx": {
+      "name": "Dark Phalanx"
+    },
+    "77_dawlin": {
+      "name": "Dawlin"
+    },
+    "80_deadhopy": {
+      "name": "Deadhopy"
+    },
+    "108_deadkinghopy": {
+      "name": "Deadkinghopy"
+    },
+    "85_deadzone": {
+      "name": "DeadZone"
+    },
+    "110_death_knight": {
+      "name": "Valento"
+    },
+    "28_devilishtree": {
+      "name": "Devilish Tree"
+    },
+    "52_direbee": {
+      "name": "Dire Bee"
+    },
+    "89_d-machine": {
+      "name": "D-Machine"
+    },
+    "69_doomguard": {
+      "name": "Doom Guard"
+    },
+    "75_dusk": {
+      "name": "Dusk"
+    },
+    "107_d_ar": {
+      "name": "Revived Archer"
+    },
+    "107_d_atal": {
+      "name": "Revived Atalanta"
+    },
+    "107_d_fi": {
+      "name": "Revived Fighter"
+    },
+    "107_d_kn": {
+      "name": "Revived Knight"
+    },
+    "107_d_magi": {
+      "name": "Revived Magician"
+    },
+    "107_d_meca": {
+      "name": "Revived Mecanician"
+    },
+    "107_d_pa": {
+      "name": "Revived Pikeman"
+    },
+    "107_d_pr": {
+      "name": "Revived Priestess"
+    },
+    "60_evilplant": {
+      "name": "Evil Plant"
+    },
+    "50_evilsnail": {
+      "name": "Evil Snail"
+    },
+    "101_fireworm": {
+      "name": "Fire Worm"
+    },
+    "97_frost": {
+      "name": "frost"
+    },
+    "95_frozen": {
+      "name": "frozen"
+    },
+    "105_fury": {
+      "name": "Fury"
+    },
+    "8_ghost": {
+      "name": "Ghost"
+    },
+    "great_greven": {
+      "name": "Great_Greven"
+    },
+    "86_grotesque": {
+      "name": "Grotesque"
+    },
+    "72_heavygoblin": {
+      "name": "Heavy Goblin"
+    },
+    "102_hellhound": {
+      "name": "Hell Hound"
+    },
+    "100_hest": {
+      "name": "Hest"
+    },
+    "85_typhoon": {
+      "name": "Typhoon"
+    },
+    "46_hungky": {
+      "name": "Hulk"
+    },
+    "84_hypermachine": {
+      "name": "Hyper Machine"
+    },
+    "93_icegoblin": {
+      "name": "icegoblin"
+    },
+    "96_icegolem": {
+      "name": "icegolem"
+    },
+    "88_ironfist": {
+      "name": "Iron Fist"
+    },
+    "81_ironguard": {
+      "name": "Iron Guard"
+    },
+    "110_kelvezu": {
+      "name": "Kelvezu"
+    },
+    "lizardfolk": {
+      "name": "lizardfolk"
+    },
+    "88_metron": {
+      "name": "Metron"
+    },
+    "83_mimic": {
+      "name": "Mimic"
+    },
+    "57_mirekeeper": {
+      "name": "Mire Keeper"
+    },
+    "105_kingspider": {
+      "name": "King Spider"
+    },
+    "120_mokova": {
+      "name": "Mokova"
+    },
+    "100_ratoo": {
+      "name": "Ratoo"
+    },
+    "107_seto": {
+      "name": "Seto"
+    },
+    "110_templeguard": {
+      "name": "Temple Guard"
+    },
+    "82_incubus": {
+      "name": "Incubus"
+    },
+    "71_witch": {
+      "name": "Witch"
+    },
+    "87_morgon": {
+      "name": "Morgon"
+    },
+    "89_mountain": {
+      "name": "Mountain"
+    },
+    "64_mummy": {
+      "name": "Mummy"
+    },
+    "54_mudygolem": {
+      "name": "Mudy Golem"
+    },
+    "92_mystic": {
+      "name": "Mystic"
+    },
+    "m_lord": {
+      "name": "m_lord"
+    },
+    "67_nightmare": {
+      "name": "Nightmare"
+    },
+    "82_niken": {
+      "name": "Niken"
+    },
+    "92_omega": {
+      "name": "Omega"
+    },
+    "79_omicron": {
+      "name": "Omicron"
+    },
+    "omu": {
+      "name": "Omu"
+    },
+    "84_rampage": {
+      "name": "Rampage"
+    },
+    "87_runicguardian": {
+      "name": "Runic Guardian"
+    },
+    "88_sadness": {
+      "name": "Sadnesst"
+    },
+    "79_shadow": {
+      "name": "Shadow"
+    },
+    "37_skeletonarcher": {
+      "name": "Skeleton Archer"
+    },
+    "103_darkguard": {
+      "name": "Dark Guard"
+    },
+    "104_darkmage": {
+      "name": "Dark Mage"
+    },
+    "72_sliver": {
+      "name": "Sliver"
+    },
+    "60_solidsnail": {
+      "name": "Solid Snail"
+    },
+    "spider": {
+      "name": "spidertrooper"
+    },
+    "stingray": {
+      "name": "stingray"
+    },
+    "74_stonegolem": {
+      "name": "Stone Golem"
+    },
+    "strider": {
+      "name": "strider"
+    },
+    "79_stygian": {
+      "name": "Stygian"
+    },
+    "62_thorncrawler": {
+      "name": "Thorn Crawler"
+    },
+    "98_turtlecannon": {
+      "name": "Turtle Cannon"
+    },
+    "49_vampiricbat": {
+      "name": "Vampiric Bat"
+    }
   }
 }

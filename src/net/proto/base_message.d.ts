@@ -6645,6 +6645,9 @@ export namespace jpt {
             /** S2C_MonsterAppear modelFile. */
             modelFile: string;
 
+            /** S2C_MonsterAppear nameKey. */
+            nameKey: string;
+
             /** S2C_MonsterAppear angle. */
             angle: number;
 
@@ -6782,6 +6785,9 @@ export namespace jpt {
 
                 /** S2C_MonsterAppear modelFile */
                 modelFile?: (string|null);
+
+                /** S2C_MonsterAppear nameKey */
+                nameKey?: (string|null);
 
                 /** S2C_MonsterAppear angle */
                 angle?: (number|null);

@@ -14,6 +14,7 @@ import SplitDialog from './SplitDialog.js';
 import WorldMapPanel, { type WorldMapPanelOptions } from './WorldMapPanel.js';
 import BuffStrip from './BuffStrip.js';
 import PartyHud from './PartyHud.js';
+import TargetInfoPanel from './TargetInfoPanel.js';
 import CraftPanel from './CraftPanel.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
@@ -107,6 +108,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
       <BuffStrip />
       {/* 左侧队伍成员组件（头像/血条/buff；未组队且无邀请时不渲染，见 PartyHud） */}
       <PartyHud />
+      {/* 右上角目标信息窗（选中目标的 3D 头像/血条/社交按钮；未选中不渲染） */}
+      <TargetInfoPanel />
       {openPanels.map((p) => renderPanel(p, props.worldMapOptions ?? {}))}
       {/* 手持物品光标（常驻，与面板开关无关） */}
       <HeldCursor />

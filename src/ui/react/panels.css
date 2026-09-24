@@ -1838,3 +1838,46 @@
 }
 .jp-party-invite-ok:hover { border-color: #7fd4ff; color: #fff; }
 .jp-party-invite-no:hover { border-color: #ff8a7a; color: #fff; }
+
+/* ==================== 目标信息窗（右上角 3D 头像框；3D 部分由 WorldView scissor 直渲进透明孔） ==================== */
+.jpt {
+  position: absolute; right: 14px; top: 44px; width: 190px;
+  display: flex; flex-direction: column;
+  user-select: none; -webkit-user-select: none;
+  z-index: 6;
+}
+.jpt-head {
+  display: flex; gap: 6px; align-items: baseline; padding: 4px 8px;
+  background: rgba(10, 14, 18, 0.85); border: 1px solid #3a4148; border-bottom: none;
+}
+.jpt-level { font-size: 11px; color: #ffee64; text-shadow: 0 0 2px #000; }
+.jpt-name {
+  flex: 1; font-size: 13px; color: #e8ecef; text-shadow: 0 0 2px #000;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* 透明孔：WebGL 画布在 DOM 之下，WorldView 按 hole 矩形 scissor 直渲目标 3D 头像 */
+.jpt-hole {
+  height: 120px; background: transparent;
+  border-left: 1px solid #3a4148; border-right: 1px solid #3a4148;
+}
+.jpt-hpbar {
+  position: relative; height: 10px; padding: 2px 6px; box-sizing: border-box;
+  background: rgba(10, 14, 18, 0.85);
+  border-left: 1px solid #3a4148; border-right: 1px solid #3a4148;
+}
+.jpt-hp-base, .jpt-hp-fill {
+  position: absolute; left: 6px; top: 2px; height: 6px;
+  image-rendering: pixelated; object-fit: fill;
+}
+.jpt-hp-base { width: calc(100% - 12px); }
+.jpt-actions {
+  display: flex; gap: 6px; padding: 4px 6px;
+  background: rgba(10, 14, 18, 0.85); border: 1px solid #3a4148; border-top: none;
+}
+.jpt-action {
+  flex: 1; padding: 2px 0; font-size: 12px; cursor: pointer;
+  background: #1c222b; border: 1px solid #3a4148; color: #d8dce3;
+}
+.jpt-action:hover { border-color: #7fd4ff; color: #fff; }
+.jpt-dead .jpt-name { color: #ff5252; }
+.jpt-dead .jpt-hole { filter: grayscale(0.85); }
