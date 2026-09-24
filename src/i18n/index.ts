@@ -2,6 +2,7 @@ import zh from '../locales/zh.json';
 import en from '../locales/en.json';
 
 const locales: Record<string, typeof zh> = { zh, en };
+// 语言：localStorage 里手选的优先，否则跟浏览器语言（`zh*` → zh，其余 en）
 let locale = localStorage.getItem('locale')
   ?? (navigator.language.startsWith('zh') ? 'zh' : 'en');
 

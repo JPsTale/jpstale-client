@@ -330,7 +330,8 @@
       "maxPoint": "Skill level cap reached",
       "noSkillPoint": "Not enough skill points",
       "noGold": "Not enough gold",
-      "resetUsed": "Skill points already reset this login"
+      "resetUsed": "Skill points already reset this login",
+      "cooldown": "Still on cooldown"
     },
     "bind": {
       "badKind": "Unknown bind slot",
@@ -343,6 +344,3084 @@
     }
   },
   "item": {
+    "1": {
+      "name": "Stone Axe"
+    },
+    "2": {
+      "name": "Steel Axe"
+    },
+    "3": {
+      "name": "Battle Axe"
+    },
+    "4": {
+      "name": "War Axe"
+    },
+    "5": {
+      "name": "Double-Sided War Axe"
+    },
+    "6": {
+      "name": "Bat Axe"
+    },
+    "7": {
+      "name": "Mechanic Axe"
+    },
+    "8": {
+      "name": "Double Headed Axe"
+    },
+    "9": {
+      "name": "Great Axe"
+    },
+    "10": {
+      "name": "Diamond Axe"
+    },
+    "11": {
+      "name": "Jagged Axe"
+    },
+    "12": {
+      "name": "Cleaver"
+    },
+    "13": {
+      "name": "Gigantic Axe"
+    },
+    "14": {
+      "name": "Tomahawk Axe"
+    },
+    "15": {
+      "name": "Titan Axe"
+    },
+    "16": {
+      "name": "Eagle Claw"
+    },
+    "17": {
+      "name": "Tiger Claw"
+    },
+    "18": {
+      "name": "Griffin Claw"
+    },
+    "19": {
+      "name": "Snake Tooth"
+    },
+    "20": {
+      "name": "Lightning Arm"
+    },
+    "21": {
+      "name": "Fingered Edge"
+    },
+    "22": {
+      "name": "Hand Blade"
+    },
+    "23": {
+      "name": "Pharaoh"
+    },
+    "24": {
+      "name": "Brutal Claw"
+    },
+    "25": {
+      "name": "Hydra Claw"
+    },
+    "26": {
+      "name": "Leviathan"
+    },
+    "27": {
+      "name": "Wyvern Claw"
+    },
+    "28": {
+      "name": "Chaos Claw"
+    },
+    "29": {
+      "name": "Wing Talon"
+    },
+    "30": {
+      "name": "Doom Talon"
+    },
+    "31": {
+      "name": "Club"
+    },
+    "32": {
+      "name": "War Mace"
+    },
+    "33": {
+      "name": "Pole Mace"
+    },
+    "34": {
+      "name": "Gothic Mace"
+    },
+    "35": {
+      "name": "War Hammer"
+    },
+    "36": {
+      "name": "Metal Hammer"
+    },
+    "37": {
+      "name": "Cross Hammer"
+    },
+    "38": {
+      "name": "Holy Mace"
+    },
+    "39": {
+      "name": "Star"
+    },
+    "40": {
+      "name": "Maximum"
+    },
+    "41": {
+      "name": "Meditation"
+    },
+    "42": {
+      "name": "Rune Hammer"
+    },
+    "43": {
+      "name": "Solar"
+    },
+    "44": {
+      "name": "War Maul"
+    },
+    "45": {
+      "name": "Titan Maul"
+    },
+    "46": {
+      "name": "Chaos Maul"
+    },
+    "47": {
+      "name": "Wand"
+    },
+    "48": {
+      "name": "Sphere Wand"
+    },
+    "49": {
+      "name": "Obi Wand"
+    },
+    "50": {
+      "name": "Root Staff"
+    },
+    "51": {
+      "name": "Poly Staff"
+    },
+    "52": {
+      "name": "Elven Wand"
+    },
+    "53": {
+      "name": "Dryad Wand"
+    },
+    "54": {
+      "name": "Meditation Staff"
+    },
+    "55": {
+      "name": "Skull Staff"
+    },
+    "56": {
+      "name": "Mage Staff"
+    },
+    "57": {
+      "name": "Faith Wand"
+    },
+    "58": {
+      "name": "Lofty Staff"
+    },
+    "59": {
+      "name": "Arch Wand"
+    },
+    "60": {
+      "name": "Chaos Staff"
+    },
+    "61": {
+      "name": "Rune Wand"
+    },
+    "62": {
+      "name": "Rune Staff"
+    },
+    "63": {
+      "name": "Pole"
+    },
+    "64": {
+      "name": "Spear"
+    },
+    "65": {
+      "name": "Bill"
+    },
+    "66": {
+      "name": "Halberd"
+    },
+    "67": {
+      "name": "Horn Scythe"
+    },
+    "68": {
+      "name": "Trident"
+    },
+    "69": {
+      "name": "Enriched Scythe"
+    },
+    "70": {
+      "name": "Double Scythe"
+    },
+    "71": {
+      "name": "Evil Scythe"
+    },
+    "72": {
+      "name": "Silver Bird"
+    },
+    "73": {
+      "name": "Chaos Spear"
+    },
+    "74": {
+      "name": "Titan Spear"
+    },
+    "75": {
+      "name": "Styx Scythe"
+    },
+    "76": {
+      "name": "Dragon's Wing"
+    },
+    "77": {
+      "name": "Butterfly"
+    },
+    "78": {
+      "name": "Mystic Spear"
+    },
+    "79": {
+      "name": "Dagger"
+    },
+    "80": {
+      "name": "Short Bow"
+    },
+    "81": {
+      "name": "Horned Bow"
+    },
+    "82": {
+      "name": "Hand Crossbow"
+    },
+    "83": {
+      "name": "Crossbow"
+    },
+    "84": {
+      "name": "Battle Bow"
+    },
+    "85": {
+      "name": "Great Bow"
+    },
+    "86": {
+      "name": "War Bow"
+    },
+    "87": {
+      "name": "Great Crossbow"
+    },
+    "88": {
+      "name": "Metal Hand Crossbow"
+    },
+    "89": {
+      "name": "Double Crossbow"
+    },
+    "90": {
+      "name": "Bone Bow"
+    },
+    "91": {
+      "name": "Sagittarius"
+    },
+    "92": {
+      "name": "Ancient Crossbow"
+    },
+    "93": {
+      "name": "Titan Bow"
+    },
+    "94": {
+      "name": "Chaos Bow"
+    },
+    "95": {
+      "name": "Swift Bow"
+    },
+    "96": {
+      "name": "Relic Crossbow"
+    },
+    "97": {
+      "name": "Celtic Dagger"
+    },
+    "98": {
+      "name": "Sword Breaker"
+    },
+    "99": {
+      "name": "Short Sword"
+    },
+    "100": {
+      "name": "Long Sword"
+    },
+    "101": {
+      "name": "Broad Sword"
+    },
+    "102": {
+      "name": "Blade"
+    },
+    "103": {
+      "name": "Templar Sword"
+    },
+    "104": {
+      "name": "Shield Sword"
+    },
+    "105": {
+      "name": "Plated Sword"
+    },
+    "106": {
+      "name": "Claymore"
+    },
+    "107": {
+      "name": "Slayer"
+    },
+    "108": {
+      "name": "Gigantic Sword"
+    },
+    "109": {
+      "name": "Highlander"
+    },
+    "110": {
+      "name": "Bastard Sword"
+    },
+    "111": {
+      "name": "Fatal Sword"
+    },
+    "112": {
+      "name": "Ancient Sword"
+    },
+    "113": {
+      "name": "Twin Sword"
+    },
+    "114": {
+      "name": "Javelin"
+    },
+    "115": {
+      "name": "War Javelin"
+    },
+    "116": {
+      "name": "Edged Javelin"
+    },
+    "117": {
+      "name": "Steel Javelin"
+    },
+    "118": {
+      "name": "Double Javelin"
+    },
+    "119": {
+      "name": "Elven Javelin"
+    },
+    "120": {
+      "name": "Fatal Javelin"
+    },
+    "121": {
+      "name": "Metal Javelin"
+    },
+    "122": {
+      "name": "Cobra"
+    },
+    "123": {
+      "name": "Winged Javelin"
+    },
+    "124": {
+      "name": "Holy Javelin"
+    },
+    "125": {
+      "name": "Throwing Trident"
+    },
+    "126": {
+      "name": "Wyvern Javelin"
+    },
+    "127": {
+      "name": "Twisted Javelin"
+    },
+    "128": {
+      "name": "Link Javelin"
+    },
+    "129": {
+      "name": "Mirage Javelin"
+    },
+    "130": {
+      "name": "Chaos Axe"
+    },
+    "131": {
+      "name": "Ancient Axe"
+    },
+    "132": {
+      "name": "Relic Axe"
+    },
+    "133": {
+      "name": "Extreme Axe"
+    },
+    "134": {
+      "name": "Minotaur Axe"
+    },
+    "135": {
+      "name": "Wyvern Axe"
+    },
+    "136": {
+      "name": "Zecram Axe"
+    },
+    "137": {
+      "name": "Dragon Axe"
+    },
+    "138": {
+      "name": "Titan Talon"
+    },
+    "139": {
+      "name": "Salamander Talon"
+    },
+    "140": {
+      "name": "Phoenix Talon"
+    },
+    "141": {
+      "name": "Chimera Talon"
+    },
+    "142": {
+      "name": "Extreme Talon"
+    },
+    "143": {
+      "name": "Viper Talon"
+    },
+    "144": {
+      "name": "Injustice Talon"
+    },
+    "145": {
+      "name": "Heretic Talon"
+    },
+    "146": {
+      "name": "Brutal Mace"
+    },
+    "147": {
+      "name": "Gladiator Hammer"
+    },
+    "148": {
+      "name": "Archon Mace"
+    },
+    "149": {
+      "name": "Justice Hammer"
+    },
+    "150": {
+      "name": "Dragon Bone"
+    },
+    "151": {
+      "name": "Guardian Hammer"
+    },
+    "152": {
+      "name": "Bane Hammer"
+    },
+    "153": {
+      "name": "Dragon Hammer"
+    },
+    "154": {
+      "name": "Apostle Wand"
+    },
+    "155": {
+      "name": "Relic Staff"
+    },
+    "156": {
+      "name": "Dragon Staff"
+    },
+    "157": {
+      "name": "Wyvern Wand"
+    },
+    "158": {
+      "name": "Gothic Staff"
+    },
+    "159": {
+      "name": "Oracle Wand"
+    },
+    "160": {
+      "name": "Celestial Staff"
+    },
+    "161": {
+      "name": "Elf Staff"
+    },
+    "162": {
+      "name": "Hyper Scythe"
+    },
+    "163": {
+      "name": "Oracle Spear"
+    },
+    "164": {
+      "name": "Immortal Scythe"
+    },
+    "165": {
+      "name": "Extreme Spear"
+    },
+    "166": {
+      "name": "HellFire Spear"
+    },
+    "167": {
+      "name": "Dreadnaught Spear"
+    },
+    "168": {
+      "name": "Reaper Scythe"
+    },
+    "169": {
+      "name": "Dragon Spear"
+    },
+    "170": {
+      "name": "Thunder Bow"
+    },
+    "171": {
+      "name": "Wave Bow"
+    },
+    "172": {
+      "name": "Grand Crossbow"
+    },
+    "173": {
+      "name": "Mirage Bow"
+    },
+    "174": {
+      "name": "Revenge Bow"
+    },
+    "175": {
+      "name": "Wyvern Bow"
+    },
+    "176": {
+      "name": "Immortal Bow"
+    },
+    "177": {
+      "name": "Salamander Bow"
+    },
+    "178": {
+      "name": "Light Green Rune"
+    },
+    "179": {
+      "name": "Salamander Sword"
+    },
+    "180": {
+      "name": "Avenger Sword"
+    },
+    "181": {
+      "name": "Titan Sword"
+    },
+    "182": {
+      "name": "Wyvern Sword"
+    },
+    "183": {
+      "name": "Immortal Sword"
+    },
+    "184": {
+      "name": "Justice Sword"
+    },
+    "185": {
+      "name": "Extreme Sword"
+    },
+    "186": {
+      "name": "Mirage Sword"
+    },
+    "187": {
+      "name": "Mystic Javelin"
+    },
+    "188": {
+      "name": "Extreme Javelin"
+    },
+    "189": {
+      "name": "Dragon Javelin"
+    },
+    "190": {
+      "name": "Spiked Javelin"
+    },
+    "191": {
+      "name": "Legend Javelin"
+    },
+    "192": {
+      "name": "Immortal Javelin"
+    },
+    "193": {
+      "name": "Heretic Javelin"
+    },
+    "194": {
+      "name": "Arctic Crystal"
+    },
+    "195": {
+      "name": "Salamander Javelin"
+    },
+    "196": {
+      "name": "Nude"
+    },
+    "197": {
+      "name": "Battle Suit"
+    },
+    "198": {
+      "name": "Leather Armor"
+    },
+    "199": {
+      "name": "Brigandine"
+    },
+    "200": {
+      "name": "Steel Armor"
+    },
+    "201": {
+      "name": "Rounded Armor"
+    },
+    "202": {
+      "name": "Breast Plate"
+    },
+    "203": {
+      "name": "Ring Armor"
+    },
+    "204": {
+      "name": "Scale Armor"
+    },
+    "205": {
+      "name": "Synthetic Armor"
+    },
+    "206": {
+      "name": "Full Plate Armor"
+    },
+    "207": {
+      "name": "Full Metal Armor"
+    },
+    "208": {
+      "name": "Supreme Armor"
+    },
+    "209": {
+      "name": "Spiked Armor"
+    },
+    "210": {
+      "name": "Titan Armor"
+    },
+    "211": {
+      "name": "Extreme Armor"
+    },
+    "212": {
+      "name": "Ancient Armor"
+    },
+    "213": {
+      "name": "Minotaur Armor"
+    },
+    "214": {
+      "name": "Doom Armor"
+    },
+    "215": {
+      "name": "Salamander Armor"
+    },
+    "216": {
+      "name": "Wyvern Armor"
+    },
+    "217": {
+      "name": "Viper Armor"
+    },
+    "218": {
+      "name": "Phoenix Armor"
+    },
+    "219": {
+      "name": "Frenzy Armor"
+    },
+    "220": {
+      "name": "Highlander Armor"
+    },
+    "221": {
+      "name": "Leather Boots"
+    },
+    "222": {
+      "name": "Elven Boots"
+    },
+    "223": {
+      "name": "Steel Boots"
+    },
+    "224": {
+      "name": "Long Boots"
+    },
+    "225": {
+      "name": "Chain Boots"
+    },
+    "226": {
+      "name": "Plated Boots"
+    },
+    "227": {
+      "name": "Brass Boots"
+    },
+    "228": {
+      "name": "War Boots"
+    },
+    "229": {
+      "name": "Mechanic Boots"
+    },
+    "230": {
+      "name": "Chaos Boots"
+    },
+    "231": {
+      "name": "Holy Boots"
+    },
+    "232": {
+      "name": "Spike Boots"
+    },
+    "233": {
+      "name": "Grand Boots"
+    },
+    "234": {
+      "name": "Wing Boots"
+    },
+    "235": {
+      "name": "Titan Boots"
+    },
+    "236": {
+      "name": "Saint Boots"
+    },
+    "237": {
+      "name": "Wyvern Boots"
+    },
+    "238": {
+      "name": "Rune Boots"
+    },
+    "239": {
+      "name": "Royal Boots"
+    },
+    "240": {
+      "name": "Ancient Boots"
+    },
+    "241": {
+      "name": "Inferno Boots"
+    },
+    "242": {
+      "name": "Phoenix Boots"
+    },
+    "243": {
+      "name": "Frenzy Boots"
+    },
+    "244": {
+      "name": "Mokova Boots"
+    },
+    "245": {
+      "name": "Robe"
+    },
+    "246": {
+      "name": "Enhanced Robe"
+    },
+    "247": {
+      "name": "Battle Robe"
+    },
+    "248": {
+      "name": "Elven Robe"
+    },
+    "249": {
+      "name": "Dryad Robe"
+    },
+    "250": {
+      "name": "Nymph Robe"
+    },
+    "251": {
+      "name": "Apprentice Robe"
+    },
+    "252": {
+      "name": "Disciple Robe"
+    },
+    "253": {
+      "name": "Master Robe"
+    },
+    "254": {
+      "name": "Arch Robe"
+    },
+    "255": {
+      "name": "Saint Robe"
+    },
+    "256": {
+      "name": "Royal Robe"
+    },
+    "257": {
+      "name": "Mystic Robe"
+    },
+    "258": {
+      "name": "Devine Robe"
+    },
+    "259": {
+      "name": "Bishop Robe"
+    },
+    "260": {
+      "name": "Celestial Robe"
+    },
+    "261": {
+      "name": "Salvation Robe"
+    },
+    "262": {
+      "name": "Alchemist Robe"
+    },
+    "263": {
+      "name": "Astral Robe"
+    },
+    "264": {
+      "name": "Archon Robe"
+    },
+    "265": {
+      "name": "Phoenix Robe"
+    },
+    "266": {
+      "name": "Ruah Robe"
+    },
+    "267": {
+      "name": "Eternal Robe"
+    },
+    "268": {
+      "name": "Archangel Robe"
+    },
+    "269": {
+      "name": "Leather Gloves"
+    },
+    "270": {
+      "name": "Leather Half Gloves"
+    },
+    "271": {
+      "name": "Steel Half Gauntlets"
+    },
+    "272": {
+      "name": "Clamshell Gauntlets"
+    },
+    "273": {
+      "name": "Finger Gauntlets"
+    },
+    "274": {
+      "name": "Gothic Gauntlets"
+    },
+    "275": {
+      "name": "War Gauntlets"
+    },
+    "276": {
+      "name": "Metal Gauntlets"
+    },
+    "277": {
+      "name": "Holy Gauntlets"
+    },
+    "278": {
+      "name": "Great Gauntlets"
+    },
+    "279": {
+      "name": "Brass Gauntlets"
+    },
+    "280": {
+      "name": "Giant Gauntlets"
+    },
+    "281": {
+      "name": "Titan Gauntlets"
+    },
+    "282": {
+      "name": "Grand Gauntlets"
+    },
+    "283": {
+      "name": "Ivory Gauntlets"
+    },
+    "284": {
+      "name": "Saint Gauntlets"
+    },
+    "285": {
+      "name": "Diamond Gauntlets"
+    },
+    "286": {
+      "name": "Angel Gauntlets"
+    },
+    "287": {
+      "name": "Relic Gauntlets"
+    },
+    "288": {
+      "name": "Ancient Gauntlets"
+    },
+    "289": {
+      "name": "Inferno Gauntlets"
+    },
+    "290": {
+      "name": "Phoenix Gauntlets"
+    },
+    "291": {
+      "name": "Frenzy Gauntlets"
+    },
+    "292": {
+      "name": "Leather Armlets"
+    },
+    "293": {
+      "name": "Long Armlets"
+    },
+    "294": {
+      "name": "Wide Armlets"
+    },
+    "295": {
+      "name": "Fold Armlets"
+    },
+    "296": {
+      "name": "Scale Armlets"
+    },
+    "297": {
+      "name": "Elven Armlets"
+    },
+    "298": {
+      "name": "Solid Armlets"
+    },
+    "299": {
+      "name": "Mechanic Armlets"
+    },
+    "300": {
+      "name": "Winged Armlets"
+    },
+    "301": {
+      "name": "Great Bracelets"
+    },
+    "302": {
+      "name": "Grand Bracelets"
+    },
+    "303": {
+      "name": "Magicial Bracelets"
+    },
+    "304": {
+      "name": "Spiked Bracelets"
+    },
+    "305": {
+      "name": "Justice Bracelets"
+    },
+    "306": {
+      "name": "Minotaur Bracelets"
+    },
+    "307": {
+      "name": "Metal Bracelets"
+    },
+    "308": {
+      "name": "Titan Bracelets"
+    },
+    "309": {
+      "name": "Saint Bracelets"
+    },
+    "310": {
+      "name": "Wyvern Bracelets"
+    },
+    "311": {
+      "name": "Ancient Bracelets"
+    },
+    "312": {
+      "name": "Inferno Bracelets"
+    },
+    "313": {
+      "name": "Phoenix Bracelets"
+    },
+    "314": {
+      "name": "Frenzy Bracelets"
+    },
+    "315": {
+      "name": "Round Amulet"
+    },
+    "316": {
+      "name": "Round Amulet +1"
+    },
+    "317": {
+      "name": "Round Amulet +2"
+    },
+    "318": {
+      "name": "Round Amulet +3"
+    },
+    "319": {
+      "name": "Gem Amulet"
+    },
+    "320": {
+      "name": "Gem Amulet +1"
+    },
+    "321": {
+      "name": "Gem Amulet +2"
+    },
+    "322": {
+      "name": "Gem Amulet +3"
+    },
+    "323": {
+      "name": "Magic Amulet"
+    },
+    "324": {
+      "name": "Magic Amulet +1"
+    },
+    "325": {
+      "name": "Magic Amulet +2"
+    },
+    "326": {
+      "name": "Magic Amulet +3"
+    },
+    "327": {
+      "name": "Rune Amulet"
+    },
+    "328": {
+      "name": "Rune Amulet +1"
+    },
+    "329": {
+      "name": "Rune Amulet +2"
+    },
+    "330": {
+      "name": "Rune Amulet +3"
+    },
+    "331": {
+      "name": "Sealed Amulet"
+    },
+    "332": {
+      "name": "Sealed Amulet +1"
+    },
+    "333": {
+      "name": "Sealed Amulet +2"
+    },
+    "334": {
+      "name": "Sealed Amulet +3"
+    },
+    "335": {
+      "name": "Mystic Amulet"
+    },
+    "336": {
+      "name": "Mystic Amulet +1"
+    },
+    "337": {
+      "name": "Mystic Amulet +2"
+    },
+    "338": {
+      "name": "Kelvezu Amulet"
+    },
+    "339": {
+      "name": "Lucidy"
+    },
+    "340": {
+      "name": "Sereneo"
+    },
+    "341": {
+      "name": "Fadeo"
+    },
+    "342": {
+      "name": "Sparky"
+    },
+    "343": {
+      "name": "Raident"
+    },
+    "344": {
+      "name": "Transparo"
+    },
+    "345": {
+      "name": "Murky"
+    },
+    "346": {
+      "name": "Devine"
+    },
+    "347": {
+      "name": "Celesto"
+    },
+    "348": {
+      "name": "Mirage"
+    },
+    "349": {
+      "name": "Inferna"
+    },
+    "350": {
+      "name": "Enigma"
+    },
+    "351": {
+      "name": "Bellum"
+    },
+    "352": {
+      "name": "Oredo"
+    },
+    "353": {
+      "name": "Pearl Beads"
+    },
+    "354": {
+      "name": "Crystal Sphere"
+    },
+    "355": {
+      "name": "Prizm Sphere"
+    },
+    "356": {
+      "name": "Bone Beads"
+    },
+    "357": {
+      "name": "Skull Beads"
+    },
+    "358": {
+      "name": "Orb"
+    },
+    "359": {
+      "name": "Holy Orb"
+    },
+    "360": {
+      "name": "Arch Orb"
+    },
+    "361": {
+      "name": "Dark Moon"
+    },
+    "362": {
+      "name": "Ceremonial Sphere"
+    },
+    "363": {
+      "name": "Orbital Beads"
+    },
+    "364": {
+      "name": "Harmony Sphere"
+    },
+    "365": {
+      "name": "Angel"
+    },
+    "366": {
+      "name": "Lucifer"
+    },
+    "367": {
+      "name": "Astral Orb"
+    },
+    "368": {
+      "name": "Rune Beads"
+    },
+    "369": {
+      "name": "Creation Beads"
+    },
+    "370": {
+      "name": "Mundane"
+    },
+    "371": {
+      "name": "Salamander Beads"
+    },
+    "372": {
+      "name": "Cosmos"
+    },
+    "373": {
+      "name": "Wyvern Orb"
+    },
+    "374": {
+      "name": "Ebony Manes"
+    },
+    "375": {
+      "name": "Avernus Beads"
+    },
+    "376": {
+      "name": "Malice Rosary"
+    },
+    "377": {
+      "name": "Round Ring"
+    },
+    "378": {
+      "name": "Round Ring +1"
+    },
+    "379": {
+      "name": "Round Ring +2"
+    },
+    "380": {
+      "name": "Round Ring +3"
+    },
+    "381": {
+      "name": "Gem Ring"
+    },
+    "382": {
+      "name": "Gem Ring +1"
+    },
+    "383": {
+      "name": "Gem Ring +2"
+    },
+    "384": {
+      "name": "Gem Ring +3"
+    },
+    "385": {
+      "name": "Magic Ring"
+    },
+    "386": {
+      "name": "Magic Ring +1"
+    },
+    "387": {
+      "name": "Magic Ring +2"
+    },
+    "388": {
+      "name": "Magic Ring +3"
+    },
+    "389": {
+      "name": "Rune Ring"
+    },
+    "390": {
+      "name": "Rune Ring +1"
+    },
+    "391": {
+      "name": "Rune Ring +2"
+    },
+    "392": {
+      "name": "Rune Ring +3"
+    },
+    "393": {
+      "name": "Sealed Ring"
+    },
+    "394": {
+      "name": "Sealed Ring +1"
+    },
+    "395": {
+      "name": "Sealed Ring +2"
+    },
+    "396": {
+      "name": "Sealed Ring +3"
+    },
+    "397": {
+      "name": "Mystic Ring"
+    },
+    "398": {
+      "name": "Mystic Ring +1"
+    },
+    "399": {
+      "name": "Mystic Ring +2"
+    },
+    "400": {
+      "name": "Wood Shield"
+    },
+    "401": {
+      "name": "Targe"
+    },
+    "402": {
+      "name": "Steel Buckler"
+    },
+    "403": {
+      "name": "Kite Shield"
+    },
+    "404": {
+      "name": "Tower Shield"
+    },
+    "405": {
+      "name": "Metal Shield"
+    },
+    "406": {
+      "name": "Scutum"
+    },
+    "407": {
+      "name": "Blaze Shield"
+    },
+    "408": {
+      "name": "Claw Shield"
+    },
+    "409": {
+      "name": "Wing Shield"
+    },
+    "410": {
+      "name": "Great Shield"
+    },
+    "411": {
+      "name": "Spiked Shield"
+    },
+    "412": {
+      "name": "Grand Shield"
+    },
+    "413": {
+      "name": "Extreme Shield"
+    },
+    "414": {
+      "name": "Gladiator Shield"
+    },
+    "415": {
+      "name": "Synthetic Shield"
+    },
+    "416": {
+      "name": "Titan Shield"
+    },
+    "417": {
+      "name": "Mystic Shield"
+    },
+    "418": {
+      "name": "Vampire Shield"
+    },
+    "419": {
+      "name": "Dragon Shield"
+    },
+    "420": {
+      "name": "Phoenix Shield"
+    },
+    "421": {
+      "name": "Dreadnaught Shield"
+    },
+    "422": {
+      "name": "Inferno Shield"
+    },
+    "423": {
+      "name": "Mini Mana Potion"
+    },
+    "424": {
+      "name": "Medium Mana Potion"
+    },
+    "425": {
+      "name": "Great Mana Potion"
+    },
+    "426": {
+      "name": "Mystic Mana Potion"
+    },
+    "427": {
+      "name": "Mini Life Potion"
+    },
+    "428": {
+      "name": "Medium Life Potion"
+    },
+    "429": {
+      "name": "Great Life Potion"
+    },
+    "430": {
+      "name": "Mystic Life Potion"
+    },
+    "431": {
+      "name": "Mini Stamina Potion"
+    },
+    "432": {
+      "name": "Medium Stamina Potion"
+    },
+    "433": {
+      "name": "Great Stamina Potion"
+    },
+    "434": {
+      "name": "Mystic Stamina Potion"
+    },
+    "435": {
+      "name": "Ether Core"
+    },
+    "436": {
+      "name": "Ether Core"
+    },
+    "437": {
+      "name": "Ether Core"
+    },
+    "438": {
+      "name": "Ether Core"
+    },
+    "439": {
+      "name": "Union Core"
+    },
+    "440": {
+      "name": "Claw"
+    },
+    "441": {
+      "name": "Tail"
+    },
+    "442": {
+      "name": "Horn"
+    },
+    "443": {
+      "name": "Vamp"
+    },
+    "444": {
+      "name": "Roitra"
+    },
+    "445": {
+      "name": "Tears of Kalia"
+    },
+    "446": {
+      "name": "Golden Vamp"
+    },
+    "447": {
+      "name": "Silver Vamp"
+    },
+    "448": {
+      "name": "Bronze Vamp"
+    },
+    "449": {
+      "name": "Recommendation Letter"
+    },
+    "450": {
+      "name": "Royal Amulet"
+    },
+    "451": {
+      "name": "Lollypop"
+    },
+    "452": {
+      "name": "Cake"
+    },
+    "453": {
+      "name": "Plastic Hammer"
+    },
+    "454": {
+      "name": "Royal Jelly"
+    },
+    "455": {
+      "name": "Hair Growth Spray"
+    },
+    "456": {
+      "name": "Empty Bottle"
+    },
+    "457": {
+      "name": "Honey"
+    },
+    "458": {
+      "name": "Oil"
+    },
+    "459": {
+      "name": "Metal Wing"
+    },
+    "460": {
+      "name": "Silver Wing"
+    },
+    "461": {
+      "name": "Gold Wing"
+    },
+    "462": {
+      "name": "Diamod Wing"
+    },
+    "463": {
+      "name": "Chaos Wing"
+    },
+    "464": {
+      "name": "Imperial Wing"
+    },
+    "469": {
+      "name": "Valento Ring"
+    },
+    "470": {
+      "name": "Lucidy Force"
+    },
+    "471": {
+      "name": "Sereneo Force"
+    },
+    "472": {
+      "name": "Fadeo Force"
+    },
+    "473": {
+      "name": "Sparky Force"
+    },
+    "474": {
+      "name": "Raident Force"
+    },
+    "475": {
+      "name": "Transparo Force"
+    },
+    "476": {
+      "name": "Murky Force"
+    },
+    "477": {
+      "name": "Devine Force"
+    },
+    "478": {
+      "name": "Celesto Force"
+    },
+    "479": {
+      "name": "Mirage Force"
+    },
+    "480": {
+      "name": "Inferna Force"
+    },
+    "481": {
+      "name": "Enigma Force"
+    },
+    "482": {
+      "name": "Bellum Force"
+    },
+    "483": {
+      "name": "Oredo Force"
+    },
+    "484": {
+      "name": "Gold"
+    },
+    "485": {
+      "name": "Exp"
+    },
+    "486": {
+      "name": "Jera"
+    },
+    "487": {
+      "name": "Nied"
+    },
+    "488": {
+      "name": "Gyfu"
+    },
+    "489": {
+      "name": "Fighter Spec Stone"
+    },
+    "490": {
+      "name": "Mechanician Spec Stone"
+    },
+    "491": {
+      "name": "Archer Spec Stone"
+    },
+    "492": {
+      "name": "Pikeman Spec Stone"
+    },
+    "493": {
+      "name": "Atalanta Spec Stone"
+    },
+    "494": {
+      "name": "Knight Spec Stone"
+    },
+    "495": {
+      "name": "Magician Spec Stone"
+    },
+    "496": {
+      "name": "Priestess Spec Stone"
+    },
+    "497": {
+      "name": "Athanasia"
+    },
+    "498": {
+      "name": "Deadly Edge"
+    },
+    "499": {
+      "name": "Avail of Evade"
+    },
+    "500": {
+      "name": "Bolster Recovery"
+    },
+    "501": {
+      "name": "Restoration"
+    },
+    "502": {
+      "name": "Defiance Stone Fire"
+    },
+    "503": {
+      "name": "Defiance Stone Ice"
+    },
+    "504": {
+      "name": "Defiance Stone Lightning"
+    },
+    "505": {
+      "name": "Might Stone (Fighter)"
+    },
+    "506": {
+      "name": "Might Stone (Mechanician)"
+    },
+    "507": {
+      "name": "Might Stone (Pikeman)"
+    },
+    "508": {
+      "name": "Might Stone (Archer)"
+    },
+    "509": {
+      "name": "Might Stone (Knight)"
+    },
+    "510": {
+      "name": "Might Stone (Atalanta)"
+    },
+    "511": {
+      "name": "Might Stone (Magician)"
+    },
+    "512": {
+      "name": "Might Stone (Priestess)"
+    },
+    "513": {
+      "name": "Antler"
+    },
+    "514": {
+      "name": "Scarf"
+    },
+    "515": {
+      "name": "Bell"
+    },
+    "554": {
+      "name": "Soccer Shirt"
+    },
+    "555": {
+      "name": "Soccer Shirt"
+    },
+    "556": {
+      "name": "Hopy Crystal"
+    },
+    "557": {
+      "name": "Hobgoblin Crystal"
+    },
+    "558": {
+      "name": "Decoy Crystal"
+    },
+    "559": {
+      "name": "Bargon Crystal"
+    },
+    "560": {
+      "name": "Headcutter Crystal"
+    },
+    "561": {
+      "name": "Figon Crystal"
+    },
+    "562": {
+      "name": "King Hopy Crystal"
+    },
+    "563": {
+      "name": "Hulk Crystal"
+    },
+    "564": {
+      "name": "Mystic Crystal"
+    },
+    "565": {
+      "name": "Guardian Saint Crystal"
+    },
+    "566": {
+      "name": "Web Crystal"
+    },
+    "567": {
+      "name": "Dark Specter Crystal"
+    },
+    "568": {
+      "name": "Iron Guard Crystal"
+    },
+    "569": {
+      "name": "Ricarten Militia Guard Crystal"
+    },
+    "570": {
+      "name": "Ricarten Guard Crystal"
+    },
+    "571": {
+      "name": "Royal Bless Guard Crystal"
+    },
+    "572": {
+      "name": "Occult Crystal"
+    },
+    "573": {
+      "name": "Doomed Crystal"
+    },
+    "574": {
+      "name": "Dusky Crystal"
+    },
+    "575": {
+      "name": "Liquid Gold Potion"
+    },
+    "576": {
+      "name": "Sea Water Potion"
+    },
+    "577": {
+      "name": "Poison Sample"
+    },
+    "578": {
+      "name": "Puzzle Item"
+    },
+    "579": {
+      "name": "Puzzle Piece 1"
+    },
+    "580": {
+      "name": "Puzzle Piece 2"
+    },
+    "581": {
+      "name": "Puzzle Piece 3"
+    },
+    "582": {
+      "name": "Puzzle Piece 4"
+    },
+    "583": {
+      "name": "Puzzle Piece 5"
+    },
+    "584": {
+      "name": "Puzzle Piece 6"
+    },
+    "585": {
+      "name": "Puzzle Piece 7"
+    },
+    "586": {
+      "name": "Puzzle Piece 8"
+    },
+    "587": {
+      "name": "Puzzle Piece 1"
+    },
+    "588": {
+      "name": "Puzzle Piece 2"
+    },
+    "589": {
+      "name": "Puzzle Piece 3"
+    },
+    "590": {
+      "name": "Puzzle Piece 4"
+    },
+    "591": {
+      "name": "Puzzle Piece 5"
+    },
+    "592": {
+      "name": "Puzzle Piece 6"
+    },
+    "593": {
+      "name": "Puzzle Piece 7"
+    },
+    "594": {
+      "name": "Puzzle Piece 8"
+    },
+    "595": {
+      "name": "Black Chocolate"
+    },
+    "596": {
+      "name": "White Chocolate"
+    },
+    "597": {
+      "name": "Lollipop"
+    },
+    "598": {
+      "name": "Lollipop"
+    },
+    "599": {
+      "name": "Blue Stone"
+    },
+    "600": {
+      "name": "Red Stone"
+    },
+    "601": {
+      "name": "Green Stone"
+    },
+    "602": {
+      "name": "Rebirth Scroll"
+    },
+    "603": {
+      "name": "Eternal Life"
+    },
+    "604": {
+      "name": "Fatal Edge"
+    },
+    "605": {
+      "name": "Avert Scroll"
+    },
+    "606": {
+      "name": "Teleport Core"
+    },
+    "607": {
+      "name": "Blank Potion"
+    },
+    "608": {
+      "name": "Aging Stone"
+    },
+    "609": {
+      "name": "Copper Ore"
+    },
+    "610": {
+      "name": "Third Eye 24H"
+    },
+    "611": {
+      "name": "EXP Potion 24H"
+    },
+    "612": {
+      "name": "Third Eye 48H"
+    },
+    "614": {
+      "name": "Vampire Teeth 12H"
+    },
+    "615": {
+      "name": "Vampire Teeth (30D)"
+    },
+    "616": {
+      "name": "Mana Aura 12H"
+    },
+    "617": {
+      "name": "Mana Aura (30D)"
+    },
+    "618": {
+      "name": "Fireworks"
+    },
+    "619": {
+      "name": "EXP Potion 48H"
+    },
+    "620": {
+      "name": "EXP Potion 72H"
+    },
+    "621": {
+      "name": "Phoenix - Fire Element"
+    },
+    "622": {
+      "name": "Phoenix - Ice Element"
+    },
+    "623": {
+      "name": "Phoenix - Lightning Element"
+    },
+    "624": {
+      "name": "Phoenix - Healing Element"
+    },
+    "625": {
+      "name": "Bronze Package(3H)"
+    },
+    "626": {
+      "name": "Bronze Package(1D)"
+    },
+    "627": {
+      "name": "Bronze Package(7D)"
+    },
+    "628": {
+      "name": "Bronze Package(30D)"
+    },
+    "629": {
+      "name": "Siver Package(3H)"
+    },
+    "630": {
+      "name": "Silver Package(1D)"
+    },
+    "631": {
+      "name": "Silver Package(7D)"
+    },
+    "632": {
+      "name": "Silver Package(30D)"
+    },
+    "633": {
+      "name": "Gold Package(3H)"
+    },
+    "634": {
+      "name": "Gold Package(1D)"
+    },
+    "635": {
+      "name": "Gold Package(7D)"
+    },
+    "636": {
+      "name": "Gold Package(30D)"
+    },
+    "637": {
+      "name": "Hair Potion (A)"
+    },
+    "638": {
+      "name": "Hair Potion (B)"
+    },
+    "639": {
+      "name": "Hair Potion (C)"
+    },
+    "640": {
+      "name": "Premium Hair Potion (D)"
+    },
+    "641": {
+      "name": "Premium Hair Potion (E)"
+    },
+    "642": {
+      "name": "Premium Hair Potion (F)"
+    },
+    "643": {
+      "name": "Premium Hair Potion (G)"
+    },
+    "644": {
+      "name": "Premium Hair Potion (H)"
+    },
+    "645": {
+      "name": "Premium Hair Potion (I)"
+    },
+    "646": {
+      "name": "Premium Hair Potion (J)"
+    },
+    "647": {
+      "name": "Premium Hair Potion (K)"
+    },
+    "648": {
+      "name": "Premium Hair Potion (L)"
+    },
+    "649": {
+      "name": "Premium Hair Potion (M)"
+    },
+    "650": {
+      "name": "Destroyer Armor"
+    },
+    "659": {
+      "name": "MaxAge"
+    },
+    "662": {
+      "name": "Mystic Ring +3"
+    },
+    "664": {
+      "name": "Mystic Amulet +3"
+    },
+    "665": {
+      "name": "Quake Seal"
+    },
+    "666": {
+      "name": "Stun Seal"
+    },
+    "667": {
+      "name": "Freeze Seal"
+    },
+    "669": {
+      "name": "Rabie Seal"
+    },
+    "670": {
+      "name": "Stygian Seal"
+    },
+    "671": {
+      "name": "Guardian Saint Seal"
+    },
+    "672": {
+      "name": "+5000 Points UP"
+    },
+    "673": {
+      "name": "Focus Ring"
+    },
+    "674": {
+      "name": "Emperor Ring"
+    },
+    "675": {
+      "name": "Arcane Ring"
+    },
+    "676": {
+      "name": "Death Ring"
+    },
+    "677": {
+      "name": "Phoenix Egg"
+    },
+    "678": {
+      "name": "MP Down 12H"
+    },
+    "679": {
+      "name": "SP Down 12H"
+    },
+    "680": {
+      "name": "Premium Hair Potion (N)"
+    },
+    "681": {
+      "name": "Premium Hair Potion (O)"
+    },
+    "682": {
+      "name": "Premium Hair Potion (P)"
+    },
+    "683": {
+      "name": "Premium Hair Potion (Q)"
+    },
+    "684": {
+      "name": "Premium Hair Potion (R)"
+    },
+    "685": {
+      "name": "Premium Hair Potion (S)"
+    },
+    "686": {
+      "name": "Angry Potion"
+    },
+    "687": {
+      "name": "Surprised Potion"
+    },
+    "688": {
+      "name": "Sensual Potion"
+    },
+    "689": {
+      "name": "Big Head of Happiness"
+    },
+    "690": {
+      "name": "Big Head of Love"
+    },
+    "691": {
+      "name": "Big Head of Sadness"
+    },
+    "692": {
+      "name": "Big Head of Shyness"
+    },
+    "693": {
+      "name": "Third Eye 72H"
+    },
+    "694": {
+      "name": "Gravity Stone"
+    },
+    "695": {
+      "name": "Mature Stone (A)"
+    },
+    "696": {
+      "name": "Mature Stone (B)"
+    },
+    "697": {
+      "name": "Mature Stone (C)"
+    },
+    "698": {
+      "name": "Skill Master (3rd)"
+    },
+    "699": {
+      "name": "Topaz Stone"
+    },
+    "700": {
+      "name": "Turquoise Stone"
+    },
+    "701": {
+      "name": "Skill Master (2nd)"
+    },
+    "704": {
+      "name": "Dagger"
+    },
+    "705": {
+      "name": "Iron Dagger"
+    },
+    "706": {
+      "name": "Hunting Knife "
+    },
+    "707": {
+      "name": "Cutlas"
+    },
+    "708": {
+      "name": "Hanger"
+    },
+    "709": {
+      "name": "Steel Dagger"
+    },
+    "710": {
+      "name": "Slaughter Knife"
+    },
+    "711": {
+      "name": "Saint Dagger"
+    },
+    "712": {
+      "name": "Falchion"
+    },
+    "713": {
+      "name": "Vine Dagger"
+    },
+    "714": {
+      "name": "Abyss Dagger"
+    },
+    "715": {
+      "name": "Wing Dual Sword"
+    },
+    "716": {
+      "name": "Sol Dagger"
+    },
+    "717": {
+      "name": "Flamberge"
+    },
+    "718": {
+      "name": "Fortress Dagger"
+    },
+    "720": {
+      "name": "Lava Dual Sword"
+    },
+    "721": {
+      "name": "Arcana Dagger"
+    },
+    "722": {
+      "name": "Moonstone Dagger"
+    },
+    "723": {
+      "name": "Chaotic Dagger"
+    },
+    "724": {
+      "name": "Plunder Dagger"
+    },
+    "725": {
+      "name": "Enigma Dagger"
+    },
+    "726": {
+      "name": "Dragon Dual Sword"
+    },
+    "727": {
+      "name": "Devilian Dagger"
+    },
+    "729": {
+      "name": "Shield Phantom"
+    },
+    "730": {
+      "name": "Creak Phantom"
+    },
+    "731": {
+      "name": "Pin Phantom"
+    },
+    "733": {
+      "name": "Terte Phantom"
+    },
+    "734": {
+      "name": "Okute Phantom"
+    },
+    "735": {
+      "name": "Wankala Phantom"
+    },
+    "736": {
+      "name": "Paha Phantom"
+    },
+    "737": {
+      "name": "Piskin Phantom"
+    },
+    "738": {
+      "name": "Tatanka Phantom"
+    },
+    "739": {
+      "name": "Sosho Phantom"
+    },
+    "740": {
+      "name": "Yumni Phantom"
+    },
+    "741": {
+      "name": "Siha Phantom"
+    },
+    "742": {
+      "name": "Wi Phantom"
+    },
+    "743": {
+      "name": "Roan Phantom"
+    },
+    "744": {
+      "name": "Canku Phantom"
+    },
+    "745": {
+      "name": "Owa Phantom"
+    },
+    "746": {
+      "name": "Nkeez Phantom"
+    },
+    "747": {
+      "name": "Pejula Phantom"
+    },
+    "748": {
+      "name": "Luta Phantom"
+    },
+    "749": {
+      "name": "Natanh Phantom"
+    },
+    "750": {
+      "name": "Kahsehtha Phantom"
+    },
+    "751": {
+      "name": "Niyaha Phantom"
+    },
+    "752": {
+      "name": "Acala Phantom"
+    },
+    "755": {
+      "name": "Skill Master (1st)"
+    },
+    "756": {
+      "name": "Stylish Armor"
+    },
+    "757": {
+      "name": "Female Armor"
+    },
+    "762": {
+      "name": "Vampire Suit"
+    },
+    "763": {
+      "name": "Succubus Suit"
+    },
+    "764": {
+      "name": "Magician Hat"
+    },
+    "765": {
+      "name": "Witch Hat"
+    },
+    "766": {
+      "name": "Toilet Paper"
+    },
+    "767": {
+      "name": "Hopy Toy"
+    },
+    "768": {
+      "name": "Spider Toy"
+    },
+    "769": {
+      "name": "Griffen Egg"
+    },
+    "770": {
+      "name": "Halloween Core"
+    },
+    "771": {
+      "name": "Rotten Lantern"
+    },
+    "772": {
+      "name": "Evil Lantern"
+    },
+    "773": {
+      "name": "Infernal Lantern"
+    },
+    "774": {
+      "name": "Assassin Spec Stone"
+    },
+    "775": {
+      "name": "Shaman Spec Stone"
+    },
+    "776": {
+      "name": "Clean Stone"
+    },
+    "777": {
+      "name": "Dark Shining Dagger"
+    },
+    "778": {
+      "name": "Wakinyan Phantom"
+    },
+    "779": {
+      "name": "Standard Christmas Recipe"
+    },
+    "780": {
+      "name": "Elegant Christmas Costume Recipe"
+    },
+    "781": {
+      "name": "Snowman Crystal"
+    },
+    "782": {
+      "name": "Cotton"
+    },
+    "783": {
+      "name": "Red Button"
+    },
+    "784": {
+      "name": "Green Cloth"
+    },
+    "787": {
+      "name": "Elegant Christmas Costume"
+    },
+    "788": {
+      "name": "Elegant Christmas Costume"
+    },
+    "789": {
+      "name": "Santa Coat Costume"
+    },
+    "790": {
+      "name": "Santa Coat Costume"
+    },
+    "793": {
+      "name": "EXP Potion 1H"
+    },
+    "794": {
+      "name": "Third Eye 1H"
+    },
+    "795": {
+      "name": "Gingerbread"
+    },
+    "796": {
+      "name": "Christmas Green Hat"
+    },
+    "797": {
+      "name": "Christmas Red Hat"
+    },
+    "798": {
+      "name": "Sheep Hat"
+    },
+    "799": {
+      "name": "Giraffe Hat"
+    },
+    "800": {
+      "name": "Soccer Hat"
+    },
+    "801": {
+      "name": "Beginner's Armor"
+    },
+    "802": {
+      "name": "Peruvian Soccer Suit"
+    },
+    "803": {
+      "name": "Brazilian Soccer Suit"
+    },
+    "804": {
+      "name": "Argentine Soccer Suit"
+    },
+    "805": {
+      "name": "Chilean Soccer Suit"
+    },
+    "806": {
+      "name": "Pinoy Soccer Suit"
+    },
+    "807": {
+      "name": "Vietnamese Soccer Suit"
+    },
+    "808": {
+      "name": "French Soccer Suit"
+    },
+    "809": {
+      "name": "German Soccer Suit"
+    },
+    "810": {
+      "name": "Holland Soccer Suit"
+    },
+    "811": {
+      "name": "Italian Soccer Suit"
+    },
+    "812": {
+      "name": "Mexican Soccer Suit"
+    },
+    "813": {
+      "name": "Portuguese Soccer Suit"
+    },
+    "814": {
+      "name": "Spanish Soccer Suit"
+    },
+    "815": {
+      "name": "Team USA Soccer Suit"
+    },
+    "816": {
+      "name": "Colombian Soccer Suit"
+    },
+    "820": {
+      "name": "Japanese Soccer Suit"
+    },
+    "821": {
+      "name": "Beginner's Robe"
+    },
+    "825": {
+      "name": "Fury Sheltom"
+    },
+    "826": {
+      "name": "Romantic Suit"
+    },
+    "827": {
+      "name": "Romantic Dress"
+    },
+    "828": {
+      "name": "King Stone"
+    },
+    "829": {
+      "name": "Fury Axe"
+    },
+    "830": {
+      "name": "Legend Axe"
+    },
+    "831": {
+      "name": "Tirbing Sword"
+    },
+    "832": {
+      "name": "Legend Sword"
+    },
+    "833": {
+      "name": "Freyja Staff"
+    },
+    "834": {
+      "name": "Freyja Wand"
+    },
+    "835": {
+      "name": "Cronus Bow"
+    },
+    "836": {
+      "name": "Cronus Javelin"
+    },
+    "837": {
+      "name": "Phoenix Spear"
+    },
+    "838": {
+      "name": "Phoenix Hammer"
+    },
+    "839": {
+      "name": "Legend Talon"
+    },
+    "840": {
+      "name": "Crystal Dagger"
+    },
+    "841": {
+      "name": "Wakan Phantom"
+    },
+    "842": {
+      "name": "Cronus Boots"
+    },
+    "843": {
+      "name": "Cronus Gauntlets"
+    },
+    "844": {
+      "name": "Cronus Bracelets"
+    },
+    "845": {
+      "name": "Cronus Armor"
+    },
+    "846": {
+      "name": "Freyja Robe"
+    },
+    "847": {
+      "name": "Freyja Orb"
+    },
+    "848": {
+      "name": "Cronus Shield"
+    },
+    "857": {
+      "name": "Light Blue Rune"
+    },
+    "858": {
+      "name": "Guidance Ring +2"
+    },
+    "859": {
+      "name": "Guidance Ring +1"
+    },
+    "860": {
+      "name": "Guidance Ring"
+    },
+    "861": {
+      "name": "Guidance Amulet +2"
+    },
+    "862": {
+      "name": "Guidance Amulet +1"
+    },
+    "863": {
+      "name": "Guidance Amulet"
+    },
+    "864": {
+      "name": "Tulla Amulet"
+    },
+    "865": {
+      "name": "Abyss Ring"
+    },
+    "866": {
+      "name": "Red Easter Egg"
+    },
+    "867": {
+      "name": "Green Easter Egg"
+    },
+    "868": {
+      "name": "Pink Easter Egg"
+    },
+    "869": {
+      "name": "Beginner's Boots"
+    },
+    "871": {
+      "name": "Beginner's Bracelets"
+    },
+    "872": {
+      "name": "Beginner's Axe"
+    },
+    "873": {
+      "name": "Beginner's Sword"
+    },
+    "874": {
+      "name": "Beginner's Staff"
+    },
+    "875": {
+      "name": "Beginner's Javelin"
+    },
+    "876": {
+      "name": "Beginner's Bow"
+    },
+    "877": {
+      "name": "Beginner's Talon"
+    },
+    "878": {
+      "name": "Beginner's Scythe"
+    },
+    "880": {
+      "name": "Beginner's Dagger"
+    },
+    "881": {
+      "name": "Beginner's Gauntlets"
+    },
+    "882": {
+      "name": "Beginner's Hammer"
+    },
+    "883": {
+      "name": "Strength Reset Stone"
+    },
+    "884": {
+      "name": "Spirit Reset Stone"
+    },
+    "885": {
+      "name": "Talent Reset Stone"
+    },
+    "886": {
+      "name": "Agility Reset Stone"
+    },
+    "887": {
+      "name": "Health Reset Stone"
+    },
+    "888": {
+      "name": "Brilliant Stone"
+    },
+    "889": {
+      "name": "Deluxe FS Spec Stone"
+    },
+    "890": {
+      "name": "Deluxe MS Spec Stone"
+    },
+    "891": {
+      "name": "Deluxe AS Spec Stone"
+    },
+    "892": {
+      "name": "Deluxe PS Spec Stone"
+    },
+    "893": {
+      "name": "Deluxe ATA Spec Stone"
+    },
+    "894": {
+      "name": "Deluxe KS Spec Stone"
+    },
+    "895": {
+      "name": "Deluxe MG Spec Stone"
+    },
+    "896": {
+      "name": "Deluxe PRS Spec Stone"
+    },
+    "897": {
+      "name": "Deluxe ASN Spec Stone"
+    },
+    "898": {
+      "name": "Deluxe SHA Spec Stone"
+    },
+    "899": {
+      "name": "Party Costume"
+    },
+    "900": {
+      "name": "Party Costume"
+    },
+    "903": {
+      "name": "Idas Armor"
+    },
+    "904": {
+      "name": "Idas Armor"
+    },
+    "907": {
+      "name": "Thales Armor"
+    },
+    "908": {
+      "name": "Thales Armor"
+    },
+    "911": {
+      "name": "Hawaii Costume"
+    },
+    "912": {
+      "name": "Hawaii Costume"
+    },
+    "915": {
+      "name": "Blue Wing Costume"
+    },
+    "916": {
+      "name": "Blue Wing Costume"
+    },
+    "919": {
+      "name": "Wing Costume"
+    },
+    "920": {
+      "name": "Wing Costume"
+    },
+    "923": {
+      "name": "Dark Wing Costume"
+    },
+    "924": {
+      "name": "Dark Wing Costume"
+    },
+    "927": {
+      "name": "Summer Costume"
+    },
+    "928": {
+      "name": "Summer Costume"
+    },
+    "931": {
+      "name": "Spring Costume"
+    },
+    "932": {
+      "name": "Spring Costume"
+    },
+    "935": {
+      "name": "Yellow Spring Costume"
+    },
+    "936": {
+      "name": "Yellow Spring Costume"
+    },
+    "939": {
+      "name": "Black Tuxedo"
+    },
+    "940": {
+      "name": "Black Dress"
+    },
+    "943": {
+      "name": "Black Suit"
+    },
+    "944": {
+      "name": "White Dress"
+    },
+    "947": {
+      "name": "Mechanic Costume"
+    },
+    "948": {
+      "name": "Mechanic Costume"
+    },
+    "951": {
+      "name": "Casual School Uniform"
+    },
+    "952": {
+      "name": "Casual School Uniform"
+    },
+    "955": {
+      "name": "Elegant School Uniform"
+    },
+    "956": {
+      "name": "Elegant School Uniform"
+    },
+    "959": {
+      "name": "Military Costume"
+    },
+    "960": {
+      "name": "Military Costume"
+    },
+    "963": {
+      "name": "Marine Costume"
+    },
+    "964": {
+      "name": "Marine Costume"
+    },
+    "967": {
+      "name": "Hopy Costume"
+    },
+    "968": {
+      "name": "Cuepi Costume"
+    },
+    "971": {
+      "name": "Lunar Costume"
+    },
+    "973": {
+      "name": "Gaia Armor"
+    },
+    "974": {
+      "name": "Gaia Armor"
+    },
+    "975": {
+      "name": "Iria Robe"
+    },
+    "976": {
+      "name": "Iria Robe"
+    },
+    "977": {
+      "name": "Dark Gaia Armor"
+    },
+    "978": {
+      "name": "Dark Gaia Armor"
+    },
+    "979": {
+      "name": "Dark Iria Robe"
+    },
+    "980": {
+      "name": "Dark Iria Robe"
+    },
+    "981": {
+      "name": "Wedding Suit"
+    },
+    "982": {
+      "name": "Wedding Dress"
+    },
+    "985": {
+      "name": "South Graceful Hanbok"
+    },
+    "986": {
+      "name": "South Graceful Hanbok"
+    },
+    "989": {
+      "name": "Kimono Costume"
+    },
+    "990": {
+      "name": "Kimono Costume"
+    },
+    "993": {
+      "name": "Chinese Costume"
+    },
+    "994": {
+      "name": "Chinese Costume"
+    },
+    "997": {
+      "name": "Martanos Robe"
+    },
+    "998": {
+      "name": "Martanos Robe"
+    },
+    "999": {
+      "name": "Mikal Robe"
+    },
+    "1000": {
+      "name": "Mikal Robe"
+    },
+    "1001": {
+      "name": "Silver Costume"
+    },
+    "1002": {
+      "name": "Silver Costume"
+    },
+    "1003": {
+      "name": "Mythology Axe"
+    },
+    "1004": {
+      "name": "Mythology Talon"
+    },
+    "1005": {
+      "name": "Mythology Dagger"
+    },
+    "1006": {
+      "name": "Mythology Hammer"
+    },
+    "1007": {
+      "name": "Mythology Staff"
+    },
+    "1008": {
+      "name": "Mythology Phantom"
+    },
+    "1009": {
+      "name": "Mythology Spear"
+    },
+    "1010": {
+      "name": "Mythology Bow"
+    },
+    "1011": {
+      "name": "Mythology Sword"
+    },
+    "1012": {
+      "name": "Mythology Javelin"
+    },
+    "1013": {
+      "name": "Mythology Armor"
+    },
+    "1014": {
+      "name": "Mythology Boots"
+    },
+    "1015": {
+      "name": "Mythology Gauntlets"
+    },
+    "1016": {
+      "name": "Mythology Bracelets"
+    },
+    "1017": {
+      "name": "Mythology Shield"
+    },
+    "1022": {
+      "name": "Mythology Robe"
+    },
+    "1023": {
+      "name": "Mythology Orb"
+    },
+    "1063": {
+      "name": "Ruby Gem Piece"
+    },
+    "1064": {
+      "name": "Aquamarine Gem Piece"
+    },
+    "1065": {
+      "name": "Topaz Gem Piece"
+    },
+    "1066": {
+      "name": "Emerald Gem Piece"
+    },
+    "1067": {
+      "name": "Amethyst Gem Piece"
+    },
+    "1068": {
+      "name": "Triangular Ruby Gem"
+    },
+    "1069": {
+      "name": "Square Ruby Gem"
+    },
+    "1070": {
+      "name": "Marquise Ruby Gem"
+    },
+    "1071": {
+      "name": "Triangular Aquamarine Gem"
+    },
+    "1072": {
+      "name": "Square Aquamarine Gem"
+    },
+    "1073": {
+      "name": "Marquise Aquamarine Gem"
+    },
+    "1074": {
+      "name": "Triangular Topaz Gem"
+    },
+    "1075": {
+      "name": "Square Topaz Gem"
+    },
+    "1076": {
+      "name": "Marquise Topaz Gem"
+    },
+    "1077": {
+      "name": "Triangular Emerald Gem"
+    },
+    "1078": {
+      "name": "Square Emerald Gem"
+    },
+    "1079": {
+      "name": "Marquise Emerald Gem"
+    },
+    "1080": {
+      "name": "Triangular Amethyst Gem"
+    },
+    "1081": {
+      "name": "Square Amethyst Gem"
+    },
+    "1082": {
+      "name": "Marquise Amethyst Gem"
+    },
+    "1083": {
+      "name": "Elaborated Ruby Gem"
+    },
+    "1084": {
+      "name": "Elaborated Aquamarine Gem"
+    },
+    "1085": {
+      "name": "Elaborated Topaz Gem"
+    },
+    "1086": {
+      "name": "Elaborated Emerald Gem"
+    },
+    "1087": {
+      "name": "Elaborated Amethyst Gem"
+    },
+    "1088": {
+      "name": "Nied Crystal"
+    },
+    "1089": {
+      "name": "Gyfu Crystal"
+    },
+    "1090": {
+      "name": "Jera Crystal"
+    },
+    "1091": {
+      "name": "Iron Drill"
+    },
+    "1092": {
+      "name": "Titanium Drill"
+    },
+    "1093": {
+      "name": "Diamond Drill"
+    },
+    "1094": {
+      "name": "Ruby Drill"
+    },
+    "1095": {
+      "name": "Aquamarine Drill"
+    },
+    "1096": {
+      "name": "Topaz Drill"
+    },
+    "1097": {
+      "name": "Emerald Drill"
+    },
+    "1098": {
+      "name": "Amethyst Drill"
+    },
+    "1099": {
+      "name": "Simple Gem Extractor"
+    },
+    "1100": {
+      "name": "Simple Socket Extractor"
+    },
+    "1101": {
+      "name": "Red Gift Box"
+    },
+    "1102": {
+      "name": "Green Gift Box"
+    },
+    "1104": {
+      "name": "Plastic Hammer"
+    },
+    "1119": {
+      "name": "Cokris Venom Glands"
+    },
+    "1120": {
+      "name": "Easter Hopy Costume"
+    },
+    "1121": {
+      "name": "Easter Cuepy Costume"
+    },
+    "1122": {
+      "name": "Standard Easter Recipe"
+    },
+    "1123": {
+      "name": "Grand Life Potion"
+    },
+    "1124": {
+      "name": "Grand Stamina Potion"
+    },
+    "1125": {
+      "name": "Grand Mana Potion"
+    },
+    "1126": {
+      "name": "Twitch Costume"
+    },
+    "1127": {
+      "name": "Twitch Costume"
+    },
+    "1138": {
+      "name": "Legend Hammer"
+    },
+    "1139": {
+      "name": "Draxos Boots"
+    },
+    "1140": {
+      "name": "Bronze Chest (100k)"
+    },
+    "1141": {
+      "name": "Silver Chest (200k)"
+    },
+    "1142": {
+      "name": "Green Chest (500k)"
+    },
+    "1143": {
+      "name": "Blue Chest (1kk)"
+    },
+    "1144": {
+      "name": "Purple Chest (2kk)"
+    },
+    "1145": {
+      "name": "Gold Chest (5kk)"
+    },
+    "1146": {
+      "name": "Golden Chest (10kk)"
+    },
+    "1147": {
+      "name": "Rainbow Chest (20kk)"
+    },
+    "1148": {
+      "name": "Season 1 Costume"
+    },
+    "1149": {
+      "name": "Season 1 Costume Robe"
+    },
+    "1150": {
+      "name": "Devil Shy Ring"
+    },
+    "1152": {
+      "name": "Greedy Gauntlets"
+    },
+    "1153": {
+      "name": "Season 2 Costume"
+    },
+    "1187": {
+      "name": "Damage Honey"
+    },
+    "1188": {
+      "name": "Fast Honey"
+    },
+    "1189": {
+      "name": "Smart Honey"
+    },
+    "1190": {
+      "name": "Defensive Honey"
+    },
+    "1191": {
+      "name": "Mechanic Crystal"
+    },
+    "1192": {
+      "name": "Mechanic King Crystal"
+    },
+    "1193": {
+      "name": "Chelsea Soccer Suit"
+    },
+    "1194": {
+      "name": "Chelsea Soccer Suit"
+    },
+    "1195": {
+      "name": "Manchester City Soccer Suit"
+    },
+    "1196": {
+      "name": "Manchester City Soccer Suit"
+    },
+    "1197": {
+      "name": "Speedy Soccer Hat"
+    },
+    "1198": {
+      "name": "Abyss Javelin"
+    },
+    "1199": {
+      "name": "Abyss Axe"
+    },
+    "1200": {
+      "name": "Abyss Talon"
+    },
+    "1201": {
+      "name": "Abyss Dagger"
+    },
+    "1202": {
+      "name": "Abyss Hammer"
+    },
+    "1203": {
+      "name": "Abyss Staff"
+    },
+    "1204": {
+      "name": "Abyss Phantom"
+    },
+    "1205": {
+      "name": "Abyss Spear"
+    },
+    "1206": {
+      "name": "Abyss Bow"
+    },
+    "1207": {
+      "name": "Abyss Sword"
+    },
+    "1208": {
+      "name": "Abyss Armor"
+    },
+    "1209": {
+      "name": "Abyss Boots"
+    },
+    "1210": {
+      "name": "Abyss Gauntlets"
+    },
+    "1211": {
+      "name": "Abyss Bracelets"
+    },
+    "1212": {
+      "name": "Abyss Shield"
+    },
+    "1213": {
+      "name": "Abyss Robe"
+    },
+    "1214": {
+      "name": "Abyss Orb"
+    },
+    "1215": {
+      "name": "Abyss Dagger"
+    },
+    "1217": {
+      "name": "Summer Costume"
+    },
+    "1218": {
+      "name": "Summer Costume"
+    },
+    "1219": {
+      "name": "Pet System 1h"
+    },
+    "1220": {
+      "name": "Pet System 24h"
+    },
+    "1221": {
+      "name": "Pet System 48h"
+    },
+    "1222": {
+      "name": "Pet System 72h"
+    },
+    "1223": {
+      "name": "Pet System 1h"
+    },
+    "1224": {
+      "name": "Pet System 24h"
+    },
+    "1225": {
+      "name": "Pet System 48h"
+    },
+    "1226": {
+      "name": "Pet System 72h"
+    },
+    "1227": {
+      "name": "纤维拳套"
+    },
+    "1228": {
+      "name": "青铜拳套"
+    },
+    "1229": {
+      "name": "羊皮拳套"
+    },
+    "1230": {
+      "name": "传说的拳套"
+    },
+    "1231": {
+      "name": "魔王拳套"
+    },
+    "1232": {
+      "name": "嗜血拳套"
+    },
+    "1233": {
+      "name": "灵魂之击拳套"
+    },
+    "1234": {
+      "name": "白金拳套"
+    },
+    "1235": {
+      "name": "枫击拳套"
+    },
+    "1236": {
+      "name": "降龙拳套"
+    },
+    "1237": {
+      "name": "玄铁拳套"
+    },
+    "1238": {
+      "name": "蓝玉拳套"
+    },
+    "1239": {
+      "name": "血染拳套"
+    },
+    "1240": {
+      "name": "熔岩拳套"
+    },
+    "1241": {
+      "name": "百裂拳套"
+    },
+    "1242": {
+      "name": "龙王之怒拳套"
+    },
+    "1243": {
+      "name": "钛金之手拳套"
+    },
+    "1244": {
+      "name": "百战不殆拳套"
+    },
+    "1245": {
+      "name": "精灵之力拳套"
+    },
+    "1246": {
+      "name": "毁灭拳套"
+    },
+    "1247": {
+      "name": "虎牙拳套"
+    },
+    "1248": {
+      "name": "阿瑞斯拳套"
+    },
+    "1249": {
+      "name": "波塞顿拳套"
+    },
+    "1250": {
+      "name": "悲伤之拳"
+    },
+    "1251": {
+      "name": "阿波罗之拳"
+    },
+    "1252": {
+      "name": "致命之拳"
+    },
+    "1253": {
+      "name": "烈焰之拳"
+    },
+    "1254": {
+      "name": "毁灭拳套(5h)"
+    },
+    "1255": {
+      "name": "阿瑞斯拳套(5h)"
+    },
+    "1256": {
+      "name": "波塞顿拳套(5h)"
+    },
+    "1257": {
+      "name": "黑色拳头(80Lv)"
+    },
+    "1258": {
+      "name": "黑色拳头(102Lv)"
+    },
+    "1259": {
+      "name": "黑色拳头(108Lv)"
+    },
+    "1260": {
+      "name": "黑色拳头"
+    },
     "pickup": {
       "overMoney": "Your money would exceed the maximum allowed"
     },
@@ -372,13 +3451,13 @@
       "notDroppable": "That item cannot be dropped",
       "failed": "Operation failed",
       "skill-master": {
-   "not-a-stone": "Not a skill mastery stone",
-   "stone-not-in-bag": "The stone must be in your bag or potion slot",
-   "no-skill-tree": "This class has no skill tree",
-   "nothing-to-mature": "Nothing to mature in this tier (unlearned / passive / already full)",
-   "bad-percent": "Bad percent (valid 1..100)"
-  },
-  "crystal": {
+        "not-a-stone": "Not a skill mastery stone",
+        "stone-not-in-bag": "The stone must be in your bag or potion slot",
+        "no-skill-tree": "This class has no skill tree",
+        "nothing-to-mature": "Nothing to mature in this tier (unlearned / passive / already full)",
+        "bad-percent": "Bad percent (valid 1..100)"
+      },
+      "crystal": {
         "level": "Requires level {level} to use this crystal",
         "town": "Crystals cannot be used in town",
         "noTemplate": "Summon failed, the crystal was not consumed"

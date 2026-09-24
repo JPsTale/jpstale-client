@@ -88,6 +88,8 @@ import { skillMotionSrcByIcon, weaponSfxForIcon } from '../game/skillMotionSrc.j
 import { skillRate, skillRateByIcon } from '../game/skillRate.js';
 import { noTargetCastBlock } from '../game/skillNoTarget.js';
 import { checkCastResources } from '../game/skillCost.js';
+import { itemDisplayNameById } from '../game/itemName.js';
+import { markSkillCast, skillCdRemainingMs } from '../game/skillCooldown.js';
 import { skillLevelOf } from '../game/skillLevel.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
 import { skillIdByIcon } from '../game/skillIdentity.js';
@@ -343,7 +345,9 @@ export interface WorldView {
    * 原版 `scITEM::Draw` 里只有 `ITEMBASE_Weapon`（首字节 0x01）才躺平。
    * `quantity` / `money` 只用于名牌显示数量（金币用 `money`，其余可堆叠物用 `quantity`）。
    */
-  groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string, itemId: number, quantity: number, money: number): void;
+  /** `itemId` = **物品码**（判掉落大类用）；`itemlistId` = **主键**（查显示名用，见 proto 注释）。 */
+  groundItemAppear(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string,
+                   itemId: number, itemlistId: number, quantity: number, money: number): void;
   /** 地面物品消失（S2C_GroundItemDisappear，拾取/过期/被清） → 移除 */
   groundItemDisappear(groundItemId: number): void;
   /** [调试/装备] 播放指定技能图标动画（iconFile 含 .bmp；'skill_normal'=普攻） */
@@ -2483,7 +2487,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
-   * 施法资源门（客户端预校验，唯一实现）：MP 够不够。**只查原因，不提示** ——
+   * 施法资源门（客户端预校验，唯一实现）：**CD 满了没 + MP 够不够**。**只查原因，不提示** ——
    * 提示由调用方按"这一击怎么处置"决定（左拳退普攻 / 右拳什么都不做，见攻击循环）。
    * 权威判定在服务端（`SkillCastService.begin`）；这里只为**别先把动画播出去再被拒**
    * （用户 2026-09-24："缺少魔法值现在也可以施法，至少客户端应该判断施法前提吧"）。
@@ -2493,6 +2497,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function castBlockReason(skillId: number): string | null {
     const point = skillLevelOf(skillId);
     const mp = getGameSnapshot().character?.mp ?? 0;
+    // CD 门（原版 `UseSkillFlag`：`GageLength >= 35` 才允许用，`sinSkill.cpp:2117/2124` 每帧刷）。
+    // 本地的表在**收到服务端 ack（自己那条 `S2C_SkillStart`）**时才起 —— 于是这一圈总不早于服务端的窗口，
+    // 不会出现“客户端弧满了、服务端还在冷却”；权威仍在服务端（`SkillCastService.begin`）。
+    if (skillCdRemainingMs(skillId) > 0) return 'skill.op.cooldown';
     const r = checkCastResources(skillId, point, mp);
     if (r.block === 'noMp') return 'skill.op.noMp';
     if (r.block === 'notEnoughData') {
@@ -3861,7 +3869,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     groundItemLabelsOn = !groundItemLabelsOn;
     try { localStorage.setItem(GROUND_LABELS_KEY, groundItemLabelsOn ? '1' : '0'); } catch { /* 隐私模式/配额满：忽略，仅影响本次 */ }
   }
-  const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string; itemId: number; quantity: number; money: number }[] = [];
+  const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string; itemId: number; itemlistId: number; quantity: number; money: number }[] = [];
   /** 掉落物离地微抬：原版 `ps->sSelfPosition.iY = ps->sPosition.iY + 6 * 256`（定点 fONE=256）→ 6/256 世界单位 */
   const GROUND_LIFT = 6 / 256;
   /** 掉落物高亮闪烁周期（ms 半个周期）：对齐原版 Color+100 周期脉冲 */
@@ -4345,7 +4353,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 演员未就绪时与攻击同策入队（补播窗口由该动作自身的时长决定）。
    */
   function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0, animClip = ''): void {
-    if (casterId === selfPlayerId) return;   // 自己已在本地播（客户端驱动）
+    if (casterId === selfPlayerId) {
+      // 动画自己已在本地播过了（客户端驱动），但**CD 计时从这条 ack 起**：服务端是在受理那一刻
+      // （扣 MP + 记 `lastCastAt`）开始的，客户端晚一个 RTT 起表 ⇒ 客户端窗口 ⊇ 服务端窗口，
+      // 边界上永远是“服务端先就绪”；时长也是服务端下发的（`S2C_SkillList.skills[].cd_ms`）。
+      markSkillCast(skillId);
+      return;
+    }
     drainStaleRemoteAttacks();
     const actor = remotes.get(casterId);
     if (!actor) {
@@ -4885,9 +4899,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     drawMapBanner(ctx, now, W, H);
   }
 
-  function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number, dorpItem: string, itemId: number, quantity: number, money: number): void {
+  function spawnGroundItem(groundItemId: number, name: string, x: number, y: number, z: number,
+                           dorpItem: string, itemId: number, itemlistId: number, quantity: number, money: number): void {
+    // 显示名按**主键**查（`item.<id>.name`）—— 主键由服务端在 `GroundItemProto.itemlist_id` 里下发
+    // （用户 2026-09-25 定：地面掉落物带 itemlist_id，省掉"物品码 → 定义 → 主键"那一跳）。
+    // `itemId` 仍是物品码，只用于下面判掉落大类（`itemBaseOf`）。
+    if (itemlistId > 0) {
+      name = itemDisplayNameById(itemlistId, name, name);
+    } else {
+      // 服务端没给主键（旧版服务端）⇒ **显式留痕**，名字退回数据名（不假装查到了）
+      reportFallback('item.groundName', `地面物 #${groundItemId} 没有 itemlist_id ⇒ 名字用数据名「${name}」`);
+    }
     if (!scene) {
-      pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem, itemId, quantity, money });
+      pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem, itemId, itemlistId, quantity, money });
       return;
     }
     if (groundItems.has(groundItemId)) return;
@@ -6941,7 +6965,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 地面物品同理（可能早于本机进场到达）
       if (pendingGroundItems.length > 0) {
         const batch = pendingGroundItems.splice(0);
-        for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z, g.dorpItem, g.itemId, g.quantity, g.money);
+        for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z, g.dorpItem, g.itemId, g.itemlistId, g.quantity, g.money);
       }
 
       try {
@@ -7140,10 +7164,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       spawnNpc({ entityId: Number(entityId), nameKey: nameKey || '', modelFile: modelFile || '', x: Number(x), y: Number(y), z: Number(z), angle: Number(angle) || 0 });
     },
     npcDisappear: (entityId) => despawnNpc(Number(entityId)),
-    groundItemAppear: (groundItemId, name, x, y, z, dorpItem, itemId, quantity, money) => {
+    groundItemAppear: (groundItemId, name, x, y, z, dorpItem, itemId, itemlistId, quantity, money) => {
       spawnGroundItem(
         Number(groundItemId), name || '', Number(x), Number(y), Number(z),
-        dorpItem || '', Number(itemId) || 0, Number(quantity) || 0, Number(money) || 0,
+        dorpItem || '', Number(itemId) || 0, Number(itemlistId) || 0,
+        Number(quantity) || 0, Number(money) || 0,
       );
     },
     groundItemDisappear: (groundItemId) => despawnGroundItem(Number(groundItemId)),

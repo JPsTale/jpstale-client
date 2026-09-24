@@ -2,6 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import { subscribeGame, getGameSnapshot, hoveredItemOf, setHoverSpot, clearHoverItem, type GameItem, type HoverSource } from '../../app/gameStore.js';
 import { itemDefById } from '../../game/data/itemDefs.js';
+import { itemDisplayName } from '../../game/itemName.js';
 import { buildLines, classIconFile } from '../itemInfoLines.js';
 import { useItemImg } from './ItemPanel.js';
 
@@ -48,7 +49,8 @@ export function ItemInfo({ hover }: { hover: ItemHover | null }) {
   if (!hover) return null;
   const { it } = hover;
   const def = itemDefById(it.itemlistId);
-  const rawName = def?.name ?? `#${it.itemlistId}`;
+  // 显示名走**唯一实现**（`item.<id>.name` 覆盖优先，缺则数据名）—— 键用**主键**（与 Web 管理端同一个口径）
+  const rawName = itemDisplayName(it.itemlistId, def?.name, `#${it.itemlistId}`);
   // 名字：本体名 + 右上角武器类型小图标。（锻造等级**不再**当前缀 ——
   // 用户 2026-09-22："在名字下方显示强化等级"；`buildLines` 会把它作为 `sub` 行放在最前。）
   const name = rawName;

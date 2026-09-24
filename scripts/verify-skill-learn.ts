@@ -193,8 +193,9 @@ console.log('④ `skill.op.*` 文案（zh/en 成对 + 逐个原因码覆盖服�
   const SERVER = process.env.PT_SERVER_ROOT ?? resolve('..', 'jpstale-server');
   const RULES = resolve(SERVER, 'modules/common-service/src/main/java/org/jpstale/common/service/skill/SkillRules.java');
   /** 冻结名单：`SkillRules.Reason` 里 OK 之外的全部 key()（= 客户端必须覆盖的 10 条） */
+  // `cooldown` 是**施法**路径的原因码（学习路径用不到），但共用同一个 `skill.op.*` key 空间
   const FROZEN = ['unknownSkill', 'noSkillTree', 'wrongJob', 'slotLocked', 'prevNotLearned',
-    'levelTooLow', 'maxPoint', 'noSkillPoint', 'noGold', 'resetUsed'];
+    'levelTooLow', 'maxPoint', 'noSkillPoint', 'noGold', 'resetUsed', 'cooldown'];
   if (existsSync(RULES)) {
     const java = readFileSync(RULES, 'utf8');
     const keys = [...java.matchAll(/^ {8}[A-Z_]+\("([a-zA-Z]+)"\),\r?$/gm)].map((m) => m[1]!);

@@ -13,6 +13,7 @@ import { ITEM_CLASS, isStackable, isTwoHandWeaponClass } from '../../game/itemCl
 import { requestPlayEat } from '../WorldView.js';
 import { useEffectKindOf, useWithoutAnimation } from '../../game/useEffect.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
+import { itemDisplayNameOf } from '../../game/itemName.js';
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { sendEquipItem, sendSwitchWeapon, sendBagLayout, sendStackMerge, sendUseItem, sendTakeToHand, sendBagSwap, sendShopSell } from '../../net/bridge.js';
 import { useItemHover } from './ItemInfo.js';
@@ -216,7 +217,7 @@ function BagCanvas({ items, held, character, onPick, onUse, onPutSlot, onHover, 
       // **Shift + 左键 = 拆分**（用户 2026-09-14）：只对堆叠物有效，数量为 1 时无效。
       // 弹框输入要拆出去几个，确认后那份进鼠标位 —— 与"拿起"同一去处，只是拿一部分。
       if (e.shiftKey && isStackable(defOf(p.it)?.class) && p.it.count > 1) {
-        requestSplit(p.it.uid, p.it.count, defOf(p.it)?.name ?? '');
+        requestSplit(p.it.uid, p.it.count, itemDisplayNameOf(defOf(p.it), ''));
         return;
       }
       onPick(p.it);
@@ -285,7 +286,7 @@ function ItemImg({ it, w, h }: { it: GameItem; w: number; h: number }) {
   return (
     <img
       src={src}
-      alt={def.name}
+      alt={itemDisplayNameOf(def)}
       className="jp-item-iconimg"
       style={{ width: w, height: h }}
       draggable={false}

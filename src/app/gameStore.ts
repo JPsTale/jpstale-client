@@ -18,7 +18,10 @@ export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldm
 /** 一条已学技能（`S2C_SkillList` 下发；未学的技能**不下发**）。 */
 export interface LearnedSkillState {
   point: number;    // 技能等级 1..10（已学的必然 ≥1）
-  mastery: number;  // 熟练度 0..10000
+  mastery: number;  // **派生后的**熟练度 0..10000（服务端 SkillRules.useSkillMastery）
+  /** 该技能此刻的冷却时长（毫秒）—— **服务端算好下发**（`SkillRules.cooldownMs`）。
+   *  0 = 服务端说“算不出 CD”（如 5 转：三份源码定义表里都没有 RequireMastery）⇒ 客户端不记 CD。 */
+  cdMs: number;
 }
 
 /**

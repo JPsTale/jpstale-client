@@ -45,6 +45,10 @@ const flat = (o: unknown, prefix = ''): Map<string, string> => {
 
 let failed = 0;
 const fail = (msg: string) => { console.log(`  FAIL ${msg}`); failed++; };
+/** 通过即打印（与 fail 对称） */
+const ok2 = (msg: string, cond: boolean): void => {
+  if (cond) console.log('  ok   ' + msg); else fail(msg);
+};
 
 for (const loc of ['zh', 'en']) {
   const cli = flat(load(resolve('src/locales', `${loc}.json`)));
@@ -86,6 +90,113 @@ for (const loc of ['zh', 'en']) {
     }
     if (missing === 0) console.log(`  ok   [${loc}] 服务端 ${keys.length} 个效果位 key 全部有文案`);
   }
+}
+
+/* ── 物品名表（`item.<id>.name`，**全量写在两份语言表里**）────────────────────────────
+   用户 2026-09-25 定的两条口径：
+     ① 键用 `gamedb.itemlist.id`（主键、十进制，不用 idcode）；
+     ② **i18n 内容只有一处** = `locales/{zh,en}.json`（"把内容塞到不同地方只会制造维护困难"）。
+   ⇒ 两份表**全量**（每件物品都有条目），客户端显示名 100% 从语言表取。
+   本节钉：键集全量且成对 / 每个 id 是真物品 / 端到端取值 / 视图层走唯一实现，
+   并把**未翻译的条数**报出来（zh == en 的那些 = 还等着补译文的）。 */
+console.log('\n[物品名] `item.<id>.name`（全量写在 locales/{zh,en}.json）');
+{
+  // 动态 import：i18n 在模块作用域读 localStorage/navigator（Node 下要先打桩）
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, configurable: true,
+  });
+  Object.defineProperty(globalThis, 'navigator', { value: { language: 'zh' }, configurable: true });
+  const { ITEM_DEFS, itemDefById } = await import('../src/game/data/itemDefs.js');
+  const { itemDisplayNameById, itemNameKey } = await import('../src/game/itemName.js');
+  const { t, setLocale } = await import('../src/i18n/index.js');
+
+  const namesOf = (rel: string): Record<string, string> => {
+    const table = load(resolve(rel));
+    const item = (table.item ?? {}) as Record<string, { name?: string }>;
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(item)) if (/^\d+$/.test(k)) out[k] = v?.name ?? '';
+    return out;
+  };
+  const zh = namesOf('src/locales/zh.json');
+  const en = namesOf('src/locales/en.json');
+  const all = (ITEM_DEFS as unknown as Array<{ id: number; name: string }>);
+  const zhIds = Object.keys(zh);
+  const enIds = Object.keys(en);
+
+  // ① 全量 + 成对
+  const missingZh = all.filter((d) => !(String(d.id) in zh)).map((d) => d.id);
+  const missingEn = all.filter((d) => !(String(d.id) in en)).map((d) => d.id);
+  const onlyZh = zhIds.filter((k) => !(k in en));
+  if (missingZh.length || missingEn.length || onlyZh.length) {
+    fail(`物品名不是全量/不成对：zh 缺 ${missingZh.length}、en 缺 ${missingEn.length}、只在 zh ${onlyZh.length}`
+      + ` ⇒ 重跑 npm run item-names`);
+  } else {
+    console.log(`  ok   zh/en 各 ${zhIds.length} 条 = 物品总数 ${all.length}（键集成对）`);
+  }
+
+  // ② 没有"挂在不存在 id 上"的条目
+  const known = new Set(all.map((d) => d.id));
+  const dead = zhIds.filter((id) => !known.has(Number(id)));
+  if (dead.length) fail(`有 ${dead.length} 个物品名挂在**不存在**的 id 上：${dead.slice(0, 5).join(',')}`);
+  else console.log('  ok   每个 item.<id>.name 都对应一件真实物品');
+
+  // ③ 端到端（真取一次，不看实现）+ 空值检查
+  const blanks = zhIds.filter((id) => zh[id] === '' || en[id] === '');
+  if (blanks.length) fail(`有 ${blanks.length} 条名字是空串（如 ${blanks.slice(0, 3).join(',')}）`);
+  else console.log('  ok   没有空名字');
+  const sample = zhIds[0];
+  const def = itemDefById(Number(sample))!;
+  setLocale('zh');
+  ok2(`zh 下 id=${sample}：「${zh[sample]}」`,
+    t(itemNameKey(Number(sample))) === zh[sample]
+    && itemDisplayNameById(Number(sample), def.name) === zh[sample]);
+  setLocale('en');
+  ok2(`en 下 id=${sample}：${en[sample]}`,
+    t(itemNameKey(Number(sample))) === en[sample]
+    && itemDisplayNameById(Number(sample), def.name) === en[sample]);
+  setLocale('zh');
+
+  // ④ 未翻译的条数（zh 与 en 逐字相同 = 还在等译文；只报不红）
+  const untranslated = zhIds.filter((id) => zh[id] === en[id]);
+  console.log(`  ok   未翻译 ${untranslated.length}/${zhIds.length} 条（zh==en，暂用数据名）`
+    + `${untranslated.length ? '，如 ' + untranslated.slice(0, 6).map((i) => `#${i}`).join(' ') : ''}`);
+
+  // ④b **特殊掉落物**（金币 `folder=gold` / 经验 `folder=exp`）必须真有中文词条 ——
+  //     它们是怪一死就出现在地上的名牌（用户 2026-09-25：「特殊掉落物 Gold 没有 i18n 支持」），
+  //     不能躺在"未翻译 247 条"里当占位。
+  const { ITEM_DEFS: DEFS2 } = await import('../src/game/data/itemDefs.js');
+  const special = (DEFS2 as unknown as Array<{ id: number; name: string; folder: string }>)
+    .filter((d) => d.folder === 'gold' || d.folder === 'exp');
+  const untranslatedSpecial = special.filter((d) => zh[String(d.id)] === en[String(d.id)]);
+  ok2(`特殊掉落物（gold/exp 共 ${special.length} 件）都有中文词条：`
+    + special.map((d) => `#${d.id}=${zh[String(d.id)]}`).join(' '),
+  special.length > 0 && untranslatedSpecial.length === 0);
+
+  // ⑤ 名字只有一个来源：视图层不许直接拿 `def.name` / 服务端下发的 name 当显示名
+  const SITES = ['ItemInfo', 'ItemPanel', 'CraftPanel', 'BuffStrip', 'ShopPanel'];
+  const missing: string[] = [];
+  for (const s of SITES) {
+    if (!/itemName\.js/.test(readFileSync(resolve('src/ui/react/' + s + '.tsx'), 'utf8'))) missing.push(s);
+  }
+  ok2(`面板显示点都接了唯一实现（缺：${missing.join(', ') || '无'}）`, missing.length === 0);
+  const wv = readFileSync(resolve('src/ui/WorldView.ts'), 'utf8');
+  // 地面名牌：**按服务端下发的主键**（`GroundItemProto.itemlist_id`）查 —— 用户 2026-09-25 定：
+  // "地面掉落物带 itemlist_id"（此前按物品码换算：`item_id` 是物品码，第一版我甚至按主键查错了字段）。
+  ok2('地面名牌按 `itemlistId` 查（`itemDisplayNameById(itemlistId, …)`）',
+    /name = itemDisplayNameById\(itemlistId, name, name\);/.test(wv));
+  const protoCommon = readFileSync(resolve('proto/base/common.proto'), 'utf8');
+  ok2('proto 声明了 `itemlist_id`（主键，专给显示名），且写清了它配 `item_id` 一起下发',
+    /int32 itemlist_id = 10;/.test(protoCommon)
+    && /只给客户端查 i18n 显示名/.test(protoCommon)
+    && /0 = 服务端没给（旧版）/.test(protoCommon));
+  ok2('proto 仍注明 `item_id` 是**物品码**（掉落模型用，名字不看它）',
+    /物品码（idcode），不是 `gamedb\.itemlist\.id` 主键[\s\S]{0,400}?int32 item_id = 2;/.test(protoCommon));
+  // 服务端两处填值都要带上主键（漏一处 = 那种掉落物没名字）
+  const aoi = readFileSync(resolve('../jpstale-server/apps/game-server/src/main/java/org/jpstale/server/game/service/GroundItemAOI.java'), 'utf8');
+  const chat = readFileSync(resolve('../jpstale-server/apps/game-server/src/main/java/org/jpstale/server/game/service/ChatService.java'), 'utf8');
+  ok2('服务端两处填值都带主键（GroundItemAOI 掉落广播 + ChatService 的 /@get）',
+    /setItemlistId\(gi\.item\.getItemListId\(\)/.test(aoi) && /setItemlistId\(fresh\.getItemListId\(\)\)/.test(chat));
+  ok2('key 形态 = item.<id>.name', itemNameKey(755) === 'item.755.name');
 }
 
 console.log(failed === 0 ? '\ni18n 一致性：全部通过' : `\ni18n 一致性：${failed} 条失败`);

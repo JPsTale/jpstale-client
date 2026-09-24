@@ -48,7 +48,6 @@ import {
   type FistSlot,
 } from '../game/skillBinding.js';
 import { reportFallback } from '../char/fallback-log.js';
-import { markSkillCast } from '../game/skillCooldown.js';
 
 export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): GameCharacter {
   return {
@@ -228,8 +227,11 @@ export function installBridge(): void {
     // 已学技能表（登录/学习/洗点后各来一次，**整表替换**）：面板的等级/熟练度只认这一份（AGENTS #12：
     // 表没到 ≠ 什么都没学 —— 存 null，面板据此**不点亮**，不拿角色等级推一个等级出来）
     if (msg.skillList) {
-      const learned: Record<number, { point: number; mastery: number }> = {};
-      for (const s of msg.skillList.skills || []) learned[Number(s.skillId) || 0] = { point: s.point || 0, mastery: s.mastery || 0 };
+      const learned: Record<number, { point: number; mastery: number; cdMs: number }> = {};
+      for (const s of msg.skillList.skills || []) {
+        // `cdMs` = 服务端算好的冷却时长（客户端不再自己算公式）
+        learned[Number(s.skillId) || 0] = { point: s.point || 0, mastery: s.mastery || 0, cdMs: Number(s.cdMs) || 0 };
+      }
       const learnInfo: Record<number, {
         nextReqLevel: number; nextGold: number;
         powerPctMin: number; powerPctMax: number; nextPowerPctMin: number; nextPowerPctMax: number;
@@ -341,7 +343,8 @@ export function sendAllocateStat(stat: string, points = 1): void {
  *  `game/skillIdentity.ts`）；`targetId` 默认 0，见 `protocol.useSkill`。 */
 export function sendUseSkill(skillId: number, targetId = 0, animIndex = 0, animClip = ''): void {
   // 起手即进 CD（原版的 GageLength 也从起手开始涨，sinSkill.cpp:2065-2075）—— 客户端本地计时
-  markSkillCast(skillId);
+  // CD 计时**不在这里**起：等服务端 ack（自己的 `S2C_SkillStart`）才起 —— 见
+  // `WorldView.signalSkillStart`（客户端窗口 ⊇ 服务端窗口，边界上不会“弧满却被拒”）。
   send(useSkill(skillId, targetId, undefined, animIndex, animClip));
 }
 

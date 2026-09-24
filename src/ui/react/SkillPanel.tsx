@@ -259,6 +259,7 @@ export default function SkillPanel() {
                 />
                 <SkillBars learned={(lvl ?? 0) > 0} mastery={mast} skillId={cell.skillId}
                            element0={cell.row?.element0 ?? 0} cdTick={cdTick}
+                           passive={cell.row?.useCode === 'NOT'}
                            onTip={setBarTip} />
                 </div>
               );
@@ -390,20 +391,27 @@ function NormalAttackCell(props: {
  * ⚠ CD 值是**客户端本地计时**（服务端尚未实现 CD，见 `game/skillCooldown.ts`）；`cdTick` 是重绘节流。
  */
 function SkillBars(props: { learned: boolean; mastery: number; skillId: number | null;
-                            element0: number; cdTick: number;
+                            element0: number; cdTick: number; passive: boolean;
                             onTip: (tip: BarTipData | null) => void }) {
-  const { learned, mastery, skillId, element0, cdTick, onTip } = props;
+  const { learned, mastery, skillId, element0, cdTick, passive, onTip } = props;
   void cdTick;   // 只用于触发重绘（值本身不参与计算）
+  // **被动技能：两条都灰**（用户 2026-09-25）。依据 = 原版对被动**不画**计量条：
+  // `sinSkill.cpp:823` 画 gage 的条件是 `Flag && (USECODE != SIN_SKILL_USE_NOT || Element[0])`，
+  // 而被动（`useCode = NOT`）既不能施放（无 CD 可言）也不会随施放涨熟练度 ⇒ 两个数都没有语义。
+  // ⚠ `Element[0]` 那一支是给**可施放的高阶技能**留的；我们的 5 转被动是人工裁定成 `element0=1` 的，
+  // 不该因此画成粉色实条（那是"满熟练度"的意思，对一个被动是假信息）。
   // **粉色条 = `Element[0] != 0`** —— 源码唯一的触发条件（`sinSkill.cpp:839` 画 `Gage-5.bmp`）。
   //   该值取自生成物 `skills[].element0`（口径/provenance 见生成物 `elementNote`）：**高转职段**为 1
   //   （英文/中文定义表一致；5 转那 40 行三份表都没有定义，按用户在原版里看到的粉色 gage 记为 1）。
   //   ⚠ 同一行源码还规定这类技能**熟练度恒满**（`:2064`）—— 服务端下发的就是 10000 ⇒ 这里自然满格。
-  const elite = element0 !== 0;
+  const elite = element0 !== 0 && !passive;
   const masteryPct = Math.max(0, Math.min(100, mastery / 100));
   const cdPct = skillId != null ? skillCdProgress(skillId) * 100 : 100;
-  const masteryCls = !learned ? 'jp-skill-bar--grey' : elite ? 'jp-skill-bar--elite' : 'jp-skill-bar--mastery';
+  // 未学 / 被动 ⇒ 灰（两条一起灰：熟练度与 CD 在被动上都没有语义）
+  const greyed = !learned || passive;
+  const masteryCls = greyed ? 'jp-skill-bar--grey' : elite ? 'jp-skill-bar--elite' : 'jp-skill-bar--mastery';
   const showMasteryTip = (e: React.MouseEvent): void => {
-    onTip({ x: e.clientX, y: e.clientY, pct: masteryPct, known: learned });
+    onTip({ x: e.clientX, y: e.clientY, pct: masteryPct, known: learned && !passive });
   };
   return (
     <div className="jp-skill-bars">
@@ -415,7 +423,7 @@ function SkillBars(props: { learned: boolean; mastery: number; skillId: number |
         <div className="jp-skill-bar-fill" style={{ height: `${masteryPct}%` }} />
       </div>
       {/* 未学 ⇒ 两条都灰（原版 `UseSkillFlag`/`Point == 0` 画灰版；配色取 `Gage-4.bmp` 实测 rgb(123,123,123)） */}
-      <div className={`jp-skill-bar ${learned ? 'jp-skill-bar--cd' : 'jp-skill-bar--grey'}`} aria-label={t('skills.cd')}>
+      <div className={`jp-skill-bar ${greyed ? 'jp-skill-bar--grey' : 'jp-skill-bar--cd'}`} aria-label={t('skills.cd')}>
         <div className="jp-skill-bar-fill" style={{ height: `${cdPct}%` }} />
       </div>
     </div>
@@ -593,7 +601,10 @@ function SkillTip(props: { skill: SkillDef; skillId: number | null; lv: number; 
         </div>
       )}
       <div className="jp-skill-tip-row jp-skill-tip-next">Lv {Math.max(1, lv + 1)}: {nextEffect}</div>
-      <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
+      {/* 熟练度只对**可施放**的技能有意义（被动不施放 ⇒ 永远不涨）⇒ 被动那一格不显示这一行 */}
+      {skillId != null && skillRowBySkillId(skillId)?.useCode !== 'NOT' && (
+        <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
+      )}
       {(!curDamage || !nextDamage) && <div className="jp-skill-tip-demo">{t('skills.demo')}</div>}
     </div>
   );

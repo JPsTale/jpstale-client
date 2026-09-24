@@ -1185,6 +1185,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
         it?.position?.z || 0,
         it?.dorpItem || '',
         it?.itemId || 0,                          // 原版 idcode：只用于判物品大类（武器才躺平），见 WorldView.groundItemAppear
+        Number(it?.itemlistId || 0),              // itemlist 主键：只给显示名查 i18n（`item.<id>.name`）
         Number(it?.quantity || 0),                // 堆叠数（名牌用）
         Number(it?.money || 0),                   // 金币金额（int64 → number；金币名牌显示它而非 quantity）
       );

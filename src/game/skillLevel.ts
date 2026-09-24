@@ -23,6 +23,15 @@ export function skillLevelOf(skillId: number): number | null {
   return list.learned[skillId]?.point ?? 0;
 }
 
+/**
+ * 按数字 `skillId` 取**服务端下发的**冷却时长（毫秒）。
+ * @returns `null` = 表没到 / 没学 / 服务端没给（0）—— 调用方按“未知/无 CD”处理，**不编时长**
+ */
+export function skillCdMsOf(skillId: number): number | null {
+  const v = getGameSnapshot().skillList?.learned[skillId]?.cdMs;
+  return v != null && v > 0 ? v : null;
+}
+
 /** 按数字 `skillId` 取熟练度 0..10000（表没到 / 没学 → 0）。 */
 export function skillMasteryOf(skillId: number): number {
   return getGameSnapshot().skillList?.learned[skillId]?.mastery ?? 0;

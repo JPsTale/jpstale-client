@@ -14986,6 +14986,9 @@ export namespace jpt {
             /** LearnedSkill mastery. */
             mastery: number;
 
+            /** LearnedSkill cdMs. */
+            cdMs: number;
+
             /**
              * Creates a new LearnedSkill instance using the specified properties.
              * @param [properties] Properties to set
@@ -15078,6 +15081,9 @@ export namespace jpt {
 
                 /** LearnedSkill mastery */
                 mastery?: (number|null);
+
+                /** LearnedSkill cdMs */
+                cdMs?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -16940,6 +16946,9 @@ export namespace jpt {
             /** GroundItemProto money. */
             money: (number|Long);
 
+            /** GroundItemProto itemlistId. */
+            itemlistId: number;
+
             /**
              * Creates a new GroundItemProto instance using the specified properties.
              * @param [properties] Properties to set
@@ -17050,6 +17059,9 @@ export namespace jpt {
 
                 /** GroundItemProto money */
                 money?: (number|Long|null);
+
+                /** GroundItemProto itemlistId */
+                itemlistId?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

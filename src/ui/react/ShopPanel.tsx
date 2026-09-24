@@ -3,6 +3,7 @@ import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, setShopSellMode, subscribeGame, type ShopItem } from '../../app/gameStore.js';
 import { sendShopBuy } from '../../net/bridge.js';
 import { itemIconUrl, itemDefById } from '../../game/data/itemDefs.js';
+import { itemDisplayNameById } from '../../game/itemName.js';
 import { t } from '../../i18n/index.js';
 
 /**
@@ -96,7 +97,7 @@ function ShopRow({ offer, gold, count, onCount, entityId }: {
       title={t('shop.buy')}
     >
       {icon ? <img className="jp-shop-icon" src={icon} alt="" draggable={false} /> : null}
-      <span className="jp-shop-name">{offer.name || `#${offer.itemlistId}`}</span>
+      <span className="jp-shop-name">{itemDisplayNameById(offer.itemlistId, offer.name, `#${offer.itemlistId}`)}</span>
       <span className="jp-shop-price">{offer.price}{t('item.gold')}</span>
       {stackable ? (
         <span className="jp-shop-count" onClick={(e) => e.stopPropagation()}>

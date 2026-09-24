@@ -28,7 +28,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { encodeAssetPath } from '../src/core/texture.js';
-import { skillCooldownMs } from '../src/game/skillCost.js';
 import { fistSlotOfSkill } from '../src/game/skillBinding.js';
 import { scanOpenPlayCases, scanSkillDistRangeCases } from './openplay-scan.js';
 import { installDomStub } from './dom-stub.js';
@@ -319,47 +318,59 @@ if (assetRoot && existsSync(assetRoot + '/image/sinimage/skill/fighter/button'))
    b) 熟练度用的是**存下来的原始计数**（`skill.<id>.mastery`），漏了源码里的 `Talent/3×100`（最多 +5000）
       ⇒ `Mastery` 被 70 档吃掉、CD 恒定。派生改到服务端唯一实现（`SkillRules.useSkillMastery`），
       下发的那一列就是派生值 —— 这里断言“客户端不自己再派生一遍”（AGENTS #15：判定只写一份）。 */
-console.log('⑧ CD 时长（源码逐帧复算）与熟练度派生');
+console.log('⑧ CD：服务端算一次（SkillRules.cooldownMs）+ 下发 cd_ms，客户端只显示/预判');
 {
   const costSrc = await read('../src/game/skillCost.ts');
-  const pikeWind = 0x040101;               // pikeman 槽 1（RequireMastery = [80,4]，element0 = 0）
-  // `mastery` = 派生后的 UseSkillMastery；反推某档 Mastery 所需的熟练度：m = rm0 + rm1*point − mastery/100
-  const masteryForMastery = (m: number, point: number): number => (80 + 4 * point - m) * 100;
-  const anchors: [number, number][] = [[70, 17.5], [35, 8.5], [20, 5.5], [10, 2.5], [5, 1.0], [1, 0.5]];
-  for (const [m, sec] of anchors) {
-    const frames = Math.max(1, Math.floor(35 / Math.floor(70 / m)));
-    const ms = skillCooldownMs(pikeWind, 1, masteryForMastery(m, 1));
-    ok(`Mastery ${m} → ${sec}s（源码：35 格 × ${frames} 帧 ÷ 70fps）`,
-      ms != null && Math.abs(ms - sec * 1000) < 1);
-  }
-  ok('熟练度越高 CD 越短（单调不增）—— 用户报的正是“完全不变”',
-    anchors.map(([m]) => skillCooldownMs(pikeWind, 1, masteryForMastery(m, 1))!)
-      .every((v, i, a) => i === 0 || v <= a[i - 1]!));
-  ok('CD 表取不到 ⇒ null（不编一个时长出来）', skillCooldownMs(pikeWind, 0, 0) === null);
-  ok('Mastery 被钳在 [1,70]（`:2073-2074`）：熟练度极大 ⇒ 夹到 1（CD 最短）、满熟练度不会算出负时长',
-    skillCooldownMs(pikeWind, 1, 1e9) === skillCooldownMs(pikeWind, 1, masteryForMastery(1, 1))
-    && skillCooldownMs(pikeWind, 10, 0)! > 0);
-  // 派生只写一份：客户端**不许**再抄一遍 Talent 项
-  ok('客户端不再自己派生熟练度（`derivedMastery` / `Talent / 3` 不在客户端源码里）',
-    !/derivedMastery/.test(stripComments(costSrc)) && !/[Tt]alent\s*\/\s*3/.test(stripComments(costSrc)));
+  const cooldownSrc = await read('../src/game/skillCooldown.ts');
   const srv = (rel: string): Promise<string> => readFile(
     new URL('../../jpstale-server/' + rel, import.meta.url), 'utf8');
-  const svcSrc = await srv('apps/game-server/src/main/java/org/jpstale/server/game/service/SkillPointService.java');
   const rulesSrc = await srv('modules/common-service/src/main/java/org/jpstale/common/service/skill/SkillRules.java');
-  ok('服务端下发派生值（`buildSkillList` 走 `SkillRules.useSkillMastery`）',
-    /setMastery\(SkillRules\.useSkillMastery\(/.test(svcSrc));
-  ok('派生的三处输入逐字照抄源码（Talent/3 + fMagic_Mastery、×100 + 计数、Element ⇒ 10000）',
-    /TALENT_TERM_MAX\s*=\s*50/.test(rulesSrc) && /talentTerm \* 100 \+ stored/.test(rulesSrc)
-    && /element0\(\) != 0[\s\S]{0,60}return MASTERY_MAX/.test(rulesSrc));
-  ok('`Element[0]` 取值不取 Brazil（那份 198 条里 136 条写 1，与 English/Chinese 冲突）',
-    /element0Src/.test(await read('../src/game/skillIdentity.ts')));
-  // `RequireMastery` 同样不取 Brazil：巴西对 7 个高阶技能的 `[0]` 写 0（配合 element=1 ⇒ CD 0.5 秒）。
-  // 锚点用旋风斩（fighter 槽 15）：English/Chinese 都写 135、Brazil 写 0 ⇒ 取 English 后 CD = 8.5 秒。
-  const cyclone = 0x010403;   // fighter 4 转档 4 槽（SKILL_CYCLONE_STRIKE）
-  ok('高阶技能的 `RequireMastery` 取 English（旋风斩 rm=[135,0] ⇒ 满熟练度下 CD 8.5s，而非巴西的 0.5s）',
-    Math.abs((skillCooldownMs(cyclone, 1, 10000) ?? -1) - 8500) < 1);
-  ok('没有 `RequireMastery` 的行（5 转 60 行）⇒ CD 返回 null（未知，不编档位）',
-    skillCooldownMs(0x010501, 1, 10000) === null);
+  const castSrc = await srv('apps/game-server/src/main/java/org/jpstale/server/game/service/SkillCastService.java');
+  const pointsSrc = await srv('apps/game-server/src/main/java/org/jpstale/server/game/service/SkillPointService.java');
+  const wv = await read('../src/ui/WorldView.ts');
+  const storeSrc = await read('../src/app/gameStore.ts');
+
+  // ① 公式的唯一实现在服务端，且形状 = 逐帧真值（70fps 那三个常量 + 两层 floor）
+  ok('公式唯一实现在服务端（`SkillRules.cooldownMs`，含 35 格/70 档/70fps 三个常量）',
+    /public static final int COOLDOWN_GAGE = 35;/.test(rulesSrc)
+    && /COOLDOWN_MASTERY_MAX = 70;/.test(rulesSrc) && /COOLDOWN_FPS = 70;/.test(rulesSrc)
+    && /Math\.max\(1, COOLDOWN_GAGE \/ t\)/.test(rulesSrc));
+  ok('客户端**不再**自己算 CD（`skillCooldownMs` / `Talent / 3` 全仓不存在）',
+    !/skillCooldownMs/.test(stripComments(costSrc))
+    && !/[Tt]alent\s*\/\s*3/.test(stripComments(costSrc)));
+  ok('时长走服务端下发（`cd_ms` → store.learned[].cdMs → `skillCdMsOf`）',
+    /skillCdMsOf/.test(cooldownSrc) && /cdMs: number;/.test(storeSrc));
+  // ② 服务端**强判**（不是只发个数字给客户端自己管）
+  ok('服务端起手时强判 CD（超时就 `REJECTED_COOLDOWN`，且**在扣 MP 之前**）',
+    /long left = cooldownLeftMs\(player\.getId\(\), skillId, cd, now\)/.test(castSrc)
+    && /if \(left > 0\)/.test(castSrc)
+    && castSrc.indexOf("cooldownLeftMs(player.getId(), skillId, cd, now)")
+       < castSrc.indexOf("int mpCost = mpCostOf("));
+  ok('拒绝回一句可见原因（`skill.op.cooldown`，不静默）',
+    /REJECTED_COOLDOWN/.test(castSrc)
+    && /skill\.op\.cooldown/.test(await srv('apps/game-server/src/main/java/org/jpstale/server/game/service/CombatService.java')));
+  ok('CD 计时是**运行态**：只内存、离线清（原版也不存计量条）', /lastCastAt/.test(castSrc)
+    && /public void clearPlayer\(long playerId\)/.test(castSrc)
+    && /skillCastService\.clearPlayer\(session\.getCharacterId\(\)\)/.test(
+      await srv('apps/game-server/src/main/java/org/jpstale/server/game/networking_placeholder'.replace('/networking_placeholder', '/network/PacketRouterHandler.java'))));
+  ok('服务端不给被动下发 CD（`cooldownMsOf` 先判 `NOT`：被动不可施放）',
+    /if \("NOT"\.equals\(row\.useCode\(\)\)\)/.test(castSrc));
+  ok('下发处也走同一个公式（`buildSkillList` → `cooldownMsOf`）',
+    /setCdMs\(cd == null \? 0 : \(int\) \(long\) cd\)/.test(pointsSrc));
+  // ③ 客户端两道门：本地预判（起表于服务端 ack）+ 服务端权威
+  ok('客户端把 CD 也算进"能不能放"（`skill.op.cooldown` 来自 `skillCdRemainingMs`）',
+    /if \(skillCdRemainingMs\(skillId\) > 0\) return 'skill\.op\.cooldown';/.test(wv));
+  ok('本地表**从服务端 ack 起**（自己那条 `S2C_SkillStart`）⇒ 客户端窗口 ⊇ 服务端窗口',
+    /casterId === selfPlayerId\) \{\n(?:.|\n)*?markSkillCast\(skillId\);/.test(wv));
+  ok('发包那一刻不再起表（否则边界上是"弧满却被拒"）',
+    !/markSkillCast/.test(await read('../src/net/bridge.ts')));
+  // ④ proto 两端同号同形
+  const proto = await read('../proto/base/message.proto');
+  ok('`LearnedSkill.cd_ms = 4` 已在 proto（客户端生成物 + 服务端副本都要有）',
+    /int32 cd_ms = 4;/.test(proto)
+    && /cdMs/.test(await read('../src/net/proto/base_message.d.ts')));
+  const srvProto = (await srv('modules/protocol/src/main/proto/base/message.proto')).replace(/\r\n/g, '\n');
+  ok('服务端 proto 副本与客户端**逐字节相同**（同一份消息定义；只差换行符）', srvProto === proto);
 }
 
 console.log('⑨ 面板两条竖条（位置/高度/hover）与“一技能一位置”');
@@ -377,8 +388,17 @@ console.log('⑨ 面板两条竖条（位置/高度/hover）与“一技能一�
     && declOf('.jp-skill-bar--mastery::after') !== '');
   ok('hover 提示是**自绘**的（`jp-skill-bartip`，不是原生 title）',
     /className="jp-skill-bartip"/.test(panelSrc) && /skills\.mastery/.test(panelSrc));
-  ok('粉色条 = `Element[0] != 0`（源码 `:839` 的 `Gage-5.bmp`），不再按 tier 猜',
-    /const elite = element0 !== 0;/.test(panelSrc) && !/tier >= 5/.test(stripComments(panelSrc)));
+  // 被动：两条都灰（用户 2026-09-25「被动技能也有熟练度和CD？这两条应该都是灰的」）。
+  // 依据 = 原版对被动不画计量条：`sinSkill.cpp:823` 的条件是 `Flag && (USECODE != NOT || Element[0])`。
+  ok('被动技能两条竖条都灰（`passive` ⇒ greyed，粉条也不成立）',
+    /passive: boolean;/.test(panelSrc)
+    && /const greyed = !learned \|\| passive;/.test(panelSrc)
+    && /const elite = element0 !== 0 && !passive;/.test(panelSrc)
+    && /greyed \? 'jp-skill-bar--grey' : 'jp-skill-bar--cd'/.test(panelSrc));
+  ok('被动那一格的信息窗不显示"熟练度: N%"（不施放 ⇒ 永远不涨，显示就是假信息）',
+    /skillRowBySkillId\(skillId\)\?\.useCode !== 'NOT'/.test(panelSrc));
+  ok('粉色条 = `Element[0] != 0`且非被动（源码 `:839` 的 `Gage-5.bmp`），不再按 tier 猜',
+    /const elite = element0 !== 0 && !passive;/.test(panelSrc) && !/tier >= 5/.test(stripComments(panelSrc)));
   ok('客户端 `fistSlotOfSkill` 不再“先左后右”（两只都有 ⇒ 显式 both + 上报）',
     /onLeft && onRight/.test(await read('../src/game/skillBinding.ts'))
     && fistSlotOfSkill({ fistLeft: 7, fistRight: 7, quick: [] }, 7) === 'both'
@@ -459,8 +479,9 @@ console.log('⑨ 面板两条竖条（位置/高度/hover）与“一技能一�
     && /<SkillBars learned=/.test(panel) && /function SkillBars\(/.test(panel)
     && /\.jp-skill-cellwrap \{[\s\S]{0,120}?gap: 2px;/.test(css));
   // 「竖条与格子齐高」2026-09-24 被用户推翻（**不许伸到 `+ 学习`**）⇒ 断言挪到 ⑨（高 = 图标高 44）
+  // “未学 ⇒ 灰”在 2026-09-25 扩成了 `greyed = !learned || passive`（被动也灰），断言在 ⑨
   ok('**未学 ⇒ 灰**（`--grey`，配色 = `Gage-4.bmp` 实测 rgb(123,123,123)）',
-    /!learned \? 'jp-skill-bar--grey'/.test(panel) && /rgb\(123,123,123\)/.test(css));
+    /greyed \? 'jp-skill-bar--grey'/.test(panel) && /rgb\(123,123,123\)/.test(css));
   // 「5 转 ⇒ 粉」也改了：粉的**判据是 `Element[0]`**（源码 `sinSkill.cpp:839`），断言在 ⑨
   ok('CD 用与 HUD 同一个 `skillCdProgress`，且**用 rAF 不用定时器**（否则与 HUD 弧不同步）',
     /skillCdProgress\(skillId\)/.test(panel) && /requestAnimationFrame\(loop\)/.test(panel)

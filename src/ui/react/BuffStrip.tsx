@@ -1,6 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, type BuffEntry } from '../../app/gameStore.js';
 import { itemDefByCode, itemIconUrl } from '../../game/data/itemDefs.js';
+import { itemDisplayNameOf } from '../../game/itemName.js';
 import { t } from '../../i18n/index.js';
 import { useItemImg } from './ItemPanel.js';
 
@@ -69,12 +70,12 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
                 transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`} />
       </svg>
       <div className="jp-buff-face">
-        {src ? <img src={src} alt={def?.name ?? ''} draggable={false} /> : null}
+        {src ? <img src={src} alt={itemDisplayNameOf(def)} draggable={false} /> : null}
       </div>
       {b.stack > 1 ? <span className="jp-buff-stack">{b.stack}</span> : null}
       {hover ? (
         <div className="jp-buff-tip">
-          <div className="jp-buff-tip-name">{def?.name ?? `#${b.itemCode}`}</div>
+          <div className="jp-buff-tip-name">{itemDisplayNameOf(def, `#${b.itemCode}`)}</div>
           <div className="jp-buff-tip-time">{t('buff.remaining', { s: fmt(remain) })}</div>
         </div>
       ) : null}

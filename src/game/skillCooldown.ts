@@ -8,8 +8,7 @@
  * 计时起点 = **本机发出 `C2S_UseSkill` 的那一刻**（`bridge.sendUseSkill` 调 `markSkillCast`）——
  * 与原版"起手即进 CD"一致（原版的 gage 也在起手后开始涨）。
  */
-import { skillCooldownMs } from './skillCost.js';
-import { skillLevelOf, skillMasteryOf } from './skillLevel.js';
+import { skillLevelOf, skillCdMsOf } from './skillLevel.js';
 import { reportFallback } from '../char/fallback-log.js';
 
 /** skillId → 这次 CD 的起点（毫秒时间戳）与总时长 */
@@ -19,10 +18,12 @@ const active = new Map<number, { startMs: number; totalMs: number }>();
 export function markSkillCast(skillId: number): void {
   const point = skillLevelOf(skillId);
   if (point == null || point < 1) return;   // 等级未知/未学：算不出 CD（那本来也放不出来）
-  const totalMs = skillCooldownMs(skillId, point, skillMasteryOf(skillId));
+  // 时长是**服务端算好下发的**（`S2C_SkillList.skills[].cd_ms` = `SkillRules.cooldownMs`）
+  // —— 客户端不再自己算一遍公式（AGENTS #15：判定只写一份）
+  const totalMs = skillCdMsOf(skillId);
   if (totalMs == null || totalMs <= 0) {
     // 表取不到 ⇒ **不记 CD**（不是"CD=0"）：宁可少一道本地门，也不编一个时长出来
-    reportFallback('skill.cd', `技能 0x${skillId.toString(16)} 的 CD 表取不到（等级 ${point}）⇒ 本次不计 CD`);
+    reportFallback('skill.cd', `技能 0x${skillId.toString(16)} 服务端没下发 CD 时长 ⇒ 本次不计 CD`);
     return;
   }
   active.set(skillId, { startMs: Date.now(), totalMs });

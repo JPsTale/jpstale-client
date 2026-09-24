@@ -44159,6 +44159,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [skillId] LearnedSkill skillId
              * @property {number|null} [point] LearnedSkill point
              * @property {number|null} [mastery] LearnedSkill mastery
+             * @property {number|null} [cdMs] LearnedSkill cdMs
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -44215,6 +44216,14 @@ export const jpt = $root.jpt = (() => {
             LearnedSkill.prototype.mastery = 0;
 
             /**
+             * LearnedSkill cdMs.
+             * @member {number} cdMs
+             * @memberof jpt.base.LearnedSkill
+             * @instance
+             */
+            LearnedSkill.prototype.cdMs = 0;
+
+            /**
              * Creates a new LearnedSkill instance using the specified properties.
              * @function create
              * @memberof jpt.base.LearnedSkill
@@ -44252,6 +44261,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.point);
                 if (message.mastery != null && $Object.hasOwnProperty.call(message, "mastery") && message.mastery !== 0)
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.mastery);
+                if (message.cdMs != null && $Object.hasOwnProperty.call(message, "cdMs") && message.cdMs !== 0)
+                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.cdMs);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -44336,6 +44347,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.mastery;
                             continue;
                         }
+                    case 4: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.cdMs = value;
+                            else
+                                delete message.cdMs;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -44393,6 +44413,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.mastery != null && $Object.hasOwnProperty.call(message, "mastery"))
                     if (!$util.isInteger(message.mastery))
                         return "mastery: integer expected";
+                if (message.cdMs != null && $Object.hasOwnProperty.call(message, "cdMs"))
+                    if (!$util.isInteger(message.cdMs))
+                        return "cdMs: integer expected";
                 return null;
             };
 
@@ -44423,6 +44446,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.mastery != null)
                     if ($Number(object.mastery) !== 0)
                         message.mastery = object.mastery | 0;
+                if (object.cdMs != null)
+                    if ($Number(object.cdMs) !== 0)
+                        message.cdMs = object.cdMs | 0;
                 return message;
             };
 
@@ -44447,6 +44473,7 @@ export const jpt = $root.jpt = (() => {
                     object.skillId = 0;
                     object.point = 0;
                     object.mastery = 0;
+                    object.cdMs = 0;
                 }
                 if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
                     object.skillId = message.skillId;
@@ -44454,6 +44481,8 @@ export const jpt = $root.jpt = (() => {
                     object.point = message.point;
                 if (message.mastery != null && $Object.hasOwnProperty.call(message, "mastery"))
                     object.mastery = message.mastery;
+                if (message.cdMs != null && $Object.hasOwnProperty.call(message, "cdMs"))
+                    object.cdMs = message.cdMs;
                 return object;
             };
 
@@ -49977,6 +50006,7 @@ export const jpt = $root.jpt = (() => {
              * @property {string|null} [name] GroundItemProto name
              * @property {string|null} [dorpItem] GroundItemProto dorpItem
              * @property {number|Long|null} [money] GroundItemProto money
+             * @property {number|null} [itemlistId] GroundItemProto itemlistId
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -50081,6 +50111,14 @@ export const jpt = $root.jpt = (() => {
             GroundItemProto.prototype.money = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
 
             /**
+             * GroundItemProto itemlistId.
+             * @member {number} itemlistId
+             * @memberof jpt.base.GroundItemProto
+             * @instance
+             */
+            GroundItemProto.prototype.itemlistId = 0;
+
+            /**
              * Creates a new GroundItemProto instance using the specified properties.
              * @function create
              * @memberof jpt.base.GroundItemProto
@@ -50130,6 +50168,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 8, wireType 2 =*/66).string(message.dorpItem);
                 if (message.money != null && $Object.hasOwnProperty.call(message, "money") && (typeof message.money === "object" ? message.money.low || message.money.high : message.money !== 0))
                     writer.uint32(/* id 9, wireType 0 =*/72).int64(message.money);
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId") && message.itemlistId !== 0)
+                    writer.uint32(/* id 10, wireType 0 =*/80).int32(message.itemlistId);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -50265,6 +50305,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.money;
                             continue;
                         }
+                    case 10: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.itemlistId = value;
+                            else
+                                delete message.itemlistId;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -50342,6 +50391,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.money != null && $Object.hasOwnProperty.call(message, "money"))
                     if (!$util.isInteger(message.money) && !(message.money && $util.isInteger(message.money.low) && $util.isInteger(message.money.high)))
                         return "money: integer|Long expected";
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
+                    if (!$util.isInteger(message.itemlistId))
+                        return "itemlistId: integer expected";
                 return null;
             };
 
@@ -50420,6 +50472,9 @@ export const jpt = $root.jpt = (() => {
                             message.money = object.money;
                         else if (typeof object.money === "object")
                             message.money = new $util.LongBits(object.money.low >>> 0, object.money.high >>> 0).toNumber();
+                if (object.itemlistId != null)
+                    if ($Number(object.itemlistId) !== 0)
+                        message.itemlistId = object.itemlistId | 0;
                 return message;
             };
 
@@ -50466,6 +50521,7 @@ export const jpt = $root.jpt = (() => {
                         object.money = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
                     } else
                         object.money = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.itemlistId = 0;
                 }
                 if (message.groundItemId != null && $Object.hasOwnProperty.call(message, "groundItemId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -50505,6 +50561,8 @@ export const jpt = $root.jpt = (() => {
                         object.money = options.longs === $String ? $String(message.money) : message.money;
                     else
                         object.money = options.longs === $String ? $util.Long.prototype.toString.call(message.money) : options.longs === $Number ? new $util.LongBits(message.money.low >>> 0, message.money.high >>> 0).toNumber() : message.money;
+                if (message.itemlistId != null && $Object.hasOwnProperty.call(message, "itemlistId"))
+                    object.itemlistId = message.itemlistId;
                 return object;
             };
 

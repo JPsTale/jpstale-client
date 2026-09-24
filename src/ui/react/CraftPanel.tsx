@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getGameSnapshot, setCraftPreview, subscribeGame, type CraftPreview, type GameItem } from '../../app/gameStore.js';
 import { ITEM_CLASS } from '../../game/itemClass.js';
 import { itemDefById, itemIconUrl } from '../../game/data/itemDefs.js';
+import { itemDisplayNameOf } from '../../game/itemName.js';
 import { t } from '../../i18n/index.js';
 import { sendAgeItem, sendForceOrbItem, sendMixItem, sendMixPreview } from '../../net/bridge.js';
 import PanelShell from './PanelShell.js';
@@ -215,7 +216,7 @@ function CraftSlot({ it, cap, onClick }: { it?: GameItem; cap: number; onClick?:
     >
       {it && src ? (
         <>
-          <img src={src} alt={def?.name ?? ''} draggable={false} />
+          <img src={src} alt={itemDisplayNameOf(def)} draggable={false} />
           {it.count > cap ? <span className="jp-craft-count">{it.count}</span> : null}
         </>
       ) : null}
@@ -253,13 +254,13 @@ function SrcIcon({ it, onClick, disabled, hover }: {
   return (
     <button
       className="jp-craft-src-icon"
-      title={def?.name ?? ''}
+      title={itemDisplayNameOf(def)}
       disabled={disabled}
       onClick={() => onClick(it.uid)}
       onPointerEnter={(e) => hover.show({ kind: 'item', uid: it.uid }, e)}
       onPointerLeave={() => hover.hide()}
     >
-      {src ? <img src={src} alt={def?.name ?? ''} draggable={false} /> : null}
+      {src ? <img src={src} alt={itemDisplayNameOf(def)} draggable={false} /> : null}
       {it.count > 1 ? <span className="jp-craft-count">{it.count}</span> : null}
     </button>
   );
