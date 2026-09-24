@@ -13,6 +13,7 @@ import ChatWindow from './ChatWindow.js';
 import SplitDialog from './SplitDialog.js';
 import WorldMapPanel, { type WorldMapPanelOptions } from './WorldMapPanel.js';
 import BuffStrip from './BuffStrip.js';
+import PartyHud from './PartyHud.js';
 import CraftPanel from './CraftPanel.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
@@ -104,6 +105,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
       <ChatWindow />
       {/* 左上角 buff 图标条（常驻 World，与面板开关无关 —— 打怪时也看得见剩余时间） */}
       <BuffStrip />
+      {/* 左侧队伍成员组件（头像/血条/buff；未组队且无邀请时不渲染，见 PartyHud） */}
+      <PartyHud />
       {openPanels.map((p) => renderPanel(p, props.worldMapOptions ?? {}))}
       {/* 手持物品光标（常驻，与面板开关无关） */}
       <HeldCursor />

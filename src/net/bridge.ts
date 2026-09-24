@@ -1,7 +1,8 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite } from '../app/gameStore.js';
+import type { PartyMemberView } from '../app/gameStore.js';
 import {
   allocateStat,
   useSkill,
@@ -26,6 +27,10 @@ import {
   learnSkill,
   resetSkillPoints,
   setSkillBinding,
+  partyInvite,
+  partyAccept,
+  partyLeave,
+  partyAction,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -295,6 +300,50 @@ export function installBridge(): void {
         at,
       })));
     }
+    // 队伍全量名单（成员变动/解散；members 为空 = 清窗）。静态身份以它为权威。
+    if (msg.partyUpdate) {
+      const u = msg.partyUpdate;
+      const members: PartyMemberView[] = (u.members || []).map((m) => ({
+        id: Number(m.id) || 0,
+        name: m.name || '',
+        classId: Number(m.classId) || 0,
+        leader: !!m.leader,
+        // 动态字段名单包不带 → 显式未知（at=0，显示层按"还没数值"处理，不编默认值）
+        level: 0, hp: 0, maxHp: 0, mp: 0, maxMp: 0, mapId: -1, x: 0, z: 0,
+        buffs: [],
+        at: 0,
+      }));
+      setPartyRoster(Number(u.partyId) || 0, Number(u.mode) || 0, members);
+    }
+    // 队伍动态数据（500ms；不含自己）。名单未到时 store 侧丢弃。
+    if (msg.partyPlayUpdate) {
+      const at = Date.now();
+      setPartyPlay((msg.partyPlayUpdate.members || []).map((m) => ({
+        id: Number(m.id) || 0,
+        level: Number(m.level) || 0,
+        hp: Number(m.hp) || 0,
+        maxHp: Number(m.maxHp) || 0,
+        mp: Number(m.mp) || 0,
+        maxMp: Number(m.maxMp) || 0,
+        mapId: Number(m.mapId) || -1,
+        x: Number(m.x) || 0,
+        z: Number(m.z) || 0,
+        buffs: (m.buffs || []).map((b) => ({
+          itemCode: Number(b.itemCode) || 0,
+          itemlistId: Number(b.itemlistId) || 0,
+          remainingMs: Number(b.remainingMs) || 0,
+          totalMs: Number(b.totalMs) || 0,
+          stack: Number(b.stack) || 1,
+          at,
+        })),
+        at,
+      })));
+    }
+    // 组队邀请（弹窗用；接受/拒绝/超时由队伍组件处理）
+    if (msg.partyInvite) {
+      const inv = msg.partyInvite;
+      setPartyInvite(Number(inv.inviterId) || 0, inv.inviterName || '');
+    }
     // NPC 的打造窗口（合成/锻造/力量石）：由服务端指明这个 NPC 提供哪几档服务
     if (msg.craftOpen) {
       const c = msg.craftOpen;
@@ -401,6 +450,27 @@ export function pressQuickKey(index0: number): boolean {
 }
 
 // —— 物品操作（服务端权威：位图校验 + DB 事务）——
+
+// —— 组队（docs/组队系统-源码分析.md §8）——
+
+/** 邀请目标组队（目标窗"组队"按钮 / 队员菜单；`targetId` = 角色 id） */
+export function sendPartyInvite(targetId: number): void {
+  send(partyInvite(targetId));
+}
+
+/** 接受组队邀请（回邀请人角色 id） */
+export function sendPartyAccept(inviterId: number): void {
+  send(partyAccept(inviterId));
+}
+
+export function sendPartyLeave(): void {
+  send(partyLeave());
+}
+
+/** 队伍动作（1=LEAVE 2=KICK 3=DELEGATE 4=DISBAND_PARTY 6=CHANGE_MODE；权限校验全在服务端） */
+export function sendPartyAction(action: number, targetId = 0): void {
+  send(partyAction(action, targetId));
+}
 
 export function sendInventoryMove(uid: number, toLocation: number, toSlot: number): void {
   send(inventoryMove(uid, toLocation, toSlot));

@@ -187,6 +187,27 @@ export function learnSkill(skillId: number): jpt.base.ClientMessage.$Properties 
     return jpt.base.ClientMessage.create({ learnSkill: { skillId } });
 }
 
+// ==================== 组队（docs/组队系统-源码分析.md §8；专用包 D1 + //party 命令并存） ====================
+
+/** 邀请目标（按**角色 id**；目标窗"组队"按钮用） */
+export function partyInvite(targetId: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ partyInvite: { targetId } });
+}
+
+/** 接受邀请（回邀请人的角色 id；服务端以 pendingInvites 判定，60 秒时效） */
+export function partyAccept(inviterId: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ partyAccept: { inviterId } });
+}
+
+export function partyLeave(): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ partyLeave: {} });
+}
+
+/** 队伍动作（action = 服务端 PartyAction 枚举值：1=LEAVE 2=KICK 3=DELEGATE 4=DISBAND_PARTY 6=CHANGE_MODE） */
+export function partyAction(action: number, targetId = 0): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ partyAction: { action, targetId } });
+}
+
 /** 洗点（服务端权威：退点 + 清零等级/熟练度；会话内一次，被拒回 `skill.op.resetUsed`）。 */
 export function resetSkillPoints(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ resetSkillPoints: {} });

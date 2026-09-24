@@ -51,6 +51,7 @@
     "item-defs": "npx tsx scripts/extract-item-defs.ts",
     "item-names": "npx tsx scripts/extract-item-names.ts",
     "verify-item-sync": "npx tsx scripts/verify-item-sync.ts",
+    "monster-names": "npx tsx scripts/extract-monster-names.ts",
     "verify-ageup-fx": "tsx scripts/verify-ageup-fx.ts",
     "verify-aging-blink": "tsx scripts/verify-aging-blink.ts",
     "verify-blink-fx": "tsx scripts/verify-blink-fx.ts",

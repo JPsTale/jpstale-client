@@ -1767,3 +1767,74 @@
 .jp-item-info-name.jp-item-info-namemix { color: #7fd4ff; }
 /* 锻造等级：**另起一行**（原版是一个小铭牌，我方先用同色文字，等图形资源接上再换） */
 .jp-item-info-level { display: block; text-align: center; color: #ffd24a; font-size: 12px; letter-spacing: 0.5px; }
+
+/* ==================== 队伍成员组件（D7，Wartale 式：头像+血条+等级名字+buff 行） ==================== */
+/* 左侧贴边、垂直居中（EU CPartyWindow 同锚点）；常驻层，未组队不渲染 */
+.jp-party {
+  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 2px;
+  user-select: none; -webkit-user-select: none;
+  z-index: 6;
+}
+.jp-party-head { display: flex; align-items: center; gap: 4px; height: 16px; }
+.jp-party-toggle {
+  width: 18px; height: 14px; padding: 0; line-height: 12px;
+  background: #12141a; border: 1px solid #3a4148; color: #cfd6dd;
+  font-size: 10px; cursor: pointer;
+}
+.jp-party-mode { font-size: 11px; color: #9fb8c8; text-shadow: 0 0 2px #000; }
+.jp-party-row {
+  position: relative; display: flex; align-items: stretch; gap: 4px;
+  width: 190px; padding: 2px;
+  background: rgba(10, 12, 16, 0.78); border: 1px solid #33302a;
+}
+.jp-party-row-self { border-color: #3d5a75; }
+/* 死亡：整行降饱和（我们定的表现——没有"死亡头像"资产，压暗是显式选择，见 PartyHud 注释） */
+.jp-party-row-dead { filter: grayscale(0.9); }
+.jp-party-row-dead .jp-party-name { color: #ff5252; }
+.jp-party-portrait {
+  width: 26px; height: 34px; object-fit: contain; image-rendering: pixelated;
+  background: #0b0d11; border: 1px solid #2c2f36;
+}
+.jp-party-main { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 1px; }
+.jp-party-line1 { display: flex; align-items: baseline; gap: 4px; line-height: 13px; }
+.jp-party-level { font-size: 10px; color: #ffee64; text-shadow: 0 0 2px #000; }
+.jp-party-name {
+  font-size: 12px; color: #e8ecef; text-shadow: 0 0 2px #000;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.jp-party-hpbar {
+  position: relative; height: 6px; width: 100%;
+  background: #1a1d22; border: 1px solid #000;
+}
+.jp-party-hp-base, .jp-party-hp-fill {
+  position: absolute; left: 0; top: 0; height: 100%;
+  image-rendering: pixelated; object-fit: fill;
+}
+.jp-party-hp-base { width: 100%; }
+.jp-party-hp-fill { object-position: left center; }
+.jp-party-buffs { display: flex; gap: 2px; min-height: 20px; }
+.jp-party-buff { width: 20px; height: 20px; image-rendering: pixelated; }
+.jp-party-menu {
+  position: absolute; left: 100%; top: 0; margin-left: 2px;
+  display: flex; flex-direction: column; min-width: 92px; z-index: 8;
+  background: #12141a; border: 1px solid #3a4148;
+}
+.jp-party-menu-item {
+  padding: 4px 8px; text-align: left; font-size: 12px; color: #d8dce3;
+  background: transparent; border: none; cursor: pointer; white-space: nowrap;
+}
+.jp-party-menu-item:hover { background: #2a3038; color: #fff; }
+/* 邀请弹窗（挂在同一列下方；60 秒超时与服务端 INVITE_TTL_MS 同长） */
+.jp-party-invite {
+  width: 190px; padding: 6px; margin-top: 4px;
+  background: rgba(10, 12, 16, 0.9); border: 1px solid #3d5a75;
+}
+.jp-party-invite-text { font-size: 12px; color: #e8ecef; text-shadow: 0 0 2px #000; }
+.jp-party-invite-buttons { display: flex; gap: 6px; margin-top: 5px; }
+.jp-party-invite-buttons button {
+  flex: 1; padding: 2px 0; font-size: 12px; cursor: pointer;
+  background: #1c222b; border: 1px solid #3a4148; color: #d8dce3;
+}
+.jp-party-invite-ok:hover { border-color: #7fd4ff; color: #fff; }
+.jp-party-invite-no:hover { border-color: #ff8a7a; color: #fff; }

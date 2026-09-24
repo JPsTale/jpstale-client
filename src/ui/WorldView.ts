@@ -221,8 +221,8 @@ export interface WorldView {
   respawnNeedsMapLoad(mapId: number): boolean;
   /** 大地图用：当前地图 + 自机世界坐标（含朝向） */
   worldMapPlayer(): { mapId: number; x: number; z: number; angle: number };
-  /** 大地图用：地图上的其他实体（NPC / 怪物 / 队友） */
-  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number }[];
+  /** 大地图用：地图上的其他实体（NPC / 怪物 / 队友；队友带 name 供蓝方块旁渲染名） */
+  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number; name?: string }[];
   /** 服务端权威换图校准（game.mapSwitched）：对齐 currentMapId 并同步区域 */
   applyMapSwitched(mapId: number): void;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
@@ -7095,11 +7095,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      * 大地图用：地图上的其他实体（图标与小地图同源）。
      *   · NPC  = `npcs`（原版小地图也只画这些）
      *   · 怪物 = `monsters`（**原版小地图不画怪物**，用户要求画；标红区分）
-     *   · 队友 = **暂无数据源** —— 客户端还没接队伍系统（协议里是 `S2C_PartyUpdate`），
-     *           队伍状态一落地就往这里塞，别的地方不用改
+     *   · 队友 = gameStore 的队伍名单（`S2C_PartyUpdate` 全量 + `S2C_PartyPlayUpdate` 500ms 增量）。
+     *           只画**在本图**的队友（服务端权威 mapId 匹配当前图）——跨图队员的呈现位置待裁定
+     *           （docs/组队系统-源码分析.md §9.2），数据本身（含跨图坐标）已在 store 里。
+     *           名字随实体走（D6：蓝方块旁渲染名字）。
      */
     worldMapEntities: () => {
-      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number }[] = [];
+      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number; name?: string }[] = [];
       // ⚠ **不要**按"这只实体属于哪张图"过滤：怪物的出现/消失由服务端 **AOI（全局坐标 + 距离）**
       //   推送，玩家站在图 A 边缘时，图 B 的怪本来就会被推过来 —— 这是**正确的**，因为它确实离玩家近。
       //   （曾试图用"收到 appear 时玩家在哪张图"当归属，被用户指出是错的：那会把图 B 的怪误标成图 A，
@@ -7113,6 +7115,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 尸体不上图：它不是"这里的怪"，标上去只会让玩家以为还有活怪在（原版小地图本来也不画怪）
         if (m.dead) continue;
         out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z, angle: m.root.rotation.y });
+      }
+      // 队友：按**队员所在图**过滤（队伍数据的服务端权威 mapId，不是场景坐标归属）。
+      // 还没收到动态数据的成员（at===0）mapId 未知 → 不上图（显式没有，不猜当前图）。
+      const psnap = getGameSnapshot();
+      if (psnap.party && currentMapId != null) {
+        for (const pm of psnap.party.members) {
+          if (pm.id === selfPlayerId) continue;
+          if (pm.at === 0 || pm.mapId !== currentMapId) continue;
+          out.push({ kind: 'party', x: pm.x, z: pm.z, name: pm.name });
+        }
       }
       return out;
     },

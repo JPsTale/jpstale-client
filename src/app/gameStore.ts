@@ -225,6 +225,47 @@ export interface BuffEntry {
   at: number;
 }
 
+/** 队友身上的一个 buff（形状与 BuffEntry 一致——图标/倒计时渲染复用同一套；独立命名免混淆） */
+export interface PartyBuffEntry {
+  itemCode: number;
+  itemlistId: number;
+  remainingMs: number;
+  totalMs: number;
+  stack: number;
+  /** 本地接收时刻（倒计时基准） */
+  at: number;
+}
+
+/**
+ * 队伍成员一行（左侧队伍组件 + 大地图标记共用）。
+ * ⚠ 动态字段 `hp/level/…` 可能还没被增量包带到（刚进队）——`at === 0` 表示"只有名单、没有数值"，
+ * 显示层按**显式的未知**处理（血条空、等级不画），**不许编默认值**（AGENTS #12）。
+ */
+export interface PartyMemberView {
+  id: number;
+  name: string;
+  classId: number;
+  leader: boolean;
+  level: number;
+  hp: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
+  mapId: number;
+  x: number;
+  z: number;
+  buffs: readonly PartyBuffEntry[];
+  /** 最近一次动态数据到达时刻（Date.now()）；0 = 尚无动态数据 */
+  at: number;
+}
+
+/** 全量名单（S2C_PartyUpdate）：partyId + 模式（0=Normal 1=Hunt）+ 静态身份，队长在首位 */
+export interface PartyRoster {
+  partyId: number;
+  mode: number;
+  members: readonly PartyMemberView[];
+}
+
 /** 物品容器快照（uid → 实例 索引，渲染时按 location/slot 排布）。 */
 export interface GameInventory {
   items: GameItem[];      // 全部活物品（背包+仓库+装备+备用武器）
@@ -255,6 +296,14 @@ export interface GameSnapshot {
   shop: { entityId: number; items: ShopItem[]; sellMode: boolean } | null;
   /** 生效中的 buff（左上角图标条；见 BuffEntry） */
   buffs: readonly BuffEntry[];
+  /**
+   * 队伍（docs/组队系统-源码分析.md §8）。null = 未组队；成员全空 = 解散（服务端发空名单作清窗信号）。
+   * 静态身份（名字/职业/队长位）来自全量名单 `S2C_PartyUpdate`，动态数值（血/蓝/等级/坐标/buff）
+   * 来自 500ms 增量 `S2C_PartyPlayUpdate`——**不含自己**（自己的血/坐标本地权威）。
+   */
+  party: PartyRoster | null;
+  /** 收到的组队邀请（弹窗用）；接受/拒绝/超时后置 null。拒绝不回包（原版同）。 */
+  partyInvite: { inviterId: number; inviterName: string } | null;
   /**
    * 打造窗口（合成/锻造/力量石）—— 由 **NPC 交互**触发，`modes` 是**服务端**说这个 NPC 提供哪几档。
    * 客户端**不**按 NPC 名字/模型判断能做什么（那会在改名时静默失效，AGENTS #24）。
@@ -302,6 +351,8 @@ function loadInitial(): GameSnapshot {
     hoverSpot: null,
     shop: null,
     buffs: [],
+    party: null,
+    partyInvite: null,
     craft: null,
     craftPreview: null,
     skillList: null,
@@ -355,6 +406,59 @@ export function setBuffs(list: readonly BuffEntry[]): void {
 function sameBuff(a: BuffEntry, b: BuffEntry): boolean {
   return a.itemCode === b.itemCode && a.remainingMs === b.remainingMs
     && a.totalMs === b.totalMs && a.stack === b.stack;
+}
+
+// ==================== 队伍（组队系统，docs/组队系统-源码分析.md §8） ====================
+
+/** 整表替换队伍名单（成员变动时服务端发全量；members 为空 = 解散/清窗信号）。 */
+export function setPartyRoster(partyId: number, mode: number, members: readonly PartyMemberView[]): void {
+  if (members.length === 0) {
+    if (snapshot.party === null && snapshot.partyInvite === null) return;
+    commit({ party: null, partyInvite: null });
+    return;
+  }
+  const cur = snapshot.party;
+  if (cur && cur.partyId === partyId && cur.mode === mode && cur.members.length === members.length
+    && cur.members.every((m, i) => sameMember(m, members[i]))) {
+    return;
+  }
+  commit({ party: { partyId, mode, members } });
+}
+
+/** 500ms 动态数据合并进现有名单（按 id 匹配；名单未到时丢弃——名单才是权威）。 */
+export function setPartyPlay(
+  list: readonly (Omit<PartyMemberView, 'name' | 'classId' | 'leader'>)[],
+): void {
+  const cur = snapshot.party;
+  if (!cur) return;
+  let changed = false;
+  const merged = cur.members.map((m) => {
+    const u = list.find((x) => x.id === m.id);
+    if (!u) return m;
+    changed = true;
+    return { ...m, ...u };
+  });
+  if (!changed) return;
+  commit({ party: { ...cur, members: merged } });
+}
+
+/** 收到组队邀请（弹窗用；同一邀请人重复邀请覆盖即可） */
+export function setPartyInvite(inviterId: number, inviterName: string): void {
+  const cur = snapshot.partyInvite;
+  if (cur && cur.inviterId === inviterId && cur.inviterName === inviterName) return;
+  commit({ partyInvite: { inviterId, inviterName } });
+}
+
+export function clearPartyInvite(): void {
+  if (snapshot.partyInvite === null) return;
+  commit({ partyInvite: null });
+}
+
+function sameMember(a: PartyMemberView, b: PartyMemberView): boolean {
+  return a.id === b.id && a.name === b.name && a.classId === b.classId && a.leader === b.leader
+    && a.hp === b.hp && a.maxHp === b.maxHp && a.level === b.level && a.mapId === b.mapId
+    && a.x === b.x && a.z === b.z && a.buffs.length === b.buffs.length
+    && a.buffs.every((x, i) => x.itemCode === b.buffs[i].itemCode && x.remainingMs === b.buffs[i].remainingMs);
 }
 
 /** 整表替换已学技能表（服务端每次下发都是完整表；未学的技能不在键里 = 明确的"未学"）。 */

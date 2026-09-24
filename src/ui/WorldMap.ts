@@ -26,7 +26,7 @@ import { t } from '../i18n/index.js';
 import { loadUiPrefs, saveUiPrefs } from './ui-prefs.js';
 import { setCursorMode } from './cursor.js';
 import './worldmap.css';   // 地图内容的样式（不再是 TS 里的模板字符串 —— 见该文件头部注释）
-import { loadUiImage, tintUiImage } from '../render/ui-texture.js';
+import { loadUiImage } from '../render/ui-texture.js';
 
 interface Box { minX: number; minZ: number; maxX: number; maxZ: number }
 interface MapEntry { id: number; name: string; box: Box; img: HTMLImageElement | null; failed: boolean }
@@ -41,11 +41,16 @@ export interface Poi {
   to?: { mapId: number; name: string; level: number }[];
 }
 
-/** 大地图上要画的实体（图标与小地图同源：`image/arrow.tga` / `npc.tga` / `party.tga`） */
+/** 大地图上要画的实体（图标与小地图同源：`image/arrow.tga` / `npc.tga`；队友画蓝方块+名字） */
 export interface WorldMapEntity {
   kind: 'npc' | 'monster' | 'party';
   x: number;
   z: number;
+  /**
+   * 队友标记的**显示名**（D6：蓝色正方形旁渲染名字——原版大地图只画点不画名，这是超出原版的增强）。
+   * 只对 kind='party' 有意义。
+   */
+  name?: string;
   /**
    * 朝向（弧度，与 three 的 `rotation.y` 同义：0 = 朝世界 +z）。
    * 地图上的**怪物画成三角形，尖指向它**（用户 2026-09-16 要求）。
@@ -233,28 +238,26 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
    * 解码走同一个 `loadUiImage`（PT 加密 TGA，浏览器不能直接解码）。
    *   玩家 = ARROW（原版 `MatArrow`，16×16、随朝向旋转）
    *   NPC  = npc.tga（原版 `MatNpcPos`，8×8 中心对齐）
-   *   队友 = party.tga（原版 `MatPartyPos`；**白点 = 17 格内、红点 = 更远**，
-   *          常量取自 `character.h: PARTY_GETTING_DIST2 = (17*64)^2`。原版这段在 exm 里被注释掉了，
-   *          但规则是明确的 —— 用户要求画）
+   *   队友 = **蓝色正方形 + 队员名称**（用户 2026-09-24 定 = D6；弃用 party.tga 近白/远红方案。
+   *          原版大地图（NSPT FullZoomMap）只画当前图 rect 内的队员点、不画名字——名与方块都是
+   *          超出原版的增强；色值呼应场景内队友名 RGB(51,204,255)）
    *   怪物 = 沿用 npc.tga **染红**：原版 `DrawMapNPC` 只遍历 `smCHAR_STATE_NPC`，没有怪物图标资产；
    *          "染红区分"在原版源码里有先例（队友过远即 `D3DCOLOR_RGBA(255,0,0,255)`）
    */
   const MARKER_SRC = {
     arrow: '/res/image/arrow.tga',
     npc: '/res/image/npc.tga',
-    party: '/res/image/party.tga',
   } as const;
   // 值类型 = `drawImage` 的源：原色图标是 `Image`（经 loadUiImage 等过 onload），
   // 染色图标是 `HTMLCanvasElement`（同步可画，见 `tintUiImage` 的注释）
-  const markers: Partial<Record<'arrow' | 'npc' | 'party' | 'partyFar',
+  const markers: Partial<Record<'arrow' | 'npc',
     HTMLImageElement | HTMLCanvasElement>> = {};
   void (async () => {
-    const [arrow, npc, party] = await Promise.all([
-      loadUiImage(MARKER_SRC.arrow), loadUiImage(MARKER_SRC.npc), loadUiImage(MARKER_SRC.party),
+    const [arrow, npc] = await Promise.all([
+      loadUiImage(MARKER_SRC.arrow), loadUiImage(MARKER_SRC.npc),
     ]);
     if (arrow) markers.arrow = arrow;
     if (npc) markers.npc = npc;   // 怪物不再用染色图标（改成画三角，见 drawMonsterMark）
-    if (party) { markers.party = party; markers.partyFar = tintUiImage(party, '#ff5252'); }
     draw();   // 图标到齐后补画一帧
   })();
 
@@ -541,9 +544,6 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     return (opts.getEntities?.() ?? []).filter((e) => e.x >= b.minX && e.x <= b.maxX && e.z >= b.minZ && e.z <= b.maxZ);
   }
 
-  /** 队友"近/远"的分界：原版 PARTY_GETTING_DIST2 = (17*64)^2 → 17 格 = 1088 世界单位 */
-  const PARTY_NEAR_DIST2 = (17 * 64) ** 2;
-
   /** 诊断：上一次 drawEntities 实际发出的绘制（自检读不到图标时用来定位是哪一步没了） */
   let lastEntityDraws: string[] = [];
   /**
@@ -577,7 +577,6 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
   }
 
   function drawEntities(): void {
-    const self = opts.getPlayer?.();
     lastEntityDraws = [];
     for (const e of drawnEntities()) {
       const [sx, sy] = toScreen(e.x, e.z);
@@ -588,15 +587,22 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
         drawMonsterMark(sx, sy, e.angle);
         lastEntityDraws.push(`monster@${Math.round(sx)},${Math.round(sy)}`);
       } else if (e.kind === 'party') {
-        const near = !!(self && typeof self.x === 'number' && typeof self.z === 'number'
-          && (e.x - self.x) ** 2 + (e.z - self.z) ** 2 < PARTY_NEAR_DIST2);
-        const img = near ? markers.party : markers.partyFar;
-        if (img) {
-          ctx.drawImage(img, sx - 4, sy - 4, 8, 8);
-          lastEntityDraws.push(`party${near ? 'Near' : 'Far'}@${Math.round(sx)},${Math.round(sy)}`);
-        } else {
-          lastEntityDraws.push(`party${near ? 'Near' : 'Far'}@${Math.round(sx)},${Math.round(sy)}=NO_IMG`);
+        // 蓝色正方形 + 队员名称（D6）。正方形带深色描边保证浅色图上可见；名字画在方块右侧。
+        ctx.fillStyle = '#33ccff'; // RGB(51,204,255)，呼应场景内队友名颜色
+        ctx.fillRect(sx - 4, sy - 4, 8, 8);
+        ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(sx - 4.5, sy - 4.5, 9, 9);
+        if (e.name) {
+          ctx.font = '10px sans-serif';
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = 'rgba(0,0,0,0.85)';
+          ctx.fillText(e.name, sx + 7, sy + 0.5);
+          ctx.fillStyle = '#bfeeff';
+          ctx.fillText(e.name, sx + 6.5, sy);
         }
+        lastEntityDraws.push(`party@${Math.round(sx)},${Math.round(sy)}${e.name ? `:${e.name}` : ''}`);
       }
     }
   }
@@ -1163,7 +1169,7 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     getLastEntityDraws: () => lastEntityDraws.slice(),
     getMarkerStates() {
       const out: Record<string, string> = {};
-      for (const k of ['arrow', 'npc', 'party', 'partyFar'] as const) {   // 怪物是画出来的三角，无图标
+      for (const k of ['arrow', 'npc'] as const) {   // 怪物是画出来的三角；队友是画的蓝方块，均无图标
         const im = markers[k];
         out[k] = im
           ? (im instanceof HTMLCanvasElement ? `${im.width}x${im.height}` : `${im.naturalWidth}x${im.naturalHeight}`)

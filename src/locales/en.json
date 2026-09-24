@@ -3589,6 +3589,19 @@
     "hint": "Press Enter to chat",
     "placeholder": "Enter message…",
     "guildNotOpen": "Guild channel is not available yet",
+    "party": {
+      "noParty": "You are not in a party",
+      "targetOffline": "That player is offline or does not exist",
+      "cannotInviteSelf": "You cannot invite yourself",
+      "full": "Party is full (6 members)",
+      "alreadyInParty": "Already in a party",
+      "notFound": "Party not found",
+      "leaderOnly": "Only the party leader can do that",
+      "levelDiff": "Level difference too big (max 10)",
+      "noInvite": "No pending party invitation",
+      "inviteExpired": "The invitation has expired",
+      "notMember": "That player is not in your party"
+    },
     "cmd": {
       "teleportNotOpen": "That area is not open yet",
       "teleportLevelLow": "Level too low to enter that area (requires level {level})",
@@ -3677,7 +3690,27 @@
   "buff": {
     "remaining": "{s}s left"
   },
-  "itemtip": {
+  "party": {
+    "expand": "Expand party",
+    "collapse": "Collapse party",
+    "waiting": "Waiting for party data…",
+    "mode": {
+      "normal": "Normal Mode",
+      "hunt": "Hunt Mode"
+    },
+    "invite": {
+      "title": "{name} has sent a party request",
+      "accept": "Accept",
+      "decline": "Decline"
+    },
+    "menu": {
+      "leave": "Leave Party",
+      "kick": "Kick",
+      "delegate": "Delegate",
+      "disband": "Disband Party",
+      "changeMode": "Change Mode"
+    }
+  },  "itemtip": {
     "recHp": "HP Recovery",
     "recMp": "MP Recovery",
     "recStm": "STM Recovery",
