@@ -1,7 +1,7 @@
 import { useSyncExternalStore, useState } from 'react';
 import { getGameSnapshot, subscribeGame } from '../../app/gameStore.js';
 import { sendAllocateStat } from '../../net/bridge.js';
-import { t } from '../../i18n/index.js';
+import { t, tList } from '../../i18n/index.js';
 
 // 职业 id → i18n key（与原 canvas 角色面板映射一致：1 武士 … 10 萨满）
 const JOB_KEYS: Record<number, string> = {
@@ -23,6 +23,11 @@ export default function CharStatusPanel() {
 
   if (!character) return <div className="jp-nodata">{t('panel.noData')}</div>;
   const c = character;
+  // 职业名按**转职阶级**取 `itemtip.jobTier.<job>[rank]`（每职业 5 阶，zh/en 都有；
+  // 服务端 JobService 按 20/40/60 推进 rank，随 S2C_CharacterStatus.rank 下发）。
+  // rank=0 取到 [0] = 1 转名，与原 job.* 同值；数组缺失（键异常）时退 job.* 并仍显示。
+  const jobTierNames = tList(`itemtip.jobTier.${c.job}`);
+  const jobName = jobTierNames[c.rank ?? 0] ?? t(JOB_KEYS[c.job] ?? 'job.fighter');
   // 本级经验进度：本级已获得 = exp - levelExp，本级升级所需 = nextExp - levelExp（经验是累计值，必须减起点）。
   // 数据异常（exp 低于本级起点，常见于直接设等级的测试角色）时钳到 0，不显示负数。
   const levelSpan = Math.max(0, c.nextExp - c.levelExp);
@@ -93,7 +98,7 @@ export default function CharStatusPanel() {
   return (
     <div className="jp-charpanel">
       <div className="jp-char-head">
-        <span className="jp-job">{t(JOB_KEYS[c.job] ?? 'job.fighter')}</span>
+        <span className="jp-job">{jobName}</span>
         <span className="jp-name">{c.name}</span>
         <span className="jp-clan">{t('panel.noClan')}</span>
       </div>

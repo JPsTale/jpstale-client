@@ -224,8 +224,13 @@ export const SKILL_INDEX_BY_ICON: Record<string, number | null> = {
   'tp70 s_master.bmp': 56,
   'ts80 j_bomb.bmp': 179,
   'ts83 r_slash.bmp': 180,
-  'ts86 v_stab.bmp': 184,
-  'ts90 storm.bmp': 185,
+  // 刺客 T5 两格：**按证据改**（原为 184/185 —— 那是"按块顺序推"出来的，且与萨满的
+  // `ms12 darkwave=184` / `ms14 curselazy=185` 撞号）。证据（`npm run skill-sfx-matrix` 的
+  // "推出来的映射值复核"段可重跑）：m6（刺客）的 `.in` 条目 86 名 `ViolenceStab`、码 `[181]`；
+  // 条目 87 名 `Storm`、码 `[182]` —— 与我们的 `Violent Stab` / `Shadow Storm` 名字吻合，
+  // 且 181/182 在本表里**没有任何别的图标占用**（`m6` 的 SKILL 码集合里 181/182 就是这两条）。
+  'ts86 v_stab.bmp': 181,
+  'ts90 storm.bmp': 182,
 };
 
 

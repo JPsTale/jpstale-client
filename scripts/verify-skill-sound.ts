@@ -199,27 +199,67 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
     castBody !== '' && /const tag = nameplateTargetAt\(cx, cy\) \?\? pickTargetAt\(cx, cy\);/.test(castBody));
   ok('① 不再拿 15Hz 的 `hoverTarget` 当施法瞄准（滞后 ⇒ 点得到怪却静默不施法）',
     castBody !== '' && !/hoverTarget/.test(castBody));
-  ok('② 左键点怪之后**不 return**（原版 `SelMouseButton = 1; TraceAttackPlay()` ⇒ 选中该怪去追打）',
-    /playEquippedSkill\(slot, aim\);/.test(code) && before(code, 'playEquippedSkill(slot, aim);', 'if (e.button === 2) return;')
-    && /if \(e\.button === 2\) return;/.test(code));
+  // 2026-09-24 改（用户实测"近战要跑到身边再打，不是原地施法"）：点怪**不再当场施法** ——
+  // 只记"用哪只拳"并交给追打循环（原版 `SelMouseButton = 1/2; TraceAttackPlay()`，`Winmain.cpp:2994-2996`）。
+  ok('② 左键点怪：不当场施法、记住拳位、不 return（选中该怪去追打）',
+    /selfAttackSlot = slot;/.test(code) && !/playEquippedSkill\(slot, aim\)/.test(code)
+    && !/if \(e\.button === 2\) return;/.test(code));
   ok('② 右键保持 return（源码那条 `break` 只跳"打人"分支）',
     /if \(e\.button === 2 && tryNoTargetCast\(\)\) \{ e\.preventDefault\(\); return; \}/.test(code));
-  ok('③ 追打循环逐次出手取左拳技能（原版 `SelMouseButton → lpAttackSkill`）',
-    /const it = isVillageMap\(currentMapId\) \? \{ kind: 'normal' as const \} : fistIntent\('left'\);/.test(code)
+  // 2026-09-24 改：拳位由"选中目标的那个键"决定（原版 `SelMouseButton → pLeftSkill/pRightSkill`）
+  ok('③ 追打循环逐次出手取 **selfAttackSlot** 那只拳的技能（原版 `SelMouseButton → lpAttackSkill`）',
+    /const it = isVillageMap\(currentMapId\) \? \{ kind: 'normal' as const \} : fistIntent\(selfAttackSlot\);/.test(code)
     && /const sk = it\.kind === 'skill' \? \{ icon: it\.row\.iconFile, skillId: it\.skillId \} : null;/.test(code)
     && /sk \? playSkillByIcon\(sk\.icon, monsters\.get\(moveTarget\.id\)\?\.root \?\? null\)/.test(code));
-  ok('③ 追打里技能那一击的结算走技能包（原版 `PlaySkillAttack` 的 `dm_SendTransDamage`）',
-    /if \(sk\) opts\?\.onCastSkill\?\.\(sk\.skillId, targetId\);/.test(code));
+  // 2026-09-24 改（D7 重做）：技能起手**不结算**，只上报"意图 + 我播的那条动作"
+  // （服务端据此广播 S2C_SkillStart 给旁观者；伤害在事件帧由 C2S_SkillHit 触发）。
+  ok('③ 追打里技能那一击上报"意图 + 本机所播动作条目"（AGENTS #14 透传；D7 两次上报）',
+    /if \(sk\) opts\?\.onCastSkill\?\.\(sk\.skillId, targetId, m\?\.index \?\? 0, selfAnimClip\);/.test(code));
+  ok('③ 技能**事件帧**上报 skill_hit（逐段结算；服务端收到才结算该段）',
+    /opts\?\.onSkillHit\?\.\(castSkillId, selfSkillTargetId,/.test(code)
+    && /const castSkillId = skillIdByIcon\(selfSkillRow\.icon\);/.test(code));
+  // 2026-09-24 修（用户实测"Jumping Crash 没有伤害"）：技能目标必须来自**施法瞄准**（selfSkillAim），
+  // 不能用 selfAttackTargetId —— 那个值只有**自动攻击循环**在跑到射程内起手时才赋，
+  // 鼠标施法路径从不设它 ⇒ 单目标技能（Critical Hit / Jumping Crash）在服务端 requireTarget 被拒。
+  // Pike Wind 因为是自身中心 AoE、不读 targetId，所以掩盖了这个 bug 一整轮。
+  ok('③ 技能目标在起手时从瞄准定死（mouse 施法路径没有 selfAttackTargetId）',
+    /selfSkillTargetId = monsterIdOfRoot\(aim\);/.test(code)
+    && /function monsterIdOfRoot\(root: THREE\.Object3D \| null \| undefined\): number \{/.test(code));
   // 2026-09-24 改：绑定身份换成数字 skillId、判定搬进 `game/skillBinding.ts`（`fistIntent`）。
   // 这三条比旧写法**更严**：未绑/村庄 ⇒ 普通攻击（规格），而**表没到/异职业 ⇒ 不起手**（旧写法把这些也退普攻）。
   ok('③ 无绑定/村庄 ⇒ 普通攻击；unknown/invalid ⇒ 本轮不起手（三处施法入口共用同一个意图判定）',
     /const bindBroken = it\.kind === 'unknown' \|\| it\.kind === 'invalid';/.test(code)
-    && /if \(!busy && !bindBroken && animState/.test(code)
+    && /if \(!busy && !bindBroken && !mpBlocked && animState/.test(code)
+    // MP 门在**起手之前**（原版 `sinCheckSkillUseOk` 的 MP 那一半）：不够就不播动画、不发包
+    && /castResourceBlocked\(it\.skillId\)/.test(code)
+    && /export function checkCastResources\(skillId: number, point: number \| null, mp: number\): ResourceCheck/.test(await read('../src/game/skillCost.ts'))
     && /function fistIntent\(slot: 'left' \| 'right'\): FistIntent \{/.test(code)
     && (code.match(/function fistSkillOf\(/g) ?? []).length === 1
     && (code.match(/function fistIntent\(/g) ?? []).length === 1);
-  ok('③ 技能动作按自身时长播（原版每技能自带 `MotionLoopSpeed`）、普攻才按攻速换算',
-    /selfAnimRate = animState\.getCurrentState\(\) === STATE\.SKILL/.test(code));
+  // 2026-09-24：**事件帧的武器挥击音**（用户"武士技能没音效"的根因，见 docs/技能音效-矩阵实测.md）。
+  // 原版 `EventAttack` 的通用分支在 `EventSkill()` 返回 FALSE 时调 `WeaponPlaySound(this)`
+  // （`character.cpp:4207` + `:4244`）—— 我们此前只在 ATTACK 态播，SKILL 态一声不出。
+  ok('③ 事件帧按原版补播**武器挥击音**（`weaponSfxForIcon`，唯一实现在 `game/skillMotionSrc.ts`）',
+    /if \(weaponSfxForIcon\(selfSkillRow\.icon\)\) \{\s*\n\s*sfx\.playWeaponAttack\(selfWeaponSoundCode\(\), \{ priority: true \}\);/.test(code));
+  ok('③ 这一声的判定读的是**生成物**（`skill-motion-src`，逐技能带 SkillSub/character.cpp 行号）',
+    /weaponSfxForIcon/.test(await read('../src/game/skillMotionSrc.ts'))
+    && /weaponSfx: eventSfx === 'weapon'/.test(await read('../scripts/extract-skill-motion-src.ts')));
+  // 找不到专属动作时**不许拿普攻顶上**（原版 `SetMotionFromCode` 的 FindCnt==0 分支什么都不换）——
+  // 只有"源里没有这一招"（motionSrc === null）才沿用老写法，且必须上报。
+  ok('③ 无专属动作 ⇒ 按原版**不换动作**并上报（不再无条件退普攻）',
+    /src\?\.motionSrc === 'skill' \|\| src\?\.motionSrc === 'mixed'/.test(code)
+    && /按原版\*\*不换动作\*\*/.test(code));
+  // 2026-09-24 改：技能不再"恒喂 1" —— 原版每个技能自带速率（`MotionLoopSpeed` / 那条按攻速的式子），
+  // 数据 = `skill-motion-speed.generated.json`，唯一实现 = `game/skillRate.ts`。
+  // 断言随之收紧：技能走 `skillRate(*, skillId, …)`、普攻仍走 `attackRate`，且每帧复位那支也认技能。
+  ok('③ 技能按**原版自己的速率**播（`skillRate(skillId, attackSpeed)`，不再恒 1）、普攻才按攻速换算',
+    /animState\.getCurrentState\(\) === STATE\.SKILL\s*\n\s*\? \(sk \? skillRate\(sk\.skillId/.test(code)
+    && /: attackRate\(m, getGameSnapshot\(\)\.character\?\.attackSpeed/.test(code)
+    && /else if \(curSt === animState\.STATE\.SKILL\)/.test(code)
+    && /skillRateByIcon\(selfSkillRow\.icon/.test(code));
+  // 远端照同一份数据改（不许第三份实现）：它也调用 `skillRateByIcon`
+  ok('③ 远端的技能速率走**同一个函数**（`skillRateByIcon`，图标由 `animIndex` 反查）',
+    (code.match(/skillRateByIcon\(/g) ?? []).length === 2);   // 自机 1 处 + 远端 1 处（导入那行不带括号）
   ok('三处施法入口（左键/右键/追踪）共用同一份判定，没有第二份"绑定+职业+身份"判定',
     ['function fistCastTarget(', 'function playEquippedSkill(', 'function tryNoTargetCast(']
       .every((h) => /fistSkillOf\(|fistIntent\(/.test(bodyOf(code, h))));

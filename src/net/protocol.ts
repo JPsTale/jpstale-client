@@ -166,9 +166,19 @@ export function attackHit(targetId: number, hitIndex: number): jpt.base.ClientMe
  *  `skillId` = **数字技能 id**（`0x<job><tier><slot>`，如 pikeman 一转一槽 `0x040101`）——
  *  由 `game/skillIdentity.ts` 的 `iconFile → skillId` 查表得来，**不是**动画下标，也不是面板下标。
  *  targetId=0 表示无显式目标（buff/自施法）；targetPosition 供地面技能后续使用。 */
-export function useSkill(skillId: number, targetId = 0, targetPosition?: jpt.base.Position.$Properties): jpt.base.ClientMessage.$Properties {
+export function useSkill(skillId: number, targetId = 0, targetPosition?: jpt.base.Position.$Properties,
+                        animIndex = 0, animClip = ''): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
-        useSkill: { skillId, targetId, ...(targetPosition ? { targetPosition } : {}) },
+        // animIndex/animClip = 施法者**自己播的那一条**技能动作（AGENTS #14）：服务端原样透传给旁观者
+        useSkill: { skillId, targetId, animIndex, animClip, ...(targetPosition ? { targetPosition } : {}) },
+    });
+}
+
+/** 技能**事件帧**回报（逐段结算；D7）。原版在动画的事件帧才触发伤害，每次事件帧独立结算 ——
+ *  这条消息就是那个"触发"（服务端收到才结算该段，不收到就不结算）。 */
+export function skillHit(skillId: number, targetId: number, hitIndex: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        skillHit: { skillId, targetId, hitIndex },
     });
 }
 

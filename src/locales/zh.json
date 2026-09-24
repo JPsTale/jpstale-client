@@ -234,6 +234,7 @@
   "skills": {
     "pt": "技能点",
     "ptSpecial": "特殊技能点",
+    "reset": "初始化技能点",
     "reqLevel": "需求等级",
     "skillType": "类型",
     "consume": "消耗",
@@ -511,13 +512,16 @@
       "unstuckCooldown": "脱离卡死冷却中，请 {sec} 秒后再试",
       "unstuckFailed": "脱离卡死失败：找不到可用的出生点",
       "partyUsage": "用法: //party 玩家名",
-      "getUsage": "用法: /@get <物品码> —— 如 ec101 / EC101 / bi108（只认物品码，不接受数字主键或物品名）",
+      "getUsage": "用法: /@get <物品码> [数量] —— 如 ec101 / EC101 / bi108（只认物品码，不接受数字主键或物品名）",
       "itemNotFound": "找不到物品: {token}",
+      "getBadCount": "数量参数无效: {arg}（须为 1~{max} 的整数）",
       "dropOverLimit": "地面物品已满，掉落被丢弃",
       "unknownGm": "未知GM命令: /{name}（GM 系统开发中）",
       "unknown": "未知命令: /{name}",
       "invalidNumber": "命令参数格式错误: {cmd}",
-      "useItemTooFast": "使用失败：距离上次使用太近"
+      "useItemTooFast": "使用失败：距离上次使用太近",
+      "setRankUsage": "用法：/@set_rank <0..{max}>（0=1转…4=5转预留）",
+      "setRankBad": "rank 参数无效：{arg}（合法 0..{max}）"
     },
     "pickup": {
       "bagFull": "背包已满，无法拾取",

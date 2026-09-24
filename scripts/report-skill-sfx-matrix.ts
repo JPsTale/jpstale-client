@@ -61,7 +61,10 @@ const { semanticEntriesForJob } = await import('../src/char/semantic-anim.js');
 const { advanceAnimFrame, crossEventFrames, motionEventIndexOf } = await import('../src/char/animation.js');
 const { skillFxRowByIcon, fireSkillCast, fireSkillEvent } = await import('../src/render/effects/skill-fx-runner.js');
 const { getWeaponTypeFromIdCode, getHandTypeFromIdCode } = await import('../src/char/weapon-type.js');
+const { SITEM_CODE_BY_INDEX } = await import('../src/char/sitem-weapon-index.js');
+const { skillMotionSrcByIcon } = await import('../src/game/skillMotionSrc.js');
 const { JOB_DATA } = await import('../src/render/char-loader.js');
+type MotionInfo = Awaited<ReturnType<typeof buildMotionList>>[number];
 
 /** 职业号 → 动作组（m1..m8）——**从 `JOB_DATA.bipInx` 推**，不另抄一份表（AGENTS #15） */
 function groupOf(job: number): string {
@@ -71,19 +74,35 @@ function groupOf(job: number): string {
   return `m${m[1]}`;
 }
 
-/** 代表武器：取语义表里 `primaryClass` = 该职业的**最小 idcode**（同族低阶）。
- *  取不到（祭司没有法球段、`ps1024` 是格斗家的位掩码写法）⇒ 用 `FALLBACK_WEAPON` 或 null。 */
+/** 代表武器：**从该职业自己的 `.inx` SKILL 条目**的 `itemCodeList` 里取（sItem 索引 → idcode），
+ *  取最小的那个 idcode。理由：动作数据**自己写了**这一招接受哪些武器 —— 比"按 DB 的
+ *  primaryClass 猜"更硬（祭司的 SKILL 条目收 `0x0104` 法杖，而她的招牌法球 `0x0303` 根本不在
+ *  sItem 索引表里，按 DB 猜会得出"祭司一招都放不出"的假结论）。取不到（该职业 SKILL 条目
+ *  itemCodeCount 都是 0）才退回 DB 语义表的 `primaryClass`。 */
+function representativeWeaponInx(skillMotions: MotionInfo[]): { code: number | null; from: string } {
+  const found = new Set<number>();
+  for (const m of skillMotions) {
+    for (let i = 0; i < Math.min(m.itemCodeCount, m.itemCodeList.length); i++) {
+      const idcode = SITEM_CODE_BY_INDEX[m.itemCodeList[i]!];
+      if (idcode) found.add(idcode);
+    }
+  }
+  if (found.size) {
+    const code = Math.min(...found);
+    return { code, from: `.inx(itemCodeList 里 ${found.size} 个武器码的最小值)` };
+  }
+  return { code: null, from: '取不到（SKILL 条目没有武器白名单）' };
+}
+
+/** DB 语义表兜底（`.inx` 白名单为空时用）：`primaryClass` = 该职业的**最小 idcode** */
 const CLASS_EN: Record<number, string> = {
   1: 'Fighter', 2: 'Mechanician', 3: 'Archer', 4: 'Pikeman', 5: 'Atalanta',
   6: 'Knight', 7: 'Magician', 8: 'Priestess', 9: 'Assassin', 10: 'Shaman', 11: 'MartialArtist',
 };
 /** 语义表里格斗家写的是位掩码 `ps1024`（= addspecclass1=1024，见 AGENTS #71） */
 const PRIMARY_ALIAS: Record<string, string> = { ps1024: 'MartialArtist' };
-/** 祭司的武器 = 法球（`gamedb` 语义表没收 `0x0303` 段）—— idcode 出处：AGENTS 纠错 #8b（`Skull Beads` = 0x0303_0500） */
-const FALLBACK_WEAPON: Record<number, number> = { 8: 0x03030500 };
 
-function representativeWeapon(job: number): number | null {
-  if (FALLBACK_WEAPON[job] != null) return FALLBACK_WEAPON[job]!;
+function representativeWeaponDb(job: number): number | null {
   const want = CLASS_EN[job]!;
   let best: number | null = null;
   for (const [code, v] of Object.entries((WEAPON_SEM as { byIdcode: Record<string, { primaryClass?: string }> }).byIdcode)) {
@@ -113,9 +132,15 @@ const OPENPLAY_MACROS: Set<string> = new Set((OPENPLAY as { macros: Array<{ macr
 interface Row {
   job: number; classDir: string; icon: string; name: string; type: string; reqLv: number; useCode: string;
   weapon: number | null; weaponUsed: string;
-  map: number | null; mapSrc: string;
+  map: number | null; mapSrc: string; alt?: string;
   codesInFile: number[];       // 该职业 .inx 的 SKILL 条目里出现过、且与该技能无关的全集（诊断用）
   hasEntry: boolean;           // 有没有任一 SKILL 条目带这个码（忽略 职业/武器/区域 过滤）
+  /** 原版这一招用哪条动作（生成物 `skill-motion-src`：`attack`/`skill`/`mixed`/null 未见） */
+  motionSrc: 'attack' | 'skill' | 'mixed' | null;
+  /** 原版**事件帧**的音从哪来（生成物：`skill` 专属 wav / `weapon` 武器挥击音 / `none` 无） */
+  eventSfx: 'skill' | 'weapon' | 'none' | null;
+  /** 事件帧要不要补播武器挥击音（本轮的修复点） */
+  weaponSfx: boolean;
   triggerSkill: boolean; state: number; motionIndex: number | null; motionRange: [number, number] | null;
   eventFrames: number[]; eventsFired: number;
   wavs: string[]; missingWavs: string[];
@@ -147,13 +172,20 @@ for (let job = 1; job <= 11; job++) {
   const skillMotions = motions.filter((m) => m.state === STATE.SKILL);
   const codesInFile = [...new Set(skillMotions.flatMap((m) => Array.from(m.skillCodeList ?? [])))].sort((a, b) => a - b);
 
-  const rep = representativeWeapon(job);
+  // 两个候选武器（都要试）：① DB 语义表里该职业的主用武器（玩家真会拿的那把）
+  //                        ② 该职业 `.inx` SKILL 条目白名单里的最小码（动作数据自己认的武器）
+  // 单一武器会给出**假阴性**：祭司拿法球（0x0303 不在 sItem 索引表里）⇒ 判她"一招都放不出"，
+  // 而她拿法杖（0x0104）时全部可放（用户实测"祭司有音效"）。故逐个试，行内记下**是哪个武器**成功的。
+  const inxRep = representativeWeaponInx(skillMotions);
+  const dbRep = representativeWeaponDb(job);
+  const candidates = [...new Set([dbRep, inxRep.code].filter((c): c is number => c != null))];
   for (const skill of SKILLS[classDir]!) {
     const key = skill.iconFile;
     const map = (SKILL_INDEX_BY_ICON as Record<string, number | null>)[key] ?? null;
     const src = PROPOSAL_SRC.get(key) ?? '既有';
     const fx = SFX_ROWS.get(key.toLowerCase());
     const hasEntry = map != null && skillMotions.some((m) => Array.from(m.skillCodeList ?? []).includes(map));
+    const motionRow = skillMotionSrcByIcon(key);
     const bindLeft = skill.useCode === 'LEFT' || skill.useCode === 'ALL';
     const bindRight = skill.useCode === 'RIGHT' || skill.useCode === 'ALL';
     const inOpenPlay = OPENPLAY_MACROS.has(skill.name.replace(/[\s'\-_]/g, '').toUpperCase())
@@ -161,8 +193,9 @@ for (let job = 1; job <= 11; job++) {
 
     const base: Row = {
       job, classDir, icon: key, name: skill.name, type: skill.type, reqLv: skill.reqLv, useCode: skill.useCode,
-      weapon: rep, weaponUsed: rep == null ? 'null(空手)' : `0x${rep.toString(16)}`,
-      map, mapSrc: src, codesInFile, hasEntry,
+      weapon: candidates[0] ?? null, weaponUsed: candidates.length ? candidates.map((c) => `0x${c.toString(16)}`).join('/') : 'null(空手)',
+      map, mapSrc: src, alt: skill.alt, codesInFile, hasEntry,
+      motionSrc: motionRow?.motionSrc ?? null, eventSfx: motionRow?.eventSfx ?? null, weaponSfx: motionRow?.weaponSfx ?? false,
       triggerSkill: false, state: 0, motionIndex: null, motionRange: null,
       eventFrames: [], eventsFired: 0, wavs: [], missingWavs: [],
       bindLeft, bindRight, inOpenPlay,
@@ -217,11 +250,14 @@ for (let job = 1; job <= 11; job++) {
       return { trigger, wavs, events, motionIndex: m.index, range: [m.startFrame, m.endFrame], frames: ef };
     };
 
-    let r = run(rep);
-    if (!r.trigger && rep != null) {           // 武器不匹配 → 再试空手（报告里标出来）
-      const bare = run(null);
-      if (bare.trigger) { r = bare; base.weaponUsed = `${base.weaponUsed} → 空手才命中`; }
+    // 逐个候选武器试（顺序：DB 主用武器 → `.inx` 白名单最小码 → 空手）；记下是哪一个成功的
+    let r = { trigger: false, wavs: [] as string[], events: 0, motionIndex: null as number | null, range: null as [number, number] | null, frames: [] as number[] };
+    let hitWeapon: string | null = null;
+    for (const c of [...candidates, null]) {
+      const attempt = run(c);
+      if (attempt.trigger) { r = attempt; hitWeapon = c == null ? 'null(空手)' : `0x${c.toString(16)}`; break; }
     }
+    base.weaponUsed = hitWeapon ?? `${base.weaponUsed}（都失败）`;
     base.triggerSkill = r.trigger;
     base.state = r.trigger ? STATE.SKILL! : 0;
     base.motionIndex = r.motionIndex;
@@ -232,8 +268,15 @@ for (let job = 1; job <= 11; job++) {
 
     if (!r.trigger) {
       base.cls = hasEntry ? 'c' : 'b';
+      // 已知边界：`matchWeapon` 只能按 **sItem 索引表**比对，而该表只覆盖 0x0101~0x0108
+      // （`AGENTS` #3）⇒ 匕首(0x010A)/图腾(0x0109)/拳套(0x010B) 这些家族的武器码**永远匹配不上**，
+      // 放宽到"同类型"也要读同一张表 ⇒ 空手放宽又要求白名单里有 0xFFFF 哨兵。
+      // 证据：`representativeWeaponInx` 从这个职业的 SKILL 条目里能解出 0 个武器码。
+      const weaponUnresolvable = !inxRep.code;
       base.note = hasEntry
-        ? '条目存在但被 职业/武器/区域位 过滤掉（状态机两级放宽后仍无）'
+        ? (weaponUnresolvable
+          ? '条目存在但**任何武器都匹配不上**：本职业 SKILL 条目的武器码不在 sItem 索引表（只覆盖 0x0101~0x0108）里 ⇒ 精确匹配/同类型放宽都失效'
+          : '条目存在但被 职业/武器/区域位 过滤掉（状态机两级放宽后仍无）')
         : `该职业 .inx 无任何 SKILL 条目带码 ${map}（文件里 SKILL 码：${codesInFile.join(',')}）`;
       rows.push(base);
       continue;
@@ -303,4 +346,49 @@ if (asJson) {
   }
   const soundless = rows.filter((r) => r.cls !== 'ok');
   console.log(`\n有音 ${rows.length - soundless.length} / ${rows.length}；无声 ${soundless.length}`);
+
+  // ── 推出来的映射值复核（`skillIndexByIcon.ts` 里 `src=positional` 的那批）──────────────
+  // 两条**可推翻**的判据：
+  //   ① 该码在本职业 `.inx` 的 SKILL 条目里存不存在（= 这张表给的值指向什么、有没有东西）
+  //   ② `.in` 的 `*적용기술` **名字集合**：名字命中的条目的码集合**不含**这个值 ⇒ 该值不是这一招的
+  //      （名字用 `skillData` 的 name 与 alt 两套，归一化后比 —— 与 `extract-skill-map` 同一套口径）
+  console.log('\n── 推出来的映射值复核（`skillIndexByIcon.ts` 里标 `positional` 的那批）');
+  console.log('   图标                        值   .inx有该码  源码有该招  `.in` 名字命中条目的码集合        判定');
+  const groupOfJob = new Map<number, string>();
+  for (let job = 1; job <= 11; job++) groupOfJob.set(job, groupOf(job));
+  const inCache = new Map<string, Array<{ skills: string[]; codes: number[] }>>();
+  const inEntries = (job: number): Array<{ skills: string[]; codes: number[] }> => {
+    const g = groupOfJob.get(job)!;
+    const hit = inCache.get(g);
+    if (hit) return hit;
+    const j = JSON.parse(readFileSync(resolve(ROOT, `src/game/data/anim-in/anim-${g}.generated.json`), 'utf8')) as {
+      entries: Array<{ inxState: string; skills: string[]; inxSkillCodes: number[] }>;
+    };
+    const list = j.entries.filter((e) => e.inxState === 'SKILL')
+      .map((e) => ({ skills: e.skills.flatMap((s) => s.split(/\s+/).filter(Boolean)), codes: e.inxSkillCodes.filter((c) => c > 0) }));
+    inCache.set(g, list);
+    return list;
+  };
+  const normName = (s: string): string => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  let reviewed = 0, confirmed = 0, noAction = 0, suspicious = 0;
+  for (const r of rows) {
+    if (r.mapSrc !== 'positional') continue;
+    reviewed++;
+    const names = [normName(r.name), ...(r.alt ? [normName(r.alt)] : [])];
+    const hits = inEntries(r.job).filter((e) => e.skills.some((s) => names.includes(normName(s))));
+    const codes = [...new Set(hits.flatMap((e) => e.codes))];
+    const byName = r.map != null && codes.includes(r.map);
+    const inSrc = (() => {                       // 源码（SkillSub/character.cpp）里有没有这一招
+      const m = skillMotionSrcByIcon(r.icon);
+      return m != null && (m.motionSrc != null || m.eventSfx != null);
+    })();
+    let verdict: string;
+    if (r.hasEntry) { verdict = '确认：本职业动作表里有带这个码的 SKILL 条目'; confirmed++; }
+    else if (byName) { verdict = '**矛盾**：名字命中的条目含该码，但 .inx 里查不到 ⇒ 需复核（`.in` 与 `.inx` 不同代？）'; suspicious++; }
+    else if (inSrc) { verdict = '确认：源码有这一招；该码在本代动作表里没有条目 ⇒ **动作数据缺**（不是映射错）'; confirmed++; }
+    else { verdict = '**待核（缺证据）**：源码没有这一招，值属推断 —— 需 11 职业客户端/源码的动作定义'; noAction++; }
+    console.log(`   ${r.icon.padEnd(28)} ${String(r.map ?? '-').padStart(3)} ${(r.hasEntry ? '有' : '无').padEnd(10)} `
+      + `${(inSrc ? '有' : '无').padEnd(10)} ${(codes.length ? codes.join(',') : '（名字未命中）').padEnd(30)} ${verdict}`);
+  }
+  console.log(`   推的值 ${reviewed} 项：确认 ${confirmed}（其中${noAction ? '' : '全部'}有动作或源码出处）、矛盾 ${suspicious}、待核缺证据 ${noAction}`);
 }

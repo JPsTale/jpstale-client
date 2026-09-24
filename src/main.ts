@@ -26,7 +26,7 @@ import { setSafeMaps } from './game/safeZones.js';
 import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installLayerStack } from './ui/layerStack.js';
-import { installBridge, pressQuickKey, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill } from './net/bridge.js';
+import { installBridge, pressQuickKey, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill, sendSkillHit } from './net/bridge.js';
 import { beginOptimistic, clearCharacterTables, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, subscribeGame } from './app/gameStore.js';
 import { useEffectKindOf } from './game/useEffect.js';
 import { LOC } from './game/itemLocations.js';
@@ -70,7 +70,10 @@ const worldView = createWorldView(app, {
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
   // 施法 → C2S_UseSkill：真实链路。`targetId=0` = **无目标施放**（右键即时施放那条路；
   // 服务端目前对 0 是空转 —— 技能效果属 P3+）。skillId = **数字技能 id**（`game/skillIdentity.ts`）。
-  onCastSkill: (skillId, targetId) => sendUseSkill(skillId, targetId),
+  onCastSkill: (skillId, targetId, animIndex, animClip) =>
+    sendUseSkill(skillId, targetId, animIndex ?? 0, animClip ?? ''),
+  // 技能**事件帧**回报（逐段结算，D7）：服务端收到才结算那一段
+  onSkillHit: (skillId, targetId, hitIndex) => sendSkillHit(skillId, targetId, hitIndex),
   // 武器套切换的兑现（W 键被缓存到动作播完才回调，见 WorldView.requestSwitchWeapon）
   onSwitchWeapon: () => sendSwitchWeapon(),
 });
@@ -979,6 +982,13 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.monsterDeath(Number(msg.monsterDeath!.monsterId));
       break;
     }
+    case 'skillStart': {
+      // 技能起手广播：旁观者立刻播**施法者自己播的那一条**技能动画（服务端透传 anim_index/anim_clip）
+      const ss = msg.skillStart!;
+      worldView.signalSkillStart(Number(ss.casterId ?? 0), Number(ss.skillId ?? 0),
+        Number(ss.targetId ?? 0), Number(ss.animIndex ?? 0), ss.animClip || '');
+      break;
+    }
     case 'attackStart': {
       // 起手广播：远端玩家立刻挥拳（自机由本地攻击循环驱动，内部忽略）
       const as = msg.attackStart!;
@@ -1096,6 +1106,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // `esPlaySound(7, GetDistVolume(pX,pY,pZ))` ⇒ 同一条音、按距离衰减）。
       const lb = msg.levelUpBroadcast!;
       const pid = Number(lb.playerId ?? 0);
+      // 名牌 `Lv.X` 前缀的时效：升级广播自带新等级，就地刷新（不在视野内则忽略，回来时 Appear 会带）
+      worldView.updateRemoteLevel(pid, Number(lb.level) || 0);
       const isSelf = worldView.isSelf(pid);
       const at = worldView.unitFeetPos(pid);
       if (isSelf) {

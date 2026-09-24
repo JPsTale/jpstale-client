@@ -5,6 +5,7 @@ import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview } from '../
 import {
   allocateStat,
   useSkill,
+  skillHit,
   inventoryMove,
   takeToHand,
   bagSwap,
@@ -35,6 +36,7 @@ import {
   applyItemRemoved,
   setInventoryGold,
   setSkillList,
+  patchSkillList,
   setSkillBindings,
   getGameSnapshot,
   type GameCharacter,
@@ -65,6 +67,7 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     statePoint: e.statePoint || 0,
     skillPoint: e.skillPoint ?? 0,
     specialSkillPoint: e.specialSkillPoint ?? 0,
+    rank: e.rank ?? 0,
     hp: e.hp || 0,
     maxHp: e.maxHp || 0,
     mp: e.mp || 0,
@@ -230,7 +233,18 @@ export function installBridge(): void {
         learned,
         skillPoint: msg.skillList.skillPoint || 0,
         specialSkillPoint: msg.skillList.specialSkillPoint || 0,
+        lastErrorKey: null,   // 服务端推新表 = 上一次被拒之后的成功结果，错误提示就地消掉
       });
+    }
+    // 技能操作的拒绝反馈（学/升/洗/绑共用 S2C_Error.key）：skill.* 前缀进面板就地显示；
+    // 其他前缀走统一上报（当前没有别的系统读它，不留静默）
+    if (msg.error) {
+      const key = msg.error.key || '';
+      if (key.startsWith('skill.')) {
+        patchSkillList((cur) => (cur ? { ...cur, lastErrorKey: key } : null));
+      } else {
+        reportFallback('net.error', `S2C_Error key=${key}`);
+      }
     }
     // 技能绑定表（登录/选角、学技能后、改绑定后）：**整表替换**，而且只认这一条消息
     // —— 客户端没有任何本地持久化，`null`（还没到）就是显式未知（AGENTS #12）。
@@ -309,8 +323,13 @@ export function sendAllocateStat(stat: string, points = 1): void {
 
 /** 释放技能（服务端权威）：`skillId` = **数字技能 id**（`iconFile → skillId` 查表得来，见
  *  `game/skillIdentity.ts`）；`targetId` 默认 0，见 `protocol.useSkill`。 */
-export function sendUseSkill(skillId: number, targetId = 0): void {
-  send(useSkill(skillId, targetId));
+export function sendUseSkill(skillId: number, targetId = 0, animIndex = 0, animClip = ''): void {
+  send(useSkill(skillId, targetId, undefined, animIndex, animClip));
+}
+
+/** 技能事件帧回报（服务端据此结算该段；D7）。`hitIndex` = 第几个事件帧（0 起）。 */
+export function sendSkillHit(skillId: number, targetId: number, hitIndex: number): void {
+  send(skillHit(skillId, targetId, hitIndex));
 }
 
 /** 学/升级技能（服务端权威：判定 + 扣钱扣点；结果由 `S2C_SkillList`/`S2C_Error` 回来）。 */

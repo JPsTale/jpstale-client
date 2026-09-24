@@ -43,14 +43,15 @@ const BY_ICON = new Map<string, RateRow>();
 for (const r of ROWS) BY_ICON.set(r.icon.replace(/\.bmp$/i, '').toLowerCase(), r);
 
 /** `GetAttackSpeedFrame(as, add)` 的帧步进（`playsub.cpp:6338-6356`；`fONE=256`/`FLOATNS=8`） */
-function frameStepFromAttackSpeed(attackSpeed: number, add: number): number {
+function frameStepFromAttackSpeed(attackSpeed: number | null, add: number): number | null {
+  if (attackSpeed == null) return null;      // 攻速未知 ⇒ 这一形态**算不出**（不拿别处的值顶上）
   const clamped = Math.max(0, Math.min(attackSpeed - 6, 6));
   const addBonus = add > 0 && add < 6 ? add * 32 : 0;
   return (80 * (256 + 32 * clamped + addBonus)) >> 8;
 }
 
 /** 该行的帧步进；`null` = 查不到/认不出的形态（**不猜**） */
-function frameStepOf(row: RateRow, attackSpeed: number): number | null {
+function frameStepOf(row: RateRow, attackSpeed: number | null): number | null {
   switch (row.kind) {
     case 'const': return row.value ?? null;
     case 'gaf-const': return frameStepFromAttackSpeed(row.value ?? 0, 0);
@@ -59,9 +60,12 @@ function frameStepOf(row: RateRow, attackSpeed: number): number | null {
       // `60 + (Charging_Strike_Time[point-1] * 2)`：表在我们自己的生成物里（同一个来源），
       // 等级取当前技能等级（`skillLevelByIcon`，单一来源）
       const lv = skillLevelByIcon(row.icon);
-      const arr = (TABLES as { arrays: Record<string, { values: number[] }> }).arrays[row.table ?? ''];
-      if (lv == null || !arr) return null;
-      return (row.base ?? 0) + (arr.values[lv - 1] ?? 0) * (row.mult ?? 1);
+      // 表在**我们自己的生成物**里（与源码同一份数据）；二维表（`int[10][2]`）不是本分支用的形状
+      const arr = (TABLES as unknown as { arrays: Record<string, { values: number[] | number[][] }> })
+        .arrays[row.table ?? ''];
+      if (lv == null || !arr || Array.isArray(arr.values[0])) return null;   // 二维表不是本分支的形状
+      const flat = arr.values as number[];
+      return (row.base ?? 0) + (flat[lv - 1] ?? 0) * (row.mult ?? 1);
     }
     case 'loop-count': return row.base ?? null;   // `90 + 10*MotionLoop`：循环数我们尚未建模 ⇒ 只取基值
     default: return null;
@@ -72,11 +76,11 @@ function frameStepOf(row: RateRow, attackSpeed: number): number | null {
  * 本招（按 `skillId`）此刻的动作速率倍率。
  *
  * @param attackSpeed 服务端下发的 `character.attackSpeed`（与 `smCharInfo.Attack_Speed` 同一量纲，
- *        见 `GetAttackSpeedMainFrame` 与我们的 `attackIntervalMs` 同式）
- * @returns `null` = 该招的速率**未取证**（源里没有这一行，如 11 职业才有的技能）——
+ *        见 `GetAttackSpeedMainFrame` 与我们的 `attackIntervalMs` 同式）；`null` = 还不知道
+ * @returns `null` = 该招的速率**未取证**（源里没有这一行，如 11 职业才有的技能，或攻速未知）——
  *          调用方按 `?? 1` 处理**并必须已上报降级**，不许静默当成 1
  */
-export function skillRate(skillId: number, attackSpeed: number): number | null {
+export function skillRate(skillId: number, attackSpeed: number | null): number | null {
   const identity = skillRowBySkillId(skillId);
   if (!identity) {
     reportFallback('skill.rate', `skillId=${skillId} 不在技能身份表里 ⇒ 速率未取证（按 1 播）`);
@@ -99,7 +103,7 @@ export function skillRate(skillId: number, attackSpeed: number): number | null {
  * 按**图标**取同一个速率（远端那条路手里只有图标 —— 它从服务端下发的动画条目反查）。
  * `null` 的含义同 `skillRate`。两条入口共用上面同一份实现与同一张表，不重复判定。
  */
-export function skillRateByIcon(iconFile: string, attackSpeed: number): number | null {
+export function skillRateByIcon(iconFile: string, attackSpeed: number | null): number | null {
   const row = BY_ICON.get(iconFile.replace(/\.bmp$/i, '').toLowerCase());
   if (!row || row.kind === 'other') {
     reportFallback('skill.rate', `「${iconFile}」在 SkillSub 的 MotionLoopSpeed 里没有对应行 ⇒ 速率未取证（按 1 播）`);

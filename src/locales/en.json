@@ -234,6 +234,7 @@
   "skills": {
     "pt": "Skill Pts",
     "ptSpecial": "Special Pts",
+    "reset": "Reset Skill Points",
     "reqLevel": "Required Level",
     "skillType": "Type",
     "consume": "Cost",
@@ -511,13 +512,16 @@
       "unstuckCooldown": "Unstuck on cooldown, retry in {sec}s",
       "unstuckFailed": "Unstuck failed: no usable start point",
       "partyUsage": "Usage: //party <player>",
-      "getUsage": "Usage: /@get <item code> - e.g. ec101 / EC101 / bi108 (item code only; no DB ids, no names)",
+      "getUsage": "Usage: /@get <item code> [count] - e.g. ec101 / EC101 / bi108 (item code only; no DB ids, no names)",
       "itemNotFound": "Item not found: {token}",
+      "getBadCount": "Invalid count: {arg} (must be an integer 1~{max})",
       "dropOverLimit": "Ground is full, drop discarded",
       "unknownGm": "Unknown GM command: /{name} (GM system in development)",
       "unknown": "Unknown command: /{name}",
       "invalidNumber": "Invalid number in command: {cmd}",
-      "useItemTooFast": "Use failed: too soon after the last use"
+      "useItemTooFast": "Use failed: too soon after the last use",
+      "setRankUsage": "Usage: /@set_rank <0..{max}> (0=tier1 ... 4=tier5 reserved)",
+      "setRankBad": "Invalid rank: {arg} (valid 0..{max})"
     },
     "pickup": {
       "bagFull": "Bag is full, cannot pick up",

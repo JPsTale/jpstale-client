@@ -8,7 +8,7 @@ import { t } from '../../i18n/index.js';
 import { skillLevelOf, skillMasteryOf } from '../../game/skillLevel.js';
 import { skillIdByIcon, skillRowBySkillId, type SkillIdentityRow } from '../../game/skillIdentity.js';
 import { learnGate, type LearnGate } from '../../game/skillLearn.js';
-import { bindQuickKey, equipFistSkill, sendLearnSkill } from '../../net/bridge.js';
+import { bindQuickKey, equipFistSkill, sendLearnSkill, sendResetSkillPoints } from '../../net/bridge.js';
 import { UNBOUND, fistSlotOfSkill, quickKeyOfSkill, type FistSlot } from '../../game/skillBinding.js';
 
 // 技能等级/熟练度 = **服务端 `S2C_SkillList`**（唯一实现在 `game/skillLevel.ts`）；
@@ -244,7 +244,13 @@ export default function SkillPanel() {
           <span>{t('skills.ptSpecial')}</span>
           <b>{skillList ? skillList.specialSkillPoint : c.specialSkillPoint}</b>
         </div>
+        {/* 洗点：服务端守卫（会话内一次）说了算，面板只发包不做乐观更新；
+            被拒回 skill.op.resetUsed，经 S2C_Error → lastErrorKey 就地显示 */}
+        <button type="button" className="jp-skill-reset" onClick={() => sendResetSkillPoints()}>
+          {t('skills.reset')}
+        </button>
       </div>
+      {skillList?.lastErrorKey && <div className="jp-skill-err">{t(skillList.lastErrorKey)}</div>}
       {tip && createPortal(<SkillTip skill={tip.skill} lv={tip.lv} mastery={tip.mastery} x={tip.x} y={tip.y} displayName={tip.displayName} />, document.body)}
     </div>
   );

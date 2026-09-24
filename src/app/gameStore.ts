@@ -29,6 +29,8 @@ export interface SkillListState {
   learned: Readonly<Record<number, LearnedSkillState>>;   // skillId → 等级/熟练度
   skillPoint: number;          // 1–3 转池剩余点
   specialSkillPoint: number;   // 4 转池剩余点
+  /** 最近一次被拒的技能操作原因码（`skill.op.*` / `skill.bind.*`，来自 S2C_Error）。面板就地显示；下次成功推送不清除 */
+  lastErrorKey: string | null;
 }
 
 export interface GameCharacter {
@@ -49,6 +51,7 @@ export interface GameCharacter {
   statePoint: number;
   skillPoint: number;          // 1–3 转池剩余点（与 `SkillListState.skillPoint` 同源：服务端 `free(Pool.ONE)`）
   specialSkillPoint: number;   // 4 转池剩余点（同上 `free(Pool.FOUR)`；**5 转不属任何池**，别读成"T5 的点"）
+  rank: number;                // 转职阶级（原版 ChangeJob：0=1转…3=4转；服务端 JobService 按等级 20/40/60 推进）
   hp: number;
   maxHp: number;
   mp: number;
@@ -345,6 +348,14 @@ function sameBuff(a: BuffEntry, b: BuffEntry): boolean {
 /** 整表替换已学技能表（服务端每次下发都是完整表；未学的技能不在键里 = 明确的"未学"）。 */
 export function setSkillList(v: SkillListState | null): void {
   commit({ skillList: v });
+}
+
+/** 技能表的**部分更新**（当前只有 lastErrorKey）：表未到（null）时不新建，静默忽略 */
+export function patchSkillList(patch: (cur: SkillListState) => SkillListState | null): void {
+  const cur = getGameSnapshot().skillList;
+  if (!cur) return;
+  const next = patch(cur);
+  if (next !== cur) commit({ skillList: next });
 }
 
 /**

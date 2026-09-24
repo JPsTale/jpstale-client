@@ -72,8 +72,16 @@ ok('`tryNoTargetCast()` 在代码（去注释）里只出现 2 次：1 处定义
   (stripComments(wv).match(/tryNoTargetCast\(\)/g) ?? []).length === 2);
 ok('右键"先试无目标"在"打光标下的怪"之前（原版 Winmain.cpp:3080-3090 的先后）',
   before(mouseDown, 'tryNoTargetCast()', 'fistCastTarget(slot,'));
-ok('右键失败仍走原有路径：光标下有怪 ⇒ 用右拳技能打它（fistCastTarget + playEquippedSkill）',
-  /const aim = fistCastTarget\(slot, e\.clientX, e\.clientY\);/.test(mouseDown) && /playEquippedSkill\(slot, aim\);/.test(mouseDown));
+// 2026-09-24 改（用户实测："近战应该跟普攻一样跑到目标身边再攻击，而不是原地施法"）：
+// 点怪**不再当场施法** —— 原版这一岔是 `SelMouseButton = 1/2; TraceAttackPlay()`（`Winmain.cpp:2994-2996`），
+// 技能由攻击循环在攻击距离内逐次放出（`playmain.cpp:2474` 的 `PlaySkillAttack(lpAttackSkill, …)`）。
+ok('点怪**不当场施法**（交给追打循环在射程内放），且记住"用哪只拳"',
+  /const aim = fistCastTarget\(slot, e\.clientX, e\.clientY\);/.test(mouseDown)
+  && /selfAttackSlot = slot;/.test(mouseDown)
+  && !/playEquippedSkill\(slot, aim\)/.test(mouseDown));
+ok('右键失败且光标下有怪 ⇒ 选目标去追打（源码 break 之后落到 `SelMouseButton=2; TraceAttackPlay()`）',
+  /if \(e\.button === 2\) \{/.test(mouseDown)
+  && /onGroundTap\(e\.clientX, e\.clientY\);/.test(mouseDown));
 ok('右键两处都失败 ⇒ 只 preventDefault（保持"什么都不做"，不新造语义）',
   /if \(e\.button === 2\) \{ e\.preventDefault\(\); return; \}/.test(mouseDown));
 ok('无目标施放失败**不弹任何消息**（原版静默；内部数据缺口才走 reportFallback）',
@@ -84,9 +92,10 @@ ok('施放分支 return 后左键原有分支仍在（移动/拾取/选目标不
   && /const overTarget = nameplateTargetAt\(e\.clientX, e\.clientY\) !== null/.test(wv));
 // 2026-09-23 改：左键"点怪施法"之后**不再 return**（原版 `SelMouseButton = 1; TraceAttackPlay()`：
 // 施法 与 "选中这只怪去追打" 是同一件事的两个后果；早先 return 掉，于是不再有后续的技能出手与音）。
-ok('左键点怪之后**不 return**（右拳那条才 return）—— 否则"点怪放技能"不会进入追打循环',
-  /if \(e\.button === 2\) return;/.test(mouseDown)
-  && before(mouseDown, 'playEquippedSkill(slot, aim);', 'if (e.button === 2) return;'));
+ok('左键点怪之后**不 return**（右键那条才 return）—— 否则不会进入追打循环',
+  /selfAttackSlot = slot;/.test(mouseDown)
+  && /if \(e\.button === 2\) \{/.test(mouseDown)
+  && !/if \(e\.button === 2\) return;/.test(mouseDown));
 ok('"打光标下的怪"仍要求三件：该拳解得出来（绑定是技能）+ 光标下有怪 + 是怪不是空地',
   /if \(!fistSkillOf\(slot\)\) return null;/.test(wv)
   && /const tag = nameplateTargetAt\(cx, cy\) \?\? pickTargetAt\(cx, cy\);/.test(wv)
@@ -166,10 +175,13 @@ console.log('③ 四道闸门（跑真模块 game/skillNoTarget.ts）+ 村庄判
   // 2026-09-24 加：unknown/invalid **不放**（旧写法 `!fs || village` 会把"异职业绑定"也退成普攻 = 兜底）
   ok('绑定表没到 / 绑的不是本职业 ⇒ **这一击不放**（不退化普攻）',
     /if \(it\.kind === 'unknown' \|\| it\.kind === 'invalid'\) return false;/.test(wv));
-  ok('追打循环逐次出手也照同一个意图（村庄 ⇒ 普攻；unknown/invalid ⇒ 本轮不起手，判据在 if 条件里）',
-    /const it = isVillageMap\(currentMapId\) \? \{ kind: 'normal' as const \} : fistIntent\('left'\);/.test(stripComments(wv))
+  // 2026-09-24 改：用哪只拳**由"选中目标的那个键"决定**（原版 `SelMouseButton → pLeftSkill/pRightSkill`，
+  // `playmain.cpp:2303-2313`），不再是硬编码左拳 —— 右键选的目标要放右拳技能。
+  ok('追打循环逐次出手照同一个意图（村庄 ⇒ 普攻；unknown/invalid ⇒ 本轮不起手；拳位由 selfAttackSlot 决定）',
+    /const it = isVillageMap\(currentMapId\) \? \{ kind: 'normal' as const \} : fistIntent\(selfAttackSlot\);/.test(stripComments(wv))
     && /const bindBroken = it\.kind === 'unknown' \|\| it\.kind === 'invalid';/.test(wv)
-    && /if \(!busy && !bindBroken && animState/.test(wv));
+    && /if \(!busy && !bindBroken && !mpBlocked && animState/.test(wv)
+    && /const mpBlocked = it\.kind === 'skill' && castResourceBlocked\(it\.skillId\);/.test(wv));
 
   // 边界必须写在代码注释里（"明确只做到名单级"，不是"没做"）
   ok('模块头注释写明未实现项（MP/SP、武器要求、互斥、CD、逐 case 守卫）',

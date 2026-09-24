@@ -85,13 +85,18 @@ import { isShootingMode } from '../char/weapon-type.js';
 import { skillLevelByIcon } from '../game/skillLevel.js';
 import { fistIntentOf, type FistIntent } from '../game/skillBinding.js';
 import { skillMotionSrcByIcon, weaponSfxForIcon } from '../game/skillMotionSrc.js';
+import { skillRate, skillRateByIcon } from '../game/skillRate.js';
 import { noTargetCastBlock } from '../game/skillNoTarget.js';
+import { checkCastResources } from '../game/skillCost.js';
+import { skillLevelOf } from '../game/skillLevel.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
+import { skillIdByIcon } from '../game/skillIdentity.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
 import { frameStart as perfFrameStart, mark as perfMark, frameEnd as perfFrameEnd, setCounter as perfSetCounter, report as perfReport } from '../app/profiler.js';
 import { pickVisibleMonsters, VIS_TIERS, type VisibilityCandidate, type VisibilityResult } from '../render/monster-visibility.js';
 import { loadDisplayPrefs, type DisplayPrefs } from './display-prefs.js';
+import { layoutItemLabels, PILL_ANCHOR_LIFT } from './item-label-layout.js';
 import { updateWaveCamera, setWaveCameraEnabled } from '../render/wave-camera.js';
 import { setBillboardCamera } from '../render/effects/part-to-quarks.js';
 import { setOrientCamera } from '../render/effects/orient-shared.js';
@@ -222,6 +227,8 @@ export interface WorldView {
   setSelfName(name: string): void;
   /** 自机等级（跨图边界的等级门槛判定用） */
   setSelfLevel(level: number): void;
+  /** `S2C_LevelUpBroadcast`：刷新视野内远端玩家的等级（名牌 `Lv.X` 前缀用，见实现注释） */
+  updateRemoteLevel(playerId: number, level: number): void;
   /** 碰撞调试可视化的开关（F9 / `?coll=1` / 控制台都走它） */
   /** 使用道具：播 EAT 动画 + 事件帧的粒子/音效（与 requestPlayEat 同一实现）。false = 没吃成（别发请求） */
   playEat(kind?: UseEffectKind): boolean;
@@ -241,6 +248,11 @@ export interface WorldView {
    * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动。
    */
   signalAttackStart(attackerId: number, targetId: number, attackSpeed: number, animIndex?: number, animClip?: string): void;
+  /**
+   * 技能起手广播（`S2C_SkillStart`）：旁观者立刻播**施法者自己播的那一条**技能动画
+   * （含"演员未就绪"的补播队列，与 `signalAttackStart` 同一套）。
+   */
+  signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex: number, animClip: string): void;
   /**
    * S2C_Damage 受击硬直：targetId 为自机 → 站立/走/跑时播受击动画（攻击/技能中不打断）；
    * 为远端玩家 → 同规则作用到该 actor。damage<=0（抵抗/吸收）不播。
@@ -372,7 +384,12 @@ export interface WorldViewOpts {
    *   ① 无目标施放（右键先试，`tryNoTargetCast`）⇒ `targetId = 0`；
    *   ② 用该拳技能打光标下的怪（左/右键，`playEquippedSkill`）⇒ `targetId = 怪的 id`。
    * `skillId` = **数字技能 id**（图标 → id 的唯一查表在 `game/skillIdentity.ts`）。 */
-  onCastSkill?: (skillId: number, targetId: number) => void;
+  onCastSkill?: (skillId: number, targetId: number, animIndex?: number, animClip?: string) => void;
+  /**
+   * 技能**事件帧**回报（逐段）—— 服务端收到才结算那一段（D7）。
+   * 与 `onAttackHit` 同一语义：原版在动画事件帧才触发伤害，每次事件帧独立结算。
+   */
+  onSkillHit?: (skillId: number, targetId: number, hitIndex: number) => void;
   /**
    * 兑现一次「切换武器套」（W 键）→ main.ts 发 C2S_SwitchWeapon。
    *
@@ -671,6 +688,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 真正的技能目标将来由服务端/技能系统给，那时换掉这一处即可。
    */
   let selfSkillAim: THREE.Object3D | null = null;
+  /** 本次施法的目标怪 id（起手时由 `beginSelfSkill` 从 `aim` 定死；0 = 无目标，如自身 buff）。 */
+  let selfSkillTargetId = 0;
+  /**
+   * **攻击循环用哪只拳的技能** —— 由"选中目标的那个键"决定：
+   * 原版 `SelMouseButton = 1/2` ⇒ `pLeftSkill/pRightSkill`（`playmain.cpp:2303-2313`），
+   * 再经 `:2474` 的 `PlaySkillAttack(lpAttackSkill, …)` 起手。左键选目标 → 左拳技能，右键 → 右拳技能。
+   */
+  let selfAttackSlot: 'left' | 'right' = 'left';
   /**
    * 瞄准**怪的身中**而不是脚底：`root.position` 在地面，而原版给特效定高度惯用 `pY + N*fONE`
    * （如蘑菇 `pY + 24*fONE`；我方 `MONSTER_ATTACK_FX` 的 `height` 也是这一套）。
@@ -1469,7 +1494,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfHeadGroup: THREE.Group | null = null;   // 自机头部（可替换：转职换头饰/道具换发型）
   let selfBodyArmor: string | null = null;        // 当前身体 key（job:armor:override）
   let selfHead = 0;                               // 头型 faceNum
-  let selfHeadTier = 0;                           // 转职阶级 tier（rank，0~3，决定头模后缀 a/b/c）
+  let selfHeadTier = 0;                           // 转职阶级 tier（= 原版 ChangeJob：0..4，5 转预留；决定头模后缀 ''/a/b/c/d，rank 2 用下划线式）
 
   // 自机初始化：建私有骨架壳 + 头 + 初始身体，动画由全局 bones/skeleton 驱动（帧循环复用）。
   // 与远端同构（cloneBoneHierarchy + cloneSkinnedMesh），规避 char-loader 共享 group 导致的
@@ -2041,9 +2066,29 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /** 起手（技能动画开始）：记下这一行 + 播起手音（原版 `SkillPlaySound`，在 `BeginSkill` 那一刻） */
+  /**
+   * 场景节点 → 怪物 id（`0` = 不是怪物/没有）。
+   *
+   * **唯一实现**：此前 `playEquippedSkill` 与 `nameplateTargetAt` 各写一遍同样的遍历
+   * （AGENTS #15：同一判定出现第二份就是 bug 的种子），技能目标这条链又要用第三次 ⇒ 收成一处。
+   */
+  function monsterIdOfRoot(root: THREE.Object3D | null | undefined): number {
+    if (!root) return 0;
+    for (const [id, m] of monsters) {
+      if (m.root === root) return id;
+    }
+    return 0;
+  }
+
   function beginSelfSkill(iconFile: string, aim: THREE.Object3D | null = null): void {
     selfSkillEventFired = 0;
     selfSkillAim = aim;
+    // **本次施法的目标**（原版 `lpCharSelPlayer`）：鼠标施法只有 `aim`（悬停的那只怪），
+    // 而 `selfAttackTargetId` 是**自动攻击循环**在跑到射程内起手时才赋的 —— 鼠标施法路径从不设它。
+    // 2026-09-24 实测：技能事件帧上报用了 `selfAttackTargetId` ⇒ 鼠标施法时是 0/陈旧值 ⇒
+    // 单目标的 Critical Hit / Jumping Crash 在服务端 `requireTarget` 被拒 ⇒ **技能没伤害**
+    // （Pike Wind 因为是自身中心 AoE、不读 targetId，所以看起来正常）。目标在**起手时定死**。
+    selfSkillTargetId = monsterIdOfRoot(aim);
     selfSkillRow = skillFxRowByIcon(iconFile);
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
     fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
@@ -2173,15 +2218,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const it = fistIntent(slot);
     if (it.kind === 'unknown' || it.kind === 'invalid') return false;   // 显式未知/异常：不放
     if (it.kind === 'normal' || isVillageMap(currentMapId)) return playSkillByIcon('skill_normal', aim);
-    // 施放真走服务端（真实链路，#14 结果同步）：有瞄准的怪 → 发 C2S_UseSkill。
-    // 带 aim 的调用方是**鼠标施法**（左键=左拳 / 右键=右拳，见 `fistCastTarget`）；
-    // 服务端 handleUseSkill 即时结算该技能（含 44 的 attackEffect）→ S2C_AttackResult 命中外观。
-    // ⚠ 上报的是**数字 skillId**（`it.row` 已保证身份存在 —— 查不到就不发，宁可这一击不结算）
+    // 施放真走服务端（真实链路，D7）：先**本地播**（拿到这一招的动画条目），再上报"意图 + 动作"。
+    // 带 aim 的调用方是**鼠标施法**（左键=左拳 / 右键=右拳，见 `fistCastTarget`）。
+    // ⚠ 上报的是**数字 skillId**（`it.row` 已保证身份存在 —— 查不到就不发，宁可这一击不施放）。
+    // ⚠ 顺序不能反：`animIndex` 是**刚播的那条动作**（AGENTS #14 透传给旁观者），
+    //   播之前拿不到 ⇒ 必须先 `playSkillByIcon` 再上报（与追打循环同一顺序）。
+    const played = playSkillByIcon(it.row.iconFile, aim);
     if (aim) {
-      const aimId = [...monsters.entries()].find(([, m]) => m.root === aim)?.[0];
-      if (aimId != null) opts?.onCastSkill?.(it.skillId, aimId);
+      const aimId = monsterIdOfRoot(aim);
+      const motion = animState?.getCurrentMotion();
+      if (aimId != null) opts?.onCastSkill?.(it.skillId, aimId, motion?.index ?? 0, selfAnimClip);
     }
-    return playSkillByIcon(it.row.iconFile, aim);
+    return played;
   }
 
   // 相机跟随角色（/pt/maps/ updateDummy 同款，Winmain.cpp 卫星相机）
@@ -2400,6 +2448,47 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * "该技能必须有目标"门，用户 2026-09-18 定）不算放出去 —— 不发包，退回"打光标下的怪"。
    * @returns true = 已施放（调用方必须**直接结束**，不再进"用右拳打怪"那条路）
    */
+  /** 施法预校验被拒的**提示节流**（同一个原因 3 秒内只提示一次；攻击循环每击都会试，不节流会刷屏） */
+  let lastCastBlockKey = '';
+  let lastCastBlockAt = 0;
+  const CAST_BLOCK_NOTIFY_MS = 3000;
+
+  /**
+   * 客户端预校验拦下时提示玩家（**节流**：同一原因 3 秒一次）。
+   * 用 `appendSystemMessage` —— 与"等级不足进不了图"那条同一通道（`map.levelTooLow`），
+   * 不另造提示层。原版这里是"拳图标变灰"（无文字），我们没有那个指示器 ⇒ 用一行文字代替，
+   * 否则玩家看到的是"点了没反应"（AGENTS #12：不许静默）。
+   */
+  function blockCast(reasonKey: string): true {
+    const now = performance.now();
+    if (reasonKey !== lastCastBlockKey || now - lastCastBlockAt > CAST_BLOCK_NOTIFY_MS) {
+      lastCastBlockKey = reasonKey;
+      lastCastBlockAt = now;
+      appendSystemMessage(t(reasonKey), Date.now());
+    }
+    return true;
+  }
+
+  /**
+   * 施法资源门（客户端预校验，唯一实现）：MP 够不够。
+   * 权威判定在服务端（`SkillCastService.begin`）；这里只为**别先把动画播出去再被拒**
+   * （用户 2026-09-24："缺少魔法值现在也可以施法，至少客户端应该判断施法前提吧"）。
+   * @returns true = 拦下（调用方**不要**播动画、不要发包）
+   */
+  function castResourceBlocked(skillId: number): boolean {
+    const point = skillLevelOf(skillId);
+    const mp = getGameSnapshot().character?.mp ?? 0;
+    const r = checkCastResources(skillId, point, mp);
+    if (r.block === 'noMp') {
+      return blockCast('skill.op.noMp');
+    }
+    if (r.block === 'notEnoughData') {
+      // 表缺/越界：**不拦**（数据缺不是"蓝不够"），但留痕 —— 静默拦会变成"技能放不出来"这种最难查的症状
+      reportFallback('skill.cost', `技能 0x${skillId.toString(16)} 的 MP 表值取不到（等级 ${point}）⇒ 不拦，放行`);
+    }
+    return false;
+  }
+
   function tryNoTargetCast(): boolean {
     if (!animState) return false;
     const st = animState.getCurrentState();
@@ -2410,6 +2499,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const selfClass = selfClassDir();
     if (selfClass == null) return false;
     if (noTargetCastBlock(fs.skillId, selfClass, isVillageMap(currentMapId)) != null) return false;
+    if (castResourceBlocked(fs.skillId)) return false;   // MP 门（原版 `sinCheckSkillUseOk` 的 MP 那一半）
     // ① 本地先播（原版 BeginSkill/SetMotion 在发包之前）。播不出来（连普攻都找不到）⇒ 这一击不算放出去
     if (!playSkillByIcon(fs.icon, null)) return false;
     opts?.onCastSkill?.(fs.skillId, 0);              // ② 再发 C2S_UseSkill(skillId, targetId=0)，不等回包
@@ -2427,13 +2517,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const aim = fistCastTarget(slot, e.clientX, e.clientY);
       if (aim) {
         e.preventDefault();
-        playEquippedSkill(slot, aim);
-        // ⚠ **左键不 return**：原版这一岔是 `SelMouseButton = 1; TraceAttackPlay();`（`Winmain.cpp:2994-2996`）
-        //   —— 施法**与**"选中这只怪去追打"是同一件事的两个后果（技能由攻击循环逐次放出，
-        //   见 `playmain.cpp:2474` 的 `PlaySkillAttack(lpAttackSkill, …)`）。早先这里直接 return，
-        //   于是"点怪放技能"之后并不进入战斗循环（也就不再有后续的技能音）。
-        //   右键保持 return（源码那条 `break` 只跳"打人"分支）。
-        if (e.button === 2) return;
+        // 这一击用**哪只拳**的技能：`SelMouseButton = 1/2` ⇒ `pLeftSkill/pRightSkill`（`playmain.cpp:2303-2313`）
+        selfAttackSlot = slot;
+        // ⛔ **不在按下瞬间施法**（用户 2026-09-24 实测："近战应该跟普攻一样跑到目标身边再攻击，
+        //   而不是原地施法"）。原版这一岔是 `SelMouseButton = 1/2; TraceAttackPlay();`
+        //   （`Winmain.cpp:2994-2996`）—— 选中这只怪去追打，**技能由攻击循环在攻击距离内逐次放出**
+        //   （`:2474` 的 `PlaySkillAttack(lpAttackSkill, …)`）。
+        //   我们此前在这里直接 `playEquippedSkill`：站多远都当场放一次 ⇒ 与源码不符。
+        if (e.button === 2) {
+          // 右键：源码那条 `break` 之后落到 `SelMouseButton = 2; TraceAttackPlay()` ⇒ 同样要"选目标去追打"
+          onGroundTap(e.clientX, e.clientY);
+          return;
+        }
+        // 左键：不 return —— 交给下面"按在目标上"的逻辑，抬起时 `onGroundTap` 选目标 + Chase
       } else if (e.button === 2) { e.preventDefault(); return; }   // 右键也放不出、光标下也没怪：什么都不做（原版同）
     }
     if (e.button === 0) {
@@ -3003,6 +3099,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface MonsterActor {
     monsterId: number;
     name: string;
+    /** 等级（`S2C_MonsterAppear.level`，模板 `monsterlist.level`）—— 名牌画 `Lv.X 名字` 前缀 */
+    level: number;
     /** 服务端 `monster_effect_id`：用于音效目录解析 */
     monsterEffectId: number;
     /**
@@ -3111,7 +3209,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   const monsterDiedDuringLoad = new Set<number>();
   // 进场竞态：与玩家 pendingAppears 同理（世界未建好时暂存，show() 后重放）
-  const pendingMonsterAppears: { monsterId: number; name: string; modelFile: string; hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number; dead?: boolean }[] = [];
+  // 类型即 spawnMonster 的参数形状（monsterSpawnerInfo）—— 之前手抄窄了一份，加字段会两处漂移
+  const pendingMonsterAppears: Parameters<typeof spawnMonster>[0][] = [];
 
   /**
    * 给本刀的攻击音效**装锚点**：记下"事件帧"，由渲染循环在 `compFrame` 跨过它时播
@@ -3389,6 +3488,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   function spawnMonster(actorInfo: {
     monsterId: number; name: string; modelFile: string;
+    /** 等级（`S2C_MonsterAppear.level`）—— 名牌 `Lv.X 名字` 前缀 */
+    level?: number;
     hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number;
     /** 服务端 Appear 就带尸体标记（中途进场/重连时看见的已死怪） */
     dead?: boolean;
@@ -3462,6 +3563,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         });
         actorObj = {
           monsterId: mid,
+          level: actorInfo.level && actorInfo.level > 0 ? actorInfo.level : 1,
           monsterEffectId: actorInfo.monsterEffectId || 0,
           name: actorInfo.name,
           modelKey: actorInfo.modelFile,
@@ -3725,8 +3827,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     mats: { mat: THREE.MeshPhongMaterial; base: THREE.Color }[];
   }
   const groundItems = new Map<number, GroundItemActor>();
-  let groundItemLabelsOn = false;
-  function toggleGroundItemLabels(): void { groundItemLabelsOn = !groundItemLabelsOn; }
+  // A 键"掉落物名称"开关：纯显示偏好，独立持久化（同 `locale` 的存法），进游戏不必重按。
+  // 不放进 `pt.display` —— 画面设置页是把 prefs 整对象快照进 React state 后原样写回的，
+  // 混进去会被面板的旧快照覆盖（用户 2026-09-24：客户端要记住 A 键状态）。
+  const GROUND_LABELS_KEY = 'pt.groundItemLabels';
+  let groundItemLabelsOn = localStorage.getItem(GROUND_LABELS_KEY) === '1';
+  function toggleGroundItemLabels(): void {
+    groundItemLabelsOn = !groundItemLabelsOn;
+    try { localStorage.setItem(GROUND_LABELS_KEY, groundItemLabelsOn ? '1' : '0'); } catch { /* 隐私模式/配额满：忽略，仅影响本次 */ }
+  }
   const pendingGroundItems: { groundItemId: number; name: string; x: number; y: number; z: number; dorpItem: string; itemId: number; quantity: number; money: number }[] = [];
   /** 掉落物离地微抬：原版 `ps->sSelfPosition.iY = ps->sPosition.iY + 6 * 256`（定点 fONE=256）→ 6/256 世界单位 */
   const GROUND_LIFT = 6 / 256;
@@ -3856,24 +3965,42 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     lifeRatio?: number;
     selected: boolean;
   }
-  /** 在锚点 (x,y) 上方画一块名牌：名牌块(名字+公会)尺寸恒定；血条出现时仅让整块上移，自身不变高 */
+  const NAME_FONT = '13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+  const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
+
+  /**
+   * 名牌的 `Lv.X ` 前缀（怪物/远端/自机同一格式，用户 2026-09-24 要求）。
+   * 复用面板的 `panel.lv` 文案（"Lv.{level}"）—— 格式只有这一份。
+   * level<=0（还没收到权威值）不加前缀，不显示 "Lv.0"。
+   */
+  function lvPrefix(level: number): string {
+    return level > 0 ? t('panel.lv', { level }) + ' ' : '';
+  }
+
+  /**
+   * 名牌**块**（名字行 + 可选第二行；不含血条/倒计时条）的屏幕尺寸。
+   * 绘制（drawPill）与掉落物防重叠布局共用这一份 —— 尺寸口径只此一处，不会两处漂移。
+   */
+  function pillBlockSize(ctx: CanvasRenderingContext2D, name: string, line2: string | null): { w: number; h: number } {
+    ctx.font = NAME_FONT;
+    const nameW = ctx.measureText(name).width;
+    const line2W = line2 ? ctx.measureText(line2).width : 0;
+    return { w: Math.max(nameW, line2W) + 16, h: 18 + (line2 ? 3 + 14 : 0) };
+  }
+
   /**
    * 画一块名牌，并**返回它的屏幕矩形**（覆盖名牌块与血条）。
    * 返回矩形是给鼠标拾取用的：用户 2026-09-13 要"指向名牌 = 指向该目标"——
    * 由绘制方给出矩形，命中判定与绘制共用同一份几何，不会各写一套后漂移。
    */
   function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): { x: number; y: number; w: number; h: number } {
-    const NAME_FONT = '13px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
-    const CLAN_FONT = '11px Verdana, "Microsoft YaHei", "PingFang SC", sans-serif';
     // 第二行：公会名（带 ◆）或召唤物的 `(主人名)`（不带前缀）
     const line2 = s.clan ? '◆ ' + s.clan : (s.sub || null);
-    ctx.font = NAME_FONT;
-    const nameW = ctx.measureText(name).width;
-    const line2W = line2 ? ctx.measureText(line2).width : 0;
-    let pillW = Math.max(nameW, line2W) + 16;
+    const block = pillBlockSize(ctx, name, line2);
+    let pillW = block.w;
 
     // 名牌块（名字+第二行）固定高；条挂在名牌块下方，出现仅抬高名牌块
-    const blockH = 18 + (line2 ? 3 + 14 : 0);
+    const blockH = block.h;
     const BAR_W = 84, HP_BAR_H = 7, LIFE_BAR_H = 5;
     // 名牌块下面可以挂**两条**：血条（受伤/选中/自己的召唤物）与召唤物的倒计时条。
     // 用列表驱动高度与绘制 —— 多一条就只在这里 push 一次，不必把下面每处
@@ -4143,6 +4270,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (Number.isFinite(level) && level > 0) selfLevel = level;
   }
 
+  /**
+   * `S2C_LevelUpBroadcast`：刷新视野内远端玩家的等级（消息带 playerId + level）。
+   * `RemoteActor.level` 平时只在 PlayerAppear（进视野）时带入 —— 名牌挂上 `Lv.X` 前缀后，
+   * 不在这里刷新的话，别人升级会一直显示旧等级，直到他离开视野再回来。
+   * 找不到该玩家（不在视野内）就忽略：AOI 边界上可能收到广播，回来时会带新等级。
+   */
+  function updateRemoteLevel(playerId: number, level: number): void {
+    if (!Number.isFinite(level) || level <= 0) return;
+    const actor = remotes.get(playerId);
+    if (actor) actor.level = level;
+  }
+
   /** 自机发起攻击 → 进入战斗窗口 */
   function markSelfCombat(): void {
     selfCombatUntil = performance.now() + COMBAT_WINDOW_MS;
@@ -4173,6 +4312,46 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * attackerId 为视野内远端玩家 → 起手即触发挥拳（按 attackSpeed 对应时长变速）+ 朝 targetId 怪转向。
    * 自机（attackerId=self）忽略：自机挥拳由本地攻击循环驱动，避免双重触发。
    */
+  /**
+   * 技能起手广播（`S2C_SkillStart`）—— 旁观者播同一条技能动画。
+   *
+   * **与 `playRemoteAttack` 的差别只有一个**：动作不用本地匹配器重跑，而是用施法者上报的
+   * `animIndex` 直取（AGENTS #14：谁播的谁上报；两端各自随机会让"一招两种动作"）。
+   * 演员未就绪时与攻击同策入队（补播窗口由该动作自身的时长决定）。
+   */
+  function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0, animClip = ''): void {
+    if (casterId === selfPlayerId) return;   // 自己已在本地播（客户端驱动）
+    drainStaleRemoteAttacks();
+    const actor = remotes.get(casterId);
+    if (!actor) {
+      // 演员还没建好（AOI 顺序/模型下载中）⇒ 入队等补播（与攻击起手共用一个队列）
+      pendingRemoteAttacks.set(casterId, {
+        targetId, attackSpeed: 0, animIndex, animClip, skillId, at: performance.now(),
+      });
+      return;
+    }
+    playRemoteSkill(actor, skillId, targetId, animIndex, animClip);
+  }
+
+  /** 远端技能动作播放：按上报条目直取并播（找不到条目 ⇒ 上报，不静默退普攻）。 */
+  function playRemoteSkill(actor: RemoteActor, skillId: number, targetId: number,
+                           animIndex: number, animClip: string): void {
+    const specified = animIndex > 0 ? actor.motionList.find((m) => m.index === animIndex) ?? null : null;
+    if (!specified) {
+      reportFallback('anim', `远端 id=${actor.playerId} 技能 ${skillId} 动作条目 #${animIndex}`
+        + ` 在本地动作表里不存在（job=${actor.jobId}）→ 这一招在本地不播动作`);
+      return;   // 显式的"没有"：不换别的动作顶上（AGENTS #12）
+    }
+    verifyRemoteAnimData(actor, animClip);
+    const started = actor.animState.playMotion(specified);
+    if (!started) return;
+    actor.attack = null;   // 技能动作不参与普攻的逐段音效账本（那套只在普攻起手上建）
+    const mon = monsters.get(targetId);
+    if (mon) {
+      actor.faceAngle = faceAngleOf(actor.root.position, mon.root.position);
+    }
+  }
+
   function signalAttackStart(attackerId: number, targetId: number, attackSpeed: number, animIndex = 0, animClip = ''): void {
     if (attackerId === selfPlayerId) return;
     drainStaleRemoteAttacks();
@@ -4192,9 +4371,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     playRemoteAttack(actor, targetId, attackSpeed, animIndex, animClip);
   }
 
-  /** 存起来的"演员还没建好时到达的起手"（只留最新一条；键 = playerId） */
+  /** 存起来的"演员还没建好时到达的起手"（只留最新一条；键 = playerId）。
+   *  `skillId` 有值 = **技能起手**（补播走 `playRemoteSkill`）；无 = 普攻起手。 */
   const pendingRemoteAttacks = new Map<number, {
     targetId: number; attackSpeed: number; animIndex: number; animClip: string; at: number;
+    skillId?: number;
   }>();
   /** 队列的**内存兜底**（与"能不能补播"无关）：留太久（演员一直没来）就清掉并上报 */
   const REMOTE_ATTACK_KEEP_MS = 5000;
@@ -4515,7 +4696,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     nameplateHits.length = 0;               // 每帧重建（与绘制同步）
     const now = performance.now();
 
-    // 掉落物：hover 命中 或 A 键开启且在附近范围内 → 白字名牌
+    // 掉落物：hover 命中 或 A 键开启且在附近范围内 → 白字名牌。
+    // 先收集本帧所有可见候选，再做防重叠布局（`item-label-layout`，纯函数唯一实现），
+    // 最后统一绘制 —— 同点多个掉落物的名字互相"挤"开（D2/POE 式纵向堆叠），永不遮挡
+    // （用户 2026-09-24 要求）。
+    const itemPills: { root: THREE.Object3D; text: string; hovered: boolean; anchor: { x: number; y: number } }[] = [];
     for (const g of groundItems.values()) {
       if (!g.root.visible) continue;
       const hovered = hoverTarget?.root === g.root;
@@ -4526,10 +4711,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       }
       const pt = anchorToScreen(g.root, g.topY);
       if (!pt) continue;
-      recordPill(drawPill(ctx, pt.x, pt.y, g.label || g.name || '', {
-        nameColor: '#ffffff', showHp: false, ratio: 1, selected: hovered,
-      }), g.root, HOVER_COLOR_ITEM, 'pickup');
+      itemPills.push({ root: g.root, text: g.label || g.name || '', hovered, anchor: pt });
     }
+    const itemLabelRects = layoutItemLabels(itemPills.map(p => {
+      const block = pillBlockSize(ctx, p.text, null); // 掉落物名牌无第二行/无条
+      return { x: p.anchor.x, y: p.anchor.y, w: block.w, h: block.h };
+    }));
+    itemPills.forEach((p, idx) => {
+      const r = itemLabelRects[idx];
+      // 锚点 y 反推：无条时 blockBottom = y - PILL_ANCHOR_LIFT ⇒ y = top + h + lift
+      //（drawPill 内部同一公式，改留白要两处一起改）
+      recordPill(drawPill(ctx, p.anchor.x, r.y + r.h + PILL_ANCHOR_LIFT, p.text, {
+        nameColor: '#ffffff', showHp: false, ratio: 1, selected: p.hovered,
+      }), p.root, HOVER_COLOR_ITEM, 'pickup');
+    });
 
     // NPC：名牌 12 格(768)内常显（浅蓝），选中/悬停不受距离限制；对齐 exm NPC RendPoint.z < 12*64*fONE
     for (const a of npcs.values()) {
@@ -4567,7 +4762,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const lifeRatio = a.lifeTotalMs > 0
         ? Math.max(0, Math.min(1, (a.lifeRemainMs - (now - a.lifeAnchorMs)) / a.lifeTotalMs))
         : undefined;
-      recordPill(drawPill(ctx, pt.x, pt.y, a.name || '', {
+      recordPill(drawPill(ctx, pt.x, pt.y, lvPrefix(a.level) + (a.name || ''), {
         // 召唤物蓝色 RGB(0,153,255)（原版 `Winmain.cpp:3921-3933` 的 MONSTER_USER 分支），普通怪原色
         nameColor: isSummon ? '#0099ff' : '#ff8080',
         // 第二行 `(主人名)`（原版同一处的 DrawTwoLineMessage）
@@ -4585,7 +4780,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const pt = anchorToScreen(a.root, a.topY);
       if (!pt) { continue; }
       const sel = isSelected(a.root);
-      recordPill(drawPill(ctx, pt.x, pt.y, a.name || '', {
+      recordPill(drawPill(ctx, pt.x, pt.y, lvPrefix(a.level) + (a.name || ''), {
         nameColor: sel ? '#ffffff' : '#ffe9a8',
         clan: a.clanName || undefined,
         showHp: a.maxHp > 0 && a.hp < a.maxHp,
@@ -4598,7 +4793,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (charGroup && charGroup.visible && selfName) {
       const pt = anchorToScreen(charGroup, selfTopY);
       if (pt) {
-        drawPill(ctx, pt.x, pt.y, selfName, {
+        drawPill(ctx, pt.x, pt.y, lvPrefix(selfLevel) + selfName, {
           nameColor: '#ffe9a8',
           showHp: now < selfCombatUntil || (selfMaxHp > 0 && selfHp < selfMaxHp),
           ratio: selfMaxHp > 0 ? selfHp / selfMaxHp : 1,
@@ -5187,8 +5382,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
             const remain = attackRemainMs(actorObj, pend.animIndex, pend.at);
             if (remain > 0) {
               console.warn('[WorldView] 远端 id=' + pid + ' 的起手广播迟到补播：该招还剩 '
-                + Math.round(remain) + 'ms（从第 0 帧重演这一挥）');
-              playRemoteAttack(actorObj, pend.targetId, pend.attackSpeed, pend.animIndex, pend.animClip);
+                + Math.round(remain) + 'ms（从第 0 帧重演这一招）');
+              if (pend.skillId != null) {
+                playRemoteSkill(actorObj, pend.skillId, pend.targetId, pend.animIndex, pend.animClip);
+              } else {
+                playRemoteAttack(actorObj, pend.targetId, pend.attackSpeed, pend.animIndex, pend.animClip);
+              }
             } else {
               reportFallback('anim', `远端 id=${pid} 的起手广播到达时该招（index=${pend.animIndex}）已演完`
                 + `（迟到 ${Math.round(performance.now() - pend.at)}ms）→ 该次挥击未显示`);
@@ -5344,6 +5543,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           actor.animRate = actor.animWalkRate > 0 ? actor.animWalkRate : 1;
         } else if (rst === actor.animState.STATE.RUN) {
           actor.animRate = actor.animRunRate > 0 ? actor.animRunRate : 1;
+        } else if (rst === actor.animState.STATE.SKILL) {
+          // 技能：与自机**同一份数据、同一个函数**（`skillRateByIcon`）。
+          // 图标从服务端下发的动画条目反查（`animIndex` → `skill-fx.json` 的 icon）——
+          // 远端手里没有 `skillId`，故走这条入口而不是 `skillRate`。
+          // ⚠ 远端的**攻速**服务端还没下发 ⇒ 传 `null`：按攻速的那些招算不出速率（`null` ⇒ 1，已上报）。
+          const icon = skillFxRowByAnimIndex(motion.index)?.icon ?? null;
+          actor.animRate = icon ? skillRateByIcon(icon, null) ?? 1 : 1;
         } else if (rst !== actor.animState.STATE.ATTACK) {
           actor.animRate = 1;
         }
@@ -5855,6 +6061,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           selfAnimRate = selfWalkAnimRate;      // 走：服务端下发的速率（查表值，1 档 = 1.0）
         } else if (curSt === animState.STATE.RUN) {
           selfAnimRate = selfRunAnimRate;       // 跑：同上
+        } else if (curSt === animState.STATE.SKILL) {
+          // 技能：**原版自己给的速率**（每个技能一个 `MotionLoopSpeed` / 或那条按攻速的式子）
+          // ——唯一实现 `game/skillRate.ts`。鼠标施法（左/右键）不走追打循环那处赋值，
+          // 所以这一支才是它们生效的地方；`selfSkillRow` 是起手时记下的那一行（图标是键）。
+          // 查不到 = 未取证 ⇒ 1（`skillRateByIcon` 已上报，不静默）。
+          selfAnimRate = selfSkillRow
+            ? skillRateByIcon(selfSkillRow.icon, getGameSnapshot().character?.attackSpeed ?? null) ?? 1
+            : 1;
         } else {
           selfAnimRate = 1;
         }
@@ -5893,6 +6107,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               const targetPos = aimTargetOf();
               console.log('[WorldView][dbg] 技能事件帧：caster=(' + selfPos.x.toFixed(1) + ',' + selfPos.y.toFixed(1) + ',' + selfPos.z.toFixed(1) + ')'
                 + ' target=' + (targetPos ? `(${targetPos.x.toFixed(1)},${targetPos.y.toFixed(1)},${targetPos.z.toFixed(1)})` : 'null'));
+              // **事件帧上报（D7）**：服务端收到这条才结算该段（逐段独立）——原版在事件帧触发伤害。
+              // 段号 = 本条动作的第几个事件帧（0 起，与普攻 hit_index 同口径）。
+              // 身份用 `skillIdByIcon`（唯一实现，§4.6.3b）从图标反查数字 id —— SkillFxRow 只有图标名。
+              const castSkillId = skillIdByIcon(selfSkillRow.icon);
+              if (castSkillId != null) {
+                opts?.onSkillHit?.(castSkillId, selfSkillTargetId,
+                  motionEventIndexOf(sm.eventFrame, _f) - 1);
+              }
               fireSkillEvent(selfSkillRow, {
                 ...skillFxCtx(),
                 // 本条动作的第几个事件帧（1 起）—— Vigor Ball 靠它分左右（第 1 帧 −45°、其后 +45°）
@@ -6228,9 +6450,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // ⚠ 绑定表没到（unknown）/ 绑的不是本职业的技能（invalid）⇒ **这一击不起手**（AGENTS #12：
       // 不许当成"没绑定"再退化普攻 —— 那正是"把异职业绑定当没绑定"的兜底）。
       // 判据放**条件里**（不是 `return`）：本帧后面还有许多别的更新要走。
-      const it = isVillageMap(currentMapId) ? { kind: 'normal' as const } : fistIntent('left');
+      const it = isVillageMap(currentMapId) ? { kind: 'normal' as const } : fistIntent(selfAttackSlot);
       const bindBroken = it.kind === 'unknown' || it.kind === 'invalid';
-      if (!busy && !bindBroken && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
+      const mpBlocked = it.kind === 'skill' && castResourceBlocked(it.skillId);
+      if (!busy && !bindBroken && !mpBlocked && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
         const sk = it.kind === 'skill' ? { icon: it.row.iconFile, skillId: it.skillId } : null;
         selfTrailSkillIndex = null;   // T1：默认不染色（技能那一支由 `playSkillByIcon` 自己设成该技能下标）
         const played = sk ? playSkillByIcon(sk.icon, monsters.get(moveTarget.id)?.root ?? null)
@@ -6241,11 +6464,21 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           const targetId = moveTarget.id;
           // 技能那一击的**结算**走技能包（原版 `PlaySkillAttack` 里的 `dm_SendTransDamage` 同义）；
           // 普攻那一支仍由下面的逐帧 `onAttackHit` 结算 —— 两者互斥（技能态不进 ATTACK 的事件帧分支）。
-          if (sk) opts?.onCastSkill?.(sk.skillId, targetId);
-          if (m) {
-            // 技能动作按**自身时长**播（原版每个技能自带 `MotionLoopSpeed`）；普攻才按攻速换算速率
+          // 上报的 animIndex/animClip = **刚播的这条**（服务端透传给旁观者，AGENTS #14）
+          if (sk) opts?.onCastSkill?.(sk.skillId, targetId, m?.index ?? 0, selfAnimClip);
+          // ⚠ "技能存在但动作表里没这条动作"时 `playSkillByIcon` 按原版**不换动作**（返回 true 表示
+          //   技能照常结算）。那时状态仍是 STAND ⇒ 后面的出手簿记（命中帧/挥击音/各段结算）**不该走**，
+          //   否则会给一个没有动作的技能发命中段并播武器音（原版在这里什么都不做，AGENTS #12）。
+          const actionState = animState.getCurrentState();
+          const started = actionState === STATE.SKILL || actionState === STATE.ATTACK;
+          if (m && started) {
+            // 速率：普攻**按攻速反推**（`attackRate`，令播完时长 = 服务端冷却 + slack）；
+            // 技能按**原版自己给的值**（`MotionLoopSpeed` / `GetAttackSpeedFrame`，唯一实现
+            // `game/skillRate.skillRate`；数据源 `data/skill-motion-speed.generated.json`）。
+            // 查不到 = 未取证 ⇒ `?? 1`（`skillRate` 内部已上报降级，不静默）。
             selfAnimRate = animState.getCurrentState() === STATE.SKILL
-              ? 1 : attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
+              ? (sk ? skillRate(sk.skillId, getGameSnapshot().character?.attackSpeed ?? null) ?? 1 : 1)
+              : attackRate(m, getGameSnapshot().character?.attackSpeed ?? 0);
             // 记录本次出手的命中帧（非零 eventFrame，相对 startFrame×160；原版最多 4 段）
             selfAttackMotion = m;
             selfAttackTargetId = targetId;
@@ -6264,8 +6497,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           }
           // 起手广播（旁观者立刻挥拳）——同时把**序号 + 段数**报给服务端，它据此预排各段结果
           // 并回 S2C_AttackPlan（B 方案）。段数 = 非零事件帧个数（无事件帧则 1 段）。
-          opts?.onAttackStart?.(targetId, selfAttackSeq, selfAttackEventFrames.length || 1,
-            selfAttackMotion?.index ?? 0, selfAnimClip);
+          // ⚠ 只有真起了动作才播报（`started`，见上）——"技能无动作"那一支已经在 `onCastSkill` 里
+          //   报了技能包，这里再报一次攻击起手会让服务端为一次没有动作的出手预排伤害段。
+          if (started) {
+            opts?.onAttackStart?.(targetId, selfAttackSeq, selfAttackEventFrames.length || 1,
+              selfAttackMotion?.index ?? 0, selfAnimClip);
+          }
           // ⚠ 投射物**不在这里**放（用户 2026-09-16 实测："抬手拉弓时箭就飞出去了"）：
           //   原版放箭在事件帧那一刻，而我们的命中判定/音效也在事件帧 ⇒ 改到"事件帧前
           //   RELEASE_LEAD_FRAMES 帧"放箭、飞行正好用掉这段时间（到达时刻仍 = 事件帧）。
@@ -6756,6 +6993,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     setSelfHp,
     setSelfName,
     setSelfLevel,
+    updateRemoteLevel,
     playEat: (kind: UseEffectKind = null) => playEatInternal(kind),
     requestSwitchWeapon: () => {
       // 站/走/跑（STATE < 0x100）→ 立刻兑现；否则缓存，等渲染循环里动作播完
@@ -6780,6 +7018,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     spawnAgeUpEffect,
     unitFeetPos,
     signalAttackStart,
+    signalSkillStart,
     onTakeDamage,
     showFloater,
     applyRespawn,
@@ -6851,8 +7090,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, _level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0 });
+    monsterAppear: (monsterId, _templateId, name, modelFile, level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, level: Number(level) || 1, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0 });
     },
     monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);
