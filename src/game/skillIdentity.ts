@@ -25,6 +25,18 @@ export interface SkillIdentityRow {
   macro: string | null;
   pairing: string;
   sourceUseCode: string | null;
+  /**
+   * `Element[0]`（`0`/`1`）。原版两处语义：`sinSkill.cpp:2064` 熟练度恒满、`:839` 粉色 gage。
+   * 取值口径与 provenance 见生成物 `elementNote` / `element0Src`（**不是** Brazil 那一列）。
+   */
+  element0: number;
+  element0Src: string;
+  /**
+   * CD 公式的 `RequireMastery[2]`（`sinSkill.cpp:2072`）；`null` = 生成物没有这一列
+   * （无宏定义的 60 行）⇒ CD 算不出来时显式未知。口径见生成物 `requireMasteryNote`。
+   */
+  requireMastery: number[] | null;
+  requireMasterySrc: string;
 }
 
 const ROWS: readonly SkillIdentityRow[] = GEN.skills as readonly SkillIdentityRow[];

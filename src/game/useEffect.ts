@@ -43,6 +43,9 @@ export const USE_EFFECT_INI: Record<Exclude<UseEffectKind, null>, string> = {
  *   `0x0802` = 怪物水晶   → 服务端 `ItemNetworkHandler.useCrystal()`（见下方 `SUPPORTED_CRYSTALS`）
  *   `0x080B` 的 34/35/36  → `AgeService.maxAgeKindOf()` 那三颗**一键拉满**石（原版同样走 USE，
  *                          目标由**服务端**挑当前装备 —— 见 AGENTS"一件拉满应由服务端判断"）
+ *   `0x080B` 的 37/38/39  → `SkillMasteryService.tierIndexOf()` 那三颗**技能熟练度石**
+ *                          （原版 `UsePremiumItem(76/77/78)` → `UseSkillMaster(1/2/3)`，
+ *                          入口 `sinInvenTory.cpp:2425-2456`；与上面三颗连号：sin36/37/38 ↔ sin39/40/41）
  *
  * ⚠ 为什么必须有它（真 bug）：`ItemPanel.onUseBag` 原来只在 `requestPlayEat()` 返回 true 时才发
  * `C2S_UseItem`，而这两族没有使用表现 → `requestPlayEat(null)` 返回 false → **右键毫无反应**
@@ -57,7 +60,9 @@ export function useWithoutAnimation(idcode: number | null | undefined): boolean 
   if (fam === 0x0802) return isSummonCrystal(idcode);    // 怪物水晶（sinGP1）——只认已实现的那几颗
   if (fam === 0x080B) {
     const sub = (idcode >>> 8) & 0xFF;
-    return sub === 0x34 || sub === 0x35 || sub === 0x36; // 拉满石 A(武器)/B(盾·法球)/C(防具)
+    // 拉满石 A(武器)/B(盾·法球)/C(防具)  +  技能熟练度石 1/2/3 档（两族连号）
+    return sub === 0x34 || sub === 0x35 || sub === 0x36
+        || sub === 0x37 || sub === 0x38 || sub === 0x39;
   }
   return false;
 }

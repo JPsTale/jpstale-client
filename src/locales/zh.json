@@ -242,13 +242,16 @@
     "curEffect": "当前效果",
     "nextEffect": "下一级效果",
     "mastery": "熟练度",
+    "cd": "冷却",
+    "nextReq": "学下一级",
+    "gold": "金币",
+    "dmgPct": "伤害：攻击力 ×(1 + {pct}%)",
+    "itemGroup": "对应的装备",
+    "reqLevelEntry": "（等级要求 {level}）",
+    "reqLevelNext": "(需要等级:{level})",
     "demo": "演示数据",
-    "equipHint": "左键绑定左拳 · 右键绑定右拳 · 按住鼠标时按 F1~F8 绑定快捷键",
     "normalAttack": "普通攻击",
     "normalAttackTip": "普通攻击：左键绑左拳 / 右键绑右拳（点击恢复普攻）",
-    "equipLeft": "已装备左拳",
-    "equipRight": "已装备右拳",
-    "quickKey": "快捷键",
     "learn": "学习",
     "learnNoList": "技能表未到，暂不能加点",
     "bindNoList": "绑定表未到，暂不能改绑定",
@@ -368,7 +371,14 @@
       "bagFull": "背包已满",
       "notDroppable": "该物品无法丢弃",
       "failed": "操作失败",
-      "crystal": {
+      "skill-master": {
+   "not-a-stone": "这不是技能熟练度石",
+   "stone-not-in-bag": "石头要放在背包或药水槽里",
+   "no-skill-tree": "这个职业没有技能树",
+   "nothing-to-mature": "这一档没有可提升的技能（未学 / 被动 / 已满）",
+   "bad-percent": "百分比参数无效（合法 1..100）"
+  },
+  "crystal": {
         "level": "需要 {level} 级才能使用这颗水晶",
         "town": "城市里不能使用水晶",
         "noTemplate": "召唤失败，水晶没有消耗"
@@ -521,7 +531,10 @@
       "invalidNumber": "命令参数格式错误: {cmd}",
       "useItemTooFast": "使用失败：距离上次使用太近",
       "setRankUsage": "用法：/@set_rank <0..{max}>（0=1转…4=5转预留）",
-      "setRankBad": "rank 参数无效：{arg}（合法 0..{max}）"
+      "setRankBad": "rank 参数无效：{arg}（合法 0..{max}）",
+      "skillMasteryUsage": "用法：/@skill_mastery <1..100>（把已学技能的熟练度设为该百分比）",
+      "skillMasteryBad": "参数无效：{arg}（合法 1..100）",
+      "skillMasteryDone": "熟练度设为 {pct}% —— 实际 {actual}%，改了 {count} 个技能；{full} 个元素/高阶技能恒为 100%（不受影响）"
     },
     "pickup": {
       "bagFull": "背包已满，无法拾取",

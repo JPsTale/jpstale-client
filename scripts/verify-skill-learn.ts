@@ -213,5 +213,88 @@ console.log('④ `skill.op.*` 文案（zh/en 成对 + 逐个原因码覆盖服�
   ok(`冻结名单 ${FROZEN.length} 条在两份语言表里都有（缺：${missFrozen.join(', ') || '无'}）`, missFrozen.length === 0);
 }
 
+console.log('⑤ 熟练度写入：道具「Skill Master(1st/2nd/3rd)」+ GM `/@skill_mastery`');
+{
+  const SERVER = process.env.PT_SERVER_ROOT ?? resolve('..', 'jpstale-server');
+  const readSrv = (rel: string): string => readFileSync(resolve(SERVER, rel), 'utf8');
+  const SVC = 'modules/common-service/src/main/java/org/jpstale/common/service/skill/SkillMasteryService.java';
+  const HANDLER = 'apps/game-server/src/main/java/org/jpstale/server/game/item/ItemNetworkHandler.java';
+  const CHAT = 'apps/game-server/src/main/java/org/jpstale/server/game/service/ChatService.java';
+  if (!existsSync(resolve(SERVER, SVC))) {
+    console.log(`  · 跳过交叉核对：找不到 ${SVC}（设 PT_SERVER_ROOT 指向服务端仓库）`);
+  } else {
+    const svc = readSrv(SVC);
+    const handler = readSrv(HANDLER);
+    const chat = readSrv(CHAT);
+
+    // ① 三颗石头的码位：11 职业 `OpenItem/BI139..141.txt` 的文件名 = Skill Master(1st/2nd/3rd)，
+    //    而 `sinInvenTory.cpp:2425-2456` 用 `sinBI1 | sin39/40/41` 分派（紧邻 Aging Master 的 sin36/37/38）。
+    const STONES: string[][] = [
+      ['STONE_TIER_1', '0x080B3700', '1', '139'],
+      ['STONE_TIER_2', '0x080B3800', '2', '140'],
+      ['STONE_TIER_3', '0x080B3900', '3', '141'],
+    ];
+    for (const [constName, code, tier, bi] of STONES) {
+      ok(`石头 ${code} → 第 ${tier} 档（与 OpenItem BI${bi}「Skill Master(${tier})」同名互证）`,
+        new RegExp(`int ${constName} = ${code}`).test(svc)
+        && new RegExp(`case ${constName} -> ${tier};`).test(svc));
+    }
+    ok('`tierIndexOf` 是**走这条链**的判据（不是按名字/按 family 猜）',
+      /public static int tierIndexOf\(/.test(svc) && /tierIndexOf\(it\.getItemCode\(\)\) > 0/.test(handler));
+    ok('效果 = 这一档已学技能计数 +10000（原版 `UseSkillCount += 10000`）',
+      /Math\.min\(COUNT_MAX, raw \+ COUNT_MAX\)/.test(svc));
+    ok('门槛（原版 `CheckMaturedSkill`）：没有可提升的技能 ⇒ 拒绝，且石头**不消耗**',
+      /NOTHING_TO_MATURE/.test(svc) && /return Result\.fail\(Reason\.NOTHING_TO_MATURE\)/.test(svc)
+      && handler.indexOf('matureTier') < handler.indexOf('pushRemove(session, req.getUid());              // 石头被消耗'));
+    ok('被动不参与（原版 `USECODE != SIN_SKILL_USE_NOT`）', /"NOT"\.equals\(s\.useCode\(\)\)/.test(svc));
+    ok('用完把技能表回推（面板熟练度条 / HUD 的 CD 立刻刷新）',
+      /skillPoints\.sendSkillTables\(session, p\)/.test(handler));
+
+    // ② GM 命令：1..100 校验 + 派生→计数的换算 + 如实回报
+    ok('`/@skill_mastery` 已注册（且与其他 GM 命令同一条分派链）',
+      /name\.equals\("@skill_mastery"\)/.test(chat)
+      && /treatSkillMastery\(session, parts\)/.test(chat));
+    ok('参数校验 1..100（越界回 `chat.cmd.skillMasteryBad`，一个技能都不动）',
+      /pct < 1 \|\| pct > 100/.test(svc) && /skillMasteryBad/.test(chat));
+    ok('换算 = `目标 − 才能项`（派生值 = 才能项 + 计数 ⇒ 才能高时下限更高，要**如实回报**）',
+      /int raw = Math\.max\(0, Math\.min\(COUNT_MAX, target - floor\)\)/.test(svc)
+      && /effectivePct/.test(chat));
+    ok('`Element[0]` 的技能**不动计数**（恒满：写下去只会抹掉修炼记录）',
+      /if \(s\.element0\(\) != 0\) \{\s*\n\s*elementFull\+\+;\s*\n\s*continue;/.test(svc));
+    ok('未学技能**不建键**（"没学"就是键不存在，不写 0 进去）',
+      /SkillKeys\.point\(s\.skillId\(\)\)\) <= 0\) \{\s*\n\s*continue;\s*\/\/ 未学：不建键/.test(svc));
+
+    // ③ 客户端**要不要发这个请求**（两半判据必须一起改，否则右键毫无反应 —— 见 `useEffect.ts` 的注释）
+    {
+      const { useWithoutAnimation } = await import('../src/game/useEffect.js');
+      ok('客户端对三颗熟练度石**会**发 `C2S_UseItem`（`useWithoutAnimation` 认这三档）',
+        useWithoutAnimation(0x080B3700) && useWithoutAnimation(0x080B3800) && useWithoutAnimation(0x080B3900));
+      ok('三颗拉满石（Aging Master）不受影响，仍是"不发请求"以外的那条路',
+        useWithoutAnimation(0x080B3400) && useWithoutAnimation(0x080B3500) && useWithoutAnimation(0x080B3600));
+      ok('普通石头 / 药水不被误纳入（0x080B3A00 与药水 0x04020100）',
+        !useWithoutAnimation(0x080B3A00) && !useWithoutAnimation(0x04020100));
+    }
+
+    // ④ 文案成对齐全（与服务端 Reason 逐个比对 —— 服务端加码漏文案会立刻红，同 ④ 的口径）
+    const RAWSVC = readSrv(SVC);
+    // ⚠ 末条常量以 `);` 收尾（不是 `),`） —— 正则要同时容下两种，否则会漏掉最后一个原因码
+    const reasonKeys = [...RAWSVC.matchAll(/^ {8}[A-Z_]+\((?:"([a-z-]+)")?\)[;,]\r?$/gm)].map((m) => m[1]).filter(Boolean);
+    ok(`从 SkillMasteryService.Reason 扫到 ${reasonKeys.length} 个原因码`, reasonKeys.length === 5);
+    for (const path of ['src/locales/zh.json', 'src/locales/en.json']) {
+      const t = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as {
+        item?: { op?: Record<string, Record<string, string>> };
+        chat?: { cmd?: Record<string, string> };
+      };
+      const sm = t.item?.op?.['skill-master'] ?? {};
+      const missing = reasonKeys.filter((k) => !(sm[k] ?? '').trim());
+      ok(`${path} 覆盖全部 ${reasonKeys.length} 条 item.op.skill-master.*（缺：${missing.join(', ') || '无'}）`,
+        missing.length === 0);
+      const gm = ['skillMasteryUsage', 'skillMasteryBad', 'skillMasteryDone'];
+      const missGm = gm.filter((k) => !(t.chat?.cmd?.[k] ?? '').trim());
+      ok(`${path} 有 GM 命令的三条 chat.cmd.*（缺：${missGm.join(', ') || '无'}）`, missGm.length === 0);
+    }
+  }
+}
+
 console.log(fails === 0 ? '\nPASS' : `\nFAIL (${fails})`);
 process.exit(fails === 0 ? 0 : 1);

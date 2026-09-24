@@ -132,10 +132,10 @@ export function quickFistOf(skillId: number, bindings: SkillBindings | null,
   if (!row) return null;
   if (row.useCode === 'RIGHT') return 'right';
   if (row.useCode === 'LEFT') return 'left';
-  reportFallback('skill.bind.quickFist',
-    `F 键绑的 0x${skillId.toString(16)}（useCode=${row.useCode}）无法确定目标拳 `
-    + `⇒ 这一下不做任何事（协议没带 MousePosi；RMB/LMB 录制时的那只拳没有落盘）`);
-  return null;
+  // `ALL`（左右都能绑）：**默认右拳**（用户 2026-09-24 裁定："默认是右拳，但要看技能本身绑了
+  // 左键还是右键"）。上面两条已经覆盖"绑了某只拳就装到那只拳"，这里只剩"两只拳都能装、又还没装"的
+  // 情况 —— 早先返回 null（按原版 `MousePosi` 缺数据就不做），结果是"按 F 没反应"（用户实测）。
+  return 'right';
 }
 
 /** 该 F 键此刻绑着这个技能吗（面板画 `F1~F8` 角标用）。 */
@@ -150,10 +150,27 @@ export function quickKeyOfSkill(bindings: SkillBindings | null, skillId: number)
   return null;
 }
 
-/** 该技能此刻绑在哪只拳上（面板画 L/R 角标用）；`null` = 没绑在任何一只拳上。 */
-export function fistSlotOfSkill(bindings: SkillBindings | null, skillId: number): FistSlot | null {
+/**
+ * 该技能此刻绑在哪只拳上（面板画 L/R 角标用）；`null` = 没绑在任何一只拳上。
+ *
+ * `'both'` = **两只拳上是同一个 id** —— 原版不可能出现（每个技能只有**一个** `MousePosi`，
+ * `record.cpp:530` 把它与 `ShortKey` 一起存），所以这是**历史数据**或我们早先漏了判定时写下的。
+ * ⚠ 这里**不再"先看左再看右"**（用户 2026-09-24 报"绑了右键、图标显示 L"）：那是把"两只拳都有"
+ * 静默显示成"在左拳"，正是 AGENTS #12 禁的那种"换一个值"。现在如实回报 `'both'`，
+ * 面板把两个角标都画出来（看得见 = 可诊断）。服务端 `SkillBindRules.apply` 也已保证
+ * 每次绑定时清掉另一侧 ⇒ 新数据不会再进这个状态。
+ */
+export function fistSlotOfSkill(bindings: SkillBindings | null, skillId: number): FistSlot | 'both' | null {
   if (bindings == null) return null;
-  if (bindings.fistLeft === skillId) return 'left';
-  if (bindings.fistRight === skillId) return 'right';
+  const onLeft = bindings.fistLeft === skillId;
+  const onRight = bindings.fistRight === skillId;
+  if (onLeft && onRight) {
+    reportFallback('skill.bind.duplicate',
+      `skillId 0x${skillId.toString(16)} 同时在左拳与右拳上（原版一个技能只有一个 MousePosi；`
+      + `服务端已按"一技能一位置"拒绝新绑定 ⇒ 这条是旧数据）`);
+    return 'both';
+  }
+  if (onLeft) return 'left';
+  if (onRight) return 'right';
   return null;
 }

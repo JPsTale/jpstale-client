@@ -15115,6 +15115,9 @@ export namespace jpt {
             /** S2C_SkillList specialSkillPoint. */
             specialSkillPoint: number;
 
+            /** S2C_SkillList learnInfo. */
+            learnInfo: jpt.base.SkillLearnInfo.$Properties[];
+
             /**
              * Creates a new S2C_SkillList instance using the specified properties.
              * @param [properties] Properties to set
@@ -15208,12 +15211,168 @@ export namespace jpt {
                 /** S2C_SkillList specialSkillPoint */
                 specialSkillPoint?: (number|null);
 
+                /** S2C_SkillList learnInfo */
+                learnInfo?: (jpt.base.SkillLearnInfo.$Properties[]|null);
+
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
             }
 
             /** Shape of a S2C_SkillList. */
             type $Shape = jpt.base.S2C_SkillList.$Properties;
+        }
+
+        /**
+         * Properties of a SkillLearnInfo.
+         * @deprecated Use jpt.base.SkillLearnInfo.$Properties instead.
+         */
+        interface ISkillLearnInfo extends jpt.base.SkillLearnInfo.$Properties {
+        }
+
+        /** Represents a SkillLearnInfo. */
+        class SkillLearnInfo {
+
+            /**
+             * Constructs a new SkillLearnInfo.
+             * @param [properties] Properties to set
+             */
+            constructor(properties?: jpt.base.SkillLearnInfo.$Properties);
+
+            /** Unknown fields preserved while decoding when enabled */
+            $unknowns?: Uint8Array[];
+
+            /** SkillLearnInfo skillId. */
+            skillId: number;
+
+            /** SkillLearnInfo nextReqLevel. */
+            nextReqLevel: number;
+
+            /** SkillLearnInfo nextGold. */
+            nextGold: (number|Long);
+
+            /** SkillLearnInfo powerPctMin. */
+            powerPctMin: number;
+
+            /** SkillLearnInfo powerPctMax. */
+            powerPctMax: number;
+
+            /** SkillLearnInfo nextPowerPctMin. */
+            nextPowerPctMin: number;
+
+            /** SkillLearnInfo nextPowerPctMax. */
+            nextPowerPctMax: number;
+
+            /**
+             * Creates a new SkillLearnInfo instance using the specified properties.
+             * @param [properties] Properties to set
+             * @returns SkillLearnInfo instance
+             */
+            static create(properties: jpt.base.SkillLearnInfo.$Shape): jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape;
+            static create(properties?: jpt.base.SkillLearnInfo.$Properties): jpt.base.SkillLearnInfo;
+
+            /**
+             * Encodes the specified SkillLearnInfo message. Does not implicitly {@link jpt.base.SkillLearnInfo.verify|verify} messages.
+             * @param message SkillLearnInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encode(message: jpt.base.SkillLearnInfo.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Encodes the specified SkillLearnInfo message, length delimited. Does not implicitly {@link jpt.base.SkillLearnInfo.verify|verify} messages.
+             * @param message SkillLearnInfo message or plain object to encode
+             * @param [writer] Writer to encode to
+             * @returns Writer
+             */
+            static encodeDelimited(message: jpt.base.SkillLearnInfo.$Properties, writer?: $protobuf.Writer): $protobuf.Writer;
+
+            /**
+             * Decodes a SkillLearnInfo message from the specified reader or buffer.
+             * @param reader Reader or buffer to decode from
+             * @param [length] Message length if known beforehand
+             * @returns {jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape} SkillLearnInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decode(reader: ($protobuf.Reader|Uint8Array), length?: number): jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape;
+
+            /**
+             * Decodes a SkillLearnInfo message from the specified reader or buffer, length delimited.
+             * @param reader Reader or buffer to decode from
+             * @returns {jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape} SkillLearnInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            static decodeDelimited(reader: ($protobuf.Reader|Uint8Array)): jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape;
+
+            /**
+             * Verifies a SkillLearnInfo message.
+             * @param message Plain object to verify
+             * @returns `null` if valid, otherwise the reason why it is not
+             */
+            static verify(message: { [k: string]: any }): (string|null);
+
+            /**
+             * Creates a SkillLearnInfo message from a plain object. Also converts values to their respective internal types.
+             * @param object Plain object
+             * @returns SkillLearnInfo
+             */
+            static fromObject(object: { [k: string]: any }): jpt.base.SkillLearnInfo;
+
+            /**
+             * Creates a plain object from a SkillLearnInfo message. Also converts values to other types if specified.
+             * @param message SkillLearnInfo
+             * @param [options] Conversion options
+             * @returns Plain object
+             */
+            static toObject(message: jpt.base.SkillLearnInfo, options?: $protobuf.IConversionOptions): { [k: string]: any };
+
+            /**
+             * Converts this SkillLearnInfo to JSON.
+             * @returns JSON object
+             */
+            toJSON(): { [k: string]: any };
+
+            /**
+             * Gets the type url for SkillLearnInfo
+             * @param [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns The type url
+             */
+            static getTypeUrl(prefix?: string): string;
+        }
+
+        namespace SkillLearnInfo {
+
+            /** Properties of a SkillLearnInfo. */
+            interface $Properties {
+
+                /** SkillLearnInfo skillId */
+                skillId?: (number|null);
+
+                /** SkillLearnInfo nextReqLevel */
+                nextReqLevel?: (number|null);
+
+                /** SkillLearnInfo nextGold */
+                nextGold?: (number|Long|null);
+
+                /** SkillLearnInfo powerPctMin */
+                powerPctMin?: (number|null);
+
+                /** SkillLearnInfo powerPctMax */
+                powerPctMax?: (number|null);
+
+                /** SkillLearnInfo nextPowerPctMin */
+                nextPowerPctMin?: (number|null);
+
+                /** SkillLearnInfo nextPowerPctMax */
+                nextPowerPctMax?: (number|null);
+
+                /** Unknown fields preserved while decoding when enabled */
+                $unknowns?: Uint8Array[];
+            }
+
+            /** Shape of a SkillLearnInfo. */
+            type $Shape = jpt.base.SkillLearnInfo.$Properties;
         }
 
         /**

@@ -31,6 +31,15 @@ export interface SkillListState {
   specialSkillPoint: number;   // 4 转池剩余点
   /** 最近一次被拒的技能操作原因码（`skill.op.*` / `skill.bind.*`，来自 S2C_Error）。面板就地显示；下次成功推送不清除 */
   lastErrorKey: string | null;
+  /**
+   * 面板数据（服务端算好）：学**下一级**的等级门槛/金币，以及"伤害加成百分比"区间
+   * （`powerPct*` = 当前显示等级，`nextPowerPct*` = 下一级；0/0 = 该技能不是"攻击力×百分比"模型）。
+   * 键 = skillId；无价目表的槽不在键里。
+   */
+  learnInfo: Readonly<Record<number, {
+    nextReqLevel: number; nextGold: number;
+    powerPctMin: number; powerPctMax: number; nextPowerPctMin: number; nextPowerPctMax: number;
+  }>>;
 }
 
 export interface GameCharacter {

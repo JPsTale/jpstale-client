@@ -36,19 +36,22 @@ ok('null/undefined → false（不抛错，计划未到的降级路径）', look
 import { readFile } from 'node:fs/promises';
 const wv = await readFile(new URL('../src/ui/WorldView.ts', import.meta.url), 'utf8');
 const main = await readFile(new URL('../src/main.ts', import.meta.url), 'utf8');
-ok('WorldViewOpts 声明 onCastSkill 回调', /onCastSkill\?:\s*\(skillId: number, targetId: number\) => void/.test(wv));
+ok('WorldViewOpts 声明 onCastSkill 回调（含 animIndex/animClip：跨端同步"播了哪一条"）',
+  /onCastSkill\?: \(skillId: number, targetId: number, animIndex\?: number, animClip\?: string\) => void/.test(wv));
 // 2026-09-23 起上行的是**数字 skillId**（图标 → id 查表，见 `game/skillIdentity.ts`），不再是动画下标。
 // 2026-09-24 起：绑定身份本身就是 skillId（服务端下发），身份/职业判定收在 `game/skillBinding.fistIntentOf`；
 // `fistSkillOf`（左键/右键/追打三个入口共用）只是它的一层投影 —— 三条护栏都跟着**收紧**了。
 ok('playEquippedSkill 上报数字 skillId（`fistSkillOf` 走 `fistIntent`，身份行给 iconFile/skillId）',
   /function fistSkillOf[\s\S]{0,400}?const it = fistIntent\(slot\);/.test(wv)
   && /return \{ icon: it\.row\.iconFile, skillId: it\.skillId \};/.test(wv));
-ok('playEquippedSkill 按 kind:monster + skillId 触发 onCastSkill', /opts\?\.onCastSkill\?\.\(it\.skillId, aimId\)/.test(wv));
+ok('playEquippedSkill 按 kind:monster + skillId 触发 onCastSkill（带本条动画下标）',
+  /opts\?\.onCastSkill\?\.\(it\.skillId, aimId, motion\?\.index \?\? 0, selfAnimClip\)/.test(wv));
 ok('playEquippedSkill 查不到身份就不发包；异职业/表没到 ⇒ **整支不放**（不退化普攻）',
   /if \(it\.kind === 'unknown' \|\| it\.kind === 'invalid'\) return false;/.test(wv));
 ok('追打循环里技能那一击也上报（原版 PlaySkillAttack 的结算同义）',
-  /if \(sk\) opts\?\.onCastSkill\?\.\(sk\.skillId, targetId\);/.test(wv));
-ok('main.ts 将 onCastSkill 接 sendUseSkill', /onCastSkill:\s*\(skillId, targetId\) => sendUseSkill\(skillId, targetId\)/.test(main));
+  /if \(sk\) opts\?\.onCastSkill\?\.\(sk\.skillId, targetId, m\?\.index \?\? 0, selfAnimClip\)/.test(wv));
+ok('main.ts 将 onCastSkill 接 sendUseSkill（原样带上 animIndex/animClip）',
+  /onCastSkill:\s*\(skillId, targetId, animIndex, animClip\) =>\s*\n?\s*sendUseSkill\(skillId, targetId, animIndex \?\? 0, animClip \?\? ''\)/.test(main));
 ok('main.ts 导入 sendUseSkill', /import \{[^}]*sendUseSkill[^}]*\} from '\.\/net\/bridge\.js'/.test(main));
 
 console.log(fails === 0 ? '\nPASS' : `\nFAIL (${fails})`);

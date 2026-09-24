@@ -6,6 +6,9 @@ import { clearHoverItem, getGameSnapshot, registerUiHitTest, setHoverSpot, subsc
 import { isInputBlocked } from '../app/inputGate.js';
 import { reportFallback } from '../char/fallback-log.js';
 import { fistIntentOf, type FistIntent } from '../game/skillBinding.js';
+import { skillLevelOf } from '../game/skillLevel.js';
+import { skillUsability } from '../game/skillCost.js';
+import { skillCdProgress, skillCdRemainingMs as cdRemaining } from '../game/skillCooldown.js';
 import { sfx } from '../audio/sfx.js';
 
 /**
@@ -58,8 +61,37 @@ interface Tex { el: HTMLImageElement; w: number; h: number }
 const TRANSPARENT_KEYS = new Set([
   'b0','b1','b2','b3','b4','b5','walk','cam1','cam2','mapOn','sun','moon','gageL','gageR','fist',
   'i0','i1','i2','i3','i4','i5','iWalk','iRun','iCamHand','iCamFix','iCamAuto','iMapOn','iMapOff',
-  'fistL','fistR',
+  'fistL','fistR','fistLGray','fistRGray',
 ])
+
+/**
+ * 拳位 **CD 弧**的屏幕坐标 —— **逐字照抄原版**（`SrcGame/src/sinbaram/sinInterFace.cpp:623-637`，
+ * 函数 `cINTERFACE::Draw()`）：
+ * <pre>
+ *   int TempGage = 0;
+ *   if (sinSkill.pLeftSkill) {
+ *       TempGage = (int)((41.0f * (float)sinSkill.pLeftSkill->GageLength) / 35.0f);
+ *       DrawSprite(338, 542 + (41 - TempGage), lpGage[0], 0, 41 - TempGage, 16, 41);
+ *   }
+ *   if (sinSkill.pRightSkill) {
+ *       TempGage = (int)((41.0f * (float)sinSkill.pRightSkill->GageLength) / 35.0f);
+ *       DrawSprite(446, 542 + (41 - TempGage), lpGage[1], 0, 41 - TempGage, 16, 41);
+ *   }
+ * </pre>
+ * ⇒ 左拳 **(338, 542)**、右拳 **(446, 542)**，贴图 16×41（`lpGage[0..1]` = `P-skill.bmp` / `P-skill2.bmp`，
+ * `sinInterFace.cpp:258-259` 加载）；`GageLength` 0→35 折算成 0→41 的**底部裁切高度**，
+ * 锚点在**底**（542+41 = 583）⇒ CD 中从下往上长、满则整条 ✔。
+ * 底图 `Menu-1.tga` 画在 (288,472)（同函数 `:538`）**先于**弧（`:629`）⇒ 弧在底图之上 ✔
+ * （我们的 HUD 也必须这样：图标在底图前、弧在底图后）。
+ * ⚠ 普通攻击（`UseSkill[0]`）的 `GageLength` 恒 0 ⇒ `TempGage=0` ⇒ 源矩形从贴图底外开始、**看不见** ✔
+ * 与用户口径"普通攻击不显示这个弧"一致。
+ */
+const GAGE_LEFT_X = 338;
+const GAGE_RIGHT_X = 446;
+const GAGE_TOP_Y = 542;
+/** 弧贴图尺寸（原版 `DrawSprite(..., 16, 41)`）；CD 档满值 `GageLength` 上限 35 已归一在 `skillCdProgress` 里。 */
+const GAGE_W = 16;
+const GAGE_H = 41;
 
 const TEXTURES: Record<string, string> = {
   menu1: 'inter/menu-1.tga',
@@ -79,6 +111,7 @@ const TEXTURES: Record<string, string> = {
   sun: 'inter/Flash/sun.bmp',
   moon: 'inter/Flash/moon.bmp',
   barTime: 'inter/sinGage/bar_time.bmp',
+  // **CD 弧**（原版 HUD 圈在槽位上的那对镜像弧，16×41，左右各一）
   gageL: 'skill/p-skill.bmp',
   gageR: 'skill/p-skill2.bmp',
   inter1: 'inter/inter_01.bmp', inter2: 'inter/inter_02.bmp', inter3: 'inter/inter_03.bmp',
@@ -207,7 +240,8 @@ export function createHud(container: HTMLElement): Hud {
 
   // 左/右拳此刻该画的**状态** —— 由 `game/skillBinding.fistIntentOf` 判定（判定只此一处），
   // 这里只负责"换图标"。`normal` = 未绑（普通攻击拳），`unknown` = 绑定表还没到。
-  type FistView = { kind: 'normal' } | { kind: 'unknown' } | { kind: 'skill'; skillId: number; rel: string }
+  type FistView = { kind: 'normal' } | { kind: 'unknown' }
+    | { kind: 'skill'; skillId: number; rel: string; relGray: string }
     | { kind: 'invalid'; skillId: number };
   const fistSlots: { left: FistView; right: FistView } = {
     left: { kind: 'unknown' }, right: { kind: 'unknown' },
@@ -216,17 +250,23 @@ export function createHud(container: HTMLElement): Hud {
   /** 意图 → 视图（含图标相对路径；**不在这一步做任何替换**）。 */
   function viewOfIntent(intent: FistIntent): FistView {
     if (intent.kind === 'skill') {
+      const base = `skill/${intent.row.classDir}/button/${intent.row.iconFile.replace(/\.bmp$/i, '')}`;
       return { kind: 'skill', skillId: intent.skillId,
         // ⚠ 路径**不做百分号编码**：编码只归 `encodeAssetPath`（`cachedFetch` 内）。在这里先编一次
         // 会让 `%20` 变 `%2520` ⇒ 中间件解不回文件名、拿回 index.html（200+HTML）⇒ 静默退回默认图标。
-        rel: `skill/${intent.row.classDir}/button/${intent.row.iconFile.replace(/\.bmp$/i, '')}.bmp` };
+        rel: `${base}.bmp`,
+        // **灰版图标** = 原版的 `<图名>_.bmp`（`sinSkill.cpp:570-573` 装 `Button\<File>_.bmp`，
+        // `:736-742` 在技能不可用时画它）—— 资产在我们这边齐全（如 `tp10 p_wind_.bmp`）。
+        relGray: `${base}_.bmp` };
     }
     return intent.kind === 'invalid' ? { kind: 'invalid', skillId: intent.skillId } : { kind: intent.kind };
   }
 
   function sameView(a: FistView, b: FistView): boolean {
     if (a.kind !== b.kind) return false;
-    return a.kind === 'skill' ? a.rel === (b as { rel: string }).rel : true;
+    return a.kind === 'skill'
+      ? a.rel === (b as { rel: string }).rel && a.relGray === (b as { relGray: string }).relGray
+      : true;
   }
 
   /**
@@ -241,8 +281,10 @@ export function createHud(container: HTMLElement): Hud {
    */
   async function loadFistIcon(slot: 'left' | 'right', view: FistView): Promise<void> {
     const key = slot === 'left' ? 'fistL' : 'fistR';
+    const keyGray = slot === 'left' ? 'fistLGray' : 'fistRGray';
     if (view.kind !== 'skill') {
       delete textures[key];
+      delete textures[keyGray];
       return;
     }
     const tex = await loadTex(view.rel, key);
@@ -250,6 +292,14 @@ export function createHud(container: HTMLElement): Hud {
     else {
       delete textures[key];
       reportFallback('hud.fistIcon', `${slot} ${view.rel}`);   // 取不到 ⇒ 这一格留空（降级可见）
+    }
+    // **灰版**（原版 `<图名>_.bmp`）：只在**不可用时**才画，所以取不到就只是"灰化画不出来"，
+    // 单独上报、不影响正常图标（AGENTS #12：降级可见，不静默）
+    const gray = await loadTex(view.relGray, keyGray);
+    if (gray) textures[keyGray] = gray;
+    else {
+      delete textures[keyGray];
+      reportFallback('hud.fistIconGray', `${slot} ${view.relGray}`);
     }
   }
 
@@ -331,6 +381,68 @@ export function createHud(container: HTMLElement): Hud {
     const t = textures[name];
     if (!t?.el) return;
     ctx.drawImage(t.el, x, y, w, h);
+  }
+
+  /**
+   * 画**一个拳位**（图标 + CD 进度弧）—— 原版 `cSKILL::Draw` 的 HUD 那半段：
+   *   · 图标：`UseSkillFlag` 为真画彩色 `lpSkillButton`、否则画灰版 `lpSkillButton_Gray`（`sinSkill.cpp:849-874`）；
+   *   · 进度弧：`lpSkillGage`（`p-skill.bmp` 16×41，左右各一张）按 `GageLength/35` 从下往上填
+   *     （`sinSkill.cpp:2065-2075`；满 = CD 结束）。
+   * ⚠ **弧的位置是我们定的**（居中压在图标上）：原版的 HUD 画点（`sLeftRightSkill[i].BoxRect` 的偏移）
+   *   在参考源码里没找到（面板那套找到了，见 `SkillPanel`）；资产、尺寸、填充比例都是原版的。
+   */
+  function drawFistSlot(slot: 'left' | 'right', view: FistView, bx: number, by: number): void {
+    const key = slot === 'left' ? 'fistL' : 'fistR';
+    const keyGray = slot === 'left' ? 'fistLGray' : 'fistRGray';
+    const snap = getGameSnapshot();
+    // 不可用（未学 / CD 中 / 蓝不够 / 力不够）⇒ 灰版图标；判定的唯一实现在 `game/skillCost.skillUsability`
+    let gray = false;
+    if (view.kind === 'skill') {
+      const point = skillLevelOf(view.skillId);
+      const why = skillUsability(view.skillId, point,
+        snap.character?.mp ?? 0, snap.character?.sp ?? 0, cdRemaining(view.skillId));
+      gray = why !== null;
+    }
+    if (view.kind === 'normal') drawTex('fist', bx, by, 49, 46);
+    else if (gray && textures[keyGray]) drawTex(keyGray, bx, by, 49, 46);
+    else if (textures[key]) drawTex(key, bx, by, 49, 46);
+  }
+
+  /**
+   * **拳位的 CD 条** —— ⚠ **必须在主 HUD 底图（`menu1`/`menu2`）之后画**：
+   * 图标要画在底图**之前**（底图的圆孔镂空才能露出图标，形成"圆形槽内图标"），
+   * 但 CD 条在 `GageRect`（左 (349,558)、右 (446,558)，5×35）—— 那个位置**被底图覆盖**，
+   * 跟着图标一起画就**完全看不见**（用户 2026-09-24 实测："根本就不显示CD"）。
+   *
+   * 几何与画法出处见 `drawGage` 与 `sLeftRightSkill[2]`（`sinSkill.cpp:423-427` / `:831-836`）。
+   */
+  /**
+   * 拳位上的 **CD 弧** —— 有技能的拳**常显**；CD 中从下往上长；**普通攻击不画**（用户 2026-09-24 定）。
+   *
+   * **位置不是猜的**（2026-09-24 第三轮：前两轮都是猜的，被用户否了两次）—— 三个量都从**资产实测**：
+   *   ① 图标本体的圆（量 `tp10 p_wind.bmp`）：中心 **(24.0, 22.5)**、直径 ≈39×36；
+   *   ② 弧 `p-skill.bmp`（16×41）的**曲率中心 (22.1, 20.6)、半径 20.2**（最小二乘拟合亮像素）；
+   *   ③ 弧 `p-skill2.bmp`：曲率中心 **(−7.1, 20.6)**、半径同 20.2（镜像）。
+   * ⇒ 让**弧的曲率中心与图标圆心重合**：左拳画在 `(bx+1.9, by+1.9)`（弧贴圆**左**缘）、
+   *   右拳画在 `(bx+31.1, by+1.9)`（贴圆**右**缘）—— 正好是"各贴外侧"，与 `GageRect` 的排布同向
+   *   （左 (349,558) 在框左缘、右 (446,558) 在框右缘）。半径 20.2 略大于图标半径 ⇒ 弧环在图标外圈 ✔
+   */
+  function drawFistGage(slot: 'left' | 'right', view: FistView): void {
+    if (view.kind !== 'skill') return;   // 普通攻击没有 CD、也没有弧（原版 `GageLength` 恒 0 ⇒ 画在贴图外）
+    const progress = skillCdProgress(view.skillId);   // 0..1（= 原版 `GageLength / 35`）
+    const key = slot === 'left' ? 'gageL' : 'gageR';
+    const x = slot === 'left' ? GAGE_LEFT_X : GAGE_RIGHT_X;
+    // 原版 `TempGage = 41 * GageLength / 35`；`drawArc` 内部就是"底部裁切 shown = 41*progress" ✔ 同一式子
+    drawArc(key, x, GAGE_TOP_Y, GAGE_W, GAGE_H, progress);
+  }
+
+  function drawArc(name: string, x: number, y: number, w: number, h: number, ratio: number) {
+    const t = textures[name];
+    if (!t?.el) return;
+    const r = Math.max(0, Math.min(1, ratio));
+    const shown = Math.round(h * r);
+    if (shown <= 0) return;
+    ctx.drawImage(t.el, 0, t.h - shown, t.w, shown, x, y + h - shown, w, shown);
   }
 
   function drawBar(name: string, x: number, y: number, w: number, h: number, value: number, max: number) {
@@ -508,14 +620,17 @@ export function createHud(container: HTMLElement): Hud {
     // 拳位图标：纹理取不到就**不画这一格** —— 早先写的是 `textures['fistL'] ? 'fistL' : 'fist'`，
     // 那会把"绑了但图标取不到/绑的是异职业技能/绑定表还没到"一律画成普通拳头图标（换一个值顶上）。
     // 只有 `normal`（未绑）才画 `fist`（原版普攻格 `UseSkill[0]` 本就画这张，见 loadFistIcon 注释）。
-    if (fistSlots.left.kind === 'normal') drawTex('fist', 349, 541, 49, 46);
-    else if (textures['fistL']) drawTex('fistL', 349, 541, 49, 46);
-    if (fistSlots.right.kind === 'normal') drawTex('fist', 403, 541, 49, 46);
-    else if (textures['fistR']) drawTex('fistR', 403, 541, 49, 46);
+    // 两个拳位各画：① 图标（不可用时画**灰版** `_` 图）② CD 进度弧（原版 `p-skill.bmp`）
+    drawFistSlot('left', fistSlots.left, 349, 541);
+    drawFistSlot('right', fistSlots.right, 403, 541);
 
     // Menu背景 (原版 (288,472) 256x128 + (544,536) 256x64)
     drawTex('menu1', 288, 472, 256, 128);
     drawTex('menu2', 544, 536, 256, 64);
+
+    // CD 条要在底图**之后**（否则被盖住看不见；见 `drawFistGage` 的注释）
+    drawFistGage('left', fistSlots.left);
+    drawFistGage('right', fistSlots.right);
 
     // 右侧inter延伸条：本客户端资源 inter_01/02/03.bmp 为纯黑占位，无内容可画，跳过
 

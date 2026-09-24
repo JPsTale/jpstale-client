@@ -194,7 +194,7 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
   const stripComments = (s: string): string => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
   const code = stripComments(wv);
 
-  const castBody = bodyOf(code, 'function fistCastTarget(');
+  const castBody = bodyOf(code, 'function monsterUnderCursor(');
   ok('① 瞄准用**点击这一下自己的判定**（`nameplateTargetAt ?? pickTargetAt`，与 `onGroundTap` 同一套）',
     castBody !== '' && /const tag = nameplateTargetAt\(cx, cy\) \?\? pickTargetAt\(cx, cy\);/.test(castBody));
   ok('① 不再拿 15Hz 的 `hoverTarget` 当施法瞄准（滞后 ⇒ 点得到怪却静默不施法）',
@@ -209,7 +209,9 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
   // 2026-09-24 改：拳位由"选中目标的那个键"决定（原版 `SelMouseButton → pLeftSkill/pRightSkill`）
   ok('③ 追打循环逐次出手取 **selfAttackSlot** 那只拳的技能（原版 `SelMouseButton → lpAttackSkill`）',
     /const it = isVillageMap\(currentMapId\) \? \{ kind: 'normal' as const \} : fistIntent\(selfAttackSlot\);/.test(code)
-    && /const sk = it\.kind === 'skill' \? \{ icon: it\.row\.iconFile, skillId: it\.skillId \} : null;/.test(code)
+    // 技能不可用（MP 等）时 `skillBlock != null` ⇒ 这一击退普攻（左拳）/ 不出手（右拳）
+    && /const sk = it\.kind === 'skill' && skillBlock == null/.test(code)
+    && /\{ icon: it\.row\.iconFile, skillId: it\.skillId \} : null;/.test(code)
     && /sk \? playSkillByIcon\(sk\.icon, monsters\.get\(moveTarget\.id\)\?\.root \?\? null\)/.test(code));
   // 2026-09-24 改（D7 重做）：技能起手**不结算**，只上报"意图 + 我播的那条动作"
   // （服务端据此广播 S2C_SkillStart 给旁观者；伤害在事件帧由 C2S_SkillHit 触发）。
@@ -229,9 +231,10 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
   // 这三条比旧写法**更严**：未绑/村庄 ⇒ 普通攻击（规格），而**表没到/异职业 ⇒ 不起手**（旧写法把这些也退普攻）。
   ok('③ 无绑定/村庄 ⇒ 普通攻击；unknown/invalid ⇒ 本轮不起手（三处施法入口共用同一个意图判定）',
     /const bindBroken = it\.kind === 'unknown' \|\| it\.kind === 'invalid';/.test(code)
-    && /if \(!busy && !bindBroken && !mpBlocked && animState/.test(code)
-    // MP 门在**起手之前**（原版 `sinCheckSkillUseOk` 的 MP 那一半）：不够就不播动画、不发包
-    && /castResourceBlocked\(it\.skillId\)/.test(code)
+    && /if \(!busy && !bindBroken && !rightSkillBlocked && animState/.test(code)
+    // 技能不可用时的分流：**左拳退普攻、右拳什么都不做**（逐字 `SkillSub.cpp:1546-1553`）
+    && /const skillBlock = it\.kind === 'skill' \? castBlockReason\(it\.skillId\) : null;/.test(code)
+    && /const rightSkillBlocked = skillBlock != null && selfAttackSlot === 'right';/.test(code)
     && /export function checkCastResources\(skillId: number, point: number \| null, mp: number\): ResourceCheck/.test(await read('../src/game/skillCost.ts'))
     && /function fistIntent\(slot: 'left' \| 'right'\): FistIntent \{/.test(code)
     && (code.match(/function fistSkillOf\(/g) ?? []).length === 1
@@ -260,8 +263,8 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
   // 远端照同一份数据改（不许第三份实现）：它也调用 `skillRateByIcon`
   ok('③ 远端的技能速率走**同一个函数**（`skillRateByIcon`，图标由 `animIndex` 反查）',
     (code.match(/skillRateByIcon\(/g) ?? []).length === 2);   // 自机 1 处 + 远端 1 处（导入那行不带括号）
-  ok('三处施法入口（左键/右键/追踪）共用同一份判定，没有第二份"绑定+职业+身份"判定',
-    ['function fistCastTarget(', 'function playEquippedSkill(', 'function tryNoTargetCast(']
+  ok('施法入口（右键无目标/绑定拳）共用同一份判定，没有第二份"绑定+职业+身份"判定',
+    ['function playEquippedSkill(', 'function tryNoTargetCast(']
       .every((h) => /fistSkillOf\(|fistIntent\(/.test(bodyOf(code, h))));
 
   // 改前基线（HEAD 的唯一入口）已按用户要求拆除 —— 由 verify-mouse-cast 钉住；这里再确认一次

@@ -737,7 +737,96 @@ if (d.defects.length === 0) {
   for (const x of d.defects) console.log(`  · ${x.src} ${x.name}: 声明 ${x.declared}，实写 ${x.actual}`);
 }
 
+
+/* ── 校验 D：**中文定义段**（用户 2026-09-24 要求面板用原版中英文本） ──
+   两条：① 生成物里必须有 `definitions.chinese` 且条数与 English 一致（同为 8 职业时代的 151 条）；
+        ② 名/描述必须**真的解出汉字** —— 抽取器按 latin1 读文件，忘了按 GBK 回解就会得到 `¼«¹â»¤¶Ü`，
+           那种数据"看起来有条目"却完全不能用（这条断言就是防它）。 */
+{
+  const chinese = (d.definitions as any).chinese as Array<{ tuple: Array<string | number | null>; src: string }> | undefined;
+  ok('D1 生成物含中文定义段（`definitions.chinese`）', !!chinese && chinese.length > 0);
+  ok('D2 中文条目数与英文一致（两份都是 8 职业时代的 151 条）',
+    !!chinese && chinese.length === (d.definitions as any).english.length);
+  const cjk = /[一-鿿]/;
+  const named = (chinese ?? []).filter((r) => cjk.test(String(r.tuple[0] ?? ''))).length;
+  ok('D3 中文名真的解出汉字（不是 latin1 乱码）',
+    named === (chinese ?? []).length,
+    `含汉字 ${named}/${chinese?.length ?? 0}`);
+  const described = (chinese ?? []).filter((r) => cjk.test(String(r.tuple[1] ?? ''))).length;
+  ok('D4 中文描述真的解出汉字', described === (chinese ?? []).length,
+    `含汉字 ${described}/${chinese?.length ?? 0}`);
+}
+
+/* ── 校验 E：`element0` 与 `requireMastery` 的**三源对账**（2026-09-24）──
+   这两列在 `sinSkill.cpp` 里各被读一次（`:2064` 熟练度恒满、`:2072` CD 档位），而三份语言定义表
+   **互相打架**，所以生成物不照抄 Brazil、而是按"English/Chinese 优先"定值并记 `*Src`。本段把那个
+   决定变成**可复算、可推翻**的：
+     E1 每行都有 `element0 ∈ {0,1}` 与 `*Src`（值域/来源名都在白名单里）；
+     E2 English 与 Chinese 在共有宏上**分歧为 0**（两列都查 —— 它们一致才是"英文优先"的前提）；
+     E3 Brazil 与 English 的差异**只出现在高转段**：`Element[0]` 96 条差异、`RequireMastery[0]` 7 条差异，
+        且这些行 `element0 === 1`（= 同一次"高阶技能无 CD"改写；出现一条不一致就说明口径崩了）；
+     E4 5 转那 60 行（无宏定义）：`element0 = 1`（人工裁定，粉色 gage）、`requireMastery = null`
+        （**算不出来就报未知**，不编档位）。
+   反例：若某天 E3 统计出"差异里有 element0=0 的行" ⇒ 说明 Brazil 的改写不止高阶技能，
+   那时必须重新裁定（而不是继续用现在的口径）。 */
+console.log('\n[校验 E] `element0` / `requireMastery` 的三源对账（生成物口径 = English/Chinese 优先）');
+{
+  const rows = d.skills as Array<{ macro: string | null; element0: number; element0Src: string;
+    requireMastery: number[] | null; requireMasterySrc: string }>;
+  const SRC_OK = new Set(['english', 'chinese', 'brazil', 'manual-override', 'none']);
+
+  const badVal = rows.filter((r) => r.element0 !== 0 && r.element0 !== 1);
+  ok('E1 每行 `element0 ∈ {0,1}` 且 `*Src` 在白名单里',
+    badVal.length === 0 && rows.every((r) => SRC_OK.has(r.element0Src) && SRC_OK.has(r.requireMasterySrc)),
+    `越界 ${badVal.length} 行；Src 取值 ${[...new Set(rows.map((r) => r.element0Src + '/' + r.requireMasterySrc))].join(',')}`);
+
+  const defs = d.definitions as { english: Array<{ macro: string; tuple: unknown[] }>;
+    chinese: Array<{ macro: string; tuple: unknown[] }>;
+    brazil: Array<{ macro: string; tuple: unknown[] }> };
+  const mk = (l: Array<{ macro: string; tuple: unknown[] }>): Map<string, unknown[]> =>
+    new Map(l.filter((x) => x.macro).map((x) => [x.macro, x.tuple]));
+  const en = mk(defs.english), cn = mk(defs.chinese), br = mk(defs.brazil);
+
+  let enCnEl = 0, enCnRm = 0, both = 0;
+  for (const [m, t] of en) {
+    const c = cn.get(m);
+    if (!c) continue;
+    both++;
+    if (String(t[7]) !== String(c[7])) enCnEl++;
+    if (`${t[5]},${t[6]}` !== `${c[5]},${c[6]}`) enCnRm++;
+  }
+  ok('E2 English 与 Chinese 在 ' + both + ' 个共有宏上 Element[0] / RequireMastery 分歧都为 0',
+    both >= 120 && enCnEl === 0 && enCnRm === 0, `element 分歧 ${enCnEl}、requireMastery 分歧 ${enCnRm}`);
+
+  // Brazil 与 English 的差异（只管英/巴共有的宏；只统计"英=中"的那些，排除中英本身打架）
+  const elDiff: string[] = [], rmDiff: string[] = [];
+  for (const [m, t] of en) {
+    const b = br.get(m), c = cn.get(m);
+    if (!b) continue;
+    if (String(t[7]) !== String(b[7]) && (!c || String(c[7]) === String(t[7]))) elDiff.push(m);
+    if (`${t[5]},${t[6]}` !== `${b[5]},${b[6]}` && (!c || `${c[5]},${c[6]}` === `${t[5]},${t[6]}`)) rmDiff.push(m);
+  }
+  const byMacro = new Map(rows.filter((r) => r.macro).map((r) => [r.macro!, r]));
+  /* ⚠ 实测口径（2026-09-24）：差集**在 Brazil 那边全部 `Element[0] = 1`**（96 条 element 差异按定义如此，
+     另 7 条是 RequireMastery[0] 被巴西写成 0，它们同样被巴西标成 Element[0]=1）⇒ "同一次改写"的判据。
+     反例：若出现一条差异宏的 `brEl !== 1` ⇒ 巴西改的不止高阶技能，口径必须重新裁定。 */
+  const diffMacros = [...new Set([...elDiff, ...rmDiff])];
+  const brElOf = new Map(defs.brazil.filter((x) => x.macro).map((x) => [x.macro, x.tuple[7]]));
+  const badBrEl = diffMacros.filter((m) => Number(brElOf.get(m)) !== 1);
+  const badSrc = diffMacros.filter((m) => byMacro.get(m)?.element0Src !== 'english');
+  ok(`E3 Brazil 与 English 的差异（element ${elDiff.length} / rm ${rmDiff.length}，共 ${diffMacros.length} 个宏）`
+    + '在 Brazil 那边**全部** Element[0]=1，且我们一律取 English',
+    elDiff.length > 0 && rmDiff.length > 0 && badBrEl.length === 0 && badSrc.length === 0,
+    `brEl≠1: ${badBrEl.join(',') || '无'}；取值不是 english: ${badSrc.join(',') || '无'}；rm 差异清单 ${rmDiff.join(',')}`);
+
+  const t5 = rows.filter((r) => r.macro === null);
+  ok('E4 无宏定义的 ' + t5.length + ' 行：element0 = 1（人工裁定 = 粉色 gage）+ requireMastery = null',
+    t5.length > 0 && t5.every((r) => r.element0 === 1 && r.requireMastery === null
+      && r.element0Src === 'manual-override' && r.requireMasterySrc === 'none'),
+    `实测 element0 取值 ${[...new Set(t5.map((r) => r.element0))].join(',')}`);
+}
+
 console.log(fails === 0
-  ? `\n✓ verify-skill-tables 通过（校验 A/B/C；${Object.keys(d.arrays).length} 表 · ${d.macros.length} 宏 · ${d.definitions.brazil.length}+${d.definitions.english.length} 定义）`
+  ? `\n✓ verify-skill-tables 通过（校验 A/B/C/D；${Object.keys(d.arrays).length} 表 · ${d.macros.length} 宏 · ${d.definitions.brazil.length}+${d.definitions.english.length}+${d.definitions.chinese.length} 定义）`
   : `\n✗ ${fails} 条不符 —— 改 scripts/extract-skill-tables.ts 的抽取（或生成物），别改断言`);
 process.exit(fails === 0 ? 0 : 1);

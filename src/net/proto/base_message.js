@@ -44493,6 +44493,7 @@ export const jpt = $root.jpt = (() => {
              * @property {Array.<jpt.base.LearnedSkill.$Properties>|null} [skills] S2C_SkillList skills
              * @property {number|null} [skillPoint] S2C_SkillList skillPoint
              * @property {number|null} [specialSkillPoint] S2C_SkillList specialSkillPoint
+             * @property {Array.<jpt.base.SkillLearnInfo.$Properties>|null} [learnInfo] S2C_SkillList learnInfo
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -44519,6 +44520,7 @@ export const jpt = $root.jpt = (() => {
              */
             const S2C_SkillList = function (properties) {
                 this.skills = [];
+                this.learnInfo = [];
                 if (properties)
                     for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
                         if (properties[keys[i]] != null && keys[i] !== "__proto__")
@@ -44548,6 +44550,14 @@ export const jpt = $root.jpt = (() => {
              * @instance
              */
             S2C_SkillList.prototype.specialSkillPoint = 0;
+
+            /**
+             * S2C_SkillList learnInfo.
+             * @member {Array.<jpt.base.SkillLearnInfo.$Properties>} learnInfo
+             * @memberof jpt.base.S2C_SkillList
+             * @instance
+             */
+            S2C_SkillList.prototype.learnInfo = $util.emptyArray;
 
             /**
              * Creates a new S2C_SkillList instance using the specified properties.
@@ -44588,6 +44598,9 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 2, wireType 0 =*/16).int32(message.skillPoint);
                 if (message.specialSkillPoint != null && $Object.hasOwnProperty.call(message, "specialSkillPoint") && message.specialSkillPoint !== 0)
                     writer.uint32(/* id 3, wireType 0 =*/24).int32(message.specialSkillPoint);
+                if (message.learnInfo != null && message.learnInfo.length)
+                    for (let i = 0; i < message.learnInfo.length; ++i)
+                        $root.jpt.base.SkillLearnInfo.encode(message.learnInfo[i], writer.uint32(/* id 4, wireType 2 =*/34).fork(), _depth + 1).ldelim();
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -44671,6 +44684,14 @@ export const jpt = $root.jpt = (() => {
                                 delete message.specialSkillPoint;
                             continue;
                         }
+                    case 4: {
+                            if (wireType !== 2)
+                                break;
+                            if (!(message.learnInfo && message.learnInfo.length))
+                                message.learnInfo = [];
+                            message.learnInfo.push($root.jpt.base.SkillLearnInfo.decode(reader, reader.uint32(), $undefined, _depth + 1));
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -44734,6 +44755,15 @@ export const jpt = $root.jpt = (() => {
                 if (message.specialSkillPoint != null && $Object.hasOwnProperty.call(message, "specialSkillPoint"))
                     if (!$util.isInteger(message.specialSkillPoint))
                         return "specialSkillPoint: integer expected";
+                if (message.learnInfo != null && $Object.hasOwnProperty.call(message, "learnInfo")) {
+                    if (!$Array.isArray(message.learnInfo))
+                        return "learnInfo: array expected";
+                    for (let i = 0; i < message.learnInfo.length; ++i) {
+                        let error = $root.jpt.base.SkillLearnInfo.verify(message.learnInfo[i], _depth + 1);
+                        if (error)
+                            return "learnInfo." + error;
+                    }
+                }
                 return null;
             };
 
@@ -44771,6 +44801,16 @@ export const jpt = $root.jpt = (() => {
                 if (object.specialSkillPoint != null)
                     if ($Number(object.specialSkillPoint) !== 0)
                         message.specialSkillPoint = object.specialSkillPoint | 0;
+                if (object.learnInfo) {
+                    if (!$Array.isArray(object.learnInfo))
+                        throw $TypeError(".jpt.base.S2C_SkillList.learnInfo: array expected");
+                    message.learnInfo = $Array(object.learnInfo.length);
+                    for (let i = 0; i < object.learnInfo.length; ++i) {
+                        if (!$util.isObject(object.learnInfo[i]))
+                            throw $TypeError(".jpt.base.S2C_SkillList.learnInfo: object expected");
+                        message.learnInfo[i] = $root.jpt.base.SkillLearnInfo.fromObject(object.learnInfo[i], _depth + 1);
+                    }
+                }
                 return message;
             };
 
@@ -44791,8 +44831,10 @@ export const jpt = $root.jpt = (() => {
                 if (_depth > $util.recursionLimit)
                     throw $Error("max depth exceeded");
                 let object = {};
-                if (options.arrays || options.defaults)
+                if (options.arrays || options.defaults) {
                     object.skills = [];
+                    object.learnInfo = [];
+                }
                 if (options.defaults) {
                     object.skillPoint = 0;
                     object.specialSkillPoint = 0;
@@ -44806,6 +44848,11 @@ export const jpt = $root.jpt = (() => {
                     object.skillPoint = message.skillPoint;
                 if (message.specialSkillPoint != null && $Object.hasOwnProperty.call(message, "specialSkillPoint"))
                     object.specialSkillPoint = message.specialSkillPoint;
+                if (message.learnInfo && message.learnInfo.length) {
+                    object.learnInfo = $Array(message.learnInfo.length);
+                    for (let j = 0; j < message.learnInfo.length; ++j)
+                        object.learnInfo[j] = $root.jpt.base.SkillLearnInfo.toObject(message.learnInfo[j], options, _depth + 1);
+                }
                 return object;
             };
 
@@ -44835,6 +44882,472 @@ export const jpt = $root.jpt = (() => {
             };
 
             return S2C_SkillList;
+        })();
+
+        base.SkillLearnInfo = (function() {
+
+            /**
+             * Properties of a SkillLearnInfo.
+             * @typedef {Object} jpt.base.SkillLearnInfo.$Properties
+             * @property {number|null} [skillId] SkillLearnInfo skillId
+             * @property {number|null} [nextReqLevel] SkillLearnInfo nextReqLevel
+             * @property {number|Long|null} [nextGold] SkillLearnInfo nextGold
+             * @property {number|null} [powerPctMin] SkillLearnInfo powerPctMin
+             * @property {number|null} [powerPctMax] SkillLearnInfo powerPctMax
+             * @property {number|null} [nextPowerPctMin] SkillLearnInfo nextPowerPctMin
+             * @property {number|null} [nextPowerPctMax] SkillLearnInfo nextPowerPctMax
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+
+            /**
+             * Properties of a SkillLearnInfo.
+             * @memberof jpt.base
+             * @interface ISkillLearnInfo
+             * @augments jpt.base.SkillLearnInfo.$Properties
+             * @deprecated Use jpt.base.SkillLearnInfo.$Properties instead.
+             */
+
+            /**
+             * Shape of a SkillLearnInfo.
+             * @typedef {jpt.base.SkillLearnInfo.$Properties} jpt.base.SkillLearnInfo.$Shape
+             */
+
+            /**
+             * Constructs a new SkillLearnInfo.
+             * @memberof jpt.base
+             * @classdesc Represents a SkillLearnInfo.
+             * @constructor
+             * @param {jpt.base.SkillLearnInfo.$Properties=} [properties] Properties to set
+             * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
+             */
+            const SkillLearnInfo = function (properties) {
+                if (properties)
+                    for (let keys = $Object.keys(properties), i = 0; i < keys.length; ++i)
+                        if (properties[keys[i]] != null && keys[i] !== "__proto__")
+                            this[keys[i]] = properties[keys[i]];
+            };
+
+            /**
+             * SkillLearnInfo skillId.
+             * @member {number} skillId
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.skillId = 0;
+
+            /**
+             * SkillLearnInfo nextReqLevel.
+             * @member {number} nextReqLevel
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.nextReqLevel = 0;
+
+            /**
+             * SkillLearnInfo nextGold.
+             * @member {number|Long} nextGold
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.nextGold = $util.Long ? $util.Long.fromBits(0,0,false) : 0;
+
+            /**
+             * SkillLearnInfo powerPctMin.
+             * @member {number} powerPctMin
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.powerPctMin = 0;
+
+            /**
+             * SkillLearnInfo powerPctMax.
+             * @member {number} powerPctMax
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.powerPctMax = 0;
+
+            /**
+             * SkillLearnInfo nextPowerPctMin.
+             * @member {number} nextPowerPctMin
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.nextPowerPctMin = 0;
+
+            /**
+             * SkillLearnInfo nextPowerPctMax.
+             * @member {number} nextPowerPctMax
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             */
+            SkillLearnInfo.prototype.nextPowerPctMax = 0;
+
+            /**
+             * Creates a new SkillLearnInfo instance using the specified properties.
+             * @function create
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {jpt.base.SkillLearnInfo.$Properties=} [properties] Properties to set
+             * @returns {jpt.base.SkillLearnInfo} SkillLearnInfo instance
+             * @type {{
+             *   (properties: jpt.base.SkillLearnInfo.$Shape): jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape;
+             *   (properties?: jpt.base.SkillLearnInfo.$Properties): jpt.base.SkillLearnInfo;
+             * }}
+             */
+            SkillLearnInfo.create = function(properties) {
+                return new SkillLearnInfo(properties);
+            };
+
+            /**
+             * Encodes the specified SkillLearnInfo message. Does not implicitly {@link jpt.base.SkillLearnInfo.verify|verify} messages.
+             * @function encode
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {jpt.base.SkillLearnInfo.$Properties} message SkillLearnInfo message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SkillLearnInfo.encode = function (message, writer, _depth) {
+                if (!writer)
+                    writer = $Writer.create();
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId") && message.skillId !== 0)
+                    writer.uint32(/* id 1, wireType 0 =*/8).int32(message.skillId);
+                if (message.nextReqLevel != null && $Object.hasOwnProperty.call(message, "nextReqLevel") && message.nextReqLevel !== 0)
+                    writer.uint32(/* id 2, wireType 0 =*/16).int32(message.nextReqLevel);
+                if (message.nextGold != null && $Object.hasOwnProperty.call(message, "nextGold") && (typeof message.nextGold === "object" ? message.nextGold.low || message.nextGold.high : message.nextGold !== 0))
+                    writer.uint32(/* id 3, wireType 0 =*/24).int64(message.nextGold);
+                if (message.powerPctMin != null && $Object.hasOwnProperty.call(message, "powerPctMin") && message.powerPctMin !== 0)
+                    writer.uint32(/* id 4, wireType 0 =*/32).int32(message.powerPctMin);
+                if (message.powerPctMax != null && $Object.hasOwnProperty.call(message, "powerPctMax") && message.powerPctMax !== 0)
+                    writer.uint32(/* id 5, wireType 0 =*/40).int32(message.powerPctMax);
+                if (message.nextPowerPctMin != null && $Object.hasOwnProperty.call(message, "nextPowerPctMin") && message.nextPowerPctMin !== 0)
+                    writer.uint32(/* id 6, wireType 0 =*/48).int32(message.nextPowerPctMin);
+                if (message.nextPowerPctMax != null && $Object.hasOwnProperty.call(message, "nextPowerPctMax") && message.nextPowerPctMax !== 0)
+                    writer.uint32(/* id 7, wireType 0 =*/56).int32(message.nextPowerPctMax);
+                if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
+                    for (let i = 0; i < message.$unknowns.length; ++i)
+                        writer.raw(message.$unknowns[i]);
+                return writer;
+            };
+
+            /**
+             * Encodes the specified SkillLearnInfo message, length delimited. Does not implicitly {@link jpt.base.SkillLearnInfo.verify|verify} messages.
+             * @function encodeDelimited
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {jpt.base.SkillLearnInfo.$Properties} message SkillLearnInfo message or plain object to encode
+             * @param {$protobuf.Writer} [writer] Writer to encode to
+             * @returns {$protobuf.Writer} Writer
+             */
+            SkillLearnInfo.encodeDelimited = function(message, writer) {
+                return this.encode(message, (writer || $Writer.create()).fork()).ldelim();
+            };
+
+            /**
+             * Decodes a SkillLearnInfo message from the specified reader or buffer.
+             * @function decode
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @param {number} [length] Message length if known beforehand
+             * @returns {jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape} SkillLearnInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SkillLearnInfo.decode = function (reader, length, _end, _depth, _target) {
+                if (!(reader instanceof $Reader))
+                    reader = $Reader.create(reader);
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $Reader.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let end, message, value;
+                if (length === $undefined)
+                    end = reader.len;
+                else {
+                    end = reader.pos + length;
+                    if (end > reader.len)
+                        throw $RangeError("index out of range");
+                    length = reader.len;
+                    reader.len = end;
+                }
+                message = _target || new $root.jpt.base.SkillLearnInfo();
+                while (reader.pos < end) {
+                    let start = reader.pos;
+                    let tag = reader.tag();
+                    if (tag === _end) {
+                        _end = $undefined;
+                        break;
+                    }
+                    let wireType = tag & 7;
+                    switch (tag >>>= 3) {
+                    case 1: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.skillId = value;
+                            else
+                                delete message.skillId;
+                            continue;
+                        }
+                    case 2: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.nextReqLevel = value;
+                            else
+                                delete message.nextReqLevel;
+                            continue;
+                        }
+                    case 3: {
+                            if (wireType !== 0)
+                                break;
+                            if (typeof (value = reader.int64()) === "object" ? value.low || value.high : value !== 0)
+                                message.nextGold = value;
+                            else
+                                delete message.nextGold;
+                            continue;
+                        }
+                    case 4: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.powerPctMin = value;
+                            else
+                                delete message.powerPctMin;
+                            continue;
+                        }
+                    case 5: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.powerPctMax = value;
+                            else
+                                delete message.powerPctMax;
+                            continue;
+                        }
+                    case 6: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.nextPowerPctMin = value;
+                            else
+                                delete message.nextPowerPctMin;
+                            continue;
+                        }
+                    case 7: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.nextPowerPctMax = value;
+                            else
+                                delete message.nextPowerPctMax;
+                            continue;
+                        }
+                    }
+                    reader.skipType(wireType, _depth, tag);
+                    if (!reader.discardUnknown) {
+                        $util.makeProp(message, "$unknowns", false);
+                        (message.$unknowns || (message.$unknowns = [])).push(reader.raw(start, reader.pos));
+                    }
+                }
+                if (length !== $undefined) {
+                    if (reader.pos !== end)
+                        throw $RangeError("index out of range");
+                    reader.len = length;
+                }
+                if (_end !== $undefined)
+                    throw $Error("missing end group");
+                return message;
+            };
+
+            /**
+             * Decodes a SkillLearnInfo message from the specified reader or buffer, length delimited.
+             * @function decodeDelimited
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {$protobuf.Reader|Uint8Array} reader Reader or buffer to decode from
+             * @returns {jpt.base.SkillLearnInfo & jpt.base.SkillLearnInfo.$Shape} SkillLearnInfo
+             * @throws {Error} If the payload is not a reader or valid buffer
+             * @throws {$protobuf.util.ProtocolError} If required fields are missing
+             */
+            SkillLearnInfo.decodeDelimited = function(reader) {
+                if (!(reader instanceof $Reader))
+                    reader = new $Reader(reader);
+                return this.decode(reader, reader.uint32());
+            };
+
+            /**
+             * Verifies a SkillLearnInfo message.
+             * @function verify
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {Object.<string,*>} message Plain object to verify
+             * @returns {string|null} `null` if valid, otherwise the reason why it is not
+             */
+            SkillLearnInfo.verify = function (message, _depth) {
+                if (typeof message !== "object" || message === null)
+                    return "object expected";
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    return "max depth exceeded";
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
+                    if (!$util.isInteger(message.skillId))
+                        return "skillId: integer expected";
+                if (message.nextReqLevel != null && $Object.hasOwnProperty.call(message, "nextReqLevel"))
+                    if (!$util.isInteger(message.nextReqLevel))
+                        return "nextReqLevel: integer expected";
+                if (message.nextGold != null && $Object.hasOwnProperty.call(message, "nextGold"))
+                    if (!$util.isInteger(message.nextGold) && !(message.nextGold && $util.isInteger(message.nextGold.low) && $util.isInteger(message.nextGold.high)))
+                        return "nextGold: integer|Long expected";
+                if (message.powerPctMin != null && $Object.hasOwnProperty.call(message, "powerPctMin"))
+                    if (!$util.isInteger(message.powerPctMin))
+                        return "powerPctMin: integer expected";
+                if (message.powerPctMax != null && $Object.hasOwnProperty.call(message, "powerPctMax"))
+                    if (!$util.isInteger(message.powerPctMax))
+                        return "powerPctMax: integer expected";
+                if (message.nextPowerPctMin != null && $Object.hasOwnProperty.call(message, "nextPowerPctMin"))
+                    if (!$util.isInteger(message.nextPowerPctMin))
+                        return "nextPowerPctMin: integer expected";
+                if (message.nextPowerPctMax != null && $Object.hasOwnProperty.call(message, "nextPowerPctMax"))
+                    if (!$util.isInteger(message.nextPowerPctMax))
+                        return "nextPowerPctMax: integer expected";
+                return null;
+            };
+
+            /**
+             * Creates a SkillLearnInfo message from a plain object. Also converts values to their respective internal types.
+             * @function fromObject
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {Object.<string,*>} object Plain object
+             * @returns {jpt.base.SkillLearnInfo} SkillLearnInfo
+             */
+            SkillLearnInfo.fromObject = function (object, _depth) {
+                if (object instanceof $root.jpt.base.SkillLearnInfo)
+                    return object;
+                if (!$util.isObject(object))
+                    throw $TypeError(".jpt.base.SkillLearnInfo: object expected");
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let message = new $root.jpt.base.SkillLearnInfo();
+                if (object.skillId != null)
+                    if ($Number(object.skillId) !== 0)
+                        message.skillId = object.skillId | 0;
+                if (object.nextReqLevel != null)
+                    if ($Number(object.nextReqLevel) !== 0)
+                        message.nextReqLevel = object.nextReqLevel | 0;
+                if (object.nextGold != null)
+                    if (typeof object.nextGold === "object" ? object.nextGold.low || object.nextGold.high : $Number(object.nextGold) !== 0)
+                        if ($util.Long)
+                            message.nextGold = $util.Long.fromValue(object.nextGold, false);
+                        else if (typeof object.nextGold === "string")
+                            message.nextGold = $parseInt(object.nextGold, 10);
+                        else if (typeof object.nextGold === "number")
+                            message.nextGold = object.nextGold;
+                        else if (typeof object.nextGold === "object")
+                            message.nextGold = new $util.LongBits(object.nextGold.low >>> 0, object.nextGold.high >>> 0).toNumber();
+                if (object.powerPctMin != null)
+                    if ($Number(object.powerPctMin) !== 0)
+                        message.powerPctMin = object.powerPctMin | 0;
+                if (object.powerPctMax != null)
+                    if ($Number(object.powerPctMax) !== 0)
+                        message.powerPctMax = object.powerPctMax | 0;
+                if (object.nextPowerPctMin != null)
+                    if ($Number(object.nextPowerPctMin) !== 0)
+                        message.nextPowerPctMin = object.nextPowerPctMin | 0;
+                if (object.nextPowerPctMax != null)
+                    if ($Number(object.nextPowerPctMax) !== 0)
+                        message.nextPowerPctMax = object.nextPowerPctMax | 0;
+                return message;
+            };
+
+            /**
+             * Creates a plain object from a SkillLearnInfo message. Also converts values to other types if specified.
+             * @function toObject
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {jpt.base.SkillLearnInfo} message SkillLearnInfo
+             * @param {$protobuf.IConversionOptions} [options] Conversion options
+             * @returns {Object.<string,*>} Plain object
+             */
+            SkillLearnInfo.toObject = function (message, options, _depth) {
+                if (!options)
+                    options = {};
+                if (_depth === $undefined)
+                    _depth = 0;
+                if (_depth > $util.recursionLimit)
+                    throw $Error("max depth exceeded");
+                let object = {};
+                if (options.defaults) {
+                    object.skillId = 0;
+                    object.nextReqLevel = 0;
+                    if ($util.Long) {
+                        let long = new $util.Long(0, 0, false);
+                        object.nextGold = options.longs === $String ? long.toString() : options.longs === $Number ? long.toNumber() : typeof $BigInt !== "undefined" && options.longs === $BigInt ? long.toBigInt() : long;
+                    } else
+                        object.nextGold = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
+                    object.powerPctMin = 0;
+                    object.powerPctMax = 0;
+                    object.nextPowerPctMin = 0;
+                    object.nextPowerPctMax = 0;
+                }
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
+                    object.skillId = message.skillId;
+                if (message.nextReqLevel != null && $Object.hasOwnProperty.call(message, "nextReqLevel"))
+                    object.nextReqLevel = message.nextReqLevel;
+                if (message.nextGold != null && $Object.hasOwnProperty.call(message, "nextGold"))
+                    if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
+                        object.nextGold = typeof message.nextGold === "number" ? $BigInt(message.nextGold) : $util.Long.fromBits(message.nextGold.low >>> 0, message.nextGold.high >>> 0, false).toBigInt();
+                    else if (typeof message.nextGold === "number")
+                        object.nextGold = options.longs === $String ? $String(message.nextGold) : message.nextGold;
+                    else
+                        object.nextGold = options.longs === $String ? $util.Long.prototype.toString.call(message.nextGold) : options.longs === $Number ? new $util.LongBits(message.nextGold.low >>> 0, message.nextGold.high >>> 0).toNumber() : message.nextGold;
+                if (message.powerPctMin != null && $Object.hasOwnProperty.call(message, "powerPctMin"))
+                    object.powerPctMin = message.powerPctMin;
+                if (message.powerPctMax != null && $Object.hasOwnProperty.call(message, "powerPctMax"))
+                    object.powerPctMax = message.powerPctMax;
+                if (message.nextPowerPctMin != null && $Object.hasOwnProperty.call(message, "nextPowerPctMin"))
+                    object.nextPowerPctMin = message.nextPowerPctMin;
+                if (message.nextPowerPctMax != null && $Object.hasOwnProperty.call(message, "nextPowerPctMax"))
+                    object.nextPowerPctMax = message.nextPowerPctMax;
+                return object;
+            };
+
+            /**
+             * Converts this SkillLearnInfo to JSON.
+             * @function toJSON
+             * @memberof jpt.base.SkillLearnInfo
+             * @instance
+             * @returns {Object.<string,*>} JSON object
+             */
+            SkillLearnInfo.prototype.toJSON = function() {
+                return SkillLearnInfo.toObject(this, $protobuf.util.toJSONOptions);
+            };
+
+            /**
+             * Gets the type url for SkillLearnInfo
+             * @function getTypeUrl
+             * @memberof jpt.base.SkillLearnInfo
+             * @static
+             * @param {string} [prefix] Custom type url prefix, defaults to `"type.googleapis.com"`
+             * @returns {string} The type url
+             */
+            SkillLearnInfo.getTypeUrl = function(prefix) {
+                if (prefix === $undefined)
+                    prefix = "type.googleapis.com";
+                return prefix + "/jpt.base.SkillLearnInfo";
+            };
+
+            return SkillLearnInfo;
         })();
 
         base.C2S_LearnSkill = (function() {

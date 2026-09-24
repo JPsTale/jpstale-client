@@ -697,6 +697,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   let selfAttackSlot: 'left' | 'right' = 'left';
   /**
+   * `selfAttackSlot` 是**一次性**的（用掉一次出手就回到左拳）。
+   * 只有"左键追打循环进行中插入一次右键技能"会置它（用户 2026-09-24 裁定的**预读指令**）；
+   * 点选目标那种是**持续**的（源码 `SelMouseButton` 本就黏着，除非再点另一键）。
+   */
+  let selfAttackSlotOneShot = false;
+  /**
    * 瞄准**怪的身中**而不是脚底：`root.position` 在地面，而原版给特效定高度惯用 `pY + N*fONE`
    * （如蘑菇 `pY + 24*fONE`；我方 `MONSTER_ATTACK_FX` 的 `height` 也是这一套）。
    * ⚠ `sinEffect_MultiSpark` 自己用 `DesChar->pY` **原值**（无抬高）⇒ 抬高属**调用侧**的事，
@@ -2430,8 +2436,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * ⚠ 右键的调用点在 `tryNoTargetCast()` **之后**（原版顺序：先试即时施放，失败才落到打人）；
    *   左键的调用点就是它的全部语义（原版左键只有"有目标 → 进攻击循环"这一岔）。
    */
-  function fistCastTarget(slot: 'left' | 'right', cx: number, cy: number): THREE.Object3D | null {
-    if (!fistSkillOf(slot)) return null;
+  /**
+   * **光标下的怪物**（与该拳绑的是技能还是普攻无关）—— 点怪要"选中它去追打"，
+   * 而"用哪只拳"是另一件事（源码 `SelMouseButton = 1/2 → pLeftSkill/pRightSkill`）。
+   *
+   * ⚠ 早前这里是 `fistCastTarget`（**该拳有技能**才返回），于是"左拳是普攻"时它返回 null ⇒
+   *   连"这一键选的目标"都记不下来，追打循环还沿用上一次的右拳 ⇒ 左键点怪放出了右拳技能
+   *   （用户 2026-09-24 实测）。判据从"这一拳有没有技能"改成"光标下有没有怪"。
+   */
+  function monsterUnderCursor(cx: number, cy: number): THREE.Object3D | null {
     const tag = nameplateTargetAt(cx, cy) ?? pickTargetAt(cx, cy);    // 与点击同一判定（唯一实现）
     if (!tag || tag.kind !== 'monster') return null;
     return monsters.get(tag.id)?.root ?? null;
@@ -2470,23 +2483,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
-   * 施法资源门（客户端预校验，唯一实现）：MP 够不够。
+   * 施法资源门（客户端预校验，唯一实现）：MP 够不够。**只查原因，不提示** ——
+   * 提示由调用方按"这一击怎么处置"决定（左拳退普攻 / 右拳什么都不做，见攻击循环）。
    * 权威判定在服务端（`SkillCastService.begin`）；这里只为**别先把动画播出去再被拒**
    * （用户 2026-09-24："缺少魔法值现在也可以施法，至少客户端应该判断施法前提吧"）。
-   * @returns true = 拦下（调用方**不要**播动画、不要发包）
+   *
+   * @returns 拒绝原因 key（`skill.op.*`）；`null` = 可用
    */
-  function castResourceBlocked(skillId: number): boolean {
+  function castBlockReason(skillId: number): string | null {
     const point = skillLevelOf(skillId);
     const mp = getGameSnapshot().character?.mp ?? 0;
     const r = checkCastResources(skillId, point, mp);
-    if (r.block === 'noMp') {
-      return blockCast('skill.op.noMp');
-    }
+    if (r.block === 'noMp') return 'skill.op.noMp';
     if (r.block === 'notEnoughData') {
       // 表缺/越界：**不拦**（数据缺不是"蓝不够"），但留痕 —— 静默拦会变成"技能放不出来"这种最难查的症状
       reportFallback('skill.cost', `技能 0x${skillId.toString(16)} 的 MP 表值取不到（等级 ${point}）⇒ 不拦，放行`);
     }
-    return false;
+    return null;
+  }
+
+  /** 施法被拦下时提示（节流）；`reasonKey` = `skill.op.*` */
+  function notifyCastBlock(reasonKey: string): void {
+    blockCast(reasonKey);
   }
 
   function tryNoTargetCast(): boolean {
@@ -2499,7 +2517,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const selfClass = selfClassDir();
     if (selfClass == null) return false;
     if (noTargetCastBlock(fs.skillId, selfClass, isVillageMap(currentMapId)) != null) return false;
-    if (castResourceBlocked(fs.skillId)) return false;   // MP 门（原版 `sinCheckSkillUseOk` 的 MP 那一半）
+    const resBlock = castBlockReason(fs.skillId);        // MP 门（原版 `sinCheckSkillUseOk` 的 MP 那一半）
+    if (resBlock) { notifyCastBlock(resBlock); return false; }
     // ① 本地先播（原版 BeginSkill/SetMotion 在发包之前）。播不出来（连普攻都找不到）⇒ 这一击不算放出去
     if (!playSkillByIcon(fs.icon, null)) return false;
     opts?.onCastSkill?.(fs.skillId, 0);              // ② 再发 C2S_UseSkill(skillId, targetId=0)，不等回包
@@ -2514,21 +2533,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 右键：**先试无目标施放**，成功即结束（原版 Winmain.cpp:3087-3088 的 `break` 跳过打人那条路）。
       // ⚠ 左键**没有**这条路（原版左键分支根本不看拳位，只有"进攻击循环/走路"两岔）。
       if (e.button === 2 && tryNoTargetCast()) { e.preventDefault(); return; }
-      const aim = fistCastTarget(slot, e.clientX, e.clientY);
+      const aim = monsterUnderCursor(e.clientX, e.clientY);
       if (aim) {
         e.preventDefault();
-        // 这一击用**哪只拳**的技能：`SelMouseButton = 1/2` ⇒ `pLeftSkill/pRightSkill`（`playmain.cpp:2303-2313`）
+        // "这一击用**哪只拳**"= 你按的那个键（`SelMouseButton = 1/2` ⇒ `pLeftSkill/pRightSkill`，`playmain.cpp:2303-2313`）。
+        // ⚠ 判据是"光标下有没有怪"，**不是**"这只拳有没有技能" —— 左拳是普攻时也要记下"用左拳"，
+        //   否则追打循环会沿用上一次的右拳（用户 2026-09-24 实测："左键点击也变了施法"）。
         selfAttackSlot = slot;
-        // ⛔ **不在按下瞬间施法**（用户 2026-09-24 实测："近战应该跟普攻一样跑到目标身边再攻击，
-        //   而不是原地施法"）。原版这一岔是 `SelMouseButton = 1/2; TraceAttackPlay();`
-        //   （`Winmain.cpp:2994-2996`）—— 选中这只怪去追打，**技能由攻击循环在攻击距离内逐次放出**
-        //   （`:2474` 的 `PlaySkillAttack(lpAttackSkill, …)`）。
-        //   我们此前在这里直接 `playEquippedSkill`：站多远都当场放一次 ⇒ 与源码不符。
+        // ⛔ **不在按下瞬间施法**（用户 2026-09-24："近战应该跟普攻一样跑到目标身边再攻击，而不是原地施法"）。
+        //   原版这一岔是 `SelMouseButton = 1/2; TraceAttackPlay()`（`Winmain.cpp:2994-2996`）：
+        //   选中这只怪去追打，**技能由攻击循环在攻击距离内逐次放出**（`playmain.cpp:2474`）。
         if (e.button === 2) {
-          // 右键：源码那条 `break` 之后落到 `SelMouseButton = 2; TraceAttackPlay()` ⇒ 同样要"选目标去追打"
-          onGroundTap(e.clientX, e.clientY);
+          // **预读指令**（用户 2026-09-24 裁定）：左键追打循环进行中 ⇒ 这次右键**插一次**右拳技能，
+          //   下一次出手后自动回到左拳（源码的 `SelMouseButton` 是黏着的，这里是按用户要求做的一次性插入）。
+          selfAttackSlotOneShot = moveTarget?.kind === 'monster';
+          if (!selfAttackSlotOneShot) {
+            // 不在追打中 = 正经的"用右拳选目标去追打"（源码 break 后落到 `SelMouseButton = 2; TraceAttackPlay()`）
+            onGroundTap(e.clientX, e.clientY);
+          }
           return;
         }
+        selfAttackSlotOneShot = false;   // 左键 = 持续用左拳
         // 左键：不 return —— 交给下面"按在目标上"的逻辑，抬起时 `onGroundTap` 选目标 + Chase
       } else if (e.button === 2) { e.preventDefault(); return; }   // 右键也放不出、光标下也没怪：什么都不做（原版同）
     }
@@ -6452,14 +6477,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 判据放**条件里**（不是 `return`）：本帧后面还有许多别的更新要走。
       const it = isVillageMap(currentMapId) ? { kind: 'normal' as const } : fistIntent(selfAttackSlot);
       const bindBroken = it.kind === 'unknown' || it.kind === 'invalid';
-      const mpBlocked = it.kind === 'skill' && castResourceBlocked(it.skillId);
-      if (!busy && !bindBroken && !mpBlocked && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
-        const sk = it.kind === 'skill' ? { icon: it.row.iconFile, skillId: it.skillId } : null;
+      // 技能**不可用**（MP/SP 等，原版 `sinCheckSkillUseOk`）时的分流 —— 逐字 `SkillSub.cpp:1546-1553`：
+      //   `if (sinCheckSkillUseOk(lpSkill) == FALSE || lpSkill->Point > 10) {`
+      //   `    if (lpSkill == sinSkill.pLeftSkill && RetryPlayAttack(lpChar)) return FALSE;`  ⇒ **左拳退普攻**
+      //   `    return TRUE; }`                                                                  ⇒ **右拳什么都不做**
+      // 即"左右键权重不同"：左键是主攻击（打不着也要打），右键是明确的技能意图（用不出来就不出）。
+      const skillBlock = it.kind === 'skill' ? castBlockReason(it.skillId) : null;
+      if (skillBlock) notifyCastBlock(skillBlock);
+      const rightSkillBlocked = skillBlock != null && selfAttackSlot === 'right';
+      if (!busy && !bindBroken && !rightSkillBlocked && animState && rafMs - lastSelfAttackStartMs >= selfAttackGateMs()) {
+        const sk = it.kind === 'skill' && skillBlock == null
+          ? { icon: it.row.iconFile, skillId: it.skillId } : null;
         selfTrailSkillIndex = null;   // T1：默认不染色（技能那一支由 `playSkillByIcon` 自己设成该技能下标）
         const played = sk ? playSkillByIcon(sk.icon, monsters.get(moveTarget.id)?.root ?? null)
           : animState.triggerAttack(true);
         if (played) {
           lastSelfAttackStartMs = rafMs;
+          // 一次性插入的右键技能：这一次出手用掉了 ⇒ 回到左拳（预读指令的"插一次"）
+          if (selfAttackSlotOneShot) {
+            selfAttackSlot = 'left';
+            selfAttackSlotOneShot = false;
+          }
           const m = animState.getCurrentMotion();
           const targetId = moveTarget.id;
           // 技能那一击的**结算**走技能包（原版 `PlaySkillAttack` 里的 `dm_SendTransDamage` 同义）；

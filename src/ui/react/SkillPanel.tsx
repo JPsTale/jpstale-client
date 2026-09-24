@@ -6,6 +6,9 @@ import { CLASS_DIR, SKILLS, CLASS_TIERS, SKILLS_PER_PAGE, skillIconUrl, skillNam
 import { transparentBmp } from '../../game/transparentBmp.js';
 import { t } from '../../i18n/index.js';
 import { skillLevelOf, skillMasteryOf } from '../../game/skillLevel.js';
+import { skillMpCost, skillSpCost } from '../../game/skillCost.js';
+import { skillCdProgress } from '../../game/skillCooldown.js';
+import { skillName, skillDesc } from '../../game/skillText.js';
 import { skillIdByIcon, skillRowBySkillId, type SkillIdentityRow } from '../../game/skillIdentity.js';
 import { learnGate, type LearnGate } from '../../game/skillLearn.js';
 import { bindQuickKey, equipFistSkill, sendLearnSkill, sendResetSkillPoints } from '../../net/bridge.js';
@@ -70,7 +73,7 @@ function useSkillIconSrc(url: string): string {
   return src;
 }
 
-interface TipData { skill: SkillDef; lv: number; mastery: number; x: number; y: number; displayName: string }
+interface TipData { skill: SkillDef; skillId: number | null; lv: number; mastery: number; x: number; y: number; displayName: string }
 
 // 可绑拳规则（useCode）：左键绑左拳需 LEFT/ALL；右键绑右拳需 RIGHT/ALL。
 // 取值来自**生成物那一行**（= 服务端同一张表；与客户端 `skillData.useCode` 由 `verify-skill-usecode` 钉死一致）。
@@ -93,6 +96,12 @@ export default function SkillPanel() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
   const { character, skillBindings, skillList } = snap;
   const [tip, setTip] = useState<TipData | null>(null);
+  // 竖条（熟练度/CD）自己的 hover 提示 —— 与技能信息窗是**两个** tip：鼠标从格子滑到竖条上时
+  // 格子那边会 onMouseLeave（信息窗关掉），这里接着显示"熟练度 N%"。
+  const [barTip, setBarTip] = useState<BarTipData | null>(null);
+  // CD 条的**重绘节流**：面板开着时每 150ms 检查一次，**只有真有 CD 在跑**才 setState
+  // （否则 React 面板会一直空转重绘；HUD 是 canvas 每帧重画，不需要这个）。
+
   // 当前按住的鼠标键（用于 F1-F8 录制判定目标拳）
   const pressedBtn = useRef<'left' | 'right' | null>(null);
   // 当前鼠标悬停的技能格 → 其录 F 键回调（原版 SkillButtonIndex 语义：悬停格上按 F 录制）。
@@ -133,6 +142,22 @@ export default function SkillPanel() {
     [skills],
   );
 
+  // CD 条的重绘驱动：**用 rAF、不用定时器** —— 150ms 轮询会让面板的 CD 条比 HUD 的弧慢半拍
+  // （用户 2026-09-24 实测"CD 不同步"）。rAF 与 HUD 的 canvas 重画同帧率 ⇒ 两条一起动；
+  // 且**只有真有 CD 在跑**时才 setState（否则面板空转重绘）。
+  const [cdTick, setCdTick] = useState(0);
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      if (cells.some((x) => x.skillId != null && skillCdProgress(x.skillId) < 1)) {
+        setCdTick((t) => t + 1);
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [cells]);
+
   const rows = useMemo(
     () => Array.from({ length: 5 }, (_, i) => ({
       tierName: tiers[i] ?? `T${i + 1}`,
@@ -154,7 +179,7 @@ export default function SkillPanel() {
   }
 
   // 某技能当前绑在哪只拳上（唯一实现 `game/skillBinding.ts`：身份是 skillId）
-  function fistOf(skillId: number | null): FistSlot | null {
+  function fistOf(skillId: number | null): FistSlot | 'both' | null {
     return skillId == null ? null : fistSlotOfSkill(skillBindings, skillId);
   }
 
@@ -174,7 +199,6 @@ export default function SkillPanel() {
       onPointerLeave={() => { pressedBtn.current = null; }}
     >
       {/* 顶部提示行：操作说明 */}
-      <div className="jp-skill-hint">{t('skills.equipHint')}</div>
 
       {/* 技能表没到 ⇒ 加点一律不可按（AGENTS #12：不拿角色等级或 0 点顶上），这里说明原因 */}
       {skillList == null && <div className="jp-skill-warn">{t('skills.learnNoList')}</div>}
@@ -205,7 +229,12 @@ export default function SkillPanel() {
           <div className="jp-skill-row-skills">
             {row.cells.map((cell, i) => {
               const s = cell.skill;
+              const lvl = cell.skillId != null ? skillLevelOf(cell.skillId) : null;
+              const mast = cell.skillId != null ? skillMasteryOf(cell.skillId) : 0;
               return (
+                // 每个技能格 = [格子][熟练度条][CD 条] —— 两条竖条在**格子外侧**紧贴右边
+                // （用户 2026-09-24 定版：不要放进格子内部，会盖住 L/R 与 F 键角标）
+                <div className="jp-skill-cellwrap" key={row.base + i}>
                 <SkillCell
                   key={row.base + i}
                   skill={s}
@@ -228,6 +257,10 @@ export default function SkillPanel() {
                   }}
                   onHoverLeave={() => { hoverRecord.current = null; }}
                 />
+                <SkillBars learned={(lvl ?? 0) > 0} mastery={mast} skillId={cell.skillId}
+                           element0={cell.row?.element0 ?? 0} cdTick={cdTick}
+                           onTip={setBarTip} />
+                </div>
               );
             })}
           </div>
@@ -251,7 +284,8 @@ export default function SkillPanel() {
         </button>
       </div>
       {skillList?.lastErrorKey && <div className="jp-skill-err">{t(skillList.lastErrorKey)}</div>}
-      {tip && createPortal(<SkillTip skill={tip.skill} lv={tip.lv} mastery={tip.mastery} x={tip.x} y={tip.y} displayName={tip.displayName} />, document.body)}
+      {tip && createPortal(<SkillTip skill={tip.skill} skillId={tip.skillId} lv={tip.lv} mastery={tip.mastery} x={tip.x} y={tip.y} displayName={tip.displayName} />, document.body)}
+      {barTip && createPortal(<BarTip {...barTip} />, document.body)}
     </div>
   );
 }
@@ -307,7 +341,7 @@ function useEquipAction(cb: CellBinding, allowed: boolean, useCode?: string): {
 
 function NormalAttackCell(props: {
   /** 未绑的拳位就是普攻（`UNBOUND` = 0，两侧都用它当身份） */
-  fistOf(): FistSlot | null;
+  fistOf(): FistSlot | 'both' | null;
   quickKey(): number | null;
   allowed: boolean;
   onEquip(target: FistSlot): void;
@@ -326,17 +360,76 @@ function NormalAttackCell(props: {
   return (
     <div
       className="jp-skill-cell"
-      title={t('skills.normalAttackTip')}
+      // ⛔ 同样不设原生 `title`（普攻格与技能格同属这个面板 —— 用户 2026-09-24 要的是
+      //   面板内也不再放操作说明行（用户 2026-09-24："纯多余"）。
+      aria-label={`${t('skills.normalAttack')} —— ${t('skills.normalAttackTip')}`}
       {...actions}
       onMouseEnter={onHover}
       onMouseLeave={onHoverLeave}
     >
       <div className="jp-skill-iconbox">
         <img className="jp-skill-icon" src={iconSrc} alt={t('skills.normalAttack')} />
-        {fist && <span className={`jp-skill-fistbadge jp-skill-fistbadge--${fist}`}>{fist === 'left' ? 'L' : 'R'}</span>}
+        {(fist === 'left' || fist === 'both') && <span className="jp-skill-fistbadge jp-skill-fistbadge--left">L</span>}
+        {(fist === 'right' || fist === 'both') && <span className="jp-skill-fistbadge jp-skill-fistbadge--right">R</span>}
         {qkey && <span className="jp-skill-keybadge">F{qkey}</span>}
       </div>
-      <div className="jp-skill-mastery"><div className="jp-skill-mastery-bar" style={{ width: '0%' }} /></div>
+    </div>
+  );
+}
+
+/**
+ * 技能格**右侧的两条竖条**（在格子**之外**、与图标**等高**；用户 2026-09-24 定版）：
+ *   · 左 = **熟练度**（绿）：`mastery / 100` %，从下往上填（`mastery` 是**服务端派生的
+ *     `UseSkillMastery`**，元素技能它本身就发 10000 ⇒ 满格，不需要在 UI 再特判）；
+ *   · 右 = **CD**（金）：`skillCdProgress` 0..1，从下往上填（满 = 可出手）。
+ * 配色取**原版贴图实测**：熟练度 `Gage-2.bmp` = `rgb(175,255,114)`（框 `Gage-3.bmp` 深绿 `rgb(23,138,0)`）、
+ * CD `Gage.bmp` = `rgb(255,223,58)`；粉 = `Gage-5.bmp` `rgb(255,0,110)`、灰 = `Gage-4.bmp` `rgb(123,123,123)`。
+ * 只借颜色与语义 —— **不套原版位图**（面板是我们重做的 UI）。
+ * ⚠ 高度**只到图标底**（`44px`），不跟到格子底 —— 格子底下还有 `+ 学习` 按钮（临时的），
+ *   竖条伸过去会像在给那个按钮画进度（用户 2026-09-24）。
+ * ⚠ CD 值是**客户端本地计时**（服务端尚未实现 CD，见 `game/skillCooldown.ts`）；`cdTick` 是重绘节流。
+ */
+function SkillBars(props: { learned: boolean; mastery: number; skillId: number | null;
+                            element0: number; cdTick: number;
+                            onTip: (tip: BarTipData | null) => void }) {
+  const { learned, mastery, skillId, element0, cdTick, onTip } = props;
+  void cdTick;   // 只用于触发重绘（值本身不参与计算）
+  // **粉色条 = `Element[0] != 0`** —— 源码唯一的触发条件（`sinSkill.cpp:839` 画 `Gage-5.bmp`）。
+  //   该值取自生成物 `skills[].element0`（口径/provenance 见生成物 `elementNote`）：**高转职段**为 1
+  //   （英文/中文定义表一致；5 转那 40 行三份表都没有定义，按用户在原版里看到的粉色 gage 记为 1）。
+  //   ⚠ 同一行源码还规定这类技能**熟练度恒满**（`:2064`）—— 服务端下发的就是 10000 ⇒ 这里自然满格。
+  const elite = element0 !== 0;
+  const masteryPct = Math.max(0, Math.min(100, mastery / 100));
+  const cdPct = skillId != null ? skillCdProgress(skillId) * 100 : 100;
+  const masteryCls = !learned ? 'jp-skill-bar--grey' : elite ? 'jp-skill-bar--elite' : 'jp-skill-bar--mastery';
+  const showMasteryTip = (e: React.MouseEvent): void => {
+    onTip({ x: e.clientX, y: e.clientY, pct: masteryPct, known: learned });
+  };
+  return (
+    <div className="jp-skill-bars">
+      {/* `onMouseMove` 而不是只 `onMouseEnter`：条很窄，用户会沿着它滑（tooltip 要跟手） */}
+      <div className={`jp-skill-bar ${masteryCls}`}
+           aria-label={`${t('skills.mastery')} ${masteryPct.toFixed(0)}%`}
+           onMouseMove={showMasteryTip}
+           onMouseLeave={() => onTip(null)}>
+        <div className="jp-skill-bar-fill" style={{ height: `${masteryPct}%` }} />
+      </div>
+      {/* 未学 ⇒ 两条都灰（原版 `UseSkillFlag`/`Point == 0` 画灰版；配色取 `Gage-4.bmp` 实测 rgb(123,123,123)） */}
+      <div className={`jp-skill-bar ${learned ? 'jp-skill-bar--cd' : 'jp-skill-bar--grey'}`} aria-label={t('skills.cd')}>
+        <div className="jp-skill-bar-fill" style={{ height: `${cdPct}%` }} />
+      </div>
+    </div>
+  );
+}
+
+/** 竖条的 hover 提示（**自绘**，不用原生 `title` —— 面板里禁用，见 SkillCell 的注释）。 */
+interface BarTipData { x: number; y: number; pct: number; known: boolean }
+
+function BarTip(props: BarTipData) {
+  const { x, y, pct, known } = props;
+  return (
+    <div className="jp-skill-bartip" style={{ left: x + 14, top: y + 10 }}>
+      {t('skills.mastery')} {known ? `${pct.toFixed(0)}%` : '—'}
     </div>
   );
 }
@@ -352,7 +445,7 @@ function SkillCell(props: {
   /** 服务端下发的熟练度 0..10000 */
   mastery: number;
   classDir: string;
-  fist(): FistSlot | null;
+  fist(): FistSlot | 'both' | null;
   quickKey(): number | null;
   /** 绑定表到了没（没到 ⇒ 不许绑、不许录 F 键） */
   allowed: boolean;
@@ -368,7 +461,6 @@ function SkillCell(props: {
   // 等级只认服务端：表没到（null）与"没学"（0）都按未学显示，不拿角色等级推一个出来。
   const lv = level ?? 0;
   const learned = lv > 0;
-  const masteryPct = Math.max(0, Math.min(100, mastery / 100)); // 0..10000 → 0..100%
   const iconSrc = useSkillIconSrc(skillIconUrl(classDir, skill.iconFile));
   const useCode = row?.useCode ?? 'NOT';
   const canBind = allowed && learned && row != null && useCode !== 'NOT';
@@ -378,26 +470,25 @@ function SkillCell(props: {
   const qkey = learned ? quickKey() : null;
   const actions = useEquipAction({ onEquip, onRecord, bindState }, canBind, useCode);
 
-  // 说明标题
-  const displayName = t(skillNameKey(classDir, skill.iconFile)) || skill.name;
-  let title = displayName;
-  if (learned) {
-    if (onFist === 'left') title += `\n[${t('skills.equipLeft')}]`;
-    else if (onFist === 'right') title += `\n[${t('skills.equipRight')}]`;
-    if (qkey) title += `\n[${t('skills.quickKey')} F${qkey}]`;
-    title += `\n${t('skills.equipHint')}`;
-  }
+  // 显示名：**原版语言文件**优先（用户 2026-09-24 要求），查不到（中文表缺刺客/萨满）再退
+  // 本地 i18n 词条 → wartale 名。`skillName` 内部已对"语言表缺这一条"上报留痕。
+  const displayName = (row?.skillId != null ? skillName(row.skillId) : null)
+    ?? (t(skillNameKey(classDir, skill.iconFile)) || skill.name);
+  // ⛔ **不设原生 `title`**（2026-09-24 用户实测"会有两层 hover，白色的很恶心"）：
+  //   原生 tooltip 由浏览器画（不可样式化、位置不跟鼠标、与自定义面板重叠）。
+  //   ⚠ 它原本承载的"已装备哪只拳 / 哪个 F 键"**不再另写文字** —— 格子上本来就有角标
+  //   （`jp-skill-fistbadge` 的 L/R、`jp-skill-keybadge` 的 F{n}）；用户 2026-09-24 明确
+  //   "那种文字没有任何价值"（重复信息）。操作提示常驻面板顶部，无障碍名走 `aria-label`。
 
   return (
     <div
       className={learned ? 'jp-skill-cell' : 'jp-skill-cell jp-skill-cell--locked'}
-      title={title}
       {...actions}
       onMouseEnter={(e) => {
         onHover();
-        learned && onTip({ skill, lv, mastery, x: e.clientX, y: e.clientY, displayName });
+        learned && onTip({ skill, skillId: row?.skillId ?? null, lv, mastery, x: e.clientX, y: e.clientY, displayName });
       }}
-      onMouseMove={(e) => learned && onTip({ skill, lv, mastery, x: e.clientX, y: e.clientY, displayName })}
+      onMouseMove={(e) => learned && onTip({ skill, skillId: row?.skillId ?? null, lv, mastery, x: e.clientX, y: e.clientY, displayName })}
       onMouseLeave={() => { onHoverLeave(); onTip(null); }}
     >
       <div className="jp-skill-iconbox">
@@ -406,11 +497,15 @@ function SkillCell(props: {
         {learned && canL && onFist === null && !canR && (
           <span className="jp-skill-fistonly">L</span>
         )}
-        {onFist && <span className={`jp-skill-fistbadge jp-skill-fistbadge--${onFist}`}>{onFist === 'left' ? 'L' : 'R'}</span>}
+        {/* 角标：`both` = 两只拳上是同一个 id（原版不可能；服务端已禁止新写入）⇒ **两个都画**，
+            不隐藏、也不替用户挑一只（用户 2026-09-24 报过"绑右键却显示 L"）。 */}
+        {(onFist === 'left' || onFist === 'both') && (
+          <span className="jp-skill-fistbadge jp-skill-fistbadge--left">L</span>
+        )}
+        {(onFist === 'right' || onFist === 'both') && (
+          <span className="jp-skill-fistbadge jp-skill-fistbadge--right">R</span>
+        )}
         {qkey && <span className="jp-skill-keybadge">F{qkey}</span>}
-      </div>
-      <div className="jp-skill-mastery">
-        <div className="jp-skill-mastery-bar" style={{ width: `${masteryPct}%` }} />
       </div>
       {/* 真加点（服务端权威）：只发包，**不做乐观更新** —— 等级与点数都等 `S2C_SkillList` 回推
           （与属性加点 `CharStatusPanel` 同一套写法）。失败原因走 `S2C_Error.key = skill.op.*` 的文案链路。 */}
@@ -418,7 +513,7 @@ function SkillCell(props: {
         type="button"
         className="jp-skill-learn"
         disabled={!gate.canLearn}
-        title={t('skills.learn')}
+        // 同样不设原生 title：这个按钮就在技能格上，悬停它会弹一个白框压住我们的面板（同一天实测）
         aria-label={`${displayName} +1`}
         onPointerDown={(e) => e.stopPropagation()}
         onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -428,15 +523,37 @@ function SkillCell(props: {
   );
 }
 
-function SkillTip(props: { skill: SkillDef; lv: number; mastery: number; x: number; y: number; displayName: string }) {
-  const { skill, lv, mastery, x, y, displayName } = props;
+function SkillTip(props: { skill: SkillDef; skillId: number | null; lv: number; mastery: number;
+                          x: number; y: number; displayName: string }) {
+  const { skill, skillId, lv, mastery, x, y, displayName } = props;
+  // **原版文本**（`game/skillText.ts` 按 UI 语言取语言文件；缺则回退并上报）
+  const origName = skillId != null ? skillName(skillId) : null;
+  const origDesc = skillId != null ? skillDesc(skillId) : null;
   const masteryPct = Math.max(0, Math.min(100, mastery / 100)); // 服务端熟练度 0..10000
   const tw = skillReqWeight(skill);
-  const mp = demoMp(skill);
-  const sp = demoSp(skill);
+  // **真实消耗**（生成物同源；`demoMp/demoSp` 是旧占位，只在身份表查不到时才回退显示占位值）
+  // 等级：已学用当前等级；未学显示"学 1 级"的消耗（面板下一行就是 Lv 1 的效果）。
+  const point = lv > 0 ? lv : 1;
+  const mpReal = skillId != null ? skillMpCost(skillId, point) : null;
+  const spReal = skillId != null ? skillSpCost(skillId, point) : null;
+  const mp = mpReal ?? demoMp(skill);
+  const sp = spReal ?? demoSp(skill);
+  const mpIsReal = mpReal != null;
+  const spIsReal = spReal != null;
+  // 学下一级的条件（服务端算好下发：等级门槛 + 金币）；无价目表的槽（5 转）不下发 ⇒ 不显示
+  const learn = skillId != null ? getGameSnapshot().skillList?.learnInfo?.[skillId] : undefined;
   const weapons = skill.weapon ?? [];
-  const curEffect = demoEffect(skill, tw, lv);
-  const nextEffect = demoNextEffect(skill, tw, lv);
+  // **真实伤害描述**：服务端按该技能自己的模型给出加成百分比（见 `SkillGameService`/SkillCastService）；
+  // 0/0 = 该技能不是"攻击力×百分比"模型 ⇒ 回退 demo 文案（仍由页脚"演示数据"标记，不冒充真值）。
+  const dmgText = (lo: number, hi: number): string | null => {
+    if (lo <= 0 && hi <= 0) return null;
+    const pct = lo === hi ? `${lo}` : `${lo}~${hi}`;
+    return t('skills.dmgPct', { pct });
+  };
+  const curDamage = learn ? dmgText(learn.powerPctMin, learn.powerPctMax) : null;
+  const nextDamage = learn ? dmgText(learn.nextPowerPctMin, learn.nextPowerPctMax) : null;
+  const curEffect = curDamage ?? demoEffect(skill, tw, lv);
+  const nextEffect = nextDamage ?? demoNextEffect(skill, tw, lv);
   const style = {
     left: x + 18,
     top: y + 14,
@@ -444,14 +561,21 @@ function SkillTip(props: { skill: SkillDef; lv: number; mastery: number; x: numb
   };
   return (
     <div className="jp-skill-tip" style={style}>
-      <div className="jp-skill-tip-name">{displayName}</div>
-      <div className="jp-skill-tip-row">{t('skills.reqLevel')}: <b>{skill.reqLv}</b></div>
+      {/* 标题 = **原版格式** `名 LV:n`（`sinSkill.cpp:2158`：`wsprintf(szSkillInfoBuff, "%s LV:%d
+", SkillName, Point)`） */}
+      <div className="jp-skill-tip-name">{origName ?? displayName}{lv > 0 ? ` LV:${lv}` : ''}</div>
+      {/* 未学：原版走 `RequirLevel`（`%s (等级要求:%d)`）—— 名字 + 入门等级 */}
+      {lv <= 0 && (
+        <div className="jp-skill-tip-row jp-skill-tip-req">
+          {t('skills.reqLevelEntry', { level: skill.reqLv })}
+        </div>
+      )}
       <div className="jp-skill-tip-row">{t('skills.skillType')}: {skill.type}</div>
-      {skill.alt && <div className="jp-skill-tip-row jp-skill-tip-alt">({skill.alt})</div>}
-      <div className="jp-skill-tip-row">{t('skills.consume')}: MP {mp} / SP {sp}</div>
+      <div className="jp-skill-tip-row">{t('skills.consume')}: MP {mp}{mpIsReal ? '' : '?'} / SP {sp}{spIsReal ? '' : '?'}</div>
       {weapons.length > 0 && (
         <div className="jp-skill-tip-row jp-skill-tip-weapon">
-          {t('skills.weapon')}:
+          {/* 原版标签逐字：`UseItemGroupName` = "对应的装备" / "Compatible Item Group" */}
+          {t('skills.itemGroup')}:
           <span className="jp-skill-tip-wicons">
             {weapons.map((w) => (
               <img key={w} className="jp-skill-tip-wicon" src={weaponIconUrl(w)} alt={WEAPON_NAMES[w] ?? String(w)} title={WEAPON_NAMES[w] ?? String(w)} />
@@ -459,11 +583,18 @@ function SkillTip(props: { skill: SkillDef; lv: number; mastery: number; x: numb
           </span>
         </div>
       )}
-      <div className="jp-skill-tip-desc">{skill.desc}</div>
+      {/* 描述：**原版语言文件**优先（中文 GBK 表已抽好）；查不到才用 wartale 的 desc */}
+      <div className="jp-skill-tip-desc">{origDesc ?? skill.desc}</div>
       {lv > 0 && <div className="jp-skill-tip-row jp-skill-tip-cur">Lv {lv}: {curEffect}</div>}
+      {learn && (
+        <div className="jp-skill-tip-row jp-skill-tip-learn">
+          {t('skills.nextReq')}: {t('skills.reqLevelNext', { level: learn.nextReqLevel })}
+          {' · '}{t('skills.gold')} {learn.nextGold.toLocaleString('en-US')}
+        </div>
+      )}
       <div className="jp-skill-tip-row jp-skill-tip-next">Lv {Math.max(1, lv + 1)}: {nextEffect}</div>
       <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
-      <div className="jp-skill-tip-demo">{t('skills.demo')}</div>
+      {(!curDamage || !nextDamage) && <div className="jp-skill-tip-demo">{t('skills.demo')}</div>}
     </div>
   );
 }

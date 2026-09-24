@@ -48,6 +48,7 @@ import {
   type FistSlot,
 } from '../game/skillBinding.js';
 import { reportFallback } from '../char/fallback-log.js';
+import { markSkillCast } from '../game/skillCooldown.js';
 
 export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): GameCharacter {
   return {
@@ -229,11 +230,26 @@ export function installBridge(): void {
     if (msg.skillList) {
       const learned: Record<number, { point: number; mastery: number }> = {};
       for (const s of msg.skillList.skills || []) learned[Number(s.skillId) || 0] = { point: s.point || 0, mastery: s.mastery || 0 };
+      const learnInfo: Record<number, {
+        nextReqLevel: number; nextGold: number;
+        powerPctMin: number; powerPctMax: number; nextPowerPctMin: number; nextPowerPctMax: number;
+      }> = {};
+      for (const li of msg.skillList.learnInfo || []) {
+        learnInfo[Number(li.skillId) || 0] = {
+          nextReqLevel: Number(li.nextReqLevel) || 0,
+          nextGold: Number(li.nextGold) || 0,
+          powerPctMin: Number(li.powerPctMin) || 0,
+          powerPctMax: Number(li.powerPctMax) || 0,
+          nextPowerPctMin: Number(li.nextPowerPctMin) || 0,
+          nextPowerPctMax: Number(li.nextPowerPctMax) || 0,
+        };
+      }
       setSkillList({
         learned,
         skillPoint: msg.skillList.skillPoint || 0,
         specialSkillPoint: msg.skillList.specialSkillPoint || 0,
         lastErrorKey: null,   // 服务端推新表 = 上一次被拒之后的成功结果，错误提示就地消掉
+        learnInfo,
       });
     }
     // 技能操作的拒绝反馈（学/升/洗/绑共用 S2C_Error.key）：skill.* 前缀进面板就地显示；
@@ -324,6 +340,8 @@ export function sendAllocateStat(stat: string, points = 1): void {
 /** 释放技能（服务端权威）：`skillId` = **数字技能 id**（`iconFile → skillId` 查表得来，见
  *  `game/skillIdentity.ts`）；`targetId` 默认 0，见 `protocol.useSkill`。 */
 export function sendUseSkill(skillId: number, targetId = 0, animIndex = 0, animClip = ''): void {
+  // 起手即进 CD（原版的 GageLength 也从起手开始涨，sinSkill.cpp:2065-2075）—— 客户端本地计时
+  markSkillCast(skillId);
   send(useSkill(skillId, targetId, undefined, animIndex, animClip));
 }
 

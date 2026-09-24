@@ -116,7 +116,7 @@ export const SKILLS: Record<string, SkillDef[]> = {
     { iconFile: 'tp10 p_wind.bmp', name: 'Pike Wind', reqLv: 10, type: 'Area Attack', useCode: 'RIGHT', weapon: [5], desc: 'Forms a whirlwind to push back and slightly damage surrounding enemies Pike Wind will always hit its targets.' },
     { iconFile: 'tp12 i_attribute.bmp', name: 'Ice Attribute', reqLv: 12, type: 'Passive', useCode: 'NOT', weapon: [3, 5], desc: 'Permanently increase resistance against frost property attacks Ice Attribute lowers the freezing duration' },
     { iconFile: 'tp14 cri_hit.bmp', name: 'Critical Hit', reqLv: 14, type: 'Single Target', useCode: 'ALL', weapon: [5], desc: 'Aims for the weak point of the targeted enemy to raise the probability of a critical strike Critical Hit has a +2 attack speed bonus. Critical Hit does 2 hits.' },
-    { iconFile: 'tp17 j_crash.bmp', name: 'Jumping Crash', reqLv: 17, type: 'Single Target', useCode: 'ALL', weapon: [5], desc: 'Leaps up into the air to strikedown inflicting huge damage Jumping Crash does +100% damage against demon monsters.' },
+    { iconFile: 'tp17 j_crash.bmp', name: 'Jumping Crash', reqLv: 17, type: 'Single Target', useCode: 'ALL', weapon: [5], desc: 'Leaps up into the air to strikedown inflicting huge damage Jumping Crash does +30% damage against demon monsters.' },
     { iconFile: 'tp20 g_pike.bmp', name: 'Ground Pike', reqLv: 20, type: 'Area Attack', useCode: 'RIGHT', weapon: [5], desc: 'Freezes all enemies in range Ground Pike freeze duration is increased by 30% against demon or undead monsters. Ground Pike does ice damage.' },
     { iconFile: 'tp23 tornado.bmp', name: 'Tornado', reqLv: 23, type: 'Target Area', useCode: 'RIGHT', weapon: [5], desc: 'Summons a tornado to attack surrounding enemies Tornado will always hit its targets. Tornado area is relative to the target location.' },
     { iconFile: 'tp26 w_d_mastery.bmp', name: 'Weapon Defense Mastery', reqLv: 26, type: 'Passive', useCode: 'NOT', alt: 'Weapon Defence Mastery', weapon: [5], desc: 'Passively increases block rating' },
@@ -324,12 +324,26 @@ export function skillIconUrl(classDir: string, iconFile: string): string {
 }
 
 /** 需求武器图标 URL（/res 资产：image/sinimage/skill/WeaponIcon/{1..13}.bmp） */
+/**
+ * 武器图标文件的 URL。
+ *
+ * ⚠ **下标差 1**（2026-09-24 实测修：技能面板给枪兵技能显示了盾牌图标）：
+ *   原版按 `pSkill->Skill_Info.UseWeaponCode[i] == UseSkillItemInfo[j]` 求匹配下标 `j`
+ *   （`sinbaram/sinSkill.cpp:2590-2600`），再画 `lpWeaponIcon[j]`；而图标是在
+ *   `sinSkill.cpp:541-544` 按 `WeaponIcon\%d.bmp`（**i+1**）装载的 ⇒ **文件名 = j + 1**。
+ *   `UseSkillItemInfo[12]` 逐字（`sinSkill.cpp:2135`）：
+ *   `{ 0, sinWA1, sinWM1, sinWH1, sinDS1, sinWP1, sinWS2, sinWC1, sinWS1, sinWT1, sinWD1, sinWN1 }`
+ *   ⇒ j=4 是**盾**（`5.bmp`）、j=5 是**枪**（`6.bmp`）。我们直接把 j 当文件名取，于是
+ *   `weapon:[5]`（Pole/Spear）取到了 `5.bmp` = 盾牌。
+ *   视觉复核（10 倍放大）：4.bmp=锤 / 5.bmp=盾 / 6.bmp=枪 / 7.bmp=剑 ✔
+ */
 export function weaponIconUrl(idx: number): string {
-  return `/res/image/sinimage/skill/WeaponIcon/${idx}.bmp`;
+  return `/res/image/sinimage/skill/WeaponIcon/${idx + 1}.bmp`;
 }
 
-/** `SkillDef.weapon` 里的索引 → 武器族名（DB skillinfo.itemallowedtype 对齐原版 UseSkillItemInfo）。
- *  唯一实现：技能面板与职业实验室（efria-studio 的 job-lab）共用这一份。 */
+/** `SkillDef.weapon` 里的索引 → 武器族名。
+ *  索引 = 原版 `UseSkillItemInfo[]` 的**下标 j**（见 `weaponIconUrl` 的出处说明）；
+ *  图标文件是同号 +1 的 `WeaponIcon/N.bmp`。唯一实现：技能面板与职业实验室（efria-studio 的 job-lab）共用这一份。 */
 export const WEAPON_NAMES: Record<number, string> = {
   1: 'Axe', 2: 'Staff', 3: 'Hammer', 4: 'Shield', 5: 'Pole/Spear',
   6: 'Sword', 7: 'Claw', 8: 'Shooter', 9: 'Throwing', 10: 'Dagger', 11: 'Twin Blade',

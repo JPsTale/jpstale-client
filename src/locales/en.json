@@ -242,13 +242,16 @@
     "curEffect": "Current Effect",
     "nextEffect": "Next Level",
     "mastery": "Mastery",
+    "cd": "Cooldown",
+    "nextReq": "Next level",
+    "gold": "Gold",
+    "dmgPct": "Damage: Attack Power x(1 + {pct}%)",
+    "itemGroup": "Compatible Item Group",
+    "reqLevelEntry": "(Required Level {level})",
+    "reqLevelNext": "(Required Level:{level})",
     "demo": "DEMO DATA (skill table not wired yet)",
-    "equipHint": "Left-click → left fist · Right-click → right fist · Hold mouse + F1~F8 → hotkey",
     "normalAttack": "Normal Attack",
     "normalAttackTip": "Normal attack: left-click binds left fist / right-click binds right fist",
-    "equipLeft": "Equipped: Left Fist",
-    "equipRight": "Equipped: Right Fist",
-    "quickKey": "Hotkey",
     "learn": "Learn",
     "learnNoList": "Skill table not loaded — cannot spend points yet",
     "bindNoList": "Bindings not loaded — cannot change binds yet",
@@ -368,7 +371,14 @@
       "bagFull": "Bag is full",
       "notDroppable": "That item cannot be dropped",
       "failed": "Operation failed",
-      "crystal": {
+      "skill-master": {
+   "not-a-stone": "Not a skill mastery stone",
+   "stone-not-in-bag": "The stone must be in your bag or potion slot",
+   "no-skill-tree": "This class has no skill tree",
+   "nothing-to-mature": "Nothing to mature in this tier (unlearned / passive / already full)",
+   "bad-percent": "Bad percent (valid 1..100)"
+  },
+  "crystal": {
         "level": "Requires level {level} to use this crystal",
         "town": "Crystals cannot be used in town",
         "noTemplate": "Summon failed, the crystal was not consumed"
@@ -521,7 +531,10 @@
       "invalidNumber": "Invalid number in command: {cmd}",
       "useItemTooFast": "Use failed: too soon after the last use",
       "setRankUsage": "Usage: /@set_rank <0..{max}> (0=tier1 ... 4=tier5 reserved)",
-      "setRankBad": "Invalid rank: {arg} (valid 0..{max})"
+      "setRankBad": "Invalid rank: {arg} (valid 0..{max})",
+      "skillMasteryUsage": "Usage: /@skill_mastery <1..100> (set learned skills mastery to that percent)",
+      "skillMasteryBad": "Bad argument: {arg} (valid 1..100)",
+      "skillMasteryDone": "Mastery set to {pct}% — effective {actual}%, {count} skills changed; {full} elemental/high-tier skills stay at 100%"
     },
     "pickup": {
       "bagFull": "Bag is full, cannot pick up",

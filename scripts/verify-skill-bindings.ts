@@ -146,8 +146,11 @@ console.log('③ 跑真模块 `game/skillBinding.ts`');
     && quickFistOf(right.skillId, { ...none, fistLeft: right.skillId }, 4) === 'left');
   ok('否则按 `useCode`：RIGHT ⇒ 右拳（与"按着右键录进去"同结果）',
     quickFistOf(right.skillId, none, 4) === 'right');
-  ok('`ALL`（左右都能绑）且不在任何拳上 ⇒ **null**（不猜；协议没带 MousePosi）',
-    quickFistOf(all.skillId, none, 4) === null);
+  // 2026-09-24 改（用户裁定）：`ALL` 且还没装在任何拳上 ⇒ **默认右拳**。
+  // 旧行为是 `null`（"协议没带 MousePosi 就不猜"）⇒ 实际效果是"按 F 没反应"（用户实测报的 bug）；
+  // 用户的口径："默认是右拳，但要看技能本身绑了左键还是右键"（上面两条已覆盖"已绑则用该拳"）。
+  ok('`ALL`（左右都能绑）且不在任何拳上 ⇒ **右拳**（用户裁定：默认右拳）',
+    quickFistOf(all.skillId, none, 4) === 'right');
   ok('异职业的 F 键绑定 ⇒ null（不解析）', quickFistOf(fighterSkill.skillId, none, 4) === null);
   ok('未绑（0）⇒ null（该 F 键没有可装的东西）', quickFistOf(UNBOUND, none, 4) === null);
   ok('角标查表：`quickKeyOfSkill` 返回 1..8、`fistSlotOfSkill` 返回左右（身份 = skillId）',
@@ -171,13 +174,16 @@ console.log('④ HUD 拳位图标：取不到就留空，不画默认图标');
   ok('旧的"取不到就画 `fist`"没了（`textures[\'fistL\'] ? \'fistL\' : \'fist\'` 0 处）',
     !/textures\['fistL'\] \? 'fistL' : 'fist'/.test(hudCode)
     && !/textures\['fistR'\] \? 'fistR' : 'fist'/.test(hudCode));
+  // 2026-09-24 改：两个拳位的绘制收进 `drawFistSlot`（原版 `cSKILL::Draw` 的 HUD 那半段：
+  // 图标按可用性选彩色/灰版 + CD 弧），断言从"两行内联"改成"两处调用 + 函数内的 normal 分支"。
   ok('只有 `normal`（**未绑**）才画默认拳头，且是显式分支（原版普攻格就是这个图标）',
-    /if \(fistSlots\.left\.kind === 'normal'\) drawTex\('fist'/.test(hudCode)
-    && /if \(fistSlots\.right\.kind === 'normal'\) drawTex\('fist'/.test(hudCode));
+    /drawFistSlot\('left', fistSlots\.left, 349, 541\);/.test(hudCode)
+    && /drawFistSlot\('right', fistSlots\.right, 403, 541\);/.test(hudCode)
+    && /if \(view\.kind === 'normal'\) drawTex\('fist'/.test(hudCode));
   ok('绑了但图标取不到 ⇒ 删纹理 + 上报（`hud.fistIcon`），该格这一帧不画',
     /delete textures\[key\];\n      reportFallback\('hud\.fistIcon'/.test(hud));
   ok('`unknown`（绑定表没到）与 `invalid`（异职业/未知 id）走的是"删纹理"那条（不画）',
-    /if \(view\.kind !== 'skill'\) \{\n      delete textures\[key\];\n      return;\n    \}/.test(hud));
+    /if \(view\.kind !== 'skill'\) \{\n      delete textures\[key\];\n      delete textures\[keyGray\];\n      return;\n    \}/.test(hud));
   ok('HUD 不再 import 绑定对象类型（`FistBinding` 全仓 0 处）', !/FistBinding/.test(hudCode));
 }
 

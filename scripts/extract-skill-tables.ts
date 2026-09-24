@@ -62,11 +62,21 @@ const F_ARRAYS = 'sinbaram/sinSkill_Info.cpp';
 const F_MACROS = 'sinbaram/sinSkill.h';
 const F_DEF_BR = 'Language/Brazil/b_sinSkill_Info.h';
 const F_DEF_EN = 'Language/English/e_sinSkill_Info.h';
+/**
+ * 中文定义表（**GBK**）。
+ *
+ * ⚠ 抽取器整体按 `latin1` 读（保字节、方便解析），所以中文的 name/desc 拿到的是"latin1 乱码"，
+ * 必须**再按 GBK 解一次**（`decodeDefText`）—— 直接 latin1 落进 JSON 会得到 `¼«¹â»¤¶Ü` 这种东西。
+ *
+ * 覆盖：与 English 同为**8 职业时代**的语言文件（151 条，**没有刺客/萨满那 47 条**）⇒
+ * 面板取中文名时要按"语言表没有 ⇒ 回退 + 上报"处理（`game/skillText.ts`），不许静默给个空串。
+ */
+const F_DEF_CN = 'Language/Chinese/C_sinSkill_Info.h';
 /** ④ 技能身份表的两份源码依据（作业段区间 + 源码侧编号表） */
 const F_CHARACTER = 'character.cpp';
 const F_FILEREAD = 'fileread.cpp';
 /** 拼接顺序固定 ⇒ sourceHash 幂等（定长分帧，避免 `ab|c` 与 `a|bc` 同哈希） */
-const INPUTS = [F_ARRAYS, F_MACROS, F_DEF_BR, F_DEF_EN, F_CHARACTER, F_FILEREAD];
+const INPUTS = [F_ARRAYS, F_MACROS, F_DEF_BR, F_DEF_EN, F_DEF_CN, F_CHARACTER, F_FILEREAD];
 
 for (const rel of INPUTS) {
   if (!existsSync(resolve(REF, rel))) {
@@ -312,6 +322,8 @@ const TUPLE_LEN = 22;
 const CODE_AT = 19;         // ← 只用到的几处偏移写在这里，不做全字段命名映射
 const REQLEVEL_AT = 2;
 const USECODE_AT = 20;      // `SIN_SKILL_USE_*`（可绑哪些拳位）；[18]=FuncPointer、[21]=UseMana 表名
+const ELEMENT_AT = 7;       // `Element[3]` 的首项；`Element[0] != 0` 在原版有两处语义（见 element0 字段注释）
+const RM_AT = 5;            // `RequireMastery[2]` 的首项（CD 公式的 `RequireMastery[0]`）
 
 function parseDefs(rel: string): DefRow[] {
   const text = readFileSync(resolve(REF, rel), 'latin1');
@@ -353,6 +365,31 @@ function parseDefs(rel: string): DefRow[] {
 
 const brazil = parseDefs(F_DEF_BR);
 const english = parseDefs(F_DEF_EN);
+const chinese = parseDefs(F_DEF_CN);
+
+/**
+ * 把某个语言定义的 **name / desc**（元组 [0]/[1]）从"latin1 保字节串"按真实编码解回来。
+ * 只碰这两格：其余格是数字/ASCII 宏名，动了会破坏解析自检。
+ */
+function decodeDefText(rows: DefRow[], encoding: string): void {
+  if (encoding === 'latin1') return;   // 西欧语言：latin1 就是对的
+  const dec = new TextDecoder(encoding);
+  for (const r of rows) {
+    for (const i of [0, 1]) {
+      const v = r.tuple[i];
+      if (typeof v === 'string') r.tuple[i] = dec.decode(Buffer.from(v, 'latin1'));
+    }
+  }
+}
+decodeDefText(chinese, 'gbk');
+
+// 自检：中文条目必须真的解出非 ASCII（否则就是编码写错了，比如把 GBK 当 latin1 存）
+{
+  const withCjk = chinese.filter((r) => /[一-鿿]/.test(String(r.tuple[0] ?? ''))).length;
+  if (withCjk < chinese.length * 0.9) {
+    throw new Error(`✗ 中文定义表解出来只有 ${withCjk}/${chinese.length} 条含汉字 —— 编码（GBK）或文件选错了`);
+  }
+}
 
 /* ─────────────── 跨语言对齐 ─────────────── */
 
@@ -535,11 +572,114 @@ interface SkillRow {
   sourceReqLv: number | null; sourceUseCode: string | null; sourceName: string | null;
   sourceSkillDataCodeIndex: number | null; sourceSkillDataCodeName: string | null;
   sourceSkillDataCodeSrc: string | null;
+  /**
+   * `Element[0]`（源码 `sinSkill.cpp:2064` 熟练度恒满 / `:839` 粉色 gage）。
+   * 取值来源见文件内 `ELEMENT_SOURCES` 的对账说明；5 转取 `T5_ELEMENT0`（人工裁定）。
+   */
+  element0: number;
+  /** 该值的来源：`english` / `chinese` / `brazil` / `manual-override`（**逐值 provenance**） */
+  element0Src: string;
+  /**
+   * CD 公式的 `RequireMastery[2]`（`sinSkill.cpp:2072`）。取值口径见 `requireMasteryOf`
+   * —— 与 `element0` 同源（English/Chinese 优先），**不是** `definitions.brazil` 那一列。
+   */
+  requireMastery: number[] | null;
+  requireMasterySrc: string;
 }
 
 const macroByName = new Map(macros.map((m) => [m.macro, m]));
 const brDefOfMacro = new Map<string, DefRow>();
 for (const d of brazil) if (d.macro && !brDefOfMacro.has(d.macro)) brDefOfMacro.set(d.macro, d);
+/** 英文/中文定义按宏索引（只用来取 `Element[0]` —— 见 `element0` 字段的取舍说明）。 */
+const enDefOfMacro = new Map<string, DefRow>();
+for (const d of english) if (d.macro && !enDefOfMacro.has(d.macro)) enDefOfMacro.set(d.macro, d);
+const cnDefOfMacro = new Map<string, DefRow>();
+for (const d of chinese) if (d.macro && !cnDefOfMacro.has(d.macro)) cnDefOfMacro.set(d.macro, d);
+
+/* ── `Element[0]` 的三源对账（**只取一个值，但必须知道为什么**） ──────────────────────────
+   它在原版 `sinSkill.cpp` 里被读两处（同一文件、都按技能）：
+     · `:2064` 熟练度：`if (Skill_Info.Element[0]) UseSkillMastery = 10000;`（**熟练度恒满** ⇒ CD 最短）
+     · `:839`  面板 gage：`if (Flag && Element[0])` 画 `Gage-5.bmp`（粉色）而不是红色
+   三份语言文件的取值**互相打架**，实测（160 个有宏的技能行）：
+     · **English / Chinese 完全一致**（共有 130 个宏，element 分歧 **0**），且命中规律清晰：
+       `Element[0] = 1` 的正好是**高转职段**的技能（8 职业表里的 T3/T4，共 32 条）。
+     · **Brazil 是异类**：198 条里 **136 条** 写了 1（含"格斗之术""龙卷枪风"这类 T1/T2，
+       以及被动），既不符合另两份语言文件、也不符合上表的"高转段"规律 ⇒ 判为**该私服的整表改写**。
+   ⇒ **取 English（缺该宏时退回 Brazil）**；两份英文/中文表若有分歧 ⇒ 直接抛（数据打架不许静默取一边）。
+   5 转（`macro == null`，40 行）三份表都没有定义 ⇒ 见 `T5_ELEMENT0`。 */
+const ELEMENT_SOURCES = [
+  { lang: 'english', defs: enDefOfMacro },
+  { lang: 'chinese', defs: cnDefOfMacro },
+] as const;
+
+/**
+ * 5 转（无宏定义、三份源码表都没有这 40 行）的 `Element[0]` = **1**。
+ *
+ * **依据 = 用户 2026-09-24 在原版客户端里的观察**：5 转技能画的是**粉色 gage**，
+ * 而粉色 gage 唯一的源码触发条件就是 `Element[0] != 0`（`sinSkill.cpp:839` ⇒ `Gage-5.bmp`）。
+ * 同一行源码又规定 `Element[0]` ⇒ 熟练度恒满，故这两件事在 5 转上应当**同时成立**
+ * （不是我们在 UI 上单独打的一个标记）。属**人工裁定**，来源如实记为 `manual-override`。
+ */
+const T5_ELEMENT0 = 1;
+
+/**
+ * 按宏取 `RequireMastery[2]`（CD 公式的 `RequireMastery[0] + RequireMastery[1] × Point`）。
+ *
+ * **口径与 `Element[0]` 相同**：English/Chinese 优先（两者须一致），缺则退回 Brazil。理由（实测）：
+ * 在 130 个英/巴共有的宏里，巴西只有 **7 条** `RequireMastery[0]` 与英/中文不同 —— 而且**全部**是
+ * `Element[0] = 1` 的高阶技能，巴西一律把 `[0]` 写成 **0**（配合 `Element[0]=1` ⇒ 熟练度恒满=
+ * `Mastery` 夹到 1 ⇒ CD 0.5 秒）：
+ * <pre>
+ *   SKILL_IMPULSION      en/cn 130 → br 0
+ *   SKILL_CYCLONE_STRIKE en/cn 135 → br 0
+ *   SKILL_X_RAGE         en/cn 210 → br 0
+ *   SKILL_CHAIN_LIGHTNING en/cn 120 → br 0
+ *   SKILL_DIASTROPHISM   en/cn 106 → br 0
+ *   SKILL_VIRTUAL_LIFE   en/cn 134 → br 82
+ *   SKILL_M_METEO        en/cn 190 → br 82
+ * </pre>
+ * 这与 `Element[0]` 那 96 条是**同一次私服改写**的痕迹（高阶技能一律"无 CD"）⇒ 同判。
+ */
+function requireMasteryOf(macro: string): { value: number[] | null; src: string } {
+  const en = enDefOfMacro.get(macro);
+  const cn = cnDefOfMacro.get(macro);
+  if (en && cn) {
+    const a = [en.tuple[RM_AT], en.tuple[RM_AT + 1]].map(String).join(',');
+    const b = [cn.tuple[RM_AT], cn.tuple[RM_AT + 1]].map(String).join(',');
+    if (a !== b) {
+      throw new Error(`✗ 宏 ${macro} 的 RequireMastery 在 English(${en.src})=[${a}] 与 Chinese(${cn.src})=[${b}] 不一致`
+        + ` —— 两份语言表打架，必须先裁定取哪份，不许静默取一边`);
+    }
+  }
+  const hit = en ?? cn;
+  if (hit) {
+    return { value: [hit.tuple[RM_AT] as number, hit.tuple[RM_AT + 1] as number],
+      src: en ? 'english' : 'chinese' };
+  }
+  const br = brDefOfMacro.get(macro);
+  if (br) return { value: [br.tuple[RM_AT] as number, br.tuple[RM_AT + 1] as number], src: 'brazil' };
+  return { value: null, src: 'none' };
+}
+
+/** 按宏取 `Element[0]`：English → Chinese（须一致）→ Brazil 兜底；都取不到 ⇒ null（未知，不猜） */
+function element0OfMacro(macro: string): { value: number | null; src: string } {
+  const en = enDefOfMacro.get(macro);
+  const cn = cnDefOfMacro.get(macro);
+  if (en && cn) {
+    const a = en.tuple[ELEMENT_AT] as number;
+    const b = cn.tuple[ELEMENT_AT] as number;
+    if (a !== b) {
+      throw new Error(`✗ 宏 ${macro} 的 Element[0] 在 English(${en.src})=${a} 与 Chinese(${cn.src})=${b} 不一致`
+        + ` —— 两份语言表打架，必须先裁定取哪份，不许静默取一边`);
+    }
+  }
+  const hit = en ?? cn;
+  if (hit) return { value: hit.tuple[ELEMENT_AT] as number, src: en ? 'english' : 'chinese' };
+  const br = brDefOfMacro.get(macro);
+  if (br) return { value: br.tuple[ELEMENT_AT] as number, src: 'brazil' };
+  return { value: null, src: 'none' };
+}
+const elementNotes: string[] = [];
 
 const skills: SkillRow[] = [];
 /** 只报不改的清单（生成器打印；校验器另有独立对账） */
@@ -701,6 +841,14 @@ for (let job = 1; job <= 11; job++) {
     /* 客户端值为准的列：`reqLv`（除刺客 idx15 那格外与源码一致）、`weapon`；
        `useCode` 按 2026-09-23 裁定取**源码** USECODE（无源码的 60 个只能用客户端值） */
     const constName = macro ? macro.replace(/^SKILL_/, '') : slugOf(s.name);
+    /* `Element[0]`：有宏 ⇒ 按上面的三源口径取；无宏（5 转）⇒ 人工裁定值 */
+    const el = macro ? element0OfMacro(macro) : { value: T5_ELEMENT0, src: 'manual-override' };
+    if (el.value === null) {
+      elementNotes.push(`${classDir} idx${idx}（${macro}）Element[0] 三份定义表都没有 ⇒ 记 0（未知按 0，见 element0 注释）`);
+    }
+    /* `RequireMastery[2]`：同一口径。无宏（5 转）⇒ null（**CD 因此算不出来** ⇒ 客户端显式"未知"，
+       不编一个档位出来 —— 源码里 5 转本来也不存在） */
+    const rm = macro ? requireMasteryOf(macro) : { value: null, src: 'none' };
     skills.push({
       job,
       classDir,
@@ -725,6 +873,10 @@ for (let job = 1; job <= 11; job++) {
       sourceSkillDataCodeIndex: sdcIndex,
       sourceSkillDataCodeName: sdcIndex === null ? null : (sdcRows[sdcIndex]?.name ?? null),
       sourceSkillDataCodeSrc: sdcSrc,
+      element0: el.value ?? 0,
+      element0Src: el.value === null ? 'none' : el.src,
+      requireMastery: rm.value,
+      requireMasterySrc: rm.src,
     });
   }
 }
@@ -786,7 +938,7 @@ const out = {
     + ' + character.cpp 的 CheckSkillIndex 区间 + fileread.cpp 的 SkillDataCode 编号表）。'
     + ' 口径：① 数值表下标 = 技能等级 − 1（源码用法 Table[Point - 1]）；'
     + ' ② 定义按**位置原样**存成 tuple（顺序 = sinSkill.h:350-365 的 sSKILL_INFO，展平共 22 项；'
-    + ' 其中 [2]=RequireLevel、[19]=CODE、[20]=USECODE、[21]=UseMana），不做逐字段命名映射；'
+    + ' 其中 [2]=RequireLevel、[7]=Element[0]、[19]=CODE、[20]=USECODE、[21]=UseMana），不做逐字段命名映射；'
     + ` ③ counts.arrays=484 的口径是**声明为 int 的参数表**（451 一维 + 33 二维），` 
     + `另有 ${arraysFloat1d} 张 float[10]（如 Raving_UseLife）同样在 arrays 里、单列计数 arraysFloat1d。`
     + ' 裸 token 原样保留（数字仍是数字、标识符是字符串）；缺省槽记 null —— 没有任何编造值。'
@@ -816,6 +968,7 @@ const out = {
     macros: macros.length,
     defsBrazil: brazil.length,
     defsEnglish: english.length,
+    defsChinese: chinese.length,
     skills: skills.length,
     skillsWithMacro: withMacro,
     skillsClientOnly: skills.length - withMacro,
@@ -824,7 +977,15 @@ const out = {
   arrays,
   defects: arrDefects,
   macros,
-  definitions: { brazil, english },
+  definitions: { brazil, english, chinese },
+  requireMasteryNote: 'skills[].requireMastery = CD 公式的 `RequireMastery[2]`（`sinSkill.cpp:2072`）。'
+    + '口径与 element0 相同（English/Chinese 优先、两者须一致、缺则 Brazil）：巴西在 130 个共有宏里'
+    + '有 7 条把 `[0]` 写成 0，**全部**是 Element[0]=1 的高阶技能（与那 96 条 element 改写同源）⇒ 同判。'
+    + '5 转（无宏定义）为 null：CD 算不出来时应显式未知，不许编档位。',
+  elementNote: 'skills[].element0 = `Element[0]`（原版 `sinSkill.cpp:2064` 熟练度恒满 / `:839` 粉色 gage）。'
+    + '取值**不取 Brazil**：Brazil 198 条里 136 条写 1（含 T1/T2 与被动），与 English/Chinese 冲突；'
+    + 'English 与 Chinese 在共有的 130 个宏上**分歧为 0**，且 `=1` 的正好是高转职段 ⇒ 按这两个取。'
+    + '缺英文/中文的宏退回 Brazil；5 转（无宏定义）取 1（依据 = 用户观察到的粉色 gage，见 element0Src）。',
   align: {
     rule: alignRule,
     pairs: alignByCode.length + alignByOrder.length,
@@ -973,6 +1134,11 @@ if (javaWritten) console.log(`写出 ${javaWritten}（${skills.length} 常量）
 if (arrDefects.length) {
   console.log(`\n⚠ 源码初始化列表写短（声明 10 项、实写不足）共 ${arrDefects.length} 处 —— **原样记录、未补零**：`);
   for (const d of arrDefects) console.log(`    ${d.src} ${d.name}: 声明 ${d.declared}，实写 ${d.actual}`);
+}
+if (elementNotes.length) {
+  console.log(`
+⚠ Element[0] 三份定义表都没有的技能行（记 0）共 ${elementNotes.length} 处：`);
+  for (const n of elementNotes) console.log(`    ${n}`);
 }
 if (defOrderNotes.length) {
   console.log(`\n⚠ 定义文件序 ≠ 需求等级序（按需求等级序对齐，文件序记在此）共 ${defOrderNotes.length} 处：`);

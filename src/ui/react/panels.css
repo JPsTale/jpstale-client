@@ -481,19 +481,72 @@
   display: block;
 }
 
-/* 底部水平熟练度条：更像"进度" */
-.jp-skill-mastery {
-  width: 44px;
-  height: 3px;
-  background: #262a31;
-  border-radius: 2px;
-  overflow: hidden;
-  flex: 0 0 auto;
+/* ── 技能格**右侧的两条竖条**（熟练度 / CD；在格子**之外**，用户 2026-09-24 定版）──
+   ① **与格子齐高**（`align-self: stretch`，不再固定 34px —— 用户："条的长度太小气了"）；
+   ② 未学 ⇒ 两条都**灰**（原版 `Point == 0` 画灰版；配色取 `Gage-4.bmp` 实测 rgb(123,123,123)）；
+   ③ 精英技能（5 转）⇒ 熟练度位**粉色实条**（用户裁定；配色取 `Gage-5.bmp` 实测 rgb(255,0,110)）；
+   ④ 其余：熟练度绿（`Gage-2.bmp` rgb(175,255,114) / 框 `Gage-3.bmp` 深绿 rgb(23,138,0)）、CD 金（`Gage.bmp` rgb(255,223,58)）。
+   只借颜色与语义，不套原版位图（面板是我们重做的 UI）。 */
+.jp-skill-cellwrap {
+  display: flex;
+  align-items: stretch;     /* 竖条与格子等高 */
+  gap: 2px;                 /* 紧贴格子 */
 }
 
-.jp-skill-mastery-bar {
-  height: 100%;
-  background: #9fe8a8;
+.jp-skill-bars {
+  display: flex;
+  align-items: flex-start;  /* 与图标**顶对齐**（不是拉满格子高） */
+  gap: 2px;
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+
+.jp-skill-bar {
+  position: relative;
+  width: 4px;
+  height: 44px;             /* = 图标高（`.jp-skill-iconbox`）——**不**跟到格子底的 `+ 学习` */
+  border-radius: 2px;
+  overflow: hidden;
+  pointer-events: none;     /* 只是指示器，别抢格子的鼠标事件 */
+}
+
+/* 熟练度条：鼠标要能 hover 上去看百分比（用户 2026-09-24）——
+   条只有 4px 宽，故用一个**不占布局**的伪元素把命中区横向放宽。 */
+.jp-skill-bar--mastery,
+.jp-skill-bar--elite {
+  pointer-events: auto;
+}
+.jp-skill-bar--mastery::after,
+.jp-skill-bar--elite::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -3px;
+  right: -2px;              /* 只铺满 2px 的间隙，不压到 CD 条上 */
+}
+
+/* 熟练度：深绿底 + 亮绿填充（原版 Gage-3 框 / Gage-2 填充） */
+.jp-skill-bar--mastery { background: rgb(23,138,0); }
+.jp-skill-bar--mastery > .jp-skill-bar-fill { background: rgb(175,255,114); }
+
+/* CD：暗金底 + 金色填充（原版 Gage.bmp） */
+.jp-skill-bar--cd { background: rgb(84,68,18); }
+.jp-skill-bar--cd > .jp-skill-bar-fill { background: rgb(255,223,58); }
+
+/* 未学（或不可绑拳的被动）：整条灰（原版 Gage-4.bmp，实测 rgb(123,123,123)） */
+.jp-skill-bar--grey { background: rgb(58,58,58); }
+.jp-skill-bar--grey > .jp-skill-bar-fill { background: rgb(123,123,123); }
+
+/* 精英技能（5 转）：熟练度位粉色实条（原版 Gage-5.bmp，实测 rgb(255,0,110)） */
+.jp-skill-bar--elite { background: rgb(120,0,52); }
+.jp-skill-bar--elite > .jp-skill-bar-fill { background: rgb(255,0,110); }
+
+.jp-skill-bar-fill {
+  position: absolute;
+  left: 0;
+  bottom: 0;                /* 从下往上长 */
+  width: 100%;
 }
 
 /* 等级角标：左上角迷你 */
@@ -599,6 +652,21 @@
   margin-bottom: 5px;
   border-bottom: 1px solid rgba(74, 63, 42, 0.6);
   padding-bottom: 4px;
+}
+
+/* 竖条的 hover 提示：一行、小、跟在鼠标旁（与技能信息窗同配色，但**不设 width**） */
+.jp-skill-bartip {
+  position: fixed;
+  z-index: 10000;
+  padding: 3px 7px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #d0d4da;
+  background: rgba(8, 9, 11, 0.94);
+  border: 1px solid #4a3f2a;
+  border-radius: 4px;
+  pointer-events: none;     /* 别挡住自己（否则在条上滑动会不停触发 leave/enter） */
+  white-space: nowrap;
 }
 
 .jp-skill-tip-row {
