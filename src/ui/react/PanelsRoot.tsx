@@ -16,6 +16,7 @@ import BuffStrip from './BuffStrip.js';
 import PartyHud from './PartyHud.js';
 import TargetInfoPanel from './TargetInfoPanel.js';
 import CraftPanel from './CraftPanel.js';
+import ClanPanel from './ClanPanel.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
 /**
@@ -67,6 +68,13 @@ function renderPanel(panel: OpenPanel, worldMapOptions: WorldMapPanelOptions) {
     return (
       <PanelShell key="shop" panel="shop" title={t('panel.shop')} align="left" width="auto">
         <ShopPanel />
+      </PanelShell>
+    );
+  }
+  if (panel === 'clan') {
+    return (
+      <PanelShell key="clan" panel="clan" title={t('clan.ui.title')} align="left" width="auto">
+        <ClanPanel />
       </PanelShell>
     );
   }

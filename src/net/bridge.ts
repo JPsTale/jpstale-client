@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setClanCreateResult } from '../app/gameStore.js';
 import type { PartyMemberView } from '../app/gameStore.js';
 import {
   allocateStat,
@@ -27,10 +27,12 @@ import {
   learnSkill,
   resetSkillPoints,
   setSkillBinding,
+  clanCreate,
   partyInvite,
   partyAccept,
   partyLeave,
   partyAction,
+  tradeRequest,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
 import {
@@ -350,6 +352,20 @@ export function installBridge(): void {
       setCraftOpen(Number(c.entityId) || 0, (c.modes || []).map((m) => Number(m) || 0));
       openPanel('craft');
     }
+    // 公会管理员 NPC 开窗（eventtype=8；数据读取由面板自己走 REST）
+    if (msg.clanOpen) {
+      openPanel('clan');
+    }
+    // 建会结果（成功/失败都到这；失败也有一条 S2C_Error 提示，面板内再显示一次细节）
+    if (msg.clanCreateResult) {
+      const r = msg.clanCreateResult;
+      setClanCreateResult({
+        ok: !!r.ok,
+        errorKey: r.errorKey || '',
+        clanName: r.clanName || '',
+        iconId: Number(r.iconId) || 0,
+      });
+    }
     // 合成预览（服务端算好的 before/after；客户端只显示）
     if (msg.mixPreview) {
       const pv = msg.mixPreview;
@@ -472,6 +488,11 @@ export function sendPartyAction(action: number, targetId = 0): void {
   send(partyAction(action, targetId));
 }
 
+/** 交易请求（目标窗"交易"按钮；服务端 401 handler 待交易系统落地） */
+export function sendTradeRequest(targetName: string): void {
+  send(tradeRequest(targetName));
+}
+
 export function sendInventoryMove(uid: number, toLocation: number, toSlot: number): void {
   send(inventoryMove(uid, toLocation, toSlot));
 }
@@ -557,4 +578,11 @@ export function sendForceOrbItem(stoneUids: readonly number[]): void {
 /** 合成预览请求（服务端权威：配方匹配与数值都在服务端算）。 */
 export function sendMixPreview(targetUid: number, stoneUids: readonly number[]): void {
   send(mixPreview(targetUid, stoneUids));
+}
+
+// —— 公会（写走 game-server；读走 web-server REST）——
+
+/** 建会（C2S_ClanCreate）。校验全在服务端；结果走 S2C_ClanCreateResult。 */
+export function sendClanCreate(clanName: string): void {
+  send(clanCreate(clanName));
 }

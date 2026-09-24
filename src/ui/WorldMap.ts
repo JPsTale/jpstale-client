@@ -52,6 +52,12 @@ export interface WorldMapEntity {
    */
   name?: string;
   /**
+   * 队友**所在图**（服务端权威 mapId，S2C_PartyPlayUpdate 下发）。
+   * 大地图显示规则（用户 2026-09-25 定）：只画**当前可见地图集**（layerMapIds）内的队友——
+   * 单图层 = 本图队友；区域（大陆）层 = 本组各图上的队友；不在可见地图的不显示。
+   */
+  mapId?: number;
+  /**
    * 朝向（弧度，与 three 的 `rotation.y` 同义：0 = 朝世界 +z）。
    * 地图上的**怪物画成三角形，尖指向它**（用户 2026-09-16 要求）。
    * 缺省时三角尖朝下（+z）—— 只是没角度，不是"面朝北"。
@@ -535,13 +541,33 @@ export function createWorldMap(host: HTMLElement, opts: WorldMapOptions = {}): W
     }
   }
 
-  /** 该画的实体：单图层 + 坐标落在本图范围内的那些（区域层不画，与点位同一条规则） */
+  /**
+   * 该画的实体：
+   *   · NPC/怪物 = 单图层 + 坐标落在本图范围内（区域层不画，与点位同一条规则，维持原状）；
+   *   · 队友 = **当前可见地图集**内的（用户 2026-09-25 定）：单图层 = 本图队友、
+   *     区域（大陆）层 = 本组各图上的队友；不在可见地图的不显示。
+   *     归属判据 = 队友的**服务端权威 mapId**（不是坐标 AABB——相邻图切片会互相搭边）；
+   *     再用其所在图的 AABB 做坐标合法性核对（防脏数据画出界）。
+   */
   function drawnEntities(): WorldMapEntity[] {
-    if (state.level !== 2 || state.mapId === null) return [];
-    const m = maps.get(state.mapId);
-    if (!m) return [];
-    const b = m.box;
-    return (opts.getEntities?.() ?? []).filter((e) => e.x >= b.minX && e.x <= b.maxX && e.z >= b.minZ && e.z <= b.maxZ);
+    const visible = new Set(layerMapIds());
+    const out: WorldMapEntity[] = [];
+    for (const e of (opts.getEntities?.() ?? [])) {
+      if (e.kind === 'party') {
+        if (e.mapId == null || !visible.has(e.mapId)) continue;
+        const mb = maps.get(e.mapId);
+        if (!mb) continue;
+        if (e.x < mb.box.minX || e.x > mb.box.maxX || e.z < mb.box.minZ || e.z > mb.box.maxZ) continue;
+        out.push(e);
+        continue;
+      }
+      if (state.level !== 2 || state.mapId === null) continue;
+      const m = maps.get(state.mapId);
+      if (!m) continue;
+      const b = m.box;
+      if (e.x >= b.minX && e.x <= b.maxX && e.z >= b.minZ && e.z <= b.maxZ) out.push(e);
+    }
+    return out;
   }
 
   /** 诊断：上一次 drawEntities 实际发出的绘制（自检读不到图标时用来定位是哪一步没了） */

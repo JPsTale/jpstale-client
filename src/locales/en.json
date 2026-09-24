@@ -3684,7 +3684,10 @@
   },
   "target": {
     "button": {
-      "party": "Party"
+      "party": "Party",
+      "trade": "Trade",
+      "friendDisabled": "Friends not available yet",
+      "clanDisabled": "Clan invite not available yet (in development)"
     }
   },
   "party": {
@@ -5026,6 +5029,54 @@
     },
     "49_vampiricbat": {
       "name": "Vampiric Bat"
+    }
+  },
+  "clan": {
+    "ui": {
+      "title": "Clan",
+      "tabInfo": "My Clan",
+      "tabRanking": "Ranking",
+      "refresh": "Refresh",
+      "loading": "Loading…",
+      "noRanking": "No clan has entered the ranking yet",
+      "leader": "Leader",
+      "subLeader": "Sub-leader",
+      "members": "Members",
+      "memberCount": "Members",
+      "memberCountShort": "Mem",
+      "rank": "Rank",
+      "points": "pts",
+      "level": "Level",
+      "levelShort": "Lv",
+      "joinDate": "Joined",
+      "created": "Founded",
+      "gold": "Clan funds",
+      "leaderShort": "Leader",
+      "subLeaderShort": "Sub",
+      "you": "you",
+      "none": "None",
+      "namePlaceholder": "Clan name (max 20 chars)",
+      "check": "Check",
+      "nameOk": "Name available",
+      "levelReq": "Level requirement: 40",
+      "cost": "Creation fee: 500,000 gold",
+      "createBtn": "Create Clan",
+      "created2": "Clan \"{name}\" created",
+      "noCharacter": "Character data not ready"
+    },
+    "op": {
+      "nameEmpty": "Enter a clan name",
+      "nameTooLong": "Clan name too long",
+      "nameTaken": "Name already taken",
+      "alreadyInClan": "You are already in a clan",
+      "clanNotFound": "Clan not found",
+      "notInClan": "You are not in a clan",
+      "noPermission": "No permission",
+      "targetNotInClan": "Target is not in this clan",
+      "targetAlreadyInClan": "Target is already in a clan",
+      "targetIsLeader": "Cannot do that to the leader",
+      "leaderCannotLeave": "The leader cannot leave",
+      "clanFull": "Clan is full"
     }
   }
 }

@@ -3684,7 +3684,10 @@
   },
   "target": {
     "button": {
-      "party": "组队"
+      "party": "组队",
+      "trade": "交易",
+      "friendDisabled": "好友系统未开放",
+      "clanDisabled": "公会邀请未开放（公会系统在建）"
     }
   },
   "party": {
@@ -5026,6 +5029,54 @@
     },
     "49_vampiricbat": {
       "name": "独眼蝙蝠"
+    }
+  },
+  "clan": {
+    "ui": {
+      "title": "公会",
+      "tabInfo": "本会信息",
+      "tabRanking": "公会排名",
+      "refresh": "刷新",
+      "loading": "读取中…",
+      "noRanking": "还没有公会进入排名",
+      "leader": "会长",
+      "subLeader": "副会长",
+      "members": "成员列表",
+      "memberCount": "成员数",
+      "memberCountShort": "成员",
+      "rank": "排名",
+      "points": "积分",
+      "level": "等级",
+      "levelShort": "Lv",
+      "joinDate": "入会时间",
+      "created": "建会时间",
+      "gold": "公会资金",
+      "leaderShort": "会长",
+      "subLeaderShort": "副会长",
+      "you": "自己",
+      "none": "无",
+      "namePlaceholder": "输入公会名（最多 20 字）",
+      "check": "查重",
+      "nameOk": "该名称可用",
+      "levelReq": "等级要求：40 级",
+      "cost": "创建费用：500,000 金币",
+      "createBtn": "创建公会",
+      "created2": "已创建公会「{name}」",
+      "noCharacter": "角色数据未就绪"
+    },
+    "op": {
+      "nameEmpty": "请输入公会名",
+      "nameTooLong": "公会名过长",
+      "nameTaken": "该名称已被使用",
+      "alreadyInClan": "你已经在公会中",
+      "clanNotFound": "公会不存在",
+      "notInClan": "你不在任何公会中",
+      "noPermission": "没有权限",
+      "targetNotInClan": "对方不在本公会",
+      "targetAlreadyInClan": "对方已在公会中",
+      "targetIsLeader": "不能对会长执行该操作",
+      "leaderCannotLeave": "会长不能退出公会",
+      "clanFull": "公会成员已满"
     }
   }
 }

@@ -2,7 +2,14 @@
  * 怪物名生成器 —— 从中文客户端的 Monster 资料抽取，写两份语言表 + 一份服务端对照表
  * （`npm run monster-names`）。
  *
- * <h3>来源与映射链</h3>
+ * <h3>来源（两个，按序取）</h3>
+ * ① `SRC_MONSTER`（11 职业端）：`name/*.zhoon` 的 `*B_NAME`（GBK）+ 同目录 `*.inf` 的
+ *    `*葛剧颇老`（韩文"模型文件"）做桥 —— 覆盖高转段/多数怪；
+ * ② `SRC_3060`（3060 端，用户 2026-09-25 补充）：`*.inf` 本身就是**中文字段**定义
+ *    （`*名字`/`*外型文件`/`*等级`，GBK）—— `*外型文件` 即模型路径，**直接就是桥**，
+ *    补上①没有的（兔妖/土妖/红蘑菇精…）。同名模型多来源时 **① zhoon 优先**（名字更全/更权威）。
+ *
+ * <h3>映射链（①）</h3>
  * `SRC_MONSTER`（默认 `E:\BaiduNetdiskDownload\精灵\精灵11职业单机版一键端\...\GameServer\Monster`）：
  * <ul>
  *   <li>`name/*.zhoon`：**中文名资料**，每文件一条 `*B_NAME "中文名"`（GB2312/GBK，逐文件试解）；
@@ -40,6 +47,8 @@ const root = resolve(here, '..');
 const SRC = process.env.SRC_MONSTER
   ?? 'E:/BaiduNetdiskDownload/精灵/精灵11职业单机版一键端/精灵11职业单机版一键端/Server服务端/GameServer/Monster';
 const SRV_RESOURCE = resolve(root, '../jpstale-server/modules/common-service/src/main/resources/monsterdata');
+const SRC_3060 = process.env.SRC_3060_INF
+  ?? 'E:/BaiduNetdiskDownload/3060/GameServer/Monster';
 
 if (!existsSync(SRC)) {
   console.error(`✗ 找不到来源目录 ${SRC}（设 SRC_MONSTER 覆盖）`);
@@ -82,6 +91,20 @@ for (const f of readdirSync(join(SRC, 'name'))) {
   if (!nm || !CJK.test(nm)) continue;
   const cmt = /^\/\/\s*(\S+\.inf)/im.exec(t)?.[1]?.trim().toLowerCase() ?? null;
   zhoon.set(f.slice(0, -6).toLowerCase(), { inf: cmt, name: nm });
+}
+
+// ── ②b 来源②：3060 的中文字段 inf（*名字/*外型文件）—— 直接以模型路径为桥 ──
+const model2zh3060 = new Map<string, string>();
+if (existsSync(SRC_3060)) {
+  for (const f of readdirSync(SRC_3060)) {
+    if (!f.toLowerCase().endsWith('.inf')) continue;
+    const t = decode(readFileSync(join(SRC_3060, f)));
+    const model = /\*\s*外型文件\s*"([^"]*)"/.exec(t)?.[1]?.trim().toLowerCase();
+    const name = /\*\s*名字\s*"([^"]*)"/.exec(t)?.[1]?.trim();
+    if (model && name && CJK.test(name) && !model2zh3060.has(model)) {
+      model2zh3060.set(model, name);
+    }
+  }
 }
 
 // ── ③ 冲突裁定：注释指向的模型 ≠ 本文件名词干的模型 ⇒ 按文件名归（见文件头"冲突裁定"） ──
@@ -141,9 +164,31 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
     mon[stem] = { name: value };
     added++;
   }
+  if (lang === 'zh') {
+    // 来源②：zhoon 没有的模型，用 3060 inf 的中文名补（en 侧无来源 ⇒ 不写）
+    for (const [model, name] of model2zh3060) {
+      const stem = keyMapStemOf(model);
+      if (!stem || mon[stem]) continue;   // 已有（①覆盖/手写）⇒ 不动
+      mon[stem] = { name };
+      added3060++;
+    }
+  }
   table.monster = mon;
   write(rel, table);
   console.log(`  ${rel}（${lang}）：新增 ${added} / 保持 ${kept}`);
+}
+
+let added3060 = 0;
+
+/**
+ * 模型路径 → 获胜的 inf 词干（= 写进服务端对照表的那个）。
+ * 与 ⑤ 的选择规则一致：**有中文名（①或②）的词干优先**，否则文件序第一个。
+ */
+function keyMapStemOf(model: string): string | undefined {
+  const cands = [...infByStem].filter(([, v]) => v.model === model);
+  if (cands.length === 0) return undefined;
+  const withZh = cands.find(([stem]) => inf2names.has(stem) || model2zh3060.has(model));
+  return (withZh ?? cands[0]!)[0];
 }
 
 // ── ⑤ 服务端对照表：模型路径 → inf 词干 ──
@@ -153,8 +198,8 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
 // 修法：**有中文名的 inf 词干优先**（同名模型多个都有中文时取文件序第一个）。
 const keyMap: Record<string, string> = {};
 for (const [stem, { model }] of [...infByStem].sort((a, b) => {
-  const aHas = inf2names.has(a[0]) ? 0 : 1;      // 有中文名的排前
-  const bHas = inf2names.has(b[0]) ? 0 : 1;
+  const aHas = (inf2names.has(a[0]) || model2zh3060.has(a[1].model)) ? 0 : 1;  // 有中文名的排前
+  const bHas = (inf2names.has(b[0]) || model2zh3060.has(b[1].model)) ? 0 : 1;
   return aHas - bHas;
 })) {
   if (!(model in keyMap)) keyMap[model] = stem;
@@ -168,4 +213,5 @@ writeFileSync(join(SRV_RESOURCE, 'monster-name-keys.json'),
 
 console.log(`来源：inf ${infByStem.size} 个（有模型）/ zhoon ${zhoon.size} 个有中文名`
   + `（${renamedByStem} 条按文件名归位 —— 首行注释笔误）`);
-console.log(`语言表 monster.<inf>.name：${inf2names.size} 条（丢弃 ${skipped} 条无 inf 的）；服务端对照表 ${Object.keys(keyMap).length} 条`);
+console.log(`语言表 monster.<inf>.name：${inf2names.size} 条（①zhoon）+ ${added3060} 条（②3060 inf）`
+  + `；丢弃 ${skipped} 条无 inf 的；服务端对照表 ${Object.keys(keyMap).length} 条`);

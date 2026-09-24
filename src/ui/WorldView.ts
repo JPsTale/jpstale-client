@@ -223,7 +223,7 @@ export interface WorldView {
   /** 大地图用：当前地图 + 自机世界坐标（含朝向） */
   worldMapPlayer(): { mapId: number; x: number; z: number; angle: number };
   /** 大地图用：地图上的其他实体（NPC / 怪物 / 队友；队友带 name 供蓝方块旁渲染名） */
-  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number; name?: string }[];
+  worldMapEntities(): { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number; name?: string; mapId?: number }[];
   /** 服务端权威换图校准（game.mapSwitched）：对齐 currentMapId 并同步区域 */
   applyMapSwitched(mapId: number): void;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
@@ -308,6 +308,12 @@ export interface WorldView {
   playerAppear(playerId: number, name: string, classId: number, level: number, hp: number, maxHp: number, clanName: string, clanMark: string, x: number, y: number, z: number, angle?: number, appearance?: CharacterAppearance, walkAnimRate?: number, runAnimRate?: number, animIndex?: number, animClip?: string): void;
   /** 玩家离开视野（S2C_PlayerDisappear）→ 移除演员 */
   playerDisappear(playerId: number): void;
+  /**
+   * 公会显示更新（S2C_ClanUpdate）：建会/入会/退会/解散后服务端显式通知 —— 刷该玩家名牌上的公会行。
+   * 只改 actor 的字段（名牌每帧直读它们），**不重建模型**：重建会"跳一下"。
+   * `clanName` 空串 = 该玩家现在没有公会（名牌去掉公会行）。
+   */
+  clanUpdate(playerId: number, clanName: string, clanMark: string): void;
   /** 外观更新（S2C_AppearanceUpdate）：自机或指定远端换装 → 重建模型（发光随之更新，见下） */
   updateSelfAppearance(appearance?: CharacterAppearance): void;
   /**
@@ -5446,6 +5452,26 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     actor.rig.setStance(actor.root, stance);
   }
 
+  /**
+   * S2C_ClanUpdate 的落地（唯一实现）。只改字段，不重建：
+   * 名牌每帧从 `a.clanName` 直读（`drawPill` 的 `clan` 参数），改字段下一帧就生效；
+   * `pendingAppears` 是"世界未就绪时的竞态缓存"（进图瞬间 appear 先到），同样要补，
+   * 否则那个窗口期里收到的更新会在 flush 时被旧值覆盖。
+   */
+  function updateRemoteClan(playerId: number, clanName: string, clanMark: string): void {
+    const a = remotes.get(playerId);
+    if (a) {
+      a.clanName = clanName;
+      a.clanMark = clanMark;
+    }
+    for (const p of pendingAppears) {
+      if (p.playerId === playerId) {
+        p.clanName = clanName;
+        p.clanMark = clanMark;
+      }
+    }
+  }
+
   function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; animWalkRate?: number; animRunRate?: number; animIndex?: number; animClip?: string }): void {
     if (!scene) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
@@ -7240,13 +7266,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
      * 大地图用：地图上的其他实体（图标与小地图同源）。
      *   · NPC  = `npcs`（原版小地图也只画这些）
      *   · 怪物 = `monsters`（**原版小地图不画怪物**，用户要求画；标红区分）
-     *   · 队友 = gameStore 的队伍名单（`S2C_PartyUpdate` 全量 + `S2C_PartyPlayUpdate` 500ms 增量）。
-     *           只画**在本图**的队友（服务端权威 mapId 匹配当前图）——跨图队员的呈现位置待裁定
-     *           （docs/组队系统-源码分析.md §9.2），数据本身（含跨图坐标）已在 store 里。
+     *   · 队友 = gameStore 的队伍名单（`S2C_PartyUpdate` 全量 + `S2C_PartyPlayUpdate` 500ms 增量），
+     *           **全部交出**（含跨图队员，带服务端权威 mapId）——显示规则在地图侧：只画
+     *           **当前可见地图集**内的（用户 2026-09-25 定：单图层=本图队友、区域层=本组各图队友）。
      *           名字随实体走（D6：蓝方块旁渲染名字）。
      */
     worldMapEntities: () => {
-      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number; name?: string }[] = [];
+      const out: { kind: 'npc' | 'monster' | 'party'; x: number; z: number; angle?: number; name?: string; mapId?: number }[] = [];
       // ⚠ **不要**按"这只实体属于哪张图"过滤：怪物的出现/消失由服务端 **AOI（全局坐标 + 距离）**
       //   推送，玩家站在图 A 边缘时，图 B 的怪本来就会被推过来 —— 这是**正确的**，因为它确实离玩家近。
       //   （曾试图用"收到 appear 时玩家在哪张图"当归属，被用户指出是错的：那会把图 B 的怪误标成图 A，
@@ -7261,14 +7287,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         if (m.dead) continue;
         out.push({ kind: 'monster', x: m.root.position.x, z: m.root.position.z, angle: m.root.rotation.y });
       }
-      // 队友：按**队员所在图**过滤（队伍数据的服务端权威 mapId，不是场景坐标归属）。
-      // 还没收到动态数据的成员（at===0）mapId 未知 → 不上图（显式没有，不猜当前图）。
+      // 队友：**不过滤地图**（过滤在地图侧按"当前可见地图集"做——单图层/区域层规则不同）。
+      // 还没收到动态数据的成员（at===0）mapId 未知 → 不上图（显式没有，不猜）。
       const psnap = getGameSnapshot();
-      if (psnap.party && currentMapId != null) {
+      if (psnap.party) {
         for (const pm of psnap.party.members) {
           if (pm.id === selfPlayerId) continue;
-          if (pm.at === 0 || pm.mapId !== currentMapId) continue;
-          out.push({ kind: 'party', x: pm.x, z: pm.z, name: pm.name });
+          if (pm.at === 0) continue;
+          out.push({ kind: 'party', x: pm.x, z: pm.z, name: pm.name, mapId: pm.mapId });
         }
       }
       return out;
@@ -7305,6 +7331,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (typeof runAnimRate === 'number' && runAnimRate > 0) selfRunAnimRate = runAnimRate;
     },
     playerDisappear: (playerId) => despawnRemote(Number(playerId)),
+    clanUpdate: (playerId, clanName, clanMark) => updateRemoteClan(Number(playerId), clanName || '', clanMark || ''),
     updateSelfAppearance: (appearance) => { applySelfAppearance(appearance); },
     currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },

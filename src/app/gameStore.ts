@@ -8,7 +8,7 @@ import { itemDefById } from '../game/data/itemDefs.js';
 import { isTwoHandWeaponClass } from '../game/itemClass.js';
 import { playItemSound, playItemDropSound } from '../audio/item-sounds.js';
 
-export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap' | 'craft';
+export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap' | 'craft' | 'clan';
 
 // 技能绑定（拳位 / F1~F8）**不在这里定义标识**：身份是**数字 `skillId`**
 // （`SkillBindings`，见下），图标/职业由 `game/skillIdentity.ts` 反查。
@@ -43,6 +43,15 @@ export interface SkillListState {
     nextReqLevel: number; nextGold: number;
     powerPctMin: number; powerPctMax: number; nextPowerPctMin: number; nextPowerPctMax: number;
   }>>;
+}
+
+/** 建会结果（`S2C_ClanCreateResult` 的客户端形态）。 */
+export interface ClanCreateResult {
+  ok: boolean;
+  /** 失败时的 i18n key（服务端只发 key，成功时为空串） */
+  errorKey: string;
+  clanName: string;
+  iconId: number;
 }
 
 export interface GameCharacter {
@@ -314,6 +323,11 @@ export interface GameSnapshot {
    * 材料一变就置 null（"待服务端回话"），避免把上一次的结果留在界面上当成本次的结果。
    */
   craftPreview: CraftPreview | null;
+  /**
+   * 建会结果（`S2C_ClanCreateResult`）—— 由 WS 异步到达，公会面板订阅它刷新。
+   * 读数据（详情/排名）不走这里：那是请求-响应，面板自己用 REST 拉（`net/rest.ts`）。
+   */
+  clanCreate: ClanCreateResult | null;
   /** 已学技能表（`S2C_SkillList`；null = 还没收到，面板据此**不点亮**任何技能） */
   skillList: SkillListState | null;
   /**
@@ -355,6 +369,7 @@ function loadInitial(): GameSnapshot {
     partyInvite: null,
     craft: null,
     craftPreview: null,
+    clanCreate: null,
     skillList: null,
     skillBindings: null,
   };
@@ -387,6 +402,11 @@ export function setCraftPreview(pv: CraftPreview | null): void {
 /** 服务端说"这个 NPC 提供打造服务" → 记下来并打开面板（实际打开动作在 bridge 里）。 */
 export function setCraftOpen(entityId: number, modes: readonly number[]): void {
   commit({ craft: { entityId, modes } });
+}
+
+/** 建会结果入库（`S2C_ClanCreateResult`）；面板据此刷新或显示失败原因。 */
+export function setClanCreateResult(r: ClanCreateResult): void {
+  commit({ clanCreate: r });
 }
 
 /** 关闭打造窗口（面板关闭时调用；下次交互会重新收到服务端的档位）。 */
@@ -1015,6 +1035,11 @@ export function closePanel(p: OpenPanel): void {
   // 关掉打造窗口时一并清掉它的档位/引用 —— 下次交互由服务端重新给（不留下"上一家 NPC 的窗口"）
   if (p === 'craft') {
     commit({ openPanels: snapshot.openPanels.filter((x) => x !== p), craft: null, craftPreview: null });
+    return;
+  }
+  // 公会面板同理：结果不留到下次（下次建会是新的一次尝试）
+  if (p === 'clan') {
+    commit({ openPanels: snapshot.openPanels.filter((x) => x !== p), clanCreate: null });
     return;
   }
   commit({ openPanels: snapshot.openPanels.filter((x) => x !== p) });

@@ -208,6 +208,12 @@ export function partyAction(action: number, targetId = 0): jpt.base.ClientMessag
     return jpt.base.ClientMessage.create({ partyAction: { action, targetId } });
 }
 
+/** 交易请求（目标窗"交易"按钮）。按**角色名**发（C2S_TradeRequest.target_name，服务端按名找会话）；
+ *  服务端 401 handler 未实现（后续交易系统落地）——按钮先行，发包即按钮的全部行为。 */
+export function tradeRequest(targetName: string): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ tradeRequest: { targetName } });
+}
+
 /** 洗点（服务端权威：退点 + 清零等级/熟练度；会话内一次，被拒回 `skill.op.resetUsed`）。 */
 export function resetSkillPoints(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ resetSkillPoints: {} });
@@ -324,4 +330,13 @@ export function forceOrbItem(stoneUids: readonly number[]): jpt.base.ClientMessa
  */
 export function mixPreview(targetUid: number, stoneUids: readonly number[]): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ mixPreview: { targetUid, stoneUids: [...stoneUids] } });
+}
+
+// —— 公会（写操作走 game-server；读走 web-server REST，见 net/rest.ts）——
+
+/** 建会（C2S_ClanCreate）。等级/余额/重名校验全在服务端，客户端只报名字。 */
+export function clanCreate(clanName: string): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        clanCreate: { clanName },
+    });
 }

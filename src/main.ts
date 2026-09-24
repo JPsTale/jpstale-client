@@ -887,6 +887,13 @@ onMessage((msg: jpt.base.ServerMessage) => {
       );
       break;
     }
+    case 'clanUpdate': {
+      // 公会显示更新（建会/入会/退会/解散）→ 刷该玩家名牌上的公会行。
+      // 只改 actor 字段（名牌每帧直读），不重建模型 —— 重建会让画面"跳一下"。
+      const cu = msg.clanUpdate!;
+      worldView.clanUpdate(Number(cu.playerId), cu.clanName || '', cu.clanMark || '');
+      break;
+    }
     case 'playerAppear': {
       const a = msg.playerAppear!;
       if (worldView.isSelf(Number(a.playerId))) {
