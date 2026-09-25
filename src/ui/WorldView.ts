@@ -926,6 +926,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function targetSelActor(): {
     root: THREE.Object3D; topY: number; name: string; level: number;
     hp: number; maxHp: number; dead: boolean; cameraY: number; cameraZ: number; bones?: THREE.Bone[];
+    /** 玩家目标的公会名（空串=无公会）；怪/NPC 无此字段 */
+    clanName?: string;
   } | null {
     if (!targetSel) return null;
     if (targetSel.kind === 'monster') {
@@ -936,7 +938,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (targetSel.kind === 'player') {
       const r = remotes.get(targetSel.id);
       if (!r) return null;
-      return { root: r.root, topY: r.topY, name: r.name, level: r.level, hp: r.hp, maxHp: r.maxHp, dead: r.hp <= 0, cameraY: 0, cameraZ: 0, bones: r.bones };
+      return { root: r.root, topY: r.topY, name: r.name, level: r.level, hp: r.hp, maxHp: r.maxHp, dead: r.hp <= 0, cameraY: 0, cameraZ: 0, bones: r.bones, clanName: r.clanName };
     }
     const n = npcs.get(targetSel.id);
     if (!n) return null;
@@ -973,7 +975,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const sel = targetSel;
     targetWindowState.info = {
       kind: sel.kind, id: sel.id, name: a.name, level: a.level,
-      hp: a.hp, maxHp: a.maxHp, dead: a.dead,
+      hp: a.hp, maxHp: a.maxHp, dead: a.dead, clanName: a.clanName,
     };
   }
 

@@ -20,6 +20,8 @@ export interface TargetWindowInfo {
   maxHp: number;
   /** 尸体态（怪：死亡动画播完前的窗口期由 WorldView 计时关闭） */
   dead: boolean;
+  /** 玩家目标的公会名（空串 = 无公会——部族按钮的显示条件之一）；怪/NPC 无此字段 */
+  clanName?: string;
 }
 
 export interface TargetHoleRect {

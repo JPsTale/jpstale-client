@@ -3684,10 +3684,10 @@
   },
   "target": {
     "button": {
-      "party": "组队",
-      "trade": "交易",
-      "friendDisabled": "好友系统未开放",
-      "clanDisabled": "公会邀请未开放（公会系统在建）"
+      "trade": "申请交易",
+      "party": "申请组队",
+      "friend": "添加好友",
+      "clan": "邀请加入公会"
     }
   },
   "party": {

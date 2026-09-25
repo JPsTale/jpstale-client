@@ -1793,6 +1793,7 @@
   display: flex; flex-direction: column; gap: 2px;
   user-select: none; -webkit-user-select: none;
   z-index: 6;
+  pointer-events: auto;   /* 宿主容器是 none——弹窗/菜单要能点 */
 }
 .jp-party-head { display: flex; align-items: center; gap: 4px; height: 16px; }
 .jp-party-toggle {
@@ -1863,6 +1864,8 @@
   position: absolute; right: 14px; top: 44px; width: 132px;
   user-select: none; -webkit-user-select: none;
   z-index: 6;
+  /* ⚠ 宿主 #jp-react-panels 是 pointer-events:none——不开启的话按钮没 hover、点了没反应 */
+  pointer-events: auto;
 }
 /* 纯方形框 = 3D 头像孔；名字/血条绝对定位在框内（不独占行） */
 .jpt-hole {
@@ -1899,7 +1902,17 @@
   position: relative; width: 100px; height: 50px;
   margin: -6px auto 0;
 }
+.jpt-actions-4 { width: 120px; }   /* 族长模式：原版托盘画 120×50（playmain.cpp:3642） */
+.jpt-actions-4 .jpt-tray { width: 120px; }
 .jpt-tray { position: absolute; inset: 0; width: 100px; height: 50px; }
+/* 悬停文字提示（原版是 ButtonInfo-c*.bmp 提示图，我方先用 i18n 文字条） */
+.jpt-tip {
+  position: absolute; left: 50%; top: -20px; transform: translateX(-50%);
+  padding: 1px 7px; white-space: nowrap;
+  font-size: 12px; color: #fff; text-shadow: 0 0 2px #000;
+  background: rgba(8, 11, 16, 0.85); border: 1px solid rgba(0,0,0,0.7); border-radius: 3px;
+  pointer-events: none; z-index: 3;
+}
 .jpt-action-btn {
   position: absolute; top: 6px; width: 20px; height: 20px;
   padding: 0; background: transparent; border: none; cursor: pointer;

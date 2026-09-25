@@ -3684,10 +3684,10 @@
   },
   "target": {
     "button": {
-      "party": "Party",
-      "trade": "Trade",
-      "friendDisabled": "Friends not available yet",
-      "clanDisabled": "Clan invite not available yet (in development)"
+      "trade": "Request Trade",
+      "party": "Invite to Party",
+      "friend": "Add Friend",
+      "clan": "Invite to Clan"
     }
   },
   "party": {

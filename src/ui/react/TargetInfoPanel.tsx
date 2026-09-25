@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { targetWindowState } from '../targetWindow.js';
 import { useUiImageUrl } from './useUiImage.js';
-import { sendPartyInvite, sendTradeRequest } from '../../net/bridge.js';
+import { sendPartyInvite, sendTradeRequest, sendClanInvite } from '../../net/bridge.js';
 import { t, tOr } from '../../i18n/index.js';
 
 /**
@@ -32,7 +32,9 @@ const BTN_PARTY = '/res/image/party/icon-c1_.bmp';
 const BTN_PARTY_H = '/res/image/party/icon-c1.bmp';
 const BTN_FRIEND = '/res/image/party/icon-c2_.bmp';
 const BTN_FRIEND_H = '/res/image/party/icon-c2.bmp';
-// 第 4 枚"部族"（icon_clan）原版仅族长模式出现——公会系统落地后按同条件启用（届时 BTN_CLAN_* 启用）
+const BTN_CLAN = '/res/image/party/icon_clan_.bmp';
+const BTN_CLAN_H = '/res/image/party/icon_clan.bmp';
+
 /** 托盘底图：原版 MatEachMenuBox（cw-1.tga，原生 128×64），照原版画成 100×50 */
 const TRAY = '/res/image/cw-1.tga';
 
@@ -43,7 +45,7 @@ function npcDisplayName(nameKey: string): string {
   return tOr(`npc.${nameKey}.name`, nameKey);
 }
 
-/** 原版式 20×20 图标按钮：普通/悬停双贴图（`_` 后缀），`disabled` = 置灰 + tooltip、点了不发包 */
+/** 原版式 20×20 图标按钮：普通/悬停双贴图（⚠ `_` 后缀=常态、无后缀=悬停），悬停出 i18n 文字提示 */
 function IconBtn(props: {
   icon: string; iconHover: string; title: string; disabled?: boolean;
   onClick?: () => void;
@@ -55,13 +57,13 @@ function IconBtn(props: {
   return (
     <button
       className={`jpt-action-btn${disabled ? ' jpt-action-btn-off' : ''}`}
-      title={title}
       disabled={disabled}
       onPointerEnter={() => setHot(true)}
       onPointerLeave={() => setHot(false)}
       onClick={() => { if (!disabled && onClick) onClick(); }}
     >
       <img src={((hot && hover) ? hover : base) ?? undefined} alt={title} draggable={false} />
+      {hot && <span className="jpt-tip">{title}</span>}
     </button>
   );
 }
@@ -127,9 +129,10 @@ export default function TargetInfoPanel() {
         </div>
       )}
       {info.kind === 'player' && (
-        <div className="jpt-actions">
+        <div className={`jpt-actions${!info.clanName ? ' jpt-actions-4' : ''}`}>
           <img className="jpt-tray" src={tray ?? undefined} alt="" draggable={false} />
-          {/* 次序与原版一致：交易 / 组队 / 好友（+部族——族长模式专属，公会系统落地后按原条件启用） */}
+          {/* 次序与原版一致：交易 / 组队 / 好友 / 部族——部族原版仅"族长 && 对方无公会"时出现；
+          我方客户端不持有会长身份（服务端权威），显示条件取**对方无公会**，资格由服务端校验 */}
           <IconBtn icon={BTN_TRADE} iconHover={BTN_TRADE_H}
                    title={t('target.button.trade')}
                    onClick={() => sendTradeRequest(name)} />
@@ -137,7 +140,12 @@ export default function TargetInfoPanel() {
                    title={t('target.button.party')}
                    onClick={() => sendPartyInvite(info.id)} />
           <IconBtn icon={BTN_FRIEND} iconHover={BTN_FRIEND_H}
-                   title={t('target.button.friendDisabled')} disabled />
+                   title={t('target.button.friend')} disabled />
+          {!info.clanName && (
+            <IconBtn icon={BTN_CLAN} iconHover={BTN_CLAN_H}
+                     title={t('target.button.clan')}
+                     onClick={() => sendClanInvite(info.id, name)} />
+          )}
         </div>
       )}
     </div>
