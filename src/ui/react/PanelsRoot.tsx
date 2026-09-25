@@ -17,6 +17,7 @@ import PartyHud from './PartyHud.js';
 import TargetInfoPanel from './TargetInfoPanel.js';
 import CraftPanel from './CraftPanel.js';
 import ClanPanel from './ClanPanel.js';
+import ClanInvitePopup from './ClanInvitePopup.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
 /**
@@ -116,6 +117,8 @@ export default function PanelsRoot(props: { systemMenuSettings?: SystemMenuSetti
       <BuffStrip />
       {/* 左侧队伍成员组件（头像/血条/buff；未组队且无邀请时不渲染，见 PartyHud） */}
       <PartyHud />
+      {/* 公会邀请弹窗（被邀请者应答；无邀请时不渲染，见 ClanInvitePopup） */}
+      <ClanInvitePopup />
       {/* 右上角目标信息窗（选中目标的 3D 头像/血条/社交按钮；未选中不渲染） */}
       <TargetInfoPanel />
       {openPanels.map((p) => renderPanel(p, props.worldMapOptions ?? {}))}

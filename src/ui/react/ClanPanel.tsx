@@ -16,7 +16,7 @@ import {
   fetchClanDetail, fetchClanRanking, checkClanName,
   RestError, type ClanDetail, type ClanRankRow,
 } from '../../net/rest.js';
-import { sendClanCreate } from '../../net/bridge.js';
+import { sendClanCreate, sendClanInvite } from '../../net/bridge.js';
 
 type FetchState<T> = { kind: 'loading' } | { kind: 'error'; code: number; msgKey: string } | { kind: 'data'; data: T };
 
@@ -92,6 +92,14 @@ export default function ClanPanel() {
 // ------------------------------------------------------------------
 
 function ClanInfo({ detail, me }: { detail: ClanDetail; me: string }) {
+  const canInvite = detail.amLeader || detail.amSubLeader;
+  const [inviteName, setInviteName] = useState('');
+  const doInvite = () => {
+    const n = inviteName.trim();
+    if (n === '') return;
+    sendClanInvite(0, n);   // 结果走 S2C_Error（key）或对方的确认弹窗
+    setInviteName('');
+  };
   return (
     <div className="jp-clan-info">
       <div className="jp-clan-head">
@@ -105,6 +113,19 @@ function ClanInfo({ detail, me }: { detail: ClanDetail; me: string }) {
         <span>{t('clan.ui.created')}</span><span>{detail.regiDate}</span>
         <span>{t('clan.ui.gold')}</span><span>{detail.clanMoney.toLocaleString()}</span>
       </div>
+      {canInvite && (
+        <div className="jp-clan-invite-row">
+          <input
+            className="jp-clan-input"
+            maxLength={16}
+            placeholder={t('clan.ui.invitePlaceholder')}
+            value={inviteName}
+            onChange={(e) => setInviteName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') doInvite(); }}
+          />
+          <button className="jp-step-btn" onClick={doInvite}>{t('clan.ui.inviteBtn')}</button>
+        </div>
+      )}
       <div className="jp-clan-members-title">{t('clan.ui.members')}</div>
       <div className="jp-clan-list">
         {detail.members.map((m) => (

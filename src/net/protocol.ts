@@ -340,3 +340,17 @@ export function clanCreate(clanName: string): jpt.base.ClientMessage.$Properties
         clanCreate: { clanName },
     });
 }
+
+/** 邀请入会（C2S_ClanInvite）。target_id（点选目标）与 target_name（面板输名字）二选一，服务端以 id 优先。 */
+export function clanInvite(targetId: number, targetName: string): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        clanInvite: { targetId, targetName },
+    });
+}
+
+/** 被邀请者的应答（C2S_ClanInviteAccept）。accept=false = 拒绝（pending 就地清）。 */
+export function clanInviteAccept(inviterId: number, accept: boolean): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        clanInviteAccept: { inviterId, accept },
+    });
+}

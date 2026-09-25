@@ -332,6 +332,11 @@ export interface GameSnapshot {
    * 读数据（详情/排名）不走这里：那是请求-响应，面板自己用 REST 拉（`net/rest.ts`）。
    */
   clanCreate: ClanCreateResult | null;
+  /**
+   * 收到的**公会邀请**（弹窗用）；接受/拒绝/超时后置 null。形状与语义照 partyInvite
+   * （60s TTL 由弹窗组件起计时，与服务端 INVITE_TTL_MS 同长）。
+   */
+  clanInviteAsk: { inviterId: number; inviterName: string; clanName: string } | null;
   /** 已学技能表（`S2C_SkillList`；null = 还没收到，面板据此**不点亮**任何技能） */
   skillList: SkillListState | null;
   /**
@@ -374,6 +379,7 @@ function loadInitial(): GameSnapshot {
     craft: null,
     craftPreview: null,
     clanCreate: null,
+    clanInviteAsk: null,
     skillList: null,
     skillBindings: null,
   };
@@ -411,6 +417,11 @@ export function setCraftOpen(entityId: number, modes: readonly number[]): void {
 /** 建会结果入库（`S2C_ClanCreateResult`）；面板据此刷新或显示失败原因。 */
 export function setClanCreateResult(r: ClanCreateResult): void {
   commit({ clanCreate: r });
+}
+
+/** 收到公会邀请（S2C_ClanInviteAsk）。同一目标只留最新一份（服务端新邀请顶旧的）。 */
+export function setClanInviteAsk(ask: { inviterId: number; inviterName: string; clanName: string } | null): void {
+  commit({ clanInviteAsk: ask });
 }
 
 /** 自机的公会显示变更（S2C_ClanUpdate 且 playerId == 自己 / characterStatus 初始态）：面板读这里。 */

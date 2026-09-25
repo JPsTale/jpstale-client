@@ -5281,7 +5281,9 @@
       "cost": "创建费用：500,000 金币",
       "createBtn": "创建公会",
       "created2": "已创建公会「{name}」",
-      "noCharacter": "角色数据未就绪"
+      "noCharacter": "角色数据未就绪",
+      "invitePlaceholder": "输入要邀请的角色名",
+      "inviteBtn": "邀请"
     },
     "op": {
       "nameEmpty": "请输入公会名",
@@ -5295,7 +5297,19 @@
       "targetAlreadyInClan": "对方已在公会中",
       "targetIsLeader": "不能对会长执行该操作",
       "leaderCannotLeave": "会长不能退出公会",
-      "clanFull": "公会成员已满"
+      "clanFull": "公会成员已满",
+      "targetOffline": "对方不在线",
+      "targetNotFound": "找不到该角色",
+      "cannotInviteSelf": "不能邀请自己",
+      "noInvite": "没有待应答的邀请",
+      "inviteExpired": "邀请已失效"
+    },
+    "invite": {
+      "askTitle": "{name} 邀请你加入公会「{clan}」",
+      "accept": "接受",
+      "decline": "拒绝",
+      "welcome": "你已加入公会「{clan}」",
+      "joined": "{name} 加入了公会"
     }
   }
 }

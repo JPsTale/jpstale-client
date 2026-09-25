@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setClanCreateResult, setSelfClan } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setClanCreateResult, setSelfClan, setClanInviteAsk } from '../app/gameStore.js';
 import type { PartyMemberView } from '../app/gameStore.js';
 import {
   allocateStat,
@@ -28,6 +28,8 @@ import {
   resetSkillPoints,
   setSkillBinding,
   clanCreate,
+  clanInvite,
+  clanInviteAccept,
   partyInvite,
   partyAccept,
   partyLeave,
@@ -361,6 +363,15 @@ export function installBridge(): void {
     if (msg.clanOpen) {
       openPanel('clan');
     }
+    // 公会邀请（会长/副会长发起）→ 被邀请者弹窗（形状照 partyInvite）
+    if (msg.clanInviteAsk) {
+      const a = msg.clanInviteAsk;
+      setClanInviteAsk({
+        inviterId: Number(a.inviterId) || 0,
+        inviterName: a.inviterName || '',
+        clanName: a.clanName || '',
+      });
+    }
     // 建会结果（成功/失败都到这；失败也有一条 S2C_Error 提示，面板内再显示一次细节）
     if (msg.clanCreateResult) {
       const r = msg.clanCreateResult;
@@ -590,4 +601,14 @@ export function sendMixPreview(targetUid: number, stoneUids: readonly number[]):
 /** 建会（C2S_ClanCreate）。校验全在服务端；结果走 S2C_ClanCreateResult。 */
 export function sendClanCreate(clanName: string): void {
   send(clanCreate(clanName));
+}
+
+/** 邀请入会（会长/副会长）。目标窗按钮给 targetId，公会面板输名字（id 优先）。 */
+export function sendClanInvite(targetId: number, targetName: string): void {
+  send(clanInvite(targetId, targetName));
+}
+
+/** 被邀请者的应答：accept=false = 拒绝（服务端就地清 pending，不发通知）。 */
+export function sendClanInviteAccept(inviterId: number, accept: boolean): void {
+  send(clanInviteAccept(inviterId, accept));
 }
