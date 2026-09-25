@@ -915,6 +915,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let portraitCam: THREE.PerspectiveCamera | null = null;
   /** 肖像专用层：目标对象与场景灯光都开这一层，小视口相机只看这一层 ⇒ 孔里只画目标本体 */
   const PORTRAIT_LAYER = 3;
+  /** 肖像半透明背景面片的专用层（与目标本体分两层、分两趟渲——透明物排序问题见 renderTargetPortrait） */
+  const VEIL_LAYER = 4;
+  let portraitVeil: THREE.Mesh | null = null;
 
   function targetSelActor(): {
     root: THREE.Object3D; topY: number; name: string; level: number;
@@ -972,13 +975,16 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /**
    * 小视口直渲（原版 DrawEachPlayer 的 three.js 对应做法）：在面板预留的**透明孔**矩形里
-   * scissor 清屏 + 只渲染目标本体（层隔离，不需要 clone/SkeletonUtils，装备外观自动一致），
+   * scissor 渲染目标本体（层隔离，不需要 clone/SkeletonUtils，装备外观自动一致），
    * 画完立刻恢复全局视口与清屏色。
    *
-   * 相机标定：原版配方 = 锚点(Bip01 Head，取不到退 PatHeight-10*fONE) + ArrowPosi 偏移、
-   * dist=(100+cameraz)×fONE、朝向 ANGLE_180（正面）。我们单位按"原版人体 ≈110 fONE"折算：
-   * base=身高×2.2、偏移=cameray/z ÷110 ×身高 —— cameraz=150（默认档）比 cameraz=25（BOSS 近摄）
-   * **更远**这条数据序关系被原样保留（DB 数据不改、不做二次换算表）。
+   * **景别 = 头肩像**（用户 2026-09-25 反馈"看到的是全身"后收紧）：锚点 = 头（Bip01 Head 骨，
+   * 取不到退身高×0.85），base 距离 = 身高×0.9 —— 35° 视角下可视高 ≈0.57×身高，正好头+肩。
+   * cameray/cameraz 仍按 ArrowPosi 语义（抬高/拉远），但只做**小幅**偏移
+   * （÷110×身高 与 ×0.0009×身高/单位）：原版 dist=(100+cameraz)×fONE 的绝对值带着
+   * SMMULT 透视放大 hack，不能直接搬；这里保留数据序关系（BOSS 25 < 默认 150 < Phalanx 200
+   * ⇒ BOSS 更近）。原版背景是 cw.tga 贴图；我们要**半透明**（用户 2026-09-25）——
+   * 不清颜色只清深度，先用一层半透明暗色面片（VEIL 层）罩住透出的实时画面，再画目标。
    */
   function renderTargetPortrait(): void {
     if (!targetSel || !renderer || !scene) return;
@@ -997,25 +1003,54 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (head) head.getWorldPosition(anchor);
     else anchor.set(a.root.position.x, a.root.position.y + height * 0.85, a.root.position.z);
     anchor.y += (a.cameraY / 110) * height;
-    const dist = height * 2.2 + (a.cameraZ / 110) * height;
+    const dist = height * 0.9 + a.cameraZ * height * 0.0009;
     // 站到目标正面（沿模型朝向 rotation.y 退后；0 = 朝 +Z，与实体朝向约定一致）
     const forward = new THREE.Vector3(Math.sin(a.root.rotation.y), 0, Math.cos(a.root.rotation.y));
     portraitCam.aspect = hole.w / hole.h;
     portraitCam.updateProjectionMatrix();
-    portraitCam.position.set(anchor.x + forward.x * dist, anchor.y + height * 0.22, anchor.z + forward.z * dist);
-    portraitCam.lookAt(anchor);
-    portraitCam.layers.set(PORTRAIT_LAYER);
+    portraitCam.position.set(anchor.x + forward.x * dist, anchor.y + height * 0.12, anchor.z + forward.z * dist);
+    // 看向脖子（头略偏上、肩入画）—— 经典半身像构图
+    portraitCam.lookAt(anchor.x, anchor.y - height * 0.06, anchor.z);
     const prevColor = renderer.getClearColor(new THREE.Color());
     const prevAlpha = renderer.getClearAlpha();
     renderer.setScissorTest(true);
     renderer.setScissor(hole.x, yGL, hole.w, hole.h);
     renderer.setViewport(hole.x, yGL, hole.w, hole.h);
-    renderer.setClearColor(0x10161c, 1);
-    renderer.clear(true, true);
+    // 半透明背景：**不清颜色**（保留主画面透出来）→ 先渲一层半透明暗色面片（VEIL 层），
+    // 再渲目标本体（不透明，直接盖回面片之上）。两趟都是 scissor 内的小成本。
+    renderer.clear(false, true, false);   // 只清深度（颜色保留 = 透出实时画面）
+    const veil = ensurePortraitVeil();
+    veil.position.set(
+      anchor.x + forward.x * dist * 0.5,
+      (anchor.y + portraitCam.position.y) * 0.5,
+      anchor.z + forward.z * dist * 0.5,
+    );
+    veil.lookAt(portraitCam.position);
+    const veilSize = dist * 0.6;   // 盖住孔的视野（0.315×dist 起，留余量）
+    veil.scale.set(veilSize, veilSize, 1);
+    portraitCam.layers.set(VEIL_LAYER);
+    renderer.render(scene, portraitCam);
+    portraitCam.layers.set(PORTRAIT_LAYER);
     renderer.render(scene, portraitCam);
     renderer.setClearColor(prevColor, prevAlpha);
     renderer.setScissorTest(false);
     renderer.setViewport(0, 0, cssW, cssH);
+  }
+
+  /** 肖像的半透明背景面片：只在 VEIL 层（主渲染看不到），透出实时画面 + 压暗成面板同调 */
+  function ensurePortraitVeil(): THREE.Mesh {
+    if (!portraitVeil) {
+      portraitVeil = new THREE.Mesh(
+        new THREE.PlaneGeometry(1, 1),
+        new THREE.MeshBasicMaterial({
+          color: 0x0a0e12, transparent: true, opacity: 0.55,
+          depthWrite: false, depthTest: false, side: THREE.DoubleSide,
+        }),
+      );
+      portraitVeil.layers.set(VEIL_LAYER);
+      scene!.add(portraitVeil);
+    }
+    return portraitVeil;
   }
 
   /** Chase/移动目标实时位置：找不到（消失/离视野）返回 null → 取消追踪 */
