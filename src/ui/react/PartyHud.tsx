@@ -1,12 +1,12 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import {
-  getGameSnapshot, subscribeGame, clearPartyInvite,
+  getGameSnapshot, subscribeGame, clearPartyInvite, setPartyRecommendAsk,
   type PartyMemberView, type PartyBuffEntry,
 } from '../../app/gameStore.js';
 import { itemDefByCode, itemIconUrl } from '../../game/data/itemDefs.js';
 import { useItemImg } from './ItemPanel.js';
 import { useUiImageUrl } from './useUiImage.js';
-import { sendPartyAccept, sendPartyAction, sendPartyLeave } from '../../net/bridge.js';
+import { sendPartyAccept, sendPartyAction, sendPartyLeave, sendPartyRecommendAnswer } from '../../net/bridge.js';
 import { t } from '../../i18n/index.js';
 
 /**
@@ -37,7 +37,7 @@ const HP_FILL = '/res/image/party/smallenergy_blue.bmp';
 
 export default function PartyHud() {
   const snap = useSyncExternalStore(subscribeGame, getGameSnapshot);
-  const { party, partyInvite, character, player } = snap;
+  const { party, partyInvite, partyRecommendAsk, character, player } = snap;
   const selfId = character?.playerId ?? null;
   const [collapsed, setCollapsed] = useState(false);
   const [menuFor, setMenuFor] = useState<number | null>(null);
@@ -49,7 +49,7 @@ export default function PartyHud() {
     return () => window.clearTimeout(id);
   }, [partyInvite]);
 
-  if (!party && !partyInvite) return null;
+  if (!party && !partyInvite && !partyRecommendAsk) return null;
 
   const amLeader = !!(party && selfId != null
     && party.members.some((m) => m.id === selfId && m.leader));
@@ -83,17 +83,48 @@ export default function PartyHud() {
       )}
       {partyInvite && (
         <div className="jp-party-invite">
+          {/* direction：0 = 对方邀请我入队；1 = 对方申请加入我的队（用户 2026-09-25 矩阵） */}
           <div className="jp-party-invite-text">
-            {t('party.invite.title', { name: partyInvite.inviterName })}
+            {partyInvite.direction === 1
+              ? t('party.join.title', { name: partyInvite.inviterName })
+              : t('party.invite.title', { name: partyInvite.inviterName })}
           </div>
           <div className="jp-party-invite-buttons">
             <button
               className="jp-party-invite-ok"
               onClick={() => { sendPartyAccept(partyInvite.inviterId); clearPartyInvite(); }}
-            >{t('party.invite.accept')}</button>
+            >{partyInvite.direction === 1 ? t('party.join.accept') : t('party.invite.accept')}</button>
             <button
               className="jp-party-invite-no"
               onClick={() => clearPartyInvite()}
+            >{t('party.invite.decline')}</button>
+          </div>
+        </div>
+      )}
+      {partyRecommendAsk && (
+        <div className="jp-party-invite">
+          {/* 队长端批复（两层确认第一层）：stage 0 = 队员荐散人；stage 1 = 散人申请、队员已同意 */}
+          <div className="jp-party-invite-text">
+            {partyRecommendAsk.stage === 1
+              ? t('party.recommend.titleRequester', {
+                  member: partyRecommendAsk.memberName, target: partyRecommendAsk.targetName })
+              : t('party.recommend.titleMember', {
+                  member: partyRecommendAsk.memberName, target: partyRecommendAsk.targetName })}
+          </div>
+          <div className="jp-party-invite-buttons">
+            <button
+              className="jp-party-invite-ok"
+              onClick={() => {
+                sendPartyRecommendAnswer(partyRecommendAsk.memberId, partyRecommendAsk.targetId, true);
+                setPartyRecommendAsk(null);
+              }}
+            >{t('party.recommend.approve')}</button>
+            <button
+              className="jp-party-invite-no"
+              onClick={() => {
+                sendPartyRecommendAnswer(partyRecommendAsk.memberId, partyRecommendAsk.targetId, false);
+                setPartyRecommendAsk(null);
+              }}
             >{t('party.invite.decline')}</button>
           </div>
         </div>

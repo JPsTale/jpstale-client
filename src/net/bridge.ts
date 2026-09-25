@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setClanCreateResult, setSelfClan, setClanInviteAsk } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setPartyRecommendAsk, setClanCreateResult, setSelfClan, setClanInviteAsk } from '../app/gameStore.js';
 import type { PartyMemberView } from '../app/gameStore.js';
 import {
   allocateStat,
@@ -34,6 +34,7 @@ import {
   partyAccept,
   partyLeave,
   partyAction,
+  partyRecommendAnswer,
   tradeRequest,
 } from './protocol.js';
 import type { jpt } from './proto/base_message.js';
@@ -348,10 +349,19 @@ export function installBridge(): void {
         at,
       })));
     }
-    // 组队邀请（弹窗用；接受/拒绝/超时由队伍组件处理）
+    // 组队邀请 / 入队申请（弹窗用；direction 区分两者；处理在队伍组件）
     if (msg.partyInvite) {
       const inv = msg.partyInvite;
-      setPartyInvite(Number(inv.inviterId) || 0, inv.inviterName || '');
+      setPartyInvite(Number(inv.inviterId) || 0, inv.inviterName || '', Number(inv.direction) || 0);
+    }
+    // 队长端批复弹窗（两层确认第一层）
+    if (msg.partyRecommendAsk) {
+      const a = msg.partyRecommendAsk;
+      setPartyRecommendAsk({
+        memberId: Number(a.memberId) || 0, memberName: a.memberName || '',
+        targetId: Number(a.targetId) || 0, targetName: a.targetName || '',
+        stage: Number(a.stage) || 0,
+      });
     }
     // NPC 的打造窗口（合成/锻造/力量石）：由服务端指明这个 NPC 提供哪几档服务
     if (msg.craftOpen) {
@@ -502,6 +512,11 @@ export function sendPartyLeave(): void {
 /** 队伍动作（1=LEAVE 2=KICK 3=DELEGATE 4=DISBAND_PARTY 6=CHANGE_MODE；权限校验全在服务端） */
 export function sendPartyAction(action: number, targetId = 0): void {
   send(partyAction(action, targetId));
+}
+
+/** 队长批复"队员推荐/申请人已确认"（两层确认第一层） */
+export function sendPartyRecommendAnswer(memberId: number, targetId: number, accept: boolean): void {
+  send(partyRecommendAnswer(memberId, targetId, accept));
 }
 
 /** 交易请求（目标窗"交易"按钮；服务端 401 handler 待交易系统落地） */

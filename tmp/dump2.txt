@@ -1,0 +1,24 @@
+总行数: 253
+231 '\r'
+232 '  // 客户端接线：monsterlist.namekey（inf 词干）随 Appear 下发 ⇒ 名牌优先查 `monster.<键>.name`'
+233 "  const wv = readFileSync(resolve('src/ui/WorldView.ts'), 'utf8');"
+234 "  ok2('怪物名牌 nameKey 优先、name 兜底',"
+235 "    /a\\.nameKey \\? tOr\\(`monster\\.\\$\\{a\\.nameKey\\}\\.name`, a\\.name \\|\\| ''\\) : \\(a\\.name \\|\\| ''\\)/.test(wv));"
+236 "  const main = readFileSync(resolve('src/main.ts'), 'utf8');"
+237 "  ok2('main.ts 下发 name_key（monsterlist.namekey）', /a\\.nameKey \\|\\| ''/.test(main));"
+238 "  const protoText = readFileSync(resolve('proto/base/message.proto'), 'utf8');"
+239 '  const monsterMsg = /message S2C_MonsterAppear \\{[\\s\\S]*?'
+240 "\\}/.exec(protoText)?.[0] ?? '';"
+241 "  ok2('S2C_MonsterAppear 带 name_key 字段（i18n 键）', /string name_key = 20;/.test(monsterMsg));"
+242 '  // 库侧：monsterlist.namekey 有值 ⇒ zh/en 都有词条（防止"发了键却查不到"）'
+243 '  {'
+244 "    const { ITEM_DEFS } = await import('../src/game/data/itemDefs.js');"
+245 '    void ITEM_DEFS;'
+246 '  }'
+247 "  setLocale('zh');"
+248 "  setLocale('zh');\r"
+249 '}\r'
+250 '\r'
+251 "console.log(failed === 0 ? '\\ni18n 一致性：全部通过' : `\\ni18n 一致性：${failed} 条失败`);\r"
+252 'process.exit(failed === 0 ? 0 : 1);\r'
+253 ''

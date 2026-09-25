@@ -3583,7 +3583,12 @@
       "levelDiff": "Level difference too big (max {max})",
       "noInvite": "No pending party invitation",
       "inviteExpired": "The invitation has expired",
-      "notMember": "That player is not in your party"
+      "notMember": "That player is not in your party",
+      "recommendSent": "Sent to leader {leader}: request to invite {target}",
+      "recommendRejected": "The leader declined {target}'s join",
+      "joinPending": "Forwarded to leader {name} for approval",
+      "sameParty": "That player is already in your party",
+      "leaderOffline": "The party leader is offline"
     },
     "guild": "Guild",
     "trade": "Trade",
@@ -3697,6 +3702,15 @@
     "mode": {
       "normal": "Normal Mode",
       "hunt": "Hunt Mode"
+    },
+    "join": {
+      "title": "{name} requests to join your party",
+      "accept": "Accept"
+    },
+    "recommend": {
+      "titleMember": "{member} recommends {target} to join",
+      "titleRequester": "{member} agreed to {target}'s join request",
+      "approve": "Approve"
     },
     "invite": {
       "title": "{name} has sent a party request",

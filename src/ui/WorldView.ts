@@ -334,7 +334,7 @@ export interface WorldView {
    * `dead=true` = **尸体**（中途进场/重连时看见的已死怪，服务端在 Appear 上带标记）——
    * 直接摆成死亡姿势，不播 idle。
    */
-  monsterAppear(monsterId: number, templateId: number, name: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string, lifeTotalMs?: number, lifeRemainMs?: number, cameraY?: number, cameraZ?: number): void;
+  monsterAppear(monsterId: number, templateId: number, name: string, nameKey: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string, lifeTotalMs?: number, lifeRemainMs?: number, cameraY?: number, cameraZ?: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
   monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
@@ -3305,6 +3305,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   interface MonsterActor {
     monsterId: number;
     name: string;
+    /** 显示名的 i18n 键（monsterlist.namekey = inf 词干）；空 = 未映射 ⇒ 回落 name（英文名）。 */
+    nameKey: string;
     /** 等级（`S2C_MonsterAppear.level`，模板 `monsterlist.level`）—— 名牌画 `Lv.X 名字` 前缀 */
     level: number;
     /** 目标窗相机补正（monsterlist.cameray/cameraz → 客户端 ArrowPosi 语义，随 Appear 下发） */
@@ -3696,7 +3698,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function spawnMonster(actorInfo: {
-    monsterId: number; name: string; modelFile: string;
+    monsterId: number; name: string; nameKey: string; modelFile: string;
     /** 等级（`S2C_MonsterAppear.level`）—— 名牌 `Lv.X 名字` 前缀 */
     level?: number;
     hp?: number; maxHp?: number; x: number; y: number; z: number; angle: number;
@@ -3778,6 +3780,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           level: actorInfo.level && actorInfo.level > 0 ? actorInfo.level : 1,
           monsterEffectId: actorInfo.monsterEffectId || 0,
           name: actorInfo.name,
+          nameKey: actorInfo.nameKey || '',
           modelKey: actorInfo.modelFile,
           hp: actorInfo.hp || 0,
           maxHp: actorInfo.maxHp || 0,
@@ -5080,9 +5083,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const lifeRatio = a.lifeTotalMs > 0
         ? Math.max(0, Math.min(1, (a.lifeRemainMs - (now - a.lifeAnchorMs)) / a.lifeTotalMs))
         : undefined;
-      // 显示名：monsterlist.name 存的是 **i18n 键**（inf 词干，如 `4_hopy`）⇒ 直接拼 `monster.<name>.name`
-      // 查 zh/en；没词条（未映射的行，name 还是英文名）⇒ tOr 回落显示原样。
-      const shownName = tOr(`monster.${a.name}.name`, a.name || '');
+      // 显示名：**i18n 优先**（monsterlist.namekey → `monster.<键>.name`，zh/en 表里查）；
+      // 未映射的怪（nameKey 空）回落 name（库里的英文名）。
+      const shownName = a.nameKey ? tOr(`monster.${a.nameKey}.name`, a.name || '') : (a.name || '');
       recordPill(drawPill(ctx, pt.x, pt.y, lvPrefix(a.level) + shownName, {
         // 召唤物蓝色 RGB(0,153,255)（原版 `Winmain.cpp:3921-3933` 的 MONSTER_USER 分支），普通怪原色
         nameColor: isSummon ? '#0099ff' : '#ff8080',
@@ -7479,8 +7482,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     currentSelfAppearance: () => selfAppearance,
     updateRemoteAppearance: (playerId, appearance) => { void reloadRemoteModel(Number(playerId), appearance); },
     changeSelfHead: (jobId, faceNum, tier) => { void swapSelfHead(jobId, faceNum, tier); },
-    monsterAppear: (monsterId, _templateId, name, modelFile, level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs, cameraY, cameraZ) => {
-      spawnMonster({ monsterId: Number(monsterId), name: name || '', modelFile, level: Number(level) || 1, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0, cameraY: Number(cameraY) || 0, cameraZ: Number(cameraZ) || 0 });
+    monsterAppear: (monsterId, _templateId, name, nameKey, modelFile, level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs, cameraY, cameraZ) => {
+      spawnMonster({ monsterId: Number(monsterId), name: name || '', nameKey: nameKey || '', modelFile, level: Number(level) || 1, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0, cameraY: Number(cameraY) || 0, cameraZ: Number(cameraZ) || 0 });
     },
     monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
       applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);

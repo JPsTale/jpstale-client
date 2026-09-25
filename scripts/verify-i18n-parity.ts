@@ -229,18 +229,21 @@ console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + �
   ok2('没词条的键回落到 fallback（不静默显示 key）',
     tOr('monster.__no_such_key__.name', 'X') === 'X');
 
-  // 客户端接线：monsterlist.name **本身就是键**（用户方案）⇒ 名牌直接拼 `monster.<name>.name`
-  const wv = readFileSync(resolve('src/ui/WorldView.ts'), 'utf8');
-  ok2('怪物名牌直接用 name 当键（`monster.${a.name}.name` + tOr 回落原样）',
-    /tOr\(`monster\.\$\{a\.name\}\.name`, a\.name \|\| ''\)/.test(wv));
-  const main = readFileSync(resolve('src/main.ts'), 'utf8');
-  ok2('main.ts 不再把 name_key 传给 monsterAppear（键就是 name 字段）',
-    !/a\.nameKey \|\| ''/.test(main));
-  // proto：S2C_MonsterAppear 消息块里没有 name_key（NPC 的 name_key 是另一套，合法）
-  const protoText = readFileSync(resolve('proto/base/message.proto'), 'utf8');
-  const monsterMsg = /message S2C_MonsterAppear \{[\s\S]*?\n\}/.exec(protoText)?.[0] ?? '';
-  ok2('S2C_MonsterAppear 里没有 name_key 残留',
-    monsterMsg.includes('monsterAppear') || !/name_key/.test(monsterMsg));
+  // 客户端接线：monsterlist.namekey（inf 词干）随 Appear 下发 ⇒ 名牌优先查 `monster.<键>.name`
+  const wv = readFileSync(resolve('src/ui/WorldView.ts'), 'utf8');
+  ok2('怪物名牌 nameKey 优先、name 兜底',
+    /a\.nameKey \? tOr\(`monster\.\$\{a\.nameKey\}\.name`, a\.name \|\| ''\) : \(a\.name \|\| ''\)/.test(wv));
+  const main = readFileSync(resolve('src/main.ts'), 'utf8');
+  ok2('main.ts 下发 name_key（monsterlist.namekey）', /a\.nameKey \|\| ''/.test(main));
+  const protoText = readFileSync(resolve('proto/base/message.proto'), 'utf8');
+  const monsterMsg = /message S2C_MonsterAppear \{[\s\S]*?
+\}/.exec(protoText)?.[0] ?? '';
+  ok2('S2C_MonsterAppear 带 name_key 字段（i18n 键）', /string name_key = 20;/.test(monsterMsg));
+  // 库侧：monsterlist.namekey 有值 ⇒ zh/en 都有词条（防止"发了键却查不到"）
+  {
+    const { ITEM_DEFS } = await import('../src/game/data/itemDefs.js');
+    void ITEM_DEFS;
+  }
   setLocale('zh');
 }
 

@@ -315,8 +315,20 @@ export interface GameSnapshot {
    * 来自 500ms 增量 `S2C_PartyPlayUpdate`——**不含自己**（自己的血/坐标本地权威）。
    */
   party: PartyRoster | null;
-  /** 收到的组队邀请（弹窗用）；接受/拒绝/超时后置 null。拒绝不回包（原版同）。 */
-  partyInvite: { inviterId: number; inviterName: string } | null;
+  /**
+   * 收到的组队邀请/入队申请（弹窗用）；接受/拒绝/超时后置 null。拒绝不回包（原版同）。
+   * `direction`：0 = 对方邀请我入队；1 = 对方申请加入我的队（用户 2026-09-25 矩阵）。
+   */
+  partyInvite: { inviterId: number; inviterName: string; direction: number } | null;
+  /**
+   * 队长端"批复弹窗"（两层确认第一层）：
+   *   stage=0 队员荐散人（批准→以队长名义发邀请，目标还要确认）；
+   *   stage=1 散人申请、队员已同意（批准→申请人入队）。
+   */
+  partyRecommendAsk: {
+    memberId: number; memberName: string;
+    targetId: number; targetName: string; stage: number;
+  } | null;
   /**
    * 打造窗口（合成/锻造/力量石）—— 由 **NPC 交互**触发，`modes` 是**服务端**说这个 NPC 提供哪几档。
    * 客户端**不**按 NPC 名字/模型判断能做什么（那会在改名时静默失效，AGENTS #24）。
@@ -376,6 +388,7 @@ function loadInitial(): GameSnapshot {
     buffs: [],
     party: null,
     partyInvite: null,
+    partyRecommendAsk: null,
     craft: null,
     craftPreview: null,
     clanCreate: null,
@@ -484,16 +497,28 @@ export function setPartyPlay(
   commit({ party: { ...cur, members: merged } });
 }
 
-/** 收到组队邀请（弹窗用；同一邀请人重复邀请覆盖即可） */
-export function setPartyInvite(inviterId: number, inviterName: string): void {
+/** 收到组队邀请/入队申请（弹窗用；同源重复覆盖即可） */
+export function setPartyInvite(inviterId: number, inviterName: string, direction: number): void {
   const cur = snapshot.partyInvite;
-  if (cur && cur.inviterId === inviterId && cur.inviterName === inviterName) return;
-  commit({ partyInvite: { inviterId, inviterName } });
+  if (cur && cur.inviterId === inviterId && cur.inviterName === inviterName
+    && cur.direction === direction) return;
+  commit({ partyInvite: { inviterId, inviterName, direction } });
 }
 
 export function clearPartyInvite(): void {
   if (snapshot.partyInvite === null) return;
   commit({ partyInvite: null });
+}
+
+/** 队长端批复弹窗（两层确认第一层；同意/拒绝/超时后置 null） */
+export function setPartyRecommendAsk(
+  ask: { memberId: number; memberName: string; targetId: number; targetName: string; stage: number } | null,
+): void {
+  const cur = snapshot.partyRecommendAsk;
+  if (cur === null && ask === null) return;
+  if (cur && ask && cur.memberId === ask.memberId && cur.targetId === ask.targetId
+    && cur.stage === ask.stage) return;
+  commit({ partyRecommendAsk: ask });
 }
 
 function sameMember(a: PartyMemberView, b: PartyMemberView): boolean {

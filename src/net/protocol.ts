@@ -203,6 +203,12 @@ export function partyLeave(): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ partyLeave: {} });
 }
 
+/** 队长对"队员推荐/申请人已确认"的批复（两层确认第一层；accept=false 只通知发起者） */
+export function partyRecommendAnswer(memberId: number, targetId: number,
+                                     accept: boolean): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({ partyRecommendAnswer: { memberId, targetId, accept } });
+}
+
 /** 队伍动作（action = 服务端 PartyAction 枚举值：1=LEAVE 2=KICK 3=DELEGATE 4=DISBAND_PARTY 6=CHANGE_MODE） */
 export function partyAction(action: number, targetId = 0): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({ partyAction: { action, targetId } });
