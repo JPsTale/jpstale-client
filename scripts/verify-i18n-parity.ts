@@ -234,32 +234,26 @@ console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + �
   if (!existsSync(keyMapPath)) {
     fail('缺服务端对照表 monsterdata/monster-name-keys.json（跑 npm run monster-names）');
   } else {
-    const keyMap = JSON.parse(readFileSync(keyMapPath, 'utf8')) as Record<string, string>;
-    const badRef = Object.entries(keyMap).filter(([, stem]) => !(stem in zhMon));
-    // 对照表可以比名字表大（同一个 inf 有没有中文是另一回事）——但**反向不许**：
-    // 名字表里的每个键必须能在对照表里找到对应模型（否则服务端永远发不出这个 nameKey）
-    const modelsByStem = new Map<string, string[]>();
-    for (const [model, stem] of Object.entries(keyMap)) {
-      modelsByStem.set(stem, [...(modelsByStem.get(stem) ?? []), model]);
-    }
-    // ⚠ 同一模型可有多个 inf 词干（对照表只记一个"获胜"词干）——其余词干的名字若与
-    // 获胜词干**相同**（同一份中文资料的别名文件），视为等价可达；不同才算不可达。
-    // 同一模型多个 inf 词干时对照表只记一个；判等价用**名字集合**：
-    // 名字表里的某个键，只要它的中文名出现在"任何一个获胜词干"的名字里 ⇒ 视为可达
-    // （同一份中文资料被别名文件共享，如 54/c54_mudygolem 都是「泥妖」）。
-    const winnerNames = new Set<string>(
-      [...new Set(Object.values(keyMap))].map((w) => zhMon[w]?.name).filter(Boolean) as string[]);
-    const unreachable = zhKeys.filter((k) => {
-      if (modelsByStem.has(k)) return false;
-      const own = zhMon[k]?.name;
-      return own === undefined || !winnerNames.has(own);
-    });
+    // 对照表结构 = { 模型路径: [{ s: 词干, e: 英文名 }] }（服务端按**该行的英文名**匹配选词干，
+    // 共用模型的多只怪各得各的名字；匹配不上取第一个 —— 生成器已把有中文名的候选排前）
+    const keyMap = JSON.parse(readFileSync(keyMapPath, 'utf8')) as
+      Record<string, Array<{ s: string; e: string | null }>>;
+    const allStems = new Set<string>();
+    for (const cands of Object.values(keyMap)) for (const c of cands) allStems.add(c.s);
+    const unreachable = zhKeys.filter((k) => !allStems.has(k));
     if (unreachable.length) {
-      fail(`名字表里 ${unreachable.length} 个键在服务端对照表里没有对应模型（服务端发不出这些 nameKey）：`
+      fail(`名字表里 ${unreachable.length} 个键不在对照表候选里（服务端发不出这些 nameKey）：`
         + unreachable.slice(0, 5).join(', '));
     } else {
-      console.log(`  ok   名字表 ${zhKeys.length} 个键都能由对照表到达（对照表 ${Object.keys(keyMap).length} 条）`);
+      console.log(`  ok   名字表 ${zhKeys.length} 个键都在对照表候选里（${Object.keys(keyMap).length} 个模型）`);
     }
+    // 服务端按行匹配的代码在册
+    const sp = readFileSync(resolve('../jpstale-server/apps/game-server/src/main/java'
+      + '/org/jpstale/server/game/service/MonsterSpawnService.java'), 'utf8');
+    ok2('服务端按行匹配候选（infKeyOf(模型路径, 行名)，e 命中选 s；不命中取第一个）',
+      /String infKeyOf\(String rawModelPath, String rowName\)/.test(sp)
+      && /rowName\.equalsIgnoreCase\(c\.e\(\)\)/.test(sp)
+      && /infKeyOf\(template\.getModelFile\(\), template\.getName\(\)\)/.test(sp));
   }
 
   // 客户端接线：名牌 i18n 优先（WorldView 的怪物 pill + main.ts 传 nameKey）

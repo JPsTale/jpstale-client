@@ -96,7 +96,7 @@ for (const f of readdirSync(join(SRC, 'name'))) {
 // ── ②a' 库里的 monsterlist：模型路径 → 英文名（en 侧的兜底来源，同 item-defs 的三级取数）──
 // 3060 的 inf 没有 `*Name` 英文字段 ⇒ 这些模型的 en 名只能来自库（monsterlist.name，
 // 与客户端"en 回落数据名"的显示结果一致，但**写进表里**才能保住 zh/en 键集成对）。
-function dbMonsterNames(): Map<string, string> {
+function dbMonsterNames(): Map<string, Set<string>> {
   const SQL = "select lower(modelfile), min(name) from gamedb.monsterlist where modelfile != '0' group by lower(modelfile)";
   const tryRun = (f: string, a: string[]): string | null => {
     try {
@@ -118,14 +118,20 @@ function dbMonsterNames(): Map<string, string> {
   }
   for (const line of text.split(NL)) {
     const [model, name] = line.split('|');
-    if (model && name) out.set(model.trim(), name.trim());
+    // 同模型多行（Hopy / Hopy Kid 共用 hopy.ini）—— 收集**名字集合**供服务端按行匹配
+    if (model && name) {
+      const set = out.get(model.trim()) ?? new Set<string>();
+      set.add(name.trim());
+      out.set(model.trim(), set);
+    }
   }
   return out;
 }
 const dbNames = dbMonsterNames();
 
-// ── ②b 来源②：3060 的中文字段 inf（*名字/*外型文件）—— 直接以模型路径为桥 ──
-const model2zh3060 = new Map<string, string>();
+// ── ②b 来源②：3060 的中文字段 inf（*名字/*外型文件）—— inf 文件名即词干 ──
+/** 3060 inf 词干 → 中文名（只收**模型在 11 职业端也有 inf** 的，词干才进得了服务端对照表） */
+const stemsFrom3060 = new Map<string, string>();
 let added3060 = 0;               // ②补进语言表的条数（统计用）
 if (existsSync(SRC_3060)) {
   for (const f of readdirSync(SRC_3060)) {
@@ -133,8 +139,11 @@ if (existsSync(SRC_3060)) {
     const t = decode(readFileSync(join(SRC_3060, f)));
     const model = /\*\s*外型文件\s*"([^"]*)"/.exec(t)?.[1]?.trim().toLowerCase();
     const name = /\*\s*名字\s*"([^"]*)"/.exec(t)?.[1]?.trim();
-    if (model && name && CJK.test(name) && !model2zh3060.has(model)) {
-      model2zh3060.set(model, name);
+    if (model && name && CJK.test(name)) {
+      const stem = f.slice(0, -4).toLowerCase();
+      if ([...infByStem.values()].some((v) => v.model === model) && !stemsFrom3060.has(stem)) {
+        stemsFrom3060.set(stem, name);
+      }
     }
   }
 }
@@ -188,7 +197,11 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
   let added = 0, kept = 0;
   for (const [stem, names] of inf2names) {
     const name = [...names][0]!;
-    const enName = infByStem.get(stem)?.enName;
+    const model = infByStem.get(stem)?.model;
+    // 剪枝：模型没有任何 monsterlist 行 ⇒ 服务端永远不会用它建怪 ⇒ 条目是死的
+    //（zh/en 一起剪，保住键集成对）
+    if (!model || !dbNames.has(model)) continue;
+    const enName = infByStem.get(stem)?.enName ?? [...dbNames.get(model)!][0] ?? null;
     const value = lang === 'zh' ? name : enName;
     if (!value) continue;                 // en 没有来源名 ⇒ 不写（客户端用数据名）
     const cur = mon[stem] as { name?: string } | undefined;
@@ -196,12 +209,14 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
     mon[stem] = { name: value };
     added++;
   }
-  // 来源②：zhoon 没有的模型，用 3060 inf 的中文名补；**en 侧用库里的 monsterlist.name 配对**
-  // （3060 的 inf 没有英文字段；en=数据名与"客户端 en 回落数据名"同口径，但写进表里才保住键集成对）。
-  for (const [model, name] of model2zh3060) {
-    const stem = keyMapStemOf(model);
-    if (!stem) continue;
-    const value = lang === 'zh' ? name : (infByStem.get(stem)?.enName ?? dbNames.get(model));
+  // 来源②：zhoon 没有的模型，用 3060 inf 的中文名补 —— 按 **3060 inf 自己的词干**写
+  // （该词干在服务端对照表里是候选之一，按行匹配时可达）。
+  // en 侧用库里的 monsterlist.name 配对（3060 inf 无英文字段；与"en 回落数据名"同口径）。
+  for (const [stem, name] of stemsFrom3060) {
+    const model = infByStem.get(stem)?.model;
+    if (!model || !dbNames.has(model)) continue;   // 剪枝：模型没有 monsterlist 行 ⇒ 死条目
+    const value = lang === 'zh' ? name
+      : (infByStem.get(stem)?.enName ?? [...dbNames.get(model)!][0] ?? null);
     if (!value) continue;
     const cur = mon[stem] as { name?: string } | undefined;
     if (cur?.name) { kept++; continue; }  // 已有（①覆盖/手写）⇒ 不动
@@ -209,33 +224,40 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
     if (lang === 'zh') added3060++;
   }
   table.monster = mon;
+  // 剪掉本轮没有写（= 模型没有 monsterlist 行）的陈旧键 —— 否则旧运行的死条目会一直留在表里
+  const allowed = new Set<string>();
+  for (const [stem, names] of inf2names) {
+    const model = infByStem.get(stem)?.model;
+    if (model && dbNames.has(model)) allowed.add(stem);
+  }
+  for (const stem of stemsFrom3060.keys()) {
+    const model = infByStem.get(stem)?.model;
+    if (model && dbNames.has(model)) allowed.add(stem);
+  }
+  let pruned = 0;
+  for (const k of Object.keys(mon)) {
+    if (!allowed.has(k)) { delete mon[k]; pruned++; }
+  }
+  if (pruned) console.log(`  ${rel}：剪掉 ${pruned} 个死条目（模型不在 monsterlist）`);
   write(rel, table);
   console.log(`  ${rel}（${lang}）：新增 ${added} / 保持 ${kept}`);
 }
 
-/**
- * 模型路径 → 获胜的 inf 词干（= 写进服务端对照表的那个）。
- * 与 ⑤ 的选择规则一致：**有中文名（①或②）的词干优先**，否则文件序第一个。
- */
-function keyMapStemOf(model: string): string | undefined {
-  const cands = [...infByStem].filter(([, v]) => v.model === model);
-  if (cands.length === 0) return undefined;
-  const withZh = cands.find(([stem]) => inf2names.has(stem) || model2zh3060.has(model));
-  return (withZh ?? cands[0]!)[0];
+// ── ⑤ 服务端对照表：模型路径 → **候选 inf 列表** ──
+// ⚠ **多个怪共用一个模型**（hopy.ini ← Hopy/Hopy Kid；minegolem.ini ← Mine Golem/Iron Golem…），
+// 且各自 inf 的中文名不同 —— "一个模型记一个词干"必然错配（胜负只是文件序的偶然，
+// 实测把 独角兽(Hopy) 错配成了 小独角兽(Hopy Kid)）。
+// ⇒ 记**候选数组** `[{ s: 词干, e: 英文名|null }]`，服务端建怪时按**该行的 monsterlist.name**
+// 匹配 `e` 选词干（精确到行）；匹配不上取第一个（zh 名的排前，兜底更有意义）。
+const keyMap: Record<string, Array<{ s: string; e: string | null }>> = {};
+for (const [stem, { model, enName }] of infByStem) {
+  const en = enName ?? [...(dbNames.get(model) ?? [])][0] ?? null;
+  (keyMap[model] ??= []).push({ s: stem, e: en });
 }
-
-// ── ⑤ 服务端对照表：模型路径 → inf 词干 ──
-// ⚠ 多个 inf 可指向**同一模型**（如 hopy.ini ← 3_Hopy(注释指向4_Hopy)/Sb1_Hopy/…）——
-// 直接 `keyMap[model] = stem` 会被最后写的覆盖，可能选中"没有中文名"的那个词干，
-// 服务端 nameKey 就指到一个查不到词条的键 ⇒ 名字永远回落数据名。
-// 修法：**有中文名的 inf 词干优先**（同名模型多个都有中文时取文件序第一个）。
-const keyMap: Record<string, string> = {};
-for (const [stem, { model }] of [...infByStem].sort((a, b) => {
-  const aHas = (inf2names.has(a[0]) || model2zh3060.has(a[1].model)) ? 0 : 1;  // 有中文名的排前
-  const bHas = (inf2names.has(b[0]) || model2zh3060.has(b[1].model)) ? 0 : 1;
-  return aHas - bHas;
-})) {
-  if (!(model in keyMap)) keyMap[model] = stem;
+for (const cands of Object.values(keyMap)) {
+  // zh 名有的排前（行名匹配不上时的兜底才落在一个有词条的词干上）
+  cands.sort((a, b) => (inf2names.has(a.s) || stemsFrom3060.has(a.s) ? 0 : 1)
+    - (inf2names.has(b.s) || stemsFrom3060.has(b.s) ? 0 : 1));
 }
 if (!existsSync(SRV_RESOURCE)) {
   const { mkdirSync } = await import('node:fs');

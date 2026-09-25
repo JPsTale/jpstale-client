@@ -4550,23 +4550,14 @@
     "117_ibomber": {
       "name": "爆破兵"
     },
-    "117_inferno": {
-      "name": "地狱火灵王"
-    },
     "117_minegolem": {
       "name": "矿山傀儡"
-    },
-    "117_rguard": {
-      "name": "黑暗铁甲狂魔"
     },
     "117_telite": {
       "name": "泰利特"
     },
     "117_xetan": {
       "name": "鏉板潶"
-    },
-    "118_dmystery": {
-      "name": "黑暗魔鬼"
     },
     "118_lguardian": {
       "name": "守护者"
@@ -4579,9 +4570,6 @@
     },
     "119_acero": {
       "name": "拳击手"
-    },
-    "119_ignis": {
-      "name": "三头火龙"
     },
     "14_hobgoblin": {
       "name": "魔兽兵"
@@ -4598,17 +4586,8 @@
     "120_ielite": {
       "name": "伊莱特"
     },
-    "120_najan": {
-      "name": "小恶魔"
-    },
     "121_chalybs": {
       "name": "矿工机械"
-    },
-    "121_crios": {
-      "name": "克里奥斯"
-    },
-    "123_wlord": {
-      "name": "巫婆领主"
     },
     "15_mutantrabie": {
       "name": "变异兔妖"
@@ -4618,9 +4597,6 @@
     },
     "130_greedy": {
       "name": "贪婪之主"
-    },
-    "130_midranda": {
-      "name": "米德兰达"
     },
     "130_tulla": {
       "name": "图拉"
@@ -4762,9 +4738,6 @@
     },
     "82_avelin": {
       "name": "魔弓手"
-    },
-    "badwolf": {
-      "name": "Pol韈ia do Lobo"
     },
     "62_beevil": {
       "name": "蜂王"
@@ -5033,98 +5006,8 @@
     "00_santagoblin-c": {
       "name": "圣诞精灵"
     },
-    "100_i_chimera": {
-      "name": "龙鹰灵兽"
-    },
-    "104_devilbird": {
-      "name": "冰风魔王"
-    },
-    "evilspirit": {
-      "name": "邪恶火灵"
-    },
-    "102_i_darkguard": {
-      "name": "神弓魔"
-    },
-    "100_i_darkmage": {
-      "name": "暗月法师"
-    },
-    "100_i_seto": {
-      "name": "暗凰冤魂"
-    },
-    "100_fury": {
-      "name": "狮面魔王"
-    },
     "110_hobogolem": {
       "name": "无息魔王"
-    },
-    "107_i_gorgon": {
-      "name": "米诺陶斯"
-    },
-    "b_107_ratoolord 2": {
-      "name": "鲁图王"
-    },
-    "85_king bat": {
-      "name": "吸血蝙蝠"
-    },
-    "80_i_goblinshaman": {
-      "name": "魔法魔兽兵"
-    },
-    "113_iceworm": {
-      "name": "寒冰树"
-    },
-    "110_i_minebat": {
-      "name": "寒冰恶魔"
-    },
-    "105_i_minegolem": {
-      "name": "矿山机械"
-    },
-    "105_i_tarantulika": {
-      "name": "冰甲毒蛛"
-    },
-    "100_i_willy": {
-      "name": "狂暴比利"
-    },
-    "102_i_hound": {
-      "name": "地狱犬"
-    },
-    "100_i_lena": {
-      "name": "雷娜"
-    },
-    "102_i_hena": {
-      "name": "狂暴雷娜"
-    },
-    "105_i_marionette": {
-      "name": "吊死鬼"
-    },
-    "107_i_skullnette": {
-      "name": "狂暴吊死鬼"
-    },
-    "morgonia": {
-      "name": "巨斧守卫"
-    },
-    "redeye": {
-      "name": "火眼魔"
-    },
-    "turtledragon": {
-      "name": "霸天龟王"
-    },
-    "107_i_undead stalker": {
-      "name": "死亡巫师"
-    },
-    "100_i_undead chaser": {
-      "name": "狂暴死亡巫师"
-    },
-    "115_undead maple": {
-      "name": "死亡枫树"
-    },
-    "115_isoldier": {
-      "name": "渗透侵略者"
-    },
-    "110_i_xetan": {
-      "name": "氙谭"
-    },
-    "100_i_billy": {
-      "name": "比利"
     },
     "17_hauntingmaple": {
       "name": "红木精"
@@ -5132,17 +5015,8 @@
     "17_hauntingplant": {
       "name": "绿木精"
     },
-    "17_plant": {
-      "name": "绿木精怪"
-    },
-    "17_planty": {
-      "name": "红木精怪"
-    },
     "29_hobgoblinchief": {
       "name": "魔斧怪"
-    },
-    "29_northgoblinchielf": {
-      "name": "魔锤兵"
     },
     "4_hopy kid": {
       "name": "小独角兽"
@@ -5159,9 +5033,6 @@
     "58_evilmaple": {
       "name": "黑暗枫树"
     },
-    "55_i_headcutter": {
-      "name": "魔剑士"
-    },
     "5_mudy": {
       "name": "土妖"
     },
@@ -5177,20 +5048,8 @@
     "60_s_wolverin": {
       "name": "雪狼"
     },
-    "towergolem": {
-      "name": "巨塔石人"
-    },
-    "60_i_darkknight": {
-      "name": "黑暗骑士"
-    },
     "68_aveliskqueen": {
       "name": "魔弓手"
-    },
-    "65_i_doomguard": {
-      "name": "黑暗爵士"
-    },
-    "65_i_naz": {
-      "name": "夜行者"
     },
     "70_s_metalgolem": {
       "name": "终极机械"
@@ -5201,38 +5060,17 @@
     "73_omu": {
       "name": "变异甲虫"
     },
-    "75-beetle": {
-      "name": "独眼甲虫"
-    },
     "75_hulk": {
       "name": "绿巨人"
-    },
-    "75_i_succubus": {
-      "name": "萨酷巴斯"
     },
     "76_stingray": {
       "name": "毒眼飞蛾"
     },
-    "75_i_dawlin": {
-      "name": "双头独眼"
-    },
     "79_aveliskqueen": {
       "name": "魔弓女王"
     },
-    "75_i_m_lord": {
-      "name": "木乃伊旗主"
-    },
-    "75_i_shadow": {
-      "name": "鬼影杀手"
-    },
     "7_sen": {
       "name": "路灯怪"
-    },
-    "watermelon": {
-      "name": "西瓜太郎"
-    },
-    "a_70_guardianstaff": {
-      "name": "守护圣徒"
     },
     "80_lizardfolk": {
       "name": "嗜血屠狼"
@@ -5243,14 +5081,8 @@
     "80_skillmaster": {
       "name": "技能导师"
     },
-    "102_i_incubus": {
-      "name": "英酷巴斯"
-    },
     "82_strider": {
       "name": "双刀娜迦"
-    },
-    "100_s_arcuda": {
-      "name": "笨笨熊"
     },
     "84_berserker": {
       "name": "狂暴战士"
@@ -5267,89 +5099,23 @@
     "87_darkspecter": {
       "name": "鬼影魔神"
     },
-    "35_i_ghost": {
-      "name": "魂魄"
-    },
     "8_egan": {
       "name": "草帽怪"
     },
     "8_orbit": {
       "name": "火眼怪"
     },
-    "90_i_coldeye": {
-      "name": "冷眼魔"
-    },
-    "92_i_icegoblin": {
-      "name": "冰甲魔兽兵"
-    },
-    "90_i_turtlecannon": {
-      "name": "霸天龟"
-    },
-    "96_incubussummer": {
-      "name": "冰风女妖"
-    },
     "bal_crystal": {
       "name": "瓦尔哈拉之塔"
     },
-    "79_m_babel": {
-      "name": "巴别塔"
-    },
-    "b_23_mephit 2": {
-      "name": "超级青精灵"
-    },
-    "b_25_minigsilver 2": {
-      "name": "超级蓝豆糕"
-    },
-    "b_32_ghoul 2": {
-      "name": "超级盗尸贼"
-    },
-    "b_33_bargon 2": {
-      "name": "超级刀斧手"
-    },
-    "b_33_cyclops 2": {
-      "name": "超级独眼魔人"
-    },
-    "b_47_cyclopsknight 2": {
-      "name": "超级独眼魔神"
-    },
-    "b_54_skeletonknight 2": {
-      "name": "超级骷髅骑士"
-    },
-    "b_67_illusionknight 2": {
-      "name": "超级魔战妖王"
-    },
-    "b_69_figon 2": {
-      "name": "超级火灵王"
-    },
-    "b_89_stygianlord 2": {
-      "name": "超级幽灵"
-    },
     "castledoor": {
       "name": "城门"
-    },
-    "cstone": {
-      "name": "守护水晶"
-    },
-    "100_hestian": {
-      "name": "烈火麒麟"
     },
     "event_molly": {
       "name": "莫利狼奶奶"
     },
     "event_morif": {
       "name": "精灵鼠小弟"
-    },
-    "b_soldier_a": {
-      "name": "卫兵"
-    },
-    "coursem_soldier_b": {
-      "name": "警卫兵"
-    },
-    "b_soldier_c": {
-      "name": "禁卫兵"
-    },
-    "soldier_d": {
-      "name": "护卫兵"
     },
     "t_crystal_b": {
       "name": "冰水晶塔"
@@ -5363,14 +5129,125 @@
     "t_crystal_r": {
       "name": "火水晶塔"
     },
-    "_14_h_hobgoblin": {
-      "name": "锤子巨魔兽"
+    "10_santagoblin-d": {
+      "name": "圣诞精灵(小)"
     },
-    "_17_h_hauntingplant": {
-      "name": "锤子树"
+    "110_fury": {
+      "name": "狮面魔王"
     },
-    "_31_h_decoy": {
-      "name": "锤子浮灵"
+    "118_fury2": {
+      "name": "狮面魔王(改)"
+    },
+    "119_fury3": {
+      "name": "狮面魔王(极)"
+    },
+    "120_fury4": {
+      "name": "狮面魔王(真)"
+    },
+    "30_santagoblin-c": {
+      "name": "圣诞精灵"
+    },
+    "50_santagoblin-b": {
+      "name": "大圣诞精灵"
+    },
+    "69_naz": {
+      "name": "夜行者"
+    },
+    "70_santagoblin-a": {
+      "name": "巨大圣诞精灵"
+    },
+    "75_succubus": {
+      "name": "萨酷巴斯"
+    },
+    "79_m_lord": {
+      "name": "木乃伊旗主"
+    },
+    "83_avelinqueen": {
+      "name": "人马女皇"
+    },
+    "83_omicron": {
+      "name": "神秘十五"
+    },
+    "8_bigghost": {
+      "name": "魂魄"
+    },
+    "b100_doomlord": {
+      "name": "超级黑暗爵士"
+    },
+    "b_104_babel2": {
+      "name": "巴别塔(改)"
+    },
+    "b_104_babel3": {
+      "name": "巴别塔(真)"
+    },
+    "b_15_mutantrabie": {
+      "name": "超级变异兔子"
+    },
+    "b_23_mephit": {
+      "name": "超级青精灵"
+    },
+    "b_25_minigsilver": {
+      "name": "超级蓝豆糕"
+    },
+    "b_28_plantlord": {
+      "name": "超级木精怪"
+    },
+    "b_32_ghoul": {
+      "name": "超级盗尸贼"
+    },
+    "b_33_bargon": {
+      "name": "超级刀斧手"
+    },
+    "b_33_cyclops": {
+      "name": "超级独眼魔人"
+    },
+    "b_43_mightygoblin": {
+      "name": "超级魔兽怪"
+    },
+    "b_44_skeletonranger": {
+      "name": "超级骷髅游骑兵"
+    },
+    "b_47_cyclopsknight": {
+      "name": "超级独眼魔神"
+    },
+    "b_53_titan": {
+      "name": "超级泰坦巨人"
+    },
+    "b_54_skeletonknight": {
+      "name": "超级骷髅骑士"
+    },
+    "b_59_headcutter 1": {
+      "name": "超级魔剑士"
+    },
+    "b_59_headcutter 2": {
+      "name": "超级魔斗士"
+    },
+    "b_66_slaughter": {
+      "name": "超级魔剑圣"
+    },
+    "b_67_illusionknight": {
+      "name": "超级魔战妖王"
+    },
+    "b_69_figon": {
+      "name": "超级火灵王"
+    },
+    "b_73_stonegiant": {
+      "name": "超级无双石怪"
+    },
+    "b_86_kinghopy": {
+      "name": "超级独角兽王"
+    },
+    "b_89_stygianlord": {
+      "name": "超级幽灵"
+    },
+    "soldier_a": {
+      "name": "卫兵"
+    },
+    "soldier_b": {
+      "name": "警卫兵"
+    },
+    "soldier_c": {
+      "name": "禁卫兵"
     }
   },
   "clan": {
