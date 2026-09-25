@@ -2,7 +2,9 @@
 //
 // 形状与语义照 `PartyHud` 里的组队邀请弹窗：常驻挂载（不随公会面板开关）、
 // 60s 超时（与服务端 `ClanHandler.INVITE_TTL_MS` 同长）、拒绝不发通知（原版同）。
-// 复用 `.jp-party-invite*` 样式 —— 两类邀请在屏幕上就该长得一样（同为"对方想拉你"）。
+// 内层文字/按钮复用 `.jp-party-invite-*` 样式 —— 两类邀请在屏幕上就该长得一样（同为"对方想拉你"）。
+// ⚠ 根类必须是 `.jp-clan-invite`：宿主容器 `#jp-react-panels` 是 pointer-events:none，
+// 各常驻件要自己开 auto（`.jp-party` 的注释就是为这个写的——2026-09-25 用户实测漏开 = 弹窗点不动）。
 import { useEffect } from 'react';
 import { useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, setClanInviteAsk } from '../../app/gameStore.js';
@@ -24,7 +26,7 @@ export default function ClanInvitePopup() {
   if (!clanInviteAsk) return null;
 
   return (
-    <div className="jp-party-invite jp-clan-invite" data-layer="clan-invite">
+    <div className="jp-clan-invite" data-layer="clan-invite">
       <div className="jp-party-invite-text">
         {t('clan.invite.askTitle', { name: clanInviteAsk.inviterName, clan: clanInviteAsk.clanName })}
       </div>
