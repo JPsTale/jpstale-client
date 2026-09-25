@@ -239,6 +239,12 @@
   flex-shrink: 1;
 }
 
+.jp-clan-icon {
+  vertical-align: -3px;   /* 与 12px 文字的基线对齐 */
+  margin-right: 4px;
+  image-rendering: pixelated;   /* 32×32 源缩到 16，保持像素风 */
+}
+
 .jp-char-sub {
   display: flex;
   justify-content: space-between;

@@ -902,7 +902,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.clanUpdate(Number(cu.playerId), cu.clanName || '', cu.clanMark || '');
       if (worldView.isSelf(Number(cu.playerId))) {
         // 自己：角色信息面板读 gameStore，这里同步写（名牌在 worldView.clanUpdate 里已分流）
-        setSelfClan(cu.clanName || '');
+        setSelfClan(cu.clanName || '', cu.clanMark || '');
       }
       break;
     }

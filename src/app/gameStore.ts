@@ -75,6 +75,8 @@ export interface GameCharacter {
   rank: number;                // 转职阶级（原版 ChangeJob：0=1转…3=4转；服务端 JobService 按等级 20/40/60 推进）
   /** 公会名（空串 = 无公会）。初始态来自 S2C_CharacterStatus；建会/退会后的增量走 S2C_ClanUpdate。 */
   clanName: string;
+  /** 公会图标编号（clandb.cl.miconcnt 转字符串）；空串 = 无。与 clanName 同源。 */
+  clanMark: string;
   hp: number;
   maxHp: number;
   mp: number;
@@ -411,11 +413,11 @@ export function setClanCreateResult(r: ClanCreateResult): void {
   commit({ clanCreate: r });
 }
 
-/** 自机的公会显示变更（S2C_ClanUpdate 且 playerId == 自己）：角色信息面板与名牌读这里。 */
-export function setSelfClan(clanName: string): void {
+/** 自机的公会显示变更（S2C_ClanUpdate 且 playerId == 自己 / characterStatus 初始态）：面板读这里。 */
+export function setSelfClan(clanName: string, clanMark = ''): void {
   const c = snapshot.character;
-  if (!c || c.clanName === clanName) return;
-  commit({ character: { ...c, clanName } });
+  if (!c || (c.clanName === clanName && c.clanMark === clanMark)) return;
+  commit({ character: { ...c, clanName, clanMark } });
 }
 
 /** 关闭打造窗口（面板关闭时调用；下次交互会重新收到服务端的档位）。 */

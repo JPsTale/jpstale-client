@@ -25,6 +25,7 @@ import { monsterStopRing } from '../game/combatRange.js';
 import { isInputBlocked } from '../app/inputGate.js';
 import { fetchAsset } from '../core/asset-manager.js';
 import { decodeTextureAsync } from '../core/texture.js';
+import { getClanIcon } from './clan-icon-cache.js';
 import { appendSystemMessage } from '../app/chatStore.js';
 import { mapLightProfile, isVillageMap } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
@@ -4169,33 +4170,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   //   · 图标 = ClanImage/<MIconCnt>.bmp（32×32 明文 BMP，紧凑版按 16×16 画）。
   // 中段宽度按**实际量测的文字宽**给（原版按每字符 5.5px 拉伸 —— 对 CJK 会挤，
   // 我们量测；外观一致，宽度修正记为有意偏差）。
-  interface ClanIconEl { el: HTMLImageElement; w: number; h: number }
-  const clanIconCache = new Map<string, ClanIconEl | null>();   // markId → 图标（null = 资产缺，显式不画）
-  let clanIconLoading = false;
-  const CLAN_MARK_URL = (markId: string) => `/res/image/clanimage/mark/${markId}.bmp`;
-
-  function loadClanIcon(markId: string): void {
-    if (clanIconCache.has(markId) || clanIconLoading) return;
-    clanIconLoading = true;
-    void (async () => {
-      try {
-        const buf = await fetchAsset(CLAN_MARK_URL(markId), 'texture:ui');
-        const decoded = await decodeTextureAsync(buf);
-        if (!decoded) { clanIconCache.set(markId, null); return; }
-        const c = document.createElement('canvas');
-        c.width = decoded.width; c.height = decoded.height;
-        c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(decoded.pixels), decoded.width, decoded.height), 0, 0);
-        const el = new Image();
-        el.src = c.toDataURL();
-        await new Promise<void>(r => { el.onload = () => r(); el.onerror = () => r(); });
-        clanIconCache.set(markId, { el, w: decoded.width, h: decoded.height });
-      } catch {
-        clanIconCache.set(markId, null);   // 资产缺 = 显式不画图标（不拿别的图顶）
-      } finally {
-        clanIconLoading = false;
-      }
-    })();
-  }
+  // 图标加载走共享缓存 `ui/clan-icon-cache.ts`（角色信息面板同用一份，AGENTS #15）。
 
   /** 底框三段（一次性懒加载；null = 加载失败，退化为纯深色底条 —— 底条形状是自绘的，不算换资产）。 */
   interface ClanBoxEl { left: HTMLImageElement; mid: HTMLImageElement; right: HTMLImageElement }
@@ -4334,10 +4309,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     let rowY = blockTop + 9;
     if (hasClan) {
       const clanName = s.clan!;
-      if (s.clanMark) loadClanIcon(s.clanMark);
       loadClanBox();
       const clanTop = blockTop;
-      const iconEl = s.clanMark ? clanIconCache.get(s.clanMark) : undefined;
+      const iconEl = s.clanMark ? getClanIcon(s.clanMark).icon : null;
       const stripX = x - clanW / 2 + 18;   // 图标(16) + 间距(2) 之后是底框条
       const stripW = clanW - 18;
       // 底框条：左帽 / 中段拉伸 / 右帽（clanNameBox01/02/03.tga；加载失败就画深色底条）

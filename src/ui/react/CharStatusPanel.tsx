@@ -1,4 +1,5 @@
 import { useSyncExternalStore, useState } from 'react';
+import { getClanIcon, subscribeClanIcons } from '../clan-icon-cache.js';
 import { getGameSnapshot, subscribeGame } from '../../app/gameStore.js';
 import { sendAllocateStat } from '../../net/bridge.js';
 import { t, tList } from '../../i18n/index.js';
@@ -100,7 +101,10 @@ export default function CharStatusPanel() {
       <div className="jp-char-head">
         <span className="jp-job">{jobName}</span>
         <span className="jp-name">{c.name}</span>
-        <span className="jp-clan">{c.clanName !== '' ? c.clanName : t('panel.noClan')}</span>
+        <span className="jp-clan">
+          {c.clanMark !== '' && <ClanIconImg markId={c.clanMark} />}
+          {c.clanName !== '' ? c.clanName : t('panel.noClan')}
+        </span>
       </div>
       <div className="jp-char-sub">
         <span>{t('panel.lv', { level: c.level })}</span>
@@ -197,4 +201,16 @@ export default function CharStatusPanel() {
       </div>
     </div>
   );
+}
+
+/** 公会图标（16×16；共享缓存 `ui/clan-icon-cache.ts`，加载完成即重渲染）。资产缺 = 不渲染，不顶替。 */
+let clanIconVersion = 0;
+const bumpVersion = () => { clanIconVersion++; };
+const getVersion = () => clanIconVersion;
+
+function ClanIconImg({ markId }: { markId: string }) {
+  useSyncExternalStore((cb) => subscribeClanIcons(() => { bumpVersion(); cb(); }), getVersion);
+  const { icon } = getClanIcon(markId);
+  if (!icon) return null;   // 还在加载 或 资产缺 —— 两种都不画
+  return <img className="jp-clan-icon" src={icon.el.src} width={16} height={16} alt="" />;
 }
