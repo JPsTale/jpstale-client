@@ -23,6 +23,8 @@ import type { NaNGeometryHit } from '../render/nan-scan.js';
 import { canEnterMap, mapLevelRequirement } from '../game/safeZones.js';
 import { monsterStopRing } from '../game/combatRange.js';
 import { isInputBlocked } from '../app/inputGate.js';
+import { fetchAsset } from '../core/asset-manager.js';
+import { decodeTextureAsync } from '../core/texture.js';
 import { appendSystemMessage } from '../app/chatStore.js';
 import { mapLightProfile, isVillageMap } from '../maps/map-light.js';
 import { setMaxAnisotropy } from '../render/texture-loader.js';
@@ -229,7 +231,7 @@ export interface WorldView {
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
   setSelfName(name: string): void;
   /** 自机名牌的公会行（S2C_CharacterStatus 初始态 / S2C_ClanUpdate 增量；空串 = 无公会）。 */
-  setSelfClan(clanName: string): void;
+  setSelfClan(clanName: string, clanMark?: string): void;
   /** 自机等级（跨图边界的等级门槛判定用） */
   setSelfLevel(level: number): void;
   /** `S2C_LevelUpBroadcast`：刷新视野内远端玩家的等级（名牌 `Lv.X` 前缀用，见实现注释） */
@@ -777,7 +779,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfPlayerId = -1;
   // 自机名牌/血条数据（playerState 喂 hp；damage/heal targetId=self 喂战斗窗口与 hp）
   let selfName = '';
-  let selfClan = '';   // 自机名牌上的公会行（初始态 = characterStatus；增量 = clanUpdate 且是自己）
+  let selfClan = '';      // 自机名牌上的公会行（初始态 = characterStatus；增量 = clanUpdate 且是自己）
+  let selfClanMark = '';  // 公会图标编号（ClanImage/<id>.bmp）；空串 = 无
   let selfHp = 100, selfMaxHp = 100;
   /** 自机等级：跨图边界门槛判定用（来源 S2C_PlayerState.level，见 main.ts） */
   let selfLevel = 1;
@@ -4159,9 +4162,79 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return false;
   }
 
+  // ==================== 公会名牌资源（照原版 11 职业客户端样式）====================
+  // 样式依据（NewSourcePT-2023 SrcGame Park/HoMessageBox.cpp:458-543 DrawClanName/DrawClanMark1）：
+  //   · 公会名在**图标上方**，颜色 RGB(230,255,160)（黑阴影 +1px），底下衬一条
+  //     三段贴图底框（clanNameBox01/02/03.tga：左帽 16×14、中段每字符 5.5×14、右帽 16×14）；
+  //   · 图标 = ClanImage/<MIconCnt>.bmp（32×32 明文 BMP，紧凑版按 16×16 画）。
+  // 中段宽度按**实际量测的文字宽**给（原版按每字符 5.5px 拉伸 —— 对 CJK 会挤，
+  // 我们量测；外观一致，宽度修正记为有意偏差）。
+  interface ClanIconEl { el: HTMLImageElement; w: number; h: number }
+  const clanIconCache = new Map<string, ClanIconEl | null>();   // markId → 图标（null = 资产缺，显式不画）
+  let clanIconLoading = false;
+  const CLAN_MARK_URL = (markId: string) => `/res/image/clanimage/mark/${markId}.bmp`;
+
+  function loadClanIcon(markId: string): void {
+    if (clanIconCache.has(markId) || clanIconLoading) return;
+    clanIconLoading = true;
+    void (async () => {
+      try {
+        const buf = await fetchAsset(CLAN_MARK_URL(markId), 'texture:ui');
+        const decoded = await decodeTextureAsync(buf);
+        if (!decoded) { clanIconCache.set(markId, null); return; }
+        const c = document.createElement('canvas');
+        c.width = decoded.width; c.height = decoded.height;
+        c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(decoded.pixels), decoded.width, decoded.height), 0, 0);
+        const el = new Image();
+        el.src = c.toDataURL();
+        await new Promise<void>(r => { el.onload = () => r(); el.onerror = () => r(); });
+        clanIconCache.set(markId, { el, w: decoded.width, h: decoded.height });
+      } catch {
+        clanIconCache.set(markId, null);   // 资产缺 = 显式不画图标（不拿别的图顶）
+      } finally {
+        clanIconLoading = false;
+      }
+    })();
+  }
+
+  /** 底框三段（一次性懒加载；null = 加载失败，退化为纯深色底条 —— 底条形状是自绘的，不算换资产）。 */
+  interface ClanBoxEl { left: HTMLImageElement; mid: HTMLImageElement; right: HTMLImageElement }
+  let clanBox: ClanBoxEl | null = null;
+  let clanBoxLoading = false;
+  function loadClanBox(): void {
+    if (clanBox || clanBoxLoading) return;
+    clanBoxLoading = true;
+    void (async () => {
+      try {
+        const parts = await Promise.all(['clannamebox01', 'clannamebox02', 'clannamebox03'].map(async (n) => {
+          const buf = await fetchAsset(`/res/startimage/messagebox/clanbox/${n}.tga`, 'texture:ui');
+          const d = await decodeTextureAsync(buf);
+          if (!d) return null;
+          const c = document.createElement('canvas');
+          c.width = d.width; c.height = d.height;
+          c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(d.pixels), d.width, d.height), 0, 0);
+          const el = new Image();
+          el.src = c.toDataURL();
+          await new Promise<void>(r => { el.onload = () => r(); el.onerror = () => r(); });
+          return el;
+        }));
+        if (parts[0] && parts[1] && parts[2]) clanBox = { left: parts[0], mid: parts[1], right: parts[2] };
+      } finally {
+        clanBoxLoading = false;
+      }
+    })();
+  }
+
   interface PillStyle {
     nameColor: string;
-    clan?: string;       // 公会名（玩家有公会时显示在名字下方，带 ◆ 前缀）
+    /**
+     * 公会名（有公会时显示在名字**上方**一行，样式照原版 DrawClanName：
+     * RGB(230,255,160) 黑阴影 + 三段底框条）。**不带任何文字前缀** ——
+     * 2026-09-25 用户否掉了 ◆：原版那个位置是公会**图标**，不是符号。
+     */
+    clan?: string;
+    /** 公会图标编号（clandb.cl.miconcnt）→ ClanImage/<id>.bmp；与 clan 同时给。 */
+    clanMark?: string;
     /**
      * 第二行的**其它**文本（召唤物的 `(主人名)`）—— 与 `clan` 互斥，**不带 ◆ 前缀**。
      *
@@ -4203,19 +4276,32 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     return { w: Math.max(nameW, line2W) + 16, h: 18 + (line2 ? 3 + 14 : 0) };
   }
 
+  /** 公会行的宽度：图标(16) + 间距(2) + 底框条（左帽16 + 文字宽 + 8 + 右帽16）。 */
+  function clanRowWidth(ctx: CanvasRenderingContext2D, clan: string): number {
+    ctx.font = CLAN_FONT;
+    const textW = ctx.measureText(clan).width;
+    return 16 + 2 + (16 + Math.ceil(textW) + 8 + 16);
+  }
+
   /**
    * 画一块名牌，并**返回它的屏幕矩形**（覆盖名牌块与血条）。
    * 返回矩形是给鼠标拾取用的：用户 2026-09-13 要"指向名牌 = 指向该目标"——
    * 由绘制方给出矩形，命中判定与绘制共用同一份几何，不会各写一套后漂移。
    */
   function drawPill(ctx: CanvasRenderingContext2D, x: number, y: number, name: string, s: PillStyle): { x: number; y: number; w: number; h: number } {
-    // 第二行：公会名（带 ◆）或召唤物的 `(主人名)`（不带前缀）
-    const line2 = s.clan ? '◆ ' + s.clan : (s.sub || null);
+    // 名字下方的第二行：只剩召唤物的 `(主人名)`。公会行**移到名字上方**（原版布局，用户 2026-09-25 指正）。
+    const line2 = s.sub || null;
+    const hasClan = !!s.clan;   // 有公会名就画公会行；图标缺（clanMark 空/资产缺）只是不画图，不顶替
+    const clanW = hasClan ? clanRowWidth(ctx, s.clan!) : 0;
     const block = pillBlockSize(ctx, name, line2);
     let pillW = block.w;
+    if (hasClan) pillW = Math.max(pillW, clanW + 16);
 
     // 名牌块（名字+第二行）固定高；条挂在名牌块下方，出现仅抬高名牌块
-    const blockH = block.h;
+    // 公会行挂在名牌块**上方**（原版：公会名在角色名之上），行高 14 + 间距 2
+    const CLAN_ROW_H = 14;
+    const CLAN_GAP = 2;
+    const blockH = block.h + (hasClan ? CLAN_ROW_H + CLAN_GAP : 0);
     const BAR_W = 84, HP_BAR_H = 7, LIFE_BAR_H = 5;
     // 名牌块下面可以挂**两条**：血条（受伤/选中/自己的召唤物）与召唤物的倒计时条。
     // 用列表驱动高度与绘制 —— 多一条就只在这里 push 一次，不必把下面每处
@@ -4244,16 +4330,48 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    // 公会行（块内顶部）：图标 16×16 + 底框条（三段贴图）+ 公会名 RGB(230,255,160) 黑阴影
     let rowY = blockTop + 9;
+    if (hasClan) {
+      const clanName = s.clan!;
+      if (s.clanMark) loadClanIcon(s.clanMark);
+      loadClanBox();
+      const clanTop = blockTop;
+      const iconEl = s.clanMark ? clanIconCache.get(s.clanMark) : undefined;
+      const stripX = x - clanW / 2 + 18;   // 图标(16) + 间距(2) 之后是底框条
+      const stripW = clanW - 18;
+      // 底框条：左帽 / 中段拉伸 / 右帽（clanNameBox01/02/03.tga；加载失败就画深色底条）
+      if (clanBox) {
+        const midW = Math.max(1, stripW - 32);
+        ctx.drawImage(clanBox.left, stripX, clanTop, 16, CLAN_ROW_H);
+        ctx.drawImage(clanBox.mid, stripX + 16, clanTop, midW, CLAN_ROW_H);
+        ctx.drawImage(clanBox.right, stripX + 16 + midW, clanTop, 16, CLAN_ROW_H);
+      } else {
+        ctx.fillStyle = 'rgba(8, 11, 16, 0.72)';
+        rrect(ctx, stripX, clanTop, stripW, CLAN_ROW_H, 3);
+        ctx.fill();
+      }
+      // 图标（原版紧凑版按 16×16 画；BMP 源 32×32）。资产缺 = 显式不画，不拿别的顶
+      if (iconEl) ctx.drawImage(iconEl.el, x - clanW / 2, clanTop + (CLAN_ROW_H - 16) / 2, 16, 16);
+      // 公会名文字：黑阴影(+1,+1) + RGB(230,255,160)（DrawClanName 原色）
+      ctx.font = CLAN_FONT;
+      ctx.textAlign = 'left';
+      const textX = stripX + 16 + 4;
+      ctx.fillStyle = 'rgba(0,0,0,0.9)';
+      ctx.fillText(clanName, textX + 1, clanTop + CLAN_ROW_H / 2 + 1);
+      ctx.fillStyle = 'rgb(230, 255, 160)';
+      ctx.fillText(clanName, textX, clanTop + CLAN_ROW_H / 2);
+      ctx.textAlign = 'center';
+      rowY += CLAN_ROW_H + CLAN_GAP;   // 名字行跟在公会行下面
+    }
     ctx.font = NAME_FONT;
     ctx.fillStyle = s.nameColor;
     ctx.fillText(name, x, rowY);
     if (line2) {
       rowY += 18;
       ctx.font = CLAN_FONT;
-      // 公会名用淡蓝灰；召唤物的主人名用淡黄 RGB(255,255,200) —— 原版 `DrawTwoLineMessage`
-      // 第二行的颜色（`Winmain.cpp:4010-4019`）
-      ctx.fillStyle = s.clan ? 'rgba(184, 212, 240, 0.9)' : '#ffffc8';
+      // 召唤物的主人名用淡黄 RGB(255,255,200) —— 原版 `DrawTwoLineMessage` 第二行的颜色
+      ctx.fillStyle = '#ffffc8';
       ctx.fillText(line2, x, rowY);
     }
 
@@ -4482,9 +4600,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setSelfName(name: string): void {
     selfName = name;
   }
-  function setSelfClan(clanName: string): void {
-    if (selfClan === clanName) return;
+  function setSelfClan(clanName: string, clanMark = ''): void {
+    if (selfClan === clanName && selfClanMark === clanMark) return;
     selfClan = clanName;
+    selfClanMark = clanMark;
   }
   function setSelfLevel(level: number): void {
     if (Number.isFinite(level) && level > 0) selfLevel = level;
@@ -5012,6 +5131,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       recordPill(drawPill(ctx, pt.x, pt.y, lvPrefix(a.level) + (a.name || ''), {
         nameColor: sel ? '#ffffff' : '#ffe9a8',
         clan: a.clanName || undefined,
+        clanMark: a.clanMark || undefined,
         showHp: a.maxHp > 0 && a.hp < a.maxHp,
         ratio: a.maxHp > 0 ? a.hp / a.maxHp : 1,
         selected: sel,
@@ -5026,6 +5146,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           nameColor: '#ffe9a8',
           // 与远端名牌同款：有公会显示公会行（◆ 前缀由 drawPill 统一加）
           clan: selfClan || undefined,
+          clanMark: selfClanMark || undefined,
           showHp: now < selfCombatUntil || (selfMaxHp > 0 && selfHp < selfMaxHp),
           ratio: selfMaxHp > 0 ? selfHp / selfMaxHp : 1,
           selected: false,
@@ -5504,7 +5625,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function updateRemoteClan(playerId: number, clanName: string, clanMark: string): void {
     if (playerId === selfPlayerId) {
-      setSelfClan(clanName);   // 自己的公会变了：名牌读 selfClan，面板读 gameStore（bridge 侧写）
+      setSelfClan(clanName, clanMark);   // 自己的公会变了：名牌读 selfClan，面板读 gameStore（bridge 侧写）
       return;
     }
     const a = remotes.get(playerId);
