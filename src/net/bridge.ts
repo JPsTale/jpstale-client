@@ -218,7 +218,7 @@ export function installBridge(): void {
     if (msg.characterStatus) setGameCharacter(toGameCharacter(msg.characterStatus));
     // 自机名牌的公会**初始态**（进图/重登）：角色面板与名牌共用这一份数据。
     // 建会/退会后的增量走 clanUpdate 分支（下面），两边写同一个 store 字段。
-    if (msg.characterStatus) setSelfClan(msg.characterStatus.clanName || '');
+    if (msg.characterStatus) setSelfClan(msg.characterStatus.clanName || '');   // 面板只要名字；图标在 worldView.setSelfClan
     if (msg.playerState) setGamePlayer(toGamePlayer(msg.playerState));
     // 物品：进图快照 / 单件增量 / 移除 / 金币
     if (msg.inventorySnapshot) {

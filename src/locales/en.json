@@ -5029,6 +5029,348 @@
     },
     "49_vampiricbat": {
       "name": "Vampiric Bat"
+    },
+    "00_santagoblin-c": {
+      "name": "SantaGoblin"
+    },
+    "100_i_chimera": {
+      "name": "V-Chimera"
+    },
+    "104_devilbird": {
+      "name": "devil bird"
+    },
+    "evilspirit": {
+      "name": "Evil Spirit"
+    },
+    "102_i_darkguard": {
+      "name": "V-Dark Guard"
+    },
+    "100_i_darkmage": {
+      "name": "I-Dark Mage"
+    },
+    "100_i_seto": {
+      "name": "V-Seto"
+    },
+    "100_fury": {
+      "name": "Fury"
+    },
+    "110_hobogolem": {
+      "name": "Hobogolem"
+    },
+    "107_i_gorgon": {
+      "name": "V-Gorgon"
+    },
+    "b_107_ratoolord 2": {
+      "name": "RaSha's"
+    },
+    "85_king bat": {
+      "name": "King Bat"
+    },
+    "80_i_goblinshaman": {
+      "name": "C-GoblinShaman"
+    },
+    "113_iceworm": {
+      "name": "Ice Worm"
+    },
+    "110_i_minebat": {
+      "name": "V-Minebat"
+    },
+    "105_i_minegolem": {
+      "name": "V-MineGolem"
+    },
+    "105_i_tarantulika": {
+      "name": "V-Tarantulika"
+    },
+    "100_i_willy": {
+      "name": "I-Willy"
+    },
+    "102_i_hound": {
+      "name": "V-Hound"
+    },
+    "100_i_lena": {
+      "name": "V-Lena"
+    },
+    "102_i_hena": {
+      "name": "I-Hena"
+    },
+    "105_i_marionette": {
+      "name": "V-Marionette"
+    },
+    "107_i_skullnette": {
+      "name": "I-Skullnette"
+    },
+    "morgonia": {
+      "name": "Morgonia"
+    },
+    "redeye": {
+      "name": "Redeye"
+    },
+    "turtledragon": {
+      "name": "Turtle Dragon"
+    },
+    "107_i_undead stalker": {
+      "name": "V-Undead Stalker"
+    },
+    "100_i_undead chaser": {
+      "name": "C-Undead Chaser"
+    },
+    "115_undead maple": {
+      "name": "Undead Maple"
+    },
+    "115_isoldier": {
+      "name": "ISoldier"
+    },
+    "110_i_xetan": {
+      "name": "V-Xetan"
+    },
+    "100_i_billy": {
+      "name": "V-Billy"
+    },
+    "17_hauntingmaple": {
+      "name": "Haunting Maple"
+    },
+    "17_hauntingplant": {
+      "name": "Haunting Plant"
+    },
+    "17_plant": {
+      "name": "Plant"
+    },
+    "17_planty": {
+      "name": "Planty"
+    },
+    "29_hobgoblinchief": {
+      "name": "HobGoblin Chielf"
+    },
+    "29_northgoblinchielf": {
+      "name": "NorthGoblin Chielf"
+    },
+    "4_hopy kid": {
+      "name": "HOPY KID"
+    },
+    "4_rabie": {
+      "name": "Rabie"
+    },
+    "4_tobie": {
+      "name": "Tobie"
+    },
+    "50_guardhopy": {
+      "name": "Guard Hopy"
+    },
+    "58_evilmaple": {
+      "name": "Evil Maple"
+    },
+    "55_i_headcutter": {
+      "name": "N-Head Cutter"
+    },
+    "5_mudy": {
+      "name": "Mudy"
+    },
+    "5_mush": {
+      "name": "Mush"
+    },
+    "5_zeldy": {
+      "name": "Zeldy"
+    },
+    "60_s_fireelemental": {
+      "name": "Fire Elemental"
+    },
+    "60_s_wolverin": {
+      "name": "Wolverin"
+    },
+    "towergolem": {
+      "name": "Tower Golem"
+    },
+    "60_i_darkknight": {
+      "name": "N-Dark Knight"
+    },
+    "68_aveliskqueen": {
+      "name": "Avelisk Archer"
+    },
+    "65_i_doomguard": {
+      "name": "N-Doom Guard"
+    },
+    "65_i_naz": {
+      "name": "N-Naz"
+    },
+    "70_s_metalgolem": {
+      "name": "Metal Golem"
+    },
+    "72_great_greven": {
+      "name": "Great_Greven"
+    },
+    "73_omu": {
+      "name": "Omu"
+    },
+    "75-beetle": {
+      "name": "beetle"
+    },
+    "75_hulk": {
+      "name": "Hulk"
+    },
+    "75_i_succubus": {
+      "name": "C-Succubus"
+    },
+    "76_stingray": {
+      "name": "stingray"
+    },
+    "75_i_dawlin": {
+      "name": "C-Dawlin"
+    },
+    "79_aveliskqueen": {
+      "name": "Avelisk Queen"
+    },
+    "75_i_m_lord": {
+      "name": "N-m_lord"
+    },
+    "75_i_shadow": {
+      "name": "N-Shadow"
+    },
+    "7_sen": {
+      "name": "Sen"
+    },
+    "watermelon": {
+      "name": "watermelon"
+    },
+    "a_70_guardianstaff": {
+      "name": "Guardian Staff"
+    },
+    "80_lizardfolk": {
+      "name": "lizardfolk"
+    },
+    "80_magicmaster": {
+      "name": "Master Raimon"
+    },
+    "80_skillmaster": {
+      "name": "Master Verkan"
+    },
+    "102_i_incubus": {
+      "name": "V-Incubus"
+    },
+    "82_strider": {
+      "name": "strider"
+    },
+    "100_s_arcuda": {
+      "name": "Arcuda"
+    },
+    "84_berserker": {
+      "name": "Berserker"
+    },
+    "85_spider": {
+      "name": "spidertrooper"
+    },
+    "85_vampiricbee": {
+      "name": "Vampiric Bee"
+    },
+    "85_vampiricmachine": {
+      "name": "Vampiric Machine"
+    },
+    "87_darkspecter": {
+      "name": "Dark Specter"
+    },
+    "35_i_ghost": {
+      "name": "L-Ghost"
+    },
+    "8_egan": {
+      "name": "Egan"
+    },
+    "8_orbit": {
+      "name": "Orbit"
+    },
+    "90_i_coldeye": {
+      "name": "C-coldeye"
+    },
+    "92_i_icegoblin": {
+      "name": "I-icegoblin"
+    },
+    "90_i_turtlecannon": {
+      "name": "C-Turtle Cannon"
+    },
+    "96_incubussummer": {
+      "name": "Incubus Summoner"
+    },
+    "bal_crystal": {
+      "name": "tower of valhala"
+    },
+    "79_m_babel": {
+      "name": "Mini Babel"
+    },
+    "b_23_mephit 2": {
+      "name": "Mekhist"
+    },
+    "b_25_minigsilver 2": {
+      "name": "Eed"
+    },
+    "b_32_ghoul 2": {
+      "name": "Grave Shakins"
+    },
+    "b_33_bargon 2": {
+      "name": "Bauton"
+    },
+    "b_33_cyclops 2": {
+      "name": "Cyclops"
+    },
+    "b_47_cyclopsknight 2": {
+      "name": "Fright Nemyun"
+    },
+    "b_54_skeletonknight 2": {
+      "name": "Unholy Knight"
+    },
+    "b_67_illusionknight 2": {
+      "name": "Bloody Rose"
+    },
+    "b_69_figon 2": {
+      "name": "HellSing"
+    },
+    "b_89_stygianlord 2": {
+      "name": "STYX Archon"
+    },
+    "castledoor": {
+      "name": "castledoor"
+    },
+    "cstone": {
+      "name": "C-Stone"
+    },
+    "100_hestian": {
+      "name": "Hestian"
+    },
+    "event_molly": {
+      "name": "Wanted Wolf"
+    },
+    "event_morif": {
+      "name": "Wanted Morif"
+    },
+    "b_soldier_a": {
+      "name": "Boss ricarten militia"
+    },
+    "coursem_soldier_b": {
+      "name": "Course ricarten guard"
+    },
+    "b_soldier_c": {
+      "name": "Boss bless royal guard"
+    },
+    "soldier_d": {
+      "name": "ricarten garrison"
+    },
+    "t_crystal_b": {
+      "name": "ice crystal"
+    },
+    "t_crystal_g": {
+      "name": "lightning crystal"
+    },
+    "t_crystal_n": {
+      "name": "tower crystal"
+    },
+    "t_crystal_r": {
+      "name": "fire crystal"
+    },
+    "_14_h_hobgoblin": {
+      "name": "Hammber Goblin"
+    },
+    "_17_h_hauntingplant": {
+      "name": "Hammer Plant"
+    },
+    "_31_h_decoy": {
+      "name": "Hammer Decoy"
     }
   },
   "clan": {

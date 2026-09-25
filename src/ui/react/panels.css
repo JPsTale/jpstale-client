@@ -1873,17 +1873,20 @@
   pointer-events: none;
 }
 .jpt-level { color: #fff; }
-/* 怪物血条贴框内底边（原版 DrawStateBar：MidY-(h>>1)+h+2）：细条、半透明暗底 */
+/* 血条在框下方（用户 2026-09-25 定），画法与怪物名牌血条同一套（WorldView.drawBar）：
+   黑描边圆槽 + 内槽 + hsl(120×比例) 红绿渐变填充（渐变/高光写在组件内联样式） */
 .jpt-hpbar {
-  position: absolute; left: 3px; right: 3px; bottom: 3px; height: 7px;
-  background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(0, 0, 0, 0.7);
-  pointer-events: none;
+  margin-top: 2px; height: 9px; padding: 1px; box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.85); border-radius: 5px;
 }
-.jpt-hp-base, .jpt-hp-fill {
-  position: absolute; left: 1px; top: 1px; height: 3px;
-  image-rendering: pixelated; object-fit: fill;
+.jpt-hp-slot {
+  position: relative; height: 7px; border-radius: 4px;
+  background: rgba(16, 22, 30, 0.92); overflow: hidden;
 }
-.jpt-hp-base { width: calc(100% - 2px); }
+.jpt-hp-fill {
+  position: absolute; left: 1px; top: 1px; bottom: 1px;
+  border-radius: 3px; min-width: 0;
+}
 .jpt-actions {
   display: flex; gap: 5px; padding: 4px 6px; justify-content: center;
   background: rgba(10, 14, 18, 0.85); border: 1px solid #3a4148; border-top: none;

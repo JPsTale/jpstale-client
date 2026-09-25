@@ -93,8 +93,40 @@ for (const f of readdirSync(join(SRC, 'name'))) {
   zhoon.set(f.slice(0, -6).toLowerCase(), { inf: cmt, name: nm });
 }
 
+// ── ②a' 库里的 monsterlist：模型路径 → 英文名（en 侧的兜底来源，同 item-defs 的三级取数）──
+// 3060 的 inf 没有 `*Name` 英文字段 ⇒ 这些模型的 en 名只能来自库（monsterlist.name，
+// 与客户端"en 回落数据名"的显示结果一致，但**写进表里**才能保住 zh/en 键集成对）。
+function dbMonsterNames(): Map<string, string> {
+  const SQL = "select lower(modelfile), min(name) from gamedb.monsterlist where modelfile != '0' group by lower(modelfile)";
+  const tryRun = (f: string, a: string[]): string | null => {
+    try {
+      return execFileSync(f, a, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
+    } catch { return null; }
+  };
+  const host = process.env.PT_DB_HOST ?? 'root@192.168.31.10';
+  let text: string | null = null;
+  if (process.env.PT_MONSTERLIST_DUMP) {
+    try { text = readFileSync(process.env.PT_MONSTERLIST_DUMP, 'utf8'); } catch { /* 下一级 */ }
+  }
+  text ??= tryRun('podman', ['exec', '-i', 'priston-pg', 'psql', '-U', 'sa', '-d', 'pristontale', '-At', '-F', '|', '-c', SQL]);
+  text ??= tryRun('ssh', [host, `podman exec -i priston-pg psql -U sa -d pristontale -At -F'|' -c "${SQL}"`]);
+  const NL = String.fromCharCode(10);
+  const out = new Map<string, string>();
+  if (!text) {
+    console.warn('⚠ 取不到 monsterlist（en 侧这些模型不写词条，显示走数据名）');
+    return out;
+  }
+  for (const line of text.split(NL)) {
+    const [model, name] = line.split('|');
+    if (model && name) out.set(model.trim(), name.trim());
+  }
+  return out;
+}
+const dbNames = dbMonsterNames();
+
 // ── ②b 来源②：3060 的中文字段 inf（*名字/*外型文件）—— 直接以模型路径为桥 ──
 const model2zh3060 = new Map<string, string>();
+let added3060 = 0;               // ②补进语言表的条数（统计用）
 if (existsSync(SRC_3060)) {
   for (const f of readdirSync(SRC_3060)) {
     if (!f.toLowerCase().endsWith('.inf')) continue;
@@ -164,21 +196,22 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
     mon[stem] = { name: value };
     added++;
   }
-  if (lang === 'zh') {
-    // 来源②：zhoon 没有的模型，用 3060 inf 的中文名补（en 侧无来源 ⇒ 不写）
-    for (const [model, name] of model2zh3060) {
-      const stem = keyMapStemOf(model);
-      if (!stem || mon[stem]) continue;   // 已有（①覆盖/手写）⇒ 不动
-      mon[stem] = { name };
-      added3060++;
-    }
+  // 来源②：zhoon 没有的模型，用 3060 inf 的中文名补；**en 侧用库里的 monsterlist.name 配对**
+  // （3060 的 inf 没有英文字段；en=数据名与"客户端 en 回落数据名"同口径，但写进表里才保住键集成对）。
+  for (const [model, name] of model2zh3060) {
+    const stem = keyMapStemOf(model);
+    if (!stem) continue;
+    const value = lang === 'zh' ? name : (infByStem.get(stem)?.enName ?? dbNames.get(model));
+    if (!value) continue;
+    const cur = mon[stem] as { name?: string } | undefined;
+    if (cur?.name) { kept++; continue; }  // 已有（①覆盖/手写）⇒ 不动
+    mon[stem] = { name: value };
+    if (lang === 'zh') added3060++;
   }
   table.monster = mon;
   write(rel, table);
   console.log(`  ${rel}（${lang}）：新增 ${added} / 保持 ${kept}`);
 }
-
-let added3060 = 0;
 
 /**
  * 模型路径 → 获胜的 inf 词干（= 写进服务端对照表的那个）。
