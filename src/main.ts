@@ -799,6 +799,14 @@ onMessage((msg: jpt.base.ServerMessage) => {
       }
       break;
     }
+    case 'characterStatus': {
+      // 自机名牌的公会**初始态**（进图/重登）。2026-09-25 用户实测漏了这条：
+      // bridge 的 characterStatus 分支只写 store（角色信息面板），而名牌读的是
+      // worldView 自己的 selfClan —— 重登时 S2C_ClanUpdate 不会来，名牌就空着。
+      const cs = msg.characterStatus!;
+      worldView.setSelfClan(cs.clanName || '', cs.clanMark || '');
+      break;
+    }
     case 'playerState': {
       const ps = msg.playerState!;
       // 自机移动速度接入服务端权威属性（walk/run speed 世界/秒；playerState 到 any 帧都设置）
