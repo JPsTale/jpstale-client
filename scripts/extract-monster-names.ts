@@ -32,12 +32,15 @@
  * <h3>产出</h3>
  * <ul>
  *   <li>`locales/zh.json` / `en.json` 的 `monster.<inf文件名>.name`（zh = 中文名；en = inf 里的
- *       `*Name`/monsterlist 数据名；**只补缺失**，手写不被覆盖）；</li>
- *   <li>`../jpstale-server/modules/common-service/src/main/resources/monsterdata/monster-name-keys.json`：
- *       `模型路径 → inf 词干`（服务端建怪时算 `nameKey` 下发）。</li>
+ *       `*Name`/monsterlist 数据名；**只补缺失**，手写不被覆盖；死条目剪掉保键集成对）；</li>
+ *   <li>`tmp/monster-namekey.sql`：**逐行** `UPDATE gamedb.monsterlist SET namekey = '<词干>'`——
+ *       行 → 词干的匹配规则见文件末 ⑤。生成脚本**只读库**，跑它不会改库（要改另执行该 SQL）。</li>
  * </ul>
+ *
+ * <h3>产出（对照）</h3>
+ * 生成时会拿"算出来的 key"与库中现值逐行比对并打印差异 —— 幂等性、漂移都一眼可见。
  */
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -93,23 +96,29 @@ for (const f of readdirSync(join(SRC, 'name'))) {
   zhoon.set(f.slice(0, -6).toLowerCase(), { inf: cmt, name: nm });
 }
 
-// ── ②a' 库里的 monsterlist：模型路径 → 英文名（en 侧的兜底来源，同 item-defs 的三级取数）──
-// 3060 的 inf 没有 `*Name` 英文字段 ⇒ 这些模型的 en 名只能来自库（monsterlist.name，
-// 与客户端"en 回落数据名"的显示结果一致，但**写进表里**才能保住 zh/en 键集成对）。
-function dbMonsterNames(): Map<string, Set<string>> {
-  const SQL = "select lower(modelfile), min(name) from gamedb.monsterlist where modelfile != '0' group by lower(modelfile)";
+/**
+ * 走 podman（本机）→ ssh（`PT_DB_HOST`）两级取 DB 文本；都取不到返回 null（**不猜**）。
+ * 只读查询，无写库副作用。
+ */
+function queryDb(sql: string): string | null {
   const tryRun = (f: string, a: string[]): string | null => {
     try {
       return execFileSync(f, a, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
     } catch { return null; }
   };
   const host = process.env.PT_DB_HOST ?? 'root@192.168.31.10';
+  return tryRun('podman', ['exec', '-i', 'priston-pg', 'psql', '-U', 'sa', '-d', 'pristontale', '-At', '-F', '|', '-c', sql])
+    ?? tryRun('ssh', [host, `podman exec -i priston-pg psql -U sa -d pristontale -At -F'|' -c "${sql}"`]);
+}
+
+/** 模型路径 → 英文名（en 侧的兜底来源，同 item-defs 的三级取数） */
+function dbMonsterNames(): Map<string, Set<string>> {
+  const SQL = "select lower(modelfile), min(name) from gamedb.monsterlist where modelfile != '0' group by lower(modelfile)";
   let text: string | null = null;
   if (process.env.PT_MONSTERLIST_DUMP) {
     try { text = readFileSync(process.env.PT_MONSTERLIST_DUMP, 'utf8'); } catch { /* 下一级 */ }
   }
-  text ??= tryRun('podman', ['exec', '-i', 'priston-pg', 'psql', '-U', 'sa', '-d', 'pristontale', '-At', '-F', '|', '-c', SQL]);
-  text ??= tryRun('ssh', [host, `podman exec -i priston-pg psql -U sa -d pristontale -At -F'|' -c "${SQL}"`]);
+  text ??= queryDb(SQL);
   const NL = String.fromCharCode(10);
   const out = new Map<string, string>();
   if (!text) {
@@ -118,7 +127,7 @@ function dbMonsterNames(): Map<string, Set<string>> {
   }
   for (const line of text.split(NL)) {
     const [model, name] = line.split('|');
-    // 同模型多行（Hopy / Hopy Kid 共用 hopy.ini）—— 收集**名字集合**供服务端按行匹配
+    // 同模型多行（Hopy / Hopy Kid 共用 hopy.ini）—— 收集**名字集合**供行名精确匹配
     if (model && name) {
       const set = out.get(model.trim()) ?? new Set<string>();
       set.add(name.trim());
@@ -128,6 +137,29 @@ function dbMonsterNames(): Map<string, Set<string>> {
   return out;
 }
 const dbNames = dbMonsterNames();
+
+/** 库里的 monsterlist 行（id / name / 现有 namekey / 小写 modelfile）—— ⑤ 定 key 与漂移比对用 */
+interface DbRow { id: number; name: string; nameKey: string | null; model: string }
+function dbMonsterRows(): DbRow[] {
+  const SQL = "select id, name, namekey, lower(modelfile) from gamedb.monsterlist"
+    + " where modelfile is not null and modelfile <> '0' order by id";
+  const text = queryDb(SQL);
+  if (!text) {
+    console.warn('⚠ 取不到 monsterlist 行 ⇒ 跳过 namekey 生成与比对（不改任何文件）');
+    return [];
+  }
+  const out: DbRow[] = [];
+  for (const line of text.split(String.fromCharCode(10))) {
+    const [id, name, key, model] = line.split('|');
+    if (!id || !/^\d+$/.test(id.trim())) continue;
+    out.push({
+      id: Number(id), name: (name ?? '').trim(),
+      nameKey: key && key.trim() ? key.trim() : null, model: (model ?? '').trim(),
+    });
+  }
+  return out;
+}
+const dbRows = dbMonsterRows();
 
 // ── ②b 来源②：3060 的中文字段 inf（*名字/*外型文件）—— inf 文件名即词干 ──
 /** 3060 inf 词干 → 中文名（只收**模型在 11 职业端也有 inf** 的，词干才进得了服务端对照表） */
@@ -240,11 +272,64 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
   }
   if (pruned) console.log(`  ${rel}：剪掉 ${pruned} 个死条目（模型不在 monsterlist）`);
   write(rel, table);
-  console.log(`  ${rel}（${lang}）：新增 ${added} / 保持 ${kept}`);
+  console.log(`  ${rel}（${lang}）：新增 ${added} / 保持 ${kept}（访问计数，两轮来源会有重叠）`
+    + `，怪物键合计 ${Object.keys(mon).length}`);
 }
 
-// （旧版这里会写一份 `模型路径 → 候选词干` 对照表到服务端资源 —— 已删：
-//   monsterlist.name **本身就是键**（用户方案），匹配在生成 SQL 时一次做完，运行时无表可查。）
+// ── ⑤ 行 → `monsterlist.namekey`（该行该用哪个词干）─────────────────────────
+// 规则（**唯一实现**；此前只在 `tmp/make-migration-v2.py` 里，仓库内无法重跑 —— 现已收进来）：
+//   ① 该行 modelfile 的候选词干中，`*Name`（归一化：去空白 + 小写）等于该行 `name` 的 ⇒ 命中；
+//   ② 命中不唯一时，若候选里**只有一个**词干有中文名 ⇒ 取它；
+//   ③ 仍不唯一时，若命中集里**只有一个**有中文名 ⇒ 取它；
+//   ④ 只有"唯一命中 **且** 该词干有中文名"才写键 —— 没中文名的词干写进去也换不出显示名，
+//      留 NULL 让客户端显式回落 `name`（零兜底：宁可显式"未映射"）。
+const normKey = (s: string): string => s.replace(/\s+/g, '').toLowerCase();
+/** 有中文名的词干（zhoon 文件名词干 ∪ 3060 inf 词干） */
+const zhStems = new Set<string>([...zhoon.keys(), ...stemsFrom3060.keys()]);
+const candsByModel = new Map<string, { stem: string; en: string | null }[]>();
+for (const [stem, v] of infByStem) {
+  const arr = candsByModel.get(v.model) ?? [];
+  arr.push({ stem, en: v.enName ? normKey(v.enName) : null });
+  candsByModel.set(v.model, arr);
+}
+const id2key = new Map<number, string>();
+for (const row of dbRows) {
+  const n = normKey(row.name);
+  const cands = candsByModel.get(row.model) ?? [];
+  let hit = cands.filter((c) => c.en && c.en === n).map((c) => c.stem);
+  if (hit.length !== 1) {
+    const zhCands = cands.filter((c) => zhStems.has(c.stem)).map((c) => c.stem);
+    if (zhCands.length === 1) hit = zhCands;
+  }
+  if (hit.length !== 1) {
+    const zhHits = hit.filter((s) => zhStems.has(s));
+    if (zhHits.length === 1) hit = zhHits;
+  }
+  const key = hit.length === 1 ? hit[0]! : null;
+  if (key && zhStems.has(key)) id2key.set(row.id, key);
+}
+
+if (dbRows.length > 0) {
+  // 与库里的现值比对 —— 让"生成器说的"和"库里现在的"差额可见（幂等性 + 漂移都能一眼看到）
+  const drift = dbRows.filter((r) => (id2key.get(r.id) ?? null) !== r.nameKey);
+  console.log(`\n行 → namekey：${id2key.size} / ${dbRows.length} 行命中（其余留 NULL ⇒ 客户端回落数据名）`);
+  console.log(`与库中现值比对：一致 ${dbRows.length - drift.length} / ${dbRows.length}`
+    + (drift.length ? `，**不同 ${drift.length}**（逐条列在下面，确认后再跑 SQL）` : ''));
+  for (const r of drift.slice(0, 20)) {
+    console.warn(`   id=${r.id} ${r.name}：库=${r.nameKey ?? 'NULL'} 生成=${id2key.get(r.id) ?? 'NULL'}`);
+  }
+  // 产出可直接执行的 UPSERT（**只写 namekey**，不动 name；幂等：重跑同结果）
+  const outPath = process.env.MONSTER_KEY_SQL_OUT ?? resolve(root, 'tmp/monster-namekey.sql');
+  mkdirSync(dirname(outPath), { recursive: true });
+  writeFileSync(outPath, [
+    '-- monsterlist.namekey（i18n 键 = inf 词干）—— 由 `npm run monster-names` 生成（幂等）',
+    ...(drift.length ? ['-- ⚠ 生成时与库中现值有差异，请先看生成器输出的差异清单'] : []),
+    ...[...id2key].sort((a, b) => a[0] - b[0])
+      .map(([id, k]) => `UPDATE gamedb.monsterlist SET namekey = '${k}' WHERE id = ${id};`),
+    '',
+  ].join(String.fromCharCode(10)), 'utf8');
+  console.log(`已写 ${outPath}（${id2key.size} 条 UPDATE；执行它才会改库 —— 生成脚本本身只读）`);
+}
 
 console.log(`来源：inf ${infByStem.size} 个（有模型）/ zhoon ${zhoon.size} 个有中文名`
   + `（${renamedByStem} 条按文件名归位 —— 首行注释笔误）`);
