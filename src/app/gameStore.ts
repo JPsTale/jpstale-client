@@ -73,6 +73,8 @@ export interface GameCharacter {
   skillPoint: number;          // 1–3 转池剩余点（与 `SkillListState.skillPoint` 同源：服务端 `free(Pool.ONE)`）
   specialSkillPoint: number;   // 4 转池剩余点（同上 `free(Pool.FOUR)`；**5 转不属任何池**，别读成"T5 的点"）
   rank: number;                // 转职阶级（原版 ChangeJob：0=1转…3=4转；服务端 JobService 按等级 20/40/60 推进）
+  /** 公会名（空串 = 无公会）。初始态来自 S2C_CharacterStatus；建会/退会后的增量走 S2C_ClanUpdate。 */
+  clanName: string;
   hp: number;
   maxHp: number;
   mp: number;
@@ -407,6 +409,13 @@ export function setCraftOpen(entityId: number, modes: readonly number[]): void {
 /** 建会结果入库（`S2C_ClanCreateResult`）；面板据此刷新或显示失败原因。 */
 export function setClanCreateResult(r: ClanCreateResult): void {
   commit({ clanCreate: r });
+}
+
+/** 自机的公会显示变更（S2C_ClanUpdate 且 playerId == 自己）：角色信息面板与名牌读这里。 */
+export function setSelfClan(clanName: string): void {
+  const c = snapshot.character;
+  if (!c || c.clanName === clanName) return;
+  commit({ character: { ...c, clanName } });
 }
 
 /** 关闭打造窗口（面板关闭时调用；下次交互会重新收到服务端的档位）。 */

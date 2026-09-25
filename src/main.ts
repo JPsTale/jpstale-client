@@ -27,7 +27,7 @@ import { createKeyBinding } from './ui/KeyBinding.js';
 import { createReactPanels } from './ui/react/index.js';
 import { installLayerStack } from './ui/layerStack.js';
 import { installBridge, pressQuickKey, sendPickupItem, sendSwitchWeapon, sendUseItem, sendEquipItem, sendTakeToHand, sendNpcInteract, sendUseSkill, sendSkillHit } from './net/bridge.js';
-import { beginOptimistic, clearCharacterTables, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, subscribeGame } from './app/gameStore.js';
+import { beginOptimistic, clearCharacterTables, closeSystemMenu, getGameSnapshot, getHeldUid, itemByUid, localToHeld, openSystemMenu, potionUidInSlot, setSelfClan, subscribeGame } from './app/gameStore.js';
 import { useEffectKindOf } from './game/useEffect.js';
 import { LOC } from './game/itemLocations.js';
 import type { CharacterAppearance } from './ui/CharSelect.js';
@@ -892,6 +892,10 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // 只改 actor 字段（名牌每帧直读），不重建模型 —— 重建会让画面"跳一下"。
       const cu = msg.clanUpdate!;
       worldView.clanUpdate(Number(cu.playerId), cu.clanName || '', cu.clanMark || '');
+      if (worldView.isSelf(Number(cu.playerId))) {
+        // 自己：角色信息面板读 gameStore，这里同步写（名牌在 worldView.clanUpdate 里已分流）
+        setSelfClan(cu.clanName || '');
+      }
       break;
     }
     case 'playerAppear': {

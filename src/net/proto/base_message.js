@@ -18983,6 +18983,8 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [skillPoint] S2C_CharacterStatus skillPoint
              * @property {number|null} [specialSkillPoint] S2C_CharacterStatus specialSkillPoint
              * @property {number|null} [rank] S2C_CharacterStatus rank
+             * @property {string|null} [clanName] S2C_CharacterStatus clanName
+             * @property {string|null} [clanMark] S2C_CharacterStatus clanMark
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -19407,6 +19409,22 @@ export const jpt = $root.jpt = (() => {
             S2C_CharacterStatus.prototype.rank = 0;
 
             /**
+             * S2C_CharacterStatus clanName.
+             * @member {string} clanName
+             * @memberof jpt.base.S2C_CharacterStatus
+             * @instance
+             */
+            S2C_CharacterStatus.prototype.clanName = "";
+
+            /**
+             * S2C_CharacterStatus clanMark.
+             * @member {string} clanMark
+             * @memberof jpt.base.S2C_CharacterStatus
+             * @instance
+             */
+            S2C_CharacterStatus.prototype.clanMark = "";
+
+            /**
              * Creates a new S2C_CharacterStatus instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_CharacterStatus
@@ -19536,6 +19554,10 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 48, wireType 0 =*/384).int32(message.specialSkillPoint);
                 if (message.rank != null && $Object.hasOwnProperty.call(message, "rank") && message.rank !== 0)
                     writer.uint32(/* id 49, wireType 0 =*/392).int32(message.rank);
+                if (message.clanName != null && $Object.hasOwnProperty.call(message, "clanName") && message.clanName !== "")
+                    writer.uint32(/* id 50, wireType 2 =*/402).string(message.clanName);
+                if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark") && message.clanMark !== "")
+                    writer.uint32(/* id 51, wireType 2 =*/410).string(message.clanMark);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -20034,6 +20056,24 @@ export const jpt = $root.jpt = (() => {
                                 delete message.rank;
                             continue;
                         }
+                    case 50: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.clanName = value;
+                            else
+                                delete message.clanName;
+                            continue;
+                        }
+                    case 51: {
+                            if (wireType !== 2)
+                                break;
+                            if ((value = reader.stringVerify()).length)
+                                message.clanMark = value;
+                            else
+                                delete message.clanMark;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -20229,6 +20269,12 @@ export const jpt = $root.jpt = (() => {
                 if (message.rank != null && $Object.hasOwnProperty.call(message, "rank"))
                     if (!$util.isInteger(message.rank))
                         return "rank: integer expected";
+                if (message.clanName != null && $Object.hasOwnProperty.call(message, "clanName"))
+                    if (!$util.isString(message.clanName))
+                        return "clanName: string expected";
+                if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
+                    if (!$util.isString(message.clanMark))
+                        return "clanMark: string expected";
                 return null;
             };
 
@@ -20432,6 +20478,12 @@ export const jpt = $root.jpt = (() => {
                 if (object.rank != null)
                     if ($Number(object.rank) !== 0)
                         message.rank = object.rank | 0;
+                if (object.clanName != null)
+                    if (typeof object.clanName !== "string" || object.clanName.length)
+                        message.clanName = $String(object.clanName);
+                if (object.clanMark != null)
+                    if (typeof object.clanMark !== "string" || object.clanMark.length)
+                        message.clanMark = $String(object.clanMark);
                 return message;
             };
 
@@ -20522,6 +20574,8 @@ export const jpt = $root.jpt = (() => {
                     object.skillPoint = 0;
                     object.specialSkillPoint = 0;
                     object.rank = 0;
+                    object.clanName = "";
+                    object.clanMark = "";
                 }
                 if (message.playerId != null && $Object.hasOwnProperty.call(message, "playerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -20646,6 +20700,10 @@ export const jpt = $root.jpt = (() => {
                     object.specialSkillPoint = message.specialSkillPoint;
                 if (message.rank != null && $Object.hasOwnProperty.call(message, "rank"))
                     object.rank = message.rank;
+                if (message.clanName != null && $Object.hasOwnProperty.call(message, "clanName"))
+                    object.clanName = message.clanName;
+                if (message.clanMark != null && $Object.hasOwnProperty.call(message, "clanMark"))
+                    object.clanMark = message.clanMark;
                 return object;
             };
 

@@ -165,6 +165,10 @@
   font-size: 15px;
   font-weight: 700;
   color: #ffd98a;
+  /* CJK 逐字换行的直接后果就是名字竖排（2026-09-25 用户实测）——
+     头部一行三个 span（职业/名字/公会）在窄面板下 flex 收缩会把名字压到一字一行。 */
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .jp-lv {
@@ -220,11 +224,19 @@
 .jp-job {
   font-size: 13px;
   color: #7fb3ff;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .jp-clan {
   font-size: 12px;
   color: #8a8f96;
+  white-space: nowrap;
+  /* 头部最次要的一段：空间不够时让它截断（省略号），不挤名字 */
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
 }
 
 .jp-char-sub {

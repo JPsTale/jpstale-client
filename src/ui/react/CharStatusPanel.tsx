@@ -100,7 +100,7 @@ export default function CharStatusPanel() {
       <div className="jp-char-head">
         <span className="jp-job">{jobName}</span>
         <span className="jp-name">{c.name}</span>
-        <span className="jp-clan">{t('panel.noClan')}</span>
+        <span className="jp-clan">{c.clanName !== '' ? c.clanName : t('panel.noClan')}</span>
       </div>
       <div className="jp-char-sub">
         <span>{t('panel.lv', { level: c.level })}</span>

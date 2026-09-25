@@ -228,6 +228,8 @@ export interface WorldView {
   applyMapSwitched(mapId: number): void;
   /** 自机角色名（S2C_PlayerState.playerName；名牌显示） */
   setSelfName(name: string): void;
+  /** 自机名牌的公会行（S2C_CharacterStatus 初始态 / S2C_ClanUpdate 增量；空串 = 无公会）。 */
+  setSelfClan(clanName: string): void;
   /** 自机等级（跨图边界的等级门槛判定用） */
   setSelfLevel(level: number): void;
   /** `S2C_LevelUpBroadcast`：刷新视野内远端玩家的等级（名牌 `Lv.X` 前缀用，见实现注释） */
@@ -775,6 +777,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfPlayerId = -1;
   // 自机名牌/血条数据（playerState 喂 hp；damage/heal targetId=self 喂战斗窗口与 hp）
   let selfName = '';
+  let selfClan = '';   // 自机名牌上的公会行（初始态 = characterStatus；增量 = clanUpdate 且是自己）
   let selfHp = 100, selfMaxHp = 100;
   /** 自机等级：跨图边界门槛判定用（来源 S2C_PlayerState.level，见 main.ts） */
   let selfLevel = 1;
@@ -4444,6 +4447,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function setSelfName(name: string): void {
     selfName = name;
   }
+  function setSelfClan(clanName: string): void {
+    if (selfClan === clanName) return;
+    selfClan = clanName;
+  }
   function setSelfLevel(level: number): void {
     if (Number.isFinite(level) && level > 0) selfLevel = level;
   }
@@ -4982,6 +4989,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (pt) {
         drawPill(ctx, pt.x, pt.y, lvPrefix(selfLevel) + selfName, {
           nameColor: '#ffe9a8',
+          // 与远端名牌同款：有公会显示公会行（◆ 前缀由 drawPill 统一加）
+          clan: selfClan || undefined,
           showHp: now < selfCombatUntil || (selfMaxHp > 0 && selfHp < selfMaxHp),
           ratio: selfMaxHp > 0 ? selfHp / selfMaxHp : 1,
           selected: false,
@@ -5459,6 +5468,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 否则那个窗口期里收到的更新会在 flush 时被旧值覆盖。
    */
   function updateRemoteClan(playerId: number, clanName: string, clanMark: string): void {
+    if (playerId === selfPlayerId) {
+      setSelfClan(clanName);   // 自己的公会变了：名牌读 selfClan，面板读 gameStore（bridge 侧写）
+      return;
+    }
     const a = remotes.get(playerId);
     if (a) {
       a.clanName = clanName;
@@ -7225,6 +7238,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 名牌/血条数据（main.ts 消息派发喂入；design-nameplate-hpbar.md）
     setSelfHp,
     setSelfName,
+    setSelfClan,
     setSelfLevel,
     updateRemoteLevel,
     playEat: (kind: UseEffectKind = null) => playEatInternal(kind),

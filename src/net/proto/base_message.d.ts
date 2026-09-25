@@ -6247,6 +6247,12 @@ export namespace jpt {
             /** S2C_CharacterStatus rank. */
             rank: number;
 
+            /** S2C_CharacterStatus clanName. */
+            clanName: string;
+
+            /** S2C_CharacterStatus clanMark. */
+            clanMark: string;
+
             /**
              * Creates a new S2C_CharacterStatus instance using the specified properties.
              * @param [properties] Properties to set
@@ -6477,6 +6483,12 @@ export namespace jpt {
 
                 /** S2C_CharacterStatus rank */
                 rank?: (number|null);
+
+                /** S2C_CharacterStatus clanName */
+                clanName?: (string|null);
+
+                /** S2C_CharacterStatus clanMark */
+                clanMark?: (string|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

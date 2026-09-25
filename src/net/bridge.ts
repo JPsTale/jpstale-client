@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setClanCreateResult } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setClanCreateResult, setSelfClan } from '../app/gameStore.js';
 import type { PartyMemberView } from '../app/gameStore.js';
 import {
   allocateStat,
@@ -75,6 +75,7 @@ export function toGameCharacter(e: jpt.base.S2C_CharacterStatus.$Properties): Ga
     skillPoint: e.skillPoint ?? 0,
     specialSkillPoint: e.specialSkillPoint ?? 0,
     rank: e.rank ?? 0,
+    clanName: e.clanName || '',
     hp: e.hp || 0,
     maxHp: e.maxHp || 0,
     mp: e.mp || 0,
@@ -215,6 +216,9 @@ resBionic: e.resBionic || 0,
 export function installBridge(): void {
   onMessage((msg) => {
     if (msg.characterStatus) setGameCharacter(toGameCharacter(msg.characterStatus));
+    // 自机名牌的公会**初始态**（进图/重登）：角色面板与名牌共用这一份数据。
+    // 建会/退会后的增量走 clanUpdate 分支（下面），两边写同一个 store 字段。
+    if (msg.characterStatus) setSelfClan(msg.characterStatus.clanName || '');
     if (msg.playerState) setGamePlayer(toGamePlayer(msg.playerState));
     // 物品：进图快照 / 单件增量 / 移除 / 金币
     if (msg.inventorySnapshot) {
