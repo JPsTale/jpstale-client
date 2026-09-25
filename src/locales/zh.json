@@ -3576,11 +3576,11 @@
       "noParty": "你没有加入队伍",
       "targetOffline": "对方不在线或不存在",
       "cannotInviteSelf": "不能邀请自己",
-      "full": "队伍已满（6 人）",
+      "full": "队伍已满（最多 {max} 人）",
       "alreadyInParty": "已经在队伍中",
       "notFound": "队伍不存在",
       "leaderOnly": "只有队长可以执行该操作",
-      "levelDiff": "双方等级差距过大（需 10 级以内）",
+      "levelDiff": "双方等级差距过大（需 {max} 级以内）",
       "noInvite": "没有待应答的组队邀请",
       "inviteExpired": "邀请已过期",
       "notMember": "对方不是本队成员"

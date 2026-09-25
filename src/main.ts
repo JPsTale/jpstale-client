@@ -959,8 +959,7 @@ onMessage((msg: jpt.base.ServerMessage) => {
       worldView.monsterAppear(
         Number(a.monsterId),
         a.templateId || 0,
-        a.name || '',
-        a.nameKey || '',                          // i18n 键名段（= 该怪 .inf 文件名词干；空 = 用数据名）
+        a.name || '',                             // monsterlist.name —— **本身就是 i18n 键**（inf 词干）
         a.modelFile || '',
         Number(a.level) || 1,
         a.hp || 0,

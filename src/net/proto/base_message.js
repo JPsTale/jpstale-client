@@ -21187,7 +21187,6 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [hp] S2C_MonsterAppear hp
              * @property {number|null} [maxHp] S2C_MonsterAppear maxHp
              * @property {string|null} [modelFile] S2C_MonsterAppear modelFile
-             * @property {string|null} [nameKey] S2C_MonsterAppear nameKey
              * @property {number|null} [angle] S2C_MonsterAppear angle
              * @property {boolean|null} [dead] S2C_MonsterAppear dead
              * @property {number|null} [monsterEffectId] S2C_MonsterAppear monsterEffectId
@@ -21292,14 +21291,6 @@ export const jpt = $root.jpt = (() => {
              * @instance
              */
             S2C_MonsterAppear.prototype.modelFile = "";
-
-            /**
-             * S2C_MonsterAppear nameKey.
-             * @member {string} nameKey
-             * @memberof jpt.base.S2C_MonsterAppear
-             * @instance
-             */
-            S2C_MonsterAppear.prototype.nameKey = "";
 
             /**
              * S2C_MonsterAppear angle.
@@ -21449,8 +21440,6 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 17, wireType 0 =*/136).int32(message.cameraY);
                 if (message.cameraZ != null && $Object.hasOwnProperty.call(message, "cameraZ") && message.cameraZ !== 0)
                     writer.uint32(/* id 18, wireType 0 =*/144).int32(message.cameraZ);
-                if (message.nameKey != null && $Object.hasOwnProperty.call(message, "nameKey") && message.nameKey !== "")
-                    writer.uint32(/* id 20, wireType 2 =*/162).string(message.nameKey);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -21575,15 +21564,6 @@ export const jpt = $root.jpt = (() => {
                                 message.modelFile = value;
                             else
                                 delete message.modelFile;
-                            continue;
-                        }
-                    case 20: {
-                            if (wireType !== 2)
-                                break;
-                            if ((value = reader.stringVerify()).length)
-                                message.nameKey = value;
-                            else
-                                delete message.nameKey;
                             continue;
                         }
                     case 9: {
@@ -21750,9 +21730,6 @@ export const jpt = $root.jpt = (() => {
                 if (message.modelFile != null && $Object.hasOwnProperty.call(message, "modelFile"))
                     if (!$util.isString(message.modelFile))
                         return "modelFile: string expected";
-                if (message.nameKey != null && $Object.hasOwnProperty.call(message, "nameKey"))
-                    if (!$util.isString(message.nameKey))
-                        return "nameKey: string expected";
                 if (message.angle != null && $Object.hasOwnProperty.call(message, "angle"))
                     if (typeof message.angle !== "number")
                         return "angle: number expected";
@@ -21837,9 +21814,6 @@ export const jpt = $root.jpt = (() => {
                 if (object.modelFile != null)
                     if (typeof object.modelFile !== "string" || object.modelFile.length)
                         message.modelFile = $String(object.modelFile);
-                if (object.nameKey != null)
-                    if (typeof object.nameKey !== "string" || object.nameKey.length)
-                        message.nameKey = $String(object.nameKey);
                 if (object.angle != null)
                     if (!$Object.is($Number(object.angle), 0))
                         message.angle = $Number(object.angle);
@@ -21924,7 +21898,6 @@ export const jpt = $root.jpt = (() => {
                     object.summonLifeRemainingMs = 0;
                     object.cameraY = 0;
                     object.cameraZ = 0;
-                    object.nameKey = "";
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -21972,8 +21945,6 @@ export const jpt = $root.jpt = (() => {
                     object.cameraY = message.cameraY;
                 if (message.cameraZ != null && $Object.hasOwnProperty.call(message, "cameraZ"))
                     object.cameraZ = message.cameraZ;
-                if (message.nameKey != null && $Object.hasOwnProperty.call(message, "nameKey"))
-                    object.nameKey = message.nameKey;
                 return object;
             };
 

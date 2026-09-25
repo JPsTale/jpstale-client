@@ -243,30 +243,10 @@ for (const [rel, lang] of [['src/locales/zh.json', 'zh'], ['src/locales/en.json'
   console.log(`  ${rel}（${lang}）：新增 ${added} / 保持 ${kept}`);
 }
 
-// ── ⑤ 服务端对照表：模型路径 → **候选 inf 列表** ──
-// ⚠ **多个怪共用一个模型**（hopy.ini ← Hopy/Hopy Kid；minegolem.ini ← Mine Golem/Iron Golem…），
-// 且各自 inf 的中文名不同 —— "一个模型记一个词干"必然错配（胜负只是文件序的偶然，
-// 实测把 独角兽(Hopy) 错配成了 小独角兽(Hopy Kid)）。
-// ⇒ 记**候选数组** `[{ s: 词干, e: 英文名|null }]`，服务端建怪时按**该行的 monsterlist.name**
-// 匹配 `e` 选词干（精确到行）；匹配不上取第一个（zh 名的排前，兜底更有意义）。
-const keyMap: Record<string, Array<{ s: string; e: string | null }>> = {};
-for (const [stem, { model, enName }] of infByStem) {
-  const en = enName ?? [...(dbNames.get(model) ?? [])][0] ?? null;
-  (keyMap[model] ??= []).push({ s: stem, e: en });
-}
-for (const cands of Object.values(keyMap)) {
-  // zh 名有的排前（行名匹配不上时的兜底才落在一个有词条的词干上）
-  cands.sort((a, b) => (inf2names.has(a.s) || stemsFrom3060.has(a.s) ? 0 : 1)
-    - (inf2names.has(b.s) || stemsFrom3060.has(b.s) ? 0 : 1));
-}
-if (!existsSync(SRV_RESOURCE)) {
-  const { mkdirSync } = await import('node:fs');
-  mkdirSync(SRV_RESOURCE, { recursive: true });
-}
-writeFileSync(join(SRV_RESOURCE, 'monster-name-keys.json'),
-  JSON.stringify(keyMap, null, 1).replace(/\n/g, '\r\n') + '\r\n', 'utf8');
+// （旧版这里会写一份 `模型路径 → 候选词干` 对照表到服务端资源 —— 已删：
+//   monsterlist.name **本身就是键**（用户方案），匹配在生成 SQL 时一次做完，运行时无表可查。）
 
 console.log(`来源：inf ${infByStem.size} 个（有模型）/ zhoon ${zhoon.size} 个有中文名`
   + `（${renamedByStem} 条按文件名归位 —— 首行注释笔误）`);
 console.log(`语言表 monster.<inf>.name：${inf2names.size} 条（①zhoon）+ ${added3060} 条（②3060 inf）`
-  + `；丢弃 ${skipped} 条无 inf 的；服务端对照表 ${Object.keys(keyMap).length} 条`);
+  + `；丢弃 ${skipped} 条无 inf 的`);

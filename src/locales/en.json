@@ -3576,11 +3576,11 @@
       "noParty": "You are not in a party",
       "targetOffline": "That player is offline or does not exist",
       "cannotInviteSelf": "You cannot invite yourself",
-      "full": "Party is full (6 members)",
+      "full": "Party is full (max {max} members)",
       "alreadyInParty": "Already in a party",
       "notFound": "Party not found",
       "leaderOnly": "Only the party leader can do that",
-      "levelDiff": "Level difference too big (max 10)",
+      "levelDiff": "Level difference too big (max {max})",
       "noInvite": "No pending party invitation",
       "inviteExpired": "The invitation has expired",
       "notMember": "That player is not in your party"
