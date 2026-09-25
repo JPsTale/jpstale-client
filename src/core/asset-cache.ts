@@ -212,6 +212,15 @@ function normalizeAssetPath(url: string): string {
 async function fetchWithProgress(url: string, kind: string): Promise<ArrayBuffer> {
   const resp = await fetch(encodeAssetPath(url));
   if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${url}`);
+  // **dev 服务器的 SPA 兜底会把"没这个文件"伪装成成功**：路径对不上时它回 `200 + index.html`
+  // （不是 404），HTML 字节于是流进解析器，最后炸成
+  // `RangeError: Invalid typed array length` 这种指错方向的错（实测两次：双编码的 `%2520`、
+  // 以及把 `name_key` 当 model_file 传）。在这里按 content-type 判死，**让报错自己说出病因**。
+  const ct = resp.headers.get('content-type') ?? '';
+  if (ct.includes('text/html') && !/\.html?($|\?)/i.test(url)) {
+    throw new Error(`资产不存在（服务器返回 HTML 兜底页，200）：${url}`
+      + ' —— 路径拼错/大小写不符/收发字段串位都是这个现象');
+  }
   const len = Number(resp.headers.get('content-length') ?? 0);
   if (Number.isFinite(len) && len > 0) bytesTotal += len;
   // 没有流式 body（老环境）时退回一次性读取：进度会跳，功能不受影响

@@ -151,7 +151,15 @@ export interface MonsterSubModel {
  * @param inxPath 资产相对路径（如 char/monster/monimp/monimp-a.inx）
  */
 export async function loadMonsterModel(inxPath: string): Promise<MonsterModelResult> {
-  // 兜底归一化:小写 + 反斜杠→斜杠 + .ini→.inx(服务端已规范,双保险)
+  // 传进来的**必须是资产路径**。实测过一次收发字段串位：客户端把 `name_key`（i18n 键，
+  // 形如 `4_hopy`）当模型路径传进来，于是去请求 `/res/4_hopy`，最后炸在一个与病因无关的
+  // 解析错误上（`RangeError: Invalid typed array length`）。这里点名判死 ——
+  // 真实的模型路径一定带目录（`char/monster/...`），裸词干/裸文件名都不是。
+  if (!/[\\/]/.test(inxPath)) {
+    throw new Error(`怪物模型路径不是资产路径（收到 "${inxPath}"）`
+      + ' —— 检查 S2C_MonsterAppear 的 model_file 与 name_key 是否串位');
+  }
+  // 归一化:小写 + 反斜杠→斜杠 + .ini→.inx(服务端已规范,双保险)
   const path = inxPath.replace(/\\/g, '/').toLowerCase().replace(/\.ini$/, '.inx');
   const inxInfo = await parseRes('/res/' + path, 'model', parseInx, true);
   if (!inxInfo.modelFile) throw new Error('monster .inx modelFile 为空: ' + path);
