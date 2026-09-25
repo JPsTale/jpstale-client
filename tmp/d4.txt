@@ -1,1 +1,0 @@
-"setLocale('zh');\n  setLocale('zh');\r\n}\r\n\r\nconsole.log(failed"

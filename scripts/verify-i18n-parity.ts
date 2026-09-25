@@ -236,14 +236,8 @@ console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + �
   const main = readFileSync(resolve('src/main.ts'), 'utf8');
   ok2('main.ts 下发 name_key（monsterlist.namekey）', /a\.nameKey \|\| ''/.test(main));
   const protoText = readFileSync(resolve('proto/base/message.proto'), 'utf8');
-  const monsterMsg = /message S2C_MonsterAppear \{[\s\S]*?
-\}/.exec(protoText)?.[0] ?? '';
+  const monsterMsg = /message S2C_MonsterAppear \{[\s\S]*?\n\}/.exec(protoText)?.[0] ?? '';
   ok2('S2C_MonsterAppear 带 name_key 字段（i18n 键）', /string name_key = 20;/.test(monsterMsg));
-  // 库侧：monsterlist.namekey 有值 ⇒ zh/en 都有词条（防止"发了键却查不到"）
-  {
-    const { ITEM_DEFS } = await import('../src/game/data/itemDefs.js');
-    void ITEM_DEFS;
-  }
   setLocale('zh');
 }
 

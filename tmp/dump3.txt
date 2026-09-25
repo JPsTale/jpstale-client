@@ -1,5 +1,0 @@
-<stdin>:6: SyntaxWarning: invalid escape sequence '\{'
-  File "<stdin>", line 7
-    assert bad in s, repr([l for l in s.split('\n') if 'S2C_MonsterAppear \' in l])
-                                                       ^
-SyntaxError: unterminated string literal (detected at line 7)
