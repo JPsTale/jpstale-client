@@ -331,13 +331,16 @@ export function runLevelUpFx(d: LevelUpDeps, feet: { x: number; y: number; z: nu
 export function updateLevelUpFx(dt: number): void {
   if (!paths.length && !bands.length) return;
   const d = deps;
-  tick += dt * EFFECT_HZ;
+  // 本帧折合多少 tick（`EFFECT_HZ` = 70）。**凡"原版每 tick 走一步"的量都必须乘它** ——
+  // 漏了就变成"按帧走一步"，位移随帧率变（60fps 慢 14%、30fps 慢一倍多，观感像"粒子飘半天不进去"）。
+  const dTick = dt * EFFECT_HZ;
+  tick += dTick;
 
   // ② 向心粒子：直线匀速飞行，到 3.125 单位内停发并退役（原版 `HoPhysicsDest` + `ANI_ONE` 收尾）
   for (let i = paths.length - 1; i >= 0; i--) {
     const p = paths[i]!;
     if (!p.arrived) {
-      p.pos.add(p.vel);
+      p.pos.addScaledVector(p.vel, dTick);   // `vel` 是**每 tick** 的步进（`Speed = 800` raw/256）
       p.carrier.position.copy(p.pos);
       if (p.pos.distanceTo(p.dest) < PATH_STOP_DIST) {
         p.arrived = true;
