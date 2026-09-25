@@ -1851,37 +1851,39 @@
 .jp-party-invite-ok:hover { border-color: #7fd4ff; color: #fff; }
 .jp-party-invite-no:hover { border-color: #ff8a7a; color: #fff; }
 
-/* ==================== 目标信息窗（右上角 3D 头像框；3D 部分由 WorldView scissor 直渲进透明孔） ==================== */
+/* ==================== 目标信息窗（右上角；版式照原版截图——纯方形头像框，名字/血条为框内叠层） ====================
+   3D 头像由 WorldView scissor 直渲进 .jpt-hole；框尺寸照原版比例（WinSizeY/6 ≈ 132 @720p，正方形）。 */
 .jpt {
-  position: absolute; right: 14px; top: 44px; width: 190px;
-  display: flex; flex-direction: column;
+  position: absolute; right: 14px; top: 44px; width: 132px;
   user-select: none; -webkit-user-select: none;
   z-index: 6;
 }
-.jpt-head {
-  display: flex; gap: 6px; align-items: baseline; padding: 4px 8px;
-  background: rgba(10, 14, 18, 0.85); border: 1px solid #3a4148; border-bottom: none;
-}
-.jpt-level { font-size: 11px; color: #ffee64; text-shadow: 0 0 2px #000; }
-.jpt-name {
-  flex: 1; font-size: 13px; color: #e8ecef; text-shadow: 0 0 2px #000;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-/* 透明孔：WebGL 画布在 DOM 之下，WorldView 按 hole 矩形 scissor 直渲目标 3D 头像 */
+/* 纯方形框 = 3D 头像孔；名字/血条绝对定位在框内（不独占行） */
 .jpt-hole {
-  height: 120px; background: transparent;
-  border-left: 1px solid #3a4148; border-right: 1px solid #3a4148;
+  position: relative; width: 132px; height: 132px; box-sizing: border-box;
+  background: transparent; border: 1px solid rgba(0, 0, 0, 0.65);
 }
+/* 名字叠在框内顶部：白字黑影 + 顶部向下渐隐的暗带（截图中名字背后那道暗色就是它） */
+.jpt-name {
+  position: absolute; left: 0; right: 0; top: 0;
+  padding: 1px 5px 3px; line-height: 14px;
+  font-size: 12px; color: #fff; text-shadow: 0 0 2px #000, 0 1px 2px #000;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}
+.jpt-level { color: #fff; }
+/* 怪物血条贴框内底边（原版 DrawStateBar：MidY-(h>>1)+h+2）：细条、半透明暗底 */
 .jpt-hpbar {
-  position: relative; height: 10px; padding: 2px 6px; box-sizing: border-box;
-  background: rgba(10, 14, 18, 0.85);
-  border-left: 1px solid #3a4148; border-right: 1px solid #3a4148;
+  position: absolute; left: 3px; right: 3px; bottom: 3px; height: 7px;
+  background: rgba(0, 0, 0, 0.55); border: 1px solid rgba(0, 0, 0, 0.7);
+  pointer-events: none;
 }
 .jpt-hp-base, .jpt-hp-fill {
-  position: absolute; left: 6px; top: 2px; height: 6px;
+  position: absolute; left: 1px; top: 1px; height: 3px;
   image-rendering: pixelated; object-fit: fill;
 }
-.jpt-hp-base { width: calc(100% - 12px); }
+.jpt-hp-base { width: calc(100% - 2px); }
 .jpt-actions {
   display: flex; gap: 5px; padding: 4px 6px; justify-content: center;
   background: rgba(10, 14, 18, 0.85); border: 1px solid #3a4148; border-top: none;
@@ -1897,61 +1899,5 @@
 .jpt-action-btn-off { cursor: not-allowed; opacity: 0.35; }
 .jpt-action-btn-off img { filter: grayscale(1); }
 .jpt-action-btn-off:hover { border-color: #3a4148; }
-.jpt-dead .jpt-name { color: #ff5252; }
+.jpt-dead .jpt-name-text { color: #ff5252; }
 .jpt-dead .jpt-hole { filter: grayscale(0.85); }
-
-/* ==================== 公会面板（ClanPanel） ==================== */
-
-.jp-clan { min-width: 340px; }
-.jp-clan-tabs { display: flex; gap: 4px; margin-bottom: 6px; }
-
-.jp-clan-info { display: flex; flex-direction: column; gap: 6px; }
-.jp-clan-head { display: flex; align-items: baseline; gap: 10px; }
-.jp-clan-name { font-size: 15px; font-weight: 700; color: #ffe9a8; }
-.jp-clan-sub { font-size: 12px; color: #9fb6c9; }
-.jp-clan-note {
-  font-size: 12px; color: #c6b6ff; padding: 4px 8px;
-  background: rgba(255,255,255,0.04); border-radius: 4px; white-space: pre-wrap;
-}
-.jp-clan-kv {
-  display: grid; grid-template-columns: 72px 1fr; gap: 2px 10px;
-  font-size: 12px; color: #cfd8e3;
-}
-.jp-clan-kv > span:nth-child(odd) { color: #7f92a3; }
-
-.jp-clan-members-title { margin-top: 4px; font-size: 12px; color: #7f92a3; }
-.jp-clan-list {
-  max-height: 260px; overflow-y: auto; scrollbar-width: thin;
-  display: flex; flex-direction: column; gap: 2px;
-}
-.jp-clan-row {
-  display: flex; align-items: center; gap: 8px;
-  padding: 3px 8px; font-size: 12px; color: #cfd8e3;
-  background: rgba(255,255,255,0.03); border-radius: 4px;
-}
-.jp-clan-row.is-me { outline: 1px solid rgba(255, 233, 168, 0.35); }
-.jp-clan-col-rank { width: 34px; color: #9fb6c9; }
-.jp-clan-col-name { flex: 1; }
-.jp-clan-col-lv { width: 56px; color: #9fb6c9; }
-.jp-clan-col-date { color: #7f92a3; font-size: 11px; }
-
-.jp-clan-empty { padding: 18px 0; text-align: center; font-size: 12px; color: #7f92a3; }
-
-.jp-clan-create { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
-.jp-clan-create-req { display: flex; flex-direction: column; gap: 2px; font-size: 12px; color: #9fb6c9; }
-.jp-clan-create-row { display: flex; gap: 6px; }
-.jp-clan-input {
-  flex: 1; padding: 5px 8px; font-size: 13px;
-  color: #e8eef4; background: rgba(0,0,0,0.35);
-  border: 1px solid rgba(255,255,255,0.14); border-radius: 4px; outline: none;
-}
-.jp-clan-input:focus { border-color: rgba(255, 233, 168, 0.5); }
-.jp-clan-ok { font-size: 12px; color: #7dd087; }
-.jp-clan-err { font-size: 12px; color: #e08a8a; }
-.jp-clan-create-btn {
-  align-self: flex-end; padding: 6px 18px; font-size: 13px;
-  color: #ffe9a8; background: rgba(255,233,168,0.10);
-  border: 1px solid rgba(255,233,168,0.4); border-radius: 4px; cursor: pointer;
-}
-.jp-clan-create-btn:hover { background: rgba(255,233,168,0.18); }
-.jp-clan-create-btn:disabled { opacity: 0.4; cursor: default; }
