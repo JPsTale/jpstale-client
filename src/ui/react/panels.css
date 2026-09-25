@@ -1846,7 +1846,8 @@
 .jp-party-menu-item:hover { background: #2a3038; color: #fff; }
 /* 邀请弹窗（挂在同一列下方；60 秒超时与服务端 INVITE_TTL_MS 同长） */
 .jp-clan-invite {
-  position: absolute; left: 8px; top: 50%; transform: translateY(-50%);
+  /* 屏幕正中（用户 2026-09-25：放边上根本看不清——邀请是要人当场决定的，就该居中） */
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: 240px; padding: 8px;
   background: rgba(10, 12, 16, 0.9); border: 1px solid #3d5a75;
   z-index: 6;
