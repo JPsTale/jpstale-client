@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { targetWindowState } from '../targetWindow.js';
 import { useUiImageUrl } from './useUiImage.js';
 import { sendPartyInvite, sendTradeRequest } from '../../net/bridge.js';
-import { t } from '../../i18n/index.js';
+import { t, tOr } from '../../i18n/index.js';
 
 /**
  * **目标信息窗**（右上角，原版 DrawEachPlayer 对应的 DOM 侧）。
@@ -34,9 +34,9 @@ const BTN_CLAN_H = '/res/image/party/icon_clan_.bmp';
 
 function npcDisplayName(nameKey: string): string {
   if (!nameKey) return '';
-  const full = `npc.${nameKey}`;
-  const tr = t(full);
-  return tr === full ? nameKey : tr;
+  // 与名牌同一套查表（WorldView:5084 `t(\`npc.${nameKey}.name\`)`）——locale 是 { name: ... } 嵌套；
+  // 少拼 .name 就会像截图那样把原 key 顶到界面上（用户 2026-09-25 实测）
+  return tOr(`npc.${nameKey}.name`, nameKey);
 }
 
 /** 原版式 20×20 图标按钮：普通/悬停双贴图（`_` 后缀），`disabled` = 置灰 + tooltip、点了不发包 */
