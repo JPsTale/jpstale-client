@@ -1893,20 +1893,23 @@
   position: absolute; left: 1px; top: 1px; bottom: 1px;
   border-radius: 3px; min-width: 0;
 }
+/* 社交按钮托盘：原版 cw-1.tga 画成 100×50、水平居中、顶边压住框底 6px（playmain.cpp:3647）；
+   按钮 20×20、间距 25、距托盘左缘 14px、距托盘顶 6px（= 框底边线，:3647/3652） */
 .jpt-actions {
-  display: flex; gap: 5px; padding: 4px 6px; justify-content: center;
-  background: rgba(10, 14, 18, 0.85); border: 1px solid #3a4148; border-top: none;
+  position: relative; width: 100px; height: 50px;
+  margin: -6px auto 0;
 }
-/* 原版式 20×20 图标按钮（icon-c5/c1/c2/icon_clan，`_` 后缀悬停态由组件切换贴图） */
+.jpt-tray { position: absolute; inset: 0; width: 100px; height: 50px; }
 .jpt-action-btn {
-  width: 22px; height: 22px; padding: 1px; cursor: pointer;
-  background: #1c222b; border: 1px solid #3a4148;
+  position: absolute; top: 6px; width: 20px; height: 20px;
+  padding: 0; background: transparent; border: none; cursor: pointer;
 }
-.jpt-action-btn:hover { border-color: #7fd4ff; }
-.jpt-action-btn img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
-/* 禁用态（好友/部族：系统未落地——显式置灰，点了不发包） */
-.jpt-action-btn-off { cursor: not-allowed; opacity: 0.35; }
-.jpt-action-btn-off img { filter: grayscale(1); }
-.jpt-action-btn-off:hover { border-color: #3a4148; }
+.jpt-action-btn:nth-of-type(1) { left: 14px; }
+.jpt-action-btn:nth-of-type(2) { left: 39px; }
+.jpt-action-btn:nth-of-type(3) { left: 64px; }
+.jpt-action-btn:nth-of-type(4) { left: 89px; }   /* 部族：族长模式专属（4 按钮时托盘另画 120 宽） */
+.jpt-action-btn img { width: 20px; height: 20px; display: block; }
+/* 禁用态（好友：系统未落地——显式置灰，点了不发包） */
+.jpt-action-btn-off { cursor: not-allowed; opacity: 0.45; }
 .jpt-dead .jpt-name-text { color: #ff5252; }
 .jpt-dead .jpt-hole { filter: grayscale(0.85); }
