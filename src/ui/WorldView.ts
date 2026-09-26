@@ -95,7 +95,7 @@ import { itemDisplayNameById } from '../game/itemName.js';
 import { markSkillCast, skillCdRemainingMs } from '../game/skillCooldown.js';
 import { skillLevelOf } from '../game/skillLevel.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
-import { skillIdByIcon } from '../game/skillIdentity.js';
+import { skillIdByIcon, skillTargetsPlayers } from '../game/skillIdentity.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
 import { targetWindowState } from './targetWindow.js';
@@ -396,9 +396,11 @@ export interface WorldViewOpts {
   /** 命中帧（每段一次）→ main.ts 发 C2S_AttackHit(targetId, hitIndex)。 */
   onAttackHit?: (monsterId: number, hitIndex: number) => void;
   /**
-   * 施放技能 → main.ts 发 `C2S_UseSkill(skillId, targetId)`。两条来源：
-   *   ① 无目标施放（右键先试，`tryNoTargetCast`）⇒ `targetId = 0`；
-   *   ② 用该拳技能打光标下的怪（左/右键，`playEquippedSkill`）⇒ `targetId = 怪的 id`。
+   * 施放技能 → main.ts 发 `C2S_UseSkill(skillId, targetId)`。三条来源：
+   *   ① 无目标施放（右键先试，`tryNoTargetCast`）⇒ `targetId = 0`（自施/自中心）；
+   *   ② 用该拳技能打光标下的怪（左/右键，`playEquippedSkill`）⇒ `targetId = 怪的 id`；
+   *   ③ 玩家目标（Healing/Grand Healing，2026-09-26）：右键时光标下/已选中的玩家 ⇒ `targetId = 玩家实体 id`
+   *      （服务端 `PlayerService.entityByRuntimeId` 解析后治他）。
    * `skillId` = **数字技能 id**（图标 → id 的唯一查表在 `game/skillIdentity.ts`）。 */
   onCastSkill?: (skillId: number, targetId: number, animIndex?: number, animClip?: string) => void;
   /**
@@ -2242,15 +2244,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 起手（技能动画开始）：记下这一行 + 播起手音（原版 `SkillPlaySound`，在 `BeginSkill` 那一刻） */
   /**
-   * 场景节点 → 怪物 id（`0` = 不是怪物/没有）。
+   * 场景节点 → 实体 id（`0` = 不是怪/玩家/没有）。
    *
    * **唯一实现**：此前 `playEquippedSkill` 与 `nameplateTargetAt` 各写一遍同样的遍历
    * （AGENTS #15：同一判定出现第二份就是 bug 的种子），技能目标这条链又要用第三次 ⇒ 收成一处。
+   * 2026-09-26 起同时认**远端玩家**（`remotes`）—— Healing 的"治目标"要把玩家 id 发给服务端
+   * （用户指正："有目标就可以治疗目标"；原版治疗按上报序号对玩家生效，`OnSever.cpp:16478`）。
    */
-  function monsterIdOfRoot(root: THREE.Object3D | null | undefined): number {
+  function entityIdOfRoot(root: THREE.Object3D | null | undefined): number {
     if (!root) return 0;
     for (const [id, m] of monsters) {
       if (m.root === root) return id;
+    }
+    for (const [id, r] of remotes) {
+      if (r.root === root) return id;
     }
     return 0;
   }
@@ -2258,12 +2265,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   function beginSelfSkill(iconFile: string, aim: THREE.Object3D | null = null): void {
     selfSkillEventFired = 0;
     selfSkillAim = aim;
-    // **本次施法的目标**（原版 `lpCharSelPlayer`）：鼠标施法只有 `aim`（悬停的那只怪），
+    // **本次施法的目标**（原版 `lpCharSelPlayer`）：鼠标施法只有 `aim`（悬停的那只怪或玩家），
     // 而 `selfAttackTargetId` 是**自动攻击循环**在跑到射程内起手时才赋的 —— 鼠标施法路径从不设它。
     // 2026-09-24 实测：技能事件帧上报用了 `selfAttackTargetId` ⇒ 鼠标施法时是 0/陈旧值 ⇒
     // 单目标的 Critical Hit / Jumping Crash 在服务端 `requireTarget` 被拒 ⇒ **技能没伤害**
     // （Pike Wind 因为是自身中心 AoE、不读 targetId，所以看起来正常）。目标在**起手时定死**。
-    selfSkillTargetId = monsterIdOfRoot(aim);
+    selfSkillTargetId = entityIdOfRoot(aim);
     selfSkillRow = skillFxRowByIcon(iconFile);
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
     fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
@@ -2400,7 +2407,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     //   播之前拿不到 ⇒ 必须先 `playSkillByIcon` 再上报（与追打循环同一顺序）。
     const played = playSkillByIcon(it.row.iconFile, aim);
     if (aim) {
-      const aimId = monsterIdOfRoot(aim);
+      const aimId = entityIdOfRoot(aim);
       const motion = animState?.getCurrentMotion();
       if (aimId != null) opts?.onCastSkill?.(it.skillId, aimId, motion?.index ?? 0, selfAnimClip);
     }
@@ -2680,7 +2687,19 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     blockCast(reasonKey);
   }
 
-  function tryNoTargetCast(): boolean {
+  /**
+   * 右键的"无目标施放"（原版 `OpenPlaySkill`，`SkillSub.cpp:29`）。**玩家目标优先**（2026-09-26）：
+   * 技能目标可以是玩家（Healing / Grand Healing）且光标下（或已选中的）是玩家 ⇒ 治他，
+   * 否则按无目标自施（自疗）。原版 self 分支带 `!lpCharSelPlayer` 守卫（`SkillSub.cpp:539`）——
+   * 选中玩家时**不**自疗，治疗发给被选中者（`:2737` 分支照 `lpChar` 发）⇒ 我们的优先级
+   * （光标玩家 > 选中玩家 > 自己）与它等价。
+   *
+   * 顺序照源码：① 不在施法/攻击/进食动作里 ② 有绑定且是本职业
+   * ③ `noTargetCastBlock` 的四道闸门（村庄/职业/名单/技能等级）④ MP 门
+   * ⑤ **先播动画、后发包**、不等回包。
+   * @returns true = 已施放（调用方必须**直接结束**，不再进"用右拳打怪"那条路）
+   */
+  function tryNoTargetCast(cx: number, cy: number): boolean {
     if (!animState) return false;
     const st = animState.getCurrentState();
     if (st === STATE.ATTACK || st === STATE.SKILL || st === STATE.EAT) return false;
@@ -2692,9 +2711,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (noTargetCastBlock(fs.skillId, selfClass, isVillageMap(currentMapId)) != null) return false;
     const resBlock = castBlockReason(fs.skillId);        // MP 门（原版 `sinCheckSkillUseOk` 的 MP 那一半）
     if (resBlock) { notifyCastBlock(resBlock); return false; }
+    // **玩家目标解析**（仅"目标可以是玩家"的技能）：光标下的玩家优先，其次右上角已选中的玩家；
+    // 都没有 ⇒ aim = null = 自施（服务端 Healing 落回自己）。
+    let aim: THREE.Object3D | null = null;
+    let aimId = 0;
+    if (skillTargetsPlayers(fs.skillId)) {
+      const tag = nameplateTargetAt(cx, cy) ?? pickTargetAt(cx, cy);
+      const pid = tag && tag.kind === 'player' ? tag.id
+        : targetSel?.kind === 'player' ? targetSel.id : 0;
+      const root = pid ? remotes.get(pid)?.root ?? null : null;
+      if (pid && root) { aim = root; aimId = pid; }
+    }
     // ① 本地先播（原版 BeginSkill/SetMotion 在发包之前）。播不出来（连普攻都找不到）⇒ 这一击不算放出去
-    if (!playSkillByIcon(fs.icon, null)) return false;
-    opts?.onCastSkill?.(fs.skillId, 0);              // ② 再发 C2S_UseSkill(skillId, targetId=0)，不等回包
+    if (!playSkillByIcon(fs.icon, aim)) return false;
+    opts?.onCastSkill?.(fs.skillId, aimId);          // ② 再发 C2S_UseSkill(skillId, targetId)，不等回包
     return true;
   }
 
@@ -2705,7 +2735,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const slot = e.button === 0 ? 'left' : 'right';
       // 右键：**先试无目标施放**，成功即结束（原版 Winmain.cpp:3087-3088 的 `break` 跳过打人那条路）。
       // ⚠ 左键**没有**这条路（原版左键分支根本不看拳位，只有"进攻击循环/走路"两岔）。
-      if (e.button === 2 && tryNoTargetCast()) { e.preventDefault(); return; }
+      if (e.button === 2 && tryNoTargetCast(e.clientX, e.clientY)) { e.preventDefault(); return; }
       const aim = monsterUnderCursor(e.clientX, e.clientY);
       if (aim) {
         e.preventDefault();

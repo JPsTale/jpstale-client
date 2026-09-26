@@ -78,3 +78,18 @@ export function skillIdByIcon(iconFile: string): number | null {
 export function skillRowBySkillId(skillId: number): SkillIdentityRow | null {
   return BY_ID.get(skillId) ?? null;
 }
+
+/**
+ * 该技能的**目标可以是玩家**（施法时 aim/targetId 应解析成被选中的玩家，而不是只认怪）。
+ *
+ * <p>依据（原版客户端 `SkillSub.cpp`）：Healing / Grand Healing 的激活分两岔 —— 无选中玩家的
+ * 自疗分支带 `!lpCharSelPlayer` 守卫（`:539`），选中目标后走 lpChar 分支把治疗发出去（`:2737`/
+ * `:2849`）；服务端 `rsPlayHealing` 按上报序号对玩家生效。**用户 2026-09-26 指正**："Healing
+ * 也不是自我治疗，有目标就可以治疗目标"。Resurrection（复活队友）同属此类，服务端迁入后加入。
+ */
+const PLAYER_TARGET_CONSTS = new Set(['HEALING', 'GRAND_HEALING']);
+
+export function skillTargetsPlayers(skillId: number): boolean {
+  const row = BY_ID.get(skillId);
+  return row != null && PLAYER_TARGET_CONSTS.has(row.constName);
+}

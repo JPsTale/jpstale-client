@@ -205,7 +205,7 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
     /selfAttackSlot = slot;/.test(code) && !/playEquippedSkill\(slot, aim\)/.test(code)
     && !/if \(e\.button === 2\) return;/.test(code));
   ok('② 右键保持 return（源码那条 `break` 只跳"打人"分支）',
-    /if \(e\.button === 2 && tryNoTargetCast\(\)\) \{ e\.preventDefault\(\); return; \}/.test(code));
+    /if \(e\.button === 2 && tryNoTargetCast\(e\.clientX, e\.clientY\)\) \{ e\.preventDefault\(\); return; \}/.test(code));
   // 2026-09-24 改：拳位由"选中目标的那个键"决定（原版 `SelMouseButton → pLeftSkill/pRightSkill`）
   ok('③ 追打循环逐次出手取 **selfAttackSlot** 那只拳的技能（原版 `SelMouseButton → lpAttackSkill`）',
     /const it = isVillageMap\(currentMapId\) \? \{ kind: 'normal' as const \} : fistIntent\(selfAttackSlot\);/.test(code)
@@ -225,8 +225,8 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
   // 鼠标施法路径从不设它 ⇒ 单目标技能（Critical Hit / Jumping Crash）在服务端 requireTarget 被拒。
   // Pike Wind 因为是自身中心 AoE、不读 targetId，所以掩盖了这个 bug 一整轮。
   ok('③ 技能目标在起手时从瞄准定死（mouse 施法路径没有 selfAttackTargetId）',
-    /selfSkillTargetId = monsterIdOfRoot\(aim\);/.test(code)
-    && /function monsterIdOfRoot\(root: THREE\.Object3D \| null \| undefined\): number \{/.test(code));
+    /selfSkillTargetId = entityIdOfRoot\(aim\);/.test(code)
+    && /function entityIdOfRoot\(root: THREE\.Object3D \| null \| undefined\): number \{/.test(code));
   // 2026-09-24 改：绑定身份换成数字 skillId、判定搬进 `game/skillBinding.ts`（`fistIntent`）。
   // 这三条比旧写法**更严**：未绑/村庄 ⇒ 普通攻击（规格），而**表没到/异职业 ⇒ 不起手**（旧写法把这些也退普攻）。
   ok('③ 无绑定/村庄 ⇒ 普通攻击；unknown/invalid ⇒ 本轮不起手（三处施法入口共用同一个意图判定）',
