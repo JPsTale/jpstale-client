@@ -67,6 +67,8 @@ const MAX_TIME = 250;
 const BASE_ALPHA = 150 / 255;
 const FADE_AT = 230;
 const FPS = 70;
+/** 第一份实例的高度偏移：`sinEffectDefaultSet(..., 13000)`（`sinSkillEffect.cpp:1643`，贴骨那份） */
+const UPPER_LIFT_RAW = 13000;
 /** `sinEffectDefaultSet(..., pChar, 0, 7000)`（`:1646`）——实例②的高度偏移（raw） */
 const Y_OFFSET_RAW = 7000;
 /** `RotateAngle = 256`（`:1661`）—— 初始公转角（PT 角度制，4096/圈） */
@@ -113,6 +115,18 @@ const P_JITTER_RAW = 1000, P_DROP_RAW = 1000;
 interface HealingOrbit {
   root: THREE.Object3D;
   mats: THREE.Material[];
+  /**
+   * **第一份实例**（`sinEffect_Healing2` 的第一段：`smASE_ReadBone` + `sinEffectDefaultSet(..., 13000)`
+   * + `BoneFlag = 1`）：同一个网格、高度 = `pChar->pY + 13000`（≈50.8，**头顶**）、**贴骨**
+   * （`BoneFlag=1` ⇒ 由骨骼挂载路径绘制，`sinDrawEffect2` 会跳过它）、**没有 `CODE`** ⇒ 不吃任何 mover
+   * （不公转、不上升）、也没有 `Color_A`/`Alpha*` ⇒ 不淡出。
+   * ⚠ **寿命**：源码**没有**给它 `Max_Time`（`sinEffectDefaultSet` 不设、该段也不设）⇒ 按
+   * `sinActiveEffect2` 的 `if (Max_Time != SIN_EFFECT_NO_TIME && Time > Max_Time) memset`，
+   * 残留值为 0 时**第 2 帧就被清空**；只有残留恰为 `SIN_EFFECT_NO_TIME(0xFFFF0000)` 才永不过期。
+   * **这是源码自身的未定义行为**（见 `docs/技能系统-healing-完整源码.md` §D）—— 我们取
+   * **与第二份同寿命（250 帧）**，这是**我方选择**，写在这里以便复核。
+   */
+  upper: THREE.Object3D | null;
   /** 施法者位置（起手快照；原版每帧读 `pChar->pX/pY/pZ`，我们暂不跟随移动） */
   at: { x: number; y: number; z: number };
   frame: number;
@@ -219,10 +233,21 @@ export function runHealingOrbit(
 
       const root = new THREE.Group();
       for (const m of meshes) root.add(m);
+      // **第一份实例**（贴骨、Y=13000）：同网格再放一份在头顶；不公转/不上升/不淡出（源码该段只设
+      // `BoneFlag=1`，没有 CODE/Color_A/Alpha*）。⚠ 它的寿命源码未定义（见 live 结构的说明）——
+      // 我们按与第二份同寿命保留，属我方选择。
+      const upper = new THREE.Group();
+      for (const m of meshes) {
+        const um = new THREE.Mesh(m.geometry, m.material);   // 同几何/同材质（该份无独立透明度）
+        um.frustumCulled = false;
+        upper.add(um);
+      }
+      upper.position.set(at.x, at.y + UPPER_LIFT_RAW / FONE, at.z);
       if (fxScale !== 1) root.scale.multiplyScalar(fxScale);
       root.position.set(at.x, at.y + Y_OFFSET_RAW / FONE, at.z);
-      if (casterYaw != null) root.rotation.y = casterYaw + Math.PI;
+      if (casterYaw != null) { root.rotation.y = casterYaw + Math.PI; upper.rotation.y = casterYaw + Math.PI; }
       deps.scene.add(root);
+      deps.scene.add(upper);
 
       // 运行期日志：创建 + 逐网格（用户 2026-09-27 明确要求）
       root.updateMatrixWorld(true);
@@ -247,7 +272,9 @@ export function runHealingOrbit(
             return mm?.map ? `${img?.width ?? '?'}x${img?.height ?? '?'}` : '无';
           })()}`);
       }
-      live.push({ root, mats, at: { ...at }, frame: 0, nextLogFrame: 0 });
+      logFn?.(`  · 第一份实例（贴骨·头顶）：Y=${(UPPER_LIFT_RAW / FONE).toFixed(1)}（13000/256）`
+        + ` 不公转/不上升/不淡出；⚠ 源码未定义其寿命（槽位残留），我们取与第二份同寿命（250 帧）—— 我方选择`);
+      live.push({ root, mats, at: { ...at }, frame: 0, nextLogFrame: 0, upper });
     } catch (e) {
       reportFallback('skillfx', 'Healing 小天使加载失败：' + String(e));
     }
@@ -271,6 +298,7 @@ export function updateHealingOrbits(dt: number): void {
     const t = o.frame;
     if (t >= MAX_TIME) {
       o.root.removeFromParent();
+      o.upper?.removeFromParent();
       for (const m of o.mats) m.dispose();
       logFn?.(`  · Healing 小天使 f=${t} 寿命到（Max_Time=250）⇒ 清空`);
       live.splice(i, 1);
