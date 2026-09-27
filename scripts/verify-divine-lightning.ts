@@ -22,12 +22,16 @@ const ok = (label: string, cond: boolean): void => {
 };
 
 const THREE = (await import('three')).default ?? (await import('three'));
-const { runDivineLightning, updateDivineLightningRunners, divineLightningStats, clearDivineLightning,
-  BOLT_MAX_FRAMES, SPARK_COUNT } = await import('../src/render/effects/divine-lightning.js');
+const { runDivineLightning, configureDivineLightning, updateDivineLightningRunners, divineLightningStats,
+  clearDivineLightning, BOLT_MAX_FRAMES, SPARK_COUNT, BOLT_TRACE_WIDTH_RAW } = await import('../src/render/effects/divine-lightning.js');
 
 console.log('A/B/C. 真模块跑帧循环（70fps Assa 心跳）');
 {
   const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(60, 1.6, 0.1, 2000);
+  cam.position.set(130, 50, 30);
+  cam.lookAt(100, 20, -30);
+  configureDivineLightning({ camera: cam });
   const at = { x: 100, y: 20, z: -30 };
   runDivineLightning({ scene, log: () => {} }, at);
 
@@ -69,6 +73,35 @@ console.log('A/B/C. 真模块跑帧循环（70fps Assa 心跳）');
   for (let f = 0; f < totalFrames; f++) updateDivineLightningRunners(1 / FPS);
   ok('D. 连放 3 道后同样全部清干净', divineLightningStats().live === 0 && countMeshes() === 0);
 
+  clearDivineLightning();
+}
+
+console.log('E. 竖直段不退化（2026-09-27 用户实测"没有从天而降的雷"的回归钉）');
+{
+  // 第一版的横向 = cross(段方向, up) 的水平投影 —— 竖直段（弹体下落）横向恒 (0,0) ⇒
+  // 带子两侧顶点重合 ⇒ 零宽度 ⇒ 一个像素都不画。修法：cross(视线, 段方向)。
+  // 用真模块 + 真相机跑一发，断言**弹体带子两侧顶点分离 ≥ 半宽的 90%**。
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(60, 1.6, 0.1, 2000);
+  cam.position.set(30, 30, 60);            // 斜上方看目标 —— 游戏相机的典型视角
+  cam.lookAt(0, 10, 0);
+  configureDivineLightning({ camera: cam });
+  runDivineLightning({ scene, log: () => {} }, { x: 0, y: 0, z: 0 });
+  // 推进几帧让 trace 积累（弹体竖直下落中）
+  for (let f = 0; f < 10; f++) updateDivineLightningRunners(1 / 70);
+  // 找场景里的弹体带 mesh，读它第 0 对顶点的间距
+  let mesh: THREE.Mesh | null = null;
+  scene.traverse((o) => { if (!mesh && (o as THREE.Mesh).isMesh && (o as THREE.Mesh).geometry.getAttribute('position')) mesh = o as THREE.Mesh; });
+  ok('弹体带 mesh 已创建（竖直下落中也画得出带子）', !!mesh);
+  if (mesh) {
+    const pos = mesh.geometry.getAttribute('position');
+    const a = new THREE.Vector3().fromBufferAttribute(pos, 0);
+    const b = new THREE.Vector3().fromBufferAttribute(pos, 1);
+    const sep = a.distanceTo(b);
+    const expect = BOLT_TRACE_WIDTH_RAW / 256;   // 全宽（两侧各半宽）
+    ok(`带子两侧顶点分离 = ${sep.toFixed(2)}（期望 ≈ 全宽 ${expect.toFixed(2)}；第一版为 **0** ⇒ 竖直带完全不可见）`,
+      sep > expect * 0.9 && sep < expect * 1.1);
+  }
   clearDivineLightning();
 }
 

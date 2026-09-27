@@ -2053,7 +2053,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     const fx = effects;
-    configureDivineLightning({ dynLights, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null });
+    configureDivineLightning({ dynLights, camera, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null });
     runDivineLightning({ scene: scene!, dynLights, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null,
       log: (m) => console.log('[skillfx]' + m) }, feet);
   }
@@ -2436,7 +2436,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!scene) { console.log('[skillfx] 世界未就绪'); return; }
     const at = { x: selfPos.x + Math.sin(selfAngle) * 12, y: selfPos.y, z: selfPos.z + Math.cos(selfAngle) * 12 };
     const fx2 = effects;
-    configureDivineLightning({ dynLights, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null });
+    configureDivineLightning({ dynLights, camera, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null });
     runDivineLightning({ scene, dynLights, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null,
       log: (m) => console.log('[skillfx]' + m) }, at);
     console.log('[skillfx] __ptDivine 落雷 @', at.x.toFixed(1), at.y.toFixed(1), at.z.toFixed(1));

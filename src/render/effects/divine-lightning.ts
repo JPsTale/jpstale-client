@@ -142,6 +142,8 @@ let texCache: THREE.Texture | null = null;
 let sharedMat: THREE.MeshBasicMaterial | null = null;
 let dynSink: DivineFxSink['dynLights'] = null;
 let partSink: DivineFxSink['spawnPart'] = null;
+let camRef: THREE.Camera | null = null;
+let reportedNoCam = false;
 
 function materialOf(): THREE.MeshBasicMaterial {
   if (!sharedMat) {
@@ -159,8 +161,18 @@ function materialOf(): THREE.MeshBasicMaterial {
   return sharedMat;
 }
 
-/** 建（惰性）或更新一条拖尾带 —— **顶点原地写**，段数用 drawRange；点数 <2 时隐藏 */
-function updateRibbon(root: THREE.Group, existing: Ribbon | null, trace: THREE.Vector3[], halfWidthWU: number): Ribbon | null {
+/**
+ * 建（惰性）或更新一条拖尾带 —— **顶点原地写**，段数用 drawRange；点数 <2 时隐藏。
+ *
+ * ⚠ 横向 = `normalize(cross(viewDir, segDir))`（**相机朝向带**，2026-09-27 修）：
+ *   第一版用 `cross(segDir, up)` 的水平投影 ⇒ **竖直段（弹体下落正是竖直的）横向恒 (0,0)**，
+ *   带子两侧顶点重合成零宽度 ⇒ 一个像素都不画 —— 用户实测"没有从天而降的雷"的真根因。
+ *   原版 `AssaAddFaceTrace`（`AssaUtil.cpp:895`）在**相机空间**取垂直（`persp = (-dy, +dx)`，
+ *   dx/dy 是 `AssaGetCameraCoord` 之后的 2D 分量）⇒ 竖直线投影后两分量都在、不退化；
+ *   本实现用世界空间的 `cross(viewDir, segDir)` 表达同一语义。段方向 ∥ 视线时回退 `cross(segDir, up)`。
+ */
+function updateRibbon(root: THREE.Group, existing: Ribbon | null, trace: THREE.Vector3[], halfWidthWU: number,
+                      viewDir: THREE.Vector3): Ribbon | null {
   if (trace.length < 2) {
     if (existing) existing.mesh.visible = false;
     return existing;
@@ -187,18 +199,20 @@ function updateRibbon(root: THREE.Group, existing: Ribbon | null, trace: THREE.V
     r = { mesh, geo, posAttr, uvAttr };
   }
   const n = Math.min(trace.length, TRACE_LENGTH);
+  const UP = new THREE.Vector3(0, 1, 0);
+  const seg = new THREE.Vector3();
+  const lat = new THREE.Vector3();
   for (let i = 0; i < n; i++) {
     const p = trace[i]!;
     const prev = trace[Math.max(0, i - 1)]!;
     const next = trace[Math.min(n - 1, i + 1)]!;
-    const dx = next.x - prev.x, dy = next.y - prev.y, dz = next.z - prev.z;
-    const len = Math.hypot(dx, dy, dz) || 1;
-    let px = dz / len, pz = -dx / len;
-    const pl = Math.hypot(px, pz) || 1;
-    px = (px / pl) * halfWidthWU;
-    pz = (pz / pl) * halfWidthWU;
-    r.posAttr.setXYZ(i * 2, p.x - px, p.y, p.z - pz);
-    r.posAttr.setXYZ(i * 2 + 1, p.x + px, p.y, p.z + pz);
+    seg.set(next.x - prev.x, next.y - prev.y, next.z - prev.z);
+    if (seg.lengthSq() === 0) seg.set(0, -1, 0);   // 重复点（静止段）：按"向下"处理，与弹体主方向一致
+    lat.crossVectors(viewDir, seg.normalize());
+    if (lat.lengthSq() < 1e-6) lat.crossVectors(seg, UP);   // 段 ∥ 视线：回退水平垂直
+    lat.normalize().multiplyScalar(halfWidthWU);
+    r.posAttr.setXYZ(i * 2, p.x - lat.x, p.y - lat.y, p.z - lat.z);
+    r.posAttr.setXYZ(i * 2 + 1, p.x + lat.x, p.y + lat.y, p.z + lat.z);
     const v = i / (n - 1);
     r.uvAttr.setXY(i * 2, 0, v);
     r.uvAttr.setXY(i * 2 + 1, 1, v);
@@ -324,10 +338,14 @@ export function runDivineLightning(deps: DivineFxSink, at: { x: number; y: numbe
   deps.log?.(`  ⚡ Divine Lightning 落雷：起点高 ${(BOLT_START_LIFT_RAW / FONE).toFixed(0)}，目标 (${at.x.toFixed(1)},${at.y.toFixed(1)},${at.z.toFixed(1)})`);
 }
 
-/** 渲染依赖注入（`dynLights`/`spawnPart`；幂等） */
-export function configureDivineLightning(deps: Pick<DivineFxSink, 'dynLights' | 'spawnPart'>): void {
+/** 渲染依赖注入（`dynLights`/`spawnPart`/`camera`；幂等） */
+export function configureDivineLightning(deps: Pick<DivineFxSink, 'dynLights' | 'spawnPart'> & {
+  /** 相机（拖尾带的横向 = `cross(视线, 段方向)` —— 对**竖直**段也非零；缺它 ⇒ 带**不画**并上报） */
+  camera?: THREE.Camera | null;
+}): void {
   dynSink = deps.dynLights ?? null;
   partSink = deps.spawnPart ?? null;
+  camRef = deps.camera ?? null;
 }
 
 /** 每帧调（**70fps** 帧轴 —— Assa 心跳，见文件头；与 multi-spark 的 60fps 轴**不同**，别抄错） */
@@ -337,6 +355,14 @@ export function updateDivineLightningRunners(dt: number): void {
   const n = Math.floor(frameAcc);
   if (n <= 0) return;
   frameAcc -= n;
+  // 视线方向（原版在相机空间展开 ⇒ 这里同样按相机取）；缺相机 ⇒ 上报一次并不画（不静默）
+  const viewDir = new THREE.Vector3();
+  let haveView = false;
+  if (camRef) { camRef.getWorldDirection(viewDir); haveView = true; }
+  else if (!reportedNoCam) {
+    reportedNoCam = true;
+    reportFallback('skillfx', 'Divine Lightning：没注入相机 ⇒ 拖尾带无法定向（cross(视线,段方向)），本次不画');
+  }
   for (let i = live.length - 1; i >= 0; i--) {
     const b = live[i]!;
     for (let k = 0; k < n; k++) {
@@ -344,13 +370,15 @@ export function updateDivineLightningRunners(dt: number): void {
       if (b.sparks) for (const s of b.sparks) stepSpark(s);
     }
     // 带子原地更新（弹体到点 ⇒ 当场消失；火花各自到点 ⇒ 各自消失）
-    b.boltRibbon = b.bolt.expired ? disposeRibbon(b.boltRibbon)
-      : updateRibbon(b.root, b.boltRibbon, b.bolt.trace, BOLT_TRACE_WIDTH_RAW / 2 / FONE);
-    if (b.sparks) {
-      for (let si = 0; si < b.sparks.length; si++) {
-        const s = b.sparks[si]!;
-        b.sparkRibbons[si] = s.expired ? disposeRibbon(b.sparkRibbons[si] ?? null)
-          : updateRibbon(b.root, b.sparkRibbons[si] ?? null, s.trace, SPARK_TRACE_WIDTH_RAW / 2 / FONE);
+    if (haveView) {
+      b.boltRibbon = b.bolt.expired ? disposeRibbon(b.boltRibbon)
+        : updateRibbon(b.root, b.boltRibbon, b.bolt.trace, BOLT_TRACE_WIDTH_RAW / 2 / FONE, viewDir);
+      if (b.sparks) {
+        for (let si = 0; si < b.sparks.length; si++) {
+          const s = b.sparks[si]!;
+          b.sparkRibbons[si] = s.expired ? disposeRibbon(b.sparkRibbons[si] ?? null)
+            : updateRibbon(b.root, b.sparkRibbons[si] ?? null, s.trace, SPARK_TRACE_WIDTH_RAW / 2 / FONE, viewDir);
+        }
       }
     }
     // 全部结束（弹体到点 + 火花都到点）⇒ 摘实例
