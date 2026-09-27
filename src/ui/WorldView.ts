@@ -3376,6 +3376,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   // （此刻 scene 未建、show() 未调用）→ 暂存，show() 建好 scene 后重放，避免被吞。
   const pendingAppears: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number }[] = [];
 
+  // 进场窗口：从 beginWorldEnter()（发起选角）起，到 show() 里 clearWorldActors() 清场完为止。
+  // ⚠ 不能只用 `!scene` 判"世界未就绪"：scene 在**上一局** show() 时就建好了（小退→重进 /
+  //   断线重连续传 / 换号重进都不重建）。窗口期内若直接 spawn，模型缓存全热时这条异步链在
+  //   **微任务里**就跑完（remotes.set + scene.add），随后同一场 enterGame 消息里的 show() →
+  //   clearWorldActors() 把它整个清掉；而服务端 visiblePlayers 已记"双方可见"，**不会再发第二次**
+  //   Appear ⇒ 那个玩家/怪永久隐身（直到拉开 1600 距离再回来）。症状即"先后登录 2 个账号，
+  //   有概率完全看不到对方"（2026-09-27 用户实测）。窗口期内一律暂存，重放点在清场之后 ⇒ 不可被清。
+  let enterQueuing = false;
+
   // 克隆骨骼树：按原 bones 数组顺序生成克隆并重建父/子关系（顺序即 skinIndex 语义）
   // 克隆层级/局部变换与源完全一致 ⇒ boneInverses 必须沿用源（bind() 用当前恒等世界矩阵
   // 重算会得到错误逆矩阵 → 蒙皮二次变换 → 模型扭曲）。
@@ -3901,7 +3910,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // `performance.now()`，锚点会晚于"服务端发消息"若干毫秒（模型加载耗时），条子会跟着偏慢。
     // 声明在这里（同步入口、await 之前）就与"服务端说还剩多少"对齐到同一时刻。
     const lifeAnchorMs = performance.now();
-    if (!scene) {
+    if (!scene || enterQueuing) {
       pendingMonsterAppears.push(actorInfo);
       return;
     }
@@ -4112,7 +4121,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const pendingNpcAppears: { entityId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }[] = [];
 
   function spawnNpc(info: { entityId: number; nameKey: string; modelFile: string; x: number; y: number; z: number; angle: number }): void {
-    if (!scene) {
+    if (!scene || enterQueuing) {
       pendingNpcAppears.push(info);
       return;
     }
@@ -5460,7 +5469,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 服务端没给主键（旧版服务端）⇒ **显式留痕**，名字退回数据名（不假装查到了）
       reportFallback('item.groundName', `地面物 #${groundItemId} 没有 itemlist_id ⇒ 名字用数据名「${name}」`);
     }
-    if (!scene) {
+    if (!scene || enterQueuing) {
       pendingGroundItems.push({ groundItemId, name, x, y, z, dorpItem, itemId, itemlistId, quantity, money });
       return;
     }
@@ -5879,7 +5888,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function spawnRemote(actorInfo: { playerId: number; name: string; classId: number; level: number; hp?: number; maxHp?: number; clanName?: string; clanMark?: string; x: number; y: number; z: number; angle?: number; appearance?: CharacterAppearance; animWalkRate?: number; animRunRate?: number; animIndex?: number; animClip?: string }): void {
-    if (!scene) {
+    if (!scene || enterQueuing) {
       // 世界未就绪（进场竞态）：缓存待 show() 重放，而不是静默丢弃
       pendingAppears.push(actorInfo);
       return;
@@ -6065,6 +6074,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     pendingMonsterAppears.length = 0;
     pendingGroundItems.length = 0;
     pendingNpcAppears.length = 0;
+    // 开窗：直到 show() 清场完才关。窗口期内的 Appear 一律暂存（见 enterQueuing 的注释
+    // —— 热重进时 scene 已在，`!scene` 挡不住"直建后被 clearWorldActors 清掉"那条竞态）。
+    enterQueuing = true;
   }
 
   // 进图重进（show 再次调用）前清场：移除上一段游戏生涯的远端演员/怪物/自机模型。
@@ -7564,10 +7576,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         // 进图这套外观就是"当前模型"⇒ 记下指纹，之后的 AppearanceUpdate 才能正确判断"变没变"
         selfAppearanceKey = appearanceModelKey(enterGame.appearance);
       }
+      // 关窗：清场已完，此后到达的 Appear 直建是安全的（不会再被本局清掉）；
+      // 必须在下面的暂存重放**之前** —— 重放走的也是 spawnRemote，别让它又进暂存。
+      enterQueuing = false;
 
       // 重放进场竞态期间缓存的远端 Appear（此刻 scene 已就绪）
       if (pendingAppears.length > 0) {
         const batch = pendingAppears.splice(0);
+        console.log('[WorldView] 重放进场窗口期的暂存 Appear：远端玩家 ' + batch.length + ' 个');
         for (const a of batch) spawnRemote(a);
       }
       // 怪物同理（可能早于本机 enterGame 到达）
@@ -7579,6 +7595,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       if (pendingGroundItems.length > 0) {
         const batch = pendingGroundItems.splice(0);
         for (const g of batch) spawnGroundItem(g.groundItemId, g.name, g.x, g.y, g.z, g.dorpItem, g.itemId, g.itemlistId, g.quantity, g.money);
+      }
+      // NPC 同理。⚠ 此前 pendingNpcAppears **只有 push 和 beginWorldEnter 清空、从无重放点**
+      // —— 窗口期收到的 NPC Appear 一条都显示不出来（用户 2026-09-15"刚进图不推 NPC"的服务端
+      // 修复只保证了服务端会发，客户端这条吞口没人管）。
+      if (pendingNpcAppears.length > 0) {
+        const batch = pendingNpcAppears.splice(0);
+        console.log('[WorldView] 重放进场窗口期的暂存 Appear：NPC ' + batch.length + ' 个');
+        for (const a of batch) spawnNpc(a);
       }
 
       try {
@@ -7817,6 +7841,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       remotes.clear();
       remoteSpawning.clear();
       pendingAppears.length = 0;
+      enterQueuing = false;
       for (const actor of monsters.values()) {
         scene?.remove(actor.root);
         actor.skeleton.dispose?.();
