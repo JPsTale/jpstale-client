@@ -40,7 +40,8 @@ import {
 } from '../render/effects/monster-attack-fx.js';
 import { dmgFxGet, bounceScale, popArc, dirFromTo, easeOutCubic } from '../render/dmg-fx.js';
 import {
-  fireSkillCast, fireSkillEvent, fireObserverCast, skillFxRowByIcon, skillFxRowByAnimIndex, skillFxRowBySkillId,
+  fireSkillCast, fireSkillEvent, fireObserverCast, fireObserverCastCircle, hasObserverCastVisual,
+  skillFxRowByIcon, skillFxRowByAnimIndex, skillFxRowBySkillId,
   type SkillFxRow, type SkillFxFireCtx,
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
@@ -4862,7 +4863,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       skillLevel: skillLevel > 0 ? skillLevel : null,
       sparkCount,
     };
-    if ((remoteRow.cast.fx?.length ?? 0) + remoteRow.cast.sfx.length > 0) {
+    if (hasObserverCastVisual(remoteRow)) {
       // **目标是谁**（原版 `RecvProcessSkill`：`lpChar = FindChrPlayer(LParam)`，治的就是他）。
       // 三种情形都要认（位置**每帧现取**，目标走动时效果跟着走）：
       //   ① 怪 → `monsters`；② **别的玩家** → `remotes`；③ **就是我自己** → `selfPos`
@@ -4882,7 +4883,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       const targetRoot = targetRootOf();
       if (!targetSelf && targetId !== 0 && !targetRoot) {
         reportFallback('skillfx', `旁观者侧：技能 0x${skillId.toString(16)} 的目标 id=${targetId}`
-          + ` 不在本地视野（既不是自己，也不在怪/远端表里）⇒ 起手特效不放（原版 if(lpChar) 同）`);
+          + ` 不在本地视野（既不是自己，也不在怪/远端表里）⇒ 目标处的那份特效不放（原版 if(lpChar) 同）`);
+        // ⚠ **起手法阵照放**：它长在**施法者**脚下、与目标无关（放它是我们的明确改动，见 runner 注释）。
+        //   只放法阵、不放"目标锚定"的那份 —— 否则治疗的天使会悄悄落到施法者身上
+        //  （用户 2026-09-27 实测过这个症状）。
+        fireObserverCastCircle(remoteRow, skillFxCtx(anchorOf), actor.root.position);
       } else {
         fireObserverCast(remoteRow,
           { ...skillFxCtx(anchorOf), casterYaw: actor.root.rotation.y },

@@ -466,11 +466,19 @@ function dispatchCastFx(row: SkillFxRow, ctx: SkillFxFireCtx, caster: { x: numbe
 
 /**
  * **旁观者侧的起手表现** —— 对应原版 `RecvProcessSkill`（`netplay.cpp:12734`）：它按技能码逐条分派
- * **该技能自己的特效**（如 `case SKILL_PLAY_HEALING: sinEffect_Healing2(lpChar)` + `SkillPlaySound`），
- * **不放起手法阵**（法阵只在施法者本机的 `smCHAR::BeginSkill` 路径里起）。
+ * **该技能自己的特效**（如 `case SKILL_PLAY_HEALING: sinEffect_Healing2(lpChar)` + `SkillPlaySound`）。
  *
  * <p>⚠ 用户 2026-09-27 实测："在网络上的其他玩家眼里，看不到我的施法动作和粒子特效" ——
  * 此前我们只在**自机**的起手路径派发特效，旁观者那条链没接。
+ *
+ * <h3>起手法阵：**我方明确改动**（原版旁观者看不到）</h3>
+ * 原版 `sinEffect_StartMagic` 全树 39 个调用点里 36 个在 `smCHAR::BeginSkill`、2 个在
+ * `BeginSkill_Monster`，而 `BeginSkill` **只被 `lpCurPlayer->BeginSkill(...)` 调用**（`SkillSub.cpp` 全篇），
+ * 旁观侧 `RecvProcessSkill` 也从不调它 ⇒ **原版里别人的法阵你看不到**（你看到的是"他的动画 +
+ * 事件帧特效 + 命中/受击特效"）。
+ * 用户 2026-09-27 两次指出"远端看不到祭司脚下的法阵" ⇒ 这里**有意补上**：落点 = **施法者脚下**
+ * （法阵是施法者的起手表现，与治疗锚点落在被治疗者身上是两件事），家族仍走 `castCircleFlagForClass`
+ * （按职业取，取不到就不放 —— 与原版同一份判据）。
  */
 export function fireObserverCast(row: SkillFxRow | null, ctx: SkillFxFireCtx,
                                 caster: { x: number; y: number; z: number },
@@ -479,6 +487,31 @@ export function fireObserverCast(row: SkillFxRow | null, ctx: SkillFxFireCtx,
   // 音效按**原版位置**播（在目标处：`SkillPlaySound(..., lpChar->pX…)`）
   for (const s of row.cast.sfx) ctx.playSound?.(s, target ?? caster);
   dispatchCastFx(row, ctx, caster, target);
+  fireObserverCastCircle(row, ctx, caster);
+}
+
+/**
+ * **只起起手法阵**（旁观者侧）—— 落点 = **施法者**脚下，家族按职业取（与原版同一判据）。
+ *
+ * 单独成函数的原因：法阵**与目标无关**（它长在施法者脚下），所以"目标在本地视野里认不出"时
+ * 它照样该放 —— 而"技能自身那个目标锚定的特效"（如治疗的天使落在被治疗者身上）这时**不能放**，
+ * 否则会悄悄落到施法者身上（正是用户报过的"别人眼里天使绕祭司转"）。
+ */
+export function fireObserverCastCircle(row: SkillFxRow | null, ctx: SkillFxFireCtx,
+                                      caster: { x: number; y: number; z: number }): void {
+  if (!row) return;
+  const charFlag = castCircleFlagForClass(row.classDir);
+  if (charFlag == null) return;   // 该职业在原版里没有起手法阵（取不到 = 不放）
+  runCastCircle(ctx, caster, { charFlag, type: CAST_CIRCLE_TYPE_NORMAL });
+}
+
+/** 旁观者侧这一招**有没有起手表现**（技能自己的起手特效/音效，或我们补的起手法阵） */
+export function hasObserverCastVisual(row: SkillFxRow | null): boolean {
+  if (!row) return false;
+  if ((row.cast.fx?.length ?? 0) + row.cast.sfx.length > 0) return true;
+  // ⚠ 只有法阵、没有 cast.fx/sfx 的技能（法师/祭司/萨满的多数招）也要走旁观者这条路 ——
+  //    否则"远端的法阵"对它们仍然看不到（用户 2026-09-27 报的就是祭司施法时的法阵）。
+  return castCircleFlagForClass(row.classDir) != null;
 }
 
 export function fireSkillCast(row: SkillFxRow | null, ctx: SkillFxFireCtx, pos: { x: number; y: number; z: number },

@@ -14,7 +14,8 @@
  *     `θ_t = (256 + 25t)/4096·2π`、`r_t = (4096 + 16t)/256`、`y_t = pY + (7000 + 200 + 20t)/256`。
  *  D. **每帧 2 颗粒子**（`sinEffect_HealParticle3` 尾部 `memcpy` 复制），发射到 `Max_Time - 30` 为止。
  *  E. **旁观者那条路真的派发**（`fireObserverCast` = 原版 `RecvProcessSkill`）：`code:healing` 的
- *     起手特效被调、音效按**目标**位置播；且**不起法阵**（法阵只在施法者本机 `BeginSkill` 里）。
+ *     起手特效被调、音效按**目标**位置播；并补起手法阵（**我方改动**：原版只有施法者本机看得到，
+ *     用户 2026-09-27 两次指出"远端看不到祭司脚下的法阵"⇒ 有意补上，落点在**施法者**脚下）。
  *
  * 用法：`npm run verify-healing-angel`。资产根来自 `.env` 的 `VITE_ASSET_ROOT`；
  * 取不到 ⇒ **报告跳过**（不假装通过）。
@@ -262,7 +263,7 @@ console.log('B/C/D. 真资产 + 真帧循环：30 帧动画 / 位置公式 / 每
 }
 
 // ─────────────────────────────────────────────────────────────
-console.log('E. 旁观者那条路（原版 `RecvProcessSkill`）真的派发该技能自己的起手特效 + 音效（不合法阵）');
+console.log('E. 旁观者那条路（原版 `RecvProcessSkill`）真的派发该技能自己的起手特效 + 音效 + 起手法阵');
 {
   const { skillFxRowByIcon, skillFxRowBySkillId, fireObserverCast } = await import('../src/render/effects/skill-fx-runner.js');
   const row = skillFxRowByIcon('mp10 healing');
@@ -300,6 +301,25 @@ console.log('E. 旁观者那条路（原版 `RecvProcessSkill`）真的派发该
     lights.every((l) => l[0] === target.x && l[1] === target.y && l[2] === target.z));
   ok('旁观者侧：音效按**目标**位置播（`SkillPlaySound(..., lpChar->pX…)`）',
     sounds.length >= 1 && sounds.every((s) => s.pos.x === target.x && s.pos.z === target.z));
+  // 起手法阵：**我方明确改动**（原版旁观者看不到 —— `BeginSkill` 只对 `lpCurPlayer` 跑）。
+  // 落点 = **施法者**脚下（不是被治疗者）；家族按职业取（`castCircleFlagForClass`，与原版同一判据）。
+  {
+    const srcRunner = await read('../src/render/effects/skill-fx-runner.ts');
+    ok('旁观者侧：**补起手法阵**且落点在**施法者**脚下（我方改动，注释里标明"原版只有本机看得到"）',
+      /fireObserverCastCircle\(row, ctx, caster\);/.test(srcRunner)
+      && /runCastCircle\(ctx, caster, \{ charFlag, type: CAST_CIRCLE_TYPE_NORMAL \}\);/.test(srcRunner)
+      && /const charFlag = castCircleFlagForClass\(row\.classDir\);/.test(srcRunner)
+      && /我方明确改动/.test(srcRunner)
+      && /原版里别人的法阵你看不到/.test(srcRunner));
+    // 目标认不出时：**法阵照放**（它长在施法者脚下），但目标锚定的那份不放（否则天使会落到施法者身上）
+    const wv3 = await read('../src/ui/WorldView.ts');
+    ok('旁观者侧：目标认不出时**仍放法阵**、但不放"目标锚定"的那份特效',
+      /fireObserverCastCircle\(remoteRow, skillFxCtx\(anchorOf\), actor\.root\.position\);/.test(wv3)
+      && /if \(hasObserverCastVisual\(remoteRow\)\)/.test(wv3));
+    ok('"有起手表现"的判据含**只有法阵**的技能（法师/祭司/萨满的多数招没有 cast.fx/sfx）',
+      /export function hasObserverCastVisual\(row: SkillFxRow \| null\): boolean \{/.test(srcRunner)
+      && /return castCircleFlagForClass\(row\.classDir\) != null;/.test(srcRunner));
+  }
   // 2026-09-27 用户实测："我点玩家放 healing，自己看到小天使绕玩家转，在另一个玩家眼里依然绕着祭司本人转"
   // ⇒ 被治的人**就是 observer 自己**，而自机不在 `remotes` 里 ⇒ 原来的解析落到施法者身上。
   // 三条解析都要在（怪 / 别的玩家 / 自己），且认不出时**不放**（原版 `if (lpChar)` 同）。
@@ -308,9 +328,9 @@ console.log('E. 旁观者那条路（原版 `RecvProcessSkill`）真的派发该
     ok('旁观者侧：目标解析含"就是我自己"（`targetId === selfPlayerId` ⇒ 用 `selfPos`）',
       /const targetSelf = targetId !== 0 && targetId === selfPlayerId;/.test(wv2)
       && /if \(targetSelf\) return selfPos;/.test(wv2));
-    ok('旁观者侧：目标认不出时**不放并上报**（不把锚点悄悄换成施法者，AGENTS #12）',
+    ok('旁观者侧：目标认不出时**不放那份特效**并上报（不把锚点悄悄换成施法者，AGENTS #12）',
       /targetSelf \? \{ x: selfPos\.x, y: selfPos\.y, z: selfPos\.z \}/.test(wv2)
-      && /不在本地视野（既不是自己，也不在怪\/远端表里）⇒ 起手特效不放/.test(wv2));
+      && /⇒ 目标处的那份特效不放（原版 if\(lpChar\) 同）/.test(wv2));
   }
   // 自机侧：起手音在**施法者**位置（`fireSkillCast(row, ctx, pos, target)` 的音效按 pos）
   {
