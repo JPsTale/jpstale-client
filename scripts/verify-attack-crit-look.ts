@@ -44,12 +44,15 @@ ok('WorldViewOpts 声明 onCastSkill 回调（含 animIndex/animClip：跨端同
 ok('playEquippedSkill 上报数字 skillId（`fistSkillOf` 走 `fistIntent`，身份行给 iconFile/skillId）',
   /function fistSkillOf[\s\S]{0,400}?const it = fistIntent\(slot\);/.test(wv)
   && /return \{ icon: it\.row\.iconFile, skillId: it\.skillId \};/.test(wv));
-ok('playEquippedSkill 按 kind:monster + skillId 触发 onCastSkill（带本条动画下标）',
-  /opts\?\.onCastSkill\?\.\(it\.skillId, aimId, motion\?\.index \?\? 0, selfAnimClip\)/.test(wv));
+// 2026-09-27：三条上报路收敛成**唯一实现** `reportCastIntent` —— 用户报"别人看不到我的施法动作和
+// 粒子特效"，根因就是**无目标那条路漏传了 anim_index**（服务端记 0 ⇒ 旁观者整条不播）。
+ok('playEquippedSkill / 追打循环 都经**唯一实现** `reportCastIntent` 上报（skillId + 本条动画下标）',
+  /reportCastIntent\(it\.skillId, aimId\);/.test(wv)
+  && /if \(sk\) reportCastIntent\(sk\.skillId, targetId\);/.test(wv)
+  // 动画下标由 helper 内部取"刚播的那条"（三条路共用 ⇒ 不会再漏传）
+  && /function reportCastIntent\(skillId: number, aimId: number\): void \{[\s\S]{0,240}?getCurrentMotion\(\)[\s\S]{0,160}?onCastSkill\?\.\(skillId, aimId, motion\?\.index \?\? 0, selfAnimClip\)/.test(wv));
 ok('playEquippedSkill 查不到身份就不发包；异职业/表没到 ⇒ **整支不放**（不退化普攻）',
   /if \(it\.kind === 'unknown' \|\| it\.kind === 'invalid'\) return false;/.test(wv));
-ok('追打循环里技能那一击也上报（原版 PlaySkillAttack 的结算同义）',
-  /if \(sk\) opts\?\.onCastSkill\?\.\(sk\.skillId, targetId, m\?\.index \?\? 0, selfAnimClip\)/.test(wv));
 ok('main.ts 将 onCastSkill 接 sendUseSkill（原样带上 animIndex/animClip）',
   /onCastSkill:\s*\(skillId, targetId, animIndex, animClip\) =>\s*\n?\s*sendUseSkill\(skillId, targetId, animIndex \?\? 0, animClip \?\? ''\)/.test(main));
 ok('main.ts 导入 sendUseSkill', /import \{[^}]*sendUseSkill[^}]*\} from '\.\/net\/bridge\.js'/.test(main));

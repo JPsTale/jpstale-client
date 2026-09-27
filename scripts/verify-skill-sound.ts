@@ -215,8 +215,18 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
     && /sk \? playSkillByIcon\(sk\.icon, monsters\.get\(moveTarget\.id\)\?\.root \?\? null\)/.test(code));
   // 2026-09-24 改（D7 重做）：技能起手**不结算**，只上报"意图 + 我播的那条动作"
   // （服务端据此广播 S2C_SkillStart 给旁观者；伤害在事件帧由 C2S_SkillHit 触发）。
-  ok('③ 追打里技能那一击上报"意图 + 本机所播动作条目"（AGENTS #14 透传；D7 两次上报）',
-    /if \(sk\) opts\?\.onCastSkill\?\.\(sk\.skillId, targetId, m\?\.index \?\? 0, selfAnimClip\);/.test(code));
+  // 2026-09-27 改：三条上报路收敛成**唯一实现** `reportCastIntent` —— 用户报"别人看不到我的施法动作
+  // 和粒子特效"，根因正是 **无目标那条路漏传了 anim_index**（服务端记 0 ⇒ 旁观者拿不到动作条目）。
+  // 故这里不再逐个签名断言，而是钉"只有一处发 `onCastSkill`"+"它以**刚播的那条**动作作参数"。
+  ok('③ 施法意图上报是**唯一实现** `reportCastIntent`（三条路都经它，没人再各写一份）',
+    (code.match(/opts\?\.onCastSkill\?\.\(/g) ?? []).length === 1
+    && /function reportCastIntent\(skillId: number, aimId: number\): void \{/.test(code)
+    && /const motion = animState\?\.getCurrentMotion\(\);/.test(code)
+    && /opts\?\.onCastSkill\?\.\(skillId, aimId, motion\?\.index \?\? 0, selfAnimClip\);/.test(code));
+  ok('③ 三条上报路（无目标/有目标/追打循环）**都**走它',
+    /reportCastIntent\(fs\.skillId, aimId\);/.test(code)
+    && /reportCastIntent\(it\.skillId, aimId\);/.test(code)
+    && /if \(sk\) reportCastIntent\(sk\.skillId, targetId\);/.test(code));
   ok('③ 技能**事件帧**上报 skill_hit（逐段结算；服务端收到才结算该段）',
     /opts\?\.onSkillHit\?\.\(castSkillId, selfSkillTargetId,/.test(code)
     && /const castSkillId = skillIdByIcon\(selfSkillRow\.icon\);/.test(code));

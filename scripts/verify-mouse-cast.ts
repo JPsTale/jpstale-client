@@ -124,7 +124,8 @@ ok('瞄准改用**点击这一下自己的判定**（不再读 15Hz 滞后的 `h
 ok('无目标施放的顺序照源码：①动作态闸门 ②绑定/职业 ③四道闸门 ④先播后发',
   /if \(st === STATE\.ATTACK \|\| st === STATE\.SKILL \|\| st === STATE\.EAT\) return false;/.test(noTarget)
   && before(noTarget, 'noTargetCastBlock(', 'playSkillByIcon(')
-  && before(noTarget, 'playSkillByIcon(', 'onCastSkill?.('));
+  // 2026-09-27：上报收敛成 `reportCastIntent`（唯一实现）—— 顺序仍是"先播、后发"
+  && before(noTarget, 'playSkillByIcon(', 'reportCastIntent('));
 ok('播不出来就不发包（播放层"该技能必须有目标"门 ⇒ 退回打怪那条路，不假装放出去）',
   /if \(!playSkillByIcon\(fs\.icon, aim\)\) return false;/.test(noTarget));
 // 2026-09-27 改（用户指出"客户端只有对自己施法，没有对目标施法"）：目标是**角色**（玩家或怪）——
@@ -135,7 +136,8 @@ ok('目标解析只对"目标是别的角色"的技能生效（`skillTargetsChar
   && /nameplateTargetAt\(cx, cy\) \?\? pickTargetAt\(cx, cy\)/.test(noTarget)
   && /tag\.kind === 'player' \|\| tag\.kind === 'monster'/.test(noTarget));
 ok('玩家目标的包带**玩家实体 id**；无玩家 ⇒ `aimId = 0`（自施，服务端 Healing 落回自己）',
-  /opts\?\.onCastSkill\?\.\(fs\.skillId, aimId\)/.test(noTarget)
+  // 2026-09-27：改经唯一实现上报（`reportCastIntent` 内部带 `motion?.index`，见 verify-skill-sound）
+  /reportCastIntent\(fs\.skillId, aimId\);/.test(noTarget)
   && /let aimId = 0;/.test(noTarget));
 // 2026-09-26 改：目标解析泛化为"怪或玩家"（Healing 治玩家要把玩家 id 发给服务端；
 // `OnSever.cpp:16478` rsPlayHealing 对玩家生效；beginSelfSkill 的 targetId 在起手时定死）。

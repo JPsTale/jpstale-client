@@ -40,7 +40,7 @@ import {
 } from '../render/effects/monster-attack-fx.js';
 import { dmgFxGet, bounceScale, popArc, dirFromTo, easeOutCubic } from '../render/dmg-fx.js';
 import {
-  fireSkillCast, fireSkillEvent, skillFxRowByIcon, skillFxRowByAnimIndex,
+  fireSkillCast, fireSkillEvent, fireObserverCast, skillFxRowByIcon, skillFxRowByAnimIndex, skillFxRowBySkillId,
   type SkillFxRow, type SkillFxFireCtx,
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
@@ -2183,7 +2183,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
   /** 技能**特效层的上下文**（粒子装配器 + 场景 + 音效）—— 与 `monster-attack-fx` 同理，
    *  粒子本身在 `multi-spark*.ts` 里，这里只提供"在哪、怎么出声"。 */
-  function skillFxCtx(): SkillFxFireCtx {
+  function skillFxCtx(anchorPosFn: () => { x: number; y: number; z: number } = () => selfPos): SkillFxFireCtx {
     // 飞出物（Vigor Ball 那类）要"按名字起粒子 + 拿可停止句柄" ⇒ `spawnStoppable`（不是 `spawn`）。
     // 捕获成 const：闭包里读可能为 null 的外层变量会丢空值收窄（TS18047，本项目踩过多次）。
     const fx = effects;
@@ -2197,8 +2197,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 环的半径/元素数（Pike Wind）、火花颗数（Multi Spark）都随等级变；
       // 取不到时**不猜**（各条目自己决定是"不放并上报"还是"按 1 级并上报"）。
       skillLevel: selfSkillRow ? skillLevelByIcon(selfSkillRow.icon) : null,
-      // 施法者实时位置（原版每帧 `pChar->pX/pY/pZ`）：Healing 的天使跟着人走，不停在原地
-      casterPos: () => ({ x: selfPos.x, y: selfPos.y, z: selfPos.z }),
+      // 效果锚点的实时位置（原版每帧 `pChar->pX/pY/pZ`）：Healing 的天使跟着它走，不停在原地。
+      // ⚠ **锚点是"被治疗者"不是"施法者"**（原版 `pChar = lpTarChar ?: this`）—— 治别人时传目标。
+      anchorPos: anchorPosFn,
       // 世界坐标 → 屏幕坐标（诊断：特效到底落在画面哪一处；`camera` 是主相机）
       project: (p: { x: number; y: number; z: number }) => {
         if (!camera) return null;
@@ -2293,15 +2294,33 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfSkillParam = 0;   // 新施法：道数等本次参数等自己的 SkillStart ack（AGENTS #14 同步结果）
     selfSkillRow = skillFxRowByIcon(iconFile);
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
-    // 起手特效要**目标位置**（原版 `sinEffect_Healing2(lpTarChar)`：有目标就落在目标身上）——
-    // 与事件帧同一套取值（`selfSkillAim` = 起手时定死的那个目标）。
-    const castTargetPos = aim
-      ? ((): { x: number; y: number; z: number } => {
-        const p = aim.position;
-        return { x: p.x, y: p.y + TARGET_BODY_LIFT, z: p.z };
-      })()
+    // 起手特效的落点（原版 `sinEffect_Healing2(lpTarChar)` 读的正是 `pChar->pX/pY/pZ` = **脚底**；
+    // "抬高到身中"那类偏移由**特效自己**按源码加，如 `sinEffectDefaultSet` 的 Y 参数 ——
+    // 调用侧不再加 `TARGET_BODY_LIFT`，否则 Healing 的锚点会凭空高 24 单位）。
+    // 引用快照：`aim` 这个对象不再变，但它的**位置每帧现取**（目标走动时天使跟着走）。
+    const castAimRoot = aim;
+    const castTargetPos = castAimRoot
+      ? { x: castAimRoot.position.x, y: castAimRoot.position.y, z: castAimRoot.position.z }
       : null;
-    fireSkillCast(selfSkillRow, skillFxCtx(), selfPos, castTargetPos);
+    const anchorOf = (): { x: number; y: number; z: number } => (castAimRoot
+      ? { x: castAimRoot.position.x, y: castAimRoot.position.y, z: castAimRoot.position.z }
+      : selfPos);
+    fireSkillCast(selfSkillRow, skillFxCtx(anchorOf), selfPos, castTargetPos);
+  }
+
+  /**
+   * 施法意图上报（`C2S_UseSkill`）—— `animIndex`/`animClip` = **刚刚播的那一条**动作
+   * （AGENTS #14：服务端原样透传给旁观者，两端播同一条才不会"一招两种动作"）。
+   *
+   * **唯一实现**：有目标施法 / 无目标施法（右键自疗那类）/ 追打循环逐次出手 全走它。
+   * ⚠ 漏传这两个参数 ⇒ 服务端记 0 ⇒ **旁观者拿不到动作条目**（会按"本地没有这条"上报并整条不播，
+   *   连粒子特效也不放）—— 用户 2026-09-27 报"在网络上的其他玩家眼里，看不到我的施法动作和粒子特效"，
+   *   根因正是无目标那条路漏了它们（有目标那条路一直传着）。
+   * ⚠ 调用必须在 `playSkillByIcon` **之后**：播放之前拿不到"这一招是哪条"。
+   */
+  function reportCastIntent(skillId: number, aimId: number): void {
+    const motion = animState?.getCurrentMotion();
+    opts?.onCastSkill?.(skillId, aimId, motion?.index ?? 0, selfAnimClip);
   }
 
   /**
@@ -2436,8 +2455,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const played = playSkillByIcon(it.row.iconFile, aim);
     if (aim) {
       const aimId = entityIdOfRoot(aim);
-      const motion = animState?.getCurrentMotion();
-      if (aimId != null) opts?.onCastSkill?.(it.skillId, aimId, motion?.index ?? 0, selfAnimClip);
+      if (aimId != null) reportCastIntent(it.skillId, aimId);
     }
     return played;
   }
@@ -2756,7 +2774,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     // ① 本地先播（原版 BeginSkill/SetMotion 在发包之前）。播不出来（连普攻都找不到）⇒ 这一击不算放出去
     if (!playSkillByIcon(fs.icon, aim)) return false;
-    opts?.onCastSkill?.(fs.skillId, aimId);          // ② 再发 C2S_UseSkill(skillId, targetId)，不等回包
+    reportCastIntent(fs.skillId, aimId);             // ② 再发 C2S_UseSkill(skillId, targetId)，不等回包
     return true;
   }
 
@@ -4735,6 +4753,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const mon = monsters.get(targetId);
     if (mon) {
       actor.faceAngle = faceAngleOf(actor.root.position, mon.root.position);
+    }
+    // **该技能自己的起手特效**（原版 `RecvProcessSkill` 那一路；用户 2026-09-27 报"别人看不到我的
+    // 施法动作和粒子特效"）：按 **skillId** 取技能行（`S2C_SkillStart.skill_id`；⚠ **不能**按
+    // `animIndex` 查 —— 那是动画**条目号**，与技能表的 `animIndex` 不是同一编号空间，
+    // Healing 播的是条目 58、表里记的是 123，按它查会查不到而**整条特效静默不播**）。
+    // ⚠ 只放"技能自己的起手特效 + 音效"，**不放起手法阵**（法阵是施法者本机 `BeginSkill` 的路径）。
+    // 效果落点 = 目标（原版 `sinEffect_Healing2(lpChar)`：有目标就落在目标身上），没目标才落施法者。
+    const remoteRow = skillFxRowBySkillId(skillId);
+    if (!remoteRow) {
+      // 显式的"没有"：技能身份表里查不到这一招（60 行无宏定义的那批）⇒ 不拿别的技能顶上（AGENTS #12）
+      reportFallback('skillfx', `旁观者侧：技能 0x${skillId.toString(16)} 在身份表里查不到`
+        + `（job=${actor.jobId} 的本地动作已播，起手特效**不放**）`);
+      return;
+    }
+    if ((remoteRow.cast.fx?.length ?? 0) + remoteRow.cast.sfx.length > 0) {
+      // 目标根节点（怪或远端玩家）—— 位置**每帧现取**（目标走动时效果跟着走，与原版每帧读 `pChar` 同理）
+      const targetRootOf = (): THREE.Object3D | null =>
+        monsters.get(targetId)?.root ?? remotes.get(targetId)?.root ?? null;
+      const targetRoot = targetRootOf();
+      fireObserverCast(remoteRow,
+        {
+          ...skillFxCtx(() => {
+            const t = targetRootOf();
+            return t ? t.position : actor.root.position;   // 锚点 = 被治疗者（没目标才落施法者）
+          }),
+          casterYaw: actor.root.rotation.y,
+        },
+        actor.root.position,
+        targetRoot ? { x: targetRoot.position.x, y: targetRoot.position.y, z: targetRoot.position.z } : null);
     }
   }
 
@@ -6905,7 +6952,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           // 技能那一击的**结算**走技能包（原版 `PlaySkillAttack` 里的 `dm_SendTransDamage` 同义）；
           // 普攻那一支仍由下面的逐帧 `onAttackHit` 结算 —— 两者互斥（技能态不进 ATTACK 的事件帧分支）。
           // 上报的 animIndex/animClip = **刚播的这条**（服务端透传给旁观者，AGENTS #14）
-          if (sk) opts?.onCastSkill?.(sk.skillId, targetId, m?.index ?? 0, selfAnimClip);
+          if (sk) reportCastIntent(sk.skillId, targetId);
           // ⚠ "技能存在但动作表里没这条动作"时 `playSkillByIcon` 按原版**不换动作**（返回 true 表示
           //   技能照常结算）。那时状态仍是 STAND ⇒ 后面的出手簿记（命中帧/挥击音/各段结算）**不该走**，
           //   否则会给一个没有动作的技能发命中段并播武器音（原版在这里什么都不做，AGENTS #12）。
