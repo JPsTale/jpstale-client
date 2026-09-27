@@ -32,6 +32,9 @@ const load = (p: string): Table => JSON.parse(readFileSync(p, 'utf8')) as Table;
 const MIX_EFFECT_JAVA = resolve('..', 'jpstale-server', 'modules', 'common-service', 'src', 'main', 'java',
   'org', 'jpstale', 'common', 'service', 'item', 'MixEffect.java');
 
+/** 客户端语言表：2026-09-26 起平铺 + 更名（键 = 完整点分 key）；管理端 static/i18n 仍是嵌套，flat() 两边都兼容 */
+const CLIENT_FILE: Record<string, string> = { zh: 'zh_cn.json', en: 'en_us.json' };
+
 const flat = (o: unknown, prefix = ''): Map<string, string> => {
   const m = new Map<string, string>();
   if (o && typeof o === 'object') {
@@ -51,7 +54,7 @@ const ok2 = (msg: string, cond: boolean): void => {
 };
 
 for (const loc of ['zh', 'en']) {
-  const cli = flat(load(resolve('src/locales', `${loc}.json`)));
+  const cli = flat(load(resolve('src/locales', CLIENT_FILE[loc]!)));
   const adm = flat(load(resolve(STATIC, 'i18n', `${loc}.json`)));
 
   // ① 共享的 itemtip.* 逐字一致
@@ -83,7 +86,7 @@ for (const loc of ['zh', 'en']) {
     .map((m) => m[1]);
   if (keys.length === 0) fail(`读不到服务端 MixEffect.java 的效果 key 表（路径或写法变了？）`);
   for (const loc of ['zh', 'en']) {
-    const cli = flat(load(resolve('src/locales', `${loc}.json`)));
+    const cli = flat(load(resolve('src/locales', CLIENT_FILE[loc]!)));
     let missing = 0;
     for (const k of keys) {
       if (!cli.has(`mixe.${k}`)) { fail(`[${loc}] 效果位文案缺失：mixe.${k}（服务端 MixEffect.KEYS 有它）`); missing++; }
@@ -95,11 +98,11 @@ for (const loc of ['zh', 'en']) {
 /* ── 物品名表（`item.<id>.name`，**全量写在两份语言表里**）────────────────────────────
    用户 2026-09-25 定的两条口径：
      ① 键用 `gamedb.itemlist.id`（主键、十进制，不用 idcode）；
-     ② **i18n 内容只有一处** = `locales/{zh,en}.json`（"把内容塞到不同地方只会制造维护困难"）。
+     ② **i18n 内容只有一处** = `locales/{zh_cn,en_us}.json`（"把内容塞到不同地方只会制造维护困难"）。
    ⇒ 两份表**全量**（每件物品都有条目），客户端显示名 100% 从语言表取。
    本节钉：键集全量且成对 / 每个 id 是真物品 / 端到端取值 / 视图层走唯一实现，
    并把**未翻译的条数**报出来（zh == en 的那些 = 还等着补译文的）。 */
-console.log('\n[物品名] `item.<id>.name`（全量写在 locales/{zh,en}.json）');
+console.log('\n[物品名] `item.<id>.name`（全量写在 locales/{zh_cn,en_us}.json）');
 {
   // 动态 import：i18n 在模块作用域读 localStorage/navigator（Node 下要先打桩）
   Object.defineProperty(globalThis, 'localStorage', {
@@ -110,15 +113,18 @@ console.log('\n[物品名] `item.<id>.name`（全量写在 locales/{zh,en}.json�
   const { itemDisplayNameById, itemNameKey } = await import('../src/game/itemName.js');
   const { t, setLocale } = await import('../src/i18n/index.js');
 
+  /** 平铺表里捞 `item.<id>.name`（键 = 完整点分 key，2026-09-26 起） */
   const namesOf = (rel: string): Record<string, string> => {
-    const table = load(resolve(rel));
-    const item = (table.item ?? {}) as Record<string, { name?: string }>;
+    const table = load(resolve(rel)) as Record<string, unknown>;
     const out: Record<string, string> = {};
-    for (const [k, v] of Object.entries(item)) if (/^\d+$/.test(k)) out[k] = v?.name ?? '';
+    for (const [k, v] of Object.entries(table)) {
+      const m = /^item\.(\d+)\.name$/.exec(k);
+      if (m && typeof v === 'string') out[m[1]!] = v;
+    }
     return out;
   };
-  const zh = namesOf('src/locales/zh.json');
-  const en = namesOf('src/locales/en.json');
+  const zh = namesOf('src/locales/zh_cn.json');
+  const en = namesOf('src/locales/en_us.json');
   const all = (ITEM_DEFS as unknown as Array<{ id: number; name: string }>);
   const zhIds = Object.keys(zh);
   const enIds = Object.keys(en);
@@ -199,7 +205,7 @@ console.log('\n[物品名] `item.<id>.name`（全量写在 locales/{zh,en}.json�
   ok2('key 形态 = item.<id>.name', itemNameKey(755) === 'item.755.name');
 }
 
-console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + 服务端对照表）');
+console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh_cn,en_us}.json + 服务端对照表）');
 {
   Object.defineProperty(globalThis, 'localStorage', {
     value: { getItem: () => null, setItem: () => {}, removeItem: () => {} }, configurable: true,
@@ -207,10 +213,19 @@ console.log('\n[怪物名] `monster.<inf词干>.name`（locales/{zh,en}.json + �
   Object.defineProperty(globalThis, 'navigator', { value: { language: 'zh' }, configurable: true });
   const { t, tOr, setLocale } = await import('../src/i18n/index.js');
 
-  const zhTable = load(resolve('src/locales/zh.json'));
-  const enTable = load(resolve('src/locales/en.json'));
-  const zhMon = (zhTable.monster ?? {}) as Record<string, { name?: string }>;
-  const enMon = (enTable.monster ?? {}) as Record<string, { name?: string }>;
+  const zhTable = load(resolve('src/locales/zh_cn.json'));
+  const enTable = load(resolve('src/locales/en_us.json'));
+  /** 平铺表里捞 `monster.<词干>.name`（键 = 完整点分 key，2026-09-26 起） */
+  const monOf = (t: Table): Record<string, { name?: string }> => {
+    const out: Record<string, { name?: string }> = {};
+    for (const [k, v] of Object.entries(t)) {
+      const m = /^monster\.(.+)\.name$/.exec(k);
+      if (m && typeof v === 'string') out[m[1]!] = { name: v };
+    }
+    return out;
+  };
+  const zhMon = monOf(zhTable);
+  const enMon = monOf(enTable);
   const zhKeys = Object.keys(zhMon);
   const enKeys = Object.keys(enMon);
 

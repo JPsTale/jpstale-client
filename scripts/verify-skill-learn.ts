@@ -167,20 +167,23 @@ console.log('③ 禁用条件跑**真模块** `game/skillLearn.ts`');
   setSkillList(null);
 }
 
+/** 平铺语言表（2026-09-26 起）按前缀捞 `prefix.*`（键 = 完整点分 key，与 `i18n/index.ts` 直查同口径）——④/⑤ 两段共用 */
+const pickFrom = (t: Record<string, unknown>, prefix: string): Record<string, string> => {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(t)) {
+    if (k.startsWith(`${prefix}.`) && typeof v === 'string') out[k.slice(prefix.length + 1)] = v;
+  }
+  return out;
+};
+
 console.log('④ `skill.op.*` 文案（zh/en 成对 + 逐个原因码覆盖服务端）');
 {
   type Table = Record<string, unknown>;
   const load = (p: string): Table => JSON.parse(readFileSync(p, 'utf8')) as Table;
-  /** 摊平 `skill.op.*`（本项目只取这一支，与 `i18n/index.ts` 的按 `.` 逐层查同口径） */
-  const opKeys = (rel: string): Set<string> => {
-    const t = load(resolve(root, rel));
-    const op = ((t.skill as Table | undefined)?.op ?? {}) as Record<string, string>;
-    return new Set(Object.keys(op));
-  };
-  const zh = opKeys('src/locales/zh.json');
-  const en = opKeys('src/locales/en.json');
-  const zhT = (((load(resolve(root, 'src/locales/zh.json')).skill as Table).op) as Record<string, string>);
-  const enT = (((load(resolve(root, 'src/locales/en.json')).skill as Table).op) as Record<string, string>);
+  const zh = new Set(Object.keys(pickFrom(load(resolve(root, 'src/locales/zh_cn.json')), 'skill.op')));
+  const en = new Set(Object.keys(pickFrom(load(resolve(root, 'src/locales/en_us.json')), 'skill.op')));
+  const zhT = pickFrom(load(resolve(root, 'src/locales/zh_cn.json')), 'skill.op');
+  const enT = pickFrom(load(resolve(root, 'src/locales/en_us.json')), 'skill.op');
 
   ok(`zh / en 的 skill.op.* 条数相同（zh ${zh.size} / en ${en.size}）`, zh.size === en.size && zh.size > 0);
   const missingEn = [...zh].filter((k) => !en.has(k));
@@ -281,17 +284,16 @@ console.log('⑤ 熟练度写入：道具「Skill Master(1st/2nd/3rd)」+ GM `/@
     // ⚠ 末条常量以 `);` 收尾（不是 `),`） —— 正则要同时容下两种，否则会漏掉最后一个原因码
     const reasonKeys = [...RAWSVC.matchAll(/^ {8}[A-Z_]+\((?:"([a-z-]+)")?\)[;,]\r?$/gm)].map((m) => m[1]).filter(Boolean);
     ok(`从 SkillMasteryService.Reason 扫到 ${reasonKeys.length} 个原因码`, reasonKeys.length === 5);
-    for (const path of ['src/locales/zh.json', 'src/locales/en.json']) {
-      const t = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as {
-        item?: { op?: Record<string, Record<string, string>> };
-        chat?: { cmd?: Record<string, string> };
-      };
-      const sm = t.item?.op?.['skill-master'] ?? {};
+    for (const path of ['src/locales/zh_cn.json', 'src/locales/en_us.json']) {
+      const t = JSON.parse(readFileSync(resolve(root, path), 'utf8')) as Record<string, unknown>;
+      // 平铺语言表（2026-09-26 起）：按前缀捞 `item.op.skill-master.*` / `chat.cmd.*`
+      const sm = pickFrom(t, 'item.op.skill-master');
       const missing = reasonKeys.filter((k) => !(sm[k] ?? '').trim());
       ok(`${path} 覆盖全部 ${reasonKeys.length} 条 item.op.skill-master.*（缺：${missing.join(', ') || '无'}）`,
         missing.length === 0);
       const gm = ['skillMasteryUsage', 'skillMasteryBad', 'skillMasteryDone'];
-      const missGm = gm.filter((k) => !(t.chat?.cmd?.[k] ?? '').trim());
+      const cmd = pickFrom(t, 'chat.cmd');
+      const missGm = gm.filter((k) => !(cmd[k] ?? '').trim());
       ok(`${path} 有 GM 命令的三条 chat.cmd.*（缺：${missGm.join(', ') || '无'}）`, missGm.length === 0);
     }
   }

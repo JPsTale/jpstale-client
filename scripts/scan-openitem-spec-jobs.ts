@@ -38,7 +38,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import en from '../src/locales/en.json' with { type: 'json' };
+import en from '../src/locales/en_us.json' with { type: 'json' };
 
 const DIR = process.env.PT_OPENITEM_DIR ?? 'E:/JPsTale/tmp/openitem';
 const REMOTE_DIR = process.env.PT_OPENITEM_REMOTE_DIR
@@ -47,14 +47,20 @@ const DB_HOST = process.env.PT_DB_HOST ?? 'root@192.168.31.10';
 
 const SRC_OUT = resolve('src/game/data/source/item-spec-jobs.json');
 
+/** 平铺语言表（2026-09-26 起）：`itemtip.jobTier.<n>` 的值是职业阶名字数组（键 = 完整点分 key） */
+const enTable = en as unknown as Record<string, unknown>;
+const jobTiers = Object.entries(enTable)
+  .filter(([k, v]) => /^itemtip\.jobTier\.\d+$/.test(k) && Array.isArray(v))
+  .map(([, v]) => v as string[]);
+
 /** 合法职业名（大小写不敏感）= 客户端 `jobTier` 里的全部名字（含进阶名），与服务端 `JobDataBase` 同源 */
 const jobNames = new Set<string>();
-for (const tiers of Object.values((en as { itemtip: { jobTier: Record<string, string[]> } }).itemtip.jobTier)) {
+for (const tiers of jobTiers) {
   for (const n of tiers) jobNames.add(n.toLowerCase());
 }
 /** 每个合法名的规范写法（保留服务端/客户端表格里的原始大小写，显示时用） */
 const canonical = new Map<string, string>();
-for (const tiers of Object.values((en as { itemtip: { jobTier: Record<string, string[]> } }).itemtip.jobTier)) {
+for (const tiers of jobTiers) {
   for (const n of tiers) canonical.set(n.toLowerCase(), n);
 }
 

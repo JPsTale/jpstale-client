@@ -1,7 +1,7 @@
 /**
  * 物品**显示名**的唯一实现（AGENTS #15）。
  *
- * 优先级：**i18n 表**（`item.<id>.name`，写在 `locales/{zh,en}.json` 里）→ 物品数据自带的名字
+ * 优先级：**i18n 表**（`item.<id>.name`，写在平铺的 `locales/{zh_cn,en_us}.json` 里）→ 物品数据自带的名字
  * （`gamedb.itemlist.name`，兜底 —— 表里没有的 id 就走它）。
  * 那份 i18n 表由 `npm run item-names` 从另一份中文客户端的 OpenItem 填充（`scripts/extract-item-names.ts`），
  * 也可以直接手写；**手改过的条目重跑生成器不会被动**（默认只补缺失，见脚本头部）。

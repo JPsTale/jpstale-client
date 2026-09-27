@@ -1,18 +1,16 @@
-import zh from '../locales/zh.json';
-import en from '../locales/en.json';
+// 平铺键表（2026-09-26 用户定的格式 + 命名）：文件里键就是**完整的点分 key**（如 `"gui.login.title": "登录"`），
+// `t()` 直接查表、不再按 `.` 逐层下钻。数组值（`itemtip.jobTier.<n>` 的职业阶名单）只能给 `tList`。
+import zhCn from '../locales/zh_cn.json';
+import enUs from '../locales/en_us.json';
 
-const locales: Record<string, typeof zh> = { zh, en };
+type LocTable = Record<string, string | string[]>;
+const locales: Record<string, LocTable> = { zh: zhCn, en: enUs };
 // 语言：localStorage 里手选的优先，否则跟浏览器语言（`zh*` → zh，其余 en）
 let locale = localStorage.getItem('locale')
   ?? (navigator.language.startsWith('zh') ? 'zh' : 'en');
 
 export function t(key: string, params?: Record<string, string | number>): string {
-  const parts = key.split('.');
-  let val: unknown = locales[locale] ?? locales['zh'];
-  for (const p of parts) {
-    if (val && typeof val === 'object') val = (val as Record<string, unknown>)[p];
-    else { val = undefined; break; }
-  }
+  const val: unknown = (locales[locale] ?? locales['zh'])[key];
   let msg = typeof val === 'string' ? val : key;
   if (params) {
     for (const [k, v] of Object.entries(params)) msg = msg.replace(`{${k}}`, String(v));
@@ -22,12 +20,7 @@ export function t(key: string, params?: Record<string, string | number>): string
 
 /** 取一个**字符串数组**节点（如 `itemtip.jobTier.1` 的 5 阶职业名）；键不存在或不是数组 ⇒ 空数组。 */
 export function tList(key: string): string[] {
-  const parts = key.split('.');
-  let val: unknown = locales[locale] ?? locales['zh'];
-  for (const p of parts) {
-    if (val && typeof val === 'object') val = (val as Record<string, unknown>)[p];
-    else { val = undefined; break; }
-  }
+  const val: unknown = (locales[locale] ?? locales['zh'])[key];
   return Array.isArray(val) ? (val as string[]) : [];
 }
 

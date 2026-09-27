@@ -68,11 +68,10 @@ const { ITEM_DEFS } = await import('../src/game/data/itemDefs.js');
 const defs = ITEM_DEFS as unknown as Array<{ id: number; name: string }>;
 const defById = new Map(defs.map((d) => [d.id, d.name]));
 
-const zhTable = JSON.parse(readFileSync(resolve('src/locales/zh.json'), 'utf8')) as
-  { item: Record<string, { name?: string }> };
-const enTable = JSON.parse(readFileSync(resolve('src/locales/en.json'), 'utf8')) as
-  { item: Record<string, { name?: string }> };
-const nameOf = (t: typeof zhTable, id: number): string | undefined => t.item[String(id)]?.name;
+// 平铺语言表（2026-09-26 起）：键 = 完整点分 key，`item.<id>.name` 直查（en 侧与库名比对；zh 是译文不比）
+const enTable = JSON.parse(readFileSync(resolve('src/locales/en_us.json'), 'utf8')) as Record<string, unknown>;
+const nameOf = (t: Record<string, unknown>, id: number): string | undefined =>
+  t[`item.${id}.name`] as string | undefined;
 
 let bad = 0;
 const line = (msg: string): void => { console.log('  FAIL ' + msg); bad++; };
@@ -97,7 +96,7 @@ for (const [id, dbName] of rows) {
 }
 if (nameDrift.length) {
   line(`库里的名字与 en 语言表有 ${nameDrift.length} 处不同（跑 npm run item-names --force，`
-    + `或手改 locales/en.json 的 item.<id>.name）：\n       ${nameDrift.slice(0, 6).join('\n       ')}`);
+    + `或手改 locales/en_us.json 的 item.<id>.name）：\n       ${nameDrift.slice(0, 6).join('\n       ')}`);
 } else {
   console.log('  ok   库名与 en 语言表一致（zh 侧是译文，不参与比对）');
 }

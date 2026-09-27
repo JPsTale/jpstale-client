@@ -119,13 +119,16 @@ if (useWithoutAnimation(0x04020100)) problems.push('药水 0x04020100 不该走"
 
 // ---------- ④ 文案 ----------
 const KEYS = ['level', 'town', 'noTemplate'];
-const tables = { zh: 'src/locales/zh.json', en: 'src/locales/en.json' };
+const tables = { zh: 'src/locales/zh_cn.json', en: 'src/locales/en_us.json' };
 for (const [lang, path] of Object.entries(tables)) {
-  const json = JSON.parse(readFileSync(resolve(path), 'utf8')) as {
-    item?: { op?: { crystal?: Record<string, string> } };
-  };
-  const crystal = json.item?.op?.crystal;
-  if (!crystal) {
+  // 平铺语言表（2026-09-26 起）：按前缀捞 `item.op.crystal.*`（键 = 完整点分 key）
+  const json = JSON.parse(readFileSync(resolve(path), 'utf8')) as Record<string, unknown>;
+  const crystal: Record<string, string> = {};
+  for (const [k, v] of Object.entries(json)) {
+    const m = /^item\.op\.crystal\.(.+)$/.exec(k);
+    if (m && typeof v === 'string') crystal[m[1]!] = v;
+  }
+  if (Object.keys(crystal).length === 0) {
     problems.push(`${path} 缺少 item.op.crystal.* 文案`);
     continue;
   }

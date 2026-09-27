@@ -1,9 +1,12 @@
 /**
  * 物品名写入两份语言表 —— `item.<id>.name`（`npm run item-names`）。
  *
- * <h3>为什么直接写进 `locales/{zh,en}.json`</h3>
+ * <h3>为什么直接写进 `locales/{zh_cn,en_us}.json`</h3>
  * 用户 2026-09-25 明确要求："把 i18n 内容放进 en.json 和 zh.json"（先前一版是"生成物 + 运行时合并"，
  * 已按此改掉：**不再有运行时合并**，也没有中间生成物 —— 两份语言表就是唯一真值）。
+ * 2026-09-26 起：文件**平铺**且更名为 `zh_cn.json` / `en_us.json` —— 键就是完整的点分 key
+ * （`"item.755.name": "技能之石(初级)"`），不再是嵌套对象；旧的 `zh.json`/`en.json` 已搬出仓库备份
+ * （`../tmp/locales-backup-nested-20260926/`），不再被任何代码读写。
  *
  * <h3>中文名来源</h3>
  * `analysis/3060-openitem/*.txt`（另一份中文客户端的 OpenItem，1214 个文件；字段名是中文
@@ -92,19 +95,18 @@ const write = (rel: string, obj: Table): void => {
   writeFileSync(resolve(root, rel), JSON.stringify(obj, null, 2).replace(/\n/g, '\r\n') + '\r\n', 'utf8');
 };
 
-for (const [rel, names, lang] of [['src/locales/zh.json', zhNames, 'zh'],
-                                  ['src/locales/en.json', enNames, 'en']] as const) {
+for (const [rel, names, lang] of [['src/locales/zh_cn.json', zhNames, 'zh'],
+                                  ['src/locales/en_us.json', enNames, 'en']] as const) {
   const table = load(rel);
-  const item = (table.item ?? {}) as Record<string, unknown>;
   let added = 0, refreshed = 0, kept = 0;
   for (const [id, name] of names) {
-    const cur = item[String(id)] as { name?: string } | undefined;
-    if (cur?.name === name) { kept++; continue; }
-    if (cur && !FORCE) { kept++; continue; }        // 已存在且非 --force ⇒ 不动（可能是你手改过的）
-    if (cur) refreshed++; else added++;
-    item[String(id)] = { name };
+    const key = `item.${id}.name`;
+    const cur = table[key] as string | undefined;
+    if (cur === name) { kept++; continue; }
+    if (cur !== undefined && !FORCE) { kept++; continue; }   // 已存在且非 --force ⇒ 不动（可能是你手改过的）
+    if (cur !== undefined) refreshed++; else added++;
+    table[key] = name;
   }
-  table.item = item;
   write(rel, table);
   console.log(`  ${rel}（${lang}）：新增 ${added} / 刷新 ${refreshed} / 保持 ${kept}`);
 }

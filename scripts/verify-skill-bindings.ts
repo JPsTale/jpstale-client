@@ -190,9 +190,17 @@ console.log('④ HUD 拳位图标：取不到就留空，不画默认图标');
 /* ─────────── ⑤ 文案：`skill.bind.*` 成对 + 覆盖服务端原因码 ─────────── */
 console.log('⑤ `skill.bind.*` 文案成对齐全');
 {
-  const zh = JSON.parse(await read('../src/locales/zh.json')) as { skill: { bind: Record<string, string> } };
-  const en = JSON.parse(await read('../src/locales/en.json')) as { skill: { bind: Record<string, string> } };
-  const zhT = zh.skill.bind, enT = en.skill.bind;
+  // 平铺语言表（2026-09-26 起）：按前缀捞 `skill.bind.*`（键 = 完整点分 key）
+  const pick = (t: Record<string, unknown>, prefix: string): Record<string, string> => {
+    const out: Record<string, string> = {};
+    for (const [k, v] of Object.entries(t)) {
+      if (k.startsWith(`${prefix}.`) && typeof v === 'string') out[k.slice(prefix.length + 1)] = v;
+    }
+    return out;
+  };
+  const zh = JSON.parse(await read('../src/locales/zh_cn.json')) as Record<string, unknown>;
+  const en = JSON.parse(await read('../src/locales/en_us.json')) as Record<string, unknown>;
+  const zhT = pick(zh, 'skill.bind'), enT = pick(en, 'skill.bind');
   const zhKeys = Object.keys(zhT), enKeys = Object.keys(enT);
   ok('zh/en 的 `skill.bind.*` key 完全一致（无单边 key）',
     zhKeys.length === enKeys.length && zhKeys.every((k) => enT[k] !== undefined));
