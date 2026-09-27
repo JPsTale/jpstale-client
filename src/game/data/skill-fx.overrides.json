@@ -102,11 +102,15 @@
    "note": "事件帧视觉（2026-09-26）：原版 = SkillCelestialChainLighting（hoAssaParticleEffect.cpp:674，天降闪+逐段链，需服务端下发链表 → 未移植，runner 上报）；暂起主目标处同族同名资产 skill4celestialchainlightinglight（skill4* = 祭司四转族，本技能 J4·S3）。音效照源码两条 rand 变体。"
   },
   "Divine Lightning": {
-   "eventFx": [
-    "code:divinelightning"
+   "eventFx": [],
+   "eventSfx": [
+    "wav/effects/skill/morion/divinelightning 1.wav",
+    "wav/effects/skill/morion/divinelightning 2.wav",
+    "wav/effects/skill/morion/divinelightning 3.wav"
    ],
+   "soundPick": "random",
    "fx": [],
-   "note": "**天降闪逐字移植（2026-09-27）**：原版事件帧 `SkillPlay_DivineLightning_Effect`（netplay.cpp:12463）对每个目标调 `AssaParticle_DivineLighting`（hoAssaParticleEffect.cpp:654）= ASSA_SHOT_SPARK 从 pY+100000 落到 pY+5000，到达 `AssaParticle_Sprak`（:695）= 5 颗溅射火花 + 白动态光 + part:DivineLightning。⇒ code:divinelightning（render/effects/divine-lightning.ts，含 trace 拖尾带）。目标列表 = 服务端结算 S2C_AttackResult 逐条（与自机共用一份实现）。清掉自动派生的 lua:skillcelestialchainlightaxial/part —— 那两条是 **Chain Lightning** 的 presenter（SkillCelestialChainLighting），被 extract-skill-map 的调用图误并到本招（两招名字相近）；本招的 presenter 只有 SkillPlay_DivineLightning_Effect。part:divinelightning 同时保留在 code 内部（到达三件套之一），不再单独声明避免双放。"
+   "note": "**落雷与音效的权威分派（2026-09-27 定稿）**：原版事件帧 `character.cpp:16272-16300` —— ①自机 `dm_SelectDamageCount` 选敌 + 结算；②`SkillPlay_DivineLightning_Effect`(netplay.cpp:12463) 对**选敌表逐个**放天降闪（`AssaParticle_DivineLighting`，hoAssaParticleEffect.cpp:654），**从不包括施法者自己**（自机分支只有选敌表；旁观分支的 lpCurPlayer 兜底是 PK 语义——把本地玩家当被打目标）。③打中 >0 个才 `rand()%3` 三选一播音（三条 wav 都在库）。⇒ 我方：**落雷只由结算流驱动**（`S2C_AttackResult.skill_id` 逐条 → WorldView.onSkillAttackResult → runDivineLightning，render/effects/divine-lightning.ts），事件帧**不放雷**——此前 eventFx 的code:divinelightning 用 `target ?? caster` 兜底 ⇒ 无瞄准施法时每次必有一道雷落在施法者身上（用户实测'总有一个粒子落在角色自己身上'）。音效 `soundPick:random` = 原版 rand()%3 （每客户端本地掷，原版亦然）。特效帧轴 = **70fps**（Main.cpp:1274），火花每帧 Time+2 ⇒ 寿命 ~1 秒。"
   }
  }
 }

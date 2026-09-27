@@ -98,7 +98,7 @@ import { itemDisplayNameById } from '../game/itemName.js';
 import { markSkillCast, skillCdRemainingMs } from '../game/skillCooldown.js';
 import { skillLevelOf } from '../game/skillLevel.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
-import { skillIdByIcon, skillTargetsCharacters } from '../game/skillIdentity.js';
+import { skillIdByIcon, skillTargetsCharacters, skillRowBySkillId } from '../game/skillIdentity.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
 import { targetWindowState } from './targetWindow.js';
@@ -2042,9 +2042,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function onSkillAttackResult(skillId: number, _attackerId: number, targetId: number): void {
     if (skillId === 0) return;
-    const row = skillFxRowBySkillId(skillId);
-    if (!row) return;                       // 身份表查不到 ⇒ 没有视觉（不猜）
-    if (!(row.event.fx ?? []).some((ref) => ref === 'code:divinelightning')) return;
+    // 技能身份按**常量名**判定（skillIdentity 的 constName；不走 skill-fx 表的 eventFx ——
+    // 那条已清空，落雷的分派不在"事件帧"而在"结算流"，见 PriestessSkills/PriestessHealingTargetTest 同款分层）
+    const idrow = skillRowBySkillId(skillId);
+    if (!idrow) return;
+    if (idrow.constName !== 'DIVINE_LIGHTNING') return;
     const feet = unitFeetPos(targetId);
     if (!feet) {
       reportFallback('skillfx', `Divine Lightning：目标 ${targetId} 不在本地视野 ⇒ 这道落雷不放`);

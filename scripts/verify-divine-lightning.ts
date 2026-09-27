@@ -1,13 +1,16 @@
 /**
  * **神之雷电（Divine Lightning）回归**（`npm run verify-divine-lightning`）——
  * 用户 2026-09-27 实测 FPS 11.7、"3D提交"80ms/96%：第一版每帧往场景里 new mesh 且从不摘除、
- * 实例永不清除 ⇒ 几分钟堆出 3 万+ draw。本脚本用**真模块**跑帧循环钉四条（每条都能红）：
+ * 实例永不清除 ⇒ 几分钟堆出 3 万+ draw。本脚本用**真模块**跑帧循环钉（每条都能红）：
  *
- *   A. **弹体照源码到达**：从 390 单位高落向头顶，**≤50 帧**（`Max_Time`）内到达并生成 **5 颗**溅射火花；
+ *   A. **弹体照源码到达**：从 390 单位高落向头顶，**≤50 tick**（`Max_Time`）内到达并生成 **5 颗**溅射火花；
  *   B. **网格数恒定**：飞行全程场景里的 mesh 数有界（1 弹带 + 5 火花带 = ≤6），绝不随帧数增长；
- *   C. **寿命**：弹体 50 帧到点带子消失；火花 130~150 帧各自到点消失；**全部结束后实例清零**
- *      （第一版的收尾条件永远不成立 ⇒ `live` 只增不减）；
- *   D. **纯逻辑不依赖 DOM**：模块可在 node 下直接驱动（渲染物惰性创建，没贴图也不炸）。
+ *   C. **寿命（70fps 帧轴 + 火花每帧 Time+2）**：弹体 50 tick 到点；火花 ≈(150−T0)/2 ≈ 65~75 tick；
+ *      全部结束后实例清零（第一版的收尾条件永远不成立 ⇒ `live` 只增不减）；
+ *   D. **连放多道不累积**。
+ *
+ * 帧轴 = **70fps**（`Main.cpp:1274` `int fps = 70;` 门控主循环 —— Assa 心跳；2026-09-27 修正，
+ * 第一版用 60 ⇒ 整体慢 16%，用户实测"火花动画速率太慢"）。
  */
 import { installDomStub } from './dom-stub.js';
 
@@ -22,7 +25,7 @@ const THREE = (await import('three')).default ?? (await import('three'));
 const { runDivineLightning, updateDivineLightningRunners, divineLightningStats, clearDivineLightning,
   BOLT_MAX_FRAMES, SPARK_COUNT } = await import('../src/render/effects/divine-lightning.js');
 
-console.log('A/B/C. 真模块跑帧循环（60fps 帧轴）');
+console.log('A/B/C. 真模块跑帧循环（70fps Assa 心跳）');
 {
   const scene = new THREE.Scene();
   const at = { x: 100, y: 20, z: -30 };
@@ -39,8 +42,8 @@ console.log('A/B/C. 真模块跑帧循环（60fps 帧轴）');
   let maxMeshes = 0;
   let sparksSeen = 0;
   let boltRibbonGoneAt = -1;
-  const FPS = 60;
-  const totalFrames = 260;   // 覆盖弹体 50 + 火花 ≤150 + 余量
+  const FPS = 70;            // Assa 心跳（Main.cpp:1274）
+  const totalFrames = 200;   // 覆盖弹体 50 + 火花 ≤75 + 余量
   for (let f = 1; f <= totalFrames; f++) {
     updateDivineLightningRunners(1 / FPS);
     const st = divineLightningStats();
@@ -52,13 +55,13 @@ console.log('A/B/C. 真模块跑帧循环（60fps 帧轴）');
     }
     if (st.live === 0) break;
   }
-  ok(`A. 弹体 ≤ ${BOLT_MAX_FRAMES} 帧到达并生成溅射（实测第 ${arrivedAt} 帧、${sparksSeen} 颗）`,
+  ok(`A. 弹体 ≤ ${BOLT_MAX_FRAMES} tick 到达并生成溅射（实测第 ${arrivedAt} tick、${sparksSeen} 颗）`,
     arrivedAt > 0 && arrivedAt <= BOLT_MAX_FRAMES && sparksSeen === SPARK_COUNT);
   ok(`B. 网格数有界（≤ 1+${SPARK_COUNT} = ${SPARK_COUNT + 1}；实测峰值 ${maxMeshes}）`,
     maxMeshes <= SPARK_COUNT + 1 && maxMeshes > 0);
 
   const st = divineLightningStats();
-  ok(`C. ${totalFrames} 帧后实例全部清零（残留 ${st.live}）`, st.live === 0);
+  ok(`C. ${totalFrames} tick 后实例全部清零（残留 ${st.live}；寿命上界 = 50 + 75 + 余量）`, st.live === 0);
   ok(`C. 清理后场景里 0 个 mesh（残留 ${countMeshes()}）`, countMeshes() === 0);
 
   // D. 连放三道也不累积（用户场景：多目标逐个落雷）

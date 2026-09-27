@@ -3822,14 +3822,15 @@
     ]
    },
    "event": {
-    "fx": [
-     "code:divinelightning"
-    ],
+    "fx": [],
     "sfx": [
-     "wav/effects/skill/morion/divinelightning 1.wav"
+     "wav/effects/skill/morion/divinelightning 1.wav",
+     "wav/effects/skill/morion/divinelightning 2.wav",
+     "wav/effects/skill/morion/divinelightning 3.wav"
     ]
    },
    "confidence": "code",
+   "soundPick": "random",
    "code": "SKILL_PLAY_DIVINE_LIGHTNING",
    "presenters": [
     "SkillPlay_DivineLightning_Effect"

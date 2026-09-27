@@ -21,7 +21,6 @@ import { runHealingOrbit } from './healing-orbit.js';
 import { runMonsterFly, type FlyDeps } from './monster-fly-runner.js';
 import { FX_VIGOR_BALL, pickMonsterFxAsset } from './monster-attack-fx.js';
 import { runGlacialSpike } from './glacial-spike.js';
-import { runDivineLightning, configureDivineLightning } from './divine-lightning.js';
 import { reportFallback } from '../../char/fallback-log.js';
 import { skillRowBySkillId } from '../../game/skillIdentity.js';
 import { PT_ANGLE_FULL, FONE, ptAngleToRad } from '../../core/geom.js';
@@ -45,7 +44,14 @@ export interface SkillFxRow {
    * Chain Lancer 就是：原版按 `MotionEvent` 1/2/3 各响一条（`character.cpp:15585-15598`）
    * ⇒ `'motionEvent'` = 下标取 `事件帧序号 − 1`；**越界不响**（原版 `switch` 无 `default`）。
    */
-  soundPick?: 'motionEvent';
+  /**
+   * 多段/多变体音的**下标来源**：
+   *   · `'motionEvent'` = 事件帧序号 − 1（原版 `switch (MotionEvent)`，越界不响）；
+   *   · `'random'` = 原版 `rand()%N` 三选一那类（如 Divine Lightning 的
+   *     `switch (rand() % 3)`，`character.cpp:16284-16294`）—— **每个客户端本地掷**
+   *     （原版各端在各自的 `EventSkill` 里掷，本就不同步；AGENTS #14 要同步的是伤害结果）。
+   */
+  soundPick?: 'motionEvent' | 'random';
 }
 
 const ROWS: SkillFxRow[] = (skillFx as { rows: SkillFxRow[] }).rows;
@@ -442,19 +448,6 @@ export const CODE_SKILL_FX: Record<string, (
     }
     void ctx.spawnPart('skill4celestialchainlightinglight', { pos: at });
   },
-  // **Divine Lightning**（priestess T2.2，`SKILL_PLAY_DIVINE_LIGHTNING`）—— 事件帧视觉 =
-  // `SkillPlay_DivineLightning_Effect`（`netplay.cpp:12463`）对**每个目标**调
-  // `AssaParticle_DivineLighting`（`hoAssaParticleEffect.cpp:654`）：一道 **ASSA_SHOT_SPARK
-  // 从天上（pY+100000）落到目标头顶（pY+5000）**，到达时 `AssaParticle_Sprak` 三件套
-  // （5 颗溅射火花 + 白动态光 + `part:divinelightning`）。完整移植见 `divine-lightning.ts`
-  // （文件头有逐字出处）。目标列表 = **服务端结算下发的 `S2C_AttackResult` 逐条**
-  // （`WorldView` 在 `applyMonsterHit` 那条链上按 `attacker/skill` 派发）—— 与自机共用一份，
-  // 不重跑本地选敌（AGENTS #14：同步结果）。
-  divinelightning: (ctx, caster, target) => {
-    const at = target ?? caster;
-    configureDivineLightning({ dynLights: ctx.dynLights, spawnPart: ctx.spawnPart });
-    runDivineLightning({ scene: ctx.scene, dynLights: ctx.dynLights, spawnPart: ctx.spawnPart, log: ctx.log }, at);
-  },
 };
 
 
@@ -575,6 +568,11 @@ export function fireSkillEvent(
       const pick = row.event.sfx[ctx.motionEvent - 1];
       if (pick) ctx.playSound?.(pick, caster);
     }
+  } else if (row.soundPick === 'random') {
+    // 原版 `switch (rand() % N)` 本地三选一（Divine Lightning，`character.cpp:16284-16294`）——
+    // **只响一条**，不把变体全叠上
+    const pick = row.event.sfx[Math.floor(Math.random() * row.event.sfx.length)];
+    if (pick) ctx.playSound?.(pick, caster);
   } else {
     for (const s of row.event.sfx) ctx.playSound?.(s, caster);
   }

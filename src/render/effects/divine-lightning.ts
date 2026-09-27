@@ -23,13 +23,18 @@
  *     沿历史拉出加法混合光带：`Face.width = 8000`，**half = 8000>>1 = 4000 raw = 15.6 世界单位/侧**；
  *   · 到达（`length < 10`，State 0→1）⇒ `AssaParticle_Sprak(&DesPosi)`（`:695-712`）三件套。
  *
+ *   ⚠ **心跳 = 70fps**：`Main.cpp:1274` `int fps = 70;` 门控主循环 ⇒ `MainAssaEffect`
+ *   （`sinbaram/AssaEffect.cpp:92`）每秒 tick 70 次 —— 我第一版按 60fps 推进，整体慢 16%
+ *   （用户实测"雷火花动画速率太慢"的来源之一）。
  *   溅射火花 = `cASSAPARTSPARK::Start(pCurPosi)`（`AssaParticle.cpp:949-988`，**5 颗**）：
  *   · `Posi` = 到达点（头顶）、`DesPosi = Posi − 5000y ± 1000xz`（**终点**向下 + 水平抖动；
  *     第一版我把抖动放在了起点 —— 反了）；初速 `x/z = ±rand(10..18)`、**`y = +rand(6..8)`（向上！）**，
  *     之后每帧同样"朝终点加速"；`Face.width = 4000`（half 7.8 单位/侧）；
- *   · `Max_Time = 150`，但 `partSpark->Time = GetRandomPos(0, 20)` 起跳
- *     ⇒ 实际寿命 130~150 帧（到点整个实例删掉 —— 带子随实例消失）；
- *   · `Time % 2` 才记拖尾（:1010）。
+ *   · ⚠ **每帧 Time +2**：`MainAssaEffect` 外层 `Time++`（AssaEffect.cpp:99）+ `Main` 尾部
+ *     又一个 `Time++`（AssaParticle.cpp:1090）⇒ 实际寿命 = (150 − T0)/2 ≈ **65~75 帧 @70fps
+ *     ≈ 0.93~1.07 秒**（第一版按"150 帧"算成 2.1~2.5 秒 —— "火花太慢"的主体）；
+ *   · 拖尾条件 `Time % 2` 看到的是**外层 ++ 之后**的值（T0+1, T0+3, …，奇偶恒定）
+ *     ⇒ **T0 为偶数的火花有拖尾、奇数的永远没有**（引擎怪癖，照抄：~52% 有带子）。
  *
  *   三件套：白动态光 `SetDynLight(255,255,255, 255,100,2)` + `g_NewParticleMgr.Start("DivineLightning")`
  *   = 资产 `effect/particle/script/divinelightning.part`（清单在库 ✓，走 quarks）。
@@ -73,7 +78,6 @@ const SPARK_JITTER_RAW = 1000;
 const SPARK_SPEED_MIN = 10, SPARK_SPEED_MAX = 18;
 const SPARK_VY_MIN = 6, SPARK_VY_MAX = 8;
 const SPARK_TRACE_WIDTH_RAW = 4000;
-const SPARK_TRACE_EVERY = 2;         // `Time % 2` 才记拖尾（:1010）
 const SPARK_SOFT_DIST_WU = 60;       // `length < 60 ⇒ ×0.8`（:1024）
 /** `AssaParticle_Sprak` 白动态光（`hoAssaParticleEffect.cpp:710`） */
 export const SPARK_DYN_LIGHT = { r: 255, g: 255, b: 255, a: 255, power: 100, decPower: 2 } as const;
@@ -83,6 +87,8 @@ export const SPARK_TEXTURE = 'effect/assaeffect/deadlay/spark01_01.bmp';
 export const DIVINE_LIGHTNING_PART = 'divinelightning';
 
 const FONE = 256;
+/** Assa 特效心跳 = **70fps**（`Main.cpp:1274` `int fps = 70;` 门控主循环） */
+const ASSA_FPS = 70;
 
 /* ── 渲染依赖 ── */
 export interface DivineFxSink {
@@ -247,7 +253,10 @@ function stepSpark(s: SparkState): void {
     s.expired = true;
     return;
   }
-  if (s.frame % SPARK_TRACE_EVERY === 1) {
+  // `MainAssaEffect` 外层 `Time++` 之后才进 Main ⇒ 拖尾条件看到的是 +1 后的奇偶；
+  // 本实现用 `frame % 2 === 0` 表达同一件事（frame = 帧首的 Time）。之后 Main 尾部再 +1，
+  // 与外层合成**每帧 +2** ⇒ 寿命 = (150 − T0)/2 帧。
+  if (s.frame % 2 === 0) {
     s.trace.unshift(s.pos.clone());
     if (s.trace.length > TRACE_LENGTH) s.trace.length = TRACE_LENGTH;
   }
@@ -256,7 +265,7 @@ function stepSpark(s: SparkState): void {
   s.vel.add(term.divideScalar(length));
   if (length < SPARK_SOFT_DIST_WU) s.vel.multiplyScalar(0.8);
   s.pos.add(s.vel);
-  s.frame++;
+  s.frame += 2;
 }
 
 /** 到地三件套（原版 `AssaParticle_Sprak`，`hoAssaParticleEffect.cpp:695-712` 逐字） */
@@ -277,7 +286,8 @@ function onGround(b: LiveBolt, arrival: THREE.Vector3): void {
       SPARK_VY_MIN + Math.random() * (SPARK_VY_MAX - SPARK_VY_MIN),   // ⚠ 初速**向上**（源码如此）
       dirZ * (SPARK_SPEED_MIN + Math.random() * (SPARK_SPEED_MAX - SPARK_SPEED_MIN)),
     );
-    // `partSpark->Time = GetRandomPos(0, 20)` ⇒ 起跳相位，寿命变 130~150
+    // `partSpark->Time = GetRandomPos(0, 20)` 起跳；每帧 +2（外层 ++ + Main 尾部 ++）
+    // ⇒ 寿命 (150−T0)/2 帧；拖尾看 `Time%2`（外层 ++ 后）＝ T0 偶才有（奇偶恒定，引擎怪癖照抄）
     list.push({ pos, vel, dest, trace: [], frame: Math.floor(Math.random() * (SPARK_TIME_SEED_MAX + 1)), expired: false });
   }
   b.sparks = list;
@@ -320,10 +330,10 @@ export function configureDivineLightning(deps: Pick<DivineFxSink, 'dynLights' | 
   partSink = deps.spawnPart ?? null;
 }
 
-/** 每帧调（60fps 帧轴，与 multi-spark 同一模式） */
+/** 每帧调（**70fps** 帧轴 —— Assa 心跳，见文件头；与 multi-spark 的 60fps 轴**不同**，别抄错） */
 export function updateDivineLightningRunners(dt: number): void {
   if (live.length === 0) return;
-  frameAcc += dt * 60;
+  frameAcc += dt * ASSA_FPS;
   const n = Math.floor(frameAcc);
   if (n <= 0) return;
   frameAcc -= n;
