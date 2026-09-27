@@ -14,31 +14,33 @@
  * | 调用点 | `character.cpp:11529/11536`（**EventSkill**，玩家施法的事件帧） | **现有树里没有调用点**（只有定义） |
  * | 每帧驱动 | 四个 mover（`sinMoveEffect2` / `sinCheckCharState` / `sinSkillEffectMove` / `sinPublicEffectMove`）**都不命中**（实例的 `MoveKind`/`CODE` 均未赋值）⇒ **不位移**；只有 `AniCount` 每帧 +1（30 帧循环）推 `Frame`、末 20 帧淡出、250 帧清零 | 命中 **`sinSkillEffectMove` 的 `case SKILL_HEALING`**（`sinSkillEffect.cpp:428-468`）⇒ **绕角色公转 + 上升 + 每帧发射粒子** |
  *
- * ## 本文件的实现与依据
+ * ## 本文件的实现与依据（**逐字**，2026-09-27 二次核对源码后修正）
  *
- * * **载体**：MESH 版的 `HIALTEST` 网格（"小天使"的几何 = 33 根 Biped 骨骼的蒙皮模型，
- *   绑定姿态为展开光翼的人形，实测包围盒 17.6×11.1×9.1 单位）。
- * * **运动**：FACE 版 `case SKILL_HEALING` 的**逐字参数**（`sinSkillEffect.cpp:428-468`）：
+ * * **载体**：`sinEffect_Healing2`（`sinSkillEffect.cpp:1632`，**`character.cpp:11529/11536` 的 EventSkill 调的就是它**）
+ *   的第二份实例 —— `HIALTEST` 网格（`.smb` 33 骨骼 + `.smd` 网格；绑定姿态 = 展开光翼的人形，
+ *   实测包围盒 17.6×11.1×9.1 单位）。
+ *   ⚠ 第一份实例（`smASE_ReadBone` + `BoneFlag = 1` + `Y = 13000`，贴骨渲染）**未移植** ⇒ 显式上报。
+ * * **该实例的初值**（`:1646-1667` 逐字）：
+ *   `Y = 7000`（`sinEffectDefaultSet` 的高度偏移）、`Max_Time = 250`、`AniCount = 1`、
+ *   `AniMax = 30`、`AniTime = 1`、`Color_A = 150`、**`CODE = SKILL_HEALING`**、
+ *   `RotateAngle = 256`、`RotateDistance.z = 256*16`（=4096 raw = 16 单位）、
+ *   `Angle.y = -(pChar->Angle.y)+180`、`MoveSpeed.y = 200`、`AlphaTime = Max_Time-20`、`AlphaAmount = 10`。
+ * * **每帧**（`sinSkillEffectMove` 的 `case SKILL_HEALING`，`sinSkillEffect.cpp:428-468`）——**因为有 `CODE`，这条对本实例生效**：
  *   ```
- *   RotateAngle += 25;                       // 4096/圈 ⇒ 163.84 帧/圈（@70fps ≈ 2.34s 一圈）
- *   RotateDistance.z += 16;                  // 半径每帧 +16 raw（初值 128*24*2 = 6144 = 24 单位）
- *   RotatePosi.x = RotateDistance.y*cos + RotateDistance.z*sin;   // RotateDistance.y 未设 = 0
- *   RotatePosi.z = -RotateDistance.y*sin + RotateDistance.z*cos;
- *   >>= 16;
- *   Posi.x = pChar->pX + RotatePosi.x;        // ★ 绕角色公转
+ *   RotateAngle += 25; RotateDistance.z += 16;
+ *   RotatePosi = (Rz·sin, Rz·cos) >> 16;    // RotateDistance.y 未设 = 0
+ *   Posi.x = pChar->pX + RotatePosi.x;      // ★ 绕角色公转
  *   Posi.z = pChar->pZ + RotatePosi.z;
- *   MoveSpeed.y += 20;                        // 上升速度每帧累加（raw）
- *   Posi.y = pChar->pY + 7000 + MoveSpeed.y;  // 高度 = 角色 + 7000/256 + 累积
- *   Angle.y = -((RotateAngle) + ANGLE_270);   // 朝向随公转
+ *   MoveSpeed.y += 20;
+ *   Posi.y = pChar->pY + 7000 + MoveSpeed.y;
+ *   Angle.y = -((RotateAngle) + ANGLE_270);
+ *   if (Time < Max_Time - 30) sinEffect_HealParticle3(&DesPosi, MatHolyMind[0], 1, 500, 50, 10);   // 每帧 2 颗
  *   ```
- *   （raw ÷ 256 = 世界单位 ⇒ 半径 24 起、每帧 +0.0625；高度 27.34 起、每帧 +0.078 的累加量）
- *   ⚠ 依据：MESH 版按源码**本应静止**（无 mover 命中），但用户 2026-09-27 实测原版
- *   "**绕角色的头旋转飞行**" ⇒ 采用 FACE 版的运动参数（源码里唯一一处写出这种运动的实现）。
- * * **渲染**：`buildSkeleton + buildSkinnedMesh` 后把姿态**烘焙进顶点**（`applyBoneTransform`；
- *   本机 `.smd` 无帧数据 `tmFrameCnt = 0`，绑定姿态即目标形态），用**普通 `THREE.Mesh`** 渲染 ——
- *   因为 `SkinnedMesh` 在本项目渲染管线里**不被提交渲染**（真机探针实测）。
- * * **贴图**：`HIAL.bmp` = **64×512 = 8 帧 64×64** 序列图集（实测逐帧为 8 张清晰天使，白→蓝）；
- *   本机 `.smd` 的 UV 覆盖整张图集 ⇒ 用 `map.offset/repeat` 切帧、随寿命推进（原版 `TexRect` 逐帧）。
+ * * **粒子**：`sinEffect_HealParticle3`（`:1585`，末尾 `memcpy` 复制 ⇒ **每帧 2 颗**）+ `case SIN_EFFECT_HEALING3`（`:466-479`）：
+ *   `H_MIND00.tga` 广告牌、尺寸 `rand(0..500)+200` raw、寿命 `rand(0..20)+50` 帧、颜色 `24/107/74` 起每帧 `+3/+1/+2`、
+ *   等速漂移 `Rz=32`（raw/帧）、`MoveSpeed.y = rand(0..20)+10`、`Gravity` 从 10 每帧 −5、末 22 帧每帧 −10/255 淡出。
+ * * **不加工的东西**：贴图 UV 保持数据原样（源码里 `AniCount` 驱动的是**网格帧** `Frame = AniCount*160`，
+ *   不是贴图 UV；本机 `.smd` 缺帧数据 `tmFrameCnt = 0` ⇒ 无网格帧可播，如实登记，不做自造补偿）。
  *
  * ## ⚠ 已知阻塞（未解决，如实登记）
  *
@@ -51,7 +53,7 @@ import * as THREE from 'three';
 import { loadParsedAsset } from '../../core/asset-manager.js';
 import { parseSmb } from '../../core/char-parser.js';
 import { buildSkeleton, buildSkinnedMesh } from '../skinned-builder.js';
-import { loadCharTextures } from '../char-texture-loader.js';
+import { loadCharTextures, fetchAndDecodeTexture } from '../char-texture-loader.js';
 import { reportFallback } from '../../char/fallback-log.js';
 
 /** 骨架（33 根 Biped 骨骼） */
@@ -59,31 +61,54 @@ const SMB = '/res/image/sinimage/effect/skilleffect/healing/hialtest.smb';
 /** 蒙皮网格（未经蒙皮/烘焙会塌成一团） */
 const SMD = '/res/image/sinimage/effect/skilleffect/healing/hialtest.smd';
 
-/** `Max_Time = 250`（`sinSkillEffect.cpp:1654`；70 逻辑帧/秒 ⇒ ≈3.57s） */
+/** `Max_Time = 250`（`sinSkillEffect.cpp:1654`）—— 生命周期（70 逻辑帧/秒 ⇒ ≈3.57s） */
 const MAX_TIME = 250;
-/** `Color_A = 150`（`:1659`） */
+/** `Color_A = 150`（`:1659`）；`AlphaTime = Max_Time - 20`、`AlphaAmount = 10`、`AlphaCount = 1`（`:1665-1667`） */
 const BASE_ALPHA = 150 / 255;
-/** `AlphaTime = Max_Time - 20`（`:1665`）—— 末 20 帧每帧 −10/255（`AlphaAmount`） */
 const FADE_AT = 230;
 const FPS = 70;
-/** `HIAL.bmp` 图集：实测 64×512 = 8 帧 64×64 */
-const ATLAS_FRAMES = 8;
-/** 每推进一格图集帧的逻辑帧数（原版帧序列定义在转换产物里缺失，按"铺满寿命"实现） */
-const ATLAS_FRAME_SPAN = Math.max(1, Math.floor(MAX_TIME / ATLAS_FRAMES));
-
-/* ── 运动参数：逐字来自 `sinSkillEffectMove` 的 `case SKILL_HEALING`（`sinSkillEffect.cpp:428-468`） ── */
-/** `RotateAngle += 25`/帧（4096 = 整圈） */
+/** `sinEffectDefaultSet(..., pChar, 0, 7000)`（`:1646`）——实例②的高度偏移（raw） */
+const Y_OFFSET_RAW = 7000;
+/** `RotateAngle = 256`（`:1661`）—— 初始公转角（PT 角度制，4096/圈） */
+const ROTATE_ANGLE_0 = 256;
+/** `RotateAngle += 25`（`sinSkillEffectMove` 的 `case SKILL_HEALING`，`sinSkillEffect.cpp:429`） */
 const ROTATE_PER_FRAME = 25;
-/** `RotateDistance.z` 初值 `128 * 24 * 2` = 6144 raw（= 24 世界单位） */
-const RADIUS_RAW0 = 128 * 24 * 2;
-/** `RotateDistance.z += 16`/帧（raw） */
-const RADIUS_GROW_PER_FRAME = 16;
-/** `MoveSpeed.y += 20`/帧（raw） */
-const RISE_SPEED_GROW_PER_FRAME = 20;
-/** `Posi.y = pChar->pY + 7000 + MoveSpeed.y` 里的 7000 raw（≈27.34 世界单位） */
-const ANCHOR_LIFT_RAW = 7000;
+/** `RotateDistance.z = 256 * 16`（`:1662`）= 4096 raw（= 16 世界单位）—— 初始公转半径 */
+const RADIUS_RAW_0 = 256 * 16;
+/** `RotateDistance.z += 16`（`:430`） */
+const RADIUS_GROW = 16;
+/** `MoveSpeed.y = 200`（`:1664`）—— 初始上升速度（raw/帧） */
+const MOVE_SPEED_Y_0 = 200;
+/** `MoveSpeed.y += 20`（`:433`） */
+const MOVE_SPEED_Y_GROW = 20;
+/** `Angle.y = -((RotateAngle) + ANGLE_270)`（`:435`）里的 ANGLE_270（PT 角度制） */
+const ANGLE_270 = 4096 * 270 / 360;
 /** PT 角度制：4096 = 整圈 */
 const PT_ANGLE_FULL = 4096;
+/** 原始单位 → 世界单位（PT 定点：256/单位） */
+const FONE = 256;
+
+/* ── 粒子：逐字来自 `sinEffect_HealParticle3`（`sinSkillEffect.cpp:1585-1640`）
+      与 `case SIN_EFFECT_HEALING3`（`:466-479`） ── */
+/** `MatHolyMind[0]` = `image\Sinimage\Effect\SkillEffect\HolyMind\H_MIND00.tga`（`sinSkillEffect.cpp:78`） */
+const HEAL_PARTICLE_TEX = 'image/sinimage/effect/skilleffect/holymind/h_mind00.tga';
+/** 发射条件 `if(Time < Max_Time - 30)`（`:459`） */
+const EMIT_UNTIL = MAX_TIME - 30;
+/** `TotalSize = rand() % 500 + 200`（`:1595`）、寿命 `rand() % 20 + 50`（`:1598`） */
+const P_SIZE_MIN_RAW = 200, P_SIZE_RANGE_RAW = 500;
+const P_LIFE_MIN = 50, P_LIFE_RANGE = 20;
+/** `AlphaAmount = 10`、`AlphaTime = Max_Time - 22`（`:1601-1603`） */
+const P_FADE_SPAN = 22, P_FADE_STEP = 10;
+/** `RotateDistance.z = 32`（`:1606`）、初速度 `MoveSpeed.y = rand() % 20 + 10`（`:1613`）、`Gravity = 10`（`:1614`） */
+const P_DRIFT_RADIUS_RAW = 32;
+const P_VY_MIN = 10, P_VY_RANGE = 20;
+/** 颜色初值 `r/g/b = 24/107/74`（`:1620-1622`），每帧 `r += 3; g++; b += 2`（`:474-476`） */
+const P_RGB_0: readonly [number, number, number] = [24, 107, 74];
+const P_RGB_STEP: readonly [number, number, number] = [3, 1, 2];
+/** 每帧发射**两颗**（`sinEffect_HealParticle3` 尾部 `memcpy` 复制一份，`:1636-1638`） */
+const P_PER_FRAME = 2;
+/** `DesPosi` 抖动 `rand() % 1000 - 500`（`:452-454`）、`DesPosi.y -= 1000`（`:457`） */
+const P_JITTER_RAW = 1000, P_DROP_RAW = 1000;
 
 interface HealingOrbit {
   root: THREE.Object3D;
@@ -93,7 +118,25 @@ interface HealingOrbit {
   frame: number;
   nextLogFrame: number;
 }
+/** 一颗 `H_MIND00.tga` 广告牌粒子（`sinEffect_HealParticle3` + `case SIN_EFFECT_HEALING3`） */
+interface HealParticle {
+  sprite: THREE.Sprite;
+  mat: THREE.SpriteMaterial;
+  frame: number;
+  maxLife: number;
+  pos: { x: number; y: number; z: number };
+  driftX: number;
+  driftZ: number;
+  moveSpeedY: number;
+  gravity: number;
+  rgb: [number, number, number];
+}
 const live: HealingOrbit[] = [];
+const particles: HealParticle[] = [];
+/** 粒子所属场景（`runHealingOrbit` 注入） */
+let particleScene: THREE.Scene | null = null;
+/** 粒子贴图 `H_MIND00.tga`（`runHealingOrbit` 里加载） */
+let particleTex: THREE.Texture | null = null;
 let frameAcc = 0;
 let logFn: ((msg: string) => void) | undefined;
 let projectFn: ((p: { x: number; y: number; z: number }) => { x: number; y: number; onScreen: boolean } | null) | null = null;
@@ -108,8 +151,14 @@ export function runHealingOrbit(
 ): void {
   logFn = deps.log;
   projectFn = deps.project ?? null;
+  particleScene = deps.scene;
   void (async () => {
     try {
+      if (!particleTex) {
+        // `H_MIND00.tga`：`sinSkillEffect.cpp:78`（`MatHolyMind[i] = ...\HolyMind\H_MIND0%d.tga`）
+        particleTex = await fetchAndDecodeTexture('/res/' + HEAL_PARTICLE_TEX);
+        if (!particleTex) reportFallback('skillfx', 'Healing 粒子贴图加载失败：' + HEAL_PARTICLE_TEX);
+      }
       const smb = await loadParsedAsset(SMB, 'anim', parseSmb, true);
       const smd = await loadParsedAsset(SMD, 'model', parseSmb, true);
       const skel = buildSkeleton(smb, false);
@@ -150,20 +199,16 @@ export function runHealingOrbit(
         meshes.push(m);
       }
 
-      // 图集切帧 + 逐实例克隆材质/贴图（AssetManager 的贴图全仓共享，不能直接改 offset/repeat）
+      // **材质按数据原样**（不加工）：源码里 `AniCount` 驱动的是**网格帧**（`Frame = AniCount*160`，
+      // `sinDrawEffect2:322`），**不是贴图 UV** —— 本机 `.smd` 缺帧数据（`tmFrameCnt = 0`）⇒ 无帧可播；
+      // ⚠ 该网格的 UV 覆盖**整张** `HIAL.bmp`（64×512 = 8 帧 64×64 的序列图集，实测），
+      //   这是**转换产物**的属性（原版 ASE 的帧内 UV 无从查证）—— 如实登记，不做自造补偿。
+      // 只按需克隆材质（逐实例独立控制透明度）；贴图对象共享（不改 offset/repeat 就不必克隆贴图）。
       const mats: THREE.Material[] = [];
       for (const mesh of meshes) {
         const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
         mesh.material = list.map((m) => {
           const c = (m as THREE.MeshPhongMaterial).clone();
-          if (c.map) {
-            c.map = c.map.clone();
-            c.map.repeat.set(1, 1 / ATLAS_FRAMES);
-            c.map.offset.set(0, 1 - 1 / ATLAS_FRAMES);
-            c.map.needsUpdate = true;
-          }
-          // 双面：材质数据里 `twoSide !== 1` 会被设成 FrontSide，而天使是单面片模型
-          c.side = THREE.DoubleSide;
           c.transparent = true;
           c.opacity = BASE_ALPHA;
           c.depthWrite = false;
@@ -175,7 +220,7 @@ export function runHealingOrbit(
       const root = new THREE.Group();
       for (const m of meshes) root.add(m);
       if (fxScale !== 1) root.scale.multiplyScalar(fxScale);
-      root.position.set(at.x, at.y + ANCHOR_LIFT_RAW / 256, at.z);
+      root.position.set(at.x, at.y + Y_OFFSET_RAW / FONE, at.z);
       if (casterYaw != null) root.rotation.y = casterYaw + Math.PI;
       deps.scene.add(root);
 
@@ -187,7 +232,7 @@ export function runHealingOrbit(
       logFn?.(`  ✦ Healing 小天使：烘焙网格 ${meshes.length} 个 / 源骨骼 ${skel.bones.length}`
         + ` 尺寸 ${size0.x.toFixed(1)}×${size0.y.toFixed(1)}×${size0.z.toFixed(1)}`
         + ` 世界中心 (${center0.x.toFixed(1)},${center0.y.toFixed(1)},${center0.z.toFixed(1)})`
-        + ` 锚点 (${at.x.toFixed(1)},${(at.y + ANCHOR_LIFT_RAW / 256).toFixed(1)},${at.z.toFixed(1)})`
+        + ` 锚点 (${at.x.toFixed(1)},${(at.y + Y_OFFSET_RAW / FONE).toFixed(1)},${at.z.toFixed(1)})`
         + ` 运动=绕角色公转(25/帧, r 24+0.0625/帧)+上升(速度+0.078/帧)`);
       for (const [mi, mesh] of meshes.entries()) {
         const g = mesh.geometry;
@@ -199,7 +244,7 @@ export function runHealingOrbit(
           + ` 贴图 ${(() => {
             const mm = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as THREE.MeshPhongMaterial;
             const img = mm?.map?.image as { width?: number; height?: number } | undefined;
-            return mm?.map ? `${img?.width ?? '?'}x${img?.height ?? '?'}（切 ${ATLAS_FRAMES} 帧）` : '无';
+            return mm?.map ? `${img?.width ?? '?'}x${img?.height ?? '?'}` : '无';
           })()}`);
       }
       live.push({ root, mats, at: { ...at }, frame: 0, nextLogFrame: 0 });
@@ -209,50 +254,126 @@ export function runHealingOrbit(
   })();
 }
 
-/** 每帧调一次（WorldView 帧循环）：按 `case SKILL_HEALING` 逐字推进公转/上升/图集帧/淡出 */
+/**
+ * 每帧调一次（WorldView 帧循环）—— **逐字实现** `sinActiveEffect2` 的这条链：
+ *   `sinSkillEffectMove` 的 `case SKILL_HEALING`（公转/上升/发射）+ `AlphaTime` 淡出 + `Max_Time` 清零。
+ */
 export function updateHealingOrbits(dt: number): void {
-  if (live.length === 0) return;
+  if (live.length === 0 && particles.length === 0) return;
   frameAcc += dt * FPS;
   const n = Math.floor(frameAcc);
   if (n <= 0) return;
   frameAcc -= n;
+
   for (let i = live.length - 1; i >= 0; i--) {
     const o = live[i]!;
     o.frame += n;
-    if (o.frame >= MAX_TIME) {
+    const t = o.frame;
+    if (t >= MAX_TIME) {
       o.root.removeFromParent();
       for (const m of o.mats) m.dispose();
-      logFn?.(`  · Healing 小天使 f=${o.frame} 寿命到（Max_Time）⇒ 销毁`);
+      logFn?.(`  · Healing 小天使 f=${t} 寿命到（Max_Time=250）⇒ 清空`);
       live.splice(i, 1);
       continue;
     }
-    const t = o.frame;
-    // 公转：`RotateAngle += 25`/帧；半径 `RotateDistance.z` 从 6144 起每帧 +16（raw）
-    const theta = (ROTATE_PER_FRAME * t) / PT_ANGLE_FULL * Math.PI * 2;
-    const radius = (RADIUS_RAW0 + RADIUS_GROW_PER_FRAME * t) / 256;
-    // `RotateDistance.y` 未设 = 0 ⇒ 偏移取 (r·sin, r·cos)
-    o.root.position.set(
-      o.at.x + Math.sin(theta) * radius,
-      o.at.y + (ANCHOR_LIFT_RAW + RISE_SPEED_GROW_PER_FRAME * t) / 256,
-      o.at.z + Math.cos(theta) * radius,
-    );
-    // `Angle.y = -((RotateAngle) + ANGLE_270)`（PT 角 → three 弧度）
-    o.root.rotation.y = -((ROTATE_PER_FRAME * t + 270 * PT_ANGLE_FULL / 360) / PT_ANGLE_FULL * Math.PI * 2);
-    // 图集帧推进 + 末 20 帧淡出
+    // ── `case SKILL_HEALING`（`sinSkillEffect.cpp:428-468`）逐字 ──
+    // RotateAngle += 25/帧；RotateDistance.z += 16/帧（raw，初值 4096 = 16 世界单位）
+    const theta = (ROTATE_ANGLE_0 + ROTATE_PER_FRAME * t) / PT_ANGLE_FULL * Math.PI * 2;
+    const radiusRaw = RADIUS_RAW_0 + RADIUS_GROW * t;
+    // RotatePosi = (Rz·sin, Rz·cos) >> 16（`RotateDistance.y` 未设 = 0）⇒ 世界单位 = raw/FONE
+    const offX = (radiusRaw * Math.sin(theta)) / FONE;
+    const offZ = (radiusRaw * Math.cos(theta)) / FONE;
+    // MoveSpeed.y += 20/帧（初值 200）；Posi.y = pChar->pY + 7000 + MoveSpeed.y
+    const moveSpeedY = MOVE_SPEED_Y_0 + MOVE_SPEED_Y_GROW * t;
+    o.root.position.set(o.at.x + offX, o.at.y + (Y_OFFSET_RAW + moveSpeedY) / FONE, o.at.z + offZ);
+    // Angle.y = -((RotateAngle) + ANGLE_270)
+    o.root.rotation.y = -((ROTATE_ANGLE_0 + ROTATE_PER_FRAME * t + ANGLE_270) / PT_ANGLE_FULL * Math.PI * 2);
+    // Color_A 末 20 帧每帧 −10/255（AlphaTime = Max_Time − 20、AlphaAmount = 10、AlphaCount = 1）
     const alpha = t >= FADE_AT ? Math.max(0, (150 - (t - FADE_AT) * 10) / 255) : BASE_ALPHA;
-    const atlasFrame = Math.min(ATLAS_FRAMES - 1, Math.floor(t / ATLAS_FRAME_SPAN));
-    for (const m of o.mats) {
-      m.opacity = alpha;
-      const map = (m as THREE.MeshPhongMaterial).map;
-      if (map) map.offset.y = 1 - (atlasFrame + 1) / ATLAS_FRAMES;
+    for (const m of o.mats) m.opacity = alpha;
+
+    // ── 每帧发射粒子：`if(Time < Max_Time - 30) sinEffect_HealParticle3(&DesPosi, MatHolyMind[0], 1, 500, 50, 10)`
+    //    （`sinSkillEffect.cpp:459-460`；该函数末尾 `memcpy` 再复制一份 ⇒ 每帧 2 颗，`:1636-1638`）
+    if (t < EMIT_UNTIL) {
+      // DesPosi = Posi + rand(±500) + 小半径(32)偏移；再 DesPosi.y -= 1000（`:452-457`）
+      const smallTheta = theta;   // 同一帧的 RotateAngle
+      const jx = (Math.random() * P_JITTER_RAW - P_JITTER_RAW / 2) / FONE;
+      const jy = (Math.random() * P_JITTER_RAW - P_JITTER_RAW / 2) / FONE;
+      const jz = (Math.random() * P_JITTER_RAW - P_JITTER_RAW / 2) / FONE;
+      const sx = (P_DRIFT_RADIUS_RAW * Math.sin(smallTheta)) / FONE;
+      const sz = (P_DRIFT_RADIUS_RAW * Math.cos(smallTheta)) / FONE;
+      const des = {
+        x: o.root.position.x + jx + sx,
+        y: o.root.position.y + jy + sz - P_DROP_RAW / FONE,   // ⚠ 源码把 z 分量加到 y（照抄）
+        z: o.root.position.z + jz,
+      };
+      for (let k = 0; k < P_PER_FRAME; k++) spawnHealParticle(des);
     }
+
     if (t >= o.nextLogFrame) {
       o.nextLogFrame += 35;
       const scr = projectFn ? projectFn({ x: o.root.position.x, y: o.root.position.y, z: o.root.position.z }) : null;
-      logFn?.(`  · Healing 小天使 f=${t} pos=(${o.root.position.x.toFixed(1)},`
-        + `${o.root.position.y.toFixed(1)},${o.root.position.z.toFixed(1)}) 半径=${radius.toFixed(1)}`
-        + ` 图集帧=${atlasFrame}/${ATLAS_FRAMES - 1} 透明度=${alpha.toFixed(2)}`
+      logFn?.(`  · Healing 小天使 f=${t} pos=(${o.root.position.x.toFixed(1)},${o.root.position.y.toFixed(1)},`
+        + `${o.root.position.z.toFixed(1)}) 半径=${(radiusRaw / FONE).toFixed(1)}`
+        + ` 上升速度=${(moveSpeedY / FONE).toFixed(1)}/帧 透明度=${alpha.toFixed(2)} 粒子=${particles.length}`
         + ` 屏幕=${scr ? `(${scr.x.toFixed(0)},${scr.y.toFixed(0)})${scr.onScreen ? '在画面内' : '★画面外'}` : '(无 project)'}`);
     }
   }
+
+  // ── 粒子逐帧推进（`case SIN_EFFECT_HEALING3`，`sinSkillEffect.cpp:466-479` 逐字）──
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]!;
+    p.frame += n;
+    if (p.frame >= p.maxLife) {
+      p.sprite.parent?.remove(p.sprite);
+      p.mat.dispose();
+      particles.splice(i, 1);
+      continue;
+    }
+    // sinFace += (Rz·sinφ, Rz·cosφ) >> 16 —— φ 固定 ⇒ 等速直线漂移
+    p.pos.x += p.driftX;
+    p.pos.z += p.driftZ;
+    // `Gravity -= 5`；`sinFace.y += MoveSpeed.y + Gravity`（源码逐字）
+    p.gravity -= 5;
+    p.pos.y += (p.moveSpeedY + p.gravity) / FONE;
+    // 颜色每帧变亮：r += 3; g++; b += 2（钳到 255）
+    p.rgb[0] = Math.min(255, p.rgb[0] + P_RGB_STEP[0]);
+    p.rgb[1] = Math.min(255, p.rgb[1] + P_RGB_STEP[1]);
+    p.rgb[2] = Math.min(255, p.rgb[2] + P_RGB_STEP[2]);
+    p.sprite.position.set(p.pos.x, p.pos.y, p.pos.z);
+    // AlphaTime = Max_Time - 22、每帧 −10/255（255 起）
+    const a = p.frame >= p.maxLife - P_FADE_SPAN
+      ? Math.max(0, (255 - (p.frame - (p.maxLife - P_FADE_SPAN)) * P_FADE_STEP) / 255)
+      : 1;
+    p.mat.opacity = a;
+    p.mat.color.setRGB(p.rgb[0] / 255, p.rgb[1] / 255, p.rgb[2] / 255);
+  }
+}
+
+/** 一颗 `H_MIND00.tga` 广告牌粒子（参数逐字来自 `sinEffect_HealParticle3`，见常量注释） */
+function spawnHealParticle(at: { x: number; y: number; z: number }): void {
+  const sizeRaw = Math.random() * P_SIZE_RANGE_RAW + P_SIZE_MIN_RAW;
+  const life = Math.floor(Math.random() * P_LIFE_RANGE) + P_LIFE_MIN;
+  const phi = (Math.random() * PT_ANGLE_FULL + P_PER_FRAME) / PT_ANGLE_FULL * Math.PI * 2;
+  const size = sizeRaw / FONE;
+  const mat = new THREE.SpriteMaterial({
+    map: particleTex!,
+    blending: THREE.AdditiveBlending,   // `SMMAT_BLEND_LAMP`（`CreateTextureMaterial(..., SMMAT_BLEND_LAMP)`）
+    depthWrite: false,
+    transparent: true,
+    color: new THREE.Color(P_RGB_0[0] / 255, P_RGB_0[1] / 255, P_RGB_0[2] / 255),
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(size, size, 1);
+  sprite.position.set(at.x, at.y, at.z);
+  sprite.frustumCulled = false;
+  particleScene?.add(sprite);
+  particles.push({
+    sprite, mat, frame: 0, maxLife: life, pos: { ...at },
+    driftX: (P_DRIFT_RADIUS_RAW * Math.sin(phi)) / FONE,
+    driftZ: (P_DRIFT_RADIUS_RAW * Math.cos(phi)) / FONE,
+    moveSpeedY: Math.random() * P_VY_RANGE + P_VY_MIN,
+    gravity: 10,
+    rgb: [P_RGB_0[0], P_RGB_0[1], P_RGB_0[2]],
+  });
 }
