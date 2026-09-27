@@ -344,7 +344,6 @@ export const CODE_SKILL_FX: Record<string, (
   healing: (ctx, caster, target) => {
     const at = target ?? caster;
     ctx.dynLights?.set(at.x, at.y, at.z, 255, 255, 255, 255, 200, 1);
-    reportFallback('skillfx', 'Healing：贴骨跟随份（BoneFlag=1）未移植 ⇒ 只放旋转上升光环');
     if (!ctx.scene) {
       reportFallback('skillfx', 'Healing 的旋转光环没起：调用方没给 scene');
       return;
