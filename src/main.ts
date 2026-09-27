@@ -1008,7 +1008,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // 技能起手广播：旁观者立刻播**施法者自己播的那一条**技能动画（服务端透传 anim_index/anim_clip）
       const ss = msg.skillStart!;
       worldView.signalSkillStart(Number(ss.casterId ?? 0), Number(ss.skillId ?? 0),
-        Number(ss.targetId ?? 0), Number(ss.animIndex ?? 0), ss.animClip || '');
+        Number(ss.targetId ?? 0), Number(ss.animIndex ?? 0), ss.animClip || '',
+        Number(ss.sparkCount ?? 0));
       break;
     }
     case 'attackStart': {

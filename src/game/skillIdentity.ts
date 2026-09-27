@@ -89,6 +89,21 @@ export function skillRowBySkillId(skillId: number): SkillIdentityRow | null {
  */
 const PLAYER_TARGET_CONSTS = new Set(['HEALING', 'GRAND_HEALING']);
 
+/**
+ * Multi Spark 每级**道数区间** —— `M_Spark_Num[point-1]`（生成物 `arrays`），实际
+ * N = rand(Num/2+1, Num)（随机在服务端结算时发生，并经 `S2C_SkillStart.spark_count`
+ * 同步给视觉）。面板技能信息显示这个区间；非 Multi Spark / 表缺失 ⇒ null。
+ */
+export function sparkCountRange(skillId: number, point: number): { min: number; max: number } | null {
+  const row = BY_ID.get(skillId);
+  if (!row || row.constName !== 'MULTISPARK') return null;
+  const arr = (GEN as { arrays?: { M_Spark_Num?: { values?: number[] } } }).arrays?.M_Spark_Num?.values;
+  if (!arr?.length) return null;
+  const num = arr[Math.min(Math.max(point, 1), arr.length) - 1];
+  if (!num || num < 1) return null;
+  return { min: Math.floor(num / 2) + 1, max: num };
+}
+
 export function skillTargetsPlayers(skillId: number): boolean {
   const row = BY_ID.get(skillId);
   return row != null && PLAYER_TARGET_CONSTS.has(row.constName);

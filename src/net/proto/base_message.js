@@ -27348,6 +27348,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.Position.$Properties|null} [targetPosition] S2C_SkillStart targetPosition
              * @property {number|null} [animIndex] S2C_SkillStart animIndex
              * @property {string|null} [animClip] S2C_SkillStart animClip
+             * @property {number|null} [sparkCount] S2C_SkillStart sparkCount
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -27428,6 +27429,14 @@ export const jpt = $root.jpt = (() => {
             S2C_SkillStart.prototype.animClip = "";
 
             /**
+             * S2C_SkillStart sparkCount.
+             * @member {number} sparkCount
+             * @memberof jpt.base.S2C_SkillStart
+             * @instance
+             */
+            S2C_SkillStart.prototype.sparkCount = 0;
+
+            /**
              * Creates a new S2C_SkillStart instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_SkillStart
@@ -27471,6 +27480,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 5, wireType 0 =*/40).int32(message.animIndex);
                 if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip") && message.animClip !== "")
                     writer.uint32(/* id 6, wireType 2 =*/50).string(message.animClip);
+                if (message.sparkCount != null && $Object.hasOwnProperty.call(message, "sparkCount") && message.sparkCount !== 0)
+                    writer.uint32(/* id 7, wireType 0 =*/56).int32(message.sparkCount);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -27579,6 +27590,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.animClip;
                             continue;
                         }
+                    case 7: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.sparkCount = value;
+                            else
+                                delete message.sparkCount;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -27647,6 +27667,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip"))
                     if (!$util.isString(message.animClip))
                         return "animClip: string expected";
+                if (message.sparkCount != null && $Object.hasOwnProperty.call(message, "sparkCount"))
+                    if (!$util.isInteger(message.sparkCount))
+                        return "sparkCount: integer expected";
                 return null;
             };
 
@@ -27702,6 +27725,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.animClip != null)
                     if (typeof object.animClip !== "string" || object.animClip.length)
                         message.animClip = $String(object.animClip);
+                if (object.sparkCount != null)
+                    if ($Number(object.sparkCount) !== 0)
+                        message.sparkCount = object.sparkCount | 0;
                 return message;
             };
 
@@ -27737,6 +27763,7 @@ export const jpt = $root.jpt = (() => {
                     object.targetPosition = null;
                     object.animIndex = 0;
                     object.animClip = "";
+                    object.sparkCount = 0;
                 }
                 if (message.casterId != null && $Object.hasOwnProperty.call(message, "casterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -27760,6 +27787,8 @@ export const jpt = $root.jpt = (() => {
                     object.animIndex = message.animIndex;
                 if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip"))
                     object.animClip = message.animClip;
+                if (message.sparkCount != null && $Object.hasOwnProperty.call(message, "sparkCount"))
+                    object.sparkCount = message.sparkCount;
                 return object;
             };
 

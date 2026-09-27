@@ -261,7 +261,7 @@ export interface WorldView {
    * 技能起手广播（`S2C_SkillStart`）：旁观者立刻播**施法者自己播的那一条**技能动画
    * （含"演员未就绪"的补播队列，与 `signalAttackStart` 同一套）。
    */
-  signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex: number, animClip: string): void;
+  signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex: number, animClip: string, sparkCount?: number): void;
   /**
    * S2C_Damage 受击硬直：targetId 为自机 → 站立/走/跑时播受击动画（攻击/技能中不打断）；
    * 为远端玩家 → 同规则作用到该 actor。damage<=0（抵抗/吸收）不播。
@@ -709,6 +709,10 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   let selfSkillAim: THREE.Object3D | null = null;
   /** 本次施法的目标怪 id（起手时由 `beginSelfSkill` 从 `aim` 定死；0 = 无目标，如自身 buff）。 */
   let selfSkillTargetId = 0;
+  /** **服务端掷定的本次技能参数**（`S2C_SkillStart.spark_count`，Multi Spark = 道数）。
+   *  起手（beginSelfSkill）清零、收到自己的 SkillStart ack 时写入 ⇒ 事件帧视觉用它，
+   *  与服务端结算同一个数。0 = 还没收到 / 本技能没有。 */
+  let selfSkillParam = 0;
   /**
    * **攻击循环用哪只拳的技能** —— 由"选中目标的那个键"决定：
    * 原版 `SelMouseButton = 1/2` ⇒ `pLeftSkill/pRightSkill`（`playmain.cpp:2303-2313`），
@@ -2193,6 +2197,9 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 环的半径/元素数（Pike Wind）、火花颗数（Multi Spark）都随等级变；
       // 取不到时**不猜**（各条目自己决定是"不放并上报"还是"按 1 级并上报"）。
       skillLevel: selfSkillRow ? skillLevelByIcon(selfSkillRow.icon) : null,
+      // **服务端掷定的本次道数**（Multi Spark）—— 来自自己的 `S2C_SkillStart.spark_count`；
+      // 视觉（几道光）与结算（打几次）必须同一个数。0 = 还没收到（presenter 据此不放并上报）。
+      sparkCount: selfSkillParam,
       spawnAsset: fx ? (a, o) => fx.spawnStoppable(a, o) : undefined,
       // 一次性粒子用 `spawn`（不需要"停下"的句柄）—— 与怪物侧同一条路
       spawnPart: fx ? (a, o) => fx.spawn(a, o) : undefined,
@@ -2272,6 +2279,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 单目标的 Critical Hit / Jumping Crash 在服务端 `requireTarget` 被拒 ⇒ **技能没伤害**
     // （Pike Wind 因为是自身中心 AoE、不读 targetId，所以看起来正常）。目标在**起手时定死**。
     selfSkillTargetId = entityIdOfRoot(aim);
+    selfSkillParam = 0;   // 新施法：道数等本次参数等自己的 SkillStart ack（AGENTS #14 同步结果）
     selfSkillRow = skillFxRowByIcon(iconFile);
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
     fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
@@ -4665,12 +4673,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * `animIndex` 直取（AGENTS #14：谁播的谁上报；两端各自随机会让"一招两种动作"）。
    * 演员未就绪时与攻击同策入队（补播窗口由该动作自身的时长决定）。
    */
-  function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0, animClip = ''): void {
+  function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0, animClip = '', sparkCount = 0): void {
     if (casterId === selfPlayerId) {
       // 动画自己已在本地播过了（客户端驱动），但**CD 计时从这条 ack 起**：服务端是在受理那一刻
       // （扣 MP + 记 `lastCastAt`）开始的，客户端晚一个 RTT 起表 ⇒ 客户端窗口 ⊇ 服务端窗口，
       // 边界上永远是“服务端先就绪”；时长也是服务端下发的（`S2C_SkillList.skills[].cd_ms`）。
       markSkillCast(skillId);
+      // **服务端掷定的技能参数**（Multi Spark = 道数）：起手即定 ⇒ 事件帧的火花视觉用它，
+      // 与服务端结算的同一个 N（AGENTS #14：同步结果，不各掷各的随机）。0 = 本技能没有。
+      selfSkillParam = sparkCount;
       return;
     }
     drainStaleRemoteAttacks();

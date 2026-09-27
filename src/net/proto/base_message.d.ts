@@ -8778,6 +8778,9 @@ export namespace jpt {
             /** S2C_SkillStart animClip. */
             animClip: string;
 
+            /** S2C_SkillStart sparkCount. */
+            sparkCount: number;
+
             /**
              * Creates a new S2C_SkillStart instance using the specified properties.
              * @param [properties] Properties to set
@@ -8879,6 +8882,9 @@ export namespace jpt {
 
                 /** S2C_SkillStart animClip */
                 animClip?: (string|null);
+
+                /** S2C_SkillStart sparkCount */
+                sparkCount?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

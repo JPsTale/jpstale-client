@@ -15,7 +15,6 @@
 
 import skillFx from '../../game/data/skill-fx.json';
 import { runMultiSpark, type MultiSparkRunnerCtx } from './multi-spark-runner.js';
-import { playerSparkCount } from './multi-spark.js';
 import { runCastCircle } from './cast-circle-runner.js';
 import { castCircleFlagForClass, CAST_CIRCLE_TYPE_NORMAL } from './cast-circle.js';
 import { runHealingOrbit } from './healing-orbit.js';
@@ -70,6 +69,12 @@ export function skillFxRowByIcon(iconFile: string): SkillFxRow | null {
 export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
   /** 技能等级（原版 `lpSkill->Point`）—— 颗数由它查表（`M_SPARK_NUM`） */
   skillLevel?: number | null;
+  /**
+   * **服务端掷定的本次道数**（`S2C_SkillStart.spark_count`，Multi Spark = 光弹数）。
+   * `0/undefined` = 还没收到起手 ack ⇒ 视觉不放并上报（与服务端结算对不上就宁可不放，
+   * AGENTS #14：同步结果，不各掷各的随机）。
+   */
+  sparkCount?: number;
   /** 音效播放（`sfx.play(path, {pos})`） */
   playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
   /**
@@ -133,14 +138,15 @@ export const CODE_SKILL_FX: Record<string, (
   // 早先这里写的是 `ctx.skillLevel ?? 1`（"按 1 级算"）—— 那是**猜一个值**，AGENTS #12 禁；现改为
   // **本次不放**并上报（与 Pike Wind 同一条口径）。
   multispark: (ctx, caster, target) => {
-    const lv = ctx.skillLevel;
-    if (lv == null) {
-      reportFallback('skillfx', 'MultiSpark 的颗数按技能等级取（`M_Spark_Num[Point-1]`），'
-        + '但调用方没给 skillLevel ⇒ **本次不放**（不按 1 级猜）');
+    // 道数 = **服务端起手掷定**（`S2C_SkillStart.spark_count`）—— 结算与视觉共用同一个 N；
+    // 客户端不再自己 `playerSparkCount` 掷（两个随机源必然对不上，用户 2026-09-26 实测抓出）。
+    const num = ctx.sparkCount ?? 0;
+    if (num < 1) {
+      reportFallback('skillfx', 'MultiSpark 的道数 = 服务端起手掷定（`S2C_SkillStart.spark_count`），'
+        + '本次没收到 ⇒ **不放**（与服务端各掷各的必然对不上）');
       return;
     }
-    const num = playerSparkCount(lv);
-    ctx.log?.(`    ✦ MultiSpark：${num} 颗（等级 ${lv}）`);
+    ctx.log?.(`    ✦ MultiSpark：${num} 道光弹（服务端掷定）`);
     runMultiSpark(ctx, caster, target, num);
   },
   // **Pike Wind**（pikeman 一转·1，`SKILL_PLAY_PIKEWIND` / 下标 41）——
@@ -343,7 +349,7 @@ export const CODE_SKILL_FX: Record<string, (
       reportFallback('skillfx', 'Healing 的旋转光环没起：调用方没给 scene');
       return;
     }
-    runHealingOrbit({ scene: ctx.scene, log: ctx.log }, at, ctx.fxScale ?? 1);
+    runHealingOrbit({ effects: ctx.effects, scene: ctx.scene, log: ctx.log }, at, ctx.fxScale ?? 1);
   },
   // **Holy Mind**（priestess T1.4，`SKILL_PLAY_HOLY_MIND`）—— 事件帧视觉逐字两段：
   //   · `AssaParticle_HolyMind_Attack(lpTarChar, cnt)`（`hoAssaParticleEffect.cpp:2149-2162`）：

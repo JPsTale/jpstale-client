@@ -9,7 +9,7 @@ import { skillLevelOf, skillMasteryOf } from '../../game/skillLevel.js';
 import { skillMpCost, skillSpCost } from '../../game/skillCost.js';
 import { skillCdProgress } from '../../game/skillCooldown.js';
 import { skillName, skillDesc } from '../../game/skillText.js';
-import { skillIdByIcon, skillRowBySkillId, type SkillIdentityRow } from '../../game/skillIdentity.js';
+import { skillIdByIcon, skillRowBySkillId, sparkCountRange, type SkillIdentityRow } from '../../game/skillIdentity.js';
 import { learnGate, type LearnGate } from '../../game/skillLearn.js';
 import { bindQuickKey, equipFistSkill, sendLearnSkill, sendResetSkillPoints } from '../../net/bridge.js';
 import { UNBOUND, fistSlotOfSkill, quickKeyOfSkill, type FistSlot } from '../../game/skillBinding.js';
@@ -562,6 +562,10 @@ function SkillTip(props: { skill: SkillDef; skillId: number | null; lv: number; 
   const nextDamage = learn ? dmgText(learn.nextPowerPctMin, learn.nextPowerPctMax) : null;
   const curEffect = curDamage ?? demoEffect(skill, tw, lv);
   const nextEffect = nextDamage ?? demoNextEffect(skill, tw, lv);
+  // **道数区间**（Multi Spark：实际 N 由服务端掷定并经 S2C_SkillStart.spark_count 同步给视觉；
+  // 面板显示的是生成物表给定的区间）。其余技能 ⇒ null 不显示。
+  const curBolts = skillId != null ? sparkCountRange(skillId, Math.max(1, lv)) : null;
+  const nextBolts = skillId != null ? sparkCountRange(skillId, Math.max(1, lv) + 1) : null;
   const style = {
     left: x + 18,
     top: y + 14,
@@ -594,6 +598,11 @@ function SkillTip(props: { skill: SkillDef; skillId: number | null; lv: number; 
       {/* 描述：**原版语言文件**优先（中文 GBK 表已抽好）；查不到才用 wartale 的 desc */}
       <div className="jp-skill-tip-desc">{origDesc ?? skill.desc}</div>
       {lv > 0 && <div className="jp-skill-tip-row jp-skill-tip-cur">Lv {lv}: {curEffect}</div>}
+      {lv > 0 && curBolts && (
+        <div className="jp-skill-tip-row jp-skill-tip-cur">
+          {t('skills.sparkCount', { min: curBolts.min, max: curBolts.max })}
+        </div>
+      )}
       {learn && (
         <div className="jp-skill-tip-row jp-skill-tip-learn">
           {t('skills.nextReq')}: {t('skills.reqLevelNext', { level: learn.nextReqLevel })}
@@ -601,11 +610,18 @@ function SkillTip(props: { skill: SkillDef; skillId: number | null; lv: number; 
         </div>
       )}
       <div className="jp-skill-tip-row jp-skill-tip-next">Lv {Math.max(1, lv + 1)}: {nextEffect}</div>
+      {nextBolts && (
+        <div className="jp-skill-tip-row jp-skill-tip-next">
+          {t('skills.sparkCount', { min: nextBolts.min, max: nextBolts.max })}
+        </div>
+      )}
       {/* 熟练度只对**可施放**的技能有意义（被动不施放 ⇒ 永远不涨）⇒ 被动那一格不显示这一行 */}
       {skillId != null && skillRowBySkillId(skillId)?.useCode !== 'NOT' && (
         <div className="jp-skill-tip-row">{t('skills.mastery')}: <b>{masteryPct}%</b></div>
       )}
-      {(!curDamage || !nextDamage) && <div className="jp-skill-tip-demo">{t('skills.demo')}</div>}
+      {(!curDamage || !nextDamage) && !curBolts && !nextBolts && (
+        <div className="jp-skill-tip-demo">{t('skills.demo')}</div>
+      )}
     </div>
   );
 }
