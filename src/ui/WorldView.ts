@@ -2430,6 +2430,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
   }
 
+  // **诊断入口：在自机前方起一道天降闪**（与 __ptSelfSkill/__ptMonsterSkill 一对；
+  // 直接驱动 runDivineLightning —— 不经过施法/结算链，专测落雷本体可见性）
+  (window as unknown as { __ptDivine?: () => void }).__ptDivine = () => {
+    if (!scene) { console.log('[skillfx] 世界未就绪'); return; }
+    const at = { x: selfPos.x + Math.sin(selfAngle) * 12, y: selfPos.y, z: selfPos.z + Math.cos(selfAngle) * 12 };
+    const fx2 = effects;
+    configureDivineLightning({ dynLights, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null });
+    runDivineLightning({ scene, dynLights, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null,
+      log: (m) => console.log('[skillfx]' + m) }, at);
+    console.log('[skillfx] __ptDivine 落雷 @', at.x.toFixed(1), at.y.toFixed(1), at.z.toFixed(1));
+  };
+
   /**
    * **诊断入口：直接放某个玩家技能**（临时 —— 与 `window.__ptMonsterSkill` 一对）。
    *
