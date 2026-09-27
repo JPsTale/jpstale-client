@@ -347,9 +347,13 @@ export const CODE_SKILL_FX: Record<string, (
     const at = target ?? caster;
     ctx.dynLights?.set(at.x, at.y, at.z, 255, 255, 255, 255, 200, 1);
     if (!ctx.scene) {
-      reportFallback('skillfx', 'Healing 的旋转光环没起：调用方没给 scene');
+      reportFallback('skillfx', 'Healing 效果没起：调用方没给 scene');
       return;
     }
+    // 原版 `sinEffect_Healing2` 有**两份**实例：①`smASE_ReadBone` + `Y=13000` + `BoneFlag=1`（贴骨）
+    // ②`Y=7000` + `CODE=SKILL_HEALING`（我们实现了这份）。**①未实现** —— 显式上报，不静默（AGENTS #12）。
+    reportFallback('skillfx', 'Healing：第一份实例（smASE_ReadBone + Y=13000 + BoneFlag=1，贴骨）未实现'
+      + '（且源码未给它 Max_Time，寿命取决于槽位残留值，见 docs/技能系统-healing-完整源码.md §D）');
     runHealingOrbit({ scene: ctx.scene, log: ctx.log, project: ctx.project }, at, ctx.fxScale ?? 1,
       ctx.casterYaw ?? null);
   },
