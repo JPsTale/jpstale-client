@@ -26062,6 +26062,7 @@ export const jpt = $root.jpt = (() => {
              * @property {boolean|null} [missed] S2C_AttackResult missed
              * @property {number|null} [hitIndex] S2C_AttackResult hitIndex
              * @property {boolean|null} [attackEffect] S2C_AttackResult attackEffect
+             * @property {number|null} [skillId] S2C_AttackResult skillId
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -26150,6 +26151,14 @@ export const jpt = $root.jpt = (() => {
             S2C_AttackResult.prototype.attackEffect = false;
 
             /**
+             * S2C_AttackResult skillId.
+             * @member {number} skillId
+             * @memberof jpt.base.S2C_AttackResult
+             * @instance
+             */
+            S2C_AttackResult.prototype.skillId = 0;
+
+            /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_AttackResult
@@ -26195,6 +26204,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 6, wireType 0 =*/48).int32(message.hitIndex);
                 if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect") && message.attackEffect !== false)
                     writer.uint32(/* id 7, wireType 0 =*/56).bool(message.attackEffect);
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId") && message.skillId !== 0)
+                    writer.uint32(/* id 8, wireType 0 =*/64).int32(message.skillId);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -26315,6 +26326,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.attackEffect;
                             continue;
                         }
+                    case 8: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.skillId = value;
+                            else
+                                delete message.skillId;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -26384,6 +26404,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect"))
                     if (typeof message.attackEffect !== "boolean")
                         return "attackEffect: boolean expected";
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
+                    if (!$util.isInteger(message.skillId))
+                        return "skillId: integer expected";
                 return null;
             };
 
@@ -26440,6 +26463,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.attackEffect != null)
                     if (object.attackEffect)
                         message.attackEffect = $Boolean(object.attackEffect);
+                if (object.skillId != null)
+                    if ($Number(object.skillId) !== 0)
+                        message.skillId = object.skillId | 0;
                 return message;
             };
 
@@ -26476,6 +26502,7 @@ export const jpt = $root.jpt = (() => {
                     object.missed = false;
                     object.hitIndex = 0;
                     object.attackEffect = false;
+                    object.skillId = 0;
                 }
                 if (message.attackerId != null && $Object.hasOwnProperty.call(message, "attackerId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -26501,6 +26528,8 @@ export const jpt = $root.jpt = (() => {
                     object.hitIndex = message.hitIndex;
                 if (message.attackEffect != null && $Object.hasOwnProperty.call(message, "attackEffect"))
                     object.attackEffect = message.attackEffect;
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
+                    object.skillId = message.skillId;
                 return object;
             };
 

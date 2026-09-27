@@ -3810,11 +3810,7 @@
    "classDir": "priestess",
    "icon": "mp23 d_lightning.bmp",
    "name": "Divine Lightning",
-   "fx": [
-    "part:divinelightning",
-    "lua:skillcelestialchainlightaxial",
-    "lua:skillcelestialchainlightpart"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/morion/casting_p.wav",
     "wav/effects/skill/morion/divinelightning 1.wav"
@@ -3827,9 +3823,7 @@
    },
    "event": {
     "fx": [
-     "part:divinelightning",
-     "lua:skillcelestialchainlightaxial",
-     "lua:skillcelestialchainlightpart"
+     "code:divinelightning"
     ],
     "sfx": [
      "wav/effects/skill/morion/divinelightning 1.wav"

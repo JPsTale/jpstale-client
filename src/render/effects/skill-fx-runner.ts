@@ -21,6 +21,7 @@ import { runHealingOrbit } from './healing-orbit.js';
 import { runMonsterFly, type FlyDeps } from './monster-fly-runner.js';
 import { FX_VIGOR_BALL, pickMonsterFxAsset } from './monster-attack-fx.js';
 import { runGlacialSpike } from './glacial-spike.js';
+import { runDivineLightning, configureDivineLightning } from './divine-lightning.js';
 import { reportFallback } from '../../char/fallback-log.js';
 import { skillRowBySkillId } from '../../game/skillIdentity.js';
 import { PT_ANGLE_FULL, FONE, ptAngleToRad } from '../../core/geom.js';
@@ -440,6 +441,19 @@ export const CODE_SKILL_FX: Record<string, (
       return;
     }
     void ctx.spawnPart('skill4celestialchainlightinglight', { pos: at });
+  },
+  // **Divine Lightning**（priestess T2.2，`SKILL_PLAY_DIVINE_LIGHTNING`）—— 事件帧视觉 =
+  // `SkillPlay_DivineLightning_Effect`（`netplay.cpp:12463`）对**每个目标**调
+  // `AssaParticle_DivineLighting`（`hoAssaParticleEffect.cpp:654`）：一道 **ASSA_SHOT_SPARK
+  // 从天上（pY+100000）落到目标头顶（pY+5000）**，到达时 `AssaParticle_Sprak` 三件套
+  // （5 颗溅射火花 + 白动态光 + `part:divinelightning`）。完整移植见 `divine-lightning.ts`
+  // （文件头有逐字出处）。目标列表 = **服务端结算下发的 `S2C_AttackResult` 逐条**
+  // （`WorldView` 在 `applyMonsterHit` 那条链上按 `attacker/skill` 派发）—— 与自机共用一份，
+  // 不重跑本地选敌（AGENTS #14：同步结果）。
+  divinelightning: (ctx, caster, target) => {
+    const at = target ?? caster;
+    configureDivineLightning({ dynLights: ctx.dynLights, spawnPart: ctx.spawnPart });
+    runDivineLightning({ scene: ctx.scene, dynLights: ctx.dynLights, spawnPart: ctx.spawnPart, log: ctx.log }, at);
   },
 };
 

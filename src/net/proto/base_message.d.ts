@@ -8352,6 +8352,9 @@ export namespace jpt {
             /** S2C_AttackResult attackEffect. */
             attackEffect: boolean;
 
+            /** S2C_AttackResult skillId. */
+            skillId: number;
+
             /**
              * Creates a new S2C_AttackResult instance using the specified properties.
              * @param [properties] Properties to set
@@ -8456,6 +8459,9 @@ export namespace jpt {
 
                 /** S2C_AttackResult attackEffect */
                 attackEffect?: (boolean|null);
+
+                /** S2C_AttackResult skillId */
+                skillId?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

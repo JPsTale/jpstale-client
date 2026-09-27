@@ -1032,6 +1032,11 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const attackerId = Number(ar.attackerId ?? 0);
       const targetId = Number(ar.targetId ?? 0);
       if (worldView.isSelf(attackerId)) worldView.markSelfCombat();
+      // **技能视觉按结算反查**（AGENTS #14 同步结果）： Divine Lightning 的落雷是
+      // "打中谁就劈谁"——逐条 `S2C_AttackResult` 派发（`skill_id` 标出这是哪一招）。
+      // missed 也照放：原版特效在**选敌**之后（`SkillPlay_DivineLightning_Effect` 与
+      // 结算是两步，命中与否不影响落雷落在哪里 —— 伤害为 0 也是劈下去）。
+      worldView.onSkillAttackResult(Number(ar.skillId ?? 0), attackerId, targetId);
       if (ar.missed) {
         worldView.showFloater('monster', targetId, 'MISS', '#d8dce3', false, attackerId);
         if (worldView.isSelf(attackerId)) worldView.playSelfAttackResult(true, false, Number(ar.hitIndex ?? 0));

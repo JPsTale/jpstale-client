@@ -45,6 +45,7 @@ import {
   type SkillFxRow, type SkillFxFireCtx,
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
+import { runDivineLightning, configureDivineLightning, updateDivineLightningRunners, clearDivineLightning, setDivineLightningTexture } from '../render/effects/divine-lightning.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateHealingOrbits } from '../render/effects/healing-orbit.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
@@ -296,6 +297,12 @@ export interface WorldView {
   spawnLevelUpEffect(targetId: number): void;
   /** 锻造成功（服务端 `S2C_AgeUpBroadcast`）→ 在那个单位身上播原版 `EFFECT_AGING`（白光 + `.part` aging） */
   spawnAgeUpEffect(targetId: number): void;
+  /**
+   * **技能结算反查的视觉**（`S2C_AttackResult.skillId + attackerId + targetId`）——
+   * Divine Lightning 的逐目标落雷走它（打中谁就劈谁；自机与旁观者**共用**这一份派发，
+   * 因为本机的结算也是服务端 `S2C_AttackResult` 逐条到达的）。`skillId=0` = 普攻 ⇒ 忽略。
+   */
+  onSkillAttackResult(skillId: number, attackerId: number, targetId: number): void;
   /**
    * 单位**脚下**世界坐标（升级特效/升级音的锚点）。不在视野内 ⇒ null（调用方据此不放，不退回原点）。
    */
@@ -1553,6 +1560,22 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // ⚠ 且它由 `effects.update` 统一推进 ⇒ **这里不要再 update 一次**（会 2 倍速）。
     effects = createEffectManager(quarksFx);
     dynLights = createDynLightPool(scene);
+    // 神之雷电的弹体/火花贴图（`spark01_01.bmp`，PT 加密 BMP）—— 一次解码全局复用
+    void (async () => {
+      try {
+        const buf = await import('../core/asset-cache.js').then((m) => m.cachedFetch(
+          '/res/effect/assaeffect/deadlay/spark01_01.bmp', 'texture'));
+        const d = await decodeTextureAsync(buf);
+        if (!d) { console.warn('[skillfx] Divine Lightning 贴图解码失败 spark01_01.bmp'); return; }
+        const tex = new THREE.DataTexture(d.pixels as Uint8Array<ArrayBuffer>, d.width, d.height, THREE.RGBAFormat);
+        tex.needsUpdate = true;
+        tex.wrapS = THREE.ClampToEdgeWrapping; tex.wrapT = THREE.ClampToEdgeWrapping;
+        tex.magFilter = THREE.LinearFilter; tex.minFilter = THREE.LinearFilter;
+        setDivineLightningTexture(tex);
+      } catch (e) {
+        console.warn('[skillfx] Divine Lightning 贴图加载失败（落雷带子无贴图）', e);
+      }
+    })();
     // ⚠ 顺序有讲究：投射物管理器**必须**在特效管理器之后建 —— 法术弹的粒子是挂到飞行节点上的
     // （`projectile.ts` 里 `fx.spawnSystem`），早建一步拿到的就是 `null` ⇒ 箭/标枪照常、法术弹静默没有特效
     // （2026-09-16 用户实测"看不到粒子特效"的根因）。
@@ -2009,6 +2032,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       return;
     }
     runAgeUpFx(ageUpDeps(), feet);
+  }
+
+  /**
+   * **技能结算反查的视觉**（见接口注释）。目前登记的一招：Divine Lightning（逐目标落雷）。
+   * 落点 = 目标**脚底**（原版 `AssaParticle_DivineLighting(lpTarChar)` 读 `pChar->pX/pY/pZ`，
+   * 高度由特效自己加：起点 `pY+100000`、终点 `pY+5000` —— 调用侧不额外抬）。
+   * 目标不在视野 ⇒ **不放**并上报（原版 `FindAutoPlayer` 找不到时也是直接跳过那个目标）。
+   */
+  function onSkillAttackResult(skillId: number, _attackerId: number, targetId: number): void {
+    if (skillId === 0) return;
+    const row = skillFxRowBySkillId(skillId);
+    if (!row) return;                       // 身份表查不到 ⇒ 没有视觉（不猜）
+    if (!(row.event.fx ?? []).some((ref) => ref === 'code:divinelightning')) return;
+    const feet = unitFeetPos(targetId);
+    if (!feet) {
+      reportFallback('skillfx', `Divine Lightning：目标 ${targetId} 不在本地视野 ⇒ 这道落雷不放`);
+      return;
+    }
+    const fx = effects;
+    configureDivineLightning({ dynLights, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null });
+    runDivineLightning({ scene: scene!, dynLights, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null,
+      log: (m) => console.log('[skillfx]' + m) }, feet);
   }
 
   function ageUpDeps(): AgeUpDeps {
@@ -7250,6 +7295,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (effects && camera) effects.update(dt);
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
+    updateDivineLightningRunners(dt); // 神之雷电落雷驱动（同上）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
     updateHealingOrbits(dt);          // Healing 头顶旋转上升光环（漏了它 = 光环不动、不升、不淡出）
     updateGlacialSpikes(dt);          // 冰枪网格的 alpha 包络与寿命（共用实现）
@@ -7711,6 +7757,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     markSelfCombat,
     applyUnitHp,
     applyMonsterHit,
+    onSkillAttackResult,
     playSelfAttackResult,
     applyAttackPlan,
     spawnEffectOnUnit,
@@ -7875,6 +7922,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 投射物：摘掉在飞的（模型缓存留着 —— 按 URL 缓存，与 asset-manager 同一约定，换图不必重下）
       projectileMgr?.dispose();
       clearMonsterFlies();            // 飞出物载体节点随世界一起清（否则残留到下一个世界）
+      clearDivineLightning();         // 神之雷电落雷的载体/带子同样随世界清
       clearLevelUpFx();
       clearAgeUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
       projectileMgr = null;
