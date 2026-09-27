@@ -422,6 +422,8 @@ export interface WorldViewOpts {
 }
 
 // 动画状态 wire token（与 S2C_PlayerMove.anim_state / C2S anim_state 同义）
+/** 站立（原版 `CHRMOTION_STATE_STAND = 0x0040`）—— 只用于"这条广播是不是移动三态"的判定 */
+const ANIM_STAND = 0x0040;
 const ANIM_WALK = 0x0050;
 const ANIM_RUN = 0x0060;
 const ANIM_FALLDOWN = 0x0070;
@@ -3428,6 +3430,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
 
     if (animState === actor.lastAnimState && animIndex === actor.lastAnimIndex
         && useSeq === actor.lastUseSeq) return;
+    // ⚠ **一次性动作播放期间，移动/站姿广播不得顶掉它** —— 否则那一招的**事件帧特效与音效全丢**。
+    //   原版依据：`playmain.cpp:1744` 在 `ATTACK / EAT / SKILL` 期间**整个屏蔽移动输入**，
+    //   所以那种状态下的角色根本不会发出"移动动画"广播；对旁观者等价于"这些状态不被顶掉"。
+    //   实测（用户 2026-09-27）：Pike Wind / Multi Spark 起手后 **10~60ms** 会紧跟一条
+    //   `[MOVE] … 0x0060 -> 0x0040`（施法者停步上报）的广播，旁观者侧原来会把它当成一条普通动画
+    //   条目 `playMotion()` 顶掉正在播的技能动作 ⇒ `STATE.SKILL` 不再成立 ⇒ 事件帧派发条件失败
+    //   ⇒ **同一招"有概率看不到"**（三次 Multi Spark 里两次中招，正是这个时间窗）。
+    //   只挡**移动三态**（STAND/WALK/RUN）：喝药/掉落/死亡是真实状态变化，照旧生效。
+    //   不更新去重账本（`lastAnimState/…`）：这样那条"移动意图"会在一次性动作播完后由**下一条**
+    //   广播自然接上（位置照旧每包都应用，不受影响）。
+    if (actor.animState.isOneShot()
+        && (animState === ANIM_STAND || animState === ANIM_WALK || animState === ANIM_RUN)) {
+      return;
+    }
     actor.lastAnimState = animState;
     actor.lastAnimIndex = animIndex;
     actor.lastUseSeq = useSeq;

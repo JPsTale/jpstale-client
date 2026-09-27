@@ -367,6 +367,16 @@ console.log('F. 远端施法：事件帧表现同步（"通用机制" = 各端�
     && /function weaponAttackSoundCodeOf\(idcode: number, jobId = 0\): number \{/.test(wv2)
     // 定义 1 处 + 两处调用（远端攻击段 / 远端技能事件帧）—— 保证不再各写一份
     && (wv2.match(/weaponAttackSoundCodeOf\(/g) ?? []).length === 3);
+  // **"有概率看不到"的根因**（用户 2026-09-27 实测：3 次 Multi Spark 里 2 次远端看不到，
+  //   两次都紧跟一条 `[MOVE] 0x0060 -> 0x0040` 广播）：施法者停步上报的那条移动广播，
+  //   会把旁观者侧正在播的技能动作**顶掉** ⇒ `STATE.SKILL` 不成立 ⇒ 事件帧的特效/音效再也不播。
+  //   原版依据：`playmain.cpp:1744` 在 ATTACK/EAT/SKILL 期间整个屏蔽移动输入 ⇒ 那种状态压根不发移动广播。
+  ok('远端"移动三态"广播**不顶掉一次性动作**（否则那一招的事件帧特效/音效全丢）',
+    /actor\.animState\.isOneShot\(\)/.test(wv2)
+    && /&& \(animState === ANIM_STAND \|\| animState === ANIM_WALK \|\| animState === ANIM_RUN\)\) \{/.test(wv2)
+    && /const ANIM_STAND = 0x0040;/.test(wv2));
+  ok('只挡移动三态（喝药/掉落/死亡是真实状态变化，照旧生效）',
+    !/isOneShot\(\) && animState !== ANIM_DEAD\) return;/.test(wv2));
   // Healing 的两条音效：源码里同在 `BeginSkill`（`:13588-13603`）⇒ **都在起手**（此前一条被排到事件帧）
   const fxGen = JSON.parse(await read('../src/game/data/skill-fx.json')) as
     { rows: { name: string; cast: { sfx: string[] }; event: { sfx: string[] } }[] };
