@@ -18,6 +18,7 @@ import { runMultiSpark, type MultiSparkRunnerCtx } from './multi-spark-runner.js
 import { playerSparkCount } from './multi-spark.js';
 import { runCastCircle } from './cast-circle-runner.js';
 import { castCircleFlagForClass, CAST_CIRCLE_TYPE_NORMAL } from './cast-circle.js';
+import { runHealingOrbit } from './healing-orbit.js';
 import { runMonsterFly, type FlyDeps } from './monster-fly-runner.js';
 import { FX_VIGOR_BALL, pickMonsterFxAsset } from './monster-attack-fx.js';
 import { runGlacialSpike } from './glacial-spike.js';
@@ -326,25 +327,23 @@ export const CODE_SKILL_FX: Record<string, (
     );
   },
   // **Healing**（priestess T1.1，`SKILL_PLAY_HEALING`）—— 事件帧视觉逐字 `character.cpp:11526-11544`：
-  // 被治疗者身上 `sinEffect_Healing2(...)`（`sinSkillEffect.cpp:1632-1660`）= 白动态光
-  // `SetDynLight(255,255,255, 255,200,1)` + 两份 `HIALTEST.ASE`（一份**贴骨跟随** `BoneFlag=1`、
-  // 一份**原地** `AniMax 30 / AniTime 10`）。我方：动态光 + **原地份**（`fireMesh`，资产
-  // `image/Sinimage/Effect/skilleffect/healing/hialtest.smd` 已在库）；⚠ **贴骨跟随份没做**
-  // （`fireMesh` 定点不跟随）⇒ 目标移动时网格留在起放位置，`reportFallback` 显式可见。
+  // 被治疗者身上 `sinEffect_Healing2(...)`（`sinSkillEffect.cpp:1632-1668`）= 白动态光
+  // `SetDynLight(255,255,255, 255,200,1)` + 两份 `HIALTEST.ASE`。
+  // 2026-09-26 用户实测指正（"应该是在目标或自己头上有**旋转的粒子**表示恢复的，但是现在没有"）
+  // ⇒ 补齐第二份网格的完整语义（`RotateAngle 256`/`RotateDistance.z 256*16`/`MoveSpeed.y 200`/
+  //   `Max_Time 250`/末 20 帧淡出）= **绕头 r=16 旋转、逐帧上升、末段淡出**，由
+  //   `healing-orbit.ts` 每帧驱动（静态 `fireMesh` 表达不了这些）。
+  // ⚠ **贴骨跟随份（`BoneFlag=1`，:1637-1643）仍未移植** ⇒ 显式上报。
   // 落点 = `target ?? caster`：治目标时在目标身上、自施在自己身上（与原版 `lpTarChar ?: this` 同语义）。
   healing: (ctx, caster, target) => {
     const at = target ?? caster;
     ctx.dynLights?.set(at.x, at.y, at.z, 255, 255, 255, 255, 200, 1);
-    if (!ctx.fireMesh) {
-      reportFallback('skillfx', 'Healing 的 HIALTEST 网格没起：调用方没给 fireMesh');
+    reportFallback('skillfx', 'Healing：贴骨跟随份（BoneFlag=1）未移植 ⇒ 只放旋转上升光环');
+    if (!ctx.scene) {
+      reportFallback('skillfx', 'Healing 的旋转光环没起：调用方没给 scene');
       return;
     }
-    reportFallback('skillfx', 'Healing：贴骨跟随份未移植（fireMesh 定点不跟随）⇒ 只放原地份');
-    ctx.fireMesh({
-      path: 'image/sinimage/effect/skilleffect/healing/hialtest.smd',
-      aniMaxCount: 30, aniDelayTime: 10, upAxis: 'z',
-      note: 'sinEffect_Healing2 的原地份（sinSkillEffect.cpp:1650-1659：AniMax 30 / AniTime 10）',
-    }, at);
+    runHealingOrbit({ scene: ctx.scene, log: ctx.log }, at, ctx.fxScale ?? 1);
   },
   // **Holy Mind**（priestess T1.4，`SKILL_PLAY_HOLY_MIND`）—— 事件帧视觉逐字两段：
   //   · `AssaParticle_HolyMind_Attack(lpTarChar, cnt)`（`hoAssaParticleEffect.cpp:2149-2162`）：

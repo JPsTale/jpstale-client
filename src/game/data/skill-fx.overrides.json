@@ -75,7 +75,7 @@
    "eventFx": [
     "code:healing"
    ],
-   "note": "事件帧视觉（2026-09-26）：sinEffect_Healing2（sinSkillEffect.cpp:1632，白 dynLight + HIALTEST.ASE 两份——贴骨份未移植，runner 里上报）+ StartMagic 法阵（cast 圆按职业自动）+ 音效照源码派生（healing 1 / casting_p）。code: presenter 在 skill-fx-runner.ts。"
+   "note": "事件帧视觉（2026-09-26 用户实测指正后补全）：sinEffect_Healing2（sinSkillEffect.cpp:1632-1668）= 白 dynLight + HIALTEST 两份；**第二份的 RotateAngle 256 / RotateDistance.z 256*16 / MoveSpeed.y 200 / Max_Time 250 / 末 20 帧淡出** = 绕头 r=16 旋转上升光环，由 healing-orbit.ts 每帧驱动；贴骨份（BoneFlag=1）未移植 → runner 上报。法阵照 cast 圆按职业自动。"
   },
   "Holy Mind": {
    "eventFx": [

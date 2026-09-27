@@ -45,6 +45,7 @@ import {
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
+import { updateHealingOrbits } from '../render/effects/healing-orbit.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
 import { updateGlacialSpikes } from '../render/effects/glacial-spike.js';
 import { runLevelUpFx, updateLevelUpFx, clearLevelUpFx, type LevelUpDeps } from '../render/effects/levelup-runner.js';
@@ -6973,6 +6974,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
+    updateHealingOrbits(dt);          // Healing 头顶旋转上升光环（漏了它 = 光环不动、不升、不淡出）
     updateGlacialSpikes(dt);          // 冰枪网格的 alpha 包络与寿命（共用实现）
     updateLevelUpFx(dt);              // 升级特效：向心粒子飞行 + 两侧光带内收（共用实现）
     dynLights?.update(dt);            // 动态光衰减（原版逐帧 power -= dcPower）
