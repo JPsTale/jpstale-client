@@ -2302,13 +2302,13 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!animState) { console.log('[skill] 世界未就绪（还没有动作状态机）'); return; }
     const row = typeof key === 'number' ? skillFxRowByAnimIndex(key) : skillFxRowByIcon(String(key));
     if (!row) { console.log(`[skill] 技能表里没有 animIndex/icon = ${String(key)}`); return; }
-    if (row.animIndex == null) { console.log(`[skill] 「${row.name}」没有动画条目 ⇒ 放不了`); return; }
-    const m = motionList.find((x) => x.index === row.animIndex) ?? null;
-    if (!m) { console.log(`[skill] 角色动作表里没有条目 #${row.animIndex}（该模型的动画表里没有这一条？）`); return; }
-    console.log(`[skill] 直接放技能「${row.name}」（条目 #${row.animIndex}，图标 ${row.icon}）`);
-    beginSelfSkill(row.icon);
-    // 直接播这一条（`selfPlayer` 是**播放器**，不持动作表；动作表与状态机在 `motionList` / `animState`）
-    animState.playMotion(m);
+    // **与真实施法同一条路**（2026-09-27 修正）：此前这里用"精确 index 查 `motionList`"，
+    // 而真实施法走 `playSkillByIcon` 的**语义匹配**（`triggerSkill` → `pickSemanticMotion`）——
+    // 两套编号不同 ⇒ 该入口对多数技能报"动作表里没有条目"、根本放不出来
+    // （我用它诊断 Healing 时被这条误导过一轮）。现在直接调真实施法那个函数，行为一致。
+    if (!playSkillByIcon(row.icon, null)) {
+      console.log(`[skill] 「${row.name}」没放出来（动作找不到 / 被门禁拦下，看上一条日志）`);
+    }
   };
 
   /**
