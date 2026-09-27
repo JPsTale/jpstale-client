@@ -127,12 +127,13 @@ ok('无目标施放的顺序照源码：①动作态闸门 ②绑定/职业 ③�
   && before(noTarget, 'playSkillByIcon(', 'onCastSkill?.('));
 ok('播不出来就不发包（播放层"该技能必须有目标"门 ⇒ 退回打怪那条路，不假装放出去）',
   /if \(!playSkillByIcon\(fs\.icon, aim\)\) return false;/.test(noTarget));
-// 2026-09-26 改（用户指正"Healing 也不是自我治疗，有目标就可以治疗目标"）：aim = 光标下玩家
-// > 已选中玩家 > null(自施)；非玩家目标技能（攻击/减益族）不进这条解析。
-ok('玩家目标解析只对"目标可以是玩家"的技能生效（`skillTargetsPlayers` 门，唯一实现在 skillIdentity）',
-  /if \(skillTargetsPlayers\(fs\.skillId\)\)/.test(noTarget)
+// 2026-09-27 改（用户指出"客户端只有对自己施法，没有对目标施法"）：目标是**角色**（玩家或怪）——
+// 原版 `SkillSub.cpp:2737` 的 `lpChar` 分支把治疗发给被选中的角色（`rsPlayHealing` 对任意 smCHAR 生效）；
+// 无目标才走 `:537` 的自疗分支（带 `!lpCharSelPlayer` 守卫）。
+ok('目标解析只对"目标是别的角色"的技能生效（`skillTargetsCharacters` 门，唯一实现在 skillIdentity），且目标收起玩家与怪',
+  /if \(skillTargetsCharacters\(fs\.skillId\)\)/.test(noTarget)
   && /nameplateTargetAt\(cx, cy\) \?\? pickTargetAt\(cx, cy\)/.test(noTarget)
-  && /targetSel\?\.kind === 'player' \? targetSel\.id : 0/.test(noTarget));
+  && /tag\.kind === 'player' \|\| tag\.kind === 'monster'/.test(noTarget));
 ok('玩家目标的包带**玩家实体 id**；无玩家 ⇒ `aimId = 0`（自施，服务端 Healing 落回自己）',
   /opts\?\.onCastSkill\?\.\(fs\.skillId, aimId\)/.test(noTarget)
   && /let aimId = 0;/.test(noTarget));
@@ -148,7 +149,7 @@ console.log('③ 四道闸门（跑真模块 game/skillNoTarget.ts）+ 村庄判
   installDomStub();   // gameStore → item-sounds → sfx 在 import 期就注册 document/window
   const { setSkillList } = await import('../src/app/gameStore.js');
   const { noTargetCastBlock, isInNoTargetList, NO_TARGET_SKILL_COUNT } = await import('../src/game/skillNoTarget.js');
-  const { skillTargetsPlayers } = await import('../src/game/skillIdentity.js');
+  const { skillTargetsCharacters } = await import('../src/game/skillIdentity.js');
   const { fallbacks, clearFallbacks } = await import('../src/char/fallback-log.js');
   const { isVillageMap, mapLightProfile } = await import('../src/maps/map-light.js');
   const GEN = JSON.parse(readFileSync(resolve(root, 'src/game/data/source/skill-openplay-macros.json'), 'utf8')) as {
@@ -166,9 +167,9 @@ console.log('③ 四道闸门（跑真模块 game/skillNoTarget.ts）+ 村庄判
   ok('闸门①村庄 ⇒ village（原版 SkillSub.cpp:41）', noTargetCastBlock(inList.skillId, 'pikeman', true) === 'village');
   // 2026-09-26 加：玩家目标技能判定（真模块）——Healing/Grand Healing 治玩家（用户指正
   // "有目标就可以治疗目标"；原版 self 分支 `!lpCharSelPlayer` + lpChar 分支，SkillSub.cpp:539/:2737）。
-  ok('玩家目标技能：Healing/Grand Healing ⇒ true；Pike Wind（攻击）/Meditation（被动）⇒ false',
-    skillTargetsPlayers(pick('priestess', 0).skillId) && skillTargetsPlayers(pick('priestess', 7).skillId)
-    && !skillTargetsPlayers(inList.skillId) && !skillTargetsPlayers(pick('priestess', 4).skillId));
+  ok('目标角色技能：Healing/Grand Healing ⇒ true；Pike Wind（攻击）/Meditation（被动）⇒ false',
+    skillTargetsCharacters(pick('priestess', 0).skillId) && skillTargetsCharacters(pick('priestess', 7).skillId)
+    && !skillTargetsCharacters(inList.skillId) && !skillTargetsCharacters(pick('priestess', 4).skillId));
   ok('闸门②不是本职业 ⇒ class（sinCheckSkillUseOk 的职业组掩码）', noTargetCastBlock(inList.skillId, 'knight', false) === 'class');
   ok(`闸门③不在名单里 ⇒ notInList（${notInList.macro}）`,
     !isInNoTargetList(notInList.macro) && noTargetCastBlock(notInList.skillId, 'pikeman', false) === 'notInList');

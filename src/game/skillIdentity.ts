@@ -80,14 +80,22 @@ export function skillRowBySkillId(skillId: number): SkillIdentityRow | null {
 }
 
 /**
- * 该技能的**目标可以是玩家**（施法时 aim/targetId 应解析成被选中的玩家，而不是只认怪）。
+ * 该技能的**目标可以是"别的角色"**（原版 `SkillSub.cpp:2737` 的 `lpChar` 分支：把 `SKILL_PLAY_HEALING`
+ * 发给**被选中的角色** —— 玩家或怪都行，服务端 `rsPlayHealing`（`OnSever.cpp:16478`）对任意
+ * `smCHAR` 执行 `Life[0] += WParam`）。无目标时才走自疗（`SkillSub.cpp:537` 那支自带
+ * `!lpCharSelPlayer` 守卫）。用户 2026-09-27 指出："客户端只有对自己施法，没有对目标施法"。
  *
- * <p>依据（原版客户端 `SkillSub.cpp`）：Healing / Grand Healing 的激活分两岔 —— 无选中玩家的
- * 自疗分支带 `!lpCharSelPlayer` 守卫（`:539`），选中目标后走 lpChar 分支把治疗发出去（`:2737`/
- * `:2849`）；服务端 `rsPlayHealing` 按上报序号对玩家生效。**用户 2026-09-26 指正**："Healing
- * 也不是自我治疗，有目标就可以治疗目标"。Resurrection（复活队友）同属此类，服务端迁入后加入。
+ * ⚠ 集合仍以「治疗类」为准（`HEALING` / `GRAND_HEALING`）；两个都取同一份依据：
+ * `SkillSub.cpp` 的 `case SKILL_HEALING`（自疗分支 + `lpChar` 分支）。
+ * 名字从 `skillTargetsPlayers` 改为 `skillTargetsCharacters`：**目标不只是玩家**（怪也能治）。
  */
-const PLAYER_TARGET_CONSTS = new Set(['HEALING', 'GRAND_HEALING']);
+const TARGET_CHARACTER_CONSTS = new Set(['HEALING', 'GRAND_HEALING']);
+
+/** 该技能的目标可以是**别的角色**（玩家或怪）—— 见上注。 */
+export function skillTargetsCharacters(skillId: number): boolean {
+  const row = BY_ID.get(skillId);
+  return row != null && TARGET_CHARACTER_CONSTS.has(row.constName);
+}
 
 /**
  * Multi Spark 每级**道数区间** —— `M_Spark_Num[point-1]`（生成物 `arrays`），实际
@@ -102,9 +110,4 @@ export function sparkCountRange(skillId: number, point: number): { min: number; 
   const num = arr[Math.min(Math.max(point, 1), arr.length) - 1];
   if (!num || num < 1) return null;
   return { min: Math.floor(num / 2) + 1, max: num };
-}
-
-export function skillTargetsPlayers(skillId: number): boolean {
-  const row = BY_ID.get(skillId);
-  return row != null && PLAYER_TARGET_CONSTS.has(row.constName);
 }

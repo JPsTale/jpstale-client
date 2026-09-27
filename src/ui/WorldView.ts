@@ -96,7 +96,7 @@ import { itemDisplayNameById } from '../game/itemName.js';
 import { markSkillCast, skillCdRemainingMs } from '../game/skillCooldown.js';
 import { skillLevelOf } from '../game/skillLevel.js';
 import { skillIndexByIcon } from '../game/data/skillIndexByIcon.js';
-import { skillIdByIcon, skillTargetsPlayers } from '../game/skillIdentity.js';
+import { skillIdByIcon, skillTargetsCharacters } from '../game/skillIdentity.js';
 import { CLASS_DIR } from '../game/skillData.js';
 import { getGameSnapshot } from '../app/gameStore.js';
 import { targetWindowState } from './targetWindow.js';
@@ -2729,16 +2729,20 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (noTargetCastBlock(fs.skillId, selfClass, isVillageMap(currentMapId)) != null) return false;
     const resBlock = castBlockReason(fs.skillId);        // MP 门（原版 `sinCheckSkillUseOk` 的 MP 那一半）
     if (resBlock) { notifyCastBlock(resBlock); return false; }
-    // **玩家目标解析**（仅"目标可以是玩家"的技能）：光标下的玩家优先，其次右上角已选中的玩家；
-    // 都没有 ⇒ aim = null = 自施（服务端 Healing 落回自己）。
+    // **目标角色解析**（仅"目标是别的角色"的技能，如 Healing）：光标下的**角色**（玩家或怪）优先，
+    // 其次右上角已选中的角色；都没有 ⇒ aim = null = 自施（服务端落回自己）。
+    // 依据：原版 `SkillSub.cpp:2737` 的 `lpChar` 分支把治疗发给**被选中的角色**（`rsPlayHealing`
+    // 对任意 `smCHAR` 生效）；无选中者时才走 `:537` 的自疗分支（带 `!lpCharSelPlayer` 守卫）。
+    // 用户 2026-09-27 指出此前只做了"对自己施法"。
     let aim: THREE.Object3D | null = null;
     let aimId = 0;
-    if (skillTargetsPlayers(fs.skillId)) {
+    if (skillTargetsCharacters(fs.skillId)) {
       const tag = nameplateTargetAt(cx, cy) ?? pickTargetAt(cx, cy);
-      const pid = tag && tag.kind === 'player' ? tag.id
-        : targetSel?.kind === 'player' ? targetSel.id : 0;
-      const root = pid ? remotes.get(pid)?.root ?? null : null;
-      if (pid && root) { aim = root; aimId = pid; }
+      const sel = targetSel;
+      const tid = tag && (tag.kind === 'player' || tag.kind === 'monster') ? tag.id
+        : sel && (sel.kind === 'player' || sel.kind === 'monster') ? sel.id : 0;
+      const root = tid ? remotes.get(tid)?.root ?? monsters.get(tid)?.root ?? null : null;
+      if (tid && root) { aim = root; aimId = tid; }
     }
     // ① 本地先播（原版 BeginSkill/SetMotion 在发包之前）。播不出来（连普攻都找不到）⇒ 这一击不算放出去
     if (!playSkillByIcon(fs.icon, aim)) return false;
