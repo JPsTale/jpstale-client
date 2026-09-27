@@ -75,6 +75,8 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
    * AGENTS #14：同步结果，不各掷各的随机）。
    */
   sparkCount?: number;
+  /** 世界坐标 → 屏幕坐标（诊断用；`WorldView` 用真相机算） */
+  project?: ((p: { x: number; y: number; z: number }) => { x: number; y: number; onScreen: boolean } | null) | null;
   /** 音效播放（`sfx.play(path, {pos})`） */
   playSound?: (path: string, pos: { x: number; y: number; z: number }) => void;
   /**
@@ -348,7 +350,8 @@ export const CODE_SKILL_FX: Record<string, (
       reportFallback('skillfx', 'Healing 的旋转光环没起：调用方没给 scene');
       return;
     }
-    runHealingOrbit({ scene: ctx.scene, log: ctx.log }, at, ctx.fxScale ?? 1);
+    runHealingOrbit({ scene: ctx.scene, log: ctx.log, project: ctx.project }, at, ctx.fxScale ?? 1,
+      ctx.casterYaw ?? null);
   },
   // **Holy Mind**（priestess T1.4，`SKILL_PLAY_HOLY_MIND`）—— 事件帧视觉逐字两段：
   //   · `AssaParticle_HolyMind_Attack(lpTarChar, cnt)`（`hoAssaParticleEffect.cpp:2149-2162`）：

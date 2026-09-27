@@ -2197,6 +2197,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 环的半径/元素数（Pike Wind）、火花颗数（Multi Spark）都随等级变；
       // 取不到时**不猜**（各条目自己决定是"不放并上报"还是"按 1 级并上报"）。
       skillLevel: selfSkillRow ? skillLevelByIcon(selfSkillRow.icon) : null,
+      // 世界坐标 → 屏幕坐标（诊断：特效到底落在画面哪一处；`camera` 是主相机）
+      project: (p: { x: number; y: number; z: number }) => {
+        if (!camera) return null;
+        const v = new THREE.Vector3(p.x, p.y, p.z).project(camera);
+        const w = renderer?.domElement.clientWidth ?? 1280;
+        const h = renderer?.domElement.clientHeight ?? 720;
+        return { x: (v.x * 0.5 + 0.5) * w, y: (-v.y * 0.5 + 0.5) * h,
+                 onScreen: v.z > -1 && v.z < 1 && Math.abs(v.x) <= 1 && Math.abs(v.y) <= 1 };
+      },
       // **服务端掷定的本次道数**（Multi Spark）—— 来自自己的 `S2C_SkillStart.spark_count`；
       // 视觉（几道光）与结算（打几次）必须同一个数。0 = 还没收到（presenter 据此不放并上报）。
       sparkCount: selfSkillParam,
