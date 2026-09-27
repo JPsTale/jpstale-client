@@ -349,7 +349,7 @@ export const CODE_SKILL_FX: Record<string, (
       reportFallback('skillfx', 'Healing 的旋转光环没起：调用方没给 scene');
       return;
     }
-    runHealingOrbit({ effects: ctx.effects, scene: ctx.scene, log: ctx.log }, at, ctx.fxScale ?? 1);
+    runHealingOrbit({ scene: ctx.scene, log: ctx.log }, at, ctx.fxScale ?? 1);
   },
   // **Holy Mind**（priestess T1.4，`SKILL_PLAY_HOLY_MIND`）—— 事件帧视觉逐字两段：
   //   · `AssaParticle_HolyMind_Attack(lpTarChar, cnt)`（`hoAssaParticleEffect.cpp:2149-2162`）：

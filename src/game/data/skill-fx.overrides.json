@@ -75,7 +75,7 @@
    "eventFx": [
     "code:healing"
    ],
-   "note": "事件帧视觉（2026-09-26 用户实测指正后补全）：sinEffect_Healing2（sinSkillEffect.cpp:1632-1668）= 白 dynLight + HIALTEST 两份；**第二份的 RotateAngle 256 / RotateDistance.z 256*16 / MoveSpeed.y 200 / Max_Time 250 / 末 20 帧淡出** = 绕头 r=16 旋转上升光环，由 healing-orbit.ts 每帧驱动；贴骨份（BoneFlag=1）未移植 → runner 上报。法阵照 cast 圆按职业自动。"
+   "note": "事件帧视觉（2026-09-26 三次返工定稿）：sinEffect_Healing2（sinSkillEffect.cpp:1632-1668）= 白 dynLight + HIALTEST 小天使网格（30 帧扇翅轨道，hialtest.smd 实测 tmRot 32 键）绕角色公转：锚点 = 脚底上方 7000/256≈27.3（sinEffectDefaultSet 的 Y）、半径 RotateDistance.z=16、每帧公转 RotateAngle=256、上升 MoveSpeed.y=200、Max_Time=250、末 20 帧淡出（Color_A 150）。渲染走 static-fx 动画网格（原版即网格特效，非粒子脚本）；贴骨份（BoneFlag=1，Y=13000）未移植 → runner 上报。healing-orbit.ts 每帧驱动。"
   },
   "Holy Mind": {
    "eventFx": [
