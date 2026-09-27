@@ -221,14 +221,25 @@ export function runHealingOrbit(
       const mats: THREE.Material[] = [];
       for (const mesh of meshes) {
         const list = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-        mesh.material = list.map((m) => {
+        const cloned = list.map((m) => {
           const c = (m as THREE.MeshPhongMaterial).clone();
           c.transparent = true;
           c.opacity = BASE_ALPHA;
           c.depthWrite = false;
           mats.push(c);
           return c;
-        }) as never;
+        });
+        // ★ **必须是"单材质"或"材质数 == 几何 groups 数"**（2026-09-27 定案，这就是"网格不渲染"的根因）：
+        //   three 的 `renderObject` 在 `Array.isArray(material)` 时**只按 `geometry.groups` 逐组绘制**
+        //   （`renderObject`: `for (i < groups.length) { material[group.materialIndex] }`）——
+        //   几何**没有 groups** 时一个面都不画。此前这里一律写 `list.map(...)`（数组，哪怕只有 1 个），
+        //   而我们的几何没有 groups ⇒ **整具模型不渲染**；对照物 `BoxGeometry` 自带 1 个 group，
+        //   所以它一直能画（这条差异误导了我好几轮）。
+        //   现在：只有 1 份材质（或几何无 groups）就用**单材质**；多材质且几何有 groups 才用数组。
+        mesh.material = (cloned.length === 1 || mesh.geometry.groups.length === 0
+          ? cloned[0]! : cloned) as never;
+        logFn?.(`  · 材质装配：几何 groups=${mesh.geometry.groups.length}，`
+          + `源材质 ${list.length} 份 ⇒ 用${Array.isArray(mesh.material) ? '数组' : '单材质'}`);
       }
 
       const root = new THREE.Group();
