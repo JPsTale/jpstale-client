@@ -3583,7 +3583,9 @@
     ]
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:healing"
+    ],
     "sfx": [
      "wav/effects/skill/morion/casting_p.wav"
     ]
@@ -3663,7 +3665,9 @@
     ]
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:holymind"
+    ],
     "sfx": [
      "wav/effects/skill/morion/casting_p.wav"
     ]
@@ -3744,7 +3748,9 @@
     ]
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:holyreflection"
+    ],
     "sfx": [
      "wav/effects/skill/morion/holyreflection 1.wav"
     ]
@@ -3767,7 +3773,9 @@
     "sfx": []
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:grandhealing"
+    ],
     "sfx": [
      "wav/effects/skill/morion/grandhealing 1.wav"
     ]
@@ -3974,7 +3982,9 @@
     ]
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:chainlightning"
+    ],
     "sfx": [
      "wav/effects/skill/morion/chainlightning 01.wav",
      "wav/effects/skill/morion/chainlightning 02.wav"
@@ -4606,7 +4616,7 @@
    "confidence": "none",
    "code": null,
    "presenters": [],
-   "animIndex": 184
+   "animIndex": 181
   },
   {
    "job": 9,
@@ -4634,7 +4644,7 @@
    "confidence": "alt",
    "code": null,
    "presenters": [],
-   "animIndex": 185
+   "animIndex": 182
   },
   {
    "job": 10,

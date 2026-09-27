@@ -1,75 +1,105 @@
 {
-  "note": "手工覆盖表 —— 脚本永不覆盖本文件。key = 技能名（skillData 里的官方英文名）。空白字段留空即沿用自动生成的结果。",
-  "_format": {
-    "castSfx": [
-      "起手时播放的音效文件（相对资产根的路径，或文件名）"
-    ],
-    "eventFx": [
-      "事件帧（命中/落地）时播放的特效名（.part / .ini 的裸名）"
-    ],
-    "eventSfx": [
-      "事件帧时播放的音效"
-    ],
-    "animIndex": "覆盖动画索引；null 表示明确无专属动画",
-    "fx": "顶层的特效引用（数组；显式给 [] 即清空自动派生结果 —— event.fx 已由 code: 接管时用它消掉假告警）",
-    "note": "依据说明",
-    "soundPick": "多段音的下标来源；'motionEvent' = 事件帧序号 − 1（原版 switch (MotionEvent)），越界不响"
+ "note": "手工覆盖表 —— 脚本永不覆盖本文件。key = 技能名（skillData 里的官方英文名）。空白字段留空即沿用自动生成的结果。",
+ "_format": {
+  "castSfx": [
+   "起手时播放的音效文件（相对资产根的路径，或文件名）"
+  ],
+  "eventFx": [
+   "事件帧（命中/落地）时播放的特效名（.part / .ini 的裸名）"
+  ],
+  "eventSfx": [
+   "事件帧时播放的音效"
+  ],
+  "animIndex": "覆盖动画索引；null 表示明确无专属动画",
+  "fx": "顶层的特效引用（数组；显式给 [] 即清空自动派生结果 —— event.fx 已由 code: 接管时用它消掉假告警）",
+  "note": "依据说明",
+  "soundPick": "多段音的下标来源；'motionEvent' = 事件帧序号 − 1（原版 switch (MotionEvent)），越界不响"
+ },
+ "skills": {
+  "Brandish": {
+   "castSfx": [
+    "brandish 1.wav"
+   ],
+   "eventFx": [
+    "skill3knightflamebrandish",
+    "skill3knightflamebrandish1"
+   ],
+   "eventSfx": [
+    "brandish 2.wav"
+   ],
+   "note": "实机校对（2026-09-12）：动画 #86 高高跳起举武器→落地砸地板。起跳『嗖』= brandish 1；落地『轰』= brandish 2，同时地上起火（skill3knightflamebrandish）并出现火圈（skill3knightflamebrandish1）。核对人：用户。"
   },
-  "skills": {
-    "Brandish": {
-      "castSfx": [
-        "brandish 1.wav"
-      ],
-      "eventFx": [
-        "skill3knightflamebrandish",
-        "skill3knightflamebrandish1"
-      ],
-      "eventSfx": [
-        "brandish 2.wav"
-      ],
-      "note": "实机校对（2026-09-12）：动画 #86 高高跳起举武器→落地砸地板。起跳『嗖』= brandish 1；落地『轰』= brandish 2，同时地上起火（skill3knightflamebrandish）并出现火圈（skill3knightflamebrandish1）。核对人：用户。"
-    },
-    "Multi Spark": {
-      "eventFx": [
-        "code:multispark"
-      ],
-      "note": "MultiSpark 不是单个 .part/.ini，而是代码组合（5 颗主火花+每帧拖尾+命中三件套）⇒ 用 code: 前缀指向 render/effects/skill-fx-runner.ts 的注册表。原版：sinSkill.h:85 SKILL_MULTISPARK=GROUP_PRIESTESS|CHANGE_JOB1|SKILL_3；玩家侧 sinSkillEffect.cpp:139 传 7 颗（怪物侧 5 颗，走 monster-attack-fx.ts）"
-    },
-    "Vigor Ball": {
-      "eventFx": [
-        "code:vigorball"
-      ],
-      "note": "**跟踪弹**（两颗，左右 ±45°）—— 必须走代码：原版 `character.cpp:16338 case SKILL_PLAY_VIGOR_BALL → AssaParticle_VigorBall`，与怪物 D_PR 的 `'H'`（`:14912`）是**同一个函数**，靠「主 SetPos 拖尾 + 附加 SetAttachPos 贴体 + 每帧朝目标加速」组合出来（AssaParticle.cpp:5465 Main）。自动派生的 part:skill3priestessvigorball1/2 只是那两个粒子系统本身，原地播不出飞行（且玩家技能这条链此前没有 part: 加载器，等于什么都没播）。共用实现在 CODE_SKILL_FX.vigorball（spec 见 FX_VIGOR_BALL）。"
-    },
-    "Glacial Spike": {
-      "fx": [],
-      "eventFx": [
-        "code:glacialspike"
-      ],
-      "note": "**朝向前方的一列冰块**（近身 → 前方 100，越远越大）—— 原版是 NewEffect 的 Lua 脚本 `Effect/NewEffect/SkillCelestialGlacialSpike.lua`（1 网格 + 5 粒子系统 + 正前方蓝光 power 700）：玩家 `character.cpp:16338` 一族 / 怪物 D_PR 的 `'Z'`（`:14926`）**同一个函数** `SkillCelestialGlacialSpike`。Lua 不是一个资产文件，故走 code:（render/effects/glacial-spike.ts 逐条移植）。自动派生的 lua:skillcelestialglacialspike 此前没有加载器 ⇒ 什么都不播。"
-    },
-    "Chain Lancer": {
-      "eventFx": [
-        "code:chainlance"
-      ],
-      "eventSfx": [
-        "wav/effects/skill/tempskron/chainlance 01.wav",
-        "wav/effects/skill/tempskron/chainlance 02.wav",
-        "wav/effects/skill/tempskron/chainlance 03.wav"
-      ],
-      "soundPick": "motionEvent",
-      "note": "原版 character.cpp:15578-15624（玩家 EventSkill 的 case SKILL_PLAY_CHAIN_LANCE）：落点 = GetAttackPoint（攻击骨，玩家是『握持点 + SizeMax/2』）；粒子 = AssaParticle_ChainLance （hoAssaParticleEffect.cpp:3416-3428）⇒ .part 裸名 Skill3Hit3 + y += 3000 + SetDynLight(100,50,0,0,250,5)；音效按 MotionEvent 1/2/3 = chainlance 01/02/03（effectsnd.cpp:644-646）。⚠ 未做（见 docs/技能系统-pikeman.md §2.12 ⑥ / U-K-18）：AttackCritcal>=0 闸门（任一段未命中则后续不再出粒子）、MotionEvent<3 的 3 段伤害、SetSkillMotionBlurColor 红染色残影；⚠ 顶层 fx 不写（`fireSkillEvent` 遍历顶层+event 两处，写两份会放两次 —— 实测）"
-    },
-    "Pike Wind": {
-      "eventFx": [
-        "code:pikewind"
-      ],
-      "note": "原版 HoEffect.cpp:6291-6346（case SKILL_PIKE_WIND）：SetDynLight(50,50,200,255,200+level*10,3) + ① `15+level` 个 ASE 网格 PatObj[3]（= Effect\\ObjAnimationData\\PikeWind\bong.ini，其 AnimationEnd=20）摆成半径 `level*650` 的环、朝向 `ANGLE_180-ang`、第 8 帧起；② `15+level` 颗地面环粒子（内 8000+level*325 → 外 18000+level*325，MaterialNum[0]）—— ② 未做：材质清单未取证（docs/技能系统-pikeman.md §2.1 ①）。事件帧调用点 character.cpp:15368-15375（`StartSkill(pX,pY,pZ,…)` = 施法者位置）"
-    },
-    "Critical Hit": {
-      "fx": [],
-      "eventFx": [],
-      "note": "**清空自动派生的 `ini:criticalhit1/criticalhit21/criticalhit22`** —— 那三条是**命名约定**推出来的，与本招的源码冲突：`character.cpp:15377-15379` 的 `case SKILL_PLAY_CRITICAL_HIT:` **只 `return FALSE`**（`return FALSE` 还会**跳过** EventSkill 公共的受击/命中特效链），且 m4 里**没有该技能的条目**、源码也**没有** SkillPlaySound。见 docs/技能系统-pikeman.md §2.3 ① 与未决 U-K-5"
-    }
+  "Multi Spark": {
+   "eventFx": [
+    "code:multispark"
+   ],
+   "note": "MultiSpark 不是单个 .part/.ini，而是代码组合（5 颗主火花+每帧拖尾+命中三件套）⇒ 用 code: 前缀指向 render/effects/skill-fx-runner.ts 的注册表。原版：sinSkill.h:85 SKILL_MULTISPARK=GROUP_PRIESTESS|CHANGE_JOB1|SKILL_3；玩家侧 sinSkillEffect.cpp:139 传 7 颗（怪物侧 5 颗，走 monster-attack-fx.ts）"
+  },
+  "Vigor Ball": {
+   "eventFx": [
+    "code:vigorball"
+   ],
+   "note": "**跟踪弹**（两颗，左右 ±45°）—— 必须走代码：原版 `character.cpp:16338 case SKILL_PLAY_VIGOR_BALL → AssaParticle_VigorBall`，与怪物 D_PR 的 `'H'`（`:14912`）是**同一个函数**，靠「主 SetPos 拖尾 + 附加 SetAttachPos 贴体 + 每帧朝目标加速」组合出来（AssaParticle.cpp:5465 Main）。自动派生的 part:skill3priestessvigorball1/2 只是那两个粒子系统本身，原地播不出飞行（且玩家技能这条链此前没有 part: 加载器，等于什么都没播）。共用实现在 CODE_SKILL_FX.vigorball（spec 见 FX_VIGOR_BALL）。"
+  },
+  "Glacial Spike": {
+   "fx": [],
+   "eventFx": [
+    "code:glacialspike"
+   ],
+   "note": "**朝向前方的一列冰块**（近身 → 前方 100，越远越大）—— 原版是 NewEffect 的 Lua 脚本 `Effect/NewEffect/SkillCelestialGlacialSpike.lua`（1 网格 + 5 粒子系统 + 正前方蓝光 power 700）：玩家 `character.cpp:16338` 一族 / 怪物 D_PR 的 `'Z'`（`:14926`）**同一个函数** `SkillCelestialGlacialSpike`。Lua 不是一个资产文件，故走 code:（render/effects/glacial-spike.ts 逐条移植）。自动派生的 lua:skillcelestialglacialspike 此前没有加载器 ⇒ 什么都不播。"
+  },
+  "Chain Lancer": {
+   "eventFx": [
+    "code:chainlance"
+   ],
+   "eventSfx": [
+    "wav/effects/skill/tempskron/chainlance 01.wav",
+    "wav/effects/skill/tempskron/chainlance 02.wav",
+    "wav/effects/skill/tempskron/chainlance 03.wav"
+   ],
+   "soundPick": "motionEvent",
+   "note": "原版 character.cpp:15578-15624（玩家 EventSkill 的 case SKILL_PLAY_CHAIN_LANCE）：落点 = GetAttackPoint（攻击骨，玩家是『握持点 + SizeMax/2』）；粒子 = AssaParticle_ChainLance （hoAssaParticleEffect.cpp:3416-3428）⇒ .part 裸名 Skill3Hit3 + y += 3000 + SetDynLight(100,50,0,0,250,5)；音效按 MotionEvent 1/2/3 = chainlance 01/02/03（effectsnd.cpp:644-646）。⚠ 未做（见 docs/技能系统-pikeman.md §2.12 ⑥ / U-K-18）：AttackCritcal>=0 闸门（任一段未命中则后续不再出粒子）、MotionEvent<3 的 3 段伤害、SetSkillMotionBlurColor 红染色残影；⚠ 顶层 fx 不写（`fireSkillEvent` 遍历顶层+event 两处，写两份会放两次 —— 实测）"
+  },
+  "Pike Wind": {
+   "eventFx": [
+    "code:pikewind"
+   ],
+   "note": "原版 HoEffect.cpp:6291-6346（case SKILL_PIKE_WIND）：SetDynLight(50,50,200,255,200+level*10,3) + ① `15+level` 个 ASE 网格 PatObj[3]（= Effect\\ObjAnimationData\\PikeWind\bong.ini，其 AnimationEnd=20）摆成半径 `level*650` 的环、朝向 `ANGLE_180-ang`、第 8 帧起；② `15+level` 颗地面环粒子（内 8000+level*325 → 外 18000+level*325，MaterialNum[0]）—— ② 未做：材质清单未取证（docs/技能系统-pikeman.md §2.1 ①）。事件帧调用点 character.cpp:15368-15375（`StartSkill(pX,pY,pZ,…)` = 施法者位置）"
+  },
+  "Critical Hit": {
+   "fx": [],
+   "eventFx": [],
+   "note": "**清空自动派生的 `ini:criticalhit1/criticalhit21/criticalhit22`** —— 那三条是**命名约定**推出来的，与本招的源码冲突：`character.cpp:15377-15379` 的 `case SKILL_PLAY_CRITICAL_HIT:` **只 `return FALSE`**（`return FALSE` 还会**跳过** EventSkill 公共的受击/命中特效链），且 m4 里**没有该技能的条目**、源码也**没有** SkillPlaySound。见 docs/技能系统-pikeman.md §2.3 ① 与未决 U-K-5"
+  },
+  "Healing": {
+   "eventFx": [
+    "code:healing"
+   ],
+   "note": "事件帧视觉（2026-09-26）：sinEffect_Healing2（sinSkillEffect.cpp:1632，白 dynLight + HIALTEST.ASE 两份——贴骨份未移植，runner 里上报）+ StartMagic 法阵（cast 圆按职业自动）+ 音效照源码派生（healing 1 / casting_p）。code: presenter 在 skill-fx-runner.ts。"
+  },
+  "Holy Mind": {
+   "eventFx": [
+    "code:holymind"
+   ],
+   "note": "事件帧视觉（2026-09-26）：HoEffect.cpp:9218 SERQBUS_MAGIC3 = 紫 dynLight + SerqbusMagic3.part（目标头顶 +5000/256）；贴身 HOLY_MIND_ATTACK 群未移植（依赖怪物抗性模型）→ runner 上报。"
+  },
+  "Holy Reflection": {
+   "eventFx": [
+    "code:holyreflection"
+   ],
+   "note": "事件帧视觉（2026-09-26）：sinSkillEffect_Holy_Reflection（sinAssaSkillEffect.cpp:625）= 紫 dynLight + 2HolyReflection.ASE ×2（b_2holyreflection.smd 在库）；Bone/flare 广告板与持续时长未移植 → runner 上报。"
+  },
+  "Grand Healing": {
+   "eventFx": [
+    "code:grandhealing"
+   ],
+   "note": "事件帧视觉（2026-09-26）：sinSkillEffect_Great_Healing（sinAssaSkillEffect.cpp:327）= 橙 dynLight + GH.ASE ×2 + star04 广告板；GH.ASE 全库不存在 → runner 按纪律只放 dynLight 并上报。"
+  },
+  "Chain Lightning": {
+   "eventFx": [
+    "code:chainlightning"
+   ],
+   "note": "事件帧视觉（2026-09-26）：原版 = SkillCelestialChainLighting（hoAssaParticleEffect.cpp:674，天降闪+逐段链，需服务端下发链表 → 未移植，runner 上报）；暂起主目标处同族同名资产 skill4celestialchainlightinglight（skill4* = 祭司四转族，本技能 J4·S3）。音效照源码两条 rand 变体。"
   }
+ }
 }

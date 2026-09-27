@@ -325,6 +325,93 @@ export const CODE_SKILL_FX: Record<string, (
       caster, ctx.casterYaw ?? 0, ctx.fxScale ?? 1,
     );
   },
+  // **Healing**（priestess T1.1，`SKILL_PLAY_HEALING`）—— 事件帧视觉逐字 `character.cpp:11526-11544`：
+  // 被治疗者身上 `sinEffect_Healing2(...)`（`sinSkillEffect.cpp:1632-1660`）= 白动态光
+  // `SetDynLight(255,255,255, 255,200,1)` + 两份 `HIALTEST.ASE`（一份**贴骨跟随** `BoneFlag=1`、
+  // 一份**原地** `AniMax 30 / AniTime 10`）。我方：动态光 + **原地份**（`fireMesh`，资产
+  // `image/Sinimage/Effect/skilleffect/healing/hialtest.smd` 已在库）；⚠ **贴骨跟随份没做**
+  // （`fireMesh` 定点不跟随）⇒ 目标移动时网格留在起放位置，`reportFallback` 显式可见。
+  // 落点 = `target ?? caster`：治目标时在目标身上、自施在自己身上（与原版 `lpTarChar ?: this` 同语义）。
+  healing: (ctx, caster, target) => {
+    const at = target ?? caster;
+    ctx.dynLights?.set(at.x, at.y, at.z, 255, 255, 255, 255, 200, 1);
+    if (!ctx.fireMesh) {
+      reportFallback('skillfx', 'Healing 的 HIALTEST 网格没起：调用方没给 fireMesh');
+      return;
+    }
+    reportFallback('skillfx', 'Healing：贴骨跟随份未移植（fireMesh 定点不跟随）⇒ 只放原地份');
+    ctx.fireMesh({
+      path: 'image/sinimage/effect/skilleffect/healing/hialtest.smd',
+      aniMaxCount: 30, aniDelayTime: 10, upAxis: 'z',
+      note: 'sinEffect_Healing2 的原地份（sinSkillEffect.cpp:1650-1659：AniMax 30 / AniTime 10）',
+    }, at);
+  },
+  // **Holy Mind**（priestess T1.4，`SKILL_PLAY_HOLY_MIND`）—— 事件帧视觉逐字两段：
+  //   · `AssaParticle_HolyMind_Attack(lpTarChar, cnt)`（`hoAssaParticleEffect.cpp:2149-2162`）：
+  //     `StartEffectMonster(..., MONSTER_SERQBUS_MAGIC3)` + 贴身 Billboard 群（`HOLY_MIND_ATTACK`，
+  //     `AssaParticle.cpp:1577/1936`，存活 `liveCount*70` 帧 —— liveCount 由目标**生物抗性**缩放，
+  //     我们没有怪物抗性模型 ⇒ 贴身群不放，见下）。
+  //   · `HoEffect.cpp:9218-9232`（`MONSTER_SERQBUS_MAGIC3`）：紫动态光
+  //     `SetDynLight(108,8,136, 255,250,1)` + `g_NewParticleMgr.Start("SerqbusMagic3", pos.y+5000)`。
+  // 我方：动态光 + **`part:serqbusmagic3`**（在库里，目标头顶 +5000/256 ≈ +19.5 世界单位）；
+  // ⚠ 贴身群与抗性缩放未做 ⇒ `reportFallback` 显式可见（缺口与 Holy Mind 服务端的抗性缺口同源）。
+  holymind: (ctx, caster, target) => {
+    const at = target ?? caster;
+    ctx.dynLights?.set(at.x, at.y, at.z, 108, 8, 136, 255, 250, 1);
+    reportFallback('skillfx', 'Holy Mind：贴身 Billboard 群（HOLY_MIND_ATTACK）未移植（依赖怪物抗性模型）⇒ 只放 SerqbusMagic3');
+    if (!ctx.spawnPart) {
+      reportFallback('skillfx', 'Holy Mind 的 SerqbusMagic3 没起：调用方没给 spawnPart');
+      return;
+    }
+    void ctx.spawnPart('serqbusmagic3', { pos: { x: at.x, y: at.y + 5000 / FONE, z: at.z } });
+  },
+  // **Holy Reflection**（priestess T2.3，`SKILL_PLAY_HOLY_REFLECTION`）—— 事件帧视觉逐字
+  // `sinAssaSkillEffect.cpp:625-660`（`sinSkillEffect_Holy_Reflection(this, Holy_Reflection_Time[p-1])`）：
+  // 紫动态光 `SetDynLight(100,50,100, 150,200,1)` + **两份** `2HolyReflection.ASE`（`AniMaxCount 30 /
+  // AniDelayTime 4`，一左一右：`StartPosi.x = -256*10` + 两个互反的 Angle.y）+ `Bone`/`flare.tga`
+  // 广告板若干，`CODE = SKILL_HOLY_REFLECTION`（存活 = 持续时间，由 `..._Defense` 按 Time 维护）。
+  // 我方：动态光 + **两份网格**（`b_2holyreflection.smd`，在库；第二份 rotY 转 π 表达"一左一右"）；
+  // ⚠ 广告板与"持续 Time 秒的贴身维护"没做（网格按自身动画寿命播完即逝）⇒ 显式上报。
+  holyreflection: (ctx, caster) => {
+    ctx.dynLights?.set(caster.x, caster.y, caster.z, 100, 50, 100, 150, 200, 1);
+    reportFallback('skillfx', 'Holy Reflection：Bone/flare 广告板与"持续整段时长"未移植 ⇒ 两份网格按自身动画寿命播放');
+    if (!ctx.fireMesh) {
+      reportFallback('skillfx', 'Holy Reflection 的圣盾网格没起：调用方没给 fireMesh');
+      return;
+    }
+    for (const rotY of [0, Math.PI]) {
+      ctx.fireMesh({
+        path: 'image/sinimage/assaeffect/holyr/b_2holyreflection.smd',
+        aniMaxCount: 30, aniDelayTime: 4, upAxis: 'z', rotY,
+        note: 'sinSkillEffect_Holy_Reflection 的 2HolyReflection.ASE ×2（sinAssaSkillEffect.cpp:632-650）',
+      }, caster);
+    }
+  },
+  // **Grand Healing**（priestess T2.4，`SKILL_PLAY_GREAT_HEALING`）—— 事件帧视觉逐字
+  // `sinAssaSkillEffect.cpp:327-360`：橙动态光 `SetDynLight(255,150,100, 150,180,1)` + 两份
+  // `GH.ASE`（AniMaxCount 30 / AniDelayTime 4，错帧起放）+ 20 张 `star04Y_01.bmp` 广告板。
+  // ⚠ **`GH.ASE` 不在我方资产根**（find 全库无 gh.sm*）⇒ 按纪律**不放、上报**（不拿别的网格顶）；
+  //   动态光照放（它不是资产，是渲染指令）。法阵与音效走既有链路（cast 圆 / evtSfx）。
+  grandhealing: (ctx, caster) => {
+    ctx.dynLights?.set(caster.x, caster.y, caster.z, 255, 150, 100, 150, 180, 1);
+    reportFallback('skillfx', 'Grand Healing：GH.ASE 不在资产根（全库无 gh.sm*）⇒ 网格与 star04 广告板不放，只放动态光');
+  },
+  // **Chain Lightning**（priestess J4·S3，`SKILL_PLAY_CHAIN_LIGHTNING`）—— 原版事件帧视觉 =
+  // `SkillCelestialChainLighting(lpSelected_Char, dmSelected_CharCnt)`（`character.cpp:17082`，
+  // 逐字 `hoAssaParticleEffect.cpp:674-693`）：一道 **ASSA_SHOT_SPARK 从天上（y+100000）落到主目标**
+  // （y+5000），再 `SetChainLighting` 逐段连到后续目标 —— **多目标链表在服务端**，客户端只上报了
+  // 主目标 ⇒ 忠实的链式视觉要等"链表随结算下发"。现以**同族同名资产**先起主目标那份：
+  // `part:skill4celestialchainlightinglight`（`skill4*` = 祭司四转资产族，本技能 = J4·S3，名字直配）；
+  // ⚠ 天降闪 + 逐段链未移植 ⇒ `reportFallback` 显式可见。音效照既有数据（两条 rand 变体）。
+  chainlightning: (ctx, caster, target) => {
+    const at = target ?? caster;
+    reportFallback('skillfx', 'Chain Lightning：天降闪 + 逐段链（ASSA_SHOT_SPARK/SetChainLighting）未移植（需服务端下发链表）⇒ 只放主目标处的 skill4 同族粒子');
+    if (!ctx.spawnPart) {
+      reportFallback('skillfx', 'Chain Lightning 的链光粒子没起：调用方没给 spawnPart');
+      return;
+    }
+    void ctx.spawnPart('skill4celestialchainlightinglight', { pos: at });
+  },
 };
 
 
