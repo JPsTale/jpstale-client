@@ -72,10 +72,10 @@
    "note": "**清空自动派生的 `ini:criticalhit1/criticalhit21/criticalhit22`** —— 那三条是**命名约定**推出来的，与本招的源码冲突：`character.cpp:15377-15379` 的 `case SKILL_PLAY_CRITICAL_HIT:` **只 `return FALSE`**（`return FALSE` 还会**跳过** EventSkill 公共的受击/命中特效链），且 m4 里**没有该技能的条目**、源码也**没有** SkillPlaySound。见 docs/技能系统-pikeman.md §2.3 ① 与未决 U-K-5"
   },
   "Healing": {
-   "eventFx": [
+   "note": "**起手特效**（2026-09-27 订正时机）：sinEffect_Healing2 在 `smCHAR::BeginSkill` 里调用（character.cpp:11526 的 case 就在该函数内，定义在 11232）——与 sinEffect_StartMagic（法阵）同一段，故**天使与法阵同时出现**；旁观侧同理（netplay.cpp:12927 RecvProcessSkill 收到起手报文时）。用户实测指出这一点。运动/粒子依据见 healing-orbit.ts 与 docs/技能系统-healing-完整源码.md。",
+   "castFx": [
     "code:healing"
-   ],
-   "note": "事件帧视觉（2026-09-26 三次返工定稿）：sinEffect_Healing2（sinSkillEffect.cpp:1632-1668）= 白 dynLight + HIALTEST 小天使网格（30 帧扇翅轨道，hialtest.smd 实测 tmRot 32 键）绕角色公转：锚点 = 脚底上方 7000/256≈27.3（sinEffectDefaultSet 的 Y）、半径 RotateDistance.z=16、每帧公转 RotateAngle=256、上升 MoveSpeed.y=200、Max_Time=250、末 20 帧淡出（Color_A 150）。渲染走 static-fx 动画网格（原版即网格特效，非粒子脚本）；贴骨份（BoneFlag=1，Y=13000）未移植 → runner 上报。healing-orbit.ts 每帧驱动。"
+   ]
   },
   "Holy Mind": {
    "eventFx": [

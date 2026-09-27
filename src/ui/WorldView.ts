@@ -2197,6 +2197,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 环的半径/元素数（Pike Wind）、火花颗数（Multi Spark）都随等级变；
       // 取不到时**不猜**（各条目自己决定是"不放并上报"还是"按 1 级并上报"）。
       skillLevel: selfSkillRow ? skillLevelByIcon(selfSkillRow.icon) : null,
+      // 施法者实时位置（原版每帧 `pChar->pX/pY/pZ`）：Healing 的天使跟着人走，不停在原地
+      casterPos: () => ({ x: selfPos.x, y: selfPos.y, z: selfPos.z }),
       // 世界坐标 → 屏幕坐标（诊断：特效到底落在画面哪一处；`camera` 是主相机）
       project: (p: { x: number; y: number; z: number }) => {
         if (!camera) return null;
@@ -2291,7 +2293,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     selfSkillParam = 0;   // 新施法：道数等本次参数等自己的 SkillStart ack（AGENTS #14 同步结果）
     selfSkillRow = skillFxRowByIcon(iconFile);
     if (!selfSkillRow) return;      // 表里没有 → 无起手音/无特效（不静默：上面已打过日志）
-    fireSkillCast(selfSkillRow, skillFxCtx(), selfPos);
+    // 起手特效要**目标位置**（原版 `sinEffect_Healing2(lpTarChar)`：有目标就落在目标身上）——
+    // 与事件帧同一套取值（`selfSkillAim` = 起手时定死的那个目标）。
+    const castTargetPos = aim
+      ? ((): { x: number; y: number; z: number } => {
+        const p = aim.position;
+        return { x: p.x, y: p.y + TARGET_BODY_LIFT, z: p.z };
+      })()
+      : null;
+    fireSkillCast(selfSkillRow, skillFxCtx(), selfPos, castTargetPos);
   }
 
   /**

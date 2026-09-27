@@ -154,17 +154,22 @@ let particleTex: THREE.Texture | null = null;
 let frameAcc = 0;
 let logFn: ((msg: string) => void) | undefined;
 let projectFn: ((p: { x: number; y: number; z: number }) => { x: number; y: number; onScreen: boolean } | null) | null = null;
+/** 施法者实时位置（见 `deps.casterPos`） */
+let casterPosFn: (() => { x: number; y: number; z: number }) | null = null;
 
 /** 起一份小天使（`at` = 被治疗者**脚底**位置；原版 `pChar` = 目标 ?: 自己） */
 export function runHealingOrbit(
   deps: { scene: THREE.Scene; log?: (msg: string) => void;
-          project?: ((p: { x: number; y: number; z: number }) => { x: number; y: number; onScreen: boolean } | null) | null },
+          project?: ((p: { x: number; y: number; z: number }) => { x: number; y: number; onScreen: boolean } | null) | null;
+          /** 施法者实时位置（原版每帧 `pChar->pX/pY/pZ`；缺它=用起手快照，效果停在原地） */
+          casterPos?: () => { x: number; y: number; z: number } },
   at: { x: number; y: number; z: number },
   fxScale = 1,
   casterYaw: number | null = null,
 ): void {
   logFn = deps.log;
   projectFn = deps.project ?? null;
+  casterPosFn = deps.casterPos ?? null;
   particleScene = deps.scene;
   void (async () => {
     try {
@@ -315,6 +320,8 @@ export function updateHealingOrbits(dt: number): void {
       live.splice(i, 1);
       continue;
     }
+    // 基准点 = **施法者当前位置**（原版每帧读 `pChar->pX/pY/pZ`；缺 getter 才用起手快照）
+    const base = casterPosFn ? casterPosFn() : o.at;
     // ── `case SKILL_HEALING`（`sinSkillEffect.cpp:428-468`）逐字 ──
     // RotateAngle += 25/帧；RotateDistance.z += 16/帧（raw，初值 4096 = 16 世界单位）
     const theta = (ROTATE_ANGLE_0 + ROTATE_PER_FRAME * t) / PT_ANGLE_FULL * Math.PI * 2;
@@ -324,7 +331,9 @@ export function updateHealingOrbits(dt: number): void {
     const offZ = (radiusRaw * Math.cos(theta)) / FONE;
     // MoveSpeed.y += 20/帧（初值 200）；Posi.y = pChar->pY + 7000 + MoveSpeed.y
     const moveSpeedY = MOVE_SPEED_Y_0 + MOVE_SPEED_Y_GROW * t;
-    o.root.position.set(o.at.x + offX, o.at.y + (Y_OFFSET_RAW + moveSpeedY) / FONE, o.at.z + offZ);
+    o.root.position.set(base.x + offX, base.y + (Y_OFFSET_RAW + moveSpeedY) / FONE, base.z + offZ);
+    // 第一份实例（贴骨 Y=13000）：**跟着施法者走**（`BoneFlag=1` 的语义），不公转、不上升
+    o.upper?.position.set(base.x, base.y + UPPER_LIFT_RAW / FONE, base.z);
     // Angle.y = -((RotateAngle) + ANGLE_270)
     o.root.rotation.y = -((ROTATE_ANGLE_0 + ROTATE_PER_FRAME * t + ANGLE_270) / PT_ANGLE_FULL * Math.PI * 2);
     // Color_A 末 20 帧每帧 −10/255（AlphaTime = Max_Time − 20、AlphaAmount = 10、AlphaCount = 1）

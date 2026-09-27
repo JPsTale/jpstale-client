@@ -132,6 +132,13 @@ const GENERATED = resolve('src/game/data/skill-fx.generated.json');
 interface FxOverride {
   /** 起手音（覆盖自动拆分） */
   castSfx?: string[];
+  /**
+   * **起手特效**（原版在 `smCHAR::BeginSkill` 里起的那些，如 `sinEffect_Healing2`）。
+   * 与 `eventFx` 同款前缀规则。依据：小天使是在**起手**那一刻生成的 —— 客户端 `BeginSkill`
+   * （`character.cpp:11526` 的 `case SKILL_PLAY_HEALING` 就在该函数内）与旁观侧
+   * `RecvProcessSkill`（`netplay.cpp:12927`，收到起手报文时）都指向"技能一开始"。
+   */
+  castFx?: string[];
   /** 事件帧特效（覆盖匹配结果） */
   eventFx?: string[];
   /**
@@ -284,7 +291,13 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
     else confidence = 'none';
 
     // 起手/事件帧拆分：默认"特效在事件帧、第一个音效在起手"，人工基准优先
-    const cast = { sfx: ov?.castSfx ?? (sfx.length >= 2 ? [sfx[0]!] : []) };
+    const cast = {
+      fx: ov?.castFx
+        ? ov.castFx.map((n) => (/^(ini|part|lua|luac|code):/i.test(n) ? n.toLowerCase()
+          : (fx.find((t) => t.split(':')[1] === n) ?? `part:${n}`)))
+        : [],
+      sfx: ov?.castSfx ?? (sfx.length >= 2 ? [sfx[0]!] : []),
+    };
     const eventSfx = ov?.eventSfx ?? (sfx.length >= 2 ? sfx.slice(1) : sfx);
     const event = {
       fx: ov?.eventFx

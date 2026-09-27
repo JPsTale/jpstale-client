@@ -75,6 +75,11 @@ export interface SkillFxFireCtx extends MultiSparkRunnerCtx {
    * AGENTS #14：同步结果，不各掷各的随机）。
    */
   sparkCount?: number;
+  /**
+   * **施法者的实时位置**（原版每帧读 `pChar->pX/pY/pZ` 定位效果——Healing 的天使因此**跟着人走**）。
+   * 缺它时用起手快照（会停在原地）。
+   */
+  casterPos?: () => { x: number; y: number; z: number };
   /** 世界坐标 → 屏幕坐标（诊断用；`WorldView` 用真相机算） */
   project?: ((p: { x: number; y: number; z: number }) => { x: number; y: number; onScreen: boolean } | null) | null;
   /** 音效播放（`sfx.play(path, {pos})`） */
@@ -354,8 +359,8 @@ export const CODE_SKILL_FX: Record<string, (
     // ②`Y=7000` + `CODE=SKILL_HEALING`（我们实现了这份）。**①未实现** —— 显式上报，不静默（AGENTS #12）。
     reportFallback('skillfx', 'Healing：第一份实例（smASE_ReadBone + Y=13000 + BoneFlag=1，贴骨）未实现'
       + '（且源码未给它 Max_Time，寿命取决于槽位残留值，见 docs/技能系统-healing-完整源码.md §D）');
-    runHealingOrbit({ scene: ctx.scene, log: ctx.log, project: ctx.project }, at, ctx.fxScale ?? 1,
-      ctx.casterYaw ?? null);
+    runHealingOrbit({ scene: ctx.scene, log: ctx.log, project: ctx.project, casterPos: ctx.casterPos },
+      at, ctx.fxScale ?? 1, ctx.casterYaw ?? null);
   },
   // **Holy Mind**（priestess T1.4，`SKILL_PLAY_HOLY_MIND`）—— 事件帧视觉逐字两段：
   //   · `AssaParticle_HolyMind_Attack(lpTarChar, cnt)`（`hoAssaParticleEffect.cpp:2149-2162`）：
@@ -427,9 +432,21 @@ export const CODE_SKILL_FX: Record<string, (
 
 
 /** 起手（技能动画开始那一刻）：原版 `SkillPlaySound(…)` + 起手法阵 */
-export function fireSkillCast(row: SkillFxRow | null, ctx: SkillFxFireCtx, pos: { x: number; y: number; z: number }): void {
+export function fireSkillCast(row: SkillFxRow | null, ctx: SkillFxFireCtx, pos: { x: number; y: number; z: number },
+                              target: { x: number; y: number; z: number } | null = null): void {
   if (!row) return;
   for (const s of row.cast.sfx) ctx.playSound?.(s, pos);
+  // **起手特效**（`cast.fx`）：原版在 `smCHAR::BeginSkill` 里起的那些（如 `sinEffect_Healing2`）。
+  // 与事件帧同一套派发规则（只支持 `code:`，其余**显式上报**不静默）。
+  for (const ref of row.cast.fx ?? []) {
+    if (!ref.startsWith('code:')) {
+      reportFallback('skillfx', `技能「${row.name}」的起手特效引用「${ref}」没有可用加载器（只实现了 code:）⇒ 本次不播`);
+      continue;
+    }
+    const fn = CODE_SKILL_FX[ref.slice(5)];
+    if (fn) fn(ctx, pos, target);
+    else ctx.log?.(`  ✗ 技能「${row.name}」的起手 code 特效「${ref}」未注册`);
+  }
   // **起手法阵** —— 玩家侧**有**权威出处（原注释称"玩家侧没有、25 个调用者全在怪物 BeginSkill"，
   //   2026-09-20 逐行核实：**这句是错的**，它写于 monster-lab 调 D_PR 期间，只看了怪物那一侧）。
   //   `sinEffect_StartMagic` 全树 **39 个调用点**（`grep -a -rn` 实测）：
