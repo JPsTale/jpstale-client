@@ -249,11 +249,14 @@ console.log('C. 修法结构（丢掉任一条 ⇒ 用户那一下点击既无�
     && /function fistIntent\(slot: 'left' \| 'right'\): FistIntent \{/.test(code)
     && (code.match(/function fistSkillOf\(/g) ?? []).length === 1
     && (code.match(/function fistIntent\(/g) ?? []).length === 1);
-  // 2026-09-24：**事件帧的武器挥击音**（用户"武士技能没音效"的根因，见 docs/技能音效-矩阵实测.md）。
-  // 原版 `EventAttack` 的通用分支在 `EventSkill()` 返回 FALSE 时调 `WeaponPlaySound(this)`
-  // （`character.cpp:4207` + `:4244`）—— 我们此前只在 ATTACK 态播，SKILL 态一声不出。
-  ok('③ 事件帧按原版补播**武器挥击音**（`weaponSfxForIcon`，唯一实现在 `game/skillMotionSrc.ts`）',
-    /if \(weaponSfxForIcon\(selfSkillRow\.icon\)\) \{\s*\n\s*sfx\.playWeaponAttack\(selfWeaponSoundCode\(\), \{ priority: true \}\);/.test(code));
+  // 2026-09-27 改：自机与远端的技能事件帧收敛成**同一份** `fireSkillEventFrame`
+  // （用户："需要一个更通用的方案，让使用技能的状态能同步给远端"）—— 武器声在那份公用实现里：
+  // 自机传 `weaponSfxForIcon(...) ? selfWeaponSoundCode() : null`，远端传该玩家武器的音码。
+  ok('③ 事件帧按原版补播**武器挥击音**（闸门 `weaponSfxForIcon` 在共用实现里，音码由调用方给）',
+    /function fireSkillEventFrame\(spec: \{/.test(code)
+    && /if \(spec\.weaponSoundCode != null\) \{/.test(code)
+    && /weaponSoundCode: weaponSfxForIcon\(selfSkillRow\.icon\) \? selfWeaponSoundCode\(\) : null/.test(code)
+    && /weaponSoundCode: weaponSfxForIcon\(sk\.row\.icon\)/.test(code));
   ok('③ 这一声的判定读的是**生成物**（`skill-motion-src`，逐技能带 SkillSub/character.cpp 行号）',
     /weaponSfxForIcon/.test(await read('../src/game/skillMotionSrc.ts'))
     && /weaponSfx: eventSfx === 'weapon'/.test(await read('../scripts/extract-skill-motion-src.ts')));

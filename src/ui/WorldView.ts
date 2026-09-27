@@ -261,7 +261,8 @@ export interface WorldView {
    * 技能起手广播（`S2C_SkillStart`）：旁观者立刻播**施法者自己播的那一条**技能动画
    * （含"演员未就绪"的补播队列，与 `signalAttackStart` 同一套）。
    */
-  signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex: number, animClip: string, sparkCount?: number): void;
+  signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex: number, animClip: string,
+                    sparkCount?: number, skillLevel?: number): void;
   /**
    * S2C_Damage 受击硬直：targetId 为自机 → 站立/走/跑时播受击动画（攻击/技能中不打断）；
    * 为远端玩家 → 同规则作用到该 actor。damage<=0（抵抗/吸收）不播。
@@ -2324,6 +2325,62 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   /**
+   * **技能动作的一个事件帧**（原版 `EventAttack()` → `EventSkill()`）——
+   * 特效 + 技能音 + 武器挥击音。**自机与远端共用这一份**（AGENTS #15）。
+   *
+   * 为什么远端也要走它（用户 2026-09-27 实测"枪兵放 Pike Wind，祭司那边看不到特效；双方都听不到
+   * 对方的技能音效"）：原版 `frame += FrameStep; EventAttack();`（`character.cpp:5837`）在
+   * **每个角色**的逐帧更新里都跑，里面那句 `EventSkill()`（`:4207`）也没有"仅自机"的守卫 ——
+   * 也就是说 **每个客户端都为每个角色跑事件帧派发**（谁的招式特效/音效都看得到听得到）。
+   *
+   * ⇒ 通用机制 = "各端按同一个动画帧轴驱动同一份事件表"，而不是"为每个粒子单独写一条广播"。
+   * 我们缺的正是这一半：起手广播（`fireObserverCast`）对应 `RecvProcessSkill` 只覆盖少数
+   * **buff 类**技能，而绝大多数招式的视觉/听觉都在事件帧上（`row.event.fx` / `row.event.sfx`）。
+   *
+   * ⚠ 分工（别把业务塞进来）：**服务端结算上报**（`onSkillHit`）只有施法者做（AGENTS #14：
+   *   谁播的谁上报），远端不报 —— 所以它留在自机调用处，不进本函数。
+   */
+  function fireSkillEventFrame(spec: {
+    row: SkillFxRow;
+    motion: MotionInfo;
+    evFrame: number;
+    /** 施法者脚底位置（音效/特效的定位基准） */
+    casterPos: { x: number; y: number; z: number };
+    /** 目标点（`null` = 原版无目标路径） */
+    targetPos: { x: number; y: number; z: number } | null;
+    casterYaw: number;
+    /** 目标**每帧现取**（飞出物最长飞 100 帧，目标走动时要跟着） */
+    targetGetter?: () => { x: number; y: number; z: number } | null;
+    /** 本次施法的技能等级（原版 `lpSkill->Point`；`null` = 未知 ⇒ 条目自己不放并上报） */
+    skillLevel: number | null;
+    /** 服务端掷定的道数（Multi Spark；0 = 本技能没有） */
+    sparkCount: number;
+    /** 该角色手上的武器音码（`null` = 这一招不吃武器音，判定仍走 `weaponSfxForIcon`） */
+    weaponSoundCode: number | null;
+    weaponSoundPriority?: boolean;
+  }): void {
+    const caster = spec.casterPos;
+    fireSkillEvent(spec.row, {
+      ...skillFxCtx(() => spec.casterPos),
+      // 等级/道数**按调用方给的值覆盖**：`skillFxCtx` 的默认值是"自机当前施法"的，
+      // 远端那一路必须用服务端广播来的（否则会拿**本机**的等级/道数去放别人的特效）。
+      skillLevel: spec.skillLevel,
+      sparkCount: spec.sparkCount,
+      // 本条动作的第几个事件帧（1 起）—— Vigor Ball 靠它分左右（第 1 帧 −45°、其后 +45°）
+      motionEvent: motionEventIndexOf(spec.motion.eventFrame, spec.evFrame),
+      // 出手朝向 = 该角色朝向（原版 `Angle.y`）
+      casterYaw: spec.casterYaw,
+      targetGetter: spec.targetGetter,
+    }, caster, spec.targetPos);
+    // **武器挥击音**（原版 `EventAttack` 通用分支：`EventSkill()` 返回 FALSE 时调
+    // `WeaponPlaySound(this)`，`character.cpp:4207` + `:4244`）—— 远端角色同样要响。
+    if (spec.weaponSoundCode != null) {
+      sfx.playWeaponAttack(spec.weaponSoundCode,
+        { pos: caster, priority: spec.weaponSoundPriority === true });
+    }
+  }
+
+  /**
    * **诊断入口：直接放某个玩家技能**（临时 —— 与 `window.__ptMonsterSkill` 一对）。
    *
    * 走的是**与真实施法同一条路**（`beginSelfSkill` + 播那条技能动作），只绕开
@@ -3286,6 +3343,28 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     } | null;
     /** 比 S2C_AttackStart 先到的攻击计划（起手广播到达时消费；超时作废） */
     pendingAttackPlan: { map: Map<number, CritLookSeg>; at: number } | null;
+    /**
+     * **正在播的技能动作**（旁观者侧）—— 事件帧要按它派发**该招式自己的特效/音效**。
+     *
+     * 为什么需要：原版 `frame += FrameStep; EventAttack();`（`character.cpp:5837`）在**每个角色**
+     * 的逐帧更新里都跑，其中 `EventSkill()`（`:4207`）没有"仅自机"的守卫 ⇒ **每个客户端都为
+     * 每个角色跑事件帧派发**（别人的招式特效/音效在本机同样出）。我们此前只在自机跑 ⇒ 旁观者
+     * 看不到 Pike Wind / Multi Spark 之类"视觉在事件帧"的招（用户 2026-09-27 实测）。
+     * 状态在 `playRemoteSkill` 里建立，`updateRemotes` 逐帧按它派发，动作换掉即失效（下面 `motion` 比对）。
+     */
+    skill: {
+      row: SkillFxRow;
+      motion: MotionInfo;
+      /** 非零事件帧（子帧偏移，相对动作起点） */
+      eventFrames: number[];
+      fired: number;
+      /** 本次施法的目标（`0` = 原版无目标路径） */
+      targetId: number;
+      /** 施法者的技能等级（服务端 `S2C_SkillStart.skill_level`；`0` = 未提供 ⇒ 显式未知） */
+      skillLevel: number | null;
+      /** 服务端掷定的道数（Multi Spark；随起手下发，视觉与结算同源） */
+      sparkCount: number;
+    } | null;
   }
   const remotes = new Map<number, RemoteActor>();
   const remoteSpawning = new Set<number>();
@@ -4714,7 +4793,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * `animIndex` 直取（AGENTS #14：谁播的谁上报；两端各自随机会让"一招两种动作"）。
    * 演员未就绪时与攻击同策入队（补播窗口由该动作自身的时长决定）。
    */
-  function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0, animClip = '', sparkCount = 0): void {
+  function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0,
+                            animClip = '', sparkCount = 0, skillLevel = 0): void {
     if (casterId === selfPlayerId) {
       // 动画自己已在本地播过了（客户端驱动），但**CD 计时从这条 ack 起**：服务端是在受理那一刻
       // （扣 MP + 记 `lastCastAt`）开始的，客户端晚一个 RTT 起表 ⇒ 客户端窗口 ⊇ 服务端窗口，
@@ -4730,16 +4810,18 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (!actor) {
       // 演员还没建好（AOI 顺序/模型下载中）⇒ 入队等补播（与攻击起手共用一个队列）
       pendingRemoteAttacks.set(casterId, {
-        targetId, attackSpeed: 0, animIndex, animClip, skillId, at: performance.now(),
+        targetId, attackSpeed: 0, animIndex, animClip, skillId, sparkCount, skillLevel,
+        at: performance.now(),
       });
       return;
     }
-    playRemoteSkill(actor, skillId, targetId, animIndex, animClip);
+    playRemoteSkill(actor, skillId, targetId, animIndex, animClip, sparkCount, skillLevel);
   }
 
   /** 远端技能动作播放：按上报条目直取并播（找不到条目 ⇒ 上报，不静默退普攻）。 */
   function playRemoteSkill(actor: RemoteActor, skillId: number, targetId: number,
-                           animIndex: number, animClip: string): void {
+                           animIndex: number, animClip: string, sparkCount = 0,
+                           skillLevel = 0): void {
     const specified = animIndex > 0 ? actor.motionList.find((m) => m.index === animIndex) ?? null : null;
     if (!specified) {
       reportFallback('anim', `远端 id=${actor.playerId} 技能 ${skillId} 动作条目 #${animIndex}`
@@ -4765,23 +4847,49 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       // 显式的"没有"：技能身份表里查不到这一招（60 行无宏定义的那批）⇒ 不拿别的技能顶上（AGENTS #12）
       reportFallback('skillfx', `旁观者侧：技能 0x${skillId.toString(16)} 在身份表里查不到`
         + `（job=${actor.jobId} 的本地动作已播，起手特效**不放**）`);
+      actor.skill = null;
       return;
     }
+    // **登记"这一招正在播"** —— 事件帧的表现（特效/音效）由 `updateRemotes` 按同一动画帧轴派发，
+    // 与自机共用 `fireSkillEventFrame`（原版对每个角色都跑 `EventAttack()`，见该函数说明）。
+    // 登记的 motion 必须与 `playMotion` 播的那条**同一个对象**（换动作即失效，避免串台）。
+    actor.skill = {
+      row: remoteRow,
+      motion: specified,
+      eventFrames: Array.from(specified.eventFrame).filter((f) => f > 0),
+      fired: 0,
+      targetId,
+      skillLevel: skillLevel > 0 ? skillLevel : null,
+      sparkCount,
+    };
     if ((remoteRow.cast.fx?.length ?? 0) + remoteRow.cast.sfx.length > 0) {
-      // 目标根节点（怪或远端玩家）—— 位置**每帧现取**（目标走动时效果跟着走，与原版每帧读 `pChar` 同理）
+      // **目标是谁**（原版 `RecvProcessSkill`：`lpChar = FindChrPlayer(LParam)`，治的就是他）。
+      // 三种情形都要认（位置**每帧现取**，目标走动时效果跟着走）：
+      //   ① 怪 → `monsters`；② **别的玩家** → `remotes`；③ **就是我自己** → `selfPos`
+      //   （⚠ 用户 2026-09-27 实测："我点玩家放 healing，在另一个玩家眼里天使绕着祭司转" ——
+      //    被治的那个人就是observer 自己，而自机不在 `remotes` 里 ⇒ 原来解析不到就落到施法者身上）。
+      // 都认不出（目标不在本地视野）⇒ **不放**并上报：原版 `if (lpChar)` 守卫也是"找不到就不放"，
+      // 绝不把锚点悄悄换到施法者身上（AGENTS #12）。
       const targetRootOf = (): THREE.Object3D | null =>
         monsters.get(targetId)?.root ?? remotes.get(targetId)?.root ?? null;
+      const targetSelf = targetId !== 0 && targetId === selfPlayerId;
+      const anchorOf = (): { x: number; y: number; z: number } => {
+        if (targetSelf) return selfPos;
+        const t = targetRootOf();
+        if (t) return t.position;
+        return actor.root.position;   // 无目标（targetId=0）= 原版自疗路径：效果落施法者身上
+      };
       const targetRoot = targetRootOf();
-      fireObserverCast(remoteRow,
-        {
-          ...skillFxCtx(() => {
-            const t = targetRootOf();
-            return t ? t.position : actor.root.position;   // 锚点 = 被治疗者（没目标才落施法者）
-          }),
-          casterYaw: actor.root.rotation.y,
-        },
-        actor.root.position,
-        targetRoot ? { x: targetRoot.position.x, y: targetRoot.position.y, z: targetRoot.position.z } : null);
+      if (!targetSelf && targetId !== 0 && !targetRoot) {
+        reportFallback('skillfx', `旁观者侧：技能 0x${skillId.toString(16)} 的目标 id=${targetId}`
+          + ` 不在本地视野（既不是自己，也不在怪/远端表里）⇒ 起手特效不放（原版 if(lpChar) 同）`);
+      } else {
+        fireObserverCast(remoteRow,
+          { ...skillFxCtx(anchorOf), casterYaw: actor.root.rotation.y },
+          actor.root.position,
+          targetSelf ? { x: selfPos.x, y: selfPos.y, z: selfPos.z }
+            : targetRoot ? { x: targetRoot.position.x, y: targetRoot.position.y, z: targetRoot.position.z } : null);
+      }
     }
   }
 
@@ -4809,6 +4917,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   const pendingRemoteAttacks = new Map<number, {
     targetId: number; attackSpeed: number; animIndex: number; animClip: string; at: number;
     skillId?: number;
+    /** 技能起手带的服务端参数（补播时要一并还原：Multi Spark 的道数 / 随等级变的特效） */
+    sparkCount?: number; skillLevel?: number;
   }>();
   /** 队列的**内存兜底**（与"能不能补播"无关）：留太久（演员一直没来）就清掉并上报 */
   const REMOTE_ATTACK_KEEP_MS = 5000;
@@ -4882,6 +4992,27 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 有服务端计划 → 直接播正确结果（miss 挥空 / hit 武器音 / crit 追加暴击音），无需等往返；
    * 计划未到（旧服务端/丢包）→ **乐观按命中播**并上报降级，计划迟到时由 applyRemoteAttackPlan 纠正。
    */
+  /**
+   * 某角色的**武器攻击音码**（原版 `WeaponPlaySound` 那一套）—— **唯一实现**：
+   * 远端攻击的逐段音与远端技能事件帧的武器音都走它（此前只在攻击那条路里内联写过一次）。
+   * 判据全部来自该角色的外观/职业（`weaponTypeOfIdCode` / `handTypeOfIdCode` / 法师-祭司位）。
+   */
+  function weaponAttackSoundCodeOf(idcode: number, jobId = 0): number {
+    return weaponSoundCode(
+      weaponTypeOfIdCode(idcode), handTypeOfIdCode(idcode),
+      jobId === 7 || jobId === 8, idcode,
+    );
+  }
+
+  /** 某个实体 id 的**实时位置取值器**（怪 / 远端玩家 / 自己）；查不到 ⇒ `null`（调用方据此不放） */
+  function aimPosOf(entityId: number): (() => { x: number; y: number; z: number }) | null {
+    if (entityId === 0) return null;
+    if (entityId === selfPlayerId) return () => ({ x: selfPos.x, y: selfPos.y, z: selfPos.z });
+    const root = monsters.get(entityId)?.root ?? remotes.get(entityId)?.root ?? null;
+    if (!root) return null;
+    return () => root.position;
+  }
+
   function playRemoteAttackSegment(actor: RemoteActor): void {
     if (!actor.attack) return;
     const seg = actor.attack.hitFired;
@@ -4892,10 +5023,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       sfx.playWeaponMiss(handTypeOfIdCode(idcode), { pos });
       return;
     }
-    const code = weaponSoundCode(
-      weaponTypeOfIdCode(idcode), handTypeOfIdCode(idcode),
-      actor.jobId === 7 || actor.jobId === 8, idcode,
-    );
+    const code = weaponAttackSoundCodeOf(idcode, actor.jobId);
     const voice = sfx.playWeaponAttack(code, { pos });
     if (voice) actor.attack.voices.set(seg, voice);
     if (lookCritOf(planned)) sfx.playCritical({ pos });
@@ -5824,6 +5952,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           trails: new PlayerTrails({ who: `远端 id=${pid}`, log: (m) => console.warn(m) }),
           attack: null,
           pendingAttackPlan: null,
+          // 正在播的技能动作（事件帧派发用）—— 起手广播到达时才填（`playRemoteSkill`）
+          skill: null,
         };
         remotes.set(pid, actorObj);
         // **进视野对齐对方此刻播的那一条**（`S2C_PlayerAppear.anim_index`，服务端缓存自其最近一次上报）：
@@ -5858,7 +5988,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
               console.warn('[WorldView] 远端 id=' + pid + ' 的起手广播迟到补播：该招还剩 '
                 + Math.round(remain) + 'ms（从第 0 帧重演这一招）');
               if (pend.skillId != null) {
-                playRemoteSkill(actorObj, pend.skillId, pend.targetId, pend.animIndex, pend.animClip);
+                playRemoteSkill(actorObj, pend.skillId, pend.targetId, pend.animIndex, pend.animClip,
+                  pend.sparkCount ?? 0, pend.skillLevel ?? 0);
               } else {
                 playRemoteAttack(actorObj, pend.targetId, pend.attackSpeed, pend.animIndex, pend.animClip);
               }
@@ -6056,6 +6187,38 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
           if (ev && step.raw - actor.eatEffect.motion.startFrame * 160 >= ev) {
             actor.eatEffect.fired = true;
             fireEatEffectAt(actor.root.position, actor.eatEffect.kind);
+          }
+        }
+        // **技能动作的事件帧**（旁观者看别人放招）—— 与自机**同一份实现**（`fireSkillEventFrame`）。
+        // 原版 `frame += FrameStep; EventAttack();`（`character.cpp:5837`）对**每个角色**都跑，
+        // `EventSkill()`（`:4207`）没有"仅自机"守卫 ⇒ 别人的招式特效/音效在本机同样出。
+        // 用户 2026-09-27 实测："枪兵放 Pike Wind，祭司那边看不到特效；双方都听不到对方的技能音效"
+        // —— 根因就是我们只在自机跑这一段。
+        if (actor.animState.getCurrentState() === actor.animState.STATE.SKILL
+            && actor.skill && actor.skill.motion === motion) {
+          const sk = actor.skill;
+          const compFrame = step.raw - motion.startFrame * 160;
+          // 事件帧为空（该动作没有事件帧数据）⇒ 与自机同一条：在**动作起点**派发一次
+          const frames = sk.eventFrames.length > 0 ? sk.eventFrames : [0];
+          while (sk.fired < frames.length && compFrame >= frames[sk.fired]!) {
+            const evFrame = frames[sk.fired]!;
+            sk.fired++;
+            fireSkillEventFrame({
+              row: sk.row,
+              motion,
+              evFrame,
+              casterPos: actor.root.position,
+              // 目标每帧现取（飞出物要跟人）；无目标 ⇒ `null`（原版的"没有目标"路径）
+              targetGetter: aimPosOf(sk.targetId) ?? undefined,
+              targetPos: aimPosOf(sk.targetId)?.() ?? null,
+              casterYaw: actor.root.rotation.y,
+              // 等级/道数**来自服务端广播**（`S2C_SkillStart`）—— 远端手里没有本机那一套面板数据
+              skillLevel: sk.skillLevel,
+              sparkCount: sk.sparkCount,
+              // 武器挥击音：与自机同一份判定（`weaponSfxForIcon`），音码取**该玩家**手上的武器
+              weaponSoundCode: weaponSfxForIcon(sk.row.icon)
+                ? weaponAttackSoundCodeOf(actor.appearance?.weaponIdcode ?? 0) : null,
+            });
           }
         }
         if (step.ended) {
@@ -6589,23 +6752,23 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
                 opts?.onSkillHit?.(castSkillId, selfSkillTargetId,
                   motionEventIndexOf(sm.eventFrame, _f) - 1);
               }
-              fireSkillEvent(selfSkillRow, {
-                ...skillFxCtx(),
-                // 本条动作的第几个事件帧（1 起）—— Vigor Ball 靠它分左右（第 1 帧 −45°、其后 +45°）
-                motionEvent: motionEventIndexOf(sm.eventFrame, _f),
-                // 出手朝向 = 角色朝向（原版 `Angle.y`）
+              // 事件帧表现 = **与远端同一份实现**（AGENTS #15）：技能音 + 特效 + 武器挥击音。
+              // 武器声那一条的判定 = `weaponSfxForIcon`（原版 `EventSkill()` 返回 FALSE 时调
+              // `WeaponPlaySound`，`character.cpp:4207` + `:4244`）—— 少了它，Raving / Critical Hit
+              // 这类"事件帧无专属音"的招**整招一声不响**（用户 2026-09-23 报过）。
+              fireSkillEventFrame({
+                row: selfSkillRow,
+                motion: sm,
+                evFrame: _f,
+                casterPos: selfPos,
+                targetPos,
                 casterYaw: selfAngle,
-                // 目标**每帧现取**（飞出物最长飞 100 帧，目标走动时要跟着）
                 targetGetter: aimTargetOf,
-              }, selfPos, targetPos);
-              // **武器挥击音**（原版 `EventAttack` 通用分支：`EventSkill()` 返回 FALSE 时调
-              // `WeaponPlaySound(this)`，`character.cpp:4207` + `:4244`）。这一声不在 `skill-fx.json` 里
-              //（它不是技能的专属 wav，而是**手上那把武器**的攻击音）⇒ 只看生成物 `weaponSfx`。
-              // 少了它，Raving/Impact/Triple Impact、Critical Hit 这类"事件帧无专属音"的招**整招一声不响**
-              //（用户 2026-09-23 报的"武士技能没音效"）。同一份判定 = `weaponSfxForIcon`（唯一实现）。
-              if (weaponSfxForIcon(selfSkillRow.icon)) {
-                sfx.playWeaponAttack(selfWeaponSoundCode(), { priority: true });
-              }
+                skillLevel: skillLevelByIcon(selfSkillRow.icon),
+                sparkCount: selfSkillParam ?? 0,
+                weaponSoundCode: weaponSfxForIcon(selfSkillRow.icon) ? selfWeaponSoundCode() : null,
+                weaponSoundPriority: true,
+              });
             }
           }
         }

@@ -56,6 +56,8 @@ const ok = (label: string, cond: boolean): void => {
 const read = async (rel: string): Promise<string> =>
   (await readFile(new URL(rel, import.meta.url), 'utf8')).replace(/\r\n/g, '\n');
 const src = await read('../src/render/effects/healing-orbit.ts');
+/** 去注释后的源码（结构断言用；注释里本来就该提"被删掉的东西"，别让它们把断言染红） */
+const srcCode = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 
 /* ── 源码常量（独立复算用，故意不从 src 里 import） ── */
 const FONE = 256, FPS = 70, MAX_TIME = 250, EMIT_UNTIL = MAX_TIME - 30;
@@ -72,7 +74,6 @@ console.log('A. 只建一份实例（第一份 BoneFlag=1 ⇒ 源码从不绘制
 {
   // 结构：不得再有"头顶那份"（UPPER_LIFT_RAW / upper 实例 / 13000 常量）。
   // ⚠ 注释里**可以**提 13000（文件头正是在记录"它为什么被删"）⇒ 先把注释剥掉再查代码。
-  const srcCode = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
   ok('代码里不再有 13000（第一份实例的高度偏移；注释里的说明不算）', !/13000/.test(srcCode));
   ok('模块里不再有独立 upper 实例字段', !/\bupper\b\s*:/.test(srcCode) && !/o\.upper/.test(srcCode));
   // 外部证据（源码树在场才可复算）
@@ -161,6 +162,29 @@ console.log('B/C/D. 真资产 + 真帧循环：30 帧动画 / 位置公式 / 每
       scene.children.filter((c) => (c as THREE.Group).isGroup).length === 1);
     ok('日志里出现"自身 30 帧动画"（证明这份实例的动画来源已被声明）',
       logs.some((l) => l.includes('自身 30 帧动画')));
+
+    // C2（趁实例还在，先做数值检查）：**朝向每帧跟着公转走**
+    //   绘制读 `RanderAngle`，而 `sinMoveEffect2` 的**第一行** `memcpy(&RanderAngle, &Angle, …)`
+    //   （`sinEffect2.cpp:444`）每帧把它同步成 `Angle` ⇒ 模型绕 Y 转。
+    //   （用户 2026-09-27 实测"正脸方向从来没变过，看起来很僵硬" —— 根因就是我漏看那句 memcpy。）
+    // 判据 = **数值**：再推 7 帧，`rotation.y` 必须正好改变 `-7 × 25 / 4096 × 2π`。
+    {
+      const grp = scene.children.find((c) => (c as THREE.Group).isGroup) as THREE.Group | undefined;
+      const TWO_PI = Math.PI * 2;
+      updateHealingOrbits(1 / FPS);        // ⚠ 先推一帧：朝向是**每帧写绝对值**，创建后到首帧前它还是 0
+      const r0 = grp ? grp.rotation.y : NaN;
+      for (let i = 0; i < 7; i++) updateHealingOrbits(1 / FPS);
+      const r1 = grp ? grp.rotation.y : NaN;
+      const expect = (7 * DA / 4096) * TWO_PI;
+      let d = (r1 - r0) % TWO_PI;          // 角度是绝对值算出来的，跨圈时按短差比较
+      if (d > Math.PI) d -= TWO_PI;
+      if (d < -Math.PI) d += TWO_PI;
+      ok(`C2. 朝向每帧随公转变化（7 帧应转 ${(-expect).toFixed(6)} rad，实测 ${d.toFixed(6)}）`,
+        Number.isFinite(d) && Math.abs(d + expect) < 1e-9);
+      ok('C2. 该朝向来自源码公式（不是固定 0、也不是自造值）',
+        /o\.root\.rotation\.y = -\(\(ROTATE_ANGLE_0 \+ ROTATE_PER_FRAME \* t \+ ANGLE_270\)/.test(srcCode)
+        && /memcpy\(&pEffect->RanderAngle, &pEffect->Angle/.test(src));
+    }
 
     const frames = 330;   // 跨过一次 AniCount 回绕（30 帧一圈）
     for (let f = 0; f < frames; f++) updateHealingOrbits(1 / FPS);
@@ -276,6 +300,18 @@ console.log('E. 旁观者那条路（原版 `RecvProcessSkill`）真的派发该
     lights.every((l) => l[0] === target.x && l[1] === target.y && l[2] === target.z));
   ok('旁观者侧：音效按**目标**位置播（`SkillPlaySound(..., lpChar->pX…)`）',
     sounds.length >= 1 && sounds.every((s) => s.pos.x === target.x && s.pos.z === target.z));
+  // 2026-09-27 用户实测："我点玩家放 healing，自己看到小天使绕玩家转，在另一个玩家眼里依然绕着祭司本人转"
+  // ⇒ 被治的人**就是 observer 自己**，而自机不在 `remotes` 里 ⇒ 原来的解析落到施法者身上。
+  // 三条解析都要在（怪 / 别的玩家 / 自己），且认不出时**不放**（原版 `if (lpChar)` 同）。
+  {
+    const wv2 = await read('../src/ui/WorldView.ts');
+    ok('旁观者侧：目标解析含"就是我自己"（`targetId === selfPlayerId` ⇒ 用 `selfPos`）',
+      /const targetSelf = targetId !== 0 && targetId === selfPlayerId;/.test(wv2)
+      && /if \(targetSelf\) return selfPos;/.test(wv2));
+    ok('旁观者侧：目标认不出时**不放并上报**（不把锚点悄悄换成施法者，AGENTS #12）',
+      /targetSelf \? \{ x: selfPos\.x, y: selfPos\.y, z: selfPos\.z \}/.test(wv2)
+      && /不在本地视野（既不是自己，也不在怪\/远端表里）⇒ 起手特效不放/.test(wv2));
+  }
   // 自机侧：起手音在**施法者**位置（`fireSkillCast(row, ctx, pos, target)` 的音效按 pos）
   {
     const { fireSkillCast } = await import('../src/render/effects/skill-fx-runner.js');
@@ -289,6 +325,43 @@ console.log('E. 旁观者那条路（原版 `RecvProcessSkill`）真的派发该
     ok('自机侧：起手音在**施法者**位置（原版 `SkillPlaySound(…, pX,pY,pZ)`）',
       self.length >= 1 && self.every((s) => s.pos.x === caster.x && s.pos.z === caster.z));
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+console.log('F. 远端施法：事件帧表现同步（"通用机制" = 各端按同一动画帧轴跑同一份事件表）');
+{
+  const wv2 = await read('../src/ui/WorldView.ts');
+  // 原版依据：`frame += FrameStep; EventAttack();`（character.cpp:5837）在**每个角色**的逐帧更新里跑，
+  // `EventSkill()`（:4207）没有"仅自机"守卫 ⇒ 别人的招式特效/音效在每台机器上照放。
+  ok('远端角色的技能事件帧也在本机派发（`updateRemotes` 里 STATE.SKILL 分支）',
+    /actor\.animState\.getCurrentState\(\) === actor\.animState\.STATE\.SKILL[\s\S]{0,120}?actor\.skill && actor\.skill\.motion === motion/.test(wv2));
+  ok('自机与远端**共用同一份**事件帧实现 `fireSkillEventFrame`（AGENTS #15：不写第二份）',
+    /function fireSkillEventFrame\(spec: \{/.test(wv2)
+    && (wv2.match(/fireSkillEventFrame\(\{/g) ?? []).length === 2
+    && (wv2.match(/fireSkillEvent\(/g) ?? []).length === 1);
+  ok('远端的等级/道数**来自服务端广播**（不是拿本机的面板数据顶）',
+    /skillLevel: sk\.skillLevel,/.test(wv2) && /sparkCount: sk\.sparkCount,/.test(wv2)
+    && /skillLevel: skillLevel > 0 \? skillLevel : null,/.test(wv2));
+  ok('远端武器挥击音与自机同一判定（`weaponSfxForIcon`），音码取**该玩家**的武器',
+    /weaponSoundCode: weaponSfxForIcon\(sk\.row\.icon\)/.test(wv2)
+    && /function weaponAttackSoundCodeOf\(idcode: number, jobId = 0\): number \{/.test(wv2)
+    // 定义 1 处 + 两处调用（远端攻击段 / 远端技能事件帧）—— 保证不再各写一份
+    && (wv2.match(/weaponAttackSoundCodeOf\(/g) ?? []).length === 3);
+  // Healing 的两条音效：源码里同在 `BeginSkill`（`:13588-13603`）⇒ **都在起手**（此前一条被排到事件帧）
+  const fxGen = JSON.parse(await read('../src/game/data/skill-fx.json')) as
+    { rows: { name: string; cast: { sfx: string[] }; event: { sfx: string[] } }[] };
+  const heal = fxGen.rows.find((r) => r.name === 'Healing')!;
+  ok('Healing 的两条音效都在**起手**（原版同一个 `BeginSkill` case 里连播两条）',
+    heal.cast.sfx.length === 2
+    && heal.cast.sfx.some((s) => /healing 1\.wav$/.test(s))
+    && heal.cast.sfx.some((s) => /casting_p\.wav$/.test(s))
+    && heal.event.sfx.length === 0);
+  const map = JSON.parse(await read('../src/game/data/skill-code-map.json')) as
+    { rows: { code: string; sounds: { symbol: string; file: string | null; phase?: string | null }[] }[] };
+  const hrow = map.rows.find((r) => r.code === 'SKILL_PLAY_HEALING')!;
+  ok('音效的"起手/事件帧"相位**来自源码**（`SkillPlaySound` 落在 BeginSkill 还是 EventSkill）',
+    hrow.sounds.every((s) => s.phase === 'cast')
+    && hrow.sounds.length === 2);
 }
 
 console.log(fails === 0 ? '\n全部通过' : `\n${fails} 项不符`);

@@ -1009,7 +1009,9 @@ onMessage((msg: jpt.base.ServerMessage) => {
       const ss = msg.skillStart!;
       worldView.signalSkillStart(Number(ss.casterId ?? 0), Number(ss.skillId ?? 0),
         Number(ss.targetId ?? 0), Number(ss.animIndex ?? 0), ss.animClip || '',
-        Number(ss.sparkCount ?? 0));
+        // `spark_count` / `skill_level`：前者是服务端掷定的道数（视觉与结算同源），
+        // 后者是施法者的技能等级（旁观者放"随等级变"的特效要用，如 Pike Wind 的环）
+        Number(ss.sparkCount ?? 0), Number(ss.skillLevel ?? 0));
       break;
     }
     case 'attackStart': {

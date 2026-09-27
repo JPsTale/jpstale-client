@@ -8781,6 +8781,9 @@ export namespace jpt {
             /** S2C_SkillStart sparkCount. */
             sparkCount: number;
 
+            /** S2C_SkillStart skillLevel. */
+            skillLevel: number;
+
             /**
              * Creates a new S2C_SkillStart instance using the specified properties.
              * @param [properties] Properties to set
@@ -8885,6 +8888,9 @@ export namespace jpt {
 
                 /** S2C_SkillStart sparkCount */
                 sparkCount?: (number|null);
+
+                /** S2C_SkillStart skillLevel */
+                skillLevel?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

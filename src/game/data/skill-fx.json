@@ -153,14 +153,13 @@
    "cast": {
     "fx": [],
     "sfx": [
-     "wav/effects/skill/tempskron/roar 01.wav"
+     "wav/effects/skill/tempskron/roar 01.wav",
+     "wav/effects/skill/tempskron/roar 02.wav"
     ]
    },
    "event": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/tempskron/roar 02.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_ROAR",
@@ -211,15 +210,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/concentration 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3fighterconcentration1"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/concentration 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_CONCENTRATION",
@@ -264,15 +263,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/swiftaxe 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3fighterswiftaxe1"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/swiftaxe 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_SWIFT_AXE",
@@ -309,7 +308,7 @@
    "icon": "tf60 destoryer.bmp",
    "name": "Destroyer",
    "fx": [
-    "lua:skillwarriordestroyerhit"
+    "lua:skillwarriordestroyer1"
    ],
    "sfx": [
     "wav/effects/skill/tempskron/avengingcrash 01.wav",
@@ -317,15 +316,14 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/tempskron/avengingcrash 01.wav"
-    ]
+    "sfx": []
    },
    "event": {
     "fx": [
-     "lua:skillwarriordestroyerhit"
+     "lua:skillwarriordestroyer1"
     ],
     "sfx": [
+     "wav/effects/skill/tempskron/avengingcrash 01.wav",
      "wav/effects/skill/tempskron/expansion 02.wav"
     ]
    },
@@ -343,24 +341,22 @@
    "icon": "tf63 berserker.bmp",
    "name": "Berserker",
    "fx": [
-    "lua:skillwarriorbetserker",
-    "part:skill4betserker"
+    "lua:skill5_fighter_bloodyberserker"
    ],
    "sfx": [
     "wav/effects/skill/tempskron/berserker 01.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [
-     "lua:skillwarriorbetserker",
-     "part:skill4betserker"
-    ],
     "sfx": [
      "wav/effects/skill/tempskron/berserker 01.wav"
     ]
+   },
+   "event": {
+    "fx": [
+     "lua:skill5_fighter_bloodyberserker"
+    ],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_BERSERKER",
@@ -382,15 +378,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/cyclonestrike 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "lua:skillwarriorcyclonestrike"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/cyclonestrike 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_CYCLONE_STRIKE",
@@ -519,7 +515,9 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/extreme_shield 01.wav"
+    ]
    },
    "event": {
     "fx": [
@@ -527,9 +525,7 @@
      "ini:skillextremeshieldparticle",
      "ini:skillextremeshieldsmall"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/extreme_shield 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_EXTREME_SHIELD",
@@ -605,7 +601,9 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/physical_absorption 01.wav"
+    ]
    },
    "event": {
     "fx": [
@@ -613,9 +611,7 @@
      "ini:physicalabsorbparticle2",
      "ini:skillphysicalabsorb1"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/physical_absorption 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_PHYSICAL_ABSORB",
@@ -660,16 +656,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/maximize 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "ini:maximizeleft",
      "ini:maximizeright"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/maximize 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_MAXIMIZE",
@@ -690,16 +686,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/automation 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "ini:automationleft",
      "ini:automationright"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/automation 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_AUTOMATION",
@@ -754,15 +750,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/metalarmor 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3mechanicianmetalarmor"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/metalarmor 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_METAL_ARMOR",
@@ -852,26 +848,19 @@
    "classDir": "mecha",
    "icon": "tm60 impulsion.bmp",
    "name": "Impulsion",
-   "fx": [
-    "part:skill4impulsionhit1",
-    "part:skill4impulsionlight"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/tempskron/impulsion 02.wav",
     "wav/effects/skill/tempskron/chainlance 02.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/tempskron/impulsion 02.wav"
-    ]
+    "sfx": []
    },
    "event": {
-    "fx": [
-     "part:skill4impulsionhit1",
-     "part:skill4impulsionlight"
-    ],
+    "fx": [],
     "sfx": [
+     "wav/effects/skill/tempskron/impulsion 02.wav",
      "wav/effects/skill/tempskron/chainlance 02.wav"
     ]
    },
@@ -897,15 +886,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/compulsion 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "lua:skillmetalioncompulsion1"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/compulsion 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_COMPULSION",
@@ -920,7 +909,7 @@
    "icon": "tm66 m_sphere.bmp",
    "name": "Magnetic Sphere",
    "fx": [
-    "part:skill3mechaniciansparkshield"
+    "lua:skillmetalionmagneticsphere"
    ],
    "sfx": [
     "wav/effects/skill/tempskron/spark 01.wav",
@@ -934,7 +923,7 @@
    },
    "event": {
     "fx": [
-     "part:skill3mechaniciansparkshield"
+     "lua:skillmetalionmagneticsphere"
     ],
     "sfx": [
      "wav/effects/skill/tempskron/spark 03.wav"
@@ -960,15 +949,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/metalgolem 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "lua:skillmetalionmetalgolem"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/metalgolem 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_METAL_GOLEM",
@@ -1077,7 +1066,8 @@
    "cast": {
     "fx": [],
     "sfx": [
-     "wav/effects/skill/tempskron/scout_hawk 01.wav"
+     "wav/effects/skill/tempskron/scout_hawk 01.wav",
+     "wav/effects/skill/tempskron/scout_hawk 02.wav"
     ]
    },
    "event": {
@@ -1085,9 +1075,7 @@
      "ini:scouthawkgate",
      "ini:scouthawklight"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/scout_hawk 02.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_SCOUT_HAWK",
@@ -1203,16 +1191,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/falcon 02.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3archergoldenfalcon1",
      "part:skill3archergoldenfalcon2"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/falcon 02.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_FALCON",
@@ -1309,16 +1297,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/goldfalcon 02.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3archergoldenfalcon1",
      "part:skill3archergoldenfalcon2"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/goldfalcon 02.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_GOLDEN_FALCON",
@@ -1459,24 +1447,24 @@
    "icon": "ta70 f_o_nature.bmp",
    "name": "Force of Nature",
    "fx": [
-    "lua:skillsagittarionforceofnature2",
-    "lua:skillsagittarionforceofnature"
+    "lua:skillsagittarionforceofnature",
+    "lua:skillsagittarionforceofnature2"
    ],
    "sfx": [
     "wav/effects/skill/tempskron/forceofnature 01.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [
-     "lua:skillsagittarionforceofnature2",
-     "lua:skillsagittarionforceofnature"
-    ],
     "sfx": [
      "wav/effects/skill/tempskron/forceofnature 01.wav"
     ]
+   },
+   "event": {
+    "fx": [
+     "lua:skillsagittarionforceofnature",
+     "lua:skillsagittarionforceofnature2"
+    ],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_FORCE_OF_NATURE",
@@ -1909,15 +1897,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/tempskron/assassineye 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "lua:skilllancelotassassineye"
     ],
-    "sfx": [
-     "wav/effects/skill/tempskron/assassineye 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_ASSASSIN_EYE",
@@ -1967,13 +1955,13 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [],
     "sfx": [
      "wav/effects/skill/tempskron/vague 01.wav"
     ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_VAGUE",
@@ -2194,16 +2182,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/windy 1.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:windy1",
      "part:windy2"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/windy 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_WINDY",
@@ -2254,15 +2242,14 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/morion/soulsucker 2.wav"
-    ]
+    "sfx": []
    },
    "event": {
     "fx": [
      "part:soulsuckerhit1"
     ],
     "sfx": [
+     "wav/effects/skill/morion/soulsucker 2.wav",
      "wav/effects/skill/morion/shieldspake 1.wav"
     ]
    },
@@ -2343,15 +2330,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/triumphofvalhalla 1.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3atalantatriumphofvalhalla"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/triumphofvalhalla 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_TRIUMPH_OF_VALHALLA",
@@ -2411,29 +2398,26 @@
    "classDir": "atalanta",
    "icon": "ma60 h_o_valhalla.bmp",
    "name": "Hall of Valhalla",
-   "fx": [
-    "lua:skillvalhallahallofvahalla"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/morion/hallofvalhalla 01.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [
-     "lua:skillvalhallahallofvahalla"
-    ],
     "sfx": [
      "wav/effects/skill/morion/hallofvalhalla 01.wav"
     ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_HALL_OF_VALHALLA",
    "presenters": [
     "SkillValhallaHallOfValhallaHandEffect",
-    "SkillValhallaHallOfValhalla1"
+    "SkillValhallaHallOfValhalla1",
+    "SkillValhallaHallOfValhallaHandEffect"
    ],
    "animIndex": 115
   },
@@ -2444,8 +2428,7 @@
    "name": "Extreme Rage",
    "alt": "X Rage",
    "fx": [
-    "lua:skillvalhallaxrage",
-    "lua:skillvalhallahit1"
+    "lua:skillvalhallaxrage"
    ],
    "sfx": [
     "wav/effects/skill/morion/extremerage 01.wav"
@@ -2456,8 +2439,7 @@
    },
    "event": {
     "fx": [
-     "lua:skillvalhallaxrage",
-     "lua:skillvalhallahit1"
+     "lua:skillvalhallaxrage"
     ],
     "sfx": [
      "wav/effects/skill/morion/extremerage 01.wav"
@@ -2484,16 +2466,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/frostjavelin 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill4frostjavelin",
      "lua:skillfrostjavelin"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/frostjavelin 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_FROST_JAVELIN",
@@ -2507,26 +2489,19 @@
    "classDir": "atalanta",
    "icon": "ma70 vengeance.bmp",
    "name": "Vengeance",
-   "fx": [
-    "lua:skillvalhallaxrage",
-    "lua:skillvalhallahit1"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/morion/vengeance 01.wav",
     "wav/effects/skill/morion/vengeance 02.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/morion/vengeance 01.wav"
-    ]
+    "sfx": []
    },
    "event": {
-    "fx": [
-     "lua:skillvalhallaxrage",
-     "lua:skillvalhallahit1"
-    ],
+    "fx": [],
     "sfx": [
+     "wav/effects/skill/morion/vengeance 01.wav",
      "wav/effects/skill/morion/vengeance 02.wav"
     ]
    },
@@ -2661,15 +2636,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/holybody 1.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:holybody"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/holybody 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_HOLY_BODY",
@@ -2732,16 +2707,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/holyvalor 1.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:holyvalor",
      "part:holyvalortt"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/holyvalor 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_HOLY_VALOR",
@@ -2794,15 +2769,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/piercing 2.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:piercing1"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/piercing 2.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_PIERCING",
@@ -2822,15 +2797,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/drasticspirit 1.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:drasticspirit"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/drasticspirit 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_DRASTIC_SPIRIT",
@@ -2872,16 +2847,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/divineinhalation 1.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3knightdivineinhalation1",
      "part:skill3knightdivineinhalation2"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/divineinhalation 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_DIVINE_INHALATION",
@@ -2930,13 +2905,12 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/skill_swing 02.wav"
-    ]
+    "sfx": []
    },
    "event": {
     "fx": [],
     "sfx": [
+     "wav/effects/skill/skill_swing 02.wav",
      "wav/effects/skill/morion/grandcross 2.wav"
     ]
    },
@@ -2950,23 +2924,19 @@
    "classDir": "knight",
    "icon": "mn60 s_o_justice.bmp",
    "name": "Sword of Justice",
-   "fx": [
-    "lua:skillsaintnightswordofustice"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/morion/swordofjustice 01.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [
-     "lua:skillsaintnightswordofustice"
-    ],
     "sfx": [
      "wav/effects/skill/morion/swordofjustice 01.wav"
     ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_SWORD_OF_JUSTICE",
@@ -2981,22 +2951,24 @@
    "icon": "mn63 g_shield.bmp",
    "name": "Godly Shield",
    "fx": [
-    "part:skill3knightdivineinhalation1"
+    "part:godlyshield",
+    "lua:skillsaintnightgodlyshield"
    ],
    "sfx": [
     "wav/effects/skill/tempskron/godlyshield 01.wav"
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [
-     "part:skill3knightdivineinhalation1"
-    ],
     "sfx": [
      "wav/effects/skill/tempskron/godlyshield 01.wav"
     ]
+   },
+   "event": {
+    "fx": [
+     "part:godlyshield",
+     "lua:skillsaintnightgodlyshield"
+    ],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_GODLY_SHIELD",
@@ -3031,9 +3003,7 @@
    "classDir": "knight",
    "icon": "mn70 d_piercing.bmp",
    "name": "Divine Piercing",
-   "fx": [
-    "part:skill3hit3"
-   ],
+   "fx": [],
    "sfx": [
     "wav/effects/skill/morion/divinepiercing 07.wav"
    ],
@@ -3042,9 +3012,7 @@
     "sfx": []
    },
    "event": {
-    "fx": [
-     "part:skill3hit3"
-    ],
+    "fx": [],
     "sfx": [
      "wav/effects/skill/morion/divinepiercing 07.wav"
     ]
@@ -3157,14 +3125,13 @@
    "cast": {
     "fx": [],
     "sfx": [
-     "wav/effects/skill/morion/casting_m.wav"
+     "wav/effects/skill/morion/casting_m.wav",
+     "wav/effects/skill/morion/agony 1.wav"
     ]
    },
    "event": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/morion/agony 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_AGONY",
@@ -3213,14 +3180,13 @@
    "cast": {
     "fx": [],
     "sfx": [
-     "wav/effects/skill/morion/casting_m.wav"
+     "wav/effects/skill/morion/casting_m.wav",
+     "wav/effects/skill/morion/zenith 1.wav"
     ]
    },
    "event": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/morion/zenith 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_ZENITH",
@@ -3322,7 +3288,9 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/casting_m.wav"
+    ]
    },
    "event": {
     "fx": [
@@ -3334,9 +3302,7 @@
      "part:enchantweaponlight",
      "part:enchantweaponmember"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/casting_m.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_ENCHANT_WEAPON",
@@ -3471,13 +3437,13 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [],
     "sfx": [
      "wav/effects/skill/morion/casting_m.wav"
     ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_DANCING_SWORD",
@@ -3497,15 +3463,15 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/fireelemental 01.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:fireelementalhit"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/fireelemental 01.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_FIRE_ELEMENTAL",
@@ -3554,13 +3520,13 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
-   },
-   "event": {
-    "fx": [],
     "sfx": [
      "wav/effects/skill/morion/distortion 01.wav"
     ]
+   },
+   "event": {
+    "fx": [],
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_DISTORTION",
@@ -3722,14 +3688,13 @@
      "code:healing"
     ],
     "sfx": [
-     "wav/effects/skill/morion/healing 1.wav"
+     "wav/effects/skill/morion/healing 1.wav",
+     "wav/effects/skill/morion/casting_p.wav"
     ]
    },
    "event": {
     "fx": [],
-    "sfx": [
-     "wav/effects/skill/morion/casting_p.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_HEALING",
@@ -3805,16 +3770,15 @@
    "cast": {
     "fx": [],
     "sfx": [
-     "wav/effects/skill/morion/holymind 1.wav"
+     "wav/effects/skill/morion/holymind 1.wav",
+     "wav/effects/skill/morion/casting_p.wav"
     ]
    },
    "event": {
     "fx": [
      "code:holymind"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/casting_p.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_HOLY_MIND",
@@ -3891,16 +3855,15 @@
    "cast": {
     "fx": [],
     "sfx": [
-     "wav/effects/skill/morion/casting_p.wav"
+     "wav/effects/skill/morion/casting_p.wav",
+     "wav/effects/skill/morion/holyreflection 1.wav"
     ]
    },
    "event": {
     "fx": [
      "code:holyreflection"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/holyreflection 1.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_HOLY_REFLECTION",
@@ -3980,7 +3943,9 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
    },
    "event": {
     "fx": [
@@ -3988,9 +3953,7 @@
      "part:skill3priestessresurrection2",
      "part:skill3priestessresurrection3"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/casting_p.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_RESURRECTION",
@@ -4011,16 +3974,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/casting_p.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill3priestessextinction1",
      "part:skill3priestessextinction2"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/casting_p.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_EXTINCTION",
@@ -4101,16 +4064,16 @@
    ],
    "cast": {
     "fx": [],
-    "sfx": []
+    "sfx": [
+     "wav/effects/skill/morion/regenfield 02.wav"
+    ]
    },
    "event": {
     "fx": [
      "part:skill4regenerationfield",
      "lua:skillcelestialregenerationfield"
     ],
-    "sfx": [
-     "wav/effects/skill/morion/regenfield 02.wav"
-    ]
+    "sfx": []
    },
    "confidence": "code",
    "code": "SKILL_PLAY_REGENERATION_FIELD",

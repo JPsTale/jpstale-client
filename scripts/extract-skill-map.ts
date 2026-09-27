@@ -46,14 +46,36 @@ for (const s of sfxTables.skillSounds) fileBySymbol.set(s.symbol, s.file);
 
 interface Entry { code: string; sounds: string[]; presenters: string[] }
 const byCode = new Map<string, Entry>();
-let pending: string[] = [];       // 自上次 break/return 以来见到的 case 标签
+/** 标签 + 它所在的调度函数（`\u0000` 分隔；见 `phase` 说明） */
+let pending: string[] = [];
 let guard = 0;
+
+/**
+ * **该调用落在哪个调度函数里** = "起手音 vs 事件帧音"的**权威判据**
+ * （2026-09-27 用户问"Healing 会播 2 个音效，原版是怎么播的？"后加的）。
+ *
+ * `character.cpp` 里两个函数分工固定：
+ *   · `smCHAR::BeginSkill`  —— **起手那一刻**（客户端 `SkillSub` 的 `OpenPlaySkill` 调它）；
+ *   · `smCHAR::EventSkill`  —— **动画事件帧**（`EventAttack()` 在事件帧调它，`character.cpp:4207`）。
+ * 活例 = Healing：`BeginSkill` 的 case 里**连播两条**（`SKILL_HEALING` + `SKILL_CASTING_PRIEST`，
+ * `character.cpp:13588-13603`），`EventSkill` 里那条 case 一条都不播。
+ * 我们此前按"第一个音起手、其余事件帧"的**顺序猜测**拆（`extract-skill-fx.ts`），
+ * 于是 Healing 的第二声被排到事件帧 —— 声音对、**时机错**。
+ */
+let phase: 'cast' | 'event' | 'other' = 'other';
+const PHASE_FN = /^(?:int|void|BOOL|DWORD)\s+smCHAR::(BeginSkill|BeginSkill_Monster|EventSkill|EventSkill_Monster)\s*\(/;
+const OTHER_FN = /^(?:int|void|BOOL|DWORD|long|char|smCHAR\s*\*|smCHAR\*)\s+smCHAR::\w+\s*\(/;
 
 for (const raw of lines) {
   const line = raw.trim();
 
+  const fn = PHASE_FN.exec(line);
+  if (fn) { phase = fn[1]!.startsWith('BeginSkill') ? 'cast' : 'event'; continue; }
+  // 进了别的成员函数 ⇒ 之后的 case 与"起手/事件帧"无关（记为 other，不当判据用）
+  if (OTHER_FN.test(line)) { phase = 'other'; continue; }
+
   const label = /^(?:case|default)\s+(SKILL_PLAY_\w+)\s*:/.exec(line);
-  if (label) { pending.push(label[1]!); continue; }
+  if (label) { pending.push(`${label[1]!}\u0000${phase}`); continue; }
 
   // case 体结束：把挂起的标签清掉。
   // **只认 break/return，不认 `}`** —— case 体内到处是 if 块的收尾 `}`，
@@ -64,10 +86,11 @@ for (const raw of lines) {
   // SkillPlaySound(SKILL_SOUND_X ...)
   for (const m of line.matchAll(/SkillPlaySound\(\s*(SKILL_SOUND_\w+)/g)) {
     const sym = m[1]!;
-    for (const code of pending) {
+    for (const p of pending) {
+      const [code, ph] = p.split('\u0000') as [string, 'cast' | 'event' | 'other'];
       const e = byCode.get(code) ?? { code, sounds: [], presenters: [] };
       const file = fileBySymbol.get(sym);
-      const note = `${sym}${file ? '' : '(无文件映射)'}`;
+      const note = `${sym}${file ? '' : '(无文件映射)'}\u0000${ph}`;
       if (!e.sounds.includes(note)) e.sounds.push(note);
       byCode.set(code, e);
     }
@@ -76,9 +99,11 @@ for (const raw of lines) {
   for (const m of line.matchAll(/\b(Skill[A-Z]\w*|StartEffect)\s*\(/g)) {
     const fn = m[1]!;
     if (fn.startsWith('SkillPlaySound')) continue;
-    for (const code of pending) {
+    for (const p of pending) {
+      const [code, ph] = p.split('\u0000') as [string, string];
       const e = byCode.get(code) ?? { code, sounds: [], presenters: [] };
-      if (!e.presenters.includes(fn)) e.presenters.push(fn);
+      const note = `${fn}\u0000${ph}`;
+      if (!e.presenters.includes(note)) e.presenters.push(note);
       byCode.set(code, e);
     }
   }
@@ -207,10 +232,17 @@ const rows = [...byCode.values()].map((e) => {
     skill: hit?.name ?? null,
     classDir: hit?.classDir ?? null,
     sounds: e.sounds.map((s) => {
-      const sym = s.replace(/\(无文件映射\)$/, '');
-      return { symbol: sym, file: fileBySymbol.get(sym) ?? null };
+      const [sym0, ph] = s.split('\u0000') as [string, string];
+      const sym = sym0.replace(/\(无文件映射\)$/, '');
+      return { symbol: sym, file: fileBySymbol.get(sym) ?? null,
+               phase: ph === 'cast' || ph === 'event' ? ph : null };
     }),
-    presenters: e.presenters,
+    presenters: e.presenters.map((p) => p.split('\u0000')[0]!),
+    /** 表现函数带**所在函数**（起手 / 事件帧）——供"哪个阶段该起特效"用 */
+    presenterPhases: e.presenters.map((p) => {
+      const [fn, ph] = p.split('\u0000') as [string, string];
+      return { fn, phase: ph === 'cast' || ph === 'event' ? ph : null };
+    }),
     effects,
   };
 });

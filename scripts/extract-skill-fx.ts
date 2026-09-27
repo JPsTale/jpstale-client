@@ -193,7 +193,7 @@ const fxByNorm = effects.map((e) => {
 
 interface CodeRow {
   code: string; skill: string | null; classDir: string | null;
-  sounds: Array<{ symbol: string; file: string | null }>;
+  sounds: Array<{ symbol: string; file: string | null; phase?: 'cast' | 'event' | null }>;
   presenters: string[];
 }
 const codeRows: CodeRow[] = existsSync(CODE_MAP)
@@ -290,15 +290,26 @@ for (const [classDir, list] of Object.entries(SKILLS)) {
     else if (how === 'alias') confidence = 'alias';
     else confidence = 'none';
 
-    // 起手/事件帧拆分：默认"特效在事件帧、第一个音效在起手"，人工基准优先
+    // 起手/事件帧拆分：**源码判据优先** —— `SkillPlaySound` 落在 `BeginSkill`（起手那一刻）还是
+    // `EventSkill`（动画事件帧），由 `skill-code-map.json` 的 `phase` 给出（2026-09-27 加）。
+    // 依据：`character.cpp` 两个调度函数分工固定；Healing 是活例 —— 两条音效都在 `BeginSkill`
+    // （`:13588-13603`），此前按"第一个起手、其余事件帧"的顺序猜测拆 ⇒ 第二声被排到事件帧（时机错）。
+    const phaseFiles = (ph: 'cast' | 'event'): string[] =>
+      [...new Set((codeRow?.sounds ?? []).filter((s) => s.phase === ph)
+        .map((s) => s.file).filter((f): f is string => !!f))];
+    const sfxCast = phaseFiles('cast');
+    const sfxEvent = phaseFiles('event');
+    const phased = sfxCast.length > 0 || sfxEvent.length > 0;
+    // 源码给不出相位（老生成物 / 调用点不在那两个函数里）⇒ 退回顺序猜测，并在 `castSfxSrc` 里标明
+    const castSfx = ov?.castSfx ?? (phased ? sfxCast : (sfx.length >= 2 ? [sfx[0]!] : []));
     const cast = {
       fx: ov?.castFx
         ? ov.castFx.map((n) => (/^(ini|part|lua|luac|code):/i.test(n) ? n.toLowerCase()
           : (fx.find((t) => t.split(':')[1] === n) ?? `part:${n}`)))
         : [],
-      sfx: ov?.castSfx ?? (sfx.length >= 2 ? [sfx[0]!] : []),
+      sfx: castSfx,
     };
-    const eventSfx = ov?.eventSfx ?? (sfx.length >= 2 ? sfx.slice(1) : sfx);
+    const eventSfx = ov?.eventSfx ?? (phased ? sfxEvent : (sfx.length >= 2 ? sfx.slice(1) : sfx));
     const event = {
       fx: ov?.eventFx
         ? ov.eventFx.map((n) => {

@@ -39,11 +39,15 @@
  *   `tmRot` 关键帧在 `0,160,…,4800`（= 31 键 / 30 帧），手臂在帧 0→15→30 之间往复摆动。
  *   ⇒ 姿势用**共用的** `applyPose`（`char/anim-player.ts`，与角色动画同一实现，AGENTS #15）。
  * * **贴图**保持数据原样：`AniCount` 在源码里驱动的是**网格帧**（上面的 `Frame`），不是贴图 UV。
- * * **朝向**：绘制用的是 `SetPosi(&Posi, &RanderAngle)`（`:324`）——**不是** `Angle`。
- *   `RanderAngle` 只在 `sinMoveEffect2` 的 `SIN_MOVE_LINE`/`SIN_MOVE_SONGPYEUN` 两个分支里赋值，
- *   而本实例的 `MoveKind` 是 0 ⇒ **`RanderAngle` 始终是槽位残留值（清零的槽 = 0）**，
- *   即模型**不额外转向**（`Angle.y` 每帧算的那串只写进 `Angle`，没有被绘制路径消费）。
- *   ⇒ 我们不加自造的偏航。
+ * * **朝向 = 每帧跟着公转角转**（`Angle.y`）—— 绘制读的是 `RanderAngle`（`:324` 的
+ *   `SetPosi(&Posi, &RanderAngle)`），而 `sinMoveEffect2` 的**第一行**就是
+ *   `memcpy(&pEffect->RanderAngle, &pEffect->Angle, sizeof(POINT3D));`（`sinEffect2.cpp:444`），
+ *   且 `sinActiveEffect2` 每帧对每个存活实例都调 `sinMoveEffect2` ⇒ **`RanderAngle` 每帧等于 `Angle`**，
+ *   而 `case SKILL_HEALING` 每帧写 `Angle.y = -((RotateAngle) + ANGLE_270)`（`:435`）
+ *   ⇒ 模型绕 Y 轴跟着公转一起转（正脸始终朝"前方"）。
+ *   ⚠ **我一度得出"不转向"的错结论**：只搜了 `RanderAngle.y = …` 赋值点（那两处在
+ *   `SIN_MOVE_LINE`/`SIN_MOVE_SONGPYEUN` 里、本实例确实不命中），漏看了 mover **入口处那句 memcpy**
+ *   —— 用户 2026-09-27 实测指出"正脸方向从来没变过，看起来非常僵硬"才发现。
  * * **粒子**：`sinEffect_HealParticle3`（`:1585`，尾部 `memcpy` 复制 ⇒ **每帧 2 颗**）+
  *   `case SIN_EFFECT_HEALING3`（`:466-479`）：`H_MIND00.tga` 广告牌、尺寸 `rand(0..500)+200` raw、
  *   寿命 `rand(0..20)+50` 帧、颜色 `24/107/74` 起每帧 `+3/+1/+2`、等速漂移 `Rz=32`、
@@ -88,6 +92,8 @@ const RADIUS_GROW = 16;
 const MOVE_SPEED_Y_0 = 200;
 /** `MoveSpeed.y += 20`（`:433`） */
 const MOVE_SPEED_Y_GROW = 20;
+/** `Angle.y = -((RotateAngle) + ANGLE_270)`（`:435`）里的 `ANGLE_270`（PT 角度制：4096 = 整圈） */
+const ANGLE_270 = 4096 * 270 / 360;
 /** PT 角度制：4096 = 整圈 */
 const PT_ANGLE_FULL = 4096;
 /** 原始单位 → 世界单位（PT 定点：256/单位） */
@@ -276,10 +282,13 @@ export function updateHealingOrbits(dt: number): void {
     // MoveSpeed.y += 20/帧（初值 200）；Posi.y = pChar->pY + 7000 + MoveSpeed.y
     const moveSpeedY = MOVE_SPEED_Y_0 + MOVE_SPEED_Y_GROW * t;
     o.root.position.set(base.x + offX, base.y + (Y_OFFSET_RAW + moveSpeedY) / FONE, base.z + offZ);
-    // ⚠ **不加偏航**：绘制走 `SetPosi(&Posi, &RanderAngle)`（`sinEffect2.cpp:324`），
-    //   而 `RanderAngle` 只由 `SIN_MOVE_LINE`/`SIN_MOVE_SONGPYEUN` 两个 mover 分支赋值；
-    //   本实例 `MoveKind = 0` ⇒ 它保持槽位残留值（清零槽 = 0）⇒ 模型不额外转向。
-    //   （`Angle.y` 每帧算的那串只写进 `Angle`，绘制路径不读它 —— 别再"顺手"接上去。）
+    // ── 朝向：`Angle.y = -((RotateAngle) + ANGLE_270)`（`:435`）──
+    //   绘制读的是 `RanderAngle`，而 `sinMoveEffect2` 的**第一行**就是
+    //   `memcpy(&pEffect->RanderAngle, &pEffect->Angle, sizeof(POINT3D))`（`sinEffect2.cpp:444`），
+    //   且 `sinActiveEffect2` 每帧都调它 ⇒ **`RanderAngle` 每帧 = `Angle`** ⇒ 模型跟着公转转。
+    //   ⚠ 我此前只搜 `RanderAngle.y = …`（那两处在别的 mover 分支里）就断言"本实例不转向"，
+    //     漏了 mover 入口的 memcpy —— 用户实测"正脸方向从来没变过，看起来很僵硬"才发现。
+    o.root.rotation.y = -((ROTATE_ANGLE_0 + ROTATE_PER_FRAME * t + ANGLE_270) / PT_ANGLE_FULL * Math.PI * 2);
     // ── 自身 30 帧动画：`sinPatMesh->Frame = AniCount * 160`（`sinEffect2.cpp:323`）──
     for (let k = 0; k < n; k++) {
       o.aniCount++;
