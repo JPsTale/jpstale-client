@@ -19,7 +19,11 @@ import { useTextureImg } from './useTextureImg.js';
  * 这里只做两件事：按 `已过/总时长` 画圆环、`remaining` 归零就不再绘制 ——
  * 服务端的生效判据正是 `until > now`，两边同一条线，不会分叉。效果数值全由服务端算。
  */
-const SIZE = 32;   // 原版原尺寸：32×32（图标自带外圈计时环，**不另画**）
+const SIZE = 32;   // 原版原尺寸：32×32（图标自带外圈计时环）
+/** 计时环：半径贴着图标自带环带（≈13.5px），线宽 2.5px；起点 12 点方向、顺时针扫已过时间。 */
+const RING_R = 13.5;
+const RING_W = 2.5;
+const RING_C = 2 * Math.PI * RING_R;
 
 export default function BuffStrip() {
   const { buffs } = useSyncExternalStore(subscribeGame, getGameSnapshot);
@@ -90,15 +94,21 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
           从图标外缘与底环之间的环带里透出来）③ keep 图标（**外圈计时条是它自带的**，画在最上层）。
           饼 = conic-gradient 从顶部顺时针扫过 elapsed 比例（原版扇形 0→72 段同语义）。 */}
       <img className="jp-buff-layer" src={ringSrc ?? undefined} alt="" draggable={false} />
-      <div
-        className="jp-buff-pie"
-        style={{ background: `conic-gradient(from -90deg, ${(b.skillId > 0 ? '#00ffc8' : '#ffbe1e')} ${(elapsed * 360).toFixed(1)}deg, transparent 0deg)` }}
-      />
       <div className="jp-buff-face">
         {isSkill
           ? (keepSrc ? <img src={keepSrc} alt={skillRow?.name ?? `skill ${b.skillId}`} draggable={false} /> : null)
           : (src ? <img src={src} alt={itemDisplayNameOf(def)} draggable={false} /> : null)}
       </div>
+      {/* 计时环画在图标**上层**（贴图标自带环带 r≈13.5）：填充色 = 已过时间，12 点起顺时针扫。
+          力量石=金（原版 SkillBarDraw:255,190,30），技能=青（:0,255,200）。 */}
+      <svg className="jp-buff-layer" width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
+        <circle cx={SIZE / 2} cy={SIZE / 2} r={RING_R} fill="none"
+                stroke="rgba(0,0,0,0.45)" strokeWidth={RING_W} />
+        <circle cx={SIZE / 2} cy={SIZE / 2} r={RING_R} fill="none"
+                stroke={b.skillId > 0 ? '#00ffc8' : '#ffbe1e'} strokeWidth={RING_W}
+                strokeDasharray={RING_C} strokeDashoffset={RING_C * (1 - elapsed)}
+                transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`} />
+      </svg>
       {b.stack > 1 ? <span className="jp-buff-stack">{b.stack}</span> : null}
       {hover ? (
         <div className={`jp-buff-tip${tipSide === 'center' ? '' : ` jp-buff-tip-${tipSide}`}`}>
