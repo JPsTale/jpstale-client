@@ -225,6 +225,12 @@ export interface WorldView {
    * 自机期间定身（不能移动/攻击）；旁观者的尸体同样可见。
    */
   applyPlayerDeath(playerId: number): void;
+  /**
+   * **旁观者视角的起身**（复活术 `S2C_PlayerRespawn` 的非自机分支）：让躺着的远端 actor
+   * 走 `resurrect()` 回站立 —— 原版等价物是被复活者客户端收到转发包后的
+   * `SetMotionFromCode(CHRMOTION_STATE_RESTART)`（`netplay.cpp:6556`），旁观者经广播看到。
+   */
+  applyRemoteRevive(playerId: number): void;
   /** 复活目标图是否与当前图不同（main.ts 据此决定要不要盖加载遮罩） */
   respawnNeedsMapLoad(mapId: number): boolean;
   /** 大地图用：当前地图 + 自机世界坐标（含朝向） */
@@ -4849,6 +4855,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     if (actor) actor.animState.triggerDead();
   }
 
+  /** 旁观者视角的起身（复活术；见接口注释）—— 非自机分支，自机走 applyRespawn */
+  function applyRemoteRevive(playerId: number): void {
+    const actor = remotes.get(playerId);
+    if (actor) actor.animState.resurrect();
+  }
+
   function setSelfName(name: string): void {
     selfName = name;
   }
@@ -7819,6 +7831,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     applyTeleport,
     teleportRemote,
     applyPlayerDeath,
+    applyRemoteRevive,
     applyMapSwitched,
     respawnNeedsMapLoad: (mapId: number) => !!scene && mapId !== currentMapId,
     /** 大地图（`src/ui/WorldMap.ts`）用：当前地图 + 自机世界坐标 —— 世界图上画"你在这" */

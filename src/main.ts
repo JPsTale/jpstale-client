@@ -1156,7 +1156,11 @@ onMessage((msg: jpt.base.ServerMessage) => {
       // 服务端权威复活：位置/地图/半血。自机位置权威在客户端 → 必须由客户端把自己搬过去。
       const pr = msg.playerRespawn!;
       const pid = Number(pr.playerId ?? 0);
-      if (!worldView.isSelf(pid)) break;
+      if (!worldView.isSelf(pid)) {
+        // 复活术的原地救起也会广播给旁观者：让躺着的远端 actor 起身（自机走下面的完整复活）
+        worldView.applyRemoteRevive(pid);
+        break;
+      }
       deathPanel.hide();
       const info = {
         mapId: Number(pr.mapId ?? 0),
