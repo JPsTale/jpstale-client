@@ -19,10 +19,7 @@ import { useTextureImg } from './useTextureImg.js';
  * 这里只做两件事：按 `已过/总时长` 画圆环、`remaining` 归零就不再绘制 ——
  * 服务端的生效判据正是 `until > now`，两边同一条线，不会分叉。效果数值全由服务端算。
  */
-const SIZE = 44;   // 圆形外径（含圆环）
-const RING = 3;    // 圆环粗细
-const R = (SIZE - RING) / 2;
-const C = 2 * Math.PI * R;
+const SIZE = 32;   // 原版原尺寸：32×32（图标自带外圈计时环，**不另画**）
 
 export default function BuffStrip() {
   const { buffs } = useSyncExternalStore(subscribeGame, getGameSnapshot);
@@ -47,11 +44,12 @@ export default function BuffStrip() {
 
 function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
   // 技能 buff：图标 = 技能身份表的 keepIcon（原版 sSkill[] 第 4 列，keep/ 目录 TGA）；
-  // 物品 buff：物品自己的图标（itemDefByCode）。两条共用同一张圆环。
+  // 物品 buff：物品自己的图标（itemDefByCode）。
   const isSkill = b.skillId > 0;
   const skillRow = isSkill ? skillRowBySkillId(b.skillId) : null;
   const keepUrl = skillRow?.keepIcon ? `/res/image/sinimage/skill/keep/${skillRow.keepIcon.toLowerCase()}` : null;
   const keepSrc = useTextureImg(keepUrl);
+  const ringSrc = useTextureImg('/res/image/sinimage/skill/keep/ga_.tga');
   const def = isSkill ? null : itemDefByCode(b.itemCode);
   const src = useItemImg(isSkill ? null : (def ? itemIconUrl(def) : null));
   const [hover, setHover] = useState(false);
@@ -68,15 +66,15 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
     >
-      {/* 圆环：底圈 + 已过时间的弧（原版 SkillBarDraw：力量石=金 RGB(255,190,30)，其余=青 RGB(0,255,200)） */}
-      <svg className="jp-buff-ring" width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
-        <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none"
-                stroke="rgba(0,0,0,0.55)" strokeWidth={RING} />
-        <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none"
-                stroke={b.skillId > 0 ? '#00ffc8' : '#ffbe1e'} strokeWidth={RING} strokeLinecap="round"
-                strokeDasharray={C} strokeDashoffset={C * (1 - elapsed)}
-                transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`} />
-      </svg>
+      {/* **原版三层**（`cSKILL::DrawUp`，`sinSkill.cpp:716-722`）：
+          ① `GA_.tga` 镂空环底框 ② `SkillBarDraw` 已过时间饼（力量石=金/其余=青，画在图标**下面**，
+          从图标外缘与底环之间的环带里透出来）③ keep 图标（**外圈计时条是它自带的**，画在最上层）。
+          饼 = conic-gradient 从顶部顺时针扫过 elapsed 比例（原版扇形 0→72 段同语义）。 */}
+      <img className="jp-buff-layer" src={ringSrc ?? undefined} alt="" draggable={false} />
+      <div
+        className="jp-buff-layer"
+        style={{ background: `conic-gradient(from -90deg, ${(b.skillId > 0 ? '#00ffc8' : '#ffbe1e')} ${(elapsed * 360).toFixed(1)}deg, transparent 0deg)` }}
+      />
       <div className="jp-buff-face">
         {isSkill
           ? (keepSrc ? <img src={keepSrc} alt={skillRow?.name ?? `skill ${b.skillId}`} draggable={false} /> : null)

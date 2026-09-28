@@ -1675,16 +1675,14 @@
   user-select: none; -webkit-user-select: none;
 }
 .jp-buff { position: relative; pointer-events: auto; }
-.jp-buff-ring { position: absolute; left: 0; top: 0; }
+.jp-buff-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
 /* 图标面盘：深色底 + 圆形裁切，让图标在任何背景上都读得出来（截图里也是这种"圆牌"感） */
 .jp-buff-face {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 30px; height: 30px; border-radius: 50%; overflow: hidden;
-  background: radial-gradient(circle at 50% 35%, #3a3427, #14120d 75%);
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.9);
+  position: absolute; left: 0; top: 0;
+  width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
 }
-.jp-buff-face img { width: 26px; height: 26px; object-fit: contain; image-rendering: pixelated; }
+.jp-buff-face img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
 .jp-buff-stack {
   position: absolute; right: 0; bottom: 0;
   padding: 0 3px; border-radius: 6px;
