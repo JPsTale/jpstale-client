@@ -993,6 +993,8 @@ onMessage((msg: jpt.base.ServerMessage) => {
         // 服务端选定的攻击变体条目（`S2C_MonsterMove.anim_index`）——不传的话客户端本地自选变体，
         // 而各变体的事件帧不同（实测 169 个多变体模型里 129 个如此）⇒ 特效/音效会在错的时刻触发。
         m.animIndex || 0,
+        // 动画播放速率（减速期间 <1，冰枪的"慢动作"在客户端的呈现）
+        m.animRate || undefined,
       );
       break;
     }

@@ -665,6 +665,9 @@ message S2C_MonsterMove {
   // 该状态的**条目索引**（.inx 序号）—— 服务端从 monster-anim.json 里选定的变体，
   // 客户端直接 playMotion(该条目)。与玩家 anim_index 同一语义（谁决定谁下发，见 docs/chars/动画同步.md）。
   int32 anim_index = 5;
+  // **动画播放速率**（与 S2C_MonsterAppear.anim_rate 同源同语义）：减速（冰枪）期间等比放慢
+  // ⇒ 已在视野内的怪不必重 Appear 就能更新（2026-09-28 减速可见性）。
+  float anim_rate = 6;
 }
 
 message S2C_NpcAppear {
@@ -737,6 +740,10 @@ message C2S_UseSkill {
   // 服务端原样透传给旁观者（S2C_SkillStart），两端播同一条才不会"一招两种动作"。
   int32 anim_index = 4;
   string anim_clip = 5;
+  // **施法瞬间的朝向**（弧度，three 绕 Y 约定，0 = +Z）。原版方向型 AoE 用客户端活体
+  // `lpCurPlayer->Angle.y`（`character.cpp:17019` 的 dm_SelectRangeBox）—— 原地转身不发
+  // 移动包 ⇒ 服务端实体上的角度停在最后一次移动，用它会把矩形朝向老方向（2026-09-28）。
+  optional float caster_yaw = 6;
 }
 
 message S2C_AttackResult {

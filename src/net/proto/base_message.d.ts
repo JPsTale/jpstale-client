@@ -7046,6 +7046,9 @@ export namespace jpt {
             /** S2C_MonsterMove animIndex. */
             animIndex: number;
 
+            /** S2C_MonsterMove animRate. */
+            animRate: number;
+
             /**
              * Creates a new S2C_MonsterMove instance using the specified properties.
              * @param [properties] Properties to set
@@ -7144,6 +7147,9 @@ export namespace jpt {
 
                 /** S2C_MonsterMove animIndex */
                 animIndex?: (number|null);
+
+                /** S2C_MonsterMove animRate */
+                animRate?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
@@ -8219,6 +8225,9 @@ export namespace jpt {
             /** C2S_UseSkill animClip. */
             animClip: string;
 
+            /** C2S_UseSkill casterYaw. */
+            casterYaw?: (number|null);
+
             /**
              * Creates a new C2S_UseSkill instance using the specified properties.
              * @param [properties] Properties to set
@@ -8317,6 +8326,9 @@ export namespace jpt {
 
                 /** C2S_UseSkill animClip */
                 animClip?: (string|null);
+
+                /** C2S_UseSkill casterYaw */
+                casterYaw?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];

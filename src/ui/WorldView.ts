@@ -353,7 +353,7 @@ export interface WorldView {
    */
   monsterAppear(monsterId: number, templateId: number, name: string, nameKey: string, modelFile: string, level: number, hp: number, maxHp: number, x: number, y: number, z: number, angle: number, dead?: boolean, monsterEffectId?: number, animRate?: number, ownerEntityId?: number, ownerName?: string, lifeTotalMs?: number, lifeRemainMs?: number, cameraY?: number, cameraZ?: number): void;
   /** 怪物移动/状态（S2C_MonsterMove：位置+angle+anim_state） */
-  monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number): void;
+  monsterMove(monsterId: number, x: number, y: number, z: number, angle: number, animState: number, animIndex?: number, animRate?: number): void;
   /** 怪物消失（S2C_MonsterDisappear）→ 移除（尸体的**下界**：停留时长由服务端 decay 决定，客户端不自己计时） */
   monsterDisappear(monsterId: number): void;
   /**
@@ -5667,9 +5667,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
   }
 
   function applyMonsterMove(monsterId: number, x: number, y: number, z: number, angle: number,
-                            animState: number, animIndex = 0): void {
+                            animState: number, animIndex = 0, animRate?: number): void {
     const actor = monsters.get(monsterId);
     if (!actor) return;
+    // 动画速率（服务端算好下发；减速期间等比放慢 —— 冰枪）—— 与 Appear.animRate 同源，
+    // 已在视野内的怪从这里持续更新（不必重 Appear）。
+    if (animRate !== undefined && animRate > 0 && actor.animRate !== animRate) {
+      actor.animRate = animRate;
+    }
     const lastSnap = actor.snaps[actor.snaps.length - 1];
     if (lastSnap && performance.now() - lastSnap.t > REMOTE_RESYNC_MS) {
       actor.snaps.length = 0;
@@ -7918,8 +7923,8 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     monsterAppear: (monsterId, _templateId, name, nameKey, modelFile, level, hp, maxHp, x, y, z, angle, dead, monsterEffectId, animRate, ownerEntityId, ownerName, lifeTotalMs, lifeRemainMs, cameraY, cameraZ) => {
       spawnMonster({ monsterId: Number(monsterId), name: name || '', nameKey: nameKey || '', modelFile, level: Number(level) || 1, monsterEffectId: Number(monsterEffectId) || 0, hp: hp || 0, maxHp: maxHp || 0, x, y, z, angle: angle || 0, dead: !!dead, animRate: Number(animRate) || 0, ownerEntityId: Number(ownerEntityId) || 0, ownerName: ownerName || '', lifeTotalMs: Number(lifeTotalMs) || 0, lifeRemainMs: Number(lifeRemainMs) || 0, cameraY: Number(cameraY) || 0, cameraZ: Number(cameraZ) || 0 });
     },
-    monsterMove: (monsterId, x, y, z, angle, animState, animIndex) => {
-      applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0);
+    monsterMove: (monsterId, x, y, z, angle, animState, animIndex, animRate) => {
+      applyMonsterMove(Number(monsterId), x, y, z, angle, animState, animIndex ?? 0, animRate);
     },
     monsterDisappear: (monsterId) => despawnMonster(Number(monsterId)),
     monsterDeath: (monsterId) => monsterDeath(Number(monsterId)),

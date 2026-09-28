@@ -22462,6 +22462,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|null} [angle] S2C_MonsterMove angle
              * @property {number|null} [animState] S2C_MonsterMove animState
              * @property {number|null} [animIndex] S2C_MonsterMove animIndex
+             * @property {number|null} [animRate] S2C_MonsterMove animRate
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -22534,6 +22535,14 @@ export const jpt = $root.jpt = (() => {
             S2C_MonsterMove.prototype.animIndex = 0;
 
             /**
+             * S2C_MonsterMove animRate.
+             * @member {number} animRate
+             * @memberof jpt.base.S2C_MonsterMove
+             * @instance
+             */
+            S2C_MonsterMove.prototype.animRate = 0;
+
+            /**
              * Creates a new S2C_MonsterMove instance using the specified properties.
              * @function create
              * @memberof jpt.base.S2C_MonsterMove
@@ -22575,6 +22584,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.animState);
                 if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex") && message.animIndex !== 0)
                     writer.uint32(/* id 5, wireType 0 =*/40).int32(message.animIndex);
+                if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate") && !$Object.is(message.animRate, 0))
+                    writer.uint32(/* id 6, wireType 5 =*/53).float(message.animRate);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -22674,6 +22685,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.animIndex;
                             continue;
                         }
+                    case 6: {
+                            if (wireType !== 5)
+                                break;
+                            if (!$Object.is(value = reader.float(), 0))
+                                message.animRate = value;
+                            else
+                                delete message.animRate;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -22739,6 +22759,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex"))
                     if (!$util.isInteger(message.animIndex))
                         return "animIndex: integer expected";
+                if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate"))
+                    if (typeof message.animRate !== "number")
+                        return "animRate: number expected";
                 return null;
             };
 
@@ -22784,6 +22807,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.animIndex != null)
                     if ($Number(object.animIndex) !== 0)
                         message.animIndex = object.animIndex | 0;
+                if (object.animRate != null)
+                    if (!$Object.is($Number(object.animRate), 0))
+                        message.animRate = $Number(object.animRate);
                 return message;
             };
 
@@ -22814,6 +22840,7 @@ export const jpt = $root.jpt = (() => {
                     object.angle = 0;
                     object.animState = 0;
                     object.animIndex = 0;
+                    object.animRate = 0;
                 }
                 if (message.monsterId != null && $Object.hasOwnProperty.call(message, "monsterId"))
                     if (typeof $BigInt !== "undefined" && options.longs === $BigInt)
@@ -22830,6 +22857,8 @@ export const jpt = $root.jpt = (() => {
                     object.animState = message.animState;
                 if (message.animIndex != null && $Object.hasOwnProperty.call(message, "animIndex"))
                     object.animIndex = message.animIndex;
+                if (message.animRate != null && $Object.hasOwnProperty.call(message, "animRate"))
+                    object.animRate = options.json && !$isFinite(message.animRate) ? $String(message.animRate) : message.animRate;
                 return object;
             };
 
@@ -25729,6 +25758,7 @@ export const jpt = $root.jpt = (() => {
              * @property {jpt.base.Position.$Properties|null} [targetPosition] C2S_UseSkill targetPosition
              * @property {number|null} [animIndex] C2S_UseSkill animIndex
              * @property {string|null} [animClip] C2S_UseSkill animClip
+             * @property {number|null} [casterYaw] C2S_UseSkill casterYaw
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -25801,6 +25831,23 @@ export const jpt = $root.jpt = (() => {
             C2S_UseSkill.prototype.animClip = "";
 
             /**
+             * C2S_UseSkill casterYaw.
+             * @member {number|null|undefined} casterYaw
+             * @memberof jpt.base.C2S_UseSkill
+             * @instance
+             */
+            C2S_UseSkill.prototype.casterYaw = null;
+
+            // OneOf field names bound to virtual getters and setters
+            let $oneOfFields;
+
+            // Virtual OneOf for proto3 optional field
+            $Object.defineProperty(C2S_UseSkill.prototype, "_casterYaw", {
+                get: $util.oneOfGetter($oneOfFields = ["casterYaw"]),
+                set: $util.oneOfSetter($oneOfFields)
+            });
+
+            /**
              * Creates a new C2S_UseSkill instance using the specified properties.
              * @function create
              * @memberof jpt.base.C2S_UseSkill
@@ -25842,6 +25889,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 4, wireType 0 =*/32).int32(message.animIndex);
                 if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip") && message.animClip !== "")
                     writer.uint32(/* id 5, wireType 2 =*/42).string(message.animClip);
+                if (message.casterYaw != null && $Object.hasOwnProperty.call(message, "casterYaw"))
+                    writer.uint32(/* id 6, wireType 5 =*/53).float(message.casterYaw);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -25941,6 +25990,13 @@ export const jpt = $root.jpt = (() => {
                                 delete message.animClip;
                             continue;
                         }
+                    case 6: {
+                            if (wireType !== 5)
+                                break;
+                            message.casterYaw = reader.float();
+                            message._casterYaw = "casterYaw";
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -25989,6 +26045,7 @@ export const jpt = $root.jpt = (() => {
                     _depth = 0;
                 if (_depth > $util.recursionLimit)
                     return "max depth exceeded";
+                let properties = {};
                 if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
                     if (!$util.isInteger(message.skillId))
                         return "skillId: integer expected";
@@ -26006,6 +26063,11 @@ export const jpt = $root.jpt = (() => {
                 if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip"))
                     if (!$util.isString(message.animClip))
                         return "animClip: string expected";
+                if (message.casterYaw != null && $Object.hasOwnProperty.call(message, "casterYaw")) {
+                    properties._casterYaw = 1;
+                    if (typeof message.casterYaw !== "number")
+                        return "casterYaw: number expected";
+                }
                 return null;
             };
 
@@ -26051,6 +26113,8 @@ export const jpt = $root.jpt = (() => {
                 if (object.animClip != null)
                     if (typeof object.animClip !== "string" || object.animClip.length)
                         message.animClip = $String(object.animClip);
+                if (object.casterYaw != null)
+                    message.casterYaw = $Number(object.casterYaw);
                 return message;
             };
 
@@ -26097,6 +26161,8 @@ export const jpt = $root.jpt = (() => {
                     object.animIndex = message.animIndex;
                 if (message.animClip != null && $Object.hasOwnProperty.call(message, "animClip"))
                     object.animClip = message.animClip;
+                if (message.casterYaw != null && $Object.hasOwnProperty.call(message, "casterYaw"))
+                    object.casterYaw = options.json && !$isFinite(message.casterYaw) ? $String(message.casterYaw) : message.casterYaw;
                 return object;
             };
 
