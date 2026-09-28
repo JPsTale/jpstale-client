@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, type BuffEntry } from '../../app/gameStore.js';
 import { itemDefByCode, itemIconUrl } from '../../game/data/itemDefs.js';
 import { itemDisplayNameOf } from '../../game/itemName.js';
@@ -53,6 +53,17 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
   const def = isSkill ? null : itemDefByCode(b.itemCode);
   const src = useItemImg(isSkill ? null : (def ? itemIconUrl(def) : null));
   const [hover, setHover] = useState(false);
+  const boxRef = useRef<HTMLDivElement | null>(null);
+  // 图标贴着屏幕左/右缘时，提示框改从该侧对齐（否则左 1 的提示会画出屏幕 —— 用户实测）。
+  const [tipSide, setTipSide] = useState<'center' | 'left' | 'right'>('center');
+  const onEnter = () => {
+    setHover(true);
+    const r = boxRef.current?.getBoundingClientRect();
+    if (!r) return;
+    if (r.left < 110) setTipSide('left');
+    else if (window.innerWidth - r.right < 110) setTipSide('right');
+    else setTipSide('center');
+  };
 
   const remain = Math.max(0, b.at + b.remainingMs - now);
   const total = b.totalMs > 0 ? b.totalMs : Math.max(1, b.remainingMs);
@@ -68,9 +79,10 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
 
   return (
     <div
+      ref={boxRef}
       className="jp-buff"
       style={{ width: SIZE, height: SIZE, opacity: blink ? 0 : alpha }}
-      onPointerEnter={() => setHover(true)}
+      onPointerEnter={onEnter}
       onPointerLeave={() => setHover(false)}
     >
       {/* **原版三层**（`cSKILL::DrawUp`，`sinSkill.cpp:716-722`）：
