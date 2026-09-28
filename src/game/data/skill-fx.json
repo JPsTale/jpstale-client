@@ -3718,7 +3718,9 @@
     ]
    },
    "event": {
-    "fx": [],
+    "fx": [
+     "code:holybolt"
+    ],
     "sfx": [
      "wav/effects/skill/morion/holybolt 1.wav"
     ]

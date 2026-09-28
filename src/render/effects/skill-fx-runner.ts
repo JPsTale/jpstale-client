@@ -21,6 +21,7 @@ import { runHealingOrbit } from './healing-orbit.js';
 import { runMonsterFly, type FlyDeps } from './monster-fly-runner.js';
 import { FX_VIGOR_BALL, pickMonsterFxAsset } from './monster-attack-fx.js';
 import { runGlacialSpike } from './glacial-spike.js';
+import { runHolyBolt, SHOT_DEST_LIFT_WU } from './holy-bolt.js';
 import { reportFallback } from '../../char/fallback-log.js';
 import { skillRowBySkillId } from '../../game/skillIdentity.js';
 import { PT_ANGLE_FULL, FONE, ptAngleToRad } from '../../core/geom.js';
@@ -165,6 +166,30 @@ export const CODE_SKILL_FX: Record<string, (
   /** `null` = 没有目标（原版 `sinEffect_MultiSpark(pChar, nullptr, …)` 的情形） */
   target: { x: number; y: number; z: number } | null,
 ) => void> = {
+  // **Holy Bolt**（priestess T1.2，`SKILL_PLAY_HOLY_BOLT`）——
+  // 原版事件帧 `character.cpp:13946-13957`：`if (chrAttackTarget)` 才放（无目标整段不跑，
+  // **不是**"落到脚底"）；起点 = 施法者 + 前方24/上方24（`GetMoveLocation`），终点 = 目标身上 +20。
+  // 细节（飞行/到站/爆裂）见 `holy-bolt.ts` 文件头；音效 `holybolt 1.wav` 在同行的 `event.sfx`。
+  holybolt: (ctx, caster, target) => {
+    if (!target) {
+      reportFallback('skillfx', 'Holy Bolt：事件帧没有目标（原版 `if (chrAttackTarget)` 不成立）⇒ 不放');
+      return;
+    }
+    if (ctx.casterYaw == null) {
+      reportFallback('skillfx', 'Holy Bolt：起点要按施法者朝向偏移（`GetMoveLocation` 前方24/上方24），'
+        + '调用方没给 casterYaw ⇒ 不放');
+      return;
+    }
+    if (!ctx.scene) {
+      reportFallback('skillfx', 'Holy Bolt：调用方没给 scene ⇒ 不放');
+      return;
+    }
+    // ⚠ 入参 target 已是"身上"点（脚底 + `TARGET_BODY_LIFT`(24)）；原版终点 = 脚底 +20 ⇒
+    //   这里用 `+20` 的常量对齐（runHolyBolt 收**最终**终点）。与瞄准点共用的取数通路暂不为
+    //   这 4 个单位单独开一条"脚底"通道（登记：已知近似）。
+    runHolyBolt({ scene: ctx.scene, log: ctx.log }, caster, ctx.casterYaw,
+      { x: target.x, y: target.y - (24 - SHOT_DEST_LIFT_WU), z: target.z });
+  },
   // 颗数 = **等级表 + 随机区间**（原版 `M_Spark_Num[Point-1]` → `GetRandomPos(cnt/2+1, cnt)`）。
   // ⚠ 等级必须由调用方给（`M_Spark_Num` 按 `Point-1` 取，等级错 ⇒ 颗数错）。
   // 早先这里写的是 `ctx.skillLevel ?? 1`（"按 1 级算"）—— 那是**猜一个值**，AGENTS #12 禁；现改为

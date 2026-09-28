@@ -111,6 +111,12 @@
    "soundPick": "random",
    "fx": [],
    "note": "**落雷与音效的权威分派（2026-09-27 定稿）**：原版事件帧 `character.cpp:16272-16300` —— ①自机 `dm_SelectDamageCount` 选敌 + 结算；②`SkillPlay_DivineLightning_Effect`(netplay.cpp:12463) 对**选敌表逐个**放天降闪（`AssaParticle_DivineLighting`，hoAssaParticleEffect.cpp:654），**从不包括施法者自己**（自机分支只有选敌表；旁观分支的 lpCurPlayer 兜底是 PK 语义——把本地玩家当被打目标）。③打中 >0 个才 `rand()%3` 三选一播音（三条 wav 都在库）。⇒ 我方：**落雷只由结算流驱动**（`S2C_AttackResult.skill_id` 逐条 → WorldView.onSkillAttackResult → runDivineLightning，render/effects/divine-lightning.ts），事件帧**不放雷**——此前 eventFx 的code:divinelightning 用 `target ?? caster` 兜底 ⇒ 无瞄准施法时每次必有一道雷落在施法者身上（用户实测'总有一个粒子落在角色自己身上'）。音效 `soundPick:random` = 原版 rand()%3 （每客户端本地掷，原版亦然）。特效帧轴 = **70fps**（Main.cpp:1274），火花每帧 Time+2 ⇒ 寿命 ~1 秒。"
+  },
+  "Holy Bolt": {
+   "eventFx": [
+    "code:holybolt"
+   ],
+   "note": "Holy Bolt 的飞出球不是单个 .part/.ini —— 是 HoEffect 数字码特效族：HoEffectTracker（追踪飞球）+ HoParticleSystem(MONSTER_MEPHIT_SHOT2, MaterialNum[3]=Blue.tga) 到站再放 MONSTER_MEPHIT_HIT2（10 条 LineParticle 光痕 + 4 颗 Particle1..3 火花）。⇒ 用 code: 前缀指向 render/effects/skill-fx-runner.ts 的 holybolt 注册表（实现在 render/effects/holy-bolt.ts，2026-09-28）。原版事件帧分派：character.cpp:13946-13957（if (chrAttackTarget) 才放；起点=施法者+前方24/上方24，终点=目标+20；音效 SKILL_SOUND_SKILL_HOLYBOLT=holybolt 1.wav 走 event.sfx，不在此列）。"
   }
  }
 }

@@ -63,7 +63,8 @@
     "openplay-skills": "tsx scripts/extract-openplay-skills.ts",
     "skill-motion-speed": "tsx scripts/report-skill-motion-speed.ts",
     "verify-healing-angel": "tsx scripts/verify-healing-angel.ts",
-    "verify-divine-lightning": "tsx scripts/verify-divine-lightning.ts"
+    "verify-divine-lightning": "tsx scripts/verify-divine-lightning.ts",
+    "verify-holy-bolt": "tsx scripts/verify-holy-bolt.ts"
   },
   "dependencies": {
     "js-sha256": "^1.0.0",

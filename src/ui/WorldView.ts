@@ -46,6 +46,7 @@ import {
 } from '../render/effects/skill-fx-runner.js';
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runDivineLightning, configureDivineLightning, updateDivineLightningRunners, clearDivineLightning, setDivineLightningTexture } from '../render/effects/divine-lightning.js';
+import { configureHolyBolt, updateHolyBoltRunners, clearHolyBolt, type HolyBoltTextures } from '../render/effects/holy-bolt.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateHealingOrbits } from '../render/effects/healing-orbit.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
@@ -1576,6 +1577,35 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
         console.warn('[skillfx] Divine Lightning 贴图加载失败（落雷带子无贴图）', e);
       }
     })();
+    // 神圣弹（Holy Bolt）的贴图 —— `MaterialNum[3]`=Blue.tga（球）+ MonsterMephit1/2.ini 的
+    // LineParticle/Particle1..3（到站爆裂）；全部 TGA，一次解码全局复用（同上）
+    void (async () => {
+      try {
+        const cache = await import('../core/asset-cache.js');
+        const load = async (p: string): Promise<THREE.Texture> => {
+          const buf = await cache.cachedFetch(`/res/${p}`, 'texture');
+          const d = await decodeTextureAsync(buf);
+          if (!d) throw new Error(`解码失败 ${p}`);
+          const t = new THREE.DataTexture(d.pixels as Uint8Array<ArrayBuffer>, d.width, d.height, THREE.RGBAFormat);
+          t.needsUpdate = true;
+          t.wrapS = THREE.ClampToEdgeWrapping; t.wrapT = THREE.ClampToEdgeWrapping;
+          t.magFilter = THREE.LinearFilter; t.minFilter = THREE.LinearFilter;
+          return t;
+        };
+        const texs: HolyBoltTextures = {
+          ball: await load('effect/imagedata/particle/blue.tga'),
+          streak: await load('effect/imagedata/monstermephit/lineparticle1.tga'),
+          puffs: [
+            await load('effect/imagedata/monstermephit/particle1.tga'),
+            await load('effect/imagedata/monstermephit/particle2.tga'),
+            await load('effect/imagedata/monstermephit/particle3.tga'),
+          ],
+        };
+        configureHolyBolt({ textures: texs, camera });
+      } catch (e) {
+        console.warn('[skillfx] Holy Bolt 贴图加载失败（神圣弹不放并上报，不静默）', e);
+      }
+    })();
     // ⚠ 顺序有讲究：投射物管理器**必须**在特效管理器之后建 —— 法术弹的粒子是挂到飞行节点上的
     // （`projectile.ts` 里 `fx.spawnSystem`），早建一步拿到的就是 `null` ⇒ 箭/标枪照常、法术弹静默没有特效
     // （2026-09-16 用户实测"看不到粒子特效"的根因）。
@@ -2054,6 +2084,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     }
     const fx = effects;
     configureDivineLightning({ dynLights, camera, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null });
+    configureHolyBolt({ camera });
     runDivineLightning({ scene: scene!, dynLights, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null,
       log: (m) => console.log('[skillfx]' + m) }, feet);
   }
@@ -2437,6 +2468,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     const at = { x: selfPos.x + Math.sin(selfAngle) * 12, y: selfPos.y, z: selfPos.z + Math.cos(selfAngle) * 12 };
     const fx2 = effects;
     configureDivineLightning({ dynLights, camera, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null });
+    configureHolyBolt({ camera });
     runDivineLightning({ scene, dynLights, spawnPart: fx2 ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx2.spawn(a, o) : null,
       log: (m) => console.log('[skillfx]' + m) }, at);
     console.log('[skillfx] __ptDivine 落雷 @', at.x.toFixed(1), at.y.toFixed(1), at.z.toFixed(1));
@@ -7310,6 +7342,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     updateDivineLightningRunners(dt); // 神之雷电落雷驱动（同上）
+    updateHolyBoltRunners(dt);        // 神圣弹飞行/爆裂驱动（70fps 帧轴；漏了它 = 球停在起点）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
     updateHealingOrbits(dt);          // Healing 头顶旋转上升光环（漏了它 = 光环不动、不升、不淡出）
     updateGlacialSpikes(dt);          // 冰枪网格的 alpha 包络与寿命（共用实现）
@@ -7937,6 +7970,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       projectileMgr?.dispose();
       clearMonsterFlies();            // 飞出物载体节点随世界一起清（否则残留到下一个世界）
       clearDivineLightning();         // 神之雷电落雷的载体/带子同样随世界清
+      clearHolyBolt();                // 神圣弹的球/光痕/火花载体同上
       clearLevelUpFx();
       clearAgeUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
       projectileMgr = null;
