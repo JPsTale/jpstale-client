@@ -56,13 +56,20 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
 
   const remain = Math.max(0, b.at + b.remainingMs - now);
   const total = b.totalMs > 0 ? b.totalMs : Math.max(1, b.remainingMs);
-  // 已过比例（截图口径：淡蓝填充 = 已经过的时间）
+  // 已过比例（原版口径：青/金饼 = 已经过的时间，从空到满）
   const elapsed = Math.min(1, Math.max(0, 1 - remain / total));
+  // **原版淡入淡出 + 最后 4 秒闪烁**（`sinSkill.cpp:953-979`）：
+  //   IconAlpha：前 255 tick 淡入、末 180 tick 淡出（tick = 1/70s）；末 4 秒 IconFlag 每 30 帧
+  //   翻转 ⇒ 图标以 ~0.43s 周期闪烁。这里按 ms 等价换算。
+  const elapsedTicks = ((total - remain) / 1000) * 70;
+  const remainTicks = (remain / 1000) * 70;
+  const alpha = Math.max(0, Math.min(1, Math.min(elapsedTicks, remainTicks, 255) / 255));
+  const blink = remain <= 4000 && Math.floor(elapsedTicks / 30) % 2 === 1;
 
   return (
     <div
       className="jp-buff"
-      style={{ width: SIZE, height: SIZE }}
+      style={{ width: SIZE, height: SIZE, opacity: blink ? 0 : alpha }}
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
     >
