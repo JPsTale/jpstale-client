@@ -72,7 +72,7 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
           饼 = conic-gradient 从顶部顺时针扫过 elapsed 比例（原版扇形 0→72 段同语义）。 */}
       <img className="jp-buff-layer" src={ringSrc ?? undefined} alt="" draggable={false} />
       <div
-        className="jp-buff-layer"
+        className="jp-buff-pie"
         style={{ background: `conic-gradient(from -90deg, ${(b.skillId > 0 ? '#00ffc8' : '#ffbe1e')} ${(elapsed * 360).toFixed(1)}deg, transparent 0deg)` }}
       />
       <div className="jp-buff-face">

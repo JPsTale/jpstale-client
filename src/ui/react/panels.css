@@ -1676,6 +1676,7 @@
 }
 .jp-buff { position: relative; pointer-events: auto; }
 .jp-buff-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
+.jp-buff-pie { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 50%; }
 /* 图标面盘：深色底 + 圆形裁切，让图标在任何背景上都读得出来（截图里也是这种"圆牌"感） */
 .jp-buff-face {
   position: absolute; left: 0; top: 0;
