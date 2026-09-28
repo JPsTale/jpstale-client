@@ -8,7 +8,7 @@ import { itemDefById } from '../game/data/itemDefs.js';
 import { isTwoHandWeaponClass } from '../game/itemClass.js';
 import { playItemSound, playItemDropSound } from '../audio/item-sounds.js';
 
-export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap' | 'craft' | 'clan';
+export type OpenPanel = 'charStatus' | 'skills' | 'inventory' | 'shop' | 'worldmap' | 'craft' | 'clan' | 'travel';
 
 // 技能绑定（拳位 / F1~F8）**不在这里定义标识**：身份是**数字 `skillId`**
 // （`SkillBindings`，见下），图标/职业由 `game/skillIdentity.ts` 反查。
@@ -335,6 +335,11 @@ export interface GameSnapshot {
    */
   craft: { entityId: number; modes: readonly number[] } | null;
   /**
+   * 传送目的地选择（`S2C_TravelOpen`）—— 服务端判完上下文（踩中翅膀门 / 传送 NPC / 右键卷轴）后
+   * 下发的**纯展示**数据；判定只认 `C2S_TravelUse{kind, target}`，这里不做任何门槛算术。
+   */
+  travel: TravelOpenState | null;
+  /**
    * 合成**预览**（服务端算好的 before/after）—— 客户端只显示，不做任何算术。
    * 材料一变就置 null（"待服务端回话"），避免把上一次的结果留在界面上当成本次的结果。
    */
@@ -390,6 +395,7 @@ function loadInitial(): GameSnapshot {
     partyInvite: null,
     partyRecommendAsk: null,
     craft: null,
+    travel: null,
     craftPreview: null,
     clanCreate: null,
     clanInviteAsk: null,
@@ -425,6 +431,26 @@ export function setCraftPreview(pv: CraftPreview | null): void {
 /** 服务端说"这个 NPC 提供打造服务" → 记下来并打开面板（实际打开动作在 bridge 里）。 */
 export function setCraftOpen(entityId: number, modes: readonly number[]): void {
   commit({ craft: { entityId, modes } });
+}
+
+/** 一条可选目的地（`S2C_TravelOpen.options` 原样；cost/level_req 只是展示，判定在服务端）。 */
+export interface TravelOptionView {
+  mapId: number;
+  name: string;
+  cost: number;
+  levelReq: number;
+}
+
+export interface TravelOpenState {
+  /** 1 = NPC 付费传送 / 2 = 翅膀传送门网络 / 3 = Teleport Core 选图（与服务端 TravelService 常量同值） */
+  kind: number;
+  entityId: number;
+  options: readonly TravelOptionView[];
+}
+
+/** 服务端说"选目的地吧" → 记下来并打开面板（bridge 调用；面板只渲染，不判定）。 */
+export function setTravelOpen(kind: number, entityId: number, options: readonly TravelOptionView[]): void {
+  commit({ travel: { kind, entityId, options } });
 }
 
 /** 建会结果入库（`S2C_ClanCreateResult`）；面板据此刷新或显示失败原因。 */
@@ -1087,6 +1113,11 @@ export function closePanel(p: OpenPanel): void {
   // 公会面板同理：结果不留到下次（下次建会是新的一次尝试）
   if (p === 'clan') {
     commit({ openPanels: snapshot.openPanels.filter((x) => x !== p), clanCreate: null });
+    return;
+  }
+  // 传送选点盘同理：关掉即作废（重开要服务端重新触发 —— 踩门/点 NPC/右键卷轴）
+  if (p === 'travel') {
+    commit({ openPanels: snapshot.openPanels.filter((x) => x !== p), travel: null });
     return;
   }
   commit({ openPanels: snapshot.openPanels.filter((x) => x !== p) });

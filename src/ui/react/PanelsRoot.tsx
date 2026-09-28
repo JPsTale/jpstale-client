@@ -18,6 +18,7 @@ import TargetInfoPanel from './TargetInfoPanel.js';
 import CraftPanel from './CraftPanel.js';
 import ClanPanel from './ClanPanel.js';
 import ClanInvitePopup from './ClanInvitePopup.js';
+import TravelPanel from './TravelPanel.js';
 import { tryDropHeldToGround } from './heldDrop.js';
 
 /**
@@ -83,6 +84,11 @@ function renderPanel(panel: OpenPanel, worldMapOptions: WorldMapPanelOptions) {
     // key 带 entityId：换一个 NPC 开窗时**重挂**组件，免得上一家的标签/材料留在界面上
     const entityId = getGameSnapshot().craft?.entityId ?? 0;
     return <CraftPanel key={`craft-${entityId}`} />;
+  }
+  if (panel === 'travel') {
+    // key 带 kind：换一种传送来源（NPC/翅膀门/卷轴）时重挂，选中态不串
+    const kind = getGameSnapshot().travel?.kind ?? 0;
+    return <TravelPanel key={`travel-${kind}`} />;
   }
   if (panel === 'inventory') {
     return (

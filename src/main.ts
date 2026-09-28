@@ -70,8 +70,8 @@ const worldView = createWorldView(app, {
   onAttackHit: (monsterId, hitIndex) => send(attackHit(monsterId, hitIndex)),
   // 施法 → C2S_UseSkill：真实链路。`targetId=0` = **无目标施放**（右键即时施放那条路；
   // 服务端目前对 0 是空转 —— 技能效果属 P3+）。skillId = **数字技能 id**（`game/skillIdentity.ts`）。
-  onCastSkill: (skillId, targetId, animIndex, animClip) =>
-    sendUseSkill(skillId, targetId, animIndex ?? 0, animClip ?? ''),
+  onCastSkill: (skillId, targetId, animIndex, animClip, casterYaw) =>
+    sendUseSkill(skillId, targetId, animIndex ?? 0, animClip ?? '', casterYaw),
   // 技能**事件帧**回报（逐段结算，D7）：服务端收到才结算那一段
   onSkillHit: (skillId, targetId, hitIndex) => sendSkillHit(skillId, targetId, hitIndex),
   // 武器套切换的兑现（W 键被缓存到动作播完才回调，见 WorldView.requestSwitchWeapon）

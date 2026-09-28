@@ -1,7 +1,7 @@
 // 网络 → 状态 store 桥接：订阅 transport 的 proto 消息，映射进 gameStore。
 // 这里不直接依赖 React；React 面板层通过 gameStore 只读。
 import { onMessage, send } from './transport.js';
-import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setPartyRecommendAsk, setClanCreateResult, setSelfClan, setClanInviteAsk } from '../app/gameStore.js';
+import { setShop, openPanel, setBuffs, setCraftOpen, setCraftPreview, setPartyRoster, setPartyPlay, setPartyInvite, setPartyRecommendAsk, setClanCreateResult, setSelfClan, setClanInviteAsk, setTravelOpen } from '../app/gameStore.js';
 import type { PartyMemberView } from '../app/gameStore.js';
 import {
   allocateStat,
@@ -27,6 +27,7 @@ import {
   learnSkill,
   resetSkillPoints,
   setSkillBinding,
+  travelUse,
   clanCreate,
   clanInvite,
   clanInviteAccept,
@@ -369,6 +370,22 @@ export function installBridge(): void {
       setCraftOpen(Number(c.entityId) || 0, (c.modes || []).map((m) => Number(m) || 0));
       openPanel('craft');
     }
+    // 传送目的地选择（NPC 传送 / 翅膀门 / 传送卷轴）：服务端判完上下文（含"吸附到门心"）后下发，
+    // 这里只开面板 —— 门槛/费用判定全在服务端，面板只渲染 options 并回 `C2S_TravelUse{kind,target}`
+    if (msg.travelOpen) {
+      const t = msg.travelOpen;
+      setTravelOpen(
+        Number(t.kind) || 0,
+        Number(t.entityId) || 0,
+        (t.options || []).map((o) => ({
+          mapId: Number(o.mapId) || 0,
+          name: o.name || '',
+          cost: Number(o.cost) || 0,
+          levelReq: Number(o.levelReq) || 0,
+        })),
+      );
+      openPanel('travel');
+    }
     // 公会管理员 NPC 开窗（eventtype=8；数据读取由面板自己走 REST）
     if (msg.clanOpen) {
       openPanel('clan');
@@ -432,11 +449,11 @@ export function sendAllocateStat(stat: string, points = 1): void {
 
 /** 释放技能（服务端权威）：`skillId` = **数字技能 id**（`iconFile → skillId` 查表得来，见
  *  `game/skillIdentity.ts`）；`targetId` 默认 0，见 `protocol.useSkill`。 */
-export function sendUseSkill(skillId: number, targetId = 0, animIndex = 0, animClip = ''): void {
+export function sendUseSkill(skillId: number, targetId = 0, animIndex = 0, animClip = '', casterYaw?: number): void {
   // 起手即进 CD（原版的 GageLength 也从起手开始涨，sinSkill.cpp:2065-2075）—— 客户端本地计时
   // CD 计时**不在这里**起：等服务端 ack（自己的 `S2C_SkillStart`）才起 —— 见
   // `WorldView.signalSkillStart`（客户端窗口 ⊇ 服务端窗口，边界上不会“弧满却被拒”）。
-  send(useSkill(skillId, targetId, undefined, animIndex, animClip));
+  send(useSkill(skillId, targetId, undefined, animIndex, animClip, casterYaw));
 }
 
 /** 技能事件帧回报（服务端据此结算该段；D7）。`hitIndex` = 第几个事件帧（0 起）。 */
@@ -587,6 +604,13 @@ export function sendStackMerge(srcUid: number, dstUid: number): void {
 
 export function sendSwitchWeapon(): void {
   send(switchWeapon());
+}
+
+// —— 传送：目的地选择（无状态；目的地由服务端查表，这里只回 kind + map_id）——
+
+/** 玩家在选点盘里选定一个目的地（`target` = map_id；费用/等级/上下文全部由服务端复核）。 */
+export function sendTravelUse(kind: number, target: number): void {
+  send(travelUse(kind, target));
 }
 
 // —— 打造（合成 / 锻造 / 力量石）：服务端权威 ——

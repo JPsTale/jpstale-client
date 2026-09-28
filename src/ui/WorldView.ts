@@ -419,7 +419,12 @@ export interface WorldViewOpts {
    *   ③ 玩家目标（Healing/Grand Healing，2026-09-26）：右键时光标下/已选中的玩家 ⇒ `targetId = 玩家实体 id`
    *      （服务端 `PlayerService.entityByRuntimeId` 解析后治他）。
    * `skillId` = **数字技能 id**（图标 → id 的唯一查表在 `game/skillIdentity.ts`）。 */
-  onCastSkill?: (skillId: number, targetId: number, animIndex?: number, animClip?: string) => void;
+  /**
+   * 施法意图上报。`casterYaw` = **施法瞬间的自机朝向**（弧度，0=+Z）—— 方向型 AoE
+   * （冰枪矩形）在服务端用它选敌；原地转身不发移动包 ⇒ 服务端实体角度是陈旧的，
+   * 不带这个值第二发就会朝老方向放（2026-09-28 实测 0 命中）。
+   */
+  onCastSkill?: (skillId: number, targetId: number, animIndex?: number, animClip?: string, casterYaw?: number) => void;
   /**
    * 技能**事件帧**回报（逐段）—— 服务端收到才结算那一段（D7）。
    * 与 `onAttackHit` 同一语义：原版在动画事件帧才触发伤害，每次事件帧独立结算。
@@ -2408,7 +2413,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function reportCastIntent(skillId: number, aimId: number): void {
     const motion = animState?.getCurrentMotion();
-    opts?.onCastSkill?.(skillId, aimId, motion?.index ?? 0, selfAnimClip);
+    opts?.onCastSkill?.(skillId, aimId, motion?.index ?? 0, selfAnimClip, selfAngle);
   }
 
   /**

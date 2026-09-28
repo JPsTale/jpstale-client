@@ -59,6 +59,7 @@
     "verify-mouse-cast": "tsx scripts/verify-mouse-cast.ts",
     "verify-skill-learn": "tsx scripts/verify-skill-learn.ts",
     "verify-skill-bindings": "tsx scripts/verify-skill-bindings.ts",
+    "verify-travel": "tsx scripts/verify-travel.ts",
     "verify-skill-sound": "tsx scripts/verify-skill-sound.ts",
     "openplay-skills": "tsx scripts/extract-openplay-skills.ts",
     "skill-motion-speed": "tsx scripts/report-skill-motion-speed.ts",

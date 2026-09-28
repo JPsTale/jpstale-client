@@ -1937,3 +1937,11 @@
 .jpt-action-btn-off { cursor: not-allowed; opacity: 0.45; }
 .jpt-dead .jpt-name-text { color: #ff5252; }
 .jpt-dead .jpt-hole { filter: grayscale(0.85); }
+
+/* ── 传送选点盘（TravelPanel）：行复用 jp-shop-row，这里只补布局与选中态 ── */
+.jp-travel-list { max-height: 320px; min-width: 250px; }
+.jp-travel-row { width: 100%; justify-content: space-between; }
+.jp-travel-row.is-on { background: rgba(160, 235, 255, 0.22); }
+.jp-travel-row:disabled { opacity: 0.45; cursor: default; }
+.jp-travel-name { font-weight: 600; }
+.jp-travel-meta { font-size: 11px; opacity: 0.85; white-space: nowrap; }

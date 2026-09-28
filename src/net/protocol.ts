@@ -167,10 +167,13 @@ export function attackHit(targetId: number, hitIndex: number): jpt.base.ClientMe
  *  由 `game/skillIdentity.ts` 的 `iconFile → skillId` 查表得来，**不是**动画下标，也不是面板下标。
  *  targetId=0 表示无显式目标（buff/自施法）；targetPosition 供地面技能后续使用。 */
 export function useSkill(skillId: number, targetId = 0, targetPosition?: jpt.base.Position.$Properties,
-                        animIndex = 0, animClip = ''): jpt.base.ClientMessage.$Properties {
+                        animIndex = 0, animClip = '', casterYaw?: number): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
         // animIndex/animClip = 施法者**自己播的那一条**技能动作（AGENTS #14）：服务端原样透传给旁观者
-        useSkill: { skillId, targetId, animIndex, animClip, ...(targetPosition ? { targetPosition } : {}) },
+        // casterYaw = **施法瞬间的朝向**（弧度，0=+Z）：方向型 AoE（冰枪的 dm_SelectRangeBox）在
+        // 服务端要用它 —— 原地转身不发移动包 ⇒ 实体角度停在最后一次移动（2026-09-28 冰枪 0 命中）。
+        useSkill: { skillId, targetId, animIndex, animClip,
+            ...(targetPosition ? { targetPosition } : {}), ...(casterYaw !== undefined ? { casterYaw } : {}) },
     });
 }
 
@@ -358,5 +361,11 @@ export function clanInvite(targetId: number, targetName: string): jpt.base.Clien
 export function clanInviteAccept(inviterId: number, accept: boolean): jpt.base.ClientMessage.$Properties {
     return jpt.base.ClientMessage.create({
         clanInviteAccept: { inviterId, accept },
+    });
+}
+
+export function travelUse(kind: number, target: number): jpt.base.ClientMessage.$Properties {
+    return jpt.base.ClientMessage.create({
+        travelUse: { kind, target },
     });
 }
