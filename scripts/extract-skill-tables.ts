@@ -75,8 +75,9 @@ const F_DEF_CN = 'Language/Chinese/C_sinSkill_Info.h';
 /** ④ 技能身份表的两份源码依据（作业段区间 + 源码侧编号表） */
 const F_CHARACTER = 'character.cpp';
 const F_FILEREAD = 'fileread.cpp';
+const F_SINSKILL = 'sinbaram/sinSkill.cpp';
 /** 拼接顺序固定 ⇒ sourceHash 幂等（定长分帧，避免 `ab|c` 与 `a|bc` 同哈希） */
-const INPUTS = [F_ARRAYS, F_MACROS, F_DEF_BR, F_DEF_EN, F_DEF_CN, F_CHARACTER, F_FILEREAD];
+const INPUTS = [F_ARRAYS, F_MACROS, F_DEF_BR, F_DEF_EN, F_DEF_CN, F_CHARACTER, F_FILEREAD, F_SINSKILL];
 
 for (const rel of INPUTS) {
   if (!existsSync(resolve(REF, rel))) {
@@ -488,6 +489,21 @@ const jobRanges: JobRange[] = [];
 
 interface SdcRow { index: number; name: string; code: number; src: string }
 
+/** `sSkill[]` 的第 4 列 `IconName`（常驻 buff 图标，`keep/` 目录 TGA）：SinSkill.cpp:123+ 的行内数据。 */
+const keepIconByCode: Record<string, string> = {};
+{
+  const text = readFileSync(resolve(REF, F_SINSKILL), 'latin1');
+  const clean = maskLineComments(text);
+  const decl = /sSKILL\s+sSkill\[SIN_MAX_SKILL\]\s*=\s*\{/.exec(clean);
+  if (!decl) throw new Error('✗ sinSkill.cpp 里找不到 sSkill[SIN_MAX_SKILL] 数组');
+  const body = clean.slice(decl.index + decl[0].length, clean.indexOf('};', decl.index));
+  // 条目形如 `{"韩文名" ,SKILL_XXX ,"MP50 V_Life","Pr3_V_LIFE.tga"}` —— 第 4 列存在才有 buff 图标。
+  // SKILL_ 常量即身份键（与 SkillIds 同名）：extract 端直接按 CODE 字符串存，无需展开成数字。
+  for (const m of body.matchAll(/\{\s*"([^"]*)"\s*,\s*(SKILL_[A-Z_0-9]+)\s*,\s*"([^"]*)"(?:\s*,\s*"([^"]*\.tga)")?/g)) {
+    if (m[4]) keepIconByCode[m[2]] = m[4];
+  }
+}
+
 const sdcRows: SdcRow[] = [];
 {
   const text = readFileSync(resolve(REF, F_FILEREAD), 'latin1');
@@ -567,6 +583,8 @@ interface SkillRow {
   skillId: number; skillIdHex: string;
   slotInJob: number; tier: number; slotInTier: number;
   iconFile: string; name: string; alt: string | null; nameSrc: string; constName: string;
+  /** 常驻 buff 图标（原版 `sSkill[]` 第 4 列 `IconName`，`keep/` 目录 TGA；null = 该技能无 buff 条目） */
+  keepIcon: string | null;
   reqLv: number; useCode: string; weapon: number[];
   macro: string | null; pairing: string;
   sourceReqLv: number | null; sourceUseCode: string | null; sourceName: string | null;
@@ -858,6 +876,7 @@ for (let job = 1; job <= 11; job++) {
       tier,
       slotInTier,
       iconFile: s.iconFile,
+      keepIcon: macro ? keepIconByCode[macro] ?? null : null,
       name: s.name,
       alt: s.alt ?? null,
       nameSrc: classDir === 'martial' ? 'client-button' : 'wartale',

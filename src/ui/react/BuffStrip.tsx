@@ -2,8 +2,10 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getGameSnapshot, subscribeGame, type BuffEntry } from '../../app/gameStore.js';
 import { itemDefByCode, itemIconUrl } from '../../game/data/itemDefs.js';
 import { itemDisplayNameOf } from '../../game/itemName.js';
+import { skillRowBySkillId } from '../../game/skillIdentity.js';
 import { t } from '../../i18n/index.js';
 import { useItemImg } from './ItemPanel.js';
+import { useTextureImg } from './useTextureImg.js';
 
 /**
  * 屏幕**左上角**的 buff 图标条（原版风格：圆形图标 + 外圈圆环倒计时）。
@@ -38,14 +40,20 @@ export default function BuffStrip() {
   if (live.length === 0) return null;
   return (
     <div className="jp-buffs" data-layer="buff-strip">
-      {live.map((b) => <BuffIcon key={b.itemCode} b={b} now={now} />)}
+      {live.map((b) => <BuffIcon key={b.skillId > 0 ? `s${b.skillId}` : `i${b.itemCode}`} b={b} now={now} />)}
     </div>
   );
 }
 
 function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
-  const def = itemDefByCode(b.itemCode);
-  const src = useItemImg(def ? itemIconUrl(def) : null);
+  // 技能 buff：图标 = 技能身份表的 keepIcon（原版 sSkill[] 第 4 列，keep/ 目录 TGA）；
+  // 物品 buff：物品自己的图标（itemDefByCode）。两条共用同一张圆环。
+  const isSkill = b.skillId > 0;
+  const skillRow = isSkill ? skillRowBySkillId(b.skillId) : null;
+  const keepUrl = skillRow?.keepIcon ? `/res/image/sinimage/skill/keep/${skillRow.keepIcon.toLowerCase()}` : null;
+  const keepSrc = useTextureImg(keepUrl);
+  const def = isSkill ? null : itemDefByCode(b.itemCode);
+  const src = useItemImg(isSkill ? null : (def ? itemIconUrl(def) : null));
   const [hover, setHover] = useState(false);
 
   const remain = Math.max(0, b.at + b.remainingMs - now);
@@ -60,22 +68,26 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
       onPointerEnter={() => setHover(true)}
       onPointerLeave={() => setHover(false)}
     >
-      {/* 圆环：底圈 + 已过时间的淡蓝弧（从正上方顺时针推进） */}
+      {/* 圆环：底圈 + 已过时间的弧（原版 SkillBarDraw：力量石=金 RGB(255,190,30)，其余=青 RGB(0,255,200)） */}
       <svg className="jp-buff-ring" width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}>
         <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none"
                 stroke="rgba(0,0,0,0.55)" strokeWidth={RING} />
         <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none"
-                stroke="#7fd4ff" strokeWidth={RING} strokeLinecap="round"
+                stroke={b.skillId > 0 ? '#00ffc8' : '#ffbe1e'} strokeWidth={RING} strokeLinecap="round"
                 strokeDasharray={C} strokeDashoffset={C * (1 - elapsed)}
                 transform={`rotate(-90 ${SIZE / 2} ${SIZE / 2})`} />
       </svg>
       <div className="jp-buff-face">
-        {src ? <img src={src} alt={itemDisplayNameOf(def)} draggable={false} /> : null}
+        {isSkill
+          ? (keepSrc ? <img src={keepSrc} alt={skillRow?.name ?? `skill ${b.skillId}`} draggable={false} /> : null)
+          : (src ? <img src={src} alt={itemDisplayNameOf(def)} draggable={false} /> : null)}
       </div>
       {b.stack > 1 ? <span className="jp-buff-stack">{b.stack}</span> : null}
       {hover ? (
         <div className="jp-buff-tip">
-          <div className="jp-buff-tip-name">{itemDisplayNameOf(def, `#${b.itemCode}`)}</div>
+          <div className="jp-buff-tip-name">{isSkill
+            ? (skillRow?.name ?? `skill #${b.skillId}`)
+            : itemDisplayNameOf(def, `#${b.itemCode}`)}</div>
           <div className="jp-buff-tip-time">{t('buff.remaining', { s: fmt(remain) })}</div>
         </div>
       ) : null}

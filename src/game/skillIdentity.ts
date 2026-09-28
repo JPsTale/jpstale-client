@@ -16,6 +16,8 @@ export interface SkillIdentityRow {
   tier: number;
   slotInTier: number;
   iconFile: string;
+  /** 常驻 buff 图标（原版 sSkill[] 第 4 列，keep/ 目录 TGA；null = 无 buff 条目）。 */
+  keepIcon: string | null;
   /** 枚举常量名（不是玩家可见名；不进键、不当判据） */
   name: string;
   constName: string;

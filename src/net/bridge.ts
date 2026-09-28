@@ -309,6 +309,7 @@ export function installBridge(): void {
         totalMs: Number(b.totalMs) || 0,
         stack: Number(b.stack) || 1,
         at,
+        skillId: Number(b.skillId) || 0,
       })));
     }
     // 队伍全量名单（成员变动/解散；members 为空 = 清窗）。静态身份以它为权威。

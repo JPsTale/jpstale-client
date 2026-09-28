@@ -47006,6 +47006,7 @@ export const jpt = $root.jpt = (() => {
              * @property {number|Long|null} [remainingMs] BuffStateProto remainingMs
              * @property {number|Long|null} [totalMs] BuffStateProto totalMs
              * @property {number|null} [stack] BuffStateProto stack
+             * @property {number|null} [skillId] BuffStateProto skillId
              * @property {Array.<Uint8Array>} [$unknowns] Unknown fields preserved while decoding when enabled
              */
 
@@ -47078,6 +47079,14 @@ export const jpt = $root.jpt = (() => {
             BuffStateProto.prototype.stack = 0;
 
             /**
+             * BuffStateProto skillId.
+             * @member {number} skillId
+             * @memberof jpt.base.BuffStateProto
+             * @instance
+             */
+            BuffStateProto.prototype.skillId = 0;
+
+            /**
              * Creates a new BuffStateProto instance using the specified properties.
              * @function create
              * @memberof jpt.base.BuffStateProto
@@ -47119,6 +47128,8 @@ export const jpt = $root.jpt = (() => {
                     writer.uint32(/* id 4, wireType 0 =*/32).int64(message.totalMs);
                 if (message.stack != null && $Object.hasOwnProperty.call(message, "stack") && message.stack !== 0)
                     writer.uint32(/* id 5, wireType 0 =*/40).int32(message.stack);
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId") && message.skillId !== 0)
+                    writer.uint32(/* id 6, wireType 0 =*/48).int32(message.skillId);
                 if (message.$unknowns != null && $Object.hasOwnProperty.call(message, "$unknowns"))
                     for (let i = 0; i < message.$unknowns.length; ++i)
                         writer.raw(message.$unknowns[i]);
@@ -47221,6 +47232,15 @@ export const jpt = $root.jpt = (() => {
                                 delete message.stack;
                             continue;
                         }
+                    case 6: {
+                            if (wireType !== 0)
+                                break;
+                            if (value = reader.int32())
+                                message.skillId = value;
+                            else
+                                delete message.skillId;
+                            continue;
+                        }
                     }
                     reader.skipType(wireType, _depth, tag);
                     if (!reader.discardUnknown) {
@@ -47284,6 +47304,9 @@ export const jpt = $root.jpt = (() => {
                 if (message.stack != null && $Object.hasOwnProperty.call(message, "stack"))
                     if (!$util.isInteger(message.stack))
                         return "stack: integer expected";
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
+                    if (!$util.isInteger(message.skillId))
+                        return "skillId: integer expected";
                 return null;
             };
 
@@ -47334,6 +47357,9 @@ export const jpt = $root.jpt = (() => {
                 if (object.stack != null)
                     if ($Number(object.stack) !== 0)
                         message.stack = object.stack | 0;
+                if (object.skillId != null)
+                    if ($Number(object.skillId) !== 0)
+                        message.skillId = object.skillId | 0;
                 return message;
             };
 
@@ -47368,6 +47394,7 @@ export const jpt = $root.jpt = (() => {
                     } else
                         object.totalMs = options.longs === $String ? "0" : typeof $BigInt !== "undefined" && options.longs === $BigInt ? $BigInt("0") : 0;
                     object.stack = 0;
+                    object.skillId = 0;
                 }
                 if (message.itemCode != null && $Object.hasOwnProperty.call(message, "itemCode"))
                     object.itemCode = message.itemCode;
@@ -47389,6 +47416,8 @@ export const jpt = $root.jpt = (() => {
                         object.totalMs = options.longs === $String ? $util.Long.prototype.toString.call(message.totalMs) : options.longs === $Number ? new $util.LongBits(message.totalMs.low >>> 0, message.totalMs.high >>> 0).toNumber() : message.totalMs;
                 if (message.stack != null && $Object.hasOwnProperty.call(message, "stack"))
                     object.stack = message.stack;
+                if (message.skillId != null && $Object.hasOwnProperty.call(message, "skillId"))
+                    object.skillId = message.skillId;
                 return object;
             };
 

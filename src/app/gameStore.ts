@@ -236,6 +236,8 @@ export interface BuffEntry {
   totalMs: number;
   stack: number;
   at: number;
+  /** **技能 buff**（>0）：keep 图标（skillIdentity 查表）而非物品图标。物品 buff = 0。 */
+  skillId: number;
 }
 
 /** 队友身上的一个 buff（形状与 BuffEntry 一致——图标/倒计时渲染复用同一套；独立命名免混淆） */
@@ -485,7 +487,7 @@ export function setBuffs(list: readonly BuffEntry[]): void {
 }
 
 function sameBuff(a: BuffEntry, b: BuffEntry): boolean {
-  return a.itemCode === b.itemCode && a.remainingMs === b.remainingMs
+  return a.itemCode === b.itemCode && a.remainingMs === b.remainingMs && a.skillId === b.skillId
     && a.totalMs === b.totalMs && a.stack === b.stack;
 }
 

@@ -15917,6 +15917,9 @@ export namespace jpt {
             /** BuffStateProto stack. */
             stack: number;
 
+            /** BuffStateProto skillId. */
+            skillId: number;
+
             /**
              * Creates a new BuffStateProto instance using the specified properties.
              * @param [properties] Properties to set
@@ -16015,6 +16018,9 @@ export namespace jpt {
 
                 /** BuffStateProto stack */
                 stack?: (number|null);
+
+                /** BuffStateProto skillId */
+                skillId?: (number|null);
 
                 /** Unknown fields preserved while decoding when enabled */
                 $unknowns?: Uint8Array[];
