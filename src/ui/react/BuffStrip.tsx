@@ -89,7 +89,7 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
       </div>
       {b.stack > 1 ? <span className="jp-buff-stack">{b.stack}</span> : null}
       {hover ? (
-        <div className="jp-buff-tip">
+        <div className={`jp-buff-tip${tipSide === 'center' ? '' : ` jp-buff-tip-${tipSide}`}`}>
           <div className="jp-buff-tip-name">{isSkill
             ? (skillRow?.name ?? `skill #${b.skillId}`)
             : itemDisplayNameOf(def, `#${b.itemCode}`)}</div>

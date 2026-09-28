@@ -1676,7 +1676,7 @@
 }
 .jp-buff { position: relative; pointer-events: auto; }
 .jp-buff-layer { position: absolute; left: 0; top: 0; width: 100%; height: 100%; }
-.jp-buff-pie { position: absolute; left: 0; top: 0; width: 100%; height: 100%; border-radius: 50%; }
+.jp-buff-pie { position: absolute; border-radius: 50%; }
 /* 图标面盘：深色底 + 圆形裁切，让图标在任何背景上都读得出来（截图里也是这种"圆牌"感） */
 .jp-buff-face {
   position: absolute; left: 0; top: 0;
@@ -1692,6 +1692,8 @@
 /* 悬停提示：名字 + 剩余时间（只写必要信息，不解释 buff 是干什么的） */
 .jp-buff-tip {
   position: absolute; left: 50%; top: calc(100% + 4px); transform: translateX(-50%);
+  &.jp-buff-tip-left { left: 0; transform: none; }
+  &.jp-buff-tip-right { left: auto; right: 0; transform: none; }
   padding: 3px 7px; border-radius: 4px; white-space: nowrap;
   background: #0a0c12f2; border: 1px solid #4a4f5a; color: #e8e2d4;
   font-size: 12px; line-height: 1.5; text-align: center;
