@@ -3,6 +3,7 @@ import { getGameSnapshot, subscribeGame, type BuffEntry } from '../../app/gameSt
 import { itemDefByCode, itemIconUrl } from '../../game/data/itemDefs.js';
 import { itemDisplayNameOf } from '../../game/itemName.js';
 import { skillRowBySkillId } from '../../game/skillIdentity.js';
+import { skillName } from '../../game/skillText.js';
 import { t } from '../../i18n/index.js';
 import { useItemImg } from './ItemPanel.js';
 import { useTextureImg } from './useTextureImg.js';
@@ -96,7 +97,7 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
       <img className="jp-buff-layer" src={ringSrc ?? undefined} alt="" draggable={false} />
       <div className="jp-buff-face">
         {isSkill
-          ? (keepSrc ? <img src={keepSrc} alt={skillRow?.name ?? `skill ${b.skillId}`} draggable={false} /> : null)
+          ? (keepSrc ? <img src={keepSrc} alt={skillName(b.skillId) ?? `skill ${b.skillId}`} draggable={false} /> : null)
           : (src ? <img src={src} alt={itemDisplayNameOf(def)} draggable={false} /> : null)}
       </div>
       {/* 计时环画在图标**上层**（贴图标自带环带 r≈13.5）：填充色 = 已过时间，12 点起顺时针扫。
@@ -113,7 +114,7 @@ function BuffIcon({ b, now }: { b: BuffEntry; now: number }) {
       {hover ? (
         <div className={`jp-buff-tip${tipSide === 'center' ? '' : ` jp-buff-tip-${tipSide}`}`}>
           <div className="jp-buff-tip-name">{isSkill
-            ? (skillRow?.name ?? `skill #${b.skillId}`)
+            ? (skillName(b.skillId) ?? `skill #${b.skillId}`)
             : itemDisplayNameOf(def, `#${b.itemCode}`)}</div>
           <div className="jp-buff-tip-time">{t('buff.remaining', { s: fmt(remain) })}</div>
         </div>
