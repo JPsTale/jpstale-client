@@ -50,6 +50,7 @@ import { configureHolyBolt, updateHolyBoltRunners, clearHolyBolt, type HolyBoltT
 import { configureSkillBuffFx, updateSkillBuffFx, clearSkillBuffFx, applySelfSkillBuffFx,
          makeBuffFxInstance, cueMuspelAttack, playMuspelHit, playHolyReflectionDefense,
          SKILL_HOLY_REFLECTION } from '../render/effects/skill-buff-fx.js';
+import { runChainSegment, updateChainBeams, clearChainBeams } from '../render/effects/chain-lightning.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateHealingOrbits } from '../render/effects/healing-orbit.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
@@ -2090,6 +2091,37 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 高度由特效自己加：起点 `pY+100000`、终点 `pY+5000` —— 调用侧不额外抬）。
    * 目标不在视野 ⇒ **不放**并上报（原版 `FindAutoPlayer` 找不到时也是直接跳过那个目标）。
    */
+  // ── Chain Lightning 的逐段链视觉锚（`chain-lightning.ts`）──
+  // 结算流按链序逐条到达 ⇒ "上一节点"从施法者起、每段推进到该目标。
+  // 新施法（skill_start）或 2.5s 无后续段 ⇒ 重置回施法者。
+  let chainLastNode: { x: number; y: number; z: number } | null = null;
+  let chainLastAt = 0;
+  function chainAnchorReset(feet: { x: number; y: number; z: number }): void {
+    chainLastNode = { ...feet };
+    chainLastAt = performance.now();
+  }
+  function chainSegmentTo(targetId: number): void {
+    const now = performance.now();
+    if (!chainLastNode || now - chainLastAt > 2500) {
+      const f = skillBuffFxFeet();
+      chainLastNode = { x: f.x, y: f.y, z: f.z };
+    }
+    const feet = unitFeetPos(targetId);
+    if (!feet) {
+      reportFallback('skillfx', `Chain Lightning：链目标 ${targetId} 不在本地视野 ⇒ 这段光束不放`);
+      return;
+    }
+    runChainSegment({
+      scene: scene!, camera,
+      spawnPartStoppable: (name, opts) => effects ? effects.spawnStoppable(name, {
+        pos: opts.pos, loop: opts.loop,
+      }) : null,
+      log: (m) => console.log('[skillfx]' + m),
+    }, chainLastNode, feet);
+    chainLastNode = { x: feet.x, y: feet.y, z: feet.z };
+    chainLastAt = now;
+  }
+
   function onSkillAttackResult(skillId: number, _attackerId: number, targetId: number): void {
     if (skillId === 0) return;
     // 技能身份按**常量名**判定（skillIdentity 的 constName；不走 skill-fx 表的 eventFx ——
@@ -2102,6 +2134,11 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       cueMuspelAttack();
       const feet = unitFeetPos(targetId);
       if (feet) playMuspelHit(feet);
+      return;
+    }
+    // **Chain Lightning 的逐段链**：结算按链序到达，每条拉一道光束（上一节点 → 该目标）
+    if (idrow.constName === 'CHAIN_LIGHTNING') {
+      chainSegmentTo(targetId);
       return;
     }
     if (idrow.constName !== 'DIVINE_LIGHTNING') return;
@@ -4969,6 +5006,15 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    */
   function signalSkillStart(casterId: number, skillId: number, targetId: number, animIndex = 0,
                             animClip = '', sparkCount = 0, skillLevel = 0): void {
+    // **Chain Lightning 的链锚重置**：新施法 ⇒ 第一段从施法者拉起
+    {
+      const row = skillRowBySkillId(skillId);
+      if (row?.constName === 'CHAIN_LIGHTNING') {
+        const c = remotes.get(casterId);
+        chainAnchorReset(c ? { x: c.root.position.x, y: c.root.position.y, z: c.root.position.z }
+                          : { x: selfPos.x, y: selfPos.y, z: selfPos.z });
+      }
+    }
     if (casterId === selfPlayerId) {
       // 动画自己已在本地播过了（客户端驱动），但**CD 计时从这条 ack 起**：服务端是在受理那一刻
       // （扣 MP + 记 `lastCastAt`）开始的，客户端晚一个 RTT 起表 ⇒ 客户端窗口 ⊇ 服务端窗口，
@@ -7411,6 +7457,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     updateDivineLightningRunners(dt); // 神之雷电落雷驱动（同上）
     updateSkillBuffFx(dt);            // 技能 buff 持久特效（VL 心形 / HR 光带 / Muspel 天使）
+    updateChainBeams(dt);             // 连锁闪电的逐段光束（1s 寿命淡出）
     updateHolyBoltRunners(dt);        // 神圣弹飞行/爆裂驱动（70fps 帧轴；漏了它 = 球停在起点）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
     updateHealingOrbits(dt);          // Healing 头顶旋转上升光环（漏了它 = 光环不动、不升、不淡出）
@@ -8043,6 +8090,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       clearDivineLightning();         // 神之雷电落雷的载体/带子同样随世界清
       clearHolyBolt();                // 神圣弹的球/光痕/火花载体同上
       clearSkillBuffFx();             // 技能 buff 持久特效随世界清
+      clearChainBeams();              // 连锁闪电光束同上
       clearLevelUpFx();
       clearAgeUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
       projectileMgr = null;
