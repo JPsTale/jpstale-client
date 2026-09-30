@@ -96,10 +96,8 @@
    "note": "事件帧视觉（2026-09-26）：sinSkillEffect_Great_Healing（sinAssaSkillEffect.cpp:327）= 橙 dynLight + GH.ASE ×2 + star04 广告板；GH.ASE 全库不存在 → runner 按纪律只放 dynLight 并上报。"
   },
   "Chain Lightning": {
-   "eventFx": [
-    "code:chainlightning"
-   ],
-   "note": "事件帧视觉（2026-09-26）：原版 = SkillCelestialChainLighting（hoAssaParticleEffect.cpp:674，天降闪+逐段链，需服务端下发链表 → 未移植，runner 上报）；暂起主目标处同族同名资产 skill4celestialchainlightinglight（skill4* = 祭司四转族，本技能 J4·S3）。音效照源码两条 rand 变体。"
+   "eventFx": [],
+   "note": "事件帧视觉（2026-09-26）：原版 = SkillCelestialChainLighting（hoAssaParticleEffect.cpp:674，天降闪+逐段链，需服务端下发链表 → 未移植，runner 上报）；暂起主目标处同族同名资产 skill4celestialchainlightinglight（skill4* = 祭司四转族，本技能 J4·S3）。音效照源码两条 rand 变体。\n\n【2026-09-30 更正】事件帧的 fallback 粒子（skill4celestialchainlightinglight @ 主目标）已移除：\n链的可视化改由结算流驱动（S2C_SkillStart 重置链锚 + 逐条 S2C_AttackResult 拉段光束，\nrender/effects/chain-lightning.ts）——事件帧时客户端没有链表，只画主目标是错的。音效保留。"
   },
   "Divine Lightning": {
    "eventFx": [],

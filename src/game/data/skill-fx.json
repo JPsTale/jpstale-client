@@ -4097,9 +4097,7 @@
     ]
    },
    "event": {
-    "fx": [
-     "code:chainlightning"
-    ],
+    "fx": [],
     "sfx": [
      "wav/effects/skill/morion/chainlightning 01.wav",
      "wav/effects/skill/morion/chainlightning 02.wav"
