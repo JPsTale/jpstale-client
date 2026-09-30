@@ -135,6 +135,12 @@ function repushSelfBlink(): void {
   if (cur) worldView.updateSelfAppearance(withSelfBlink(cur));
 }
 subscribeGame(repushSelfBlink);
+// 自机技能 buff 持久特效（VL 心形 / HR 符文光带 / Muspel 天使）—— 与 buff 条同源同生死：
+// buff 表变化 ⇒ 差分启停（只把技能条目传下去，物品 buff 不归它管）。
+subscribeGame(() => {
+  worldView.applySelfSkillBuffs(
+    getGameSnapshot().buffs.filter((b) => b.skillId > 0).map((b) => ({ skillId: b.skillId })));
+});
 /**
  * 世界地图 —— 现在是**普通面板**（`panel:worldmap`，由 `WorldMapPanel` 渲染），
  * 与背包/角色/技能/NPC 商店共用 `PanelShell` 外壳、层级栈与 `openPanels` 开关。

@@ -47,6 +47,9 @@ import {
 import { updateMultiSparkRunners } from '../render/effects/multi-spark-runner.js';
 import { runDivineLightning, configureDivineLightning, updateDivineLightningRunners, clearDivineLightning, setDivineLightningTexture } from '../render/effects/divine-lightning.js';
 import { configureHolyBolt, updateHolyBoltRunners, clearHolyBolt, type HolyBoltTextures } from '../render/effects/holy-bolt.js';
+import { configureSkillBuffFx, updateSkillBuffFx, clearSkillBuffFx, applySelfSkillBuffFx,
+         makeBuffFxInstance, cueMuspelAttack, playMuspelHit, playHolyReflectionDefense,
+         SKILL_HOLY_REFLECTION } from '../render/effects/skill-buff-fx.js';
 import { runMonsterFly, updateMonsterFlies, clearMonsterFlies } from '../render/effects/monster-fly-runner.js';
 import { updateHealingOrbits } from '../render/effects/healing-orbit.js';
 import { updateCastCircleMeshes, fireMonsterSkillCast, spawnAssaMesh } from '../render/effects/cast-circle-runner.js';
@@ -225,6 +228,12 @@ export interface WorldView {
    * 自机期间定身（不能移动/攻击）；旁观者的尸体同样可见。
    */
   applyPlayerDeath(playerId: number): void;
+  /**
+   * **自机技能 buff 的持久特效**差分入口（`S2C_BuffState` 的技能条目驱动）：
+   * Virtual Life 心形 / Holy Reflection 符文光带 / Summon Muspel 悬浮天使——
+   * 条目在 ⇒ 特效挂上，条目消失 ⇒ 停止（与 buff 条同源同生死）。
+   */
+  applySelfSkillBuffs(buffs: readonly { skillId: number }[]): void;
   /**
    * **旁观者视角的起身**（复活术 `S2C_PlayerRespawn` 的非自机分支）：让躺着的远端 actor
    * 走 `resurrect()` 回站立 —— 原版等价物是被复活者客户端收到转发包后的
@@ -2087,6 +2096,14 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     // 那条已清空，落雷的分派不在"事件帧"而在"结算流"，见 PriestessSkills/PriestessHealingTargetTest 同款分层）
     const idrow = skillRowBySkillId(skillId);
     if (!idrow) return;
+    // **Summon Muspel 的天使攻击**：服务端按 Summon_Muspell_Damage 结算并随 AttackResult 下发
+    // ⇒ 这里播天使的攻击动画/命中粒子/斩击音（ visuals 由 skill-buff-fx 的常驻天使承载）。
+    if (idrow.constName === 'SUMMON_MUSPELL') {
+      cueMuspelAttack();
+      const feet = unitFeetPos(targetId);
+      if (feet) playMuspelHit(feet);
+      return;
+    }
     if (idrow.constName !== 'DIVINE_LIGHTNING') return;
     const feet = unitFeetPos(targetId);
     if (!feet) {
@@ -2098,6 +2115,29 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     configureHolyBolt({ camera });
     runDivineLightning({ scene: scene!, dynLights, spawnPart: fx ? (a: string, o: { pos: { x: number; y: number; z: number } }) => fx.spawn(a, o) : null,
       log: (m) => console.log('[skillfx]' + m) }, feet);
+  }
+
+  // 技能 buff 持久特效的差分与依赖（skill-buff-fx）：
+  //   feet = 自机实时位置/朝向（原版 pChar/pY 同语义，天使挂头顶、心形挂头顶、光带绕胸高）。
+  function skillBuffFxFeet(): { x: number; y: number; z: number; yaw: number } {
+    return { x: selfPos.x, y: selfPos.y, z: selfPos.z, yaw: selfAngle };
+  }
+  function applySelfSkillBuffs(buffs: readonly { skillId: number }[]): void {
+    configureSkillBuffFx({
+      scene: scene!,
+      parts: {
+        spawnPartStoppable: (name, opts) => {
+          const fx = effects;
+          if (!fx) return Promise.resolve(null);
+          return fx.spawnStoppable(name, { pos: opts.pos, attach: opts.attach, rigidFollow: opts.rigidFollow, loop: opts.loop });
+        },
+        spawnPart: (name, opts) => effects ? effects.spawn(name, opts) : null,
+        dynLights,
+        playSound: (path, pos) => sfx.play(path, { pos }),
+      },
+      feet: skillBuffFxFeet,
+    });
+    applySelfSkillBuffFx(buffs, makeBuffFxInstance);
   }
 
   function ageUpDeps(): AgeUpDeps {
@@ -5215,6 +5255,12 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
    * 攻击/技能/受击中不打断（状态机 triggerDamage 内建守卫）；damage<=0（抵抗/吸收）不播。
    */
   function onTakeDamage(targetId: number, damage: number): void {
+    // **Holy Reflection 受击反应**（`sinSkillEffect_Holy_Reflection_Defense`）：圣盾生效期间
+    // 自机被击 ⇒ 紫光 + gu 符文 + 星屑漂浮（判据 = 自己 buff 表里有 HR 条目，同 buff 条同源）。
+    if (targetId === selfPlayerId) {
+      const hrActive = getGameSnapshot().buffs.some((b) => b.skillId === SKILL_HOLY_REFLECTION);
+      if (hrActive && damage > 1) playHolyReflectionDefense({ x: selfPos.x, y: selfPos.y + 2, z: selfPos.z });
+    }
     // 受击硬直只在**有效伤害**时触发 —— 原版 character.cpp:8463：
     //   `... && cnt > 1` 才 SetMotionFromCode(CHRMOTION_STATE_DAMAGE)（cnt = 吸收后、下限 1 的实际伤害）。
     // 所以扣 1 点血的一刀**不定身**、也不播受击音：低等级怪被高等级玩家的防御压到 1 点时，
@@ -7364,6 +7410,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     updateCastCircleMeshes(dt);       // 法阵本体的 alpha 包络（共用实现）
     updateMultiSparkRunners(dt);      // 火花驱动（共用实现；须每帧调，否则火花不动）
     updateDivineLightningRunners(dt); // 神之雷电落雷驱动（同上）
+    updateSkillBuffFx(dt);            // 技能 buff 持久特效（VL 心形 / HR 光带 / Muspel 天使）
     updateHolyBoltRunners(dt);        // 神圣弹飞行/爆裂驱动（70fps 帧轴；漏了它 = 球停在起点）
     updateMonsterFlies(dt);           // 怪物飞出物（共用实现；漏了它 = 停在起点不动）
     updateHealingOrbits(dt);          // Healing 头顶旋转上升光环（漏了它 = 光环不动、不升、不淡出）
@@ -7842,6 +7889,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
     teleportRemote,
     applyPlayerDeath,
     applyRemoteRevive,
+    applySelfSkillBuffs,
     applyMapSwitched,
     respawnNeedsMapLoad: (mapId: number) => !!scene && mapId !== currentMapId,
     /** 大地图（`src/ui/WorldMap.ts`）用：当前地图 + 自机世界坐标 —— 世界图上画"你在这" */
@@ -7994,6 +8042,7 @@ export function createWorldView(container: HTMLElement, opts?: WorldViewOpts): W
       clearMonsterFlies();            // 飞出物载体节点随世界一起清（否则残留到下一个世界）
       clearDivineLightning();         // 神之雷电落雷的载体/带子同样随世界清
       clearHolyBolt();                // 神圣弹的球/光痕/火花载体同上
+      clearSkillBuffFx();             // 技能 buff 持久特效随世界清
       clearLevelUpFx();
       clearAgeUpFx();               // 升级特效：载体 + **循环粒子**（loop 的系统不停会一直闪）
       projectileMgr = null;
