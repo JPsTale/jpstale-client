@@ -40,6 +40,7 @@ import { buildSkeleton, buildSkinnedMesh } from '../skinned-builder.js';
 import { loadCharTextures } from '../char-texture-loader.js';
 import { applyPose } from '../../char/anim-player.js';
 import { reportFallback } from '../../char/fallback-log.js';
+import { loadStaticSmd, applyStaticMeshTracks, type StaticModelResult } from './static-fx.js';
 import { cachedFetch } from '../../core/asset-cache.js';
 import { decodeTextureAsync } from '../../core/texture.js';
 import type { QuarksPartHandle } from './quarks-runtime.js';
@@ -57,7 +58,6 @@ const VL_KEEP_PART = 'skill3priestessvirtuallifemember';
 const VL_CAST_PART = 'skill3priestessvirtuallifemember_cast';
 const HR_BAND_SMD = 'image/sinimage/assaeffect/holyr/b_2holyreflection.smd';
 const MUSPEL_MESH_SMD = 'effect/neweffect/res/object/muspel.smd';
-const MUSPEL_ANIM_SMB = 'effect/assaeffect/muspell/b_muspel.smb';
 const MUSPEL_END_PART = 'muspellend';
 const MUSPEL_HIT_PART = 'muspellhit1';
 const MUSPEL_HAND_PART = 'muspellhand';
@@ -82,12 +82,12 @@ const HR_CHEST_H = 7;
 const MUSPEL_HOVER_RAW = 10000;
 /** 粒子高度：`pY + 5000` raw = 19.5 单位（`:845`） */
 const MUSPEL_PART_H_RAW = 5000;
-/** IDLE 帧循环 80..160（`:963-968`）；攻击打点帧 340（`:1025` 附近的 340×160） */
-const MUSPEL_IDLE_0 = 80;
-const MUSPEL_IDLE_1 = 160;
-const MUSPEL_HIT_FRAME = 340;
-/** 帧推进：`m_fCurrentFrame += 160*30*elapsed` ⇒ 30 动画帧/秒 */
-const MUSPEL_FPS = 30;
+/** IDLE 帧循环 80×160..160×160 tick（`:963-968`）；打击点 340×160 tick（`:1025`） */
+const MUSPEL_IDLE_0 = 80 * 160;
+const MUSPEL_IDLE_1 = 160 * 160;
+const MUSPEL_HIT_FRAME = 340 * 160;
+/** 帧推进：`m_fCurrentFrame += 160*30*elapsed`（`:891`）⇒ 每秒 30 动画帧 = 4800 tick/秒 */
+const MUSPEL_TICKS_PER_SEC = 160 * 30;
 /** 命中动态光 `SetDynLight(255,150,50,0,180,3)` */
 const MUSPEL_HIT_DYN = { r: 255, g: 150, b: 50, a: 0, power: 180, decPower: 3 } as const;
 /** VL 挂载高度：`TempPosi.y = 1000` raw ≈ 3.9 单位（头顶） */
@@ -296,8 +296,11 @@ export function playHolyReflectionDefense(at: { x: number; y: number; z: number 
 /* ══════════════ Summon Muspel ══════════════ */
 
 interface MuspelState {
-  mesh: BandMesh;             // 同 loading 管线（muspel.smd + b_muspel.smb 骨）
-  frame: number;
+  /** **对象级帧动画**网格（原版 `UpdateMesh` 用 `m_iCurrentFrame` 播帧）—— 不是骨骼蒙皮！
+   *  （误用骨骼蒙皮会让骨骼变换把网格放大 3 倍：34 单位的模型撑到 106 ⇒ 半透明巨物糊满屏幕，
+   *   2026-09-30 实测"闪电看不见、冰枪超级淡"的根因。） */
+  static: StaticModelResult;
+  frame: number;              // tick（160/动画帧）
   attacking: boolean;
   hitFired: boolean;
   /** 命中回调（WorldView 注入 → 播 hit part/动态光/音效在目标身上） */
@@ -310,7 +313,7 @@ function startMuspel(onHit: (feet: { x: number; y: number; z: number }) => void)
   const root = new THREE.Group();
   deps!.scene.add(root);
   const state: MuspelState = {
-    mesh: null as unknown as BandMesh,
+    static: null as unknown as StaticModelResult,
     frame: MUSPEL_IDLE_0,
     attacking: false,
     hitFired: false,
@@ -319,22 +322,18 @@ function startMuspel(onHit: (feet: { x: number; y: number; z: number }) => void)
   muspelLive.state = state;
   void (async () => {
     try {
-      const smb = await loadParsedAsset(MUSPEL_ANIM_SMB, 'anim', parseSmb, true);
-      const smd = await loadParsedAsset(MUSPEL_MESH_SMD, 'model', parseSmb, true);
-      const skel = buildSkeleton(smb, false);
-      const built = buildSkinnedMesh(smd, smb, null, false, skel);
-      await loadCharTextures(built.texturesToLoad);
-      root.add(built.skeletonGroup);
-      root.add(built.group);
-      state.mesh = { group: root, bones: built.bones, skeleton: built.skeleton, smb, dir: 1 };
-      // 出生粒子（`MusPellStart`，`:871`）
+      // **对象级帧动画**网格（原版 `AssaSearchRes("muspel.ASE")` + `UpdateMesh(m_iCurrentFrame)`）
+      const smd = await loadStaticSmd(MUSPEL_MESH_SMD);
+      if (!smd) throw new Error('muspel.smd 加载失败');
+      root.add(smd.group);
+      state.static = smd;
+      // 出生粒子（`MusPellStart`，施法者上方 19.5 单位，`:845`）
+      const f = feetGetter?.() ?? { x: 0, y: 0, z: 0, yaw: 0 };
       void deps!.parts.spawnPartStoppable('muspellstart', {
-        pos: feetGetter
-          ? (() => { const f = feetGetter(); return { x: f.x, y: f.y + MUSPEL_PART_H_RAW / FONE, z: f.z }; })()
-          : { x: 0, y: 0, z: 0 },
+        pos: { x: f.x, y: f.y + MUSPEL_PART_H_RAW / FONE, z: f.z },
       });
     } catch (e) {
-      reportFallback('skillfx', 'Muspel 天使加载失败：' + String(e) + '（muspel.smd / b_muspel.smb）');
+      reportFallback('skillfx', 'Muspel 天使加载失败：' + String(e) + '（' + MUSPEL_MESH_SMD + '）');
     }
   })();
   return {
@@ -345,33 +344,33 @@ function startMuspel(onHit: (feet: { x: number; y: number; z: number }) => void)
       if (f) void deps!.parts.spawnPartStoppable(MUSPEL_END_PART, {
         pos: { x: f.x, y: f.y + MUSPEL_PART_H_RAW / FONE, z: f.z },
       });
-      state.mesh = null as unknown as BandMesh;
+      state.static?.dispose();
+      state.static = null as unknown as StaticModelResult;
       muspelLive.state = null;
       root.removeFromParent();
     },
     update(dt, feet) {
       const st = muspelLive.state;
-      if (!st || !st.mesh) return;
+      if (!st || !st.static) return;
       // 悬浮：pY + 10000 raw（39 单位），朝向 = 施法者反向（`UpdateView`：-Angle.y+180°）
       root.position.set(feet.x, feet.y + MUSPEL_HOVER_RAW / FONE, feet.z);
       root.rotation.y = -feet.yaw + Math.PI;
-      st.frame += MUSPEL_FPS * dt;
+      st.frame += MUSPEL_TICKS_PER_SEC * dt;
       if (st.attacking) {
         if (!st.hitFired && st.frame >= MUSPEL_HIT_FRAME) {
           st.hitFired = true;
-          // 打击帧：橙动态光 + 命中回调（hit part/音效在目标处，WorldView 注入）
-          const tgt = st.onHit;
+          const hit = st.onHit;
           st.onHit = () => {};
-          tgt(feet);
+          hit(feet);
         }
-        if (st.frame >= MUSPEL_HIT_FRAME + 60) {
+        if (st.frame >= MUSPEL_HIT_FRAME + 60 * 160) {
           st.attacking = false;
           st.frame = MUSPEL_IDLE_0;
         }
       } else {
         if (st.frame >= MUSPEL_IDLE_1) st.frame = MUSPEL_IDLE_0;
       }
-      applyPose(st.mesh.smb, st.frame, st.mesh.bones, st.mesh.skeleton);
+      applyStaticMeshTracks(st.static.tracks ?? [], st.frame);
     },
   };
 }
